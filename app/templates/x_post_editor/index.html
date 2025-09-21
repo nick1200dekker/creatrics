@@ -972,25 +972,8 @@ input:checked + .toggle-slider:before {
         </div>
     </aside>
     
-    <!-- Right Side - Empty State or Editor -->
-    <main class="empty-state-full" id="emptyStateContainer">
-        <i class="ph ph-pencil-simple empty-state-icon"></i>
-        <h2 class="empty-state-title">Welcome to Post Editor</h2>
-        <p class="empty-state-text">Create or select a draft to start crafting your social media content</p>
-        <button class="action-btn" id="emptyStateButton">
-            <i class="ph ph-plus"></i>
-            <span id="emptyStateButtonText">
-                {% if total_count and total_count > 0 %}
-                    Create Draft
-                {% else %}
-                    Create Your First Draft
-                {% endif %}
-            </span>
-        </button>
-    </main>
-    
-    <!-- Right Editor Area (hidden by default) -->
-    <main class="editor-area" id="editorArea" style="display: none;">
+    <!-- Right Side - Editor Area (shown by default) -->
+    <main class="editor-area" id="editorArea">
         <!-- Editor Header with Toolbar -->
         <div class="editor-header">
             <div class="editor-toolbar">
@@ -1147,12 +1130,18 @@ input:checked + .toggle-slider:before {
         loadedCount: 0,
         totalCount: 0,
         hasMore: false,
-        isLoadingMore: false
+        isLoadingMore: false,
+        isCreatingDraft: false
     };
 
     // Initialize function
     function initialize() {
         console.log('Initializing Post Editor...');
+        
+        // Start with fresh editor (no draft created yet)
+        state.currentDraftId = null;
+        state.hasUnsavedChanges = false;
+        state.postCount = 0; // Reset post count to ensure we start with "Post" not "Post 2"
         
         setupEventListeners();
         setupInitialPost();
@@ -1161,14 +1150,10 @@ input:checked + .toggle-slider:before {
         loadDraftsWithSpinner();
         checkBrandVoice();
         
-        // Setup empty state button
-        const emptyStateButton = document.getElementById('emptyStateButton');
-        if (emptyStateButton) {
-            emptyStateButton.onclick = createNewDraft;
-        }
+        updateStatusMessage('Ready to create content');
         
         window.CreatorPal.PostEditor.initialized = true;
-        console.log('Post Editor initialized');
+        console.log('Post Editor initialized with fresh post');
     }
 
     // Load drafts with spinner
@@ -1282,6 +1267,10 @@ input:checked + .toggle-slider:before {
     function setupInitialPost() {
         const postsContainer = document.getElementById('postsContainer');
         if (postsContainer) {
+            // Clear any existing posts first
+            postsContainer.innerHTML = '';
+            state.postCount = 0;
+            // Add exactly one post
             addNewPost();
         }
     }
@@ -1518,10 +1507,6 @@ input:checked + .toggle-slider:before {
             if (data.success) {
                 const draft = data.draft;
                 
-                // Show editor
-                document.getElementById('emptyStateContainer').style.display = 'none';
-                document.getElementById('editorArea').style.display = 'flex';
-                
                 // Clear and load posts
                 clearEditor();
                 
@@ -1563,10 +1548,6 @@ input:checked + .toggle-slider:before {
             if (data.success) {
                 state.currentDraftId = data.draft_id;
                 
-                // Show editor
-                document.getElementById('emptyStateContainer').style.display = 'none';
-                document.getElementById('editorArea').style.display = 'flex';
-                
                 clearEditor();
                 setupInitialPost();
                 
@@ -1581,6 +1562,33 @@ input:checked + .toggle-slider:before {
         }
     }
 
+    // Create new draft silently (without UI changes)
+    async function createNewDraftSilently() {
+        try {
+            const response = await fetch('/x_post_editor/drafts/new', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: 'New Draft' })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                state.currentDraftId = data.draft_id;
+                updateStatusMessage('Auto-saved as new draft');
+                
+                // Refresh drafts list to show the new draft
+                loadDraftsWithSpinner();
+                
+                return true;
+            }
+        } catch (error) {
+            console.error('Error creating draft silently:', error);
+            return false;
+        }
+        return false;
+    }
+
     // Delete draft
     async function deleteDraft(draftId, draftItem) {
         try {
@@ -1593,11 +1601,11 @@ input:checked + .toggle-slider:before {
                 
                 if (state.currentDraftId === draftId) {
                     state.currentDraftId = null;
-                    document.getElementById('emptyStateContainer').style.display = 'flex';
-                    document.getElementById('editorArea').style.display = 'none';
+                    clearEditor();
+                    updateStatusMessage('Ready to create content');
                 }
                 
-                // Check if we need to show empty state
+                // Check if we need to show empty state in drafts list
                 const remainingDrafts = document.querySelectorAll('.draft-item');
                 if (remainingDrafts.length === 0) {
                     renderEmptyState();
@@ -1969,9 +1977,30 @@ input:checked + .toggle-slider:before {
         }
     }
 
-    function markAsChanged() {
+    async function markAsChanged() {
         state.hasUnsavedChanges = true;
-        debouncedSave();
+        
+        // If no current draft and user is typing content, create a new draft first
+        if (!state.currentDraftId && !state.isCreatingDraft) {
+            const posts = gatherPostData();
+            const hasContent = posts.some(post => post.text.trim() !== '');
+            
+            if (hasContent) {
+                state.isCreatingDraft = true;
+                const success = await createNewDraftSilently();
+                state.isCreatingDraft = false;
+                
+                // If draft creation failed, don't try to save
+                if (!success) {
+                    return;
+                }
+            }
+        }
+        
+        // Only save if we have a current draft
+        if (state.currentDraftId) {
+            debouncedSave();
+        }
     }
 
     function updateStatusMessage(message) {
@@ -2073,8 +2102,9 @@ input:checked + .toggle-slider:before {
                 state.hasUnsavedChanges = false;
                 updateSaveStatus('saved');
                 
-                // Update draft title in sidebar
+                // Update draft title in sidebar and move to top
                 updateCurrentDraftTitle(title);
+                moveCurrentDraftToTop();
             } else {
                 updateSaveStatus('error');
             }
@@ -2091,6 +2121,30 @@ input:checked + .toggle-slider:before {
             if (currentDraftElement && currentDraftElement.textContent !== title) {
                 currentDraftElement.textContent = title;
             }
+        }
+    }
+
+    // Move current draft to top of the list (like Brain Dump)
+    function moveCurrentDraftToTop() {
+        if (!state.currentDraftId) return;
+        
+        const draftsList = document.getElementById('draftsList');
+        const currentDraftElement = document.querySelector(`[data-id="${state.currentDraftId}"]`);
+        
+        if (draftsList && currentDraftElement) {
+            // Remove from current position
+            currentDraftElement.remove();
+            
+            // Add to the top of the list
+            const firstChild = draftsList.firstChild;
+            if (firstChild) {
+                draftsList.insertBefore(currentDraftElement, firstChild);
+            } else {
+                draftsList.appendChild(currentDraftElement);
+            }
+            
+            // Ensure it stays active/selected
+            currentDraftElement.classList.add('active');
         }
     }
 
