@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Soccer Stats Dashboard - Football Analytics{% endblock %}
+{% block title %}Creatrics - Content Creator Tools{% endblock %}
 
 {% block meta_tags %}
 <!-- Essential Meta Tags -->
@@ -197,9 +197,9 @@
                     <p class="text-muted mb-3">Monitor team performance, league standings, head-to-head records, and comprehensive team statistics across all major competitions.</p>
                     <div class="d-flex gap-2">
                         {% if g.user and not g.user.get('is_guest') %}
-                        <a href="{{ url_for('team_stats.index') }}" class="btn btn-success">
+                        <a href="{{ url_for('content_calendar.content_calendar') }}" class="btn btn-success">
                             <i class="ph ph-arrow-right me-1"></i>
-                            View Team Stats
+                            View Content Calendar
                         </a>
                         {% else %}
                         <button class="btn btn-success" onclick="window.showGuestModal('access comprehensive team statistics and league standings')">

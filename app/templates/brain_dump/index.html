@@ -77,8 +77,9 @@
 }
 
 .search-box {
-    padding: 0 1.5rem 1rem;
+    padding: 1rem 1.5rem;
     position: relative;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .search-wrapper {
@@ -306,6 +307,22 @@
     height: 20px;
     background: #e5e7eb;
     margin: 0 0.375rem;
+}
+
+/* Color Picker Wrapper */
+.color-picker-wrapper {
+    position: relative;
+}
+
+#colorPicker {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
 }
 
 /* Editor Content */
@@ -676,9 +693,9 @@
         <i class="ph ph-brain empty-state-icon"></i>
         <h2 class="empty-state-title">Welcome to Brain Dump</h2>
         <p class="empty-state-text">Create or select a note to start capturing your thoughts and ideas</p>
-        <button class="action-btn" onclick="createNewNote()">
+        <button class="action-btn" id="emptyStateButton" onclick="createNewNote()">
             <i class="ph ph-plus"></i>
-            Create Your First Note
+            <span id="emptyStateButtonText">Create Your First Note</span>
         </button>
     </main>
     
@@ -726,6 +743,9 @@
                     <button class="toolbar-btn" onclick="formatText('formatBlock', 'h3')" title="Heading 3">
                         H3
                     </button>
+                    <button class="toolbar-btn" onclick="formatText('formatBlock', 'p')" title="Paragraph">
+                        P
+                    </button>
                 </div>
                 
                 <div class="toolbar-separator"></div>
@@ -756,10 +776,12 @@
                 <div class="toolbar-separator"></div>
                 
                 <div class="toolbar-group">
-                    <input type="color" id="colorPicker" style="display: none;" onchange="changeTextColor(this.value)">
-                    <button class="toolbar-btn" onclick="document.getElementById('colorPicker').click()" title="Text Color">
-                        <i class="ph ph-palette"></i>
-                    </button>
+                    <div class="color-picker-wrapper">
+                        <input type="color" id="colorPicker" onchange="changeTextColor(this.value)">
+                        <button class="toolbar-btn" onclick="document.getElementById('colorPicker').click()" title="Text Color">
+                            <i class="ph ph-palette"></i>
+                        </button>
+                    </div>
                     <button class="toolbar-btn" onclick="formatText('removeFormat')" title="Clear Formatting">
                         <i class="ph ph-eraser"></i>
                     </button>
@@ -819,7 +841,7 @@ function initializeEditor() {
             if (currentNoteId) {
                 saveNote(true); // Silent auto-save
             }
-        }, 1500); // Auto-save after 1.5 seconds of inactivity
+        }, 800); // Faster auto-save after 0.8 seconds
     });
 }
 
@@ -843,7 +865,7 @@ function setupEventListeners() {
                 if (currentNoteId) {
                     saveNote(true);
                 }
-            }, 1000); // Faster auto-save for title
+            }, 500); // Even faster for title
         });
     }
     
@@ -872,12 +894,38 @@ function setupEventListeners() {
             e.preventDefault();
             formatText('underline');
         }
+        
+        // Handle special keys in editor
+        const editor = document.getElementById('editor');
+        if (document.activeElement === editor) {
+            // If we're in a code block and user presses Enter, exit the code block
+            if (e.key === 'Enter') {
+                const selection = window.getSelection();
+                const parentElement = selection.anchorNode.parentElement;
+                
+                if (parentElement && parentElement.tagName === 'CODE') {
+                    e.preventDefault();
+                    // Insert a space after the code block to exit it
+                    const range = selection.getRangeAt(0);
+                    range.setStartAfter(parentElement);
+                    range.setEndAfter(parentElement);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    document.execCommand('insertHTML', false, '<br>');
+                }
+            }
+        }
     });
 }
 
 // Format text
 function formatText(command, value = null) {
-    document.execCommand(command, false, value);
+    // Handle lists specially - they toggle on/off
+    if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
+        document.execCommand(command, false, null);
+    } else {
+        document.execCommand(command, false, value);
+    }
     document.getElementById('editor').focus();
 }
 
@@ -887,9 +935,15 @@ function insertCode() {
     const text = selection.toString();
     
     if (text) {
+        // Wrap selected text in code tags
         document.execCommand('insertHTML', false, `<code>${text}</code>`);
     } else {
-        document.execCommand('insertHTML', false, '<code>code</code>');
+        // Insert code with a space after to allow easy exit
+        document.execCommand('insertHTML', false, '<code>code</code>&nbsp;');
+        
+        // Move cursor after the code block
+        const sel = window.getSelection();
+        sel.collapseToEnd();
     }
     
     document.getElementById('editor').focus();
@@ -913,6 +967,12 @@ async function loadNotes() {
         if (data.success) {
             notes = data.notes || [];
             displayNotes(notes);
+            
+            // Update empty state button text based on whether notes exist
+            const buttonText = document.getElementById('emptyStateButtonText');
+            if (buttonText) {
+                buttonText.textContent = notes.length > 0 ? 'Create Note' : 'Create Your First Note';
+            }
         }
     } catch (error) {
         console.error('Error loading notes:', error);
@@ -1050,8 +1110,17 @@ async function saveNote(silent = false) {
             // Update local note
             const noteIndex = notes.findIndex(n => n.id === currentNoteId);
             if (noteIndex !== -1 && data.note) {
-                notes[noteIndex] = data.note;
+                // Remove the note from its current position
+                notes.splice(noteIndex, 1);
+                // Add it to the beginning (most recent)
+                notes.unshift(data.note);
                 displayNotes(notes);
+                
+                // Re-select the current note by ID to maintain selection
+                setTimeout(() => {
+                    const activeItem = document.querySelector(`[data-note-id="${currentNoteId}"]`);
+                    if (activeItem) activeItem.classList.add('active');
+                }, 10);
             }
             
             updateSaveStatus('saved');

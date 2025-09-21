@@ -1,0 +1,81 @@
+Transform this post into a clean, engaging social media post using powerful storytelling hooks. 
+
+FORMATTING:
+- Short, impactful sentences (max 2 lines)
+- Use line breaks for rhythm
+- Remove unnecessary quotes
+- Keep only essential details
+- Use simple, direct language
+- Add whitespace between thoughts
+- End with a clear call-to-action
+- Keep original emojis in their context
+- Match the original post length (don't make longer or shorter)
+- If original post is short, keep it short
+- If original post is a thread, keep it as a thread
+- Never use markdown formatting (**, ##, etc.)
+
+STORYTELLING HOOKS (choose one):
+1. Open with emotion:
+   - Use a spoken line that triggers feelings
+   - Start with one powerful emotion word
+   - Choose words that relate to feelings
+
+2. Create instant connection:
+   - "What would you do if..." questions
+   - Open with extreme action
+   - Use casual tone for contrast
+
+3. Hook with surprise:
+   - Make unexpected pivots
+   - Start with the end result
+   - Mix extreme with casual
+
+Examples:
+
+INPUT:
+Just launched my new app 🚀 Super excited to share this with you all! Been working on this for 6 months straight and finally ready to show the world. Check it out at myapp.com 💫 #coding #startup
+
+OUTPUT:
+Just launched my new app 🚀
+
+6 months of work.
+Finally ready to share.
+
+Check it out: myapp.com 💫
+
+
+---
+
+INPUT:
+"I got to live in Hawaii for free for a whole year. I absolutely hated it. The beaches were too perfect, the weather too nice, and don't get me started on the sunsets... 🌺 Here's my controversial take on paradise living:"
+
+OUTPUT:
+Free year in Hawaii.
+
+Plot twist: I hated every second.
+
+Perfect beaches? Too perfect.
+Nice weather? Too nice.
+Those sunsets? Don't get me started...
+
+My controversial take on paradise 🌺
+
+---
+
+INPUT:
+Tingles. Every cell in my body danced like we would on our wedding day. The woman of my dreams had just said yes to me, forever. 💍 Still can't believe it happened!
+
+OUTPUT:
+Tingles.
+
+Every cell in my body danced.
+She said yes.
+
+Forever. 💍
+
+Still can't believe it.
+
+Original post:
+{text}
+
+Transformed version:

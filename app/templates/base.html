@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Creaver - Content Creator Tools{% endblock %}</title>
+    <title>{% block title %}Creatrics - Content Creator Tools{% endblock %}</title>
     
     {% block seo_meta %}
     <meta name="description" content="AI-powered content creation tools for YouTubers and content creators. Generate thumbnails, banners, video tags, descriptions and more.">
     <meta name="keywords" content="content creation, youtube tools, thumbnail generator, video tags, channel banner, video description, AI tools">
-    <meta property="og:title" content="Creaver - AI Content Creator Tools">
+    <meta property="og:title" content="Creatrics - AI Content Creator Tools">
     <meta property="og:description" content="Create stunning thumbnails, banners, and optimize your content with AI.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.url }}">
@@ -683,7 +683,7 @@
     <aside class="sidebar" id="sidebar">
         <!-- Logo Section -->
         <div class="logo-section">
-            <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--accent-blue); margin: 0;">Creaver</h1>
+            <img src="{{ url_for('static', filename='img/templates/logo.png') }}" alt="Creatrics Logo" />
         </div>
         
         <!-- Navigation -->
@@ -962,14 +962,20 @@
                         items.classList.toggle('expanded');
 
                         // Save state to localStorage
-                        const groupName = header.querySelector('span').textContent;
-                        const isExpanded = header.classList.contains('expanded');
-                        localStorage.setItem(`nav-${groupName}-expanded`, isExpanded);
+                        const spanElement = header.querySelector('span');
+                        if (spanElement) {
+                            const groupName = spanElement.textContent;
+                            const isExpanded = header.classList.contains('expanded');
+                            localStorage.setItem(`nav-${groupName}-expanded`, isExpanded);
+                        }
                     };
 
                     // Restore saved states
                     document.querySelectorAll('.nav-group-header').forEach(header => {
-                        const groupName = header.querySelector('span').textContent;
+                        const spanElement = header.querySelector('span');
+                        if (!spanElement) return;
+                        
+                        const groupName = spanElement.textContent;
                         const savedState = localStorage.getItem(`nav-${groupName}-expanded`);
 
                         // If there's no saved state and no active item, keep it collapsed

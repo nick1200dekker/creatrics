@@ -1,310 +1,300 @@
-from flask import render_template, request, jsonify, g
-from . import bp
-from app.system.auth.middleware import auth_required
+from flask import render_template, request, jsonify, current_app, g
+import traceback
 from datetime import datetime
-import logging
-import json
+import uuid
 
-logger = logging.getLogger(__name__)
+from app.routes.content_calendar import bp
+from app.system.auth.middleware import auth_required
+from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
 
 @bp.route('/content-calendar')
 @auth_required
 def content_calendar():
-    """Content calendar page"""
+    """Render the Content Calendar page"""
     return render_template('content_calendar/index.html')
 
-@bp.route('/api/content-calendar/events', methods=['GET'])
+@bp.route('/content-calendar/api/events', methods=['GET'])
 @auth_required
-def get_calendar_events():
-    """Get calendar events for a specific month"""
+def get_events():
+    """API endpoint to get all calendar events"""
     try:
-        # Get month and year from query params
-        month = request.args.get('month', datetime.now().month, type=int)
-        year = request.args.get('year', datetime.now().year, type=int)
+        user_id = g.user.get('id')
         
-        # Import calendar manager here to avoid circular imports
-        from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
-        
-        # Get user ID from auth context
-        user_id = g.user.get('id') if g.user else None
-        if not user_id:
-            return jsonify({'success': False, 'error': 'User not authenticated'}), 401
-            
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
         
         # Get all events
         events = calendar_manager.get_all_events()
         
-        return jsonify({
-            'success': True,
-            'events': events,
-            'month': month,
-            'year': year
-        })
+        return jsonify(events)
     except Exception as e:
-        logger.error(f"Error fetching calendar events: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        current_app.logger.error(f"Error getting events: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
 
-@bp.route('/api/content-calendar/events', methods=['POST'])
+@bp.route('/content-calendar/api/event', methods=['POST'])
 @auth_required
-def create_calendar_event():
-    """Create a new calendar event"""
+def create_event():
+    """API endpoint to create a new calendar event"""
     try:
+        user_id = g.user.get('id')
+        
+        # Get form data
         data = request.json
         
         # Validate required fields
-        required_fields = ['title', 'date', 'platform']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({'success': False, 'error': f'{field} is required'}), 400
+        if not data.get('title') or not data.get('publish_date'):
+            return jsonify({"error": "Missing required fields"}), 400
         
-        # Import calendar manager
-        from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
-        
-        # Get user ID
-        user_id = g.user.get('id') if g.user else None
-        if not user_id:
-            return jsonify({'success': False, 'error': 'User not authenticated'}), 401
-            
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
         
-        # Create event
+        # Create the event with new fields
         event_id = calendar_manager.create_event(
             title=data.get('title'),
-            publish_date=data.get('date'),
+            publish_date=data.get('publish_date'),
             is_paid=data.get('is_paid', False),
-            is_free=data.get('is_free', True),
+            is_free=data.get('is_free', True),  # This now represents "organic" content
             is_sponsored=data.get('is_sponsored', False),
             category=data.get('category', ''),
             audience_type=data.get('audience_type', 'Public'),
-            content_type=data.get('content_type', data.get('platform', '')),
-            platform=data.get('platform'),
+            content_type=data.get('content_type', data.get('platform', '')),  # Default to platform if content_type missing
+            platform=data.get('platform', ''),
             description=data.get('description', ''),
-            color=data.get('color', '#3b82f6'),
-            content_link=data.get('content_link', ''),
-            status=data.get('status', 'planned'),
-            comments=data.get('comments', []),
-            notes=data.get('notes', '')
+            color=data.get('color', ''),  # Let the JS handle color assignment
+            content_link=data.get('content_link', ''),  # New field
+            status=data.get('status', 'planned'),  # New field with default
+            comments=data.get('comments', []),  # New field
+            notes=data.get('notes', '')  # New field
         )
         
-        # Get the created event
-        event = calendar_manager.get_event(event_id)
-        
-        return jsonify({
-            'success': True,
-            'event': event,
-            'message': 'Event created successfully'
-        })
+        return jsonify({"success": True, "event_id": event_id})
     except Exception as e:
-        logger.error(f"Error creating calendar event: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        current_app.logger.error(f"Error creating event: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
 
-@bp.route('/api/content-calendar/events/<event_id>', methods=['PUT'])
+@bp.route('/content-calendar/api/event/<event_id>', methods=['PUT'])
 @auth_required
-def update_calendar_event(event_id):
-    """Update an existing calendar event"""
+def update_event(event_id):
+    """API endpoint to update an existing calendar event"""
     try:
+        user_id = g.user.get('id')
+        
+        # Get form data
         data = request.json
         
-        # Import calendar manager
-        from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
-        
-        # Get user ID
-        user_id = g.user.get('id') if g.user else None
-        if not user_id:
-            return jsonify({'success': False, 'error': 'User not authenticated'}), 401
-            
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
         
-        # Update event
-        success = calendar_manager.update_event(event_id=event_id, **data)
+        # Prepare update data - only include fields that are present in request
+        update_data = {}
+        
+        # Standard fields
+        if 'title' in data:
+            update_data['title'] = data['title']
+        if 'publish_date' in data:
+            update_data['publish_date'] = data['publish_date']
+        if 'is_paid' in data:
+            update_data['is_paid'] = data['is_paid']
+        if 'is_free' in data:
+            update_data['is_free'] = data['is_free']
+        if 'is_sponsored' in data:
+            update_data['is_sponsored'] = data['is_sponsored']
+        if 'category' in data:
+            update_data['category'] = data['category']
+        if 'audience_type' in data:
+            update_data['audience_type'] = data['audience_type']
+        if 'content_type' in data:
+            update_data['content_type'] = data['content_type']
+        if 'platform' in data:
+            update_data['platform'] = data['platform']
+        if 'description' in data:
+            update_data['description'] = data['description']
+        if 'color' in data:
+            update_data['color'] = data['color']
+        
+        # New fields
+        if 'content_link' in data:
+            update_data['content_link'] = data['content_link']
+        if 'status' in data:
+            update_data['status'] = data['status']
+        if 'comments' in data:
+            update_data['comments'] = data['comments']
+        if 'notes' in data:
+            update_data['notes'] = data['notes']
+        
+        # Update the event
+        success = calendar_manager.update_event(event_id=event_id, **update_data)
         
         if success:
-            return jsonify({
-                'success': True,
-                'message': 'Event updated successfully'
-            })
+            return jsonify({"success": True})
         else:
-            return jsonify({'success': False, 'error': 'Event not found'}), 404
-            
+            return jsonify({"error": "Event not found"}), 404
     except Exception as e:
-        logger.error(f"Error updating calendar event: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        current_app.logger.error(f"Error updating event: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
 
-@bp.route('/api/content-calendar/events/<event_id>', methods=['DELETE'])
+@bp.route('/content-calendar/api/event/<event_id>', methods=['DELETE'])
 @auth_required
-def delete_calendar_event(event_id):
-    """Delete a calendar event"""
+def delete_event(event_id):
+    """API endpoint to delete a calendar event"""
     try:
-        # Import calendar manager
-        from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+        user_id = g.user.get('id')
         
-        # Get user ID
-        user_id = g.user.get('id') if g.user else None
-        if not user_id:
-            return jsonify({'success': False, 'error': 'User not authenticated'}), 401
-            
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
         
-        # Delete event
+        # Delete the event
         success = calendar_manager.delete_event(event_id)
         
         if success:
-            return jsonify({
-                'success': True,
-                'message': 'Event deleted successfully'
-            })
+            return jsonify({"success": True})
         else:
-            return jsonify({'success': False, 'error': 'Event not found'}), 404
-            
+            return jsonify({"error": "Event not found"}), 404
     except Exception as e:
-        logger.error(f"Error deleting calendar event: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        current_app.logger.error(f"Error deleting event: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
 
-@bp.route('/api/content-calendar/ideas', methods=['GET'])
+@bp.route('/content-calendar/api/event/<event_id>', methods=['GET'])
 @auth_required
-def get_content_ideas():
-    """Get AI-generated content ideas"""
+def get_event(event_id):
+    """API endpoint to get a specific event"""
     try:
-        platform = request.args.get('platform', 'youtube')
+        user_id = g.user.get('id')
         
-        # Sample content ideas - can be replaced with AI generation later
-        ideas = {
-            'youtube': [
-                'Top 10 Productivity Apps for 2025',
-                'Day in the Life of a Content Creator',
-                'Budget Tech Setup Under $500',
-                'How I Edit My Videos - Full Workflow',
-                'Reacting to My Old Videos',
-                'Q&A - Answering Your Questions'
-            ],
-            'tiktok': [
-                'Quick Recipe in 60 Seconds',
-                'Fashion Transformation Challenge',
-                'Tech Tips You Didn\'t Know',
-                'Behind the Scenes of Content Creation'
-            ],
-            'instagram': [
-                'Aesthetic Desk Setup Tour',
-                'Morning Routine Time-lapse',
-                'Before & After Editing',
-                'Tips for Better Photos'
-            ],
-            'x': [
-                'Thread: 10 lessons learned this year',
-                'Quick tech tip of the day',
-                'Sharing my workflow setup',
-                'Industry insights and trends'
-            ]
-        }
+        # Initialize calendar manager
+        calendar_manager = ContentCalendarManager(user_id)
         
-        return jsonify({
-            'success': True,
-            'ideas': ideas.get(platform.lower(), []),
-            'platform': platform
-        })
+        # Get the event
+        event = calendar_manager.get_event(event_id)
+        
+        if event:
+            return jsonify(event)
+        else:
+            return jsonify({"error": "Event not found"}), 404
     except Exception as e:
-        logger.error(f"Error generating content ideas: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        current_app.logger.error(f"Error getting event: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
 
-@bp.route('/api/content-calendar/events/<event_id>/comment', methods=['POST'])
-@auth_required  
+@bp.route('/content-calendar/api/event/<event_id>/comment', methods=['POST'])
+@auth_required
 def add_comment(event_id):
-    """Add a comment to an event"""
+    """API endpoint to add a comment to an event"""
     try:
+        user_id = g.user.get('id')
+        
+        # Get form data
         data = request.json
         
         # Validate required fields
         if not data.get('text'):
-            return jsonify({'error': 'Comment text is required'}), 400
-            
-        # Import calendar manager
-        from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+            return jsonify({"error": "Comment text is required"}), 400
         
-        # Get user ID
-        user_id = g.user.get('id') if g.user else None
-        if not user_id:
-            return jsonify({'error': 'User not authenticated'}), 401
-            
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
         
-        # Add comment
+        # Add comment to the event
         success = calendar_manager.add_comment_to_event(event_id, data['text'])
         
         if success:
-            return jsonify({'success': True})
+            return jsonify({"success": True})
         else:
-            return jsonify({'error': 'Event not found'}), 404
-            
+            return jsonify({"error": "Event not found"}), 404
     except Exception as e:
-        logger.error(f"Error adding comment: {e}")
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error adding comment: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
 
-@bp.route('/api/content-calendar/events/<event_id>/status', methods=['PUT'])
+@bp.route('/content-calendar/api/event/<event_id>/status', methods=['PUT'])
 @auth_required
 def update_event_status(event_id):
-    """Update event status"""
+    """API endpoint to update event status"""
     try:
+        user_id = g.user.get('id')
+        
+        # Get form data
         data = request.json
         
-        # Validate required fields  
+        # Validate required fields
         if not data.get('status'):
-            return jsonify({'error': 'Status is required'}), 400
-            
-        # Import calendar manager
-        from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+            return jsonify({"error": "Status is required"}), 400
         
-        # Get user ID
-        user_id = g.user.get('id') if g.user else None
-        if not user_id:
-            return jsonify({'error': 'User not authenticated'}), 401
-            
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
         
-        # Update status
+        # Update event status
         success = calendar_manager.update_event_status(event_id, data['status'])
         
         if success:
-            return jsonify({'success': True})
+            return jsonify({"success": True})
         else:
-            return jsonify({'error': 'Event not found or invalid status'}), 404
-            
+            return jsonify({"error": "Event not found or invalid status"}), 404
     except Exception as e:
-        logger.error(f"Error updating event status: {e}")
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error updating event status: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
 
-@bp.route('/api/content-calendar/events/<event_id>/notes', methods=['PUT'])
+@bp.route('/content-calendar/api/event/<event_id>/notes', methods=['PUT'])
 @auth_required
 def update_event_notes(event_id):
-    """Update event notes"""
+    """API endpoint to update event notes"""
     try:
+        user_id = g.user.get('id')
+        
+        # Get form data
         data = request.json
         
-        # Import calendar manager
-        from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
-        
-        # Get user ID
-        user_id = g.user.get('id') if g.user else None
-        if not user_id:
-            return jsonify({'error': 'User not authenticated'}), 401
-            
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
         
-        # Update notes
+        # Update event notes
         success = calendar_manager.update_event_notes(event_id, data.get('notes', ''))
         
         if success:
-            return jsonify({'success': True})
+            return jsonify({"success": True})
         else:
-            return jsonify({'error': 'Event not found'}), 404
-            
+            return jsonify({"error": "Event not found"}), 404
     except Exception as e:
-        logger.error(f"Error updating event notes: {e}")
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error updating event notes: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
+
+@bp.route('/content-calendar/api/events/status/<status>', methods=['GET'])
+@auth_required
+def get_events_by_status(status):
+    """API endpoint to get events by status"""
+    try:
+        user_id = g.user.get('id')
+        
+        # Initialize calendar manager
+        calendar_manager = ContentCalendarManager(user_id)
+        
+        # Get events by status
+        events = calendar_manager.get_events_by_status(status)
+        
+        return jsonify(events)
+    except Exception as e:
+        current_app.logger.error(f"Error getting events by status: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500
+
+@bp.route('/content-calendar/api/events/date-range', methods=['GET'])
+@auth_required
+def get_events_by_date_range():
+    """API endpoint to get events within a date range"""
+    try:
+        user_id = g.user.get('id')
+        
+        # Get query parameters
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        limit = int(request.args.get('limit', 1000))
+        
+        if not start_date or not end_date:
+            return jsonify({"error": "start_date and end_date are required"}), 400
+        
+        # Initialize calendar manager
+        calendar_manager = ContentCalendarManager(user_id)
+        
+        # Get events by date range
+        events = calendar_manager.get_events_by_date_range(start_date, end_date, limit)
+        
+        return jsonify(events)
+    except Exception as e:
+        current_app.logger.error(f"Error getting events by date range: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({"error": str(e)}), 500

@@ -1,6 +1,7 @@
 {
-    "name": "Soccer Stats Dashboard",
-    "short_name": "Soccer Stats",
+    "name": "Creatrics - AI Content Creator Tools",
+    "short_name": "Creatrics",
+    "description": "AI-powered content creation tools for YouTubers and content creators",
     "icons": [
         {
             "src": "/static/favicons/android-chrome-192x192.png",
@@ -14,6 +15,9 @@
         }
     ],
     "theme_color": "#3B82F6",
-    "background_color": "#ffffff",
-    "display": "standalone"
+    "background_color": "#F8FAFC",
+    "display": "standalone",
+    "start_url": "/",
+    "scope": "/",
+    "orientation": "portrait-primary"
 }

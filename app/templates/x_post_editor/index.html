@@ -1,707 +1,2598 @@
 {% extends "base.html" %}
 
-{% block title %}X Post Editor - Creaver{% endblock %}
+{% block title %}Post Editor - Creatrics{% endblock %}
+
+{% block additional_styles %}
+<style>
+/* Reset the default content-panel padding */
+.content-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Main Container */
+.post-editor-wrapper {
+    display: flex;
+    height: calc(100vh - 60px);
+    gap: 1rem;
+    background: #f8fafc;
+}
+
+/* Left Side - Editor */
+.editor-area {
+    flex: 1;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Editor Header */
+.editor-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(to bottom, #fafafa, #f9fafb);
+}
+
+.editor-title-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.editor-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #1f2937;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.editor-title i {
+    color: #667eea;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Editor Toolbar */
+.editor-toolbar {
+    padding: 0.75rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    flex-wrap: wrap;
+}
+
+.toolbar-group {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+/* Brand Voice Section */
+.brand-voice-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.brand-voice-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.brand-voice-label i {
+    color: #667eea;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e5e7eb;
+    border-radius: 22px;
+    transition: .3s;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .3s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .toggle-slider {
+    background-color: #667eea;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(18px);
+}
+
+/* AI Tools */
+.ai-tools-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.tools-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.ai-tool {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.ai-tool:hover {
+    background: #f3f4f6;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.ai-tool.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+.ai-tool i {
+    font-size: 1.125rem;
+}
+
+/* Action Tools */
+.action-tools {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* Button Styles */
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: white;
+    color: #4b5563;
+    border-color: #e5e7eb;
+}
+
+.btn-secondary:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #1f2937;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.btn-primary:hover {
+    background: #5a67d8;
+    border-color: #5a67d8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Editor Content */
+.editor-content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    background: white;
+}
+
+.editor-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.editor-content::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+.posts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Post Item */
+.post-item {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.post-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.post-item-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fafafa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.post-type {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.post-type i {
+    color: #667eea;
+}
+
+.post-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.post-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.post-action:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #1f2937;
+}
+
+.post-action:hover:not(.media-upload-trigger) {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #dc2626;
+}
+
+.post-editor-content {
+    padding: 1rem 1.5rem;
+}
+
+.post-editor-textarea {
+    width: 100%;
+    min-height: 120px;
+    border: none;
+    background: transparent;
+    color: #1f2937;
+    resize: none;
+    font-size: 1rem;
+    line-height: 1.6;
+    font-family: inherit;
+    outline: none;
+    field-sizing: content;
+}
+
+.post-editor-textarea::placeholder {
+    color: #d1d5db;
+}
+
+.post-media {
+    margin-top: 1rem;
+}
+
+.media-preview-container {
+    position: relative;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    display: inline-block;
+    background: #f3f4f6;
+}
+
+.media-preview {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
+.media-remove-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    color: #dc2626;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.media-remove-button:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.post-footer {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.character-count {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.character-count.over-limit {
+    color: #dc2626;
+}
+
+.add-post-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.add-post-icon:hover {
+    background: #667eea;
+    color: white;
+    transform: scale(1.1);
+}
+
+.post-action-btn {
+    padding: 0.375rem 0.75rem;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.post-action-btn:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+}
+
+.post-action-btn.hidden {
+    display: none;
+}
+
+/* Editor Footer */
+.editor-footer {
+    padding: 0.75rem 2rem;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.save-status {
+    font-size: 0.875rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.save-status.saved {
+    color: #10b981;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btn:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+/* Right Sidebar - Drafts */
+.drafts-sidebar {
+    width: 340px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: white;
+}
+
+.sidebar-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #1f2937;
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.sidebar-title i {
+    color: #667eea;
+}
+
+.new-draft-button {
+    width: 100%;
+    padding: 0.75rem;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.new-draft-button:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+}
+
+.drafts-counter {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    text-align: center;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fafafa;
+}
+
+.drafts-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.drafts-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.drafts-list::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.draft-item {
+    background: #fafafa;
+    border-radius: 8px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.draft-item:hover {
+    background: #f3f4f6;
+    transform: translateX(2px);
+}
+
+.draft-item.active {
+    background: white;
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.draft-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #667eea;
+    border-radius: 0 2px 2px 0;
+}
+
+.draft-content {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.draft-title {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.draft-delete-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.draft-delete-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #dc2626;
+}
+
+.show-more-container {
+    padding: 0.75rem;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+}
+
+.show-more-btn {
+    width: 100%;
+    padding: 0.625rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #4b5563;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+}
+
+.show-more-btn:hover {
+    background: #f3f4f6;
+    color: #667eea;
+    border-color: #667eea;
+}
+
+.drafts-empty {
+    padding: 2rem;
+    text-align: center;
+    color: #9ca3af;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.drafts-empty i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #d1d5db;
+}
+
+.drafts-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #9ca3af;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.drafts-loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e5e7eb;
+    border-radius: 50%;
+    border-top-color: #667eea;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Modals */
+.modal, .ai-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content, .ai-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.modal-header, .ai-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fafafa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title, .ai-modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-title i, .ai-modal-title i {
+    color: #667eea;
+}
+
+.ai-modal-close {
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.ai-modal-close:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.modal-body, .ai-modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer, .ai-modal-footer {
+    padding: 1.25rem;
+    border-top: 1px solid #e5e7eb;
+    background: #fafafa;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #1f2937;
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.form-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-textarea::placeholder {
+    color: #d1d5db;
+}
+
+.ai-option-group {
+    margin-bottom: 1rem;
+}
+
+.ai-option-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.ai-option-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(102, 126, 234, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+}
+
+.ai-option-icon i {
+    color: #667eea;
+    font-size: 0.875rem;
+}
+
+/* Hidden elements */
+.hidden-file-input {
+    display: none;
+}
+
+/* Tooltips */
+.ai-tool-tooltip {
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.ai-tool:hover .ai-tool-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Toast */
+.toast-notification {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    max-width: 320px;
+}
+
+.toast-notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-notification.success {
+    border-left: 4px solid #10b981;
+}
+
+.toast-notification.error {
+    border-left: 4px solid #dc2626;
+}
+
+/* Animations */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .post-editor-wrapper {
+        flex-direction: column;
+    }
+    
+    .drafts-sidebar {
+        width: 100%;
+        height: 300px;
+        border-left: none;
+        border-top: 1px solid #e5e7eb;
+        order: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .editor-header {
+        padding: 1rem;
+    }
+    
+    .editor-title {
+        font-size: 1.25rem;
+    }
+    
+    .editor-toolbar {
+        padding: 0.5rem 1rem;
+        overflow-x: auto;
+    }
+    
+    .editor-content {
+        padding: 1rem;
+    }
+    
+    .posts-container {
+        max-width: 100%;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-lg-12">
-            <h1 class="mb-4">
-                <i class="ph ph-x-logo" style="color: #000;"></i>
-                X (Twitter) Post Editor
-            </h1>
-            <p class="lead">Craft engaging posts that drive conversation and grow your audience</p>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <!-- Post Editor -->
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <form id="post-form">
-                        <div class="mb-4">
-                            <label for="post-content" class="form-label">
-                                <i class="ph ph-text-aa"></i>
-                                Post Content
-                            </label>
-                            <textarea class="form-control" id="post-content" rows="5"
-                                      placeholder="What's happening?" maxlength="280"></textarea>
-                            <div class="d-flex justify-content-between mt-2">
-                                <small class="text-muted">
-                                    <span id="char-count">0</span> / 280 characters
-                                </small>
-                                <div>
-                                    <span class="character-indicator" data-range="good">●</span>
-                                    <span class="character-indicator" data-range="warning">●</span>
-                                    <span class="character-indicator" data-range="danger">●</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="post-style" class="form-label">
-                                    <i class="ph ph-layout"></i>
-                                    Post Style
-                                </label>
-                                <select class="form-select" id="post-style">
-                                    <option value="single">Single Post</option>
-                                    <option value="thread">Thread</option>
-                                    <option value="poll">Poll</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label for="tone" class="form-label">
-                                    <i class="ph ph-microphone"></i>
-                                    Tone
-                                </label>
-                                <select class="form-select" id="tone">
-                                    <option value="professional">Professional</option>
-                                    <option value="casual">Casual</option>
-                                    <option value="humorous">Humorous</option>
-                                    <option value="inspiring">Inspiring</option>
-                                    <option value="educational">Educational</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="topic" class="form-label">
-                                <i class="ph ph-lightbulb"></i>
-                                Topic (for AI generation)
-                            </label>
-                            <input type="text" class="form-control" id="topic"
-                                   placeholder="e.g., AI trends, productivity tips, startup advice">
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" id="include-hashtags" checked>
-                                <label class="form-check-label" for="include-hashtags">
-                                    Include Hashtags
-                                </label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" id="include-emojis">
-                                <label class="form-check-label" for="include-emojis">
-                                    Include Emojis
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-primary" onclick="generatePost()">
-                                <i class="ph ph-sparkle"></i>
-                                Generate Post
-                            </button>
-                            <button type="button" class="btn btn-outline-primary" onclick="optimizePost()">
-                                <i class="ph ph-magic-wand"></i>
-                                Optimize
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary" onclick="analyzePost()">
-                                <i class="ph ph-chart-bar"></i>
-                                Analyze
-                            </button>
-                        </div>
-                    </form>
+<div class="post-editor-wrapper">
+    <!-- Left Side - Editor -->
+    <main class="editor-area">
+        <!-- Editor Header -->
+        <div class="editor-header">
+            <div class="editor-title-wrapper">
+                <h1 class="editor-title">
+                    <i class="ph ph-pencil-simple"></i>
+                    Post Editor
+                </h1>
+                <div class="header-actions">
+                    <!-- Removed Dashboard and How It Works buttons -->
                 </div>
             </div>
+        </div>
 
-            <!-- Thread Builder (shown when thread is selected) -->
-            <div class="card shadow-sm mt-4" id="thread-builder" style="display: none;">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">
-                        <i class="ph ph-text-columns"></i>
-                        Thread Builder
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div id="thread-posts">
-                        <!-- Thread posts will be added here -->
-                    </div>
-                    <button class="btn btn-sm btn-outline-primary" onclick="addThreadPost()">
-                        <i class="ph ph-plus"></i> Add Post
+        <!-- Editor Toolbar -->
+        <div class="editor-toolbar">
+            <!-- Brand Voice Section -->
+            <div class="brand-voice-section">
+                <label for="use-brand-voice" class="brand-voice-label">
+                    <i class="ph ph-microphone"></i>
+                    Brand Voice
+                </label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="use-brand-voice" name="use-brand-voice">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- AI Tools Section -->
+            <div class="ai-tools-section">
+                <div class="tools-group">
+                    <button id="grammar-tool" class="ai-tool" title="Grammar & Style">
+                        <i class="ph ph-text-a-underline"></i>
+                        <span class="ai-tool-tooltip">Grammar & Style</span>
+                    </button>
+                    <button id="storytelling-tool" class="ai-tool active" title="Storytelling Enhancement">
+                        <i class="ph ph-sparkle"></i>
+                        <span class="ai-tool-tooltip">Storytelling</span>
+                    </button>
+                    <button id="hook-story-punch-tool" class="ai-tool" title="Hook, Story, Punch">
+                        <i class="ph ph-lightning"></i>
+                        <span class="ai-tool-tooltip">Hook, Story, Punch</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Post Preview -->
-            <div class="card shadow-sm mt-4" id="post-preview" style="display: none;">
-                <div class="card-header bg-light">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="ph ph-eye"></i>
-                            Preview
-                        </h5>
-                        <button class="btn btn-sm btn-outline-primary" onclick="copyPost()">
-                            <i class="ph ph-copy"></i> Copy
+            <!-- Action Tools -->
+            <div class="action-tools">
+                <button id="context-button" class="ai-tool" title="Add Prompt">
+                    <i class="ph ph-info"></i>
+                    <span class="ai-tool-tooltip">Add Prompt</span>
+                </button>
+                <button id="generate-button" class="btn btn-primary">
+                    <i class="ph ph-magic-wand"></i>
+                    <span class="button-text">Enhance</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Editor Content -->
+        <div class="editor-content">
+            <div class="posts-container">
+                <!-- Single Empty Post -->
+                <div class="post-item">
+                    <div class="post-item-header">
+                        <div class="post-type">
+                            <i class="ph ph-note-pencil"></i>
+                            <span id="post-label-1">Post</span>
+                        </div>
+                        <div class="post-actions">
+                            <button class="post-action media-upload-trigger" title="Add Media" data-post-id="1">
+                                <i class="ph ph-paperclip"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="post-editor-content">
+                        <label for="post-textarea-1" class="sr-only">Post content</label>
+                        <textarea id="post-textarea-1" name="post-content-1" class="post-editor-textarea" placeholder="Start typing your post here..."></textarea>
+                        <div class="post-media"></div>
+                        <input type="file" id="file-input-1" name="media-upload-1" class="hidden-file-input" accept="image/*,video/*,.gif" aria-label="Upload media file">
+                    </div>
+                    <div class="post-footer">
+                        <div class="character-count" id="count-1">
+                            <span class="character-count-text">0/280</span>
+                            <div class="add-post-icon" id="add-post-icon">
+                                <i class="ph ph-plus"></i>
+                            </div>
+                        </div>
+                        <button id="post-to-x-btn" class="post-action-btn hidden">
+                            <i class="ph ph-paper-plane-right"></i>
+                            Post to X
                         </button>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div id="preview-content" class="post-preview"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Templates -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">
-                        <i class="ph ph-folders"></i>
-                        Templates
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div id="templates-list">
-                        <!-- Templates will be loaded here -->
-                    </div>
-                </div>
+        <!-- Editor Footer -->
+        <div class="editor-footer">
+            <div class="save-status saved" id="saveStatus">
+                <i class="ph ph-check-circle"></i>
+                <span>Ready to create content</span>
             </div>
+            <div class="editor-actions">
+                <button class="action-btn" id="revert-button">
+                    <i class="ph ph-arrow-counter-clockwise"></i>
+                    Undo last change
+                </button>
+            </div>
+        </div>
+    </main>
 
-            <!-- Best Times to Post -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">
-                        <i class="ph ph-clock"></i>
-                        Best Times to Post
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div id="best-times">
-                        <button class="btn btn-sm btn-outline-primary mb-3" onclick="analyzeTiming()">
-                            Analyze Timing
-                        </button>
-                        <div id="timing-results"></div>
-                    </div>
-                </div>
-            </div>
+    <!-- Right Sidebar - Drafts -->
+    <aside class="drafts-sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">
+                <i class="ph ph-files"></i>
+                Your Drafts
+            </h2>
+            <button class="new-draft-button" id="new-draft-button">
+                <i class="ph ph-plus"></i>
+                New Draft
+            </button>
+        </div>
 
-            <!-- Tips -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">
-                        <i class="ph ph-lightbulb"></i>
-                        X Post Tips
-                    </h5>
+        <!-- Drafts counter -->
+        {% if recent_drafts and total_count > 0 %}
+        <div class="drafts-counter" id="draftsCounter">
+            Showing <span id="loadedCount">{{ loaded_count }}</span> of <span id="totalCount">{{ total_count }}</span> drafts
+        </div>
+        {% endif %}
+
+        <div id="draftsContainer">
+            {% if recent_drafts %}
+                <div class="drafts-list" id="draftsList">
+                    {% for draft in recent_drafts %}
+                        <div class="draft-item" data-id="{{ draft.id }}">
+                            <div class="draft-content">
+                                <div class="draft-title">{{ draft.title or 'Untitled Draft' }}</div>
+                            </div>
+                            <button class="draft-delete-btn" title="Delete Draft">
+                                <i class="ph ph-trash"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
                 </div>
-                <div class="card-body">
-                    <ul class="small mb-0">
-                        <li class="mb-2"><strong>Hook:</strong> Start with something attention-grabbing</li>
-                        <li class="mb-2"><strong>Brevity:</strong> Keep it concise and scannable</li>
-                        <li class="mb-2"><strong>Hashtags:</strong> Use 1-3 relevant hashtags</li>
-                        <li class="mb-2"><strong>Engagement:</strong> End with a question or CTA</li>
-                        <li class="mb-2"><strong>Timing:</strong> Post when your audience is active</li>
-                        <li><strong>Visuals:</strong> Add images or GIFs for 2x engagement</li>
-                    </ul>
+                
+                {% if has_more %}
+                <div class="show-more-container" id="showMoreContainer">
+                    <button class="show-more-btn" id="showMoreBtn">
+                        <i class="ph ph-arrow-down"></i>
+                        <span>Show More</span>
+                    </button>
                 </div>
+                {% endif %}
+            {% else %}
+                <div class="drafts-loading" id="drafts-loading">
+                    <div class="drafts-loading-spinner"></div>
+                    <div>Loading drafts...</div>
+                </div>
+            {% endif %}
+        </div>
+    </aside>
+</div>
+
+<!-- AI Enhancement Context Modal -->
+<div class="ai-modal" id="context-modal" style="display: none;">
+    <div class="ai-modal-content">
+        <div class="ai-modal-header">
+            <div class="ai-modal-title">
+                <i class="ph ph-info"></i>
+                Add Prompt
             </div>
+            <button class="ai-modal-close" id="context-modal-close">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <div class="ai-modal-body">
+            <div class="ai-option-group">
+                <label for="context-textarea" class="ai-option-label">
+                    <div class="ai-option-icon">
+                        <i class="ph ph-text-t"></i>
+                    </div>
+                    Additional Prompt or Specific Requirements
+                </label>
+                <textarea id="context-textarea" name="additional-context" class="form-textarea" placeholder="Add prompts like tone, audience, or specific goals for your content..."></textarea>
+            </div>
+        </div>
+        <div class="ai-modal-footer">
+            <button class="btn btn-secondary" id="context-cancel-button">Cancel</button>
+            <button class="btn btn-primary" id="context-save-button">
+                <i class="ph ph-check"></i>
+                Apply Prompt
+            </button>
         </div>
     </div>
 </div>
 
-<style>
-.post-preview {
-    background: white;
-    border: 1px solid #e1e8ed;
-    border-radius: 12px;
-    padding: 1rem;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
+<!-- Removed How It Works Modal -->
 
-.post-preview .post-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.5rem;
-}
+{% endblock %}
 
-.post-preview .avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--accent-blue);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    margin-right: 0.75rem;
-}
-
-.post-preview .post-meta {
-    flex: 1;
-}
-
-.post-preview .username {
-    font-weight: bold;
-}
-
-.post-preview .handle {
-    color: #536471;
-}
-
-.post-preview .post-text {
-    line-height: 1.5;
-    white-space: pre-wrap;
-}
-
-.character-indicator {
-    font-size: 0.75rem;
-}
-
-.character-indicator[data-range="good"] {
-    color: #10b981;
-}
-
-.character-indicator[data-range="warning"] {
-    color: #f59e0b;
-}
-
-.character-indicator[data-range="danger"] {
-    color: #ef4444;
-}
-
-.template-item {
-    cursor: pointer;
-    padding: 0.75rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-    transition: all 0.2s;
-}
-
-.template-item:hover {
-    background: #f8f9fa;
-    border-color: var(--accent-blue);
-}
-
-.thread-post {
-    position: relative;
-    padding: 1rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-.thread-post::before {
-    content: '';
-    position: absolute;
-    left: 24px;
-    top: -1rem;
-    bottom: -1rem;
-    width: 2px;
-    background: #e2e8f0;
-    z-index: -1;
-}
-
-.thread-post:first-child::before {
-    top: 50%;
-}
-
-.thread-post:last-child::before {
-    bottom: 50%;
-}
-
-.thread-number {
-    position: absolute;
-    left: -10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 30px;
-    height: 30px;
-    background: white;
-    border: 2px solid var(--accent-blue);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    color: var(--accent-blue);
-}
-</style>
-
+{% block scripts %}
 <script>
-let currentPosts = [];
-let threadPosts = [{content: '', id: 1}];
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadTemplates();
-    setupCharacterCounter();
-    setupStyleSelector();
-});
-
-// Character counter
-function setupCharacterCounter() {
-    const textarea = document.getElementById('post-content');
-    const counter = document.getElementById('char-count');
-    const indicators = document.querySelectorAll('.character-indicator');
-
-    textarea.addEventListener('input', function() {
-        const length = this.value.length;
-        counter.textContent = length;
-
-        // Update indicators
-        indicators[0].style.opacity = length <= 200 ? '1' : '0.3';
-        indicators[1].style.opacity = length > 200 && length <= 260 ? '1' : '0.3';
-        indicators[2].style.opacity = length > 260 ? '1' : '0.3';
-
-        // Update counter color
-        if (length > 280) {
-            counter.style.color = '#ef4444';
-        } else if (length > 260) {
-            counter.style.color = '#f59e0b';
-        } else {
-            counter.style.color = '#6b7280';
-        }
-    });
-}
-
-// Style selector
-function setupStyleSelector() {
-    const styleSelect = document.getElementById('post-style');
-    const threadBuilder = document.getElementById('thread-builder');
-
-    styleSelect.addEventListener('change', function() {
-        if (this.value === 'thread') {
-            threadBuilder.style.display = 'block';
-            renderThreadPosts();
-        } else {
-            threadBuilder.style.display = 'none';
-        }
-    });
-}
-
-// Generate post
-async function generatePost() {
-    const topic = document.getElementById('topic').value;
-    if (!topic) {
-        showToast('Please enter a topic', 'error');
+// Post Editor JavaScript
+(function() {
+    'use strict';
+    
+    // Initialize namespace
+    window.CreatorPal = window.CreatorPal || {};
+    window.CreatorPal.PostEditor = window.CreatorPal.PostEditor || {};
+    
+    // Check if already initialized
+    if (window.CreatorPal.PostEditor.initialized) {
+        console.log('Post Editor already initialized, skipping...');
         return;
     }
 
-    const btn = event.currentTarget;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="ph ph-spinner-gap spinning"></i> Generating...';
+    // File type configuration
+    const SUPPORTED_MEDIA_TYPES = {
+        image: {
+            mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
+            maxSize: 10 * 1024 * 1024, // 10MB
+            icon: 'ph-image',
+            label: 'Image'
+        },
+        video: {
+            mimeTypes: ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'],
+            maxSize: 100 * 1024 * 1024, // 100MB
+            icon: 'ph-video',
+            label: 'Video'
+        },
+        gif: {
+            mimeTypes: ['image/gif'],
+            maxSize: 25 * 1024 * 1024, // 25MB
+            icon: 'ph-gif',
+            label: 'GIF'
+        }
+    };
 
-    try {
-        const response = await fetch('/api/x-post/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                topic: topic,
-                tone: document.getElementById('tone').value,
-                style: document.getElementById('post-style').value,
-                include_hashtags: document.getElementById('include-hashtags').checked,
-                include_emojis: document.getElementById('include-emojis').checked
-            })
+    // App state
+    const state = {
+        enhancementPreset: 'storytelling',
+        additionalInstructions: '',
+        postCount: 1,
+        currentDraftId: null,
+        hasUnsavedChanges: false,
+        undoStack: [],
+        maxUndoSteps: 20,
+        saveTimeout: null,
+        isLoadingDraft: false,
+        currentOffset: 0,
+        loadedCount: 0,
+        totalCount: 0,
+        hasMore: false,
+        isLoadingMore: false
+    };
+
+    // Initialize function
+    function initialize() {
+        console.log('Initializing Post Editor...');
+        
+        // Reset state
+        Object.assign(state, {
+            enhancementPreset: 'storytelling',
+            additionalInstructions: '',
+            postCount: 1,
+            currentDraftId: null,
+            hasUnsavedChanges: false,
+            undoStack: [],
+            saveTimeout: null,
+            isLoadingDraft: false,
+            currentOffset: 0,
+            loadedCount: 0,
+            totalCount: 0,
+            hasMore: false,
+            isLoadingMore: false
         });
 
-        const data = await response.json();
-
-        if (data.success) {
-            currentPosts = data.posts;
-
-            if (data.style === 'single' || data.style === 'poll') {
-                document.getElementById('post-content').value = data.posts[0].content;
-                document.getElementById('post-content').dispatchEvent(new Event('input'));
-            } else if (data.style === 'thread') {
-                threadPosts = data.posts.map((post, index) => ({
-                    content: post.content,
-                    id: index + 1
-                }));
-                renderThreadPosts();
-            }
-
-            showPreview();
-            showToast('Post generated successfully!', 'success');
+        // Initialize state from template
+        {% if recent_drafts is defined %}
+        state.currentOffset = {{ loaded_count|default(0)|int }};
+        state.loadedCount = {{ loaded_count|default(0)|int }};
+        state.totalCount = {{ total_count|default(0)|int }};
+        state.hasMore = {{ has_more|lower if has_more is defined else 'false' }};
+        {% endif %}
+        
+        setupEventListeners();
+        setupInitialPost();
+        setupKeyboardShortcuts();
+        updatePostToXButtonVisibility();
+        
+        if (state.totalCount === 0) {
+            loadDraftsWithSpinner();
         } else {
-            showToast(data.error || 'Failed to generate post', 'error');
+            attachDraftEventListeners();
         }
-    } catch (error) {
-        console.error('Error:', error);
-        showToast('An error occurred', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="ph ph-sparkle"></i> Generate Post';
-    }
-}
-
-// Optimize post
-async function optimizePost() {
-    const content = document.getElementById('post-content').value;
-    if (!content) {
-        showToast('Please enter some content first', 'error');
-        return;
+        
+        checkBrandVoice();
+        
+        window.CreatorPal.PostEditor.initialized = true;
+        console.log('Post Editor initialized');
     }
 
-    const btn = event.currentTarget;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="ph ph-spinner-gap spinning"></i> Optimizing...';
-
-    try {
-        const response = await fetch('/api/x-post/optimize', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                content: content,
-                goal: 'engagement'
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            if (data.suggestions && data.suggestions.length > 0) {
-                let suggestionsHtml = '<h6>Optimization Suggestions:</h6><ul>';
-                data.suggestions.forEach(suggestion => {
-                    suggestionsHtml += `<li>${suggestion}</li>`;
-                });
-                suggestionsHtml += '</ul>';
-
-                // You could show this in a modal or a dedicated section
-                showToast('Optimization complete! Check suggestions.', 'success');
+    // Update Post to X button visibility
+    function updatePostToXButtonVisibility() {
+        const postToXButton = document.getElementById('post-to-x-btn');
+        const posts = document.querySelectorAll('.post-item');
+        
+        if (postToXButton) {
+            if (posts.length === 1) {
+                postToXButton.classList.remove('hidden');
+            } else {
+                postToXButton.classList.add('hidden');
             }
         }
-    } catch (error) {
-        console.error('Error:', error);
-        showToast('Failed to optimize post', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="ph ph-magic-wand"></i> Optimize';
     }
-}
 
-// Analyze post timing
-async function analyzeTiming() {
-    const btn = event.currentTarget;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="ph ph-spinner-gap spinning"></i> Analyzing...';
-
-    try {
-        const response = await fetch('/api/x-post/analyze-timing', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            displayTimingResults(data.best_times);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        showToast('Failed to analyze timing', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Analyze Timing';
-    }
-}
-
-// Display timing results
-function displayTimingResults(times) {
-    const resultsDiv = document.getElementById('timing-results');
-
-    let html = '<h6 class="mb-2">Best Times (Weekdays):</h6><ul class="small">';
-    times.weekdays.forEach(time => {
-        html += `<li>${time.time} - Score: ${time.engagement_score}/100</li>`;
-    });
-    html += '</ul>';
-
-    html += '<h6 class="mb-2">Best Days:</h6>';
-    html += `<p class="small">${times.best_days.join(', ')}</p>`;
-
-    resultsDiv.innerHTML = html;
-}
-
-// Load templates
-async function loadTemplates() {
-    try {
-        const response = await fetch('/api/x-post/templates');
-        const data = await response.json();
-
-        if (data.success) {
-            const templatesList = document.getElementById('templates-list');
-            templatesList.innerHTML = '';
-
-            data.templates.forEach(template => {
-                const templateDiv = document.createElement('div');
-                templateDiv.className = 'template-item';
-                templateDiv.onclick = () => applyTemplate(template);
-
-                templateDiv.innerHTML = `
-                    <h6 class="mb-1">${template.name}</h6>
-                    <small class="text-muted">${template.category}</small>
-                `;
-
-                templatesList.appendChild(templateDiv);
-            });
-        }
-    } catch (error) {
-        console.error('Error loading templates:', error);
-    }
-}
-
-// Apply template
-function applyTemplate(template) {
-    document.getElementById('post-content').value = template.template;
-    document.getElementById('post-content').dispatchEvent(new Event('input'));
-    showToast(`Applied ${template.name} template`, 'success');
-}
-
-// Thread functions
-function renderThreadPosts() {
-    const container = document.getElementById('thread-posts');
-    container.innerHTML = '';
-
-    threadPosts.forEach((post, index) => {
-        const postDiv = document.createElement('div');
-        postDiv.className = 'thread-post';
-        postDiv.innerHTML = `
-            <div class="thread-number">${index + 1}</div>
-            <textarea class="form-control mb-2" rows="3"
-                      onchange="updateThreadPost(${index}, this.value)"
-                      placeholder="Post ${index + 1}...">${post.content}</textarea>
-            <small class="text-muted">${post.content.length}/280</small>
-            ${threadPosts.length > 1 ? `<button class="btn btn-sm btn-outline-danger float-end" onclick="removeThreadPost(${index})">Remove</button>` : ''}
-        `;
-        container.appendChild(postDiv);
-    });
-}
-
-function addThreadPost() {
-    threadPosts.push({content: '', id: threadPosts.length + 1});
-    renderThreadPosts();
-}
-
-function removeThreadPost(index) {
-    if (threadPosts.length > 1) {
-        threadPosts.splice(index, 1);
-        renderThreadPosts();
-    }
-}
-
-function updateThreadPost(index, content) {
-    threadPosts[index].content = content;
-}
-
-// Show preview
-function showPreview() {
-    const preview = document.getElementById('post-preview');
-    const content = document.getElementById('preview-content');
-
-    const style = document.getElementById('post-style').value;
-
-    if (style === 'single') {
-        const postContent = document.getElementById('post-content').value;
-        content.innerHTML = `
-            <div class="post-header">
-                <div class="avatar">C</div>
-                <div class="post-meta">
-                    <div class="username">Creaver</div>
-                    <div class="handle">@creaver · now</div>
+    // Load drafts with spinner
+    async function loadDraftsWithSpinner() {
+        const draftsContainer = document.getElementById('draftsContainer');
+        if (!draftsContainer) return;
+        
+        const loadingElement = document.getElementById('drafts-loading');
+        if (!loadingElement) {
+            draftsContainer.innerHTML = `
+                <div class="drafts-loading" id="drafts-loading">
+                    <div class="drafts-loading-spinner"></div>
+                    <div>Loading drafts...</div>
                 </div>
-            </div>
-            <div class="post-text">${postContent}</div>
-        `;
-    } else if (style === 'thread') {
-        let html = '';
-        threadPosts.forEach((post, index) => {
-            html += `
-                <div class="mb-3">
-                    <div class="post-header">
-                        <div class="avatar">C</div>
-                        <div class="post-meta">
-                            <div class="username">Creaver</div>
-                            <div class="handle">@creaver · ${index + 1}/${threadPosts.length}</div>
-                        </div>
+            `;
+        }
+        
+        try {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const response = await fetch('/x_post_editor/drafts');
+            const data = await response.json();
+            
+            const currentLoadingElement = document.getElementById('drafts-loading');
+            if (currentLoadingElement) {
+                currentLoadingElement.remove();
+            }
+            
+            if (data.success) {
+                state.currentOffset = data.loaded_count;
+                state.loadedCount = data.loaded_count;
+                state.totalCount = data.total_count;
+                state.hasMore = data.has_more;
+                
+                renderDrafts(data.drafts || []);
+                updateDraftsCounter();
+            } else {
+                renderEmptyState();
+            }
+        } catch (error) {
+            console.error('Error loading drafts:', error);
+            const currentLoadingElement = document.getElementById('drafts-loading');
+            if (currentLoadingElement) {
+                currentLoadingElement.remove();
+            }
+            renderEmptyState();
+        }
+    }
+
+    // Render drafts
+    function renderDrafts(drafts) {
+        const draftsContainer = document.getElementById('draftsContainer');
+        if (!draftsContainer) return;
+        
+        const loadingElement = document.getElementById('drafts-loading');
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+        
+        if (!drafts || drafts.length === 0) {
+            renderEmptyState();
+            return;
+        }
+
+        const sortedDrafts = [...drafts].sort((a, b) => {
+            if (a.id === state.currentDraftId) return -1;
+            if (b.id === state.currentDraftId) return 1;
+            
+            const aTime = a.timestamp ? new Date(a.timestamp.seconds * 1000) : new Date(0);
+            const bTime = b.timestamp ? new Date(b.timestamp.seconds * 1000) : new Date(0);
+            return bTime - aTime;
+        });
+        
+        let draftsHTML = '<div class="drafts-list" id="draftsList">';
+        sortedDrafts.forEach(draft => {
+            const isActive = draft.id === state.currentDraftId;
+            draftsHTML += `
+                <div class="draft-item ${isActive ? 'active' : ''}" data-id="${draft.id}">
+                    <div class="draft-content">
+                        <div class="draft-title">${draft.title || 'Untitled Draft'}</div>
                     </div>
-                    <div class="post-text">${post.content}</div>
+                    <button class="draft-delete-btn" title="Delete Draft">
+                        <i class="ph ph-trash"></i>
+                    </button>
                 </div>
             `;
         });
-        content.innerHTML = html;
+        draftsHTML += '</div>';
+        
+        if (state.hasMore) {
+            draftsHTML += `
+                <div class="show-more-container" id="showMoreContainer">
+                    <button class="show-more-btn" id="showMoreBtn">
+                        <i class="ph ph-arrow-down"></i>
+                        <span>Show More</span>
+                    </button>
+                </div>
+            `;
+        }
+        
+        draftsContainer.innerHTML = draftsHTML;
+        attachDraftEventListeners();
+        
+        const showMoreBtn = document.getElementById('showMoreBtn');
+        if (showMoreBtn) {
+            showMoreBtn.addEventListener('click', loadMoreDrafts);
+        }
     }
 
-    preview.style.display = 'block';
-}
-
-// Copy post
-async function copyPost() {
-    const style = document.getElementById('post-style').value;
-    let textToCopy = '';
-
-    if (style === 'single') {
-        textToCopy = document.getElementById('post-content').value;
-    } else if (style === 'thread') {
-        textToCopy = threadPosts.map((post, index) =>
-            `${index + 1}/${threadPosts.length}\n${post.content}`
-        ).join('\n\n');
+    // Render empty state
+    function renderEmptyState() {
+        const draftsContainer = document.getElementById('draftsContainer');
+        if (!draftsContainer) return;
+        
+        draftsContainer.innerHTML = `
+            <div class="drafts-empty">
+                <i class="ph ph-files"></i>
+                <div style="margin-bottom: 0.5rem; color: #6b7280;">No drafts yet</div>
+                <div style="font-size: 0.875rem;">Your saved drafts will appear here</div>
+            </div>
+        `;
     }
 
-    try {
-        await navigator.clipboard.writeText(textToCopy);
-        showToast('Post copied to clipboard!', 'success');
-    } catch (error) {
-        showToast('Failed to copy post', 'error');
+    // Load more drafts
+    function loadMoreDrafts() {
+        if (state.isLoadingMore || !state.hasMore) return;
+        
+        state.isLoadingMore = true;
+        
+        const showMoreBtn = document.getElementById('showMoreBtn');
+        if (showMoreBtn) {
+            showMoreBtn.disabled = true;
+            showMoreBtn.classList.add('loading');
+            showMoreBtn.innerHTML = '<div class="loading-spinner small"></div><span>Loading...</span>';
+        }
+        
+        fetch(`/x_post_editor/drafts?offset=${state.currentOffset}&limit=20`)
+            .then(response => response.json())
+            .then(data => {
+                state.isLoadingMore = false;
+                
+                if (data.success && data.drafts) {
+                    const draftsList = document.getElementById('draftsList');
+                    
+                    data.drafts.forEach(draft => {
+                        const draftHTML = `
+                            <div class="draft-item" data-id="${draft.id}">
+                                <div class="draft-content">
+                                    <div class="draft-title">${draft.title || 'Untitled Draft'}</div>
+                                </div>
+                                <button class="draft-delete-btn" title="Delete Draft">
+                                    <i class="ph ph-trash"></i>
+                                </button>
+                            </div>
+                        `;
+                        draftsList.insertAdjacentHTML('beforeend', draftHTML);
+                    });
+                    
+                    state.currentOffset = data.offset + data.drafts.length;
+                    state.loadedCount = data.loaded_count;
+                    state.totalCount = data.total_count;
+                    state.hasMore = data.has_more;
+                    
+                    updateDraftsCounter();
+                    attachDraftEventListeners();
+                    
+                    if (!data.has_more) {
+                        const showMoreContainer = document.getElementById('showMoreContainer');
+                        if (showMoreContainer) {
+                            showMoreContainer.style.display = 'none';
+                        }
+                    }
+                } else {
+                    if (window.showToast) {
+                        showToast('Failed to load more drafts', 'error');
+                    }
+                }
+                
+                if (showMoreBtn) {
+                    showMoreBtn.disabled = false;
+                    showMoreBtn.classList.remove('loading');
+                    showMoreBtn.innerHTML = '<i class="ph ph-arrow-down"></i><span>Show More</span>';
+                }
+            })
+            .catch(error => {
+                state.isLoadingMore = false;
+                
+                if (showMoreBtn) {
+                    showMoreBtn.disabled = false;
+                    showMoreBtn.classList.remove('loading');
+                    showMoreBtn.innerHTML = '<i class="ph ph-arrow-down"></i><span>Show More</span>';
+                }
+                
+                if (window.showToast) {
+                    showToast('Error loading more drafts: ' + error.message, 'error');
+                }
+                console.error('Error loading more drafts:', error);
+            });
     }
-}
 
-// Analyze post
-function analyzePost() {
-    const content = document.getElementById('post-content').value;
-    if (!content) {
-        showToast('Please enter some content first', 'error');
-        return;
+    // Update drafts counter
+    function updateDraftsCounter() {
+        const draftsCounter = document.getElementById('draftsCounter');
+        const loadedCount = document.getElementById('loadedCount');
+        const totalCount = document.getElementById('totalCount');
+        
+        if (draftsCounter && loadedCount && totalCount) {
+            if (state.totalCount > 0) {
+                draftsCounter.style.display = 'block';
+                loadedCount.textContent = state.loadedCount;
+                totalCount.textContent = state.totalCount;
+            } else {
+                draftsCounter.style.display = 'none';
+            }
+        }
     }
 
-    // Simple analysis
-    const hashtagCount = (content.match(/#/g) || []).length;
-    const mentionCount = (content.match(/@/g) || []).length;
-    const hasQuestion = content.includes('?');
-    const hasEmoji = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/u.test(content);
-
-    let score = 50;
-    if (hashtagCount >= 1 && hashtagCount <= 3) score += 10;
-    if (hasQuestion) score += 15;
-    if (hasEmoji) score += 10;
-    if (content.length > 100 && content.length < 240) score += 15;
-
-    showToast(`Engagement Score: ${score}/100`, 'info');
-}
-
-// Show toast
-function showToast(message, type = 'info') {
-    if (window.BaseApp && window.BaseApp.showToast) {
-        window.BaseApp.showToast(message, type);
+    // Attach draft event listeners
+    function attachDraftEventListeners() {
+        document.querySelectorAll('.draft-item').forEach(item => {
+            const draftId = item.dataset.id;
+            
+            // Click to load draft
+            item.onclick = (e) => {
+                if (e.target.closest('.draft-delete-btn')) return;
+                
+                document.querySelectorAll('.draft-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
+                state.currentDraftId = draftId;
+                
+                loadDraft(draftId);
+            };
+            
+            // Delete button
+            const deleteBtn = item.querySelector('.draft-delete-btn');
+            if (deleteBtn) {
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const title = item.querySelector('.draft-title').textContent;
+                    if (confirm(`Delete draft "${title}"?`)) {
+                        deleteDraft(draftId, item);
+                    }
+                };
+            }
+        });
     }
-}
 
-// Add spinning animation
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    // Setup event listeners
+    function setupEventListeners() {
+        // Removed How It Works modal handlers
+        
+        // Tool selection
+        const grammarTool = document.getElementById('grammar-tool');
+        const storytellingTool = document.getElementById('storytelling-tool');
+        const hookStoryPunchTool = document.getElementById('hook-story-punch-tool');
+        
+        if (grammarTool) {
+            grammarTool.onclick = () => {
+                resetToolsActive();
+                grammarTool.classList.add('active');
+                state.enhancementPreset = 'grammar';
+                markAsChanged();
+            };
+        }
+        
+        if (storytellingTool) {
+            storytellingTool.onclick = () => {
+                resetToolsActive();
+                storytellingTool.classList.add('active');
+                state.enhancementPreset = 'storytelling';
+                markAsChanged();
+            };
+        }
+        
+        if (hookStoryPunchTool) {
+            hookStoryPunchTool.onclick = () => {
+                resetToolsActive();
+                hookStoryPunchTool.classList.add('active');
+                state.enhancementPreset = 'hook_story_punch';
+                markAsChanged();
+            };
+        }
+        
+        // Context modal
+        const contextButton = document.getElementById('context-button');
+        const contextModal = document.getElementById('context-modal');
+        const contextModalClose = document.getElementById('context-modal-close');
+        const contextTextarea = document.getElementById('context-textarea');
+        const contextCancelButton = document.getElementById('context-cancel-button');
+        const contextSaveButton = document.getElementById('context-save-button');
+        
+        if (contextButton) {
+            contextButton.onclick = () => {
+                if (contextModal) contextModal.style.display = 'flex';
+            };
+        }
+        if (contextModalClose) {
+            contextModalClose.onclick = () => {
+                if (contextModal) contextModal.style.display = 'none';
+            };
+        }
+        if (contextCancelButton) {
+            contextCancelButton.onclick = () => {
+                if (contextModal) contextModal.style.display = 'none';
+            };
+        }
+        if (contextSaveButton) {
+            contextSaveButton.onclick = () => {
+                if (contextTextarea) {
+                    state.additionalInstructions = contextTextarea.value;
+                }
+                if (contextModal) contextModal.style.display = 'none';
+                markAsChanged();
+                
+                if (contextButton && state.additionalInstructions.trim() !== '') {
+                    contextButton.classList.add('active');
+                } else if (contextButton) {
+                    contextButton.classList.remove('active');
+                }
+            };
+        }
+        
+        // Generate button
+        const generateButton = document.getElementById('generate-button');
+        if (generateButton) {
+            generateButton.onclick = handleGenerate;
+        }
+        
+        // Add post button
+        const addPostIcon = document.getElementById('add-post-icon');
+        if (addPostIcon) {
+            addPostIcon.onclick = addNewPost;
+        }
+        
+        // Revert button
+        const revertButton = document.getElementById('revert-button');
+        if (revertButton) {
+            revertButton.onclick = () => {
+                if (state.undoStack.length === 0) {
+                    updateStatusMessage('Nothing to undo');
+                    return;
+                }
+                performUndo();
+                updateStatusMessage('Undid last change');
+            };
+        }
+        
+        // New Draft Button
+        const newDraftButton = document.getElementById('new-draft-button');
+        if (newDraftButton) {
+            newDraftButton.onclick = createNewDraft;
+        }
+        
+        // Brand Voice Toggle
+        const brandVoiceToggle = document.getElementById('use-brand-voice');
+        if (brandVoiceToggle) {
+            brandVoiceToggle.onchange = () => {
+                markAsChanged();
+            };
+        }
+        
+        // Post to X button
+        const postToXButton = document.getElementById('post-to-x-btn');
+        if (postToXButton) {
+            postToXButton.onclick = postToX;
+        }
+        
+        // Close modals on background click
+        if (contextModal) {
+            contextModal.onclick = (e) => {
+                if (e.target === contextModal) {
+                    contextModal.style.display = 'none';
+                }
+            };
+        }
+        
+        setupMediaUploadHandlers();
     }
-    .spinning {
-        animation: spin 1s linear infinite;
-        display: inline-block;
+
+    // Setup media upload handlers
+    function setupMediaUploadHandlers() {
+        document.querySelectorAll('.hidden-file-input').forEach(setupFileInputHandler);
+        
+        document.querySelectorAll('.media-upload-trigger').forEach(trigger => {
+            trigger.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const postItem = trigger.closest('.post-item');
+                if (postItem) {
+                    const fileInput = postItem.querySelector('.hidden-file-input');
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                }
+            };
+        });
     }
-`;
-document.head.appendChild(style);
+
+    // Setup file input handler
+    function setupFileInputHandler(fileInput) {
+        fileInput.onchange = async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (this.files && this.files[0]) {
+                const postItem = this.closest('.post-item');
+                const mediaContainer = postItem ? postItem.querySelector('.post-media') : null;
+                
+                if (mediaContainer) {
+                    await handleFileUpload(this.files[0], mediaContainer);
+                    markAsChanged();
+                }
+                
+                this.value = '';
+            }
+        };
+    }
+
+    // Post to X function
+    function postToX() {
+        const posts = document.querySelectorAll('.post-item');
+        
+        if (posts.length !== 1) return;
+        
+        const textarea = posts[0].querySelector('.post-editor-textarea');
+        if (!textarea) return;
+        
+        const postText = textarea.value.trim();
+        
+        if (!postText) {
+            if (window.showToast) {
+                showToast('Please enter some content to post', 'error');
+            }
+            return;
+        }
+        
+        const encodedText = encodeURIComponent(postText);
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodedText}`;
+        window.open(twitterUrl, '_blank');
+    }
+
+    // Load draft
+    async function loadDraft(draftId) {
+        const draftItem = document.querySelector(`[data-id="${draftId}"]`);
+        if (draftItem) {
+            draftItem.classList.add('loading');
+        }
+        
+        state.isLoadingDraft = true;
+        
+        try {
+            const response = await fetch(`/x_post_editor/drafts/${draftId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const draft = data.draft;
+                
+                clearEditor();
+                
+                if (draft.posts && Array.isArray(draft.posts)) {
+                    loadPostsArray(draft.posts);
+                }
+                
+                state.enhancementPreset = draft.preset || 'storytelling';
+                state.additionalInstructions = draft.additional_context || '';
+                
+                // Update UI
+                resetToolsActive();
+                if (state.enhancementPreset === 'grammar') {
+                    const tool = document.getElementById('grammar-tool');
+                    if (tool) tool.classList.add('active');
+                } else if (state.enhancementPreset === 'storytelling') {
+                    const tool = document.getElementById('storytelling-tool');
+                    if (tool) tool.classList.add('active');
+                } else if (state.enhancementPreset === 'hook_story_punch') {
+                    const tool = document.getElementById('hook-story-punch-tool');
+                    if (tool) tool.classList.add('active');
+                }
+                
+                const contextButton = document.getElementById('context-button');
+                const contextTextarea = document.getElementById('context-textarea');
+                if (state.additionalInstructions.trim() !== '') {
+                    if (contextButton) contextButton.classList.add('active');
+                    if (contextTextarea) contextTextarea.value = state.additionalInstructions;
+                } else {
+                    if (contextButton) contextButton.classList.remove('active');
+                    if (contextTextarea) contextTextarea.value = '';
+                }
+                
+                updateStatusMessage(`Loaded draft: "${draft.title || 'Untitled'}"`);
+                state.hasUnsavedChanges = false;
+            }
+        } catch (error) {
+            console.error('Error loading draft:', error);
+            if (window.showToast) {
+                showToast('Failed to load draft', 'error');
+            }
+        } finally {
+            state.isLoadingDraft = false;
+            
+            if (draftItem) {
+                draftItem.classList.remove('loading');
+            }
+        }
+    }
+
+    // Create new draft
+    async function createNewDraft() {
+        if (state.hasUnsavedChanges) {
+            await saveContent();
+        }
+        
+        try {
+            const response = await fetch('/x_post_editor/drafts/new', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: 'New Draft' })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                state.currentDraftId = data.draft_id;
+                clearEditor();
+                
+                document.querySelectorAll('.draft-item').forEach(item => item.classList.remove('active'));
+                
+                updateStatusMessage('New draft created');
+                
+                loadDraftsWithSpinner();
+            }
+        } catch (error) {
+            console.error('Error creating draft:', error);
+            if (window.showToast) {
+                showToast('Failed to create new draft', 'error');
+            }
+        }
+    }
+
+    // Delete draft
+    async function deleteDraft(draftId, draftItem) {
+        try {
+            const response = await fetch(`/x_post_editor/drafts/${draftId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                draftItem.remove();
+                
+                state.loadedCount--;
+                state.totalCount--;
+                updateDraftsCounter();
+                
+                if (state.currentDraftId === draftId) {
+                    state.currentDraftId = null;
+                    clearEditor();
+                    updateStatusMessage('Draft deleted');
+                }
+                
+                const draftsList = document.getElementById('draftsList');
+                if (draftsList && draftsList.children.length < 10 && state.hasMore) {
+                    loadMoreDrafts();
+                }
+                
+                const draftsContainer = document.getElementById('draftsContainer');
+                if (draftsContainer && state.totalCount === 0) {
+                    renderEmptyState();
+                }
+            }
+        } catch (error) {
+            console.error('Error deleting draft:', error);
+            if (window.showToast) {
+                showToast('Failed to delete draft', 'error');
+            }
+        }
+    }
+
+    // Setup initial post
+    function setupInitialPost() {
+        const firstPost = document.querySelector('.post-item');
+        if (firstPost) {
+            setupPostEventListeners(firstPost, 0);
+        }
+        
+        const firstTextarea = document.querySelector('.post-editor-textarea');
+        if (firstTextarea) {
+            updateCharacterCount(firstTextarea, 'count-1');
+        }
+    }
+
+    // Setup post event listeners
+    function setupPostEventListeners(postItem, index) {
+        const textarea = postItem.querySelector('.post-editor-textarea');
+        const fileInput = postItem.querySelector('.hidden-file-input');
+        
+        const postNumber = index + 1;
+        if (textarea) {
+            textarea.id = `post-textarea-${postNumber}`;
+            textarea.name = `post-content-${postNumber}`;
+            
+            textarea.oninput = function() {
+                updateCharacterCount(this, `count-${postNumber}`);
+                
+                if (!state.isLoadingDraft) {
+                    markAsChanged();
+                }
+            };
+        }
+        
+        if (fileInput) {
+            fileInput.id = `file-input-${postNumber}`;
+            fileInput.name = `media-upload-${postNumber}`;
+            fileInput.setAttribute('aria-label', `Upload media file for post ${postNumber}`);
+            setupFileInputHandler(fileInput);
+        }
+        
+        const mediaUploadTrigger = postItem.querySelector('.media-upload-trigger');
+        if (mediaUploadTrigger) {
+            mediaUploadTrigger.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (fileInput) {
+                    fileInput.click();
+                }
+            };
+        }
+    }
+
+    // Check brand voice
+    function checkBrandVoice() {
+        const brandVoiceToggle = document.getElementById('use-brand-voice');
+        if (!brandVoiceToggle) return;
+        
+        fetch('/x_post_editor/check-brand-voice')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.has_brand_voice_data) {
+                    brandVoiceToggle.disabled = false;
+                    brandVoiceToggle.checked = true;
+                } else {
+                    brandVoiceToggle.disabled = true;
+                    brandVoiceToggle.checked = false;
+                    brandVoiceToggle.parentElement.style.opacity = '0.5';
+                }
+            })
+            .catch(error => {
+                console.error('Brand voice check failed:', error);
+                brandVoiceToggle.disabled = true;
+                brandVoiceToggle.checked = false;
+            });
+    }
+
+    // Load posts array
+    function loadPostsArray(posts) {
+        if (posts.length > 0) {
+            const firstTextarea = document.querySelector('.post-editor-textarea');
+            const firstMediaContainer = document.querySelector('.post-media');
+            
+            if (firstTextarea) {
+                firstTextarea.value = posts[0].text || '';
+                updateCharacterCount(firstTextarea, 'count-1');
+            }
+            
+            if (firstMediaContainer) {
+                firstMediaContainer.innerHTML = '';
+                if (posts[0].media && posts[0].media.length > 0) {
+                    posts[0].media.forEach(item => {
+                        addMediaToContainer(firstMediaContainer, item);
+                    });
+                }
+            }
+        }
+        
+        for (let i = 1; i < posts.length; i++) {
+            addNewPost();
+            
+            const allPosts = document.querySelectorAll('.post-item');
+            const newPost = allPosts[allPosts.length - 1];
+            
+            const textarea = newPost.querySelector('.post-editor-textarea');
+            const mediaContainer = newPost.querySelector('.post-media');
+            
+            if (textarea) {
+                textarea.value = posts[i].text || '';
+                updateCharacterCount(textarea, `count-${i + 1}`);
+            }
+            
+            if (mediaContainer && posts[i].media && posts[i].media.length > 0) {
+                posts[i].media.forEach(item => {
+                    addMediaToContainer(mediaContainer, item);
+                });
+            }
+        }
+        
+        updatePostToXButtonVisibility();
+    }
+
+    // Handle generate
+    async function handleGenerate() {
+        const brandVoiceToggle = document.getElementById('use-brand-voice');
+        const posts = gatherPostData();
+        
+        if (!posts.some(post => post.text.trim() !== '')) {
+            if (window.showToast) {
+                showToast('Please enter some content to enhance.', 'error');
+            }
+            return;
+        }
+        
+        saveUndoState();
+        
+        const generateButton = document.getElementById('generate-button');
+        if (generateButton) {
+            generateButton.classList.add('loading');
+            generateButton.innerHTML = '<span class="button-text">Enhancing...</span>';
+            generateButton.disabled = true;
+        }
+        
+        try {
+            const response = await fetch('/x_post_editor/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    posts: posts,
+                    preset: state.enhancementPreset,
+                    additional_context: state.additionalInstructions,
+                    use_brand_voice: brandVoiceToggle ? brandVoiceToggle.checked : false
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const postItems = document.querySelectorAll('.post-item');
+                data.enhanced_posts.forEach((enhancedText, index) => {
+                    if (postItems[index]) {
+                        const textarea = postItems[index].querySelector('.post-editor-textarea');
+                        if (textarea) {
+                            textarea.value = enhancedText;
+                            updateCharacterCount(textarea, `count-${index + 1}`);
+                        }
+                    }
+                });
+                
+                markAsChanged();
+                updateStatusMessage('Enhanced all posts in thread');
+                
+                if (window.showToast) {
+                    showToast('Content enhanced successfully! ✨', 'success');
+                }
+            } else {
+                if (window.showToast) {
+                    showToast('Error enhancing content: ' + data.error, 'error');
+                }
+            }
+        } catch (error) {
+            console.error('Generate error:', error);
+            if (window.showToast) {
+                showToast('Error connecting to enhancement service', 'error');
+            }
+        } finally {
+            if (generateButton) {
+                generateButton.classList.remove('loading');
+                generateButton.innerHTML = '<i class="ph ph-magic-wand"></i><span class="button-text">Enhance</span>';
+                generateButton.disabled = false;
+            }
+        }
+    }
+
+    // Add new post
+    function addNewPost() {
+        const postsContainer = document.querySelector('.posts-container');
+        const editorContent = document.querySelector('.editor-content');
+        if (!postsContainer || !editorContent) return;
+        
+        state.postCount++;
+        
+        const newPost = document.createElement('div');
+        newPost.className = 'post-item';
+        newPost.innerHTML = `
+            <div class="post-item-header">
+                <div class="post-type">
+                    <i class="ph ph-note-pencil"></i>
+                    <span>Post ${state.postCount}</span>
+                </div>
+                <div class="post-actions">
+                    <button class="post-action media-upload-trigger" title="Add Media" data-post-id="${state.postCount}">
+                        <i class="ph ph-paperclip"></i>
+                    </button>
+                    <button class="post-action" title="Delete">
+                        <i class="ph ph-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="post-editor-content">
+                <label for="post-textarea-${state.postCount}" class="sr-only">Post ${state.postCount} content</label>
+                <textarea id="post-textarea-${state.postCount}" name="post-content-${state.postCount}" class="post-editor-textarea" placeholder="Continue your content here..."></textarea>
+                <div class="post-media"></div>
+                <input type="file" id="file-input-${state.postCount}" name="media-upload-${state.postCount}" class="hidden-file-input" accept="image/*,video/*,.gif" aria-label="Upload media file for post ${state.postCount}">
+            </div>
+            <div class="post-footer">
+                <div class="character-count" id="count-${state.postCount}">
+                    <span class="character-count-text">0/280</span>
+                    <div class="add-post-icon">
+                        <i class="ph ph-plus"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        postsContainer.appendChild(newPost);
+        
+        setupPostEventListeners(newPost, state.postCount - 1);
+        
+        // Delete button
+        const deleteButton = newPost.querySelector('.post-action[title="Delete"]');
+        if (deleteButton) {
+            deleteButton.onclick = () => {
+                newPost.remove();
+                reorderPosts();
+                updatePostToXButtonVisibility();
+                markAsChanged();
+            };
+        }
+        
+        // Add post icon
+        const addPostIcon = newPost.querySelector('.add-post-icon');
+        if (addPostIcon) {
+            addPostIcon.onclick = addNewPost;
+        }
+        
+        const textarea = newPost.querySelector('.post-editor-textarea');
+        if (textarea) {
+            textarea.focus();
+        }
+        
+        updatePostToXButtonVisibility();
+        markAsChanged();
+    }
+
+    // File upload handling
+    async function handleFileUpload(file, mediaContainer) {
+        const mediaType = getMediaType(file);
+        if (!mediaType) {
+            if (window.showToast) {
+                showToast('Unsupported file type', 'error');
+            }
+            return;
+        }
+        
+        // Show loading
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'media-loading';
+        loadingDiv.innerHTML = `
+            <div class="media-loading-spinner"></div>
+            <div>Uploading ${mediaType}...</div>
+        `;
+        mediaContainer.appendChild(loadingDiv);
+        
+        try {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const response = await fetch('/x_post_editor/upload-media', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            media_data: e.target.result,
+                            filename: `${Date.now()}_${file.name}`,
+                            media_type: mediaType,
+                            file_size: file.size,
+                            mime_type: file.type
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    loadingDiv.remove();
+                    
+                    if (data.success) {
+                        const mediaElement = createMediaElement({
+                            url: data.media_url,
+                            filename: data.filename,
+                            media_type: mediaType,
+                            file_size: file.size,
+                            mime_type: file.type
+                        });
+                        mediaContainer.appendChild(mediaElement);
+                        
+                        if (window.showToast) {
+                            showToast('Media uploaded successfully', 'success');
+                        }
+                    } else {
+                        if (window.showToast) {
+                            showToast('Upload failed: ' + data.error, 'error');
+                        }
+                    }
+                } catch (uploadError) {
+                    loadingDiv.remove();
+                    if (window.showToast) {
+                        showToast('Upload error: ' + uploadError.message, 'error');
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            loadingDiv.remove();
+            if (window.showToast) {
+                showToast('File reading error: ' + error.message, 'error');
+            }
+        }
+    }
+
+    // Media utilities
+    function getMediaType(file) {
+        for (const [type, config] of Object.entries(SUPPORTED_MEDIA_TYPES)) {
+            if (config.mimeTypes.includes(file.type)) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    function createMediaElement(mediaData) {
+        const container = document.createElement('div');
+        container.className = 'media-preview-container';
+        
+        let mediaElement;
+        if (mediaData.media_type === 'video') {
+            mediaElement = document.createElement('video');
+            mediaElement.controls = true;
+            mediaElement.muted = true;
+            mediaElement.className = 'media-preview video';
+        } else {
+            mediaElement = document.createElement('img');
+            mediaElement.className = `media-preview ${mediaData.media_type}`;
+        }
+        
+        mediaElement.src = mediaData.url;
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'media-remove-button';
+        removeBtn.innerHTML = '<i class="ph ph-x"></i>';
+        removeBtn.onclick = () => {
+            container.remove();
+            markAsChanged();
+        };
+        
+        container.appendChild(mediaElement);
+        container.appendChild(removeBtn);
+        
+        return container;
+    }
+
+    function addMediaToContainer(container, mediaData) {
+        const mediaElement = createMediaElement(mediaData);
+        container.appendChild(mediaElement);
+    }
+
+    // Utility functions
+    function resetToolsActive() {
+        document.querySelectorAll('.ai-tool').forEach(tool => {
+            if (tool.id !== 'context-button') {
+                tool.classList.remove('active');
+            }
+        });
+    }
+
+    function reorderPosts() {
+        const posts = document.querySelectorAll('.post-item');
+        posts.forEach((post, index) => {
+            const labelElement = post.querySelector('.post-type span');
+            const countElement = post.querySelector('.character-count');
+            const textarea = post.querySelector('.post-editor-textarea');
+            const fileInput = post.querySelector('.hidden-file-input');
+            const label = post.querySelector('label[for^="post-textarea-"]');
+            const mediaUploadTrigger = post.querySelector('.media-upload-trigger');
+            
+            const newIndex = index + 1;
+            const newId = `post-textarea-${newIndex}`;
+            const newFileId = `file-input-${newIndex}`;
+            
+            if (labelElement) {
+                labelElement.textContent = index === 0 ? 'Post' : `Post ${newIndex}`;
+            }
+            if (countElement) {
+                countElement.id = `count-${newIndex}`;
+            }
+            if (textarea) {
+                textarea.id = newId;
+                textarea.name = `post-content-${newIndex}`;
+                updateCharacterCount(textarea, `count-${newIndex}`);
+            }
+            if (fileInput) {
+                fileInput.id = newFileId;
+                fileInput.name = `media-upload-${newIndex}`;
+                fileInput.setAttribute('aria-label', `Upload media file for post ${newIndex}`);
+            }
+            if (label) {
+                label.setAttribute('for', newId);
+                label.textContent = index === 0 ? 'Post content' : `Post ${newIndex} content`;
+            }
+            if (mediaUploadTrigger) {
+                mediaUploadTrigger.setAttribute('data-post-id', newIndex.toString());
+            }
+        });
+        
+        state.postCount = posts.length;
+    }
+
+    function updateCharacterCount(textarea, countId) {
+        const count = textarea.value.length;
+        const countElement = document.getElementById(countId);
+        
+        if (countElement) {
+            const countText = countElement.querySelector('.character-count-text');
+            if (countText) {
+                countText.textContent = `${count}/280`;
+            }
+            
+            if (count > 280) {
+                countElement.classList.add('over-limit');
+            } else {
+                countElement.classList.remove('over-limit');
+            }
+        }
+    }
+
+    function gatherPostData() {
+        const posts = [];
+        document.querySelectorAll('.post-item').forEach(postItem => {
+            const textarea = postItem.querySelector('.post-editor-textarea');
+            const mediaContainer = postItem.querySelector('.post-media');
+            
+            const postData = {
+                text: textarea ? textarea.value : '',
+                media: []
+            };
+            
+            if (mediaContainer) {
+                const mediaElements = mediaContainer.querySelectorAll('.media-preview');
+                mediaElements.forEach(element => {
+                    postData.media.push({
+                        url: element.getAttribute('data-url') || element.src,
+                        filename: element.getAttribute('data-filename') || 'media',
+                        media_type: element.getAttribute('data-media-type') || 'image',
+                        file_size: parseInt(element.getAttribute('data-file-size')) || 0,
+                        mime_type: element.getAttribute('data-mime-type') || ''
+                    });
+                });
+            }
+            
+            posts.push(postData);
+        });
+        
+        return posts;
+    }
+
+    function clearEditor() {
+        const allPosts = document.querySelectorAll('.post-item');
+        allPosts.forEach((post, index) => {
+            if (index === 0) {
+                const textarea = post.querySelector('.post-editor-textarea');
+                const mediaContainer = post.querySelector('.post-media');
+                const fileInput = post.querySelector('.hidden-file-input');
+                const label = post.querySelector('label[for^="post-textarea-"]');
+                
+                if (textarea) {
+                    textarea.value = '';
+                    textarea.id = 'post-textarea-1';
+                    textarea.name = 'post-content-1';
+                    updateCharacterCount(textarea, 'count-1');
+                }
+                if (mediaContainer) {
+                    mediaContainer.innerHTML = '';
+                }
+                if (fileInput) {
+                    fileInput.id = 'file-input-1';
+                    fileInput.name = 'media-upload-1';
+                    fileInput.setAttribute('aria-label', 'Upload media file for post 1');
+                }
+                if (label) {
+                    label.setAttribute('for', 'post-textarea-1');
+                    label.textContent = 'Post content';
+                }
+                
+                const postLabel = post.querySelector('.post-type span');
+                if (postLabel) {
+                    postLabel.textContent = 'Post';
+                }
+            } else {
+                post.remove();
+            }
+        });
+        
+        state.postCount = 1;
+        state.hasUnsavedChanges = false;
+        state.undoStack = [];
+        
+        resetToolsActive();
+        const storytellingTool = document.getElementById('storytelling-tool');
+        if (storytellingTool) storytellingTool.classList.add('active');
+        state.enhancementPreset = 'storytelling';
+        state.additionalInstructions = '';
+        
+        const contextButton = document.getElementById('context-button');
+        const contextTextarea = document.getElementById('context-textarea');
+        if (contextButton) contextButton.classList.remove('active');
+        if (contextTextarea) contextTextarea.value = '';
+        
+        updatePostToXButtonVisibility();
+    }
+
+    function markAsChanged() {
+        state.hasUnsavedChanges = true;
+        debouncedSave();
+    }
+
+    function updateStatusMessage(message) {
+        const statusElement = document.getElementById('saveStatus');
+        if (statusElement) {
+            const statusText = statusElement.querySelector('span');
+            const statusIcon = statusElement.querySelector('i');
+            
+            if (statusText) statusText.textContent = message;
+            if (statusIcon) statusIcon.className = 'ph ph-check-circle';
+        }
+    }
+
+    // Auto-save with debouncing
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    const debouncedSave = debounce(saveContent, 1000);
+
+    // Save content
+    async function saveContent() {
+        if (!state.currentDraftId) {
+            state.currentDraftId = 'new';
+        }
+        
+        const posts = gatherPostData();
+        
+        if (posts.every(post => !post.text.trim() && (!post.media || post.media.length === 0))) {
+            return;
+        }
+        
+        let title = "Untitled Draft";
+        if (posts.length > 0 && posts[0].text) {
+            const firstLine = posts[0].text.trim().split('\n')[0];
+            title = firstLine.slice(0, 30);
+            if (firstLine.length > 30) {
+                title += '...';
+            }
+        }
+        
+        const saveData = {
+            draft_id: state.currentDraftId,
+            posts: posts,
+            preset: state.enhancementPreset,
+            additional_context: state.additionalInstructions,
+            title: title
+        };
+        
+        try {
+            const response = await fetch('/x_post_editor/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(saveData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                if (data.draft_id && state.currentDraftId === 'new') {
+                    state.currentDraftId = data.draft_id;
+                }
+                
+                state.hasUnsavedChanges = false;
+                updateStatusMessage('Saved automatically');
+                
+                updateCurrentDraftTitle(title);
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+        }
+    }
+
+    // Update current draft title
+    function updateCurrentDraftTitle(title) {
+        if (state.currentDraftId) {
+            const currentDraftElement = document.querySelector(`[data-id="${state.currentDraftId}"] .draft-title`);
+            if (currentDraftElement && currentDraftElement.textContent !== title) {
+                currentDraftElement.textContent = title;
+            }
+        }
+    }
+
+    // Undo functionality
+    function setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            if (!e.target.classList.contains('post-editor-textarea')) return;
+            
+            const isModifierPressed = e.ctrlKey || e.metaKey;
+            
+            if (isModifierPressed && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                performUndo();
+            }
+        });
+    }
+
+    function saveUndoState() {
+        const currentState = {};
+        document.querySelectorAll('.post-item').forEach((post, index) => {
+            const textarea = post.querySelector('.post-editor-textarea');
+            if (textarea) {
+                currentState[index] = {
+                    text: textarea.value,
+                    selectionStart: textarea.selectionStart,
+                    selectionEnd: textarea.selectionEnd
+                };
+            }
+        });
+        
+        state.undoStack.push(currentState);
+        if (state.undoStack.length > state.maxUndoSteps) {
+            state.undoStack.shift();
+        }
+    }
+
+    function performUndo() {
+        if (state.undoStack.length === 0) return;
+        
+        const previousState = state.undoStack.pop();
+        
+        document.querySelectorAll('.post-item').forEach((post, index) => {
+            if (previousState[index]) {
+                const textarea = post.querySelector('.post-editor-textarea');
+                if (textarea) {
+                    textarea.value = previousState[index].text;
+                    updateCharacterCount(textarea, `count-${index + 1}`);
+                    
+                    if (document.activeElement === textarea) {
+                        textarea.setSelectionRange(
+                            previousState[index].selectionStart,
+                            previousState[index].selectionEnd
+                        );
+                    }
+                }
+            }
+        });
+        
+        markAsChanged();
+    }
+
+    // Toast notification
+    window.showToast = function(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        
+        const icon = type === 'success' ? 'ph-check-circle' : 'ph-x-circle';
+        
+        toast.innerHTML = `
+            <i class="ph ${icon}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.classList.add('show'), 100);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    };
+
+    // Expose functions
+    window.CreatorPal.PostEditor.initialize = initialize;
+
+    // Auto-initialize if on post editor page
+    if (document.getElementById('grammar-tool')) {
+        initialize();
+    }
+
+    // Beforeunload handler
+    window.addEventListener('beforeunload', (e) => {
+        if (state.hasUnsavedChanges) {
+            const message = 'You have unsaved changes. Are you sure you want to leave?';
+            e.returnValue = message;
+            return message;
+        }
+    });
+
+})();
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.CreatorPal && window.CreatorPal.PostEditor && document.getElementById('grammar-tool')) {
+        window.CreatorPal.PostEditor.initialize();
+    }
+});
 </script>
 {% endblock %}
