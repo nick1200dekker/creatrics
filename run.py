@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 # Create app-specific logger
-app_logger = logging.getLogger('creator-pal')
+app_logger = logging.getLogger('creaver')
 app_logger.setLevel(logging.DEBUG)  # Change to DEBUG
 
 # Create Flask app
@@ -87,11 +87,18 @@ from app.routes.core.core_routes import bp as core_bp
 from app.routes.home.home_routes import bp as home_bp
 from app.routes.payment import bp as payment_bp
 
-# Import soccer stats blueprints
-from app.routes.player_stats import bp as player_stats_bp
-from app.routes.team_stats import bp as team_stats_bp
-from app.routes.tp_analytics import bp as tp_analytics_bp
-from app.routes.match_center import bp as match_center_bp
+# Import content creator blueprints
+from app.routes.thumbnail import bp as thumbnail_bp
+from app.routes.video_title import bp as video_title_bp
+from app.routes.video_tags import bp as video_tags_bp
+from app.routes.video_description import bp as video_description_bp
+from app.routes.video_script import bp as video_script_bp
+from app.routes.brain_dump import bp as brain_dump_bp
+from app.routes.content_calendar import bp as content_calendar_bp
+from app.routes.analytics import bp as analytics_bp
+
+# Import X (Twitter) blueprints
+from app.routes.x_post_editor import bp as x_post_editor_bp
 
 # Import Cron blueprint
 from app.routes.cron import bp as cron_bp
@@ -100,10 +107,15 @@ from app.routes.cron import bp as cron_bp
 app.register_blueprint(core_bp)
 app.register_blueprint(home_bp)
 app.register_blueprint(payment_bp)
-app.register_blueprint(player_stats_bp)
-app.register_blueprint(team_stats_bp)
-app.register_blueprint(tp_analytics_bp)
-app.register_blueprint(match_center_bp)
+app.register_blueprint(thumbnail_bp)
+app.register_blueprint(video_title_bp)
+app.register_blueprint(video_tags_bp)
+app.register_blueprint(video_description_bp)
+app.register_blueprint(video_script_bp)
+app.register_blueprint(brain_dump_bp)
+app.register_blueprint(content_calendar_bp)
+app.register_blueprint(analytics_bp)
+app.register_blueprint(x_post_editor_bp)
 
 # Register Cron blueprint
 app.register_blueprint(cron_bp)

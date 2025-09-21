@@ -16,9 +16,8 @@ bp = Blueprint('home', __name__)
 
 @bp.route('/')
 def dashboard():
-    """Redirect root to Player Stats - the main landing page"""
-    from flask import redirect, url_for
-    return redirect(url_for('player_stats.index'))
+    """Main landing page - show the dashboard"""
+    return render_template('home/dashboard.html')
 
 @bp.route('/dashboard')
 @bp.route('/home')

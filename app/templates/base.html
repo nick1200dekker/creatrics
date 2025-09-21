@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Soccer Stats Dashboard - Football Analytics{% endblock %}</title>
+    <title>{% block title %}Creaver - Content Creator Tools{% endblock %}</title>
     
     {% block seo_meta %}
-    <meta name="description" content="Advanced soccer statistics and analytics platform. Get detailed player stats, match analysis, and performance insights using AI technology.">
-    <meta name="keywords" content="soccer stats, football analytics, player statistics, match analysis, soccer data">
-    <meta property="og:title" content="Soccer Stats Dashboard - Advanced Football Analytics">
-    <meta property="og:description" content="Get comprehensive soccer statistics and analytics.">
+    <meta name="description" content="AI-powered content creation tools for YouTubers and content creators. Generate thumbnails, banners, video tags, descriptions and more.">
+    <meta name="keywords" content="content creation, youtube tools, thumbnail generator, video tags, channel banner, video description, AI tools">
+    <meta property="og:title" content="Creaver - AI Content Creator Tools">
+    <meta property="og:description" content="Create stunning thumbnails, banners, and optimize your content with AI.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.url }}">
     <meta name="twitter:card" content="summary_large_image">
@@ -213,10 +213,94 @@
             background: var(--accent-blue);
             border-radius: 0 2px 2px 0;
         }
-        
+
         .nav-item i {
             font-size: 1.1rem;
             pointer-events: none;
+        }
+
+        /* Expandable menu styles */
+        .nav-group {
+            margin: 0.15rem 0;
+        }
+
+        .nav-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0.8rem;
+            margin: 0.15rem 0;
+            border-radius: 8px;
+            color: #64748B;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .nav-group-header:hover {
+            color: #1E293B;
+            background: #F1F5F9;
+        }
+
+        .nav-group-header.expanded {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .nav-group-header .left-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-group-header .chevron {
+            transition: transform 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .nav-group-header.expanded .chevron {
+            transform: rotate(90deg);
+        }
+
+        .nav-group-items {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .nav-group-items.expanded {
+            max-height: 500px;
+        }
+
+        .nav-subitem {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.8rem 0.6rem 2.5rem;
+            margin: 0.1rem 0;
+            border-radius: 8px;
+            color: #64748B;
+            font-size: 0.825rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            position: relative;
+            text-decoration: none;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .nav-subitem:hover {
+            color: #1E293B;
+            background: #F1F5F9;
+            transform: translateX(2px);
+        }
+
+        .nav-subitem.active {
+            background: linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(237, 233, 254, 0.5) 100%);
+            color: var(--accent-blue);
+            font-weight: 600;
         }
         
         .admin-section {
@@ -599,47 +683,123 @@
     <aside class="sidebar" id="sidebar">
         <!-- Logo Section -->
         <div class="logo-section">
-            <img src="{{ url_for('static', filename='img/templates/logo.png') }}" alt="Soccer Stats Logo" class="logo-img">
+            <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--accent-blue); margin: 0;">Creaver</h1>
         </div>
         
         <!-- Navigation -->
         <nav class="nav-section">
-            <a href="{{ url_for('player_stats.index') }}" 
-               class="nav-item {% if request.endpoint == 'player_stats.index' %}active{% endif %}">
-                <i class="ph ph-user-circle-gear"></i>
-                <span>Player Stats</span>
+            <a href="{{ url_for('home.dashboard') }}"
+               class="nav-item {% if request.endpoint == 'home.dashboard' %}active{% endif %}">
+                <i class="ph ph-house"></i>
+                <span>Home</span>
             </a>
-            
-            <a href="{{ url_for('tp_analytics.index') }}" 
-               class="nav-item {% if request.endpoint == 'tp_analytics.index' %}active{% endif %}">
-                <i class="ph ph-chart-line-up"></i>
-                <span>TP Analytics</span>
+
+            <!-- YouTube Group -->
+            <div class="nav-group">
+                <div class="nav-group-header {% if request.endpoint and ('video_title' in request.endpoint or 'video_tags' in request.endpoint or 'video_description' in request.endpoint or 'video_script' in request.endpoint or 'thumbnail' in request.endpoint or 'analytics' in request.endpoint) %}expanded{% endif %}"
+                     onclick="toggleNavGroup(this)">
+                    <div class="left-content">
+                        <i class="ph ph-youtube-logo"></i>
+                        <span>YouTube</span>
+                    </div>
+                    <i class="ph ph-caret-right chevron"></i>
+                </div>
+                <div class="nav-group-items {% if request.endpoint and ('video_title' in request.endpoint or 'video_tags' in request.endpoint or 'video_description' in request.endpoint or 'video_script' in request.endpoint or 'thumbnail' in request.endpoint or 'analytics' in request.endpoint) %}expanded{% endif %}">
+                    <a href="{{ url_for('video_script.video_script') }}"
+                       class="nav-subitem {% if request.endpoint and 'video_script' in request.endpoint %}active{% endif %}"
+                       onclick="return BaseApp.checkGuestAccess(event, this)">
+                        <i class="ph ph-file-doc"></i>
+                        <span>Scripts</span>
+                    </a>
+
+                    <a href="{{ url_for('video_title.video_title') }}"
+                       class="nav-subitem {% if request.endpoint and 'video_title' in request.endpoint %}active{% endif %}"
+                       onclick="return BaseApp.checkGuestAccess(event, this)">
+                        <i class="ph ph-text-t"></i>
+                        <span>Video Title</span>
+                    </a>
+
+                    <a href="{{ url_for('video_tags.video_tags') }}"
+                       class="nav-subitem {% if request.endpoint and 'video_tags' in request.endpoint %}active{% endif %}"
+                       onclick="return BaseApp.checkGuestAccess(event, this)">
+                        <i class="ph ph-hash"></i>
+                        <span>Video Tags</span>
+                    </a>
+
+                    <a href="{{ url_for('video_description.video_description') }}"
+                       class="nav-subitem {% if request.endpoint and 'video_description' in request.endpoint %}active{% endif %}"
+                       onclick="return BaseApp.checkGuestAccess(event, this)">
+                        <i class="ph ph-file-text"></i>
+                        <span>Video Description</span>
+                    </a>
+
+                    <a href="{{ url_for('thumbnail.thumbnail') }}"
+                       class="nav-subitem {% if request.endpoint and 'thumbnail' in request.endpoint %}active{% endif %}"
+                       onclick="return BaseApp.checkGuestAccess(event, this)">
+                        <i class="ph ph-image"></i>
+                        <span>Thumbnail</span>
+                    </a>
+
+                    <a href="{{ url_for('analytics.analytics') }}"
+                       class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint %}active{% endif %}"
+                       onclick="return BaseApp.checkGuestAccess(event, this)">
+                        <i class="ph ph-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- X Group -->
+            <div class="nav-group">
+                <div class="nav-group-header {% if request.endpoint and 'x_post_editor' in request.endpoint %}expanded{% endif %}"
+                     onclick="toggleNavGroup(this)">
+                    <div class="left-content">
+                        <i class="ph ph-x-logo"></i>
+                    </div>
+                    <i class="ph ph-caret-right chevron"></i>
+                </div>
+                <div class="nav-group-items {% if request.endpoint and 'x_post_editor' in request.endpoint %}expanded{% endif %}">
+                    <a href="{{ url_for('x_post_editor.x_post_editor') }}"
+                       class="nav-subitem {% if request.endpoint and 'x_post_editor' in request.endpoint %}active{% endif %}"
+                       onclick="return BaseApp.checkGuestAccess(event, this)">
+                        <i class="ph ph-pencil-simple"></i>
+                        <span>Post Editor</span>
+                    </a>
+
+                    <a href="{{ url_for('analytics.analytics') }}"
+                       class="nav-subitem"
+                       onclick="return BaseApp.checkGuestAccess(event, this)">
+                        <i class="ph ph-chart-bar"></i>
+                        <span>Analytics</span>
+                    </a>
+                </div>
+            </div>
+
+            <a href="{{ url_for('brain_dump.brain_dump') }}"
+               class="nav-item {% if request.endpoint and 'brain_dump' in request.endpoint %}active{% endif %}"
+               onclick="return BaseApp.checkGuestAccess(event, this)">
+                <i class="ph ph-brain"></i>
+                <span>Brain Dump</span>
             </a>
-            
-            <a href="{{ url_for('match_center.index') }}" 
-               class="nav-item {% if request.endpoint == 'match_center.index' %}active{% endif %}">
-                <i class="ph ph-calendar-check"></i>
-                <span>Match Center</span>
+
+            <a href="{{ url_for('content_calendar.content_calendar') }}"
+               class="nav-item {% if request.endpoint and 'content_calendar' in request.endpoint %}active{% endif %}"
+               onclick="return BaseApp.checkGuestAccess(event, this)">
+                <i class="ph ph-calendar"></i>
+                <span>Content Calendar</span>
             </a>
-            
-            <!-- Upgrade option hidden -->
-            <!--
-            <a href="{{ url_for('payment.index') }}" 
+
+            <a href="{{ url_for('payment.index') }}"
                class="nav-item {% if request.endpoint == 'payment.index' %}active{% endif %}"
                onclick="return BaseApp.checkGuestAccess(event, this)">
                 <i class="ph ph-crown"></i>
                 <span>Upgrade</span>
             </a>
-            -->
         </nav>
         
         <!-- Admin Section -->
         <div class="admin-section" id="admin-section" style="display: none;">
-            <a href="{{ url_for('player_stats.add_players') }}" 
-               class="nav-item {% if request.endpoint == 'player_stats.add_players' %}active{% endif %}">
-                <i class="ph ph-user-plus"></i>
-                <span>Add Players</span>
-            </a>
+            <!-- Admin features can be added here -->
         </div>
         
         <!-- User Section -->
@@ -703,7 +863,7 @@
         <div class="guest-modal-content">
             <i class="ph ph-lock guest-modal-icon"></i>
             <h3 id="guest-modal-title">Login Required</h3>
-            <p id="guest-modal-message">Register to unlock all features! As a registered user, you'll get access to advanced analytics, player stats, team insights, and more!</p>
+            <p id="guest-modal-message">Register to unlock all features! As a registered user, you'll get access to AI-powered content creation tools, unlimited generations, and more!</p>
             <div class="guest-modal-buttons">
                 <a href="/auth/login" class="btn-primary">Login</a>
                 <a href="/auth/register" class="btn-secondary">Register</a>
@@ -730,7 +890,7 @@
                         event.stopPropagation();
                         
                         document.getElementById('guest-modal-title').textContent = 'Login Required';
-                        document.getElementById('guest-modal-message').textContent = 'Register to unlock all features! As a registered user, you\'ll get access to advanced analytics, player stats, team insights, and more!';
+                        document.getElementById('guest-modal-message').textContent = 'Register to unlock all features! As a registered user, you\'ll get access to AI-powered content creation tools, unlimited generations, and more!';
                         this.showGuestModal();
                         return false;
                     }
@@ -756,7 +916,7 @@
                     
                     setTimeout(() => {
                         document.getElementById('guest-modal-title').textContent = 'Login Required';
-                        document.getElementById('guest-modal-message').textContent = 'Register to unlock all features! As a registered user, you\'ll get access to advanced analytics, player stats, team insights, and more!';
+                        document.getElementById('guest-modal-message').textContent = 'Register to unlock all features! As a registered user, you\'ll get access to AI-powered content creation tools, unlimited generations, and more!';
                     }, 300);
                 },
                 
@@ -789,6 +949,37 @@
                     this.initMobileMenu();
                     this.initModal();
                     this.loadUserData();
+                    this.initNavGroups();
+                },
+
+                initNavGroups: function() {
+                    // Initialize expandable navigation groups
+                    window.toggleNavGroup = function(header) {
+                        const group = header.parentElement;
+                        const items = group.querySelector('.nav-group-items');
+
+                        header.classList.toggle('expanded');
+                        items.classList.toggle('expanded');
+
+                        // Save state to localStorage
+                        const groupName = header.querySelector('span').textContent;
+                        const isExpanded = header.classList.contains('expanded');
+                        localStorage.setItem(`nav-${groupName}-expanded`, isExpanded);
+                    };
+
+                    // Restore saved states
+                    document.querySelectorAll('.nav-group-header').forEach(header => {
+                        const groupName = header.querySelector('span').textContent;
+                        const savedState = localStorage.getItem(`nav-${groupName}-expanded`);
+
+                        // If there's no saved state and no active item, keep it collapsed
+                        // If there's an active item in the group, it's already expanded
+                        if (savedState === 'true' && !header.classList.contains('expanded')) {
+                            const items = header.parentElement.querySelector('.nav-group-items');
+                            header.classList.add('expanded');
+                            items.classList.add('expanded');
+                        }
+                    });
                 },
                 
                 // Private methods (still accessible but clearly internal)
