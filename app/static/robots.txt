@@ -1,8 +1,15 @@
 User-agent: *
 Allow: /
-Allow: /create-meme/
-Allow: /meme-3-2-1/
-Allow: /gifs/
+Allow: /dashboard/
+Allow: /video-script/
+Allow: /video-title/
+Allow: /video-tags/
+Allow: /video-description/
+Allow: /thumbnail/
+Allow: /x-post-editor/
+Allow: /brain-dump/
+Allow: /content-calendar/
+Allow: /analytics/
 Allow: /auth/register
 Allow: /auth/login
 Disallow: /auth/logout
@@ -12,4 +19,5 @@ Disallow: /admin/
 Disallow: /files/
 Disallow: /user/
 Disallow: /dashboard/settings
-Sitemap: https://meme321.com/sitemap.xml
+
+Sitemap: https://creatrics.com/sitemap.xml

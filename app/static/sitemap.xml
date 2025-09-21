@@ -1,68 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-        <loc>https://meme321.com/</loc>
-        <lastmod>2025-07-22</lastmod>
+        <loc>https://creatrics.com/</loc>
+        <lastmod>2025-09-21</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>https://meme321.com/create-meme/</loc>
-        <lastmod>2025-07-22</lastmod>
+        <loc>https://creatrics.com/dashboard/</loc>
+        <lastmod>2025-09-21</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://meme321.com/meme-3-2-1/</loc>
-        <lastmod>2025-07-22</lastmod>
+        <loc>https://creatrics.com/video-script/</loc>
+        <lastmod>2025-09-21</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://meme321.com/gifs/</loc>
-        <lastmod>2025-07-22</lastmod>
+        <loc>https://creatrics.com/video-title/</loc>
+        <lastmod>2025-09-21</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://creatrics.com/video-tags/</loc>
+        <lastmod>2025-09-21</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://creatrics.com/video-description/</loc>
+        <lastmod>2025-09-21</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://creatrics.com/thumbnail/</loc>
+        <lastmod>2025-09-21</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://creatrics.com/x-post-editor/</loc>
+        <lastmod>2025-09-21</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://creatrics.com/brain-dump/</loc>
+        <lastmod>2025-09-21</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://meme321.com/auth/register</loc>
-        <lastmod>2025-07-22</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://meme321.com/auth/login</loc>
-        <lastmod>2025-07-22</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://meme321.com/blog/</loc>
-        <lastmod>2025-07-22</lastmod>
+        <loc>https://creatrics.com/content-calendar/</loc>
+        <lastmod>2025-09-21</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://meme321.com/blog/memes-for-marketing</loc>
-        <lastmod>2025-07-22</lastmod>
+        <loc>https://creatrics.com/analytics/</loc>
+        <lastmod>2025-09-21</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://creatrics.com/auth/register</loc>
+        <lastmod>2025-09-21</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>https://meme321.com/blog/content-creators-guide</loc>
-        <lastmod>2025-07-22</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://meme321.com/blog/why-memes-go-viral</loc>
-        <lastmod>2025-07-22</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://meme321.com/blog/best-meme-formats-2025</loc>
-        <lastmod>2025-07-22</lastmod>
+        <loc>https://creatrics.com/auth/login</loc>
+        <lastmod>2025-09-21</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
