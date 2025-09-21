@@ -740,8 +740,8 @@
                         <span>Thumbnail</span>
                     </a>
 
-                    <a href="{{ url_for('analytics.analytics') }}"
-                       class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint %}active{% endif %}"
+                    <a href="{{ url_for('analytics.analytics') }}?source=youtube"
+                       class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and request.args.get('source') == 'youtube' %}active{% endif %}"
                        onclick="return BaseApp.checkGuestAccess(event, this)">
                         <i class="ph ph-chart-line"></i>
                         <span>Analytics</span>
@@ -766,8 +766,8 @@
                         <span>Post Editor</span>
                     </a>
 
-                    <a href="{{ url_for('analytics.analytics') }}"
-                       class="nav-subitem"
+                    <a href="{{ url_for('analytics.analytics') }}?source=x"
+                       class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and request.args.get('source') == 'x' %}active{% endif %}"
                        onclick="return BaseApp.checkGuestAccess(event, this)">
                         <i class="ph ph-chart-bar"></i>
                         <span>Analytics</span>
@@ -969,6 +969,8 @@
                             localStorage.setItem(`nav-${groupName}-expanded`, isExpanded);
                         }
                     };
+
+                    // No auto-collapse - keep it simple and fast
 
                     // Restore saved states
                     document.querySelectorAll('.nav-group-header').forEach(header => {
