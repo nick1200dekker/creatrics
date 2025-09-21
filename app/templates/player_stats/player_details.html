@@ -1,0 +1,2559 @@
+{% extends "base.html" %}
+
+{% block title %}Player Details - Soccer Analytics{% endblock %}
+
+{% block additional_styles %}
+<style>
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-25px, -10px) rotate(1deg); }
+}
+
+.player-hero {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.back-button {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #475569;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+    user-select: none;
+}
+
+.back-button:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    color: #475569;
+}
+
+.back-button:active {
+    transform: translateY(-1px);
+    opacity: 0.8;
+}
+
+.player-header-section {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 3rem 2rem;
+    position: relative;
+    z-index: 2;
+    border-radius: 20px;
+}
+
+.player-profile {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.player-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 900;
+    color: white;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.player-main-info {
+    flex: 1;
+}
+
+.player-name {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.player-basic-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.basic-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+}
+
+.basic-detail i {
+    font-size: 1.25rem;
+    opacity: 0.8;
+    width: 20px;
+    pointer-events: none;
+}
+
+/* SEASONAL STATISTICS SECTION */
+.seasonal-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.seasonal-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #10B981, #3B82F6);
+    pointer-events: none;
+}
+
+.season-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.season-tab {
+    background: #F8FAFC;
+    border: 2px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #64748B;
+}
+
+.season-tab.active {
+    background: #3B82F6;
+    color: white;
+    border-color: #3B82F6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.season-tab:hover:not(.active) {
+    background: #F1F5F9;
+    border-color: #CBD5E1;
+}
+
+.season-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.season-stat-card {
+    background: #FAFBFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.season-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10B981, #3B82F6);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    pointer-events: none;
+}
+
+.season-stat-card:hover::before {
+    transform: scaleX(1);
+}
+
+.season-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+    background: white;
+}
+
+.season-stat-value {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #10B981;
+    margin-bottom: 0.5rem;
+}
+
+.season-stat-label {
+    color: #64748B;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.show-all-container {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.show-all-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.show-all-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.season-meta {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.league-badge {
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.team-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569;
+}
+
+.team-logo-small {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+/* RATING CHART SECTION */
+.chart-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #8B5CF6, #EC4899);
+    pointer-events: none;
+}
+
+.chart-container {
+    width: 100%;
+    height: 300px;
+    position: relative;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title i {
+    font-size: 1.75rem;
+    color: #3B82F6;
+    pointer-events: none;
+}
+
+/* ENHANCED MATCHES SECTION */
+.matches-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.matches-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #F59E0B, #EC4899);
+    pointer-events: none;
+}
+
+.match-card {
+    background: #FAFBFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.match-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(135deg, #F59E0B, #EC4899);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+    pointer-events: none;
+}
+
+.match-card:hover::before {
+    transform: scaleY(1);
+}
+
+.match-card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    background: white;
+}
+
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.match-date-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.match-date {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.match-league {
+    color: #64748B;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.league-type-badge {
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.league-type-friendly {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8B5CF6;
+}
+
+.league-type-cup {
+    background: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
+}
+
+.league-type-domestic {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+}
+
+.match-teams {
+    flex: 2;
+    min-width: 250px;
+}
+
+.match-teams-name {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.match-score {
+    color: #64748B;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* ENHANCED MATCH STATS */
+.match-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.match-stat {
+    background: white;
+    padding: 0.75rem;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #E2E8F0;
+    transition: all 0.2s ease;
+}
+
+.match-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-goals {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    color: #047857;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.stat-assists {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    color: #1D4ED8;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.stat-minutes {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.1));
+    color: #7C3AED;
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.stat-yellow-card {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1));
+    color: #D97706;
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+.stat-red-card {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+    color: #DC2626;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.rating-badge {
+    background: white;
+    padding: 0.75rem 1rem;
+    border-radius: 20px;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    font-weight: 700;
+    text-align: center;
+    min-width: 60px;
+    font-size: 1.1rem;
+}
+
+.fdf-score-badge {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    color: #047857;
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    padding: 0.75rem 1rem;
+    border-radius: 20px;
+    font-weight: 700;
+    text-align: center;
+    min-width: 60px;
+    font-size: 1.1rem;
+    margin-left: 0.5rem;
+}
+
+.rating-excellent {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    color: #047857;
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.rating-good {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+    color: #1D4ED8;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.rating-average {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    color: #B45309;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.rating-poor {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+    color: #DC2626;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* PLAYER PLAYED MARKER - TOP LEFT POSITION */
+.player-played-marker {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+}
+
+.player-played-badge {
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* PREDICTION PANEL - SEPARATE SMALLER PANEL */
+.prediction-panel {
+    background: linear-gradient(135deg, #F1F5F9, #E2E8F0);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.75rem;
+    border: 1px solid #CBD5E1;
+    font-size: 0.85rem;
+}
+
+.prediction-header {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-bottom: 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #475569;
+    justify-content: center;
+}
+
+.prediction-header i {
+    font-size: 0.875rem;
+}
+
+.prediction-bar-container {
+    display: flex;
+    background: #E5E7EB;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 32px;
+    margin-bottom: 0.75rem;
+}
+
+.prediction-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.prediction-home {
+    background: #3B82F6;
+}
+
+.prediction-draw {
+    background: #1F2937;
+}
+
+.prediction-away {
+    background: #059669;
+}
+
+.prediction-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #64748B;
+    margin-top: 0.5rem;
+}
+
+.prediction-odds.no-predictions {
+    background: linear-gradient(135deg, #F1F5F9, #E2E8F0);
+    border: 1px dashed #CBD5E1;
+}
+
+.prediction-odds.no-predictions::before {
+    display: none;
+}
+
+.no-prediction-text {
+    text-align: center;
+    color: #64748B;
+    font-size: 0.8rem;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* TROPHIES SECTION - SIMPLIFIED */
+.trophies-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.trophies-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #F59E0B, #EF4444);
+    pointer-events: none;
+}
+
+.trophy-card {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(254, 240, 138, 0.2));
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.trophy-card::before {
+    content: '';
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.5rem;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.trophy-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.trophy-name {
+    font-weight: 700;
+    color: #92400E;
+    font-size: 1rem;
+}
+
+.trophy-details {
+    color: #A16207;
+    font-size: 0.85rem;
+}
+
+/* TEAM MATCHES SECTION - FIXED */
+.team-matches-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.team-matches-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3B82F6, #10B981);
+    pointer-events: none;
+}
+
+.team-match-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #E2E8F0;
+}
+
+.team-match-tab {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #64748B;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+}
+
+.team-match-tab.active {
+    color: #3B82F6;
+    border-bottom-color: #3B82F6;
+}
+
+.team-match-tab:hover:not(.active) {
+    color: #1E293B;
+}
+
+.team-match-card {
+    background: #FAFBFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.team-match-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    background: white;
+}
+
+.match-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.match-teams-display {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+    min-width: 280px;
+}
+
+.team-info {
+    text-align: center;
+    flex: 1;
+}
+
+.team-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: white;
+    padding: 4px;
+    border: 1px solid #E2E8F0;
+    margin: 0 auto 0.5rem;
+}
+
+.team-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1E293B;
+    margin-bottom: 0.25rem;
+}
+
+.home-away-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.vs-separator {
+    font-weight: 700;
+    color: #CBD5E1;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+    padding: 0 1rem;
+}
+
+.match-score-display {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #1E293B;
+    padding: 0.5rem 1rem;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 12px;
+    min-width: 70px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.match-details {
+    text-align: right;
+    min-width: 140px;
+    flex-shrink: 0;
+}
+
+.match-date-small {
+    font-weight: 600;
+    color: #1E293B;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.match-league-small {
+    color: #64748B;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.match-badges {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.player-played-badge {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    color: #047857;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* INJURIES & SUSPENSIONS SECTION */
+.injuries-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.injuries-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #EF4444, #F59E0B);
+    pointer-events: none;
+}
+
+.player-status-banner {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.player-status-banner.suspended {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.player-status-banner.available {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.status-icon {
+    font-size: 2rem;
+    color: #DC2626;
+}
+
+.status-icon.suspended {
+    color: #D97706;
+}
+
+.status-icon.available {
+    color: #059669;
+}
+
+.status-info h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 0.25rem;
+}
+
+.status-details {
+    color: #64748B;
+    font-size: 0.9rem;
+}
+
+.injury-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #E2E8F0;
+}
+
+.injury-tab {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #64748B;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+}
+
+.injury-tab.active {
+    color: #EF4444;
+    border-bottom-color: #EF4444;
+}
+
+.injury-tab:hover:not(.active) {
+    color: #1E293B;
+}
+
+.injury-match-card {
+    background: #FAFBFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.injury-match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.match-info h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 0.25rem;
+}
+
+.match-date-label {
+    font-size: 0.875rem;
+    color: #64748B;
+}
+
+.unavailable-count {
+    background: rgba(239, 68, 68, 0.1);
+    color: #DC2626;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.sidelined-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.sidelined-player {
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.sidelined-player:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.sidelined-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: #E2E8F0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.sidelined-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sidelined-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1E293B;
+    margin-bottom: 0.125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidelined-position {
+    font-size: 0.75rem;
+    color: #64748B;
+    margin-bottom: 0.25rem;
+}
+
+.injury-type {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.injury-type.injury {
+    background: rgba(239, 68, 68, 0.1);
+    color: #DC2626;
+}
+
+.injury-type.suspended {
+    background: rgba(245, 158, 11, 0.1);
+    color: #D97706;
+}
+
+.team-impact-summary {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.impact-title {
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.impact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.impact-stat {
+    text-align: center;
+}
+
+.impact-number {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #3B82F6;
+    margin-bottom: 0.25rem;
+}
+
+.impact-label {
+    font-size: 0.875rem;
+    color: #64748B;
+    font-weight: 600;
+}
+
+.no-injuries {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #64748B;
+}
+
+.no-injuries i {
+    font-size: 3rem;
+    color: #10B981;
+    margin-bottom: 1rem;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    color: #64748B;
+}
+
+.player-loading-spinner {
+    width: 48px;
+    height: 48px;
+    position: relative;
+    margin: 0 auto 1rem;
+}
+
+.player-loading-spinner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid #F1F5F9;
+    border-top-color: #3B82F6;
+    animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-state {
+    background: white;
+    border-radius: 16px;
+    padding: 4rem 2rem;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+}
+
+.error-state i {
+    font-size: 4rem;
+    color: #EF4444;
+    margin-bottom: 1.5rem;
+}
+
+.error-state h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 1rem;
+}
+
+.error-state p {
+    color: #64748B;
+    margin-bottom: 2rem;
+}
+
+.no-data {
+    text-align: center;
+    padding: 2rem;
+    color: #64748B;
+}
+
+@media (max-width: 768px) {
+    .player-profile {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    
+    .player-name {
+        font-size: 2rem;
+    }
+    
+    .player-basic-details {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .season-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .match-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .match-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .season-tabs {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .match-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .match-teams-display {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .match-details {
+        text-align: center;
+    }
+    
+    .match-badges {
+        justify-content: center;
+    }
+    
+    .home-away-badge {
+        margin: 0 auto;
+    }
+    
+    .sidelined-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .injury-tabs {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .player-header-section {
+        padding: 2rem 1.5rem;
+    }
+    
+    .player-avatar-large {
+        width: 80px;
+        height: 80px;
+        font-size: 2rem;
+    }
+    
+    .player-name {
+        font-size: 1.75rem;
+    }
+    
+    .season-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .match-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+        height: 200px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Back Button -->
+    <a href="#" class="back-button" id="back-button">
+        <i class="ph ph-arrow-left"></i>
+        Back to Players
+    </a>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading-state">
+        <div class="player-loading-spinner"></div>
+        <p>Loading player details...</p>
+    </div>
+
+    <!-- Player Content -->
+    <div id="playerContent" style="display: none;">
+        <!-- Player Hero Section -->
+        <div class="player-hero" style="margin-bottom: 4rem !important;">
+            <div class="player-header-section">
+                <div class="player-profile">
+                    <div class="player-avatar-large" id="playerAvatar">
+                        <i class="ph ph-user"></i>
+                    </div>
+                    <div class="player-main-info">
+                        <h1 class="player-name" id="playerName">Player Name</h1>
+                        <div class="player-basic-details">
+                            <div class="basic-detail">
+                                <i class="ph ph-flag"></i>
+                                <span id="playerNationality">Nationality</span>
+                            </div>
+                            <div class="basic-detail">
+                                <i class="ph ph-calendar"></i>
+                                <span id="playerAge">Age</span>
+                            </div>
+                            <div class="basic-detail">
+                                <i class="ph ph-user-circle"></i>
+                                <span id="playerPosition">Position</span>
+                            </div>
+                            <div class="basic-detail">
+                                <i class="ph ph-shield"></i>
+                                <span id="playerTeam">Current Team</span>
+                            </div>
+                            <div class="basic-detail">
+                                <i class="ph ph-ruler"></i>
+                                <span id="playerHeight">Height</span>
+                            </div>
+                            <div class="basic-detail">
+                                <i class="ph ph-barbell"></i>
+                                <span id="playerWeight">Weight</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seasonal Statistics -->
+        <div class="seasonal-section">
+            <h2 class="section-title">
+                <i class="ph ph-chart-bar"></i>
+                Seasonal Performance
+            </h2>
+            <div class="season-tabs" id="seasonTabs">
+                <!-- Season tabs will be populated by JavaScript -->
+            </div>
+            <div class="season-stats-grid" id="seasonalStats">
+                <!-- Seasonal stats will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Rating Trend Chart -->
+        <div class="chart-section">
+            <h2 class="section-title">
+                <i class="ph ph-trend-up"></i>
+                Rating Trend (Last 4 Weeks)
+            </h2>
+            <div class="chart-container">
+                <canvas id="ratingChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Matches (Last 4 Weeks) -->
+        <div class="matches-section">
+            <h2 class="section-title">
+                <i class="ph ph-soccer-ball"></i>
+                Recent Matches (Last 4 Weeks)
+            </h2>
+            <div id="recentMatches">
+                <!-- Matches will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Recent Trophies (Last 2 Years) -->
+        <div class="trophies-section" id="trophiesSection" style="display: none;">
+            <h2 class="section-title">
+                Recent Trophies (Last 2 Years)
+            </h2>
+            <div id="trophiesList">
+                <!-- Trophies will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Team Matches Section -->
+        <div class="team-matches-section" id="teamMatchesSection" style="display: none;">
+            <h2 class="section-title">
+                <i class="ph ph-shield-checkered"></i>
+                <span id="teamMatchesTitle">Team Matches</span>
+            </h2>
+            <div class="team-match-tabs" id="teamMatchTabs">
+                <!-- Tabs will be dynamically generated based on available data -->
+            </div>
+            <div id="teamMatchesContent">
+                <!-- Team matches will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Team Injuries & Suspensions -->
+        <div class="injuries-section" id="injuriesSection" style="display: none;">
+            <h2 class="section-title">
+                <i class="ph ph-first-aid-kit"></i>
+                Team Injuries & Suspensions
+            </h2>
+            
+            <!-- Player Status Banner (if injured/suspended) -->
+            <div id="playerStatusBanner" style="display: none;">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            
+            <!-- Injury Tabs -->
+            <div class="injury-tabs" id="injuryTabs">
+                <div class="injury-tab active" onclick="showInjuryTab('next')">
+                    Next Match
+                </div>
+                <div class="injury-tab" onclick="showInjuryTab('last')">
+                    Last Match
+                </div>
+            </div>
+            
+            <!-- Injury Content -->
+            <div id="injuryContent">
+                <div class="loading-state">
+                    <div class="player-loading-spinner"></div>
+                    <p>Loading team injuries...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+let currentPlayer = null;
+let ratingChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Back button handling
+    const backButton = document.getElementById('back-button');
+    if (backButton) {
+        backButton.href = 'javascript:void(0)';
+        
+        backButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            this.style.transform = 'translateY(-1px)';
+            this.style.opacity = '0.8';
+            
+            setTimeout(() => {
+                window.location.href = '/player-stats/';
+            }, 100);
+        });
+    }
+    
+    // Get player ID from URL path
+    const pathParts = window.location.pathname.split('/');
+    const playerId = pathParts[pathParts.length - 1];
+    
+    if (!playerId || playerId === 'player') {
+        window.location.href = '/player-stats';
+        return;
+    }
+    
+    loadPlayerDetails(playerId);
+});
+
+async function loadPlayerDetails(playerId) {
+    try {
+        const response = await fetch(`/player-stats/api/player-details/${playerId}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            showError(data.error);
+            return;
+        }
+        
+        currentPlayer = data.player;
+        displayPlayerDetails(currentPlayer);
+        
+    } catch (error) {
+        console.error('Error loading player details:', error);
+        showError('Failed to load player details');
+    }
+}
+
+function displayPlayerDetails(player) {
+    // Hide loading, show content
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('playerContent').style.display = 'block';
+    
+    // Store player position globally for position-based KPIs
+    window.currentPlayerPosition = player.position?.name || player.detailed_position?.name || 'Unknown';
+    
+    // Player basic info - show full name on details page
+    document.getElementById('playerName').textContent = player.name || 'Unknown Player';
+    document.getElementById('playerNationality').textContent = player.nationality || 'Unknown';
+    document.getElementById('playerAge').textContent = player.age ? `${player.age} years old` : 'Unknown';
+    document.getElementById('playerPosition').textContent = window.currentPlayerPosition;
+    document.getElementById('playerTeam').textContent = player.current_team?.name || 'Free Agent';
+    document.getElementById('playerHeight').textContent = player.height ? `${player.height} cm` : 'Unknown';
+    document.getElementById('playerWeight').textContent = player.weight ? `${player.weight} kg` : 'Unknown';
+    
+    // Player avatar with photo support
+    const avatar = document.getElementById('playerAvatar');
+    if (player.image_path) {
+        avatar.innerHTML = `<img src="${player.image_path}" alt="${player.name}" style="width: 100%; height: 100%; border-radius: 20px; object-fit: cover;">`;
+    } else {
+        const initials = player.name ? player.name.split(' ').map(n => n[0]).join('').substring(0, 2) : '??';
+        avatar.textContent = initials;
+    }
+    
+    // Display seasonal statistics
+    displaySeasonalStats(player.seasonal_stats);
+    
+    // Display rating chart
+    displayRatingChart(player.recent_matches);
+    
+    // Display recent matches
+    displayRecentMatches(player.recent_matches, player.match_level_stats);
+    
+    // Display recent trophies if any
+    displayRecentTrophies(player.recent_trophies);
+    
+    // Display team injuries if available
+    if (player.team_injuries) {
+        displayTeamInjuries(player.team_injuries);
+    }
+    
+    // Display team matches if available
+    displayTeamMatches(player.team_matches, player.recent_matches);
+}
+
+function displaySeasonalStats(seasonalStats) {
+    const tabsContainer = document.getElementById('seasonTabs');
+    const statsContainer = document.getElementById('seasonalStats');
+    
+    if (!seasonalStats || seasonalStats.length === 0) {
+        tabsContainer.innerHTML = '<div class="no-data">No seasonal statistics available</div>';
+        statsContainer.innerHTML = '';
+        return;
+    }
+    
+    // Create season tabs
+    tabsContainer.innerHTML = seasonalStats.map((season, index) => `
+        <button class="season-tab ${index === 0 ? 'active' : ''}" onclick="showSeasonStats(${index})">
+            ${season.league_name} ${season.season_name}
+        </button>
+    `).join('');
+    
+    // Show first season by default
+    showSeasonStats(0);
+}
+
+function showSeasonStats(seasonIndex) {
+    const seasonalStats = currentPlayer.seasonal_stats;
+    const statsContainer = document.getElementById('seasonalStats');
+    const season = seasonalStats[seasonIndex];
+    
+    // Update active tab
+    document.querySelectorAll('.season-tab').forEach((tab, index) => {
+        tab.classList.toggle('active', index === seasonIndex);
+    });
+    
+    // Determine position type
+    const position = currentPlayer.position?.name?.toLowerCase() || '';
+    const isDefender = position.includes('back') || position.includes('defender');
+    const isMidfielder = position.includes('midfield');
+    const isForward = position.includes('forward') || position.includes('striker') || position.includes('winger');
+    const isGoalkeeper = position.includes('keeper');
+    
+    // Build stats array based on ALL available data from the API
+    let stats = [];
+    
+    // If we have the all_stats dictionary, use it to show ALL available stats
+    if (season.all_stats) {
+        // Define stat categories with proper labels
+        const statCategories = {
+            basic: {
+                'Appearances': { icon: 'ph-calendar-check', label: 'Appearances' },
+                'Minutes Played': { icon: 'ph-clock', label: 'Minutes Played' },
+                'Rating': { icon: 'ph-star', label: 'Rating' },
+                'Lineups': { icon: 'ph-users', label: 'Starting XI' },
+                'Bench': { icon: 'ph-chair', label: 'Bench' }
+            },
+            offensive: {
+                'Goals': { icon: 'ph-soccer-ball', label: 'Goals' },
+                'Assists': { icon: 'ph-handshake', label: 'Assists' },
+                'Shots Total': { icon: 'ph-target', label: 'Total Shots' },
+                'Shots On Target': { icon: 'ph-crosshair', label: 'Shots on Target' },
+                'Key Passes': { icon: 'ph-key', label: 'Key Passes' }
+            },
+            defensive: {
+                'Tackles': { icon: 'ph-shield', label: 'Tackles' },
+                'Interceptions': { icon: 'ph-prohibit', label: 'Interceptions' },
+                'Clearances': { icon: 'ph-arrow-up', label: 'Clearances' },
+                'Blocks': { icon: 'ph-stop', label: 'Blocks' },
+                'Clean Sheets': { icon: 'ph-shield-check', label: 'Clean Sheets' }
+            },
+            passing: {
+                'Passes': { icon: 'ph-arrow-right', label: 'Passes' },
+                'Pass Accuracy': { icon: 'ph-percent', label: 'Pass Accuracy' },
+                'Crosses': { icon: 'ph-arrows-horizontal', label: 'Crosses' },
+                'Through Balls': { icon: 'ph-arrows-out-line-vertical', label: 'Through Balls' }
+            },
+            discipline: {
+                'Yellowcards': { icon: 'ph-warning', label: 'Yellow Cards' },
+                'Redcards': { icon: 'ph-warning-circle', label: 'Red Cards' },
+                'Fouls': { icon: 'ph-exclamation', label: 'Fouls' },
+                'Fouls Drawn': { icon: 'ph-user-focus', label: 'Fouls Drawn' }
+            },
+            goalkeeper: {
+                'Saves': { icon: 'ph-hand', label: 'Saves' },
+                'Clean Sheets': { icon: 'ph-shield-check', label: 'Clean Sheets' },
+                'Goals Conceded': { icon: 'ph-x-circle', label: 'Goals Conceded' },
+                'Penalties Saved': { icon: 'ph-target', label: 'Penalties Saved' }
+            },
+            team: {
+                'Team Wins': { icon: 'ph-trophy', label: 'Team Wins' },
+                'Team Draws': { icon: 'ph-equals', label: 'Team Draws' },
+                'Team Lost': { icon: 'ph-x-circle', label: 'Team Losses' }
+            }
+        };
+        
+        // Collect all stats from the appropriate categories
+        const categoriesToShow = ['basic'];
+        
+        if (isGoalkeeper) {
+            categoriesToShow.push('goalkeeper', 'team', 'discipline');
+        } else {
+            categoriesToShow.push('offensive');
+            if (isDefender || isMidfielder) {
+                categoriesToShow.push('defensive');
+            }
+            categoriesToShow.push('passing', 'discipline', 'team');
+        }
+        
+        // Add stats from selected categories
+        for (const category of categoriesToShow) {
+            if (statCategories[category]) {
+                for (const [statName, config] of Object.entries(statCategories[category])) {
+                    if (season.all_stats.hasOwnProperty(statName)) {
+                        const value = season.all_stats[statName];
+                        if (value !== null && value !== undefined) {
+                            // Format value appropriately
+                            let displayValue = value;
+                            if (statName === 'Rating' && typeof value === 'number') {
+                                displayValue = value.toFixed(2);
+                            } else if (statName === 'Pass Accuracy' && typeof value === 'number') {
+                                displayValue = `${value}%`;
+                            }
+                            
+                            stats.push({
+                                label: config.label,
+                                value: displayValue,
+                                icon: config.icon,
+                                priority: category === 'basic' ? 1 : 2
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Add any other stats not in our categories (but filter out duplicates and sub-values)
+        const knownStats = new Set();
+        for (const category of Object.values(statCategories)) {
+            for (const statName of Object.keys(category)) {
+                knownStats.add(statName);
+            }
+        }
+        
+        for (const [statName, value] of Object.entries(season.all_stats)) {
+            if (!knownStats.has(statName) && value !== null && value !== undefined && value !== 0) {
+                // Skip sub-values and duplicates
+                if (!statName.includes('_home') && !statName.includes('_away') && 
+                    !statName.includes('_goals') && !statName.includes('_penalties')) {
+                    stats.push({
+                        label: statName.replace(/_/g, ' '),
+                        value: value,
+                        icon: 'ph-chart-bar',
+                        priority: 3
+                    });
+                }
+            }
+        }
+    }
+    
+    // Always check for rating in all_stats if not already added
+    const hasRatingAlready = stats.some(stat => stat.label === 'Rating');
+    if (!hasRatingAlready && season.all_stats && season.all_stats.Rating !== undefined && season.all_stats.Rating !== null) {
+        stats.push({ 
+            label: 'Rating', 
+            value: season.all_stats.Rating.toFixed(2), 
+            icon: 'ph-star', 
+            priority: 1 
+        });
+    }
+    
+    // Fallback to manually mapped stats if all_stats not available
+    if (!season.all_stats) {
+        if (season.appearances !== undefined) stats.push({ label: 'Appearances', value: season.appearances || 0, icon: 'ph-calendar-check', priority: 1 });
+        if (season.minutes_played !== undefined) stats.push({ label: 'Minutes Played', value: season.minutes_played || 0, icon: 'ph-clock', priority: 1 });
+        if (season.rating !== undefined && season.rating !== null) stats.push({ label: 'Rating', value: season.rating.toFixed(2), icon: 'ph-star', priority: 1 });
+    }
+    
+    // Sort stats by priority and filter out zeros (except key stats)
+    const alwaysShowStats = ['Appearances', 'Minutes Played', 'Rating'];
+    
+    stats.sort((a, b) => (a.priority || 3) - (b.priority || 3));
+    
+    // Position-based key stats
+    const getKeyStatsByPosition = (playerPosition) => {
+        const position = playerPosition?.toLowerCase() || '';
+        
+        // Base stats for all positions
+        const baseStats = ['Appearances', 'Minutes Played', 'Rating'];
+        
+        if (position.includes('goalkeeper') || position.includes('gk')) {
+            // GK: Focus on saves, cleansheets, goals conceded
+            return [...baseStats, 'Saves', 'Cleansheets', 'Goals Conceded', 'Team Wins'];
+        } else if (position.includes('back') || position.includes('centre back') || position.includes('sweeper')) {
+            // Defense: Focus on defensive actions
+            return [...baseStats, 'Tackles', 'Interceptions', 'Clearances', 'Cleansheets', 'Team Wins'];
+        } else if (position.includes('midfielder') || position.includes('midfield')) {
+            // Midfield: Focus on passing and creativity
+            return [...baseStats, 'Assists', 'Key Passes', 'Accurate Passes', 'Team Wins'];
+        } else {
+            // Attack (Wingers, Forwards, Strikers): Focus on goals and assists
+            return [...baseStats, 'Goals', 'Assists', 'Shots On Target', 'Team Wins'];
+        }
+    };
+    
+    const keyStats = getKeyStatsByPosition(window.currentPlayerPosition);
+    
+    // Separate key stats from all stats
+    const allRelevantStats = stats.filter(stat => 
+        (stat.value !== 0 && 
+        stat.value !== '0' && 
+        stat.value !== 'N/A' && 
+        stat.value !== null && 
+        stat.value !== undefined) || 
+        alwaysShowStats.includes(stat.label)
+    );
+    
+    const keyStatsFiltered = allRelevantStats.filter(stat => keyStats.includes(stat.label));
+    const otherStats = allRelevantStats.filter(stat => !keyStats.includes(stat.label));
+    
+    // Show key stats by default
+    const relevantStats = keyStatsFiltered;
+    
+    const seasonId = season.season_name.replace(/[^a-zA-Z0-9]/g, '');
+    
+    statsContainer.innerHTML = `
+        <div class="season-card" data-season="${season.season_name}">
+            <div class="season-stats-grid" id="keyStats_${seasonId}">
+                ${relevantStats.map(stat => `
+                    <div class="season-stat-card">
+                        <div class="season-stat-value">${stat.value}</div>
+                        <div class="season-stat-label">
+                            <i class="${stat.icon}"></i>
+                            ${stat.label}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            ${otherStats.length > 0 ? `
+                <div class="season-stats-grid" id="allStats_${seasonId}" style="display: none;">
+                    ${allRelevantStats.map(stat => `
+                        <div class="season-stat-card">
+                            <div class="season-stat-value">${stat.value}</div>
+                            <div class="season-stat-label">
+                                <i class="${stat.icon}"></i>
+                                ${stat.label}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="show-all-container">
+                    <button class="show-all-btn" onclick="toggleAllStats('${seasonId}')">
+                        <i class="ph ph-eye"></i>
+                        Show All Stats (${allRelevantStats.length})
+                    </button>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function toggleAllStats(seasonId) {
+    const keyStatsDiv = document.getElementById(`keyStats_${seasonId}`);
+    const allStatsDiv = document.getElementById(`allStats_${seasonId}`);
+    const button = document.querySelector(`button[onclick="toggleAllStats('${seasonId}')"]`);
+    
+    if (allStatsDiv.style.display === 'none') {
+        // Show all stats
+        keyStatsDiv.style.display = 'none';
+        allStatsDiv.style.display = 'grid';
+        button.innerHTML = '<i class="ph ph-eye-slash"></i> Show Key Stats';
+    } else {
+        // Show key stats
+        keyStatsDiv.style.display = 'grid';
+        allStatsDiv.style.display = 'none';
+        const totalCount = allStatsDiv.querySelectorAll('.season-stat-card').length;
+        button.innerHTML = `<i class="ph ph-eye"></i> Show All Stats (${totalCount})`;
+    }
+}
+
+function displayRatingChart(recentMatches) {
+    const chartContainer = document.querySelector('#ratingChart');
+    
+    // Always destroy existing chart
+    if (ratingChart) {
+        ratingChart.destroy();
+    }
+    
+    // Generate consistent 4-week date range (28 days ago to today)
+    const today = new Date();
+    const fourWeeksAgo = new Date(today);
+    fourWeeksAgo.setDate(today.getDate() - 28);
+    
+    // Create date labels for every 4 days over 4 weeks
+    const dateLabels = [];
+    const labelDates = [];
+    
+    for (let i = 0; i <= 28; i += 4) {
+        const labelDate = new Date(fourWeeksAgo);
+        labelDate.setDate(fourWeeksAgo.getDate() + i);
+        
+        dateLabels.push(labelDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+        }));
+        labelDates.push(new Date(labelDate));
+    }
+    
+    // Process match data if available
+    let chartData = new Array(dateLabels.length).fill(null);
+    let hasData = false;
+    
+    if (recentMatches && recentMatches.rating_trend && recentMatches.rating_trend.length > 0) {
+        // Map actual match data to our 4-week timeline
+        recentMatches.rating_trend.forEach(match => {
+            if (match.date && match.rating) {
+                const matchDate = new Date(match.date);
+                
+                // Check if match is within our 4-week range
+                if (matchDate >= fourWeeksAgo && matchDate <= today) {
+                    // Find closest label date
+                    let closestIndex = 0;
+                    let closestDiff = Math.abs(matchDate - labelDates[0]);
+                    
+                    for (let i = 1; i < labelDates.length; i++) {
+                        const diff = Math.abs(matchDate - labelDates[i]);
+                        if (diff < closestDiff) {
+                            closestDiff = diff;
+                            closestIndex = i;
+                        }
+                    }
+                    
+                    // Only map if within 3 days of label date
+                    if (closestDiff <= 3 * 24 * 60 * 60 * 1000) {
+                        chartData[closestIndex] = match.rating;
+                        hasData = true;
+                    }
+                }
+            }
+        });
+    }
+    
+    const ctx = chartContainer.getContext('2d');
+    ratingChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dateLabels,
+            datasets: [{
+                label: 'Match Rating',
+                data: chartData,
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.1,
+                pointBackgroundColor: function(context) {
+                    return context.parsed.y !== null ? '#3B82F6' : 'transparent';
+                },
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: function(context) {
+                    return context.parsed.y !== null ? 6 : 0;
+                },
+                pointHoverRadius: 8,
+                spanGaps: true // Connect points even when matches are missing
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#3B82F6',
+                    borderWidth: 1,
+                    filter: function(tooltipItem) {
+                        return tooltipItem.parsed.y !== null;
+                    },
+                    callbacks: {
+                        title: function(context) {
+                            return `${context[0].label}`;
+                        },
+                        label: function(context) {
+                            if (context.parsed.y === null) return '';
+                            return `Rating: ${context.parsed.y.toFixed(1)}`;
+                        },
+                        afterLabel: function(context) {
+                            return hasData && context.parsed.y === null ? '' : 'Match played';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 5.0,
+                    max: 10.0,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        color: '#64748B',
+                        stepSize: 0.5,
+                        callback: function(value) {
+                            return value.toFixed(1);
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Rating',
+                        color: '#64748B'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        color: '#64748B',
+                        maxTicksLimit: 8
+                    },
+                    title: {
+                        display: true,
+                        text: 'Last 4 Weeks',
+                        color: '#64748B'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Add explanatory text if no data
+    if (!hasData) {
+        const existingNoData = chartContainer.parentElement.querySelector('.chart-no-data');
+        if (!existingNoData) {
+            const noDataDiv = document.createElement('div');
+            noDataDiv.className = 'chart-no-data';
+            noDataDiv.innerHTML = '<p style="text-align: center; color: #64748B; margin-top: 1rem; font-size: 0.9rem;">No matches with ratings in the last 4 weeks</p>';
+            chartContainer.parentElement.appendChild(noDataDiv);
+        }
+    } else {
+        // Remove no data message if it exists
+        const existingNoData = chartContainer.parentElement.querySelector('.chart-no-data');
+        if (existingNoData) {
+            existingNoData.remove();
+        }
+    }
+}
+
+function displayRecentMatches(recentMatches, matchLevelStats) {
+    const container = document.getElementById('recentMatches');
+    
+    if (!recentMatches || !recentMatches.matches || recentMatches.matches.length === 0) {
+        container.innerHTML = '<div class="no-data">No recent match data available (last 4 weeks)</div>';
+        return;
+    }
+    
+    const matches = recentMatches.matches;
+    
+    // Create a lookup map for FDF scores by fixture_id
+    const fdfScoreMap = {};
+    if (matchLevelStats && matchLevelStats.matches) {
+        matchLevelStats.matches.forEach(match => {
+            if (match.fixture_id && match.fdf_score) {
+                fdfScoreMap[match.fixture_id] = match.fdf_score;
+            }
+        });
+    }
+    
+    // Determine player position type for appropriate stats display
+    const position = currentPlayer.position?.name?.toLowerCase() || '';
+    const isDefender = position.includes('back') || position.includes('defender');
+    const isMidfielder = position.includes('midfield');
+    const isGoalkeeper = position.includes('keeper');
+    
+    container.innerHTML = matches.map(match => {
+        // Build stats based on position
+        let mainStats = '';
+        
+        if (isGoalkeeper) {
+            mainStats = `
+                <div class="match-stat stat-saves">
+                    <i class="ph ph-hand"></i>
+                    <strong>${match.saves || 0}</strong><br>Saves
+                </div>
+                <div class="match-stat stat-goals-conceded">
+                    <i class="ph ph-x-circle"></i>
+                    <strong>${match.goals_conceded || 0}</strong><br>Conceded
+                </div>
+                <div class="match-stat stat-clean-sheet">
+                    <i class="ph ph-shield-check"></i>
+                    <strong>${(match.goals_conceded === 0 || match.clean_sheet === 1) ? 'Yes' : 'No'}</strong><br>Clean Sheet
+                </div>`;
+        } else if (isDefender) {
+            mainStats = `
+                <div class="match-stat stat-tackles">
+                    <i class="ph ph-shield"></i>
+                    <strong>${match.tackles || 0}</strong><br>Tackles
+                </div>
+                <div class="match-stat stat-interceptions">
+                    <i class="ph ph-prohibit"></i>
+                    <strong>${match.interceptions || 0}</strong><br>Intercepts
+                </div>
+                <div class="match-stat stat-clearances">
+                    <i class="ph ph-arrow-up"></i>
+                    <strong>${match.clearances || 0}</strong><br>Clearances
+                </div>`;
+        } else {
+            // Attackers and midfielders show offensive stats
+            mainStats = `
+                <div class="match-stat stat-goals">
+                    <i class="ph ph-soccer-ball"></i>
+                    <strong>${match.goals || 0}</strong><br>Goals
+                </div>
+                <div class="match-stat stat-assists">
+                    <i class="ph ph-handshake"></i>
+                    <strong>${match.assists || 0}</strong><br>Assists
+                </div>
+                <div class="match-stat stat-shots">
+                    <i class="ph ph-target"></i>
+                    <strong>${match.shots || 0}</strong><br>Shots
+                </div>`;
+        }
+        
+        return `
+        <div class="match-card">
+            <div class="match-header">
+                <div class="match-date-info">
+                    <div class="match-date">${formatDate(match.date)}</div>
+                    <div class="match-league">
+                        ${match.league || 'Unknown League'}
+                        ${getLeagueTypeBadge(match.league_type)}
+                    </div>
+                </div>
+                <div class="match-teams">
+                    <div class="match-teams-name">${match.teams ? match.teams.join(' vs ') : 'Unknown Teams'}</div>
+                    <div class="match-score">Score: ${match.score || 'N/A'}</div>
+                </div>
+                <div class="rating-badge ${getRatingClass(match.rating)}">
+                    ${match.rating ? parseFloat(match.rating).toFixed(1) : 'N/A'}
+                </div>
+                <div class="fdf-score-badge">
+                    ${fdfScoreMap[match.fixture_id] ? `ETP: ${Math.round(fdfScoreMap[match.fixture_id].total)}` : 'ETP: N/A'}
+                </div>
+            </div>
+            <div class="match-stats">
+                ${mainStats}
+                <div class="match-stat stat-minutes">
+                    <i class="ph ph-clock"></i>
+                    <strong>${match.minutes_played || 0}</strong><br>Minutes
+                </div>
+                ${(match.yellow_cards || match.red_cards) ? `
+                    ${match.yellow_cards ? `
+                    <div class="match-stat stat-yellow-card">
+                        <i class="ph ph-warning"></i>
+                        <strong>${match.yellow_cards}</strong><br>Yellow
+                    </div>
+                    ` : ''}
+                    ${match.red_cards ? `
+                    <div class="match-stat stat-red-card">
+                        <i class="ph ph-warning-circle"></i>
+                        <strong>${match.red_cards}</strong><br>Red
+                    </div>
+                    ` : ''}
+                ` : ''}
+                ${match.passes && !isGoalkeeper ? `
+                <div class="match-stat">
+                    <i class="ph ph-arrow-right"></i>
+                    <strong>${match.passes}</strong><br>Passes
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function displayRecentTrophies(recentTrophies) {
+    const container = document.getElementById('trophiesList');
+    const section = document.getElementById('trophiesSection');
+    
+    if (!recentTrophies || recentTrophies.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    
+    section.style.display = 'block';
+    
+    container.innerHTML = recentTrophies.map(trophy => `
+        <div class="trophy-card">
+            <div class="trophy-info">
+                <div class="trophy-main">
+                    <div class="trophy-name">${trophy.trophy_name || 'Trophy'}</div>
+                    <div class="trophy-details">${trophy.league_name || 'Unknown League'} • ${trophy.season_name || 'Unknown Season'}</div>
+                </div>
+                <div class="trophy-team">
+                    <strong>${trophy.team_name || 'Unknown Team'}</strong>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function displayTeamMatches(teamMatches, recentMatches) {
+    const section = document.getElementById('teamMatchesSection');
+    
+    if (!teamMatches || ((!teamMatches.upcoming_matches && !teamMatches.upcoming_detailed) && !teamMatches.recent_matches)) {
+        section.style.display = 'none';
+        return;
+    }
+    
+    section.style.display = 'block';
+    
+    // Update section title with team name
+    if (teamMatches.team_name) {
+        document.getElementById('teamMatchesTitle').textContent = `${teamMatches.team_name} Matches`;
+    }
+    
+    // Generate tabs based on available data
+    const tabsContainer = document.getElementById('teamMatchTabs');
+    let tabsHTML = '';
+    
+    const upcomingMatches = teamMatches.upcoming_detailed || teamMatches.upcoming_matches;
+    if (upcomingMatches && upcomingMatches.length > 0) {
+        tabsHTML += '<div class="team-match-tab active" onclick="showTeamMatches(\'upcoming\')">Upcoming Matches</div>';
+    }
+    
+    if (teamMatches.recent_matches && teamMatches.recent_matches.length > 0) {
+        tabsHTML += '<div class="team-match-tab" onclick="showTeamMatches(\'recent\')">Recent Matches</div>';
+    }
+    
+    // If only one type of matches is available, hide the tabs
+    const hasUpcoming = upcomingMatches && upcomingMatches.length > 0;
+    const hasRecent = teamMatches.recent_matches && teamMatches.recent_matches.length > 0;
+    if ((hasUpcoming && !hasRecent) || (hasRecent && !hasUpcoming)) {
+        tabsContainer.style.display = 'none';
+    } else {
+        tabsContainer.style.display = 'flex';
+    }
+    
+    tabsContainer.innerHTML = tabsHTML;
+    
+    // Get all player match IDs from recent matches
+    let playerMatchIds = [];
+    if (recentMatches && recentMatches.all_match_ids) {
+        playerMatchIds = recentMatches.all_match_ids;
+    }
+    
+    // Update team matches with player participation
+    if (teamMatches.recent_matches) {
+        teamMatches.recent_matches.forEach(match => {
+            match.player_played = playerMatchIds.includes(match.fixture_id);
+        });
+    }
+    
+    // Store team matches data
+    window.teamMatchesData = teamMatches;
+    
+    // Show available matches
+    if (upcomingMatches && upcomingMatches.length > 0) {
+        showTeamMatches('upcoming');
+    } else if (teamMatches.recent_matches && teamMatches.recent_matches.length > 0) {
+        showTeamMatches('recent');
+    }
+}
+
+function showTeamMatches(type) {
+    const container = document.getElementById('teamMatchesContent');
+    const teamMatches = window.teamMatchesData;
+    
+    if (!teamMatches) return;
+    
+    // Update active tab
+    document.querySelectorAll('.team-match-tab').forEach(tab => {
+        if (tab.textContent.toLowerCase().includes(type)) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+    
+    let matches = [];
+    if (type === 'upcoming') {
+        matches = teamMatches.upcoming_detailed || teamMatches.upcoming_matches || [];
+    } else {
+        matches = teamMatches.recent_matches || [];
+    }
+    
+    if (matches.length === 0) {
+        container.innerHTML = `<div class="no-data">No ${type} matches available</div>`;
+        return;
+    }
+    
+    container.innerHTML = matches.map(match => {
+        const isRecent = type === 'recent';
+        const scoreDisplay = isRecent && match.score ? `<div class="match-score-display">${match.score}</div>` : '';
+        const playerPlayedBadge = isRecent && match.player_played ? '<span class="player-played-badge"><i class="ph ph-check-circle"></i> Player Played</span>' : '';
+        
+        // Generate prediction panel for upcoming matches (only if predictions exist)
+        let predictionDisplay = '';
+        if (!isRecent && match.predictions && (match.predictions.home_win !== undefined || (Array.isArray(match.predictions) && match.predictions.length > 0))) {
+            predictionDisplay = generatePredictionPanel(match.predictions);
+        }
+        
+        return `
+        <div class="team-match-card">
+            ${playerPlayedBadge ? `<div class="player-played-marker">${playerPlayedBadge}</div>` : ''}
+            <div class="match-content">
+                <div class="match-teams-display">
+                    <div class="team-info">
+                        ${match.home_team_image ? `<img src="${match.home_team_image}" class="team-logo" alt="${match.home_team}">` : ''}
+                        <div class="team-name">${match.home_team}</div>
+                        ${match.is_home === true ? '<span class="home-away-badge"><i class="ph ph-house"></i> Home</span>' : ''}
+                    </div>
+                    <div class="vs-separator">
+                        ${scoreDisplay || 'VS'}
+                    </div>
+                    <div class="team-info">
+                        ${match.away_team_image ? `<img src="${match.away_team_image}" class="team-logo" alt="${match.away_team}">` : ''}
+                        <div class="team-name">${match.away_team}</div>
+                        ${match.is_home === false ? '<span class="home-away-badge"><i class="ph ph-airplane"></i> Away</span>' : ''}
+                    </div>
+                </div>
+                <div class="match-details">
+                    <div class="match-date-small">${formatDate(match.date)}</div>
+                    <div class="match-league-small">${match.league}</div>
+                    <div class="match-badges">
+                        ${getLeagueTypeBadge(match.league_type)}
+                    </div>
+                </div>
+            </div>
+            ${predictionDisplay}
+        </div>
+        `;
+    }).join('');
+}
+
+function generatePredictionPanel(predictions) {
+    if (!predictions) return '';
+    
+    // Handle new prediction format from updated service
+    let home, draw, away;
+    
+    if (predictions.home_win !== undefined) {
+        // New format from your updated service
+        home = predictions.home_win;
+        draw = predictions.draw;
+        away = predictions.away_win;
+    } else if (Array.isArray(predictions) && predictions.length > 0) {
+        // Old format - find fulltime result probability
+        const fullTimeResult = predictions.find(p => 
+            p.type && (p.type.developer_name === 'FULLTIME_RESULT_PROBABILITY' || p.type.code === 'fulltime-result-probability')
+        );
+        
+        if (!fullTimeResult || !fullTimeResult.predictions) return '';
+        
+        home = fullTimeResult.predictions.home;
+        draw = fullTimeResult.predictions.draw;
+        away = fullTimeResult.predictions.away;
+    } else {
+        return '';
+    }
+    
+    // Ensure we have valid numbers
+    if (home === undefined || draw === undefined || away === undefined) return '';
+    if (home === 0 && draw === 0 && away === 0) return '';
+    
+    return `
+        <div class="prediction-panel">
+            <div class="prediction-header">
+                <i class="ph ph-target"></i>
+                <span>Match Prediction</span>
+            </div>
+            <div class="prediction-bar-container">
+                <div class="prediction-segment prediction-home" style="width: ${home}%">
+                    ${home.toFixed(1)}%
+                </div>
+                <div class="prediction-segment prediction-draw" style="width: ${draw}%">
+                    ${draw.toFixed(1)}%
+                </div>
+                <div class="prediction-segment prediction-away" style="width: ${away}%">
+                    ${away.toFixed(1)}%
+                </div>
+            </div>
+            <div class="prediction-labels">
+                <span>Home ${home.toFixed(1)}%</span>
+                <span>Draw ${draw.toFixed(1)}%</span>
+                <span>Away ${away.toFixed(1)}%</span>
+            </div>
+        </div>
+    `;
+}
+
+function displayTeamInjuries(injuriesData) {
+    const section = document.getElementById('injuriesSection');
+    
+    if (!injuriesData) {
+        section.style.display = 'none';
+        return;
+    }
+    
+    section.style.display = 'block';
+    
+    // Show player status banner if injured/suspended
+    if (injuriesData.player_status !== 'available') {
+        const banner = document.getElementById('playerStatusBanner');
+        const statusClass = injuriesData.player_status === 'suspended' ? 'suspended' : 'injured';
+        const icon = injuriesData.player_status === 'suspended' ? 'ph-warning' : 'ph-first-aid';
+        
+        banner.innerHTML = `
+            <div class="player-status-banner ${statusClass}">
+                <i class="ph ${icon} status-icon ${statusClass}"></i>
+                <div class="status-info">
+                    <h3>${currentPlayer.name} is ${injuriesData.player_status}</h3>
+                    <div class="status-details">
+                        ${injuriesData.player_injury_details ? `
+                            Type: ${injuriesData.player_injury_details.type}<br>
+                            ${injuriesData.player_injury_details.end_date ? 
+                                `Expected return: ${formatDate(injuriesData.player_injury_details.end_date)}` : 
+                                `Games missed: ${injuriesData.player_injury_details.games_missed || 'Unknown'}`
+                            }
+                        ` : 'Details unavailable'}
+                    </div>
+                </div>
+            </div>
+        `;
+        banner.style.display = 'block';
+    }
+    
+    // Store injuries data globally
+    window.teamInjuriesData = injuriesData;
+    
+    // Show appropriate tab - prioritize next match for fantasy planning
+    if (injuriesData.next_match) {
+        showInjuryTab('next');
+    } else if (injuriesData.last_match) {
+        showInjuryTab('last');
+    }
+}
+
+function showInjuryTab(type) {
+    const content = document.getElementById('injuryContent');
+    const injuriesData = window.teamInjuriesData;
+    
+    if (!injuriesData) return;
+    
+    // Update active tab
+    document.querySelectorAll('.injury-tab').forEach(tab => {
+        if (tab.textContent.toLowerCase().includes(type)) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+    
+    // Get match data
+    const matchData = type === 'last' ? injuriesData.last_match : injuriesData.next_match;
+    
+    if (!matchData) {
+        content.innerHTML = `
+            <div class="no-injuries">
+                <i class="ph ph-check-circle"></i>
+                <h3>No injury data available for ${type} match</h3>
+            </div>
+        `;
+        return;
+    }
+    
+    if (matchData.sidelined_players.length === 0) {
+        content.innerHTML = `
+            <div class="no-injuries">
+                <i class="ph ph-check-circle"></i>
+                <h3>Full Squad Available</h3>
+                <p>No injuries or suspensions for ${type === 'last' ? 'the previous' : 'the upcoming'} match</p>
+            </div>
+        `;
+        return;
+    }
+    
+    content.innerHTML = `
+        <div class="injury-match-card">
+            <div class="injury-match-header">
+                <div class="match-info">
+                    <h4>${matchData.opponent || 'Unknown Opponent'}</h4>
+                    <div class="match-date-label">${formatDate(matchData.date)}</div>
+                </div>
+                <div class="unavailable-count">
+                    ${matchData.sidelined_players.length} Unavailable
+                </div>
+            </div>
+            
+            <div class="sidelined-grid">
+                ${matchData.sidelined_players.map(player => `
+                    <div class="sidelined-player">
+                        <div class="sidelined-avatar">
+                            ${player.image ? `<img src="${player.image}" alt="${player.name}" style="width: 100%; height: 100%; object-fit: cover;">` : '<i class="ph ph-user"></i>'}
+                        </div>
+                        <div class="sidelined-info">
+                            <div class="sidelined-name">${player.name}</div>
+                            <div class="sidelined-position">${player.position || 'Player'}</div>
+                            <span class="injury-type ${player.category}">
+                                ${player.type}
+                            </span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+// Helper functions
+function formatDate(dateString) {
+    if (!dateString) return 'Unknown Date';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    } catch (error) {
+        return 'Unknown Date';
+    }
+}
+
+function getRatingClass(rating) {
+    if (!rating) return 'rating-average';
+    
+    const numRating = parseFloat(rating);
+    
+    if (numRating >= 8) return 'rating-excellent';
+    else if (numRating >= 7) return 'rating-good';
+    else if (numRating < 6) return 'rating-poor';
+    else return 'rating-average';
+}
+
+function getLeagueTypeBadge(leagueType) {
+    if (!leagueType) return '';
+    
+    let badgeClass = 'league-type-domestic';
+    let badgeText = 'League';
+    
+    if (leagueType.includes('friendly')) {
+        badgeClass = 'league-type-friendly';
+        badgeText = 'Friendly';
+    } else if (leagueType.includes('cup') || leagueType.includes('international')) {
+        badgeClass = 'league-type-cup';
+        badgeText = 'Cup';
+    }
+    
+    return `<span class="league-type-badge ${badgeClass}">${badgeText}</span>`;
+}
+
+function showError(message) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('playerContent').innerHTML = `
+        <div class="error-state">
+            <i class="ph ph-warning"></i>
+            <h3>Error Loading Player</h3>
+            <p>${message}</p>
+            <a href="/player-stats/" class="btn-primary-large">Back to Players</a>
+        </div>
+    `;
+    document.getElementById('playerContent').style.display = 'block';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Football Statistics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    
+    <style>
+        :root {
+            --brand-gradient: #3B82F6;
+            --soft-gradient: linear-gradient(135deg, #DBEAFE 0%, #EDE9FE 50%, #FCE7F3 100%);
+            --accent-blue: #3B82F6;
+            --accent-purple: #3B82F6;
+            --accent-pink: #2563EB;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F8FAFC;
+            color: #1E293B;
+            min-height: 100vh;
+            overflow-x: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        body.loaded {
+            opacity: 1;
+        }
+        
+        /* Animated background */
+        .animated-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: #F8FAFC;
+            overflow: hidden;
+        }
+        
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
+            opacity: 0.6;
+            animation: bgShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes bgShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-15px, -15px) rotate(0.5deg); }
+            66% { transform: translate(15px, -8px) rotate(-0.5deg); }
+        }
+        
+        /* Main container */
+        .register-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+        
+        /* Register container */
+        .register-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            max-width: 480px;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+        
+        .register-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .register-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--brand-gradient);
+            opacity: 0.8;
+        }
+        
+        /* Success container */
+        .success-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            display: none;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+        
+        .success-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .success-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            opacity: 0.8;
+        }
+        
+        /* Logo */
+        .logo-text {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--accent-blue);
+            letter-spacing: -0.02em;
+            margin-bottom: 0.75rem;
+        }
+        
+        /* Form elements */
+        .form-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-subtitle {
+            color: #64748B;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+        }
+        
+        .form-group.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .form-label {
+            display: block;
+            color: #374151;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-input-wrapper {
+            position: relative;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: white;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            color: #1E293B;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .form-input::placeholder {
+            color: #9CA3AF;
+        }
+        
+        .form-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.25rem;
+            color: #9CA3AF;
+            transition: color 0.3s ease;
+        }
+        
+        .form-input:focus ~ .form-icon {
+            color: var(--accent-blue);
+        }
+        
+        .form-help {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #6B7280;
+        }
+        
+        /* Invite code validation */
+        .invite-code-feedback {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .invite-code-feedback.valid {
+            color: #059669;
+            opacity: 1;
+        }
+        
+        .invite-code-feedback.invalid {
+            color: #DC2626;
+            opacity: 1;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary {
+            background: var(--brand-gradient);
+            color: white;
+            box-shadow: var(--shadow-md);
+            width: 100%;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-primary:hover:not(:disabled)::before {
+            left: 100%;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Error message */
+        .error-message {
+            background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #DC2626;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: none;
+            border-left: 4px solid #EF4444;
+        }
+        
+        /* Terms notice */
+        .terms-notice {
+            background: #F8FAFC;
+            border: 1px solid #E5E7EB;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: #64748B;
+            text-align: center;
+        }
+        
+        .terms-notice a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .terms-notice a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Success elements */
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 2.5rem;
+            color: #059669;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            70% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        
+        .success-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 1rem;
+        }
+        
+        .success-text {
+            color: #374151;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .success-steps {
+            background: var(--soft-gradient);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .success-steps h4 {
+            color: #1E293B;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .success-steps ol {
+            color: #4B5563;
+            padding-left: 1rem;
+            line-height: 1.6;
+        }
+        
+        .success-steps li {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Login link */
+        .login-link {
+            text-align: center;
+            margin-top: 2rem;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .login-link.active {
+            opacity: 1;
+        }
+        
+        .login-link a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+        
+        .login-link a:hover {
+            color: var(--accent-purple);
+        }
+        
+        /* Policy links */
+        .policy-links {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #E5E7EB;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .policy-links.active {
+            opacity: 1;
+        }
+        
+        .policy-links a {
+            color: #9CA3AF;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            margin: 0 0.75rem;
+        }
+        
+        .policy-links a:hover {
+            color: #6B7280;
+        }
+        
+        .policy-links .separator {
+            color: #E5E7EB;
+            margin: 0 0.25rem;
+        }
+        
+        /* Page transition */
+        .page-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #F8FAFC;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .page-transition.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            .register-page {
+                padding: 1rem;
+            }
+            
+            .register-container,
+            .success-container {
+                padding: 2rem;
+            }
+            
+            .logo-text {
+                font-size: 2.25rem;
+            }
+            
+            .policy-links a {
+                font-size: 0.75rem;
+                margin: 0 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Page transition overlay -->
+    <div id="page-transition" class="page-transition"></div>
+    
+    <!-- Animated background -->
+    <div class="animated-bg"></div>
+    
+    <div class="register-page">
+        <div style="width: 100%; max-width: 480px;">
+            <!-- Register Container -->
+            <div id="register-container" class="register-container">
+                <!-- Logo text -->
+                <div class="logo-text">FOOTBALL STATISTICS</div>
+                
+                <!-- Form Header -->
+                <div class="form-header">
+                    <p class="form-subtitle">Create your account to get started</p>
+                </div>
+                
+                <!-- Error message -->
+                <div id="error-message" class="error-message"></div>
+                
+                <!-- Register Form -->
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="form-input-wrapper">
+                            <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" required>
+                            <i class="ph ph-envelope form-icon"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="form-input-wrapper">
+                            <input type="text" id="username" name="username" class="form-input" placeholder="Choose a username" required minlength="2" maxlength="20">
+                            <i class="ph ph-user form-icon"></i>
+                        </div>
+                        <div class="form-help">2-20 characters, letters and numbers only</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="form-input-wrapper">
+                            <input type="password" id="password" name="password" class="form-input" placeholder="Create a password" required>
+                            <i class="ph ph-lock form-icon"></i>
+                        </div>
+                        <div class="form-help">Password must be at least 8 characters long</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="terms-notice">
+                            By creating an account, you agree to our <a href="/terms-conditions" target="_blank">Terms & Conditions</a> and <a href="/privacy-policy" target="_blank">Privacy Policy</a>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" id="register-button" class="btn btn-primary">
+                            <i class="ph ph-user-plus"></i>
+                            Create Account
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Login Link -->
+                <div class="login-link">
+                    <a href="#" id="login-link">Already have an account? Sign in here</a>
+                </div>
+                
+                <!-- Policy Links -->
+                <div class="policy-links">
+                    <a href="/privacy-policy">Privacy Policy</a>
+                    <span class="separator">•</span>
+                    <a href="/terms-conditions">Terms & Conditions</a>
+                </div>
+            </div>
+            
+            <!-- Success Container -->
+            <div id="success-container" class="success-container">
+                <div class="success-icon">
+                    <i class="ph ph-check-circle"></i>
+                </div>
+                <h2 class="success-title">Account Created!</h2>
+                <p class="success-text">
+                    We've sent a confirmation email to your inbox. Please check your email and click the verification link to activate your account.
+                </p>
+                
+                <div class="success-steps">
+                    <h4>
+                        <i class="ph ph-list-checks"></i>
+                        Next Steps:
+                    </h4>
+                    <ol>
+                        <li>Check your email inbox (and spam folder)</li>
+                        <li>Click the verification link in the email</li>
+                        <li>Return to the login page to sign in</li>
+                    </ol>
+                </div>
+                
+                <a href="/auth/login" class="btn btn-primary">
+                    <i class="ph ph-sign-in"></i>
+                    Continue to Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Page load animation
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+                animateElements();
+            }, 100);
+            
+            function animateElements() {
+                // Animate register container
+                setTimeout(() => {
+                    document.getElementById('register-container').classList.add('active');
+                }, 200);
+                
+                // Animate form elements
+                const formElements = document.querySelectorAll('.form-group');
+                formElements.forEach((element, index) => {
+                    setTimeout(() => {
+                        element.classList.add('active');
+                    }, 400 + (index * 100));
+                });
+                
+                // Animate login link
+                setTimeout(() => {
+                    document.querySelector('.login-link').classList.add('active');
+                }, 1100);
+                
+                // Animate policy links
+                setTimeout(() => {
+                    document.querySelector('.policy-links').classList.add('active');
+                }, 1200);
+            }
+            
+            // Clear any existing auth tokens
+            localStorage.removeItem('auth_token');
+            sessionStorage.setItem('redirect_count', '0');
+            
+            // Initialize Supabase
+            const supabaseUrl = '{{ supabase_url }}';
+            const supabaseKey = '{{ supabase_key }}';
+            
+            if (!supabaseUrl || !supabaseKey) {
+                showError("Configuration error. Please try again later.");
+                return;
+            }
+            
+            const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+            
+            // Helper functions
+            function showError(message) {
+                const errorElement = document.getElementById('error-message');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+            
+            function hideError() {
+                document.getElementById('error-message').style.display = 'none';
+            }
+            
+            function showSuccess() {
+                document.getElementById('register-container').style.display = 'none';
+                const successContainer = document.getElementById('success-container');
+                successContainer.style.display = 'block';
+                
+                setTimeout(() => {
+                    successContainer.classList.add('active');
+                }, 50);
+            }
+            
+            function showPageTransition() {
+                document.getElementById('page-transition').classList.add('active');
+            }
+            
+            // Register button is enabled by default (no invite code required)
+            
+            // Handle register form
+            document.getElementById('register-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideError();
+                
+                const email = document.getElementById('email').value.trim();
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                
+                // Validate form
+                if (!email || !username || !password) {
+                    showError('Please fill in all fields');
+                    return;
+                }
+                
+                // Validate username
+                if (username.length < 2 || username.length > 20) {
+                    showError('Username must be between 2-20 characters');
+                    return;
+                }
+                
+                if (!/^[a-zA-Z0-9]+$/.test(username)) {
+                    showError('Username can only contain letters and numbers');
+                    return;
+                }
+                
+                if (password.length < 8) {
+                    showError('Password must be at least 8 characters long');
+                    return;
+                }
+                
+                const registerBtn = document.getElementById('register-button');
+                const originalText = registerBtn.innerHTML;
+                registerBtn.disabled = true;
+                registerBtn.innerHTML = '<i class="ph ph-spinner"></i> Creating account...';
+                
+                try {
+                    const { data, error } = await supabaseClient.auth.signUp({
+                        email,
+                        password,
+                        options: {
+                            data: {
+                                username: username,
+                                subscription_plan: 'Free Plan'
+                            },
+                            emailRedirectTo: window.location.origin + "/auth/callback"
+                        }
+                    });
+                    
+                    if (error) {
+                        throw error;
+                    }
+                    
+                    // Mark user registration date for welcome message
+                    localStorage.setItem('userRegistrationDate', new Date().getTime().toString());
+                    
+                    // Show success message
+                    showSuccess();
+                    
+                } catch (error) {
+                    showError(error.message || "Registration failed. Please try again.");
+                    registerBtn.disabled = false;
+                    registerBtn.innerHTML = originalText;
+                }
+            });
+            
+            // Handle login link
+            document.getElementById('login-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                showPageTransition();
+                
+                setTimeout(() => {
+                    window.location.href = '/auth/login';
+                }, 300);
+            });
+            
+            // Also add transition to continue to login button
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('a[href="/auth/login"]')) {
+                    e.preventDefault();
+                    showPageTransition();
+                    
+                    setTimeout(() => {
+                        window.location.href = '/auth/login';
+                    }, 300);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

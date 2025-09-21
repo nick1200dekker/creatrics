@@ -1,0 +1,49 @@
+# Web Framework
+Flask==2.3.3
+gunicorn==21.2.0
+Werkzeug==2.3.7
+
+# Database & Backend Services
+firebase-admin==6.2.0
+
+# HTTP & API
+requests==2.31.0
+httpx>=0.25.0
+
+# Environment & Configuration
+python-dotenv==1.0.0
+
+# Security & Authentication
+PyJWT>=2.6.0
+cryptography>=41.0.0
+google-auth-oauthlib==1.0.0
+google-auth>=2.23.0
+
+# Google APIs
+google-api-python-client>=2.110.0
+google-cloud-core>=2.3.0
+
+# AI & Machine Learning
+openai>=1.50.0
+anthropic>=0.34.0
+google-genai>=1.5.0
+
+# Optional AI providers
+replicate>=0.15.0
+fal-client>=0.5.9
+runwayml>=3.0.0
+
+# Audio Processing
+yt-dlp>=2023.12.0
+
+# Payment Processing
+stripe==7.5.0
+
+# Core dependencies
+numpy>=1.24.0
+Pillow>=9.0.0
+
+# Image & Video Processing (for Create GIF feature)
+imageio>=2.31.0
+opencv-python>=4.8.0
+imageio-ffmpeg>=0.4.8

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms & Conditions - Football Statistics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        :root {
+            --brand-gradient: #3B82F6;
+            --soft-gradient: linear-gradient(135deg, #DBEAFE 0%, #EDE9FE 50%, #FCE7F3 100%);
+            --accent-blue: #3B82F6;
+            --accent-purple: #3B82F6;
+            --accent-pink: #2563EB;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F8FAFC;
+            color: #1E293B;
+            min-height: 100vh;
+            overflow-x: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        body.loaded {
+            opacity: 1;
+        }
+        
+        /* Animated background */
+        .animated-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: #F8FAFC;
+            overflow: hidden;
+        }
+        
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
+            opacity: 0.6;
+            animation: bgShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes bgShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-15px, -15px) rotate(0.5deg); }
+            66% { transform: translate(15px, -8px) rotate(-0.5deg); }
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        
+        .header-content {
+            width: 100%;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-text {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: var(--accent-blue);
+            letter-spacing: -0.02em;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .logo-text:hover {
+            color: var(--accent-purple);
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #64748B;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+        
+        .back-link:hover {
+            color: var(--accent-blue);
+            background: #F1F5F9;
+        }
+        
+        /* Main content */
+        .policy-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 2rem 4rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        
+        .policy-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .policy-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .policy-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--brand-gradient);
+            opacity: 0.8;
+        }
+        
+        /* Important box */
+        .important-box {
+            background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #991B1B;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            border-left: 4px solid #EF4444;
+        }
+        
+        .important-box strong {
+            color: #991B1B;
+        }
+        
+        /* Typography */
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #1E293B;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .update-date {
+            color: #64748B;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1E293B;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            letter-spacing: -0.01em;
+        }
+        
+        h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 1.75rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        p, li {
+            line-height: 1.7;
+            color: #475569;
+            margin-bottom: 1rem;
+        }
+        
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        strong {
+            color: #1E293B;
+            font-weight: 600;
+        }
+        
+        /* Links in content */
+        .policy-content a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .policy-content a:hover {
+            color: var(--accent-purple);
+            text-decoration: underline;
+        }
+        
+        /* Contact section */
+        .contact-section {
+            background: var(--soft-gradient);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .contact-section h3 {
+            margin-top: 0;
+            color: #1E293B;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem 1.5rem;
+            }
+            
+            .logo-text {
+                font-size: 1.5rem;
+            }
+            
+            .policy-container {
+                padding: 2rem 1rem 3rem;
+            }
+            
+            .policy-content {
+                padding: 2rem;
+            }
+            
+            h1 {
+                font-size: 1.875rem;
+            }
+            
+            h2 {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="animated-bg"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo-text">Football Statistics</a>
+            <a href="/" class="back-link">
+                <i class="ph ph-arrow-left"></i>
+                Back to Home
+            </a>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <div class="policy-container">
+        <div class="policy-content">
+            <h1>Terms & Conditions</h1>
+            <p class="update-date">Last updated: August 28, 2025</p>
+
+            <h2>1. Introduction</h2>
+            <p>Welcome to Football Statistics ("we", "our", "us"). These Terms and Conditions govern your use of our website and application (the "Service"), which provides football statistics and data analysis. By accessing or using our Service, you agree to be bound by these Terms.</p>
+
+            <h2>2. Service Description</h2>
+            <p>Football Statistics provides a comprehensive football player statistics platform. The Service is provided for informational and personal entertainment purposes only.</p>
+
+            <div class="important-box">
+                <p><strong>Disclaimer of Warranties and Limitation of Liability</strong></p>
+                <p>The data provided on our Service is aggregated from third-party sources. While we strive for accuracy, we do not guarantee that all information is complete, accurate, or up-to-date. The Service is provided on an "AS IS" and "AS AVAILABLE" basis.</p>
+                <p><strong>We are not responsible for any decisions, financial or otherwise, made based on the data presented on this website. The statistics are for informational purposes only and should not be used as a basis for financial decisions. You agree that you use the Service at your own risk.</strong></p>
+            </div>
+
+            <h2>3. Account Terms</h2>
+            <p>When you create an account with us, you must provide accurate information and maintain the security of your account. You are responsible for all activities that occur under your account.</p>
+
+            <h2>4. Acceptable Use</h2>
+            <p>You agree not to use the Service to engage in any activity that is illegal, harmful, or infringes on the rights of others. We reserve the right to terminate accounts that violate these terms.</p>
+
+            <h2>5. Intellectual Property</h2>
+            <p>The Service and its original content, features, and functionality are and will remain the exclusive property of the Service and its licensors. Player statistics and data are sourced from third-party providers and are subject to their respective licenses.</p>
+
+            <h2>6. Limitation of Liability</h2>
+            <p>To the maximum extent permitted by law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the Service.</p>
+
+            <h2>7. Privacy</h2>
+            <p>Your use of our Service is also governed by our Privacy Policy. Please review our <a href="/privacy-policy">Privacy Policy</a> to understand our data collection and use practices.</p>
+
+            <h2>8. Termination</h2>
+            <p>We may terminate or suspend your account at our sole discretion, without prior notice, for conduct that we believe violates these Terms or is harmful to other users of the Service, us, or third parties, or for any other reason.</p>
+
+            <h2>9. Changes to Terms</h2>
+            <p>We reserve the right to modify these Terms at any time. We will provide notice of any changes by posting the new Terms on this page. Your continued use of the Service after any such changes constitutes your acceptance of the new Terms.</p>
+
+            <h2>10. Governing Law</h2>
+            <p>These Terms shall be governed by the laws of the Netherlands, without regard to its conflict of law provisions.</p>
+
+            <h2>11. Entire Agreement</h2>
+            <p>These Terms constitute the entire agreement between you and the Service regarding our Service and supersede all prior agreements.</p>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Page load animation
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 100);
+            
+            // Animate content
+            setTimeout(() => {
+                document.querySelector('.policy-container').classList.add('active');
+            }, 200);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1319 @@
+{% extends "base.html" %}
+
+{% block title %}TP Analytics - Soccer Analytics{% endblock %}
+
+{% block additional_styles %}
+<style>
+/* Page Layout */
+.page-content {
+    padding: 2rem;
+    background: #F8FAFC;
+    min-height: 100vh;
+}
+
+/* Hero Section - With Background Panel */
+.dashboard-hero {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border-radius: 20px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.stats-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #3B82F6;
+    margin-bottom: 1rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.stats-title i {
+    color: #3B82F6;
+    font-size: 2.5rem;
+    pointer-events: none;
+}
+
+.stats-subtitle {
+    color: #64748B;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+/* Estimation Banner */
+.estimation-banner {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+    border: 1px solid #FCD34D;
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(252, 211, 77, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.estimation-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -5%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(252, 211, 77, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.estimation-banner-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.estimation-banner-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    background: rgba(252, 211, 77, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #FBBF24;
+}
+
+.estimation-banner-icon i {
+    font-size: 24px;
+    color: #F59E0B;
+}
+
+.estimation-banner-text {
+    flex: 1;
+}
+
+.estimation-banner-title {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #78350F;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.estimation-banner-description {
+    color: #92400E;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.estimation-banner-description strong {
+    color: #78350F;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .estimation-banner {
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .estimation-banner-content {
+        gap: 1rem;
+    }
+    
+    .estimation-banner-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .estimation-banner-icon i {
+        font-size: 20px;
+    }
+    
+    .estimation-banner-title {
+        font-size: 1rem;
+    }
+    
+    .estimation-banner-description {
+        font-size: 0.875rem;
+    }
+}
+
+/* Filters Section */
+.filters-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.filters-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+    pointer-events: none;
+}
+
+.filter-controls {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-input,
+.filter-select {
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    border: 2px solid #E2E8F0;
+    border-radius: 12px;
+    font-size: 1rem;
+    background: #FAFBFC;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+    outline: none;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+    outline: none;
+    border-color: #3B82F6;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    z-index: 2;
+}
+
+.filter-input:hover,
+.filter-select:hover {
+    border-color: #CBD5E1;
+    background: white;
+}
+
+.filter-input::placeholder {
+    color: #94A3B8;
+    pointer-events: none;
+}
+
+.clear-btn {
+    padding: 0.875rem 1.5rem;
+    background: #6B7280;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(107, 114, 128, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.clear-btn:hover {
+    background: #4B5563;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(107, 114, 128, 0.4);
+}
+
+/* Summary Stats */
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #10B981, #3B82F6);
+    pointer-events: none;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    color: #3B82F6;
+    margin-bottom: 1rem;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #1E293B;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #64748B;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Section Title Style */
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title i {
+    font-size: 1.75rem;
+    color: #3B82F6;
+    pointer-events: none;
+}
+
+/* Charts Section */
+.charts-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.charts-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #8B5CF6, #EC4899);
+    pointer-events: none;
+}
+
+.chart-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #E2E8F0;
+}
+
+.chart-tab {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #64748B;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-tab.active {
+    color: #3B82F6;
+    border-bottom-color: #3B82F6;
+}
+
+.chart-tab:hover:not(.active) {
+    color: #1E293B;
+}
+
+.chart-container {
+    width: 100%;
+    height: 500px;
+    position: relative;
+}
+
+/* Players Table */
+.players-table-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.players-table-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #F59E0B, #10B981);
+    pointer-events: none;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.players-table-wrapper {
+    overflow-x: auto;
+}
+
+.players-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.players-table th {
+    text-align: left;
+    padding: 1rem;
+    font-weight: 600;
+    color: #64748B;
+    font-size: 0.875rem;
+    border-bottom: 2px solid #E2E8F0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.players-table th.numeric {
+    text-align: center;
+}
+
+.players-table th:first-child {
+    width: 50px;
+    text-align: center;
+}
+
+.players-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+}
+
+.players-table td.numeric {
+    text-align: center;
+}
+
+.players-table td:first-child {
+    text-align: center;
+    color: #64748B;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.player-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: #E2E8F0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #64748B;
+    overflow: hidden;
+}
+
+.player-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.player-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.player-name {
+    font-weight: 700;
+    color: #1E293B;
+    cursor: pointer;
+    font-size: 0.9375rem;
+}
+
+.player-name:hover {
+    color: #3B82F6;
+}
+
+.player-team {
+    font-size: 0.8125rem;
+    color: #64748B;
+}
+
+.tp-sparkline {
+    width: 100px;
+    height: 35px;
+    margin: 0 auto;
+    display: block;
+}
+
+.tp-value {
+    font-weight: 700;
+    font-size: 0.9375rem;
+}
+
+.tp-min {
+    color: #64748B;
+}
+
+.tp-avg {
+    color: #3B82F6;
+    font-size: 1.0625rem;
+}
+
+.tp-max {
+    color: #10B981;
+}
+
+.tp-total {
+    color: #8B5CF6;
+    font-size: 1.0625rem;
+}
+
+/* Loading State */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    color: #64748B;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    position: relative;
+    margin: 0 auto 1rem;
+}
+
+.loading-spinner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid #F1F5F9;
+    border-top-color: #3B82F6;
+    animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* No Data State */
+.no-data {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #64748B;
+}
+
+.no-data i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-hero {
+        padding: 2rem 1.5rem;
+        text-align: center;
+    }
+    
+    .stats-title {
+        font-size: 2rem;
+    }
+    
+    .stats-subtitle {
+        font-size: 1rem;
+    }
+    
+    .filter-controls {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .summary-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .chart-container {
+        height: 400px;
+    }
+    
+    .table-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .player-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-section {
+        padding: 1.5rem;
+    }
+    
+    .player-card {
+        padding: 1.25rem;
+    }
+    
+    .player-avatar {
+        width: 50px;
+        height: 50px;
+        font-size: 1.1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Hero Section - Always Visible -->
+    <div class="dashboard-hero">
+        <h1 class="stats-title">
+            <i class="ph ph-chart-line-up"></i>
+            TP Analytics
+        </h1>
+        <p class="stats-subtitle">
+            Analyze player Tournament Points (TP) performance trends based on last 10 matches played
+        </p>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading TP analytics...</p>
+    </div>
+
+    <!-- Main Content -->
+    <div id="analyticsContent" style="display: none;">
+
+        <!-- Estimation Banner -->
+        <div class="estimation-banner">
+            <div class="estimation-banner-content">
+                <div class="estimation-banner-icon">
+                    <i class="ph ph-info"></i>
+                </div>
+                <div class="estimation-banner-text">
+                    <h3 class="estimation-banner-title">
+                        TP Points Are Estimations
+                    </h3>
+                    <p class="estimation-banner-description">
+                        <strong>Important:</strong> The Tournament Points (TP) displayed are calculated estimations and may differ from official FDF scores.<br>
+                        Our testing indicates we are close to actual values.<br>
+                        Use these metrics as performance indicators rather than exact scores.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <div class="filter-controls">
+                <input type="text" 
+                       class="filter-input" 
+                       id="nameFilter" 
+                       placeholder="Search players by name or nickname...">
+                <select class="filter-select" id="categoryFilter">
+                    <option value="">All Positions</option>
+                    <option value="Goalkeeper">Goalkeeper</option>
+                    <option value="Defender">Defender</option>
+                    <option value="Midfielder">Midfielder</option>
+                    <option value="Attacker">Attacker</option>
+                </select>
+                <button class="clear-btn" id="clearBtn" style="display: none;">
+                    <i class="ph ph-x"></i>
+                    Clear
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="summary-stats">
+            <div class="stat-card">
+                <i class="ph ph-users stat-icon"></i>
+                <div class="stat-value" id="totalPlayers">-</div>
+                <div class="stat-label">Total Players</div>
+            </div>
+            <div class="stat-card">
+                <i class="ph ph-trophy stat-icon"></i>
+                <div class="stat-value" id="topPerformer">-</div>
+                <div class="stat-label">Top Performer Avg ETP</div>
+            </div>
+            <div class="stat-card">
+                <i class="ph ph-chart-line stat-icon"></i>
+                <div class="stat-value" id="overallAvg">-</div>
+                <div class="stat-label">Overall Avg ETP</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <h2 class="section-title">
+                <i class="ph ph-chart-line-up"></i>
+                Performance Charts
+            </h2>
+            <div class="chart-tabs">
+                <div class="chart-tab active" onclick="showChart('timeline')">
+                    <i class="ph ph-calendar"></i>
+                    ETP Timeline
+                </div>
+                <div class="chart-tab" onclick="showChart('distribution')">
+                    <i class="ph ph-chart-bar"></i>
+                    ETP Distribution
+                </div>
+                <div class="chart-tab" onclick="showChart('topPerformers')">
+                    <i class="ph ph-ranking"></i>
+                    Top Performers
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="tpChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Players Table -->
+        <div class="players-table-section">
+            <div class="table-header">
+                <h2 class="section-title">
+                    <i class="ph ph-table"></i>
+                    Player Performance Summary
+                </h2>
+            </div>
+            
+            <div class="players-table-wrapper">
+                <table class="players-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Player</th>
+                            <th class="numeric">Matches</th>
+                            <th>Recent Form</th>
+                            <th class="numeric">Min ETP</th>
+                            <th class="numeric">Avg ETP</th>
+                            <th class="numeric">Max ETP</th>
+                            <th class="numeric">Total ETP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playersTableBody">
+                        <!-- Table rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+
+<script>
+let playersData = [];
+let filteredPlayersData = [];
+let timelineData = [];
+let currentChart = null;
+let currentChartType = 'timeline';
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    initializeFilters();
+});
+
+async function loadData() {
+    showLoading(true);
+    
+    try {
+        // Load player TP data
+        const playersResponse = await fetch('/tp-analytics/api/player-tp-data');
+        const playersResult = await playersResponse.json();
+        
+        // Load timeline data
+        const timelineResponse = await fetch('/tp-analytics/api/tp-timeline');
+        const timelineResult = await timelineResponse.json();
+        
+        if (playersResult.success && timelineResult.success) {
+            // Sort by average TP descending by default
+            playersData = playersResult.players.sort((a, b) => b.tp_avg_10 - a.tp_avg_10);
+            filteredPlayersData = [...playersData];
+            timelineData = timelineResult.timeline;
+            
+            updateSummaryStats();
+            updateTable();
+            updateChart(currentChartType);
+            
+            // Show content
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('analyticsContent').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading data:', error);
+        showLoading(false);
+    }
+}
+
+function initializeFilters() {
+    const nameFilter = document.getElementById('nameFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const clearBtn = document.getElementById('clearBtn');
+    
+    // Real-time filtering
+    let filterTimeout;
+    
+    function applyFilters() {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+            const nameValue = nameFilter.value.toLowerCase().trim();
+            const categoryValue = categoryFilter.value;
+            
+            filteredPlayersData = playersData.filter(player => {
+                // Name filter - search in name or nickname
+                const matchesName = !nameValue || 
+                    player.name.toLowerCase().includes(nameValue) ||
+                    player.nickname.toLowerCase().includes(nameValue) ||
+                    player.display_name.toLowerCase().includes(nameValue);
+                
+                // Category filter
+                const matchesCategory = !categoryValue || player.position_category === categoryValue;
+                
+                return matchesName && matchesCategory;
+            });
+            
+            // Keep the same sort order (by average TP descending)
+            filteredPlayersData.sort((a, b) => b.tp_avg_10 - a.tp_avg_10);
+            
+            updateSummaryStats();
+            updateTable();
+            updateChart(currentChartType);
+            
+            // Show/hide clear button
+            if (nameValue || categoryValue) {
+                clearBtn.style.display = 'flex';
+            } else {
+                clearBtn.style.display = 'none';
+            }
+        }, 300);
+    }
+    
+    nameFilter.addEventListener('input', applyFilters);
+    categoryFilter.addEventListener('change', applyFilters);
+    
+    clearBtn.addEventListener('click', function() {
+        nameFilter.value = '';
+        categoryFilter.value = '';
+        filteredPlayersData = [...playersData];
+        updateSummaryStats();
+        updateTable();
+        updateChart(currentChartType);
+        clearBtn.style.display = 'none';
+        nameFilter.focus();
+    });
+}
+
+function updateSummaryStats() {
+    document.getElementById('totalPlayers').textContent = filteredPlayersData.length;
+    
+    if (filteredPlayersData.length > 0) {
+        document.getElementById('topPerformer').textContent = filteredPlayersData[0].tp_avg_10;
+        
+        const overallAvg = filteredPlayersData.reduce((sum, p) => sum + p.tp_avg_10, 0) / filteredPlayersData.length;
+        document.getElementById('overallAvg').textContent = Math.round(overallAvg);
+    } else {
+        document.getElementById('topPerformer').textContent = '-';
+        document.getElementById('overallAvg').textContent = '-';
+    }
+}
+
+function updateTable() {
+    const tbody = document.getElementById('playersTableBody');
+    tbody.innerHTML = '';
+    
+    if (filteredPlayersData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="no-data">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <p>No players found with ETP data</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    filteredPlayersData.forEach((player, index) => {
+        const row = document.createElement('tr');
+        
+        // Create sparkline data for recent form (last 5 matches from the last 10)
+        const sparklineData = player.last_10_tp.slice(-5).map(m => m.tp);
+        
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>
+                <div class="player-cell">
+                    <div class="player-avatar">
+                        ${player.image_path ? 
+                            `<img src="${player.image_path}" alt="${player.display_name}">` : 
+                            player.display_name.split(' ').map(n => n[0]).join('').substring(0, 2)
+                        }
+                    </div>
+                    <div class="player-info">
+                        <div class="player-name" onclick="viewPlayer('${player.id}')">
+                            ${player.display_name}
+                        </div>
+                        <div class="player-team">${player.team}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="tp-value numeric">${player.matches_played}</td>
+            <td style="text-align: center;">
+                <canvas class="tp-sparkline" id="sparkline-${player.id}"></canvas>
+            </td>
+            <td class="tp-value tp-min numeric">${player.tp_min_10}</td>
+            <td class="tp-value tp-avg numeric">${player.tp_avg_10}</td>
+            <td class="tp-value tp-max numeric">${player.tp_max_10}</td>
+            <td class="tp-value tp-total numeric">${player.tp_total_10}</td>
+        `;
+        
+        tbody.appendChild(row);
+        
+        // Draw sparkline
+        if (sparklineData.length > 0) {
+            setTimeout(() => drawSparkline(`sparkline-${player.id}`, sparklineData), 100);
+        }
+    });
+}
+
+function drawSparkline(canvasId, data) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size
+    canvas.width = 100;
+    canvas.height = 35;
+    
+    if (data.length === 0) return;
+    
+    const padding = 3;
+    const width = canvas.width - (padding * 2);
+    const height = canvas.height - (padding * 2);
+    
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const range = max - min || 1;
+    
+    ctx.beginPath();
+    ctx.strokeStyle = '#3B82F6';
+    ctx.lineWidth = 2;
+    
+    data.forEach((value, index) => {
+        const x = padding + (index / (data.length - 1)) * width;
+        const y = padding + height - ((value - min) / range) * height;
+        
+        if (index === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+    
+    ctx.stroke();
+    
+    // Draw points
+    data.forEach((value, index) => {
+        const x = padding + (index / (data.length - 1)) * width;
+        const y = padding + height - ((value - min) / range) * height;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 2.5, 0, 2 * Math.PI);
+        ctx.fillStyle = '#3B82F6';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    });
+}
+
+function showChart(type) {
+    // Update active tab
+    document.querySelectorAll('.chart-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    event.target.closest('.chart-tab').classList.add('active');
+    
+    currentChartType = type;
+    updateChart(type);
+}
+
+function updateChart(type) {
+    if (currentChart) {
+        currentChart.destroy();
+    }
+    
+    const ctx = document.getElementById('tpChart').getContext('2d');
+    
+    switch (type) {
+        case 'timeline':
+            drawTimelineChart(ctx);
+            break;
+        case 'distribution':
+            drawDistributionChart(ctx);
+            break;
+        case 'topPerformers':
+            drawTopPerformersChart(ctx);
+            break;
+    }
+}
+
+function drawTimelineChart(ctx) {
+    // Get top 20 players by average ETP (last 10)
+    const top20Players = filteredPlayersData.slice(0, 20);
+    
+    // Create weekly data for each player
+    const playerLines = top20Players.map((player, index) => {
+        const playerTimelineData = processPlayerTimelineData(player.last_10_tp);
+        
+        // Generate a color for this player
+        const hue = (index * 360 / 20);
+        const color = `hsl(${hue}, 70%, 50%)`;
+        
+        return {
+            label: player.display_name,
+            data: playerTimelineData,
+            borderColor: color,
+            backgroundColor: color + '20',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.1,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            hidden: index >= 10 // Initially hide players 11-20
+        };
+    });
+    
+    currentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: playerLines
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'point',
+                intersect: true
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Top 20 Players ETP Performance (Weekly Average from Last 10 Matches)',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                },
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    onClick: (e, legendItem, legend) => {
+                        const index = legendItem.datasetIndex;
+                        const ci = legend.chart;
+                        const meta = ci.getDatasetMeta(index);
+                        
+                        // Toggle visibility
+                        meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
+                        ci.update();
+                    },
+                    labels: {
+                        padding: 15,
+                        boxWidth: 12,
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
+                tooltip: {
+                    mode: 'point',
+                    intersect: true,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + Math.round(context.parsed.y) + ' ETP';
+                        },
+                        title: function(tooltipItems) {
+                            if (tooltipItems.length > 0) {
+                                const date = new Date(tooltipItems[0].parsed.x);
+                                return date.toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                });
+                            }
+                            return '';
+                        }
+                    },
+                    displayColors: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#ddd',
+                    borderWidth: 1,
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 10
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'week',
+                        displayFormats: {
+                            week: 'MMM dd'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Week'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Average ETP'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function processPlayerTimelineData(matches) {
+    // Group matches by week
+    const weeklyData = {};
+    
+    matches.forEach(match => {
+        const date = new Date(match.date);
+        const weekStart = getWeekStart(date);
+        const weekKey = weekStart.toISOString().split('T')[0];
+        
+        if (!weeklyData[weekKey]) {
+            weeklyData[weekKey] = {
+                total: 0,
+                count: 0
+            };
+        }
+        
+        weeklyData[weekKey].total += match.tp;
+        weeklyData[weekKey].count += 1;
+    });
+    
+    // Convert to array format for Chart.js
+    return Object.entries(weeklyData).map(([date, data]) => ({
+        x: date,
+        y: data.count > 0 ? data.total / data.count : 0
+    })).sort((a, b) => new Date(a.x) - new Date(b.x));
+}
+
+function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    return new Date(d.setDate(diff));
+}
+
+function drawDistributionChart(ctx) {
+    // Group players by ETP ranges
+    const ranges = [
+        { min: 0, max: 20, label: '0-20', count: 0 },
+        { min: 20, max: 40, label: '20-40', count: 0 },
+        { min: 40, max: 60, label: '40-60', count: 0 },
+        { min: 60, max: 80, label: '60-80', count: 0 },
+        { min: 80, max: 100, label: '80-100', count: 0 },
+        { min: 100, max: 200, label: '100+', count: 0 }
+    ];
+    
+    filteredPlayersData.forEach(player => {
+        const range = ranges.find(r => player.tp_avg_10 >= r.min && player.tp_avg_10 < r.max);
+        if (range) range.count++;
+    });
+    
+    currentChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ranges.map(r => r.label),
+            datasets: [{
+                label: 'Number of Players',
+                data: ranges.map(r => r.count),
+                backgroundColor: '#3B82F6',
+                borderColor: '#2563EB',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'ETP Distribution (Average ETP per Player - Last 10 Matches)',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Players'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Average ETP Range'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function drawTopPerformersChart(ctx) {
+    const top20 = filteredPlayersData.slice(0, 20);
+    
+    currentChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: top20.map(p => p.display_name),
+            datasets: [
+                {
+                    label: 'Average ETP (Last 10)',
+                    data: top20.map(p => p.tp_avg_10),
+                    backgroundColor: '#3B82F6',
+                    borderColor: '#2563EB',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Max ETP (Last 10)',
+                    data: top20.map(p => p.tp_max_10),
+                    backgroundColor: '#10B981',
+                    borderColor: '#059669',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Top 20 Performers by Average ETP (Last 10 Matches)',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Estimated Tournament Points (ETP)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function viewPlayer(playerId) {
+    window.location.href = `/player-stats/player/${playerId}`;
+}
+
+function showLoading(show) {
+    if (!show) {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

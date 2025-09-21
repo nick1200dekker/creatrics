@@ -1,0 +1,707 @@
+{% extends "base.html" %}
+
+{% block title %}X Post Editor - Creaver{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="mb-4">
+                <i class="ph ph-x-logo" style="color: #000;"></i>
+                X (Twitter) Post Editor
+            </h1>
+            <p class="lead">Craft engaging posts that drive conversation and grow your audience</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Post Editor -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form id="post-form">
+                        <div class="mb-4">
+                            <label for="post-content" class="form-label">
+                                <i class="ph ph-text-aa"></i>
+                                Post Content
+                            </label>
+                            <textarea class="form-control" id="post-content" rows="5"
+                                      placeholder="What's happening?" maxlength="280"></textarea>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small class="text-muted">
+                                    <span id="char-count">0</span> / 280 characters
+                                </small>
+                                <div>
+                                    <span class="character-indicator" data-range="good">●</span>
+                                    <span class="character-indicator" data-range="warning">●</span>
+                                    <span class="character-indicator" data-range="danger">●</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="post-style" class="form-label">
+                                    <i class="ph ph-layout"></i>
+                                    Post Style
+                                </label>
+                                <select class="form-select" id="post-style">
+                                    <option value="single">Single Post</option>
+                                    <option value="thread">Thread</option>
+                                    <option value="poll">Poll</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="tone" class="form-label">
+                                    <i class="ph ph-microphone"></i>
+                                    Tone
+                                </label>
+                                <select class="form-select" id="tone">
+                                    <option value="professional">Professional</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="humorous">Humorous</option>
+                                    <option value="inspiring">Inspiring</option>
+                                    <option value="educational">Educational</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="topic" class="form-label">
+                                <i class="ph ph-lightbulb"></i>
+                                Topic (for AI generation)
+                            </label>
+                            <input type="text" class="form-control" id="topic"
+                                   placeholder="e.g., AI trends, productivity tips, startup advice">
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="include-hashtags" checked>
+                                <label class="form-check-label" for="include-hashtags">
+                                    Include Hashtags
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="include-emojis">
+                                <label class="form-check-label" for="include-emojis">
+                                    Include Emojis
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-primary" onclick="generatePost()">
+                                <i class="ph ph-sparkle"></i>
+                                Generate Post
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="optimizePost()">
+                                <i class="ph ph-magic-wand"></i>
+                                Optimize
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="analyzePost()">
+                                <i class="ph ph-chart-bar"></i>
+                                Analyze
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Thread Builder (shown when thread is selected) -->
+            <div class="card shadow-sm mt-4" id="thread-builder" style="display: none;">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="ph ph-text-columns"></i>
+                        Thread Builder
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="thread-posts">
+                        <!-- Thread posts will be added here -->
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="addThreadPost()">
+                        <i class="ph ph-plus"></i> Add Post
+                    </button>
+                </div>
+            </div>
+
+            <!-- Post Preview -->
+            <div class="card shadow-sm mt-4" id="post-preview" style="display: none;">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="ph ph-eye"></i>
+                            Preview
+                        </h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="copyPost()">
+                            <i class="ph ph-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="preview-content" class="post-preview"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Templates -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="ph ph-folders"></i>
+                        Templates
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="templates-list">
+                        <!-- Templates will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Times to Post -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="ph ph-clock"></i>
+                        Best Times to Post
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="best-times">
+                        <button class="btn btn-sm btn-outline-primary mb-3" onclick="analyzeTiming()">
+                            Analyze Timing
+                        </button>
+                        <div id="timing-results"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="ph ph-lightbulb"></i>
+                        X Post Tips
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li class="mb-2"><strong>Hook:</strong> Start with something attention-grabbing</li>
+                        <li class="mb-2"><strong>Brevity:</strong> Keep it concise and scannable</li>
+                        <li class="mb-2"><strong>Hashtags:</strong> Use 1-3 relevant hashtags</li>
+                        <li class="mb-2"><strong>Engagement:</strong> End with a question or CTA</li>
+                        <li class="mb-2"><strong>Timing:</strong> Post when your audience is active</li>
+                        <li><strong>Visuals:</strong> Add images or GIFs for 2x engagement</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.post-preview {
+    background: white;
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    padding: 1rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.post-preview .post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.post-preview .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    margin-right: 0.75rem;
+}
+
+.post-preview .post-meta {
+    flex: 1;
+}
+
+.post-preview .username {
+    font-weight: bold;
+}
+
+.post-preview .handle {
+    color: #536471;
+}
+
+.post-preview .post-text {
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.character-indicator {
+    font-size: 0.75rem;
+}
+
+.character-indicator[data-range="good"] {
+    color: #10b981;
+}
+
+.character-indicator[data-range="warning"] {
+    color: #f59e0b;
+}
+
+.character-indicator[data-range="danger"] {
+    color: #ef4444;
+}
+
+.template-item {
+    cursor: pointer;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.template-item:hover {
+    background: #f8f9fa;
+    border-color: var(--accent-blue);
+}
+
+.thread-post {
+    position: relative;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.thread-post::before {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: -1rem;
+    bottom: -1rem;
+    width: 2px;
+    background: #e2e8f0;
+    z-index: -1;
+}
+
+.thread-post:first-child::before {
+    top: 50%;
+}
+
+.thread-post:last-child::before {
+    bottom: 50%;
+}
+
+.thread-number {
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    background: white;
+    border: 2px solid var(--accent-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--accent-blue);
+}
+</style>
+
+<script>
+let currentPosts = [];
+let threadPosts = [{content: '', id: 1}];
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadTemplates();
+    setupCharacterCounter();
+    setupStyleSelector();
+});
+
+// Character counter
+function setupCharacterCounter() {
+    const textarea = document.getElementById('post-content');
+    const counter = document.getElementById('char-count');
+    const indicators = document.querySelectorAll('.character-indicator');
+
+    textarea.addEventListener('input', function() {
+        const length = this.value.length;
+        counter.textContent = length;
+
+        // Update indicators
+        indicators[0].style.opacity = length <= 200 ? '1' : '0.3';
+        indicators[1].style.opacity = length > 200 && length <= 260 ? '1' : '0.3';
+        indicators[2].style.opacity = length > 260 ? '1' : '0.3';
+
+        // Update counter color
+        if (length > 280) {
+            counter.style.color = '#ef4444';
+        } else if (length > 260) {
+            counter.style.color = '#f59e0b';
+        } else {
+            counter.style.color = '#6b7280';
+        }
+    });
+}
+
+// Style selector
+function setupStyleSelector() {
+    const styleSelect = document.getElementById('post-style');
+    const threadBuilder = document.getElementById('thread-builder');
+
+    styleSelect.addEventListener('change', function() {
+        if (this.value === 'thread') {
+            threadBuilder.style.display = 'block';
+            renderThreadPosts();
+        } else {
+            threadBuilder.style.display = 'none';
+        }
+    });
+}
+
+// Generate post
+async function generatePost() {
+    const topic = document.getElementById('topic').value;
+    if (!topic) {
+        showToast('Please enter a topic', 'error');
+        return;
+    }
+
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner-gap spinning"></i> Generating...';
+
+    try {
+        const response = await fetch('/api/x-post/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                topic: topic,
+                tone: document.getElementById('tone').value,
+                style: document.getElementById('post-style').value,
+                include_hashtags: document.getElementById('include-hashtags').checked,
+                include_emojis: document.getElementById('include-emojis').checked
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentPosts = data.posts;
+
+            if (data.style === 'single' || data.style === 'poll') {
+                document.getElementById('post-content').value = data.posts[0].content;
+                document.getElementById('post-content').dispatchEvent(new Event('input'));
+            } else if (data.style === 'thread') {
+                threadPosts = data.posts.map((post, index) => ({
+                    content: post.content,
+                    id: index + 1
+                }));
+                renderThreadPosts();
+            }
+
+            showPreview();
+            showToast('Post generated successfully!', 'success');
+        } else {
+            showToast(data.error || 'Failed to generate post', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('An error occurred', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-sparkle"></i> Generate Post';
+    }
+}
+
+// Optimize post
+async function optimizePost() {
+    const content = document.getElementById('post-content').value;
+    if (!content) {
+        showToast('Please enter some content first', 'error');
+        return;
+    }
+
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner-gap spinning"></i> Optimizing...';
+
+    try {
+        const response = await fetch('/api/x-post/optimize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                content: content,
+                goal: 'engagement'
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (data.suggestions && data.suggestions.length > 0) {
+                let suggestionsHtml = '<h6>Optimization Suggestions:</h6><ul>';
+                data.suggestions.forEach(suggestion => {
+                    suggestionsHtml += `<li>${suggestion}</li>`;
+                });
+                suggestionsHtml += '</ul>';
+
+                // You could show this in a modal or a dedicated section
+                showToast('Optimization complete! Check suggestions.', 'success');
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to optimize post', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-magic-wand"></i> Optimize';
+    }
+}
+
+// Analyze post timing
+async function analyzeTiming() {
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner-gap spinning"></i> Analyzing...';
+
+    try {
+        const response = await fetch('/api/x-post/analyze-timing', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            displayTimingResults(data.best_times);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to analyze timing', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Analyze Timing';
+    }
+}
+
+// Display timing results
+function displayTimingResults(times) {
+    const resultsDiv = document.getElementById('timing-results');
+
+    let html = '<h6 class="mb-2">Best Times (Weekdays):</h6><ul class="small">';
+    times.weekdays.forEach(time => {
+        html += `<li>${time.time} - Score: ${time.engagement_score}/100</li>`;
+    });
+    html += '</ul>';
+
+    html += '<h6 class="mb-2">Best Days:</h6>';
+    html += `<p class="small">${times.best_days.join(', ')}</p>`;
+
+    resultsDiv.innerHTML = html;
+}
+
+// Load templates
+async function loadTemplates() {
+    try {
+        const response = await fetch('/api/x-post/templates');
+        const data = await response.json();
+
+        if (data.success) {
+            const templatesList = document.getElementById('templates-list');
+            templatesList.innerHTML = '';
+
+            data.templates.forEach(template => {
+                const templateDiv = document.createElement('div');
+                templateDiv.className = 'template-item';
+                templateDiv.onclick = () => applyTemplate(template);
+
+                templateDiv.innerHTML = `
+                    <h6 class="mb-1">${template.name}</h6>
+                    <small class="text-muted">${template.category}</small>
+                `;
+
+                templatesList.appendChild(templateDiv);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading templates:', error);
+    }
+}
+
+// Apply template
+function applyTemplate(template) {
+    document.getElementById('post-content').value = template.template;
+    document.getElementById('post-content').dispatchEvent(new Event('input'));
+    showToast(`Applied ${template.name} template`, 'success');
+}
+
+// Thread functions
+function renderThreadPosts() {
+    const container = document.getElementById('thread-posts');
+    container.innerHTML = '';
+
+    threadPosts.forEach((post, index) => {
+        const postDiv = document.createElement('div');
+        postDiv.className = 'thread-post';
+        postDiv.innerHTML = `
+            <div class="thread-number">${index + 1}</div>
+            <textarea class="form-control mb-2" rows="3"
+                      onchange="updateThreadPost(${index}, this.value)"
+                      placeholder="Post ${index + 1}...">${post.content}</textarea>
+            <small class="text-muted">${post.content.length}/280</small>
+            ${threadPosts.length > 1 ? `<button class="btn btn-sm btn-outline-danger float-end" onclick="removeThreadPost(${index})">Remove</button>` : ''}
+        `;
+        container.appendChild(postDiv);
+    });
+}
+
+function addThreadPost() {
+    threadPosts.push({content: '', id: threadPosts.length + 1});
+    renderThreadPosts();
+}
+
+function removeThreadPost(index) {
+    if (threadPosts.length > 1) {
+        threadPosts.splice(index, 1);
+        renderThreadPosts();
+    }
+}
+
+function updateThreadPost(index, content) {
+    threadPosts[index].content = content;
+}
+
+// Show preview
+function showPreview() {
+    const preview = document.getElementById('post-preview');
+    const content = document.getElementById('preview-content');
+
+    const style = document.getElementById('post-style').value;
+
+    if (style === 'single') {
+        const postContent = document.getElementById('post-content').value;
+        content.innerHTML = `
+            <div class="post-header">
+                <div class="avatar">C</div>
+                <div class="post-meta">
+                    <div class="username">Creaver</div>
+                    <div class="handle">@creaver · now</div>
+                </div>
+            </div>
+            <div class="post-text">${postContent}</div>
+        `;
+    } else if (style === 'thread') {
+        let html = '';
+        threadPosts.forEach((post, index) => {
+            html += `
+                <div class="mb-3">
+                    <div class="post-header">
+                        <div class="avatar">C</div>
+                        <div class="post-meta">
+                            <div class="username">Creaver</div>
+                            <div class="handle">@creaver · ${index + 1}/${threadPosts.length}</div>
+                        </div>
+                    </div>
+                    <div class="post-text">${post.content}</div>
+                </div>
+            `;
+        });
+        content.innerHTML = html;
+    }
+
+    preview.style.display = 'block';
+}
+
+// Copy post
+async function copyPost() {
+    const style = document.getElementById('post-style').value;
+    let textToCopy = '';
+
+    if (style === 'single') {
+        textToCopy = document.getElementById('post-content').value;
+    } else if (style === 'thread') {
+        textToCopy = threadPosts.map((post, index) =>
+            `${index + 1}/${threadPosts.length}\n${post.content}`
+        ).join('\n\n');
+    }
+
+    try {
+        await navigator.clipboard.writeText(textToCopy);
+        showToast('Post copied to clipboard!', 'success');
+    } catch (error) {
+        showToast('Failed to copy post', 'error');
+    }
+}
+
+// Analyze post
+function analyzePost() {
+    const content = document.getElementById('post-content').value;
+    if (!content) {
+        showToast('Please enter some content first', 'error');
+        return;
+    }
+
+    // Simple analysis
+    const hashtagCount = (content.match(/#/g) || []).length;
+    const mentionCount = (content.match(/@/g) || []).length;
+    const hasQuestion = content.includes('?');
+    const hasEmoji = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/u.test(content);
+
+    let score = 50;
+    if (hashtagCount >= 1 && hashtagCount <= 3) score += 10;
+    if (hasQuestion) score += 15;
+    if (hasEmoji) score += 10;
+    if (content.length > 100 && content.length < 240) score += 15;
+
+    showToast(`Engagement Score: ${score}/100`, 'info');
+}
+
+// Show toast
+function showToast(message, type = 'info') {
+    if (window.BaseApp && window.BaseApp.showToast) {
+        window.BaseApp.showToast(message, type);
+    }
+}
+
+// Add spinning animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .spinning {
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

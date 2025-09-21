@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+
+{% block title %}Video Title Generator - Creaver{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="mb-4">Video Title Generator</h1>
+            <p class="lead">Create compelling titles that maximize clicks and engagement</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Generate Video Titles</h5>
+
+                    <form id="titleForm">
+                        <div class="mb-3">
+                            <label for="topic" class="form-label">Video Topic</label>
+                            <input type="text" class="form-control" id="topic"
+                                placeholder="E.g., iPhone 15 Review, Minecraft Tutorial, Cooking Pasta">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="content_type" class="form-label">Content Type</label>
+                            <select class="form-control" id="content_type">
+                                <option value="tutorial">Tutorial / How-to</option>
+                                <option value="review">Product Review</option>
+                                <option value="vlog">Vlog / Personal</option>
+                                <option value="list">List / Top 10</option>
+                                <option value="reaction">Reaction / Commentary</option>
+                                <option value="challenge">Challenge / Experiment</option>
+                                <option value="news">News / Update</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="educational">Educational</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tone" class="form-label">Tone</label>
+                            <select class="form-control" id="tone">
+                                <option value="engaging">Engaging / Exciting</option>
+                                <option value="professional">Professional</option>
+                                <option value="casual">Casual / Friendly</option>
+                                <option value="urgent">Urgent / Breaking</option>
+                                <option value="mysterious">Mysterious / Intriguing</option>
+                                <option value="humorous">Humorous / Fun</option>
+                                <option value="emotional">Emotional / Inspiring</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="keywords" class="form-label">Important Keywords (Optional)</label>
+                            <input type="text" class="form-control" id="keywords"
+                                placeholder="E.g., 2024, best, ultimate, honest">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-magic"></i> Generate Titles
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4" id="resultCard" style="display: none;">
+                <div class="card-body">
+                    <h5 class="card-title">Generated Titles</h5>
+                    <div id="titlesResult" class="mb-3">
+                        <!-- Generated titles will appear here -->
+                    </div>
+                    <button class="btn btn-secondary" onclick="regenerateTitles()">
+                        <i class="fas fa-redo"></i> Generate More
+                    </button>
+                </div>
+            </div>
+
+            <!-- Title Analyzer -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Title Analyzer</h5>
+                    <p class="text-muted">Test your title for SEO and engagement potential</p>
+
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="analyzeInput"
+                            placeholder="Enter a title to analyze">
+                        <button class="btn btn-outline-primary" onclick="analyzeTitle()">
+                            <i class="fas fa-chart-line"></i> Analyze
+                        </button>
+                    </div>
+
+                    <div id="analysisResult" style="display: none;">
+                        <!-- Analysis results will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Title Best Practices</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Keep under 60 characters
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Front-load keywords
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Use numbers when relevant
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Create curiosity gap
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Be specific and clear
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Avoid clickbait
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Power Words</h5>
+                    <div class="d-flex flex-wrap gap-1">
+                        <span class="badge bg-primary">Ultimate</span>
+                        <span class="badge bg-primary">Essential</span>
+                        <span class="badge bg-primary">Proven</span>
+                        <span class="badge bg-primary">Secret</span>
+                        <span class="badge bg-primary">Amazing</span>
+                        <span class="badge bg-primary">Powerful</span>
+                        <span class="badge bg-primary">Complete</span>
+                        <span class="badge bg-primary">Easy</span>
+                        <span class="badge bg-primary">Quick</span>
+                        <span class="badge bg-primary">Free</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Title Formulas</h5>
+                    <ul class="small">
+                        <li>How to [Achieve Desired Outcome]</li>
+                        <li>[Number] Ways to [Solve Problem]</li>
+                        <li>Why [Something] is [Adjective]</li>
+                        <li>[Do This] Before [Time/Event]</li>
+                        <li>The Truth About [Topic]</li>
+                        <li>[Topic]: Everything You Need to Know</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let generatedTitles = [];
+
+document.getElementById('titleForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const topic = document.getElementById('topic').value;
+    const contentType = document.getElementById('content_type').value;
+    const tone = document.getElementById('tone').value;
+    const keywords = document.getElementById('keywords').value;
+
+    if (!topic) {
+        alert('Please enter a video topic');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/video-title/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                topic: topic,
+                content_type: contentType,
+                tone: tone,
+                keywords: keywords
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            generatedTitles = data.titles;
+            displayTitles();
+            document.getElementById('resultCard').style.display = 'block';
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error generating titles: ' + error.message);
+    }
+});
+
+function displayTitles() {
+    const titlesHtml = generatedTitles.map((title, index) =>
+        `<div class="mb-3 p-3 border rounded hover-shadow" style="cursor: pointer;" onclick="copyTitle('${title.replace(/'/g, "\\'")}')">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${title}</h6>
+                    <small class="text-muted">${title.length} characters</small>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); copyTitle('${title.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>`
+    ).join('');
+
+    document.getElementById('titlesResult').innerHTML = titlesHtml;
+}
+
+function copyTitle(title) {
+    navigator.clipboard.writeText(title);
+    // Show brief success message
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed top-50 start-50 translate-middle bg-success text-white p-2 rounded';
+    toast.textContent = 'Title copied!';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 1000);
+}
+
+function regenerateTitles() {
+    document.getElementById('titleForm').dispatchEvent(new Event('submit'));
+}
+
+async function analyzeTitle() {
+    const title = document.getElementById('analyzeInput').value;
+
+    if (!title) {
+        alert('Please enter a title to analyze');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/video-title/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title: title })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            displayAnalysis(data.analysis);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error analyzing title: ' + error.message);
+    }
+}
+
+function displayAnalysis(analysis) {
+    const scoreColor = analysis.score >= 80 ? 'success' : analysis.score >= 60 ? 'warning' : 'danger';
+
+    const analysisHtml = `
+        <div class="border-top pt-3">
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Overall Score</span>
+                    <span class="badge bg-${scoreColor}">${analysis.score}/100</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-${scoreColor}" style="width: ${analysis.score}%"></div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <small class="text-muted">
+                    Length: ${analysis.length} chars | Words: ${analysis.word_count}
+                </small>
+            </div>
+
+            <div class="mb-3">
+                <h6>Strengths:</h6>
+                <ul class="small">
+                    ${analysis.strengths.map(s => `<li>${s}</li>`).join('')}
+                </ul>
+            </div>
+
+            <div class="mb-3">
+                <h6>Suggestions:</h6>
+                <ul class="small">
+                    ${analysis.suggestions.map(s => `<li>${s}</li>`).join('')}
+                </ul>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('analysisResult').innerHTML = analysisHtml;
+    document.getElementById('analysisResult').style.display = 'block';
+}
+
+// Add hover effect style
+const style = document.createElement('style');
+style.textContent = `
+    .hover-shadow {
+        transition: all 0.3s ease;
+    }
+    .hover-shadow:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

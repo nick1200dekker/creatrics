@@ -1,0 +1,587 @@
+from flask import render_template, request, jsonify, g, redirect, url_for
+from . import bp
+from app.system.auth.middleware import auth_required
+from datetime import datetime
+import logging
+import json
+import uuid
+
+logger = logging.getLogger(__name__)
+
+# In-memory storage for demo purposes
+# In production, this should be replaced with proper database operations
+notes_storage = {}
+
+@bp.route('/brain-dump')
+@auth_required
+def brain_dump():
+    """Brain Dump main page"""
+    return render_template('brain_dump/index.html')
+
+@bp.route('/api/brain-dump/notes', methods=['GET'])
+@auth_required
+def get_notes():
+    """Get all notes for the current user"""
+    try:
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        # Get user's notes from storage
+        user_notes = notes_storage[user_id]
+        
+        # Convert to list and sort by updated_at descending (newest first)
+        notes = list(user_notes.values())
+        notes.sort(key=lambda x: x.get('updated_at', ''), reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'notes': notes,
+            'total': len(notes)
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching notes: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch notes'
+        }), 500
+
+@bp.route('/api/brain-dump/notes', methods=['POST'])
+@auth_required
+def create_note():
+    """Create a new note"""
+    try:
+        data = request.json or {}
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        # Create new note
+        note_id = str(uuid.uuid4())
+        now = datetime.utcnow().isoformat() + 'Z'
+        
+        new_note = {
+            'id': note_id,
+            'title': data.get('title', 'Untitled'),
+            'content': data.get('content', ''),
+            'tags': data.get('tags', []),
+            'is_favorite': data.get('is_favorite', False),
+            'created_at': now,
+            'updated_at': now,
+            'user_id': user_id
+        }
+        
+        # Store note
+        notes_storage[user_id][note_id] = new_note
+        
+        logger.info(f"Created note {note_id} for user {user_id}")
+        
+        return jsonify({
+            'success': True,
+            'note': new_note,
+            'message': 'Note created successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error creating note: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to create note'
+        }), 500
+
+@bp.route('/api/brain-dump/notes/<note_id>', methods=['GET'])
+@auth_required
+def get_note(note_id):
+    """Get a specific note"""
+    try:
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        # Check if note exists
+        if note_id not in notes_storage[user_id]:
+            return jsonify({
+                'success': False,
+                'error': 'Note not found'
+            }), 404
+        
+        note = notes_storage[user_id][note_id]
+        
+        return jsonify({
+            'success': True,
+            'note': note
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching note: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch note'
+        }), 500
+
+@bp.route('/api/brain-dump/notes/<note_id>', methods=['PUT'])
+@auth_required
+def update_note(note_id):
+    """Update an existing note"""
+    try:
+        data = request.json or {}
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        # Check if note exists
+        if note_id not in notes_storage[user_id]:
+            return jsonify({
+                'success': False,
+                'error': 'Note not found'
+            }), 404
+        
+        # Update note
+        note = notes_storage[user_id][note_id]
+        
+        # Update fields if provided
+        if 'title' in data:
+            note['title'] = data['title'] if data['title'] else 'Untitled'
+        if 'content' in data:
+            note['content'] = data['content']
+        if 'tags' in data:
+            note['tags'] = data['tags']
+        if 'is_favorite' in data:
+            note['is_favorite'] = data['is_favorite']
+        
+        note['updated_at'] = datetime.utcnow().isoformat() + 'Z'
+        
+        logger.info(f"Updated note {note_id} for user {user_id}")
+        
+        return jsonify({
+            'success': True,
+            'note': note,
+            'message': 'Note updated successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error updating note: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to update note'
+        }), 500
+
+@bp.route('/api/brain-dump/notes/<note_id>', methods=['DELETE'])
+@auth_required
+def delete_note(note_id):
+    """Delete a note"""
+    try:
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        # Check if note exists
+        if note_id not in notes_storage[user_id]:
+            return jsonify({
+                'success': False,
+                'error': 'Note not found'
+            }), 404
+        
+        # Delete note
+        del notes_storage[user_id][note_id]
+        
+        logger.info(f"Deleted note {note_id} for user {user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Note deleted successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error deleting note: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to delete note'
+        }), 500
+
+@bp.route('/api/brain-dump/notes/<note_id>/favorite', methods=['POST'])
+@auth_required
+def toggle_favorite(note_id):
+    """Toggle favorite status of a note"""
+    try:
+        data = request.json or {}
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        # Check if note exists
+        if note_id not in notes_storage[user_id]:
+            return jsonify({
+                'success': False,
+                'error': 'Note not found'
+            }), 404
+        
+        # Update favorite status
+        note = notes_storage[user_id][note_id]
+        note['is_favorite'] = data.get('is_favorite', False)
+        note['updated_at'] = datetime.utcnow().isoformat() + 'Z'
+        
+        return jsonify({
+            'success': True,
+            'note': note,
+            'message': 'Favorite status updated'
+        })
+
+    except Exception as e:
+        logger.error(f"Error toggling favorite: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to update favorite status'
+        }), 500
+
+@bp.route('/api/brain-dump/search', methods=['GET'])
+@auth_required
+def search_notes():
+    """Search notes with query parameter"""
+    try:
+        query = request.args.get('q', '').lower().strip()
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        # Get user's notes
+        user_notes = notes_storage[user_id]
+        
+        if not query:
+            # Return all notes if no query
+            notes = list(user_notes.values())
+        else:
+            # Search through notes
+            notes = []
+            for note in user_notes.values():
+                # Search in title and content
+                title_match = query in (note.get('title', '') or '').lower()
+                
+                # Remove HTML tags for content search
+                content = note.get('content', '') or ''
+                import re
+                clean_content = re.sub('<[^<]+?>', '', content)
+                content_match = query in clean_content.lower()
+                
+                # Search in tags
+                tags_match = any(query in tag.lower() for tag in (note.get('tags', []) or []))
+                
+                if title_match or content_match or tags_match:
+                    notes.append(note)
+        
+        # Sort by updated_at descending
+        notes.sort(key=lambda x: x.get('updated_at', ''), reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'notes': notes,
+            'query': query,
+            'total': len(notes)
+        })
+
+    except Exception as e:
+        logger.error(f"Error searching notes: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to search notes'
+        }), 500
+
+@bp.route('/api/brain-dump/tags', methods=['GET'])
+@auth_required
+def get_all_tags():
+    """Get all unique tags used by the user"""
+    try:
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        # Get user's notes
+        user_notes = notes_storage[user_id]
+        
+        # Collect all unique tags
+        all_tags = set()
+        for note in user_notes.values():
+            tags = note.get('tags', [])
+            if tags:
+                all_tags.update(tags)
+        
+        # Sort tags alphabetically
+        tags_list = sorted(list(all_tags))
+        
+        return jsonify({
+            'success': True,
+            'tags': tags_list,
+            'total': len(tags_list)
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching tags: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch tags'
+        }), 500
+
+@bp.route('/api/brain-dump/export', methods=['POST'])
+@auth_required
+def export_notes():
+    """Export notes in various formats (JSON, Markdown, HTML)"""
+    try:
+        data = request.json or {}
+        format_type = data.get('format', 'json').lower()
+        note_ids = data.get('note_ids', [])
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        # Get user's notes
+        user_notes = notes_storage[user_id]
+        
+        # Filter notes if specific IDs provided
+        if note_ids:
+            export_notes = {
+                nid: note for nid, note in user_notes.items() 
+                if nid in note_ids
+            }
+        else:
+            export_notes = user_notes
+        
+        # Convert to list
+        notes_list = list(export_notes.values())
+        
+        if format_type == 'json':
+            return jsonify({
+                'success': True,
+                'data': notes_list,
+                'format': 'json',
+                'count': len(notes_list)
+            })
+        
+        elif format_type == 'markdown':
+            # Convert to markdown format
+            markdown_content = "# Brain Dump Export\n\n"
+            
+            for note in notes_list:
+                title = note.get('title', 'Untitled')
+                content = note.get('content', '')
+                tags = note.get('tags', [])
+                created = note.get('created_at', '')
+                updated = note.get('updated_at', '')
+                
+                # Remove HTML tags from content
+                import re
+                clean_content = re.sub('<[^<]+?>', '', content)
+                
+                markdown_content += f"## {title}\n\n"
+                markdown_content += f"**Created:** {created}\n"
+                markdown_content += f"**Updated:** {updated}\n"
+                if tags:
+                    markdown_content += f"**Tags:** {', '.join(tags)}\n"
+                markdown_content += f"\n{clean_content}\n\n"
+                markdown_content += "---\n\n"
+            
+            return jsonify({
+                'success': True,
+                'data': markdown_content,
+                'format': 'markdown',
+                'count': len(notes_list)
+            })
+        
+        elif format_type == 'html':
+            # Convert to HTML format
+            html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Dump Export</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+        h1 { color: #667eea; }
+        .note { margin-bottom: 2rem; padding: 1rem; border-left: 3px solid #667eea; background: #f9fafb; }
+        .note-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .note-meta { font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem; }
+        .note-content { line-height: 1.6; }
+        .tags { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .tag { background: #dbeafe; color: #1e40af; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+    <h1>Brain Dump Export</h1>
+"""
+            
+            for note in notes_list:
+                title = note.get('title', 'Untitled')
+                content = note.get('content', '')
+                tags = note.get('tags', [])
+                created = note.get('created_at', '')
+                
+                html_content += f"""
+    <div class="note">
+        <div class="note-title">{title}</div>
+        <div class="note-meta">Created: {created}</div>
+        <div class="note-content">{content}</div>
+"""
+                
+                if tags:
+                    html_content += '        <div class="tags">\n'
+                    for tag in tags:
+                        html_content += f'            <span class="tag">{tag}</span>\n'
+                    html_content += '        </div>\n'
+                
+                html_content += '    </div>\n'
+            
+            html_content += """
+</body>
+</html>"""
+            
+            return jsonify({
+                'success': True,
+                'data': html_content,
+                'format': 'html',
+                'count': len(notes_list)
+            })
+        
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Export format {format_type} not supported. Use "json", "markdown", or "html".'
+            }), 400
+
+    except Exception as e:
+        logger.error(f"Error exporting notes: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to export notes'
+        }), 500
+
+@bp.route('/api/brain-dump/stats', methods=['GET'])
+@auth_required
+def get_stats():
+    """Get user's notes statistics"""
+    try:
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        # Get user's notes
+        user_notes = notes_storage[user_id]
+        notes_list = list(user_notes.values())
+        
+        # Calculate stats
+        total_notes = len(notes_list)
+        favorite_count = sum(1 for note in notes_list if note.get('is_favorite', False))
+        
+        # Get all tags
+        all_tags = []
+        for note in notes_list:
+            tags = note.get('tags', [])
+            if tags:
+                all_tags.extend(tags)
+        
+        unique_tags = len(set(all_tags))
+        
+        # Calculate average note length
+        total_length = 0
+        for note in notes_list:
+            content = note.get('content', '')
+            # Remove HTML tags
+            import re
+            clean_content = re.sub('<[^<]+?>', '', content)
+            total_length += len(clean_content)
+        
+        avg_length = total_length // total_notes if total_notes > 0 else 0
+        
+        # Get recent notes (last 7 days)
+        from datetime import timedelta
+        week_ago = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
+        recent_notes = sum(1 for note in notes_list if note.get('updated_at', '') >= week_ago)
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_notes': total_notes,
+                'favorites': favorite_count,
+                'unique_tags': unique_tags,
+                'average_note_length': avg_length,
+                'recent_notes': recent_notes,
+                'total_words': total_length // 5  # Rough word count estimate
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting stats: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to get statistics'
+        }), 500
+
+# Helper function to bulk import notes (useful for testing)
+@bp.route('/api/brain-dump/import', methods=['POST'])
+@auth_required
+def import_notes():
+    """Import notes from JSON"""
+    try:
+        data = request.json or {}
+        imported_notes = data.get('notes', [])
+        user_id = str(g.user.get('id'))
+        
+        # Initialize user storage if needed
+        if user_id not in notes_storage:
+            notes_storage[user_id] = {}
+        
+        imported_count = 0
+        
+        for note_data in imported_notes:
+            # Generate new ID to avoid conflicts
+            note_id = str(uuid.uuid4())
+            now = datetime.utcnow().isoformat() + 'Z'
+            
+            new_note = {
+                'id': note_id,
+                'title': note_data.get('title', 'Imported Note'),
+                'content': note_data.get('content', ''),
+                'tags': note_data.get('tags', []),
+                'is_favorite': note_data.get('is_favorite', False),
+                'created_at': note_data.get('created_at', now),
+                'updated_at': now,
+                'user_id': user_id
+            }
+            
+            notes_storage[user_id][note_id] = new_note
+            imported_count += 1
+        
+        logger.info(f"Imported {imported_count} notes for user {user_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully imported {imported_count} notes',
+            'count': imported_count
+        })
+
+    except Exception as e:
+        logger.error(f"Error importing notes: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to import notes'
+        }), 500

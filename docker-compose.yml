@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - FLASK_APP=run.py
+      - FLASK_ENV=development
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - CLERK_JWKS_URL=${CLERK_JWKS_URL}
+      - CLERK_JWT_ISSUER=${CLERK_JWT_ISSUER}
+      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
+      - FIREBASE_CREDENTIALS=/app/firebase-credentials.json
+    volumes:
+      - .:/app
+      - ./firebase-credentials.json:/app/firebase-credentials.json:ro

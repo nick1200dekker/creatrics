@@ -1,0 +1,1063 @@
+{% extends "base.html" %}
+{% set check_auth = true %}
+{% block title %}Subscription Plans - Soccer Stats{% endblock %}
+
+{% block additional_styles %}
+<style>
+    /* Page Header - Match Player Stats Style */
+    .hero-section {
+        padding: 1.5rem 0 1rem 0;
+        text-align: left;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #3B82F6;
+        margin-bottom: 0.75rem;
+        line-height: 1.1;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .hero-title i {
+        color: #3B82F6;
+        font-size: 2.5rem;
+        pointer-events: none;
+    }
+    
+    .hero-subtitle {
+        color: #64748B;
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        font-weight: 500;
+        line-height: 1.6;
+    }
+    
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1rem;
+        }
+    }
+
+    /* Status section - Enhanced */
+    .status-section {
+        background: linear-gradient(135deg, #F8FAFF 0%, #EEF2FF 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-top: 2rem;
+        margin-bottom: 3rem;
+        border: 1px solid rgba(59, 130, 246, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .status-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    
+    .status-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .status-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--brand-gradient);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
+    }
+    
+    .status-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1E293B;
+        margin: 0;
+    }
+    
+    .status-subtitle {
+        color: #64748B;
+        font-size: 0.875rem;
+        margin: 0;
+        margin-top: 0.25rem;
+    }
+    
+    .status-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+        gap: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .status-details .status-info:first-child {
+        justify-self: start;
+    }
+    
+    .status-details .status-info:nth-child(2) {
+        justify-self: center;
+    }
+    
+    .status-details #manage-section {
+        justify-self: end;
+    }
+    
+    .status-details.no-manage #manage-section {
+        display: none !important;
+    }
+    
+    .status-details.no-manage {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .status-details.no-manage .status-info:nth-child(2) {
+        justify-self: end;
+    }
+    
+    .status-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .status-info .label {
+        font-size: 0.75rem;
+        color: #64748B;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .status-info .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1E293B;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .manage-button {
+        background: var(--brand-gradient);
+        color: white;
+        padding: 0.875rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+    
+    .manage-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+    }
+
+    /* Plan cards grid */
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /* Plan card styling - Improved */
+    .plan-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.75rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border: 1px solid #E5E7EB;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .plan-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        border-color: #CBD5E1;
+    }
+    
+    .plan-card.current {
+        border: 2px solid var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+    }
+    
+    .plan-badge {
+        background: #EEF2FF;
+        color: var(--accent-blue);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-block;
+        margin: 0 auto 1rem auto;
+        text-align: center;
+        width: fit-content;
+    }
+    
+    .king-badge {
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        color: #92400E;
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 0.375rem 1rem;
+        border-radius: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: inline-block;
+        margin: 0 auto 1rem auto;
+        text-align: center;
+        width: fit-content;
+        position: relative;
+    }
+    
+    .king-badge::before {
+        content: '✨';
+        position: absolute;
+        left: -8px;
+        top: -2px;
+        font-size: 0.8rem;
+        animation: sparkle 2s infinite;
+    }
+    
+    @keyframes sparkle {
+        0%, 100% { opacity: 0; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+    
+    .plan-header {
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .plan-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 0.5rem;
+    }
+    
+    .plan-price {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1E293B;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 0.25rem;
+    }
+    
+    .plan-price .currency {
+        font-size: 1.5rem;
+        color: #64748B;
+        font-weight: 600;
+    }
+    
+    .plan-price .period {
+        font-size: 0.875rem;
+        color: #64748B;
+        font-weight: 500;
+        margin-left: 0.5rem;
+    }
+    
+    .plan-description {
+        color: #64748B;
+        font-size: 0.875rem;
+        margin-bottom: 1.25rem;
+        font-weight: 500;
+    }
+    
+    .plan-features {
+        flex: 1;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        padding: 0.5rem 0;
+        font-size: 0.875rem;
+        color: #475569;
+        width: 100%;
+        position: relative;
+    }
+    
+    .feature-item::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 24px;
+        right: 0;
+        height: 1px;
+        background: #F1F5F9;
+    }
+    
+    .feature-item:last-child::after {
+        display: none;
+    }
+    
+    .feature-icon {
+        color: #10B981;
+        font-size: 1rem;
+        flex-shrink: 0;
+        background: #ECFDF5;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .plan-button {
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .plan-button.primary {
+        background: var(--brand-gradient);
+        color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+    
+    .plan-button.primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    }
+    
+    .current-plan-badge {
+        background: #F0F9FF;
+        border: 1.5px solid #3B82F6;
+        color: #1E40AF;
+        font-weight: 600;
+        padding: 0.75rem 1.25rem;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        width: 100%;
+        justify-content: center;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .current-plan-badge i {
+        color: #3B82F6;
+        font-size: 1.125rem;
+    }
+    
+    /* Flex Credits Section - Redesigned */
+    .flex-credits-section {
+        margin-top: 3.5rem;
+        padding: 2.5rem 0 2rem 0;
+        border-top: 1px solid #E5E7EB;
+        position: relative;
+    }
+    
+    .flex-credits-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .flex-credits-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 0.5rem;
+    }
+    
+    .flex-credits-subtitle {
+        color: #64748B;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .flex-credits-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        max-width: 540px;
+        margin: 0 auto;
+    }
+    
+    .flex-card {
+        background: #FAFBFC;
+        border-radius: 16px;
+        padding: 1.75rem;
+        border: 1px solid #E5E7EB;
+        text-align: center;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .flex-card::before {
+        content: '⚡';
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.25rem;
+        opacity: 0.1;
+    }
+    
+    .flex-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        border-color: #CBD5E1;
+    }
+    
+    .flex-amount {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #1E293B;
+        margin-bottom: 0.25rem;
+    }
+    
+    .flex-price {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 1.25rem;
+    }
+    
+    .flex-button {
+        width: 100%;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: #1E293B;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .flex-button:hover:not(:disabled) {
+        background: #0F172A;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .flex-button:disabled {
+        background: #F3F4F6;
+        color: #9CA3AF;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        border: 1px solid #E5E7EB;
+    }
+    
+    .locked-message {
+        background: #FEF3C7;
+        border: 1px solid #FCD34D;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        text-align: center;
+        color: #92400E;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        max-width: 540px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .locked-message i {
+        font-size: 1rem;
+    }
+    
+    /* Loading states */
+    .skeleton {
+        background: linear-gradient(90deg, rgba(226, 232, 240, 0.5) 25%, rgba(226, 232, 240, 0.8) 50%, rgba(226, 232, 240, 0.5) 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 6px;
+        height: 1.5em;
+        display: inline-block;
+    }
+
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    .skeleton-plan {
+        width: 140px;
+        height: 36px;
+    }
+
+    .skeleton-credits {
+        width: 60px;
+        height: 36px;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 1rem 0;
+            text-align: center;
+        }
+        
+        .hero-title {
+            font-size: 1.6rem;
+        }
+        
+        .status-section {
+            padding: 1.5rem;
+        }
+        
+        .status-details {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1.5rem;
+        }
+        
+        .status-details .status-info:first-child,
+        .status-details .status-info:nth-child(2),
+        .status-details #manage-section {
+            justify-self: auto;
+        }
+        
+        .status-info .value {
+            font-size: 1.25rem;
+        }
+        
+        .manage-button {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .plan-card {
+            padding: 1.5rem;
+        }
+        
+        .plans-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .flex-credits-grid {
+            grid-template-columns: 1fr;
+            max-width: 100%;
+        }
+        
+        .flex-credits-section {
+            margin-top: 3rem;
+            padding-top: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <h1 class="hero-title">
+        <i class="ph ph-credit-card"></i>
+        Subscription Plans
+    </h1>
+    <p class="hero-subtitle">Choose the perfect plan to unleash your soccer analytics potential</p>
+</section>
+
+<!-- Current Plan Status -->
+<div class="status-section">
+    <div class="status-header">
+        <div class="status-icon">
+            <i class="ph ph-crown"></i>
+        </div>
+        <div>
+            <div class="status-title">Your Current Plan: <span id="current-plan-inline" style="color: #3B82F6;">Loading...</span></div>
+            <div class="status-subtitle">Manage your subscription</div>
+        </div>
+    </div>
+    
+    <div class="status-details no-manage" id="status-details">
+        <div id="manage-section" style="display: none;">
+            <button id="manage-subscription-btn" class="manage-button">
+                <i class="ph ph-gear"></i>
+                Manage Subscription
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Plans Grid -->
+<div class="plans-grid">
+    <!-- Free Plan -->
+    <div class="plan-card" id="free-plan-card">
+        <div class="plan-header">
+            <div class="plan-badge">Free Forever</div>
+            <h3 class="plan-title">Free Plan</h3>
+            <div class="plan-price">
+                <span class="currency">€</span>0
+                <span class="period">one time</span>
+            </div>
+            <p class="plan-description">Perfect for trying out our player statistics</p>
+        </div>
+        
+        <div class="plan-features">
+            <ul class="feature-list">
+                <li class="feature-item">
+                    <i class="ph ph-check feature-icon"></i>
+                    <span>Basic player stats access</span>
+                </li>
+                <li class="feature-item">
+                    <i class="ph ph-check feature-icon"></i>
+                    <span>Free player stats access</span>
+                </li>
+                <li class="feature-item">
+                    <i class="ph ph-check feature-icon"></i>
+                    <span>Limited daily access</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div id="free-plan-button" style="display: none;">
+            <div class="current-plan-badge">
+                <i class="ph ph-check-circle"></i>
+                Current Plan
+            </div>
+        </div>
+    </div>
+    
+    <!-- Soccer Pro Plan -->
+    <div class="plan-card" id="king-plan-card">
+        <div class="plan-header">
+            <div class="king-badge">⚽ Soccer Pro</div>
+            <h3 class="plan-title">Soccer Pro</h3>
+            <div class="plan-price">
+                <span class="currency">€</span>9
+                <span class="period">/ month</span>
+            </div>
+            <p class="plan-description">Master the soccer analytics field!</p>
+        </div>
+        
+        <div class="plan-features">
+            <ul class="feature-list">
+                <li class="feature-item">
+                    <i class="ph ph-check feature-icon"></i>
+                    <span><strong>Premium player insights</strong></span>
+                </li>
+                <li class="feature-item">
+                    <i class="ph ph-check feature-icon"></i>
+                    <span>Build and manage your squad</span>
+                </li>
+                <li class="feature-item">
+                    <i class="ph ph-check feature-icon"></i>
+                    <span>Advanced performance analytics</span>
+                </li>
+                <li class="feature-item">
+                    <i class="ph ph-check feature-icon"></i>
+                    <span>Save & organize squads</span>
+                </li>
+                <li class="feature-item">
+                    <i class="ph ph-check feature-icon"></i>
+                    <span>Export squad data & reports</span>
+                </li>
+            </ul>
+        </div>
+        
+        <button id="subscribe-king" data-plan="basic" class="plan-button primary" style="display: none;">
+            <i class="ph ph-crown"></i>
+            Become Soccer Pro
+        </button>
+        
+        <div id="king-plan-button" style="display: none;">
+            <div class="current-plan-badge">
+                <i class="ph ph-check-circle"></i>
+                Current Plan
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+// Payment page JavaScript - Handles subscription and flex credit purchases
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Payment page loaded, initializing...");
+    
+    let currentPlan = null;
+    let userCredits = null;
+    let isKingPlan = false;
+    
+    // Initialize UI state
+    initializeUI();
+    
+    // Load user data
+    loadUserData();
+    
+    // Also update the sidebar credits display
+    updateSidebarCredits();
+    
+    function initializeUI() {
+        // Hide all plan indicators initially
+        const planButtons = ['free-plan-button', 'king-plan-button'];
+        planButtons.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.style.display = 'none';
+        });
+        
+        const subscribeButtons = ['subscribe-king'];
+        subscribeButtons.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.style.display = 'none';
+        });
+        
+        // Hide manage button initially
+        const manageSection = document.getElementById('manage-section');
+        if (manageSection) manageSection.style.display = 'none';
+        
+        // Add event listeners for subscription buttons
+        subscribeButtons.forEach(id => {
+            const button = document.getElementById(id);
+            if (button) {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const planId = button.dataset.plan;
+                    redirectToCheckout(planId);
+                });
+            }
+        });
+        
+        // Add event listeners for flex credit buttons
+        const flexButtons = ['buy-flex1', 'buy-flex2'];
+        flexButtons.forEach(id => {
+            const button = document.getElementById(id);
+            if (button) {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const planId = button.dataset.plan;
+                    redirectToCheckout(planId);
+                });
+            }
+        });
+        
+        // Add event listener for manage button
+        const manageBtn = document.getElementById('manage-subscription-btn');
+        if (manageBtn) {
+            manageBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                openStripePortal();
+            });
+        }
+    }
+    
+    async function loadUserData() {
+        try {
+            const response = await fetch('/users/profile', {
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch user profile');
+            }
+            
+            const userData = await response.json();
+            console.log("User profile data:", userData);
+            
+            currentPlan = userData.subscription_plan || "Free Plan";
+            userCredits = userData.credits || 0;
+            
+            updateUI();
+        } catch (error) {
+            console.error("Error loading user data:", error);
+            // Show error state
+            document.getElementById('current-plan-display').innerHTML = '<span style="color: #EF4444;">Error loading</span>';
+            document.getElementById('user-credits-status').innerHTML = '<span style="color: #EF4444;">--</span>';
+        }
+    }
+    
+    async function updateSidebarCredits() {
+        // Update the sidebar credits display (from base.html)
+        try {
+            const response = await fetch('/users/profile', {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const userData = await response.json();
+                const sidebarCreditsDisplay = document.getElementById('user-credits-display');
+                if (sidebarCreditsDisplay) {
+                    sidebarCreditsDisplay.textContent = userData.credits || 0;
+                }
+            }
+        } catch (error) {
+            console.error('Error updating sidebar credits:', error);
+        }
+    }
+    
+    function updateUI() {
+        // Update inline plan display in header
+        const inlinePlanDisplay = document.getElementById('current-plan-inline');
+        if (inlinePlanDisplay) {
+            inlinePlanDisplay.textContent = currentPlan;
+        }
+        
+        // Update credits display in status section
+        const creditsDisplay = document.getElementById('user-credits-status');
+        if (creditsDisplay) {
+            creditsDisplay.innerHTML = userCredits;
+        }
+        
+        // Also update sidebar credits
+        const sidebarCreditsDisplay = document.getElementById('user-credits-display');
+        if (sidebarCreditsDisplay) {
+            sidebarCreditsDisplay.textContent = userCredits;
+        }
+        
+        // Clear all current plan highlights
+        document.querySelectorAll('.plan-card').forEach(card => {
+            card.classList.remove('current');
+        });
+        
+        // Determine plan type - More flexible plan name matching
+        const normalizedPlan = currentPlan.toLowerCase().trim();
+        const isFreePlan = normalizedPlan === 'free plan' || normalizedPlan === 'free';
+        isKingPlan = normalizedPlan === 'soccer pro' || 
+                     normalizedPlan === 'king plan' || 
+                     normalizedPlan === 'basic plan' ||
+                     normalizedPlan === 'basic' ||
+                     normalizedPlan === 'king';
+        
+        console.log("Plan analysis:", { 
+            currentPlan, 
+            normalizedPlan, 
+            isFreePlan, 
+            isKingPlan 
+        });
+        
+        // Show manage button for paid plans and adjust layout
+        const manageSection = document.getElementById('manage-section');
+        const statusDetails = document.getElementById('status-details');
+        
+        if (manageSection) {
+            if (isKingPlan) {
+                manageSection.style.display = 'block';
+                // Only remove no-manage class if it exists
+                if (statusDetails && statusDetails.classList.contains('no-manage')) {
+                    statusDetails.classList.remove('no-manage');
+                }
+            } else {
+                manageSection.style.display = 'none';
+                // Only add no-manage class if it doesn't exist
+                if (statusDetails && !statusDetails.classList.contains('no-manage')) {
+                    statusDetails.classList.add('no-manage');
+                }
+            }
+        }
+        
+        // Update flex credits section
+        const flexLockedMessage = document.getElementById('flex-locked-message');
+        const flexButtons = document.querySelectorAll('.flex-button');
+        
+        if (isKingPlan) {
+            // Enable flex credit purchases for King plan
+            if (flexLockedMessage) flexLockedMessage.style.display = 'none';
+            flexButtons.forEach(btn => {
+                btn.disabled = false;
+            });
+        } else {
+            // Disable flex credit purchases for non-King plans
+            if (flexLockedMessage) flexLockedMessage.style.display = 'block';
+            flexButtons.forEach(btn => {
+                btn.disabled = true;
+            });
+        }
+        
+        // Highlight current plan and show appropriate buttons
+        if (isFreePlan) {
+            document.getElementById('free-plan-card').classList.add('current');
+            document.getElementById('free-plan-button').style.display = 'block';
+            // Show subscribe button for King plan
+            document.getElementById('subscribe-king').style.display = 'inline-flex';
+        } else if (isKingPlan) {
+            document.getElementById('king-plan-card').classList.add('current');
+            document.getElementById('king-plan-button').style.display = 'block';
+        }
+    }
+    
+    function redirectToCheckout(planId) {
+        showToast('Processing your request...', 'info');
+        
+        fetch(`/payment/api/create-checkout/${planId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            credentials: 'include'
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || `HTTP error ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.checkout_url) {
+                window.location.href = data.checkout_url;
+            } else {
+                throw new Error(data.error || 'Failed to create checkout session');
+            }
+        })
+        .catch(error => {
+            console.error('Error creating checkout session:', error);
+            showToast('Error: ' + error.message, 'error');
+        });
+    }
+    
+    function openStripePortal() {
+        showToast('Opening subscription management...', 'info');
+        
+        fetch('/payment/direct-portal', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            credentials: 'include'
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || `HTTP error ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error(data.error || 'No portal URL returned');
+            }
+        })
+        .catch(error => {
+            console.error('Error accessing Stripe portal:', error);
+            showToast('Error: ' + error.message, 'error');
+        });
+    }
+    
+    // Check for payment status in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment_status');
+    
+    if (paymentStatus === 'success') {
+        showToast('🎉 Payment processed successfully!', 'success');
+        // Reload user data to show updated credits/plan
+        setTimeout(() => {
+            loadUserData();
+            updateSidebarCredits();
+        }, 1000);
+    } else if (paymentStatus === 'cancelled') {
+        showToast('Payment cancelled. Your subscription was not changed.', 'info');
+    } else if (paymentStatus === 'error') {
+        showToast('There was an error processing your payment. Please try again.', 'error');
+    }
+    
+    // Clean up URL parameters
+    if (paymentStatus) {
+        const cleanUrl = window.location.protocol + "//" + 
+                        window.location.host + 
+                        window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
+});
+
+// Toast notification function (should be defined in your main app)
+// Fallback implementation if not available
+if (typeof showToast === 'undefined') {
+    window.showToast = function(message, type) {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        // You can implement a simple toast here or use your existing notification system
+        alert(message);
+    };
+}
+</script>
+{% endblock %}

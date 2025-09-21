@@ -1,0 +1,2651 @@
+{% extends "base.html" %}
+
+{% block title %}Content Calendar - Creaver{% endblock %}
+
+{% block additional_styles %}
+<!-- FullCalendar CSS -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+<!-- Quill Editor CSS -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<style>
+    /* Light mode color scheme */
+    :root {
+        --primary-color: #3b82f6;
+        --primary-hover: #2563eb;
+        --primary-light: #eff6ff;
+        --danger-color: #ef4444;
+        --danger-hover: #dc2626;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --border-color: #e5e7eb;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --bg-primary: #ffffff;
+        --bg-secondary: #f9fafb;
+        --bg-hover: #f3f4f6;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Main containers */
+    .content-wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+    }
+
+    /* Card components */
+    .card {
+        background: var(--bg-primary);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+    .card-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Calendar toolbar */
+    .calendar-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .calendar-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .nav-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+        background: var(--bg-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .calendar-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 1rem;
+    }
+
+    /* View toggle buttons */
+    .view-toggle {
+        display: flex;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 4px;
+        gap: 4px;
+        border: 1px solid var(--border-color);
+    }
+
+    .view-btn {
+        padding: 6px 14px;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        transition: all 0.2s;
+    }
+
+    .view-btn:hover {
+        color: var(--text-primary);
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    .view-btn.active {
+        background: var(--bg-primary);
+        color: var(--primary-color);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-hover);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .btn-danger {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: var(--danger-hover);
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 0.813rem;
+    }
+
+    .btn-icon-only {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    /* Filter panel */
+    .filter-panel {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+        display: none;
+    }
+
+    .filter-panel.show {
+        display: block;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .filter-group h5 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+
+    .filter-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .filter-tag {
+        padding: 6px 12px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        font-size: 0.813rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: var(--text-secondary);
+    }
+
+    .filter-tag:hover {
+        background: var(--bg-hover);
+        transform: translateY(-1px);
+    }
+
+    .filter-tag.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* FullCalendar customization */
+    #calendar {
+        background: var(--bg-primary);
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .fc {
+        font-family: inherit;
+    }
+
+    .fc-theme-standard td,
+    .fc-theme-standard th {
+        border-color: var(--border-color);
+    }
+
+    .fc-theme-standard .fc-scrollgrid {
+        border: none;
+    }
+
+    .fc-col-header-cell-cushion {
+        color: var(--text-secondary);
+        font-weight: 600;
+        padding: 12px 0;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+
+    .fc-daygrid-day-number {
+        color: var(--text-primary);
+        font-weight: 500;
+        padding: 8px;
+    }
+
+    .fc-day-today {
+        background: var(--primary-light) !important;
+    }
+
+    .fc-day-today .fc-daygrid-day-number {
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .fc-daygrid-day {
+        min-height: 100px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .fc-daygrid-day:hover {
+        background: var(--bg-hover);
+    }
+
+    /* Calendar events */
+    .fc-event {
+        border: none;
+        border-radius: 4px;
+        margin-bottom: 2px;
+        cursor: pointer;
+        transition: all 0.2s;
+        overflow: hidden;
+    }
+
+    .fc-event:hover {
+        transform: translateX(2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .fc-daygrid-event {
+        white-space: normal;
+        padding: 2px 4px;
+        font-size: 0.75rem;
+    }
+
+    .fc-event-title {
+        font-weight: 500;
+    }
+
+    .fc-event-time {
+        font-weight: 400;
+        opacity: 0.9;
+    }
+
+    /* Platform colors */
+    .fc-event[data-platform="YouTube"] {
+        background-color: #ff0000;
+        color: white;
+    }
+
+    .fc-event[data-platform="X"] {
+        background-color: #000000;
+        color: white;
+    }
+
+    .fc-event[data-platform="TikTok"] {
+        background-color: #ff0050;
+        color: white;
+    }
+
+    .fc-event[data-platform="Instagram"] {
+        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        color: white;
+    }
+
+    .fc-event[data-platform="LinkedIn"] {
+        background-color: #0077b5;
+        color: white;
+    }
+
+    .fc-event[data-platform="Blog"] {
+        background-color: #ff6347;
+        color: white;
+    }
+
+    /* Status badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-planned {
+        background: #e5e7eb;
+        color: #6b7280;
+    }
+
+    .status-in-progress {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .status-review {
+        background: #fed7aa;
+        color: #ea580c;
+    }
+
+    .status-ready {
+        background: #d1fae5;
+        color: #059669;
+    }
+
+    .status-posted {
+        background: #e0e7ff;
+        color: #4f46e5;
+    }
+
+    /* Table view */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .content-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .content-table th {
+        background: var(--bg-secondary);
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        border-bottom: 2px solid var(--border-color);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .content-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.875rem;
+        color: var(--text-primary);
+    }
+
+    .content-table tbody tr {
+        transition: background 0.2s;
+        cursor: pointer;
+    }
+
+    .content-table tbody tr:hover {
+        background: var(--bg-hover);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 1rem;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+    }
+
+    .modal-backdrop.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background: var(--bg-primary);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transform: scale(0.9);
+        transition: transform 0.3s;
+    }
+
+    .modal-backdrop.show .modal-content {
+        transform: scale(1);
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+    }
+
+    .modal-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .modal-footer {
+        padding: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--bg-secondary);
+    }
+
+    /* Form styling */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        background: var(--bg-primary);
+        transition: all 0.2s;
+        color: var(--text-primary);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-control:disabled {
+        background: var(--bg-secondary);
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    select.form-control {
+        cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+        appearance: none;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    /* Date picker */
+    .date-picker-container {
+        position: relative;
+    }
+
+    .date-picker-trigger {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        cursor: pointer;
+    }
+
+    .custom-date-picker {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: var(--shadow-lg);
+        z-index: 1000;
+        min-width: 300px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .date-picker-hidden {
+        display: none;
+    }
+
+    .date-picker-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .date-picker-title {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .date-picker-nav {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .date-picker-nav:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .date-picker-calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        margin-bottom: 1rem;
+    }
+
+    .date-picker-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        transition: all 0.2s;
+    }
+
+    .date-picker-day:hover {
+        background: var(--bg-hover);
+    }
+
+    .date-picker-day.today {
+        background: var(--primary-light);
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .date-picker-day.selected {
+        background: var(--primary-color);
+        color: white;
+        font-weight: 600;
+    }
+
+    .date-picker-day.other-month {
+        color: var(--text-secondary);
+        opacity: 0.5;
+    }
+
+    .date-picker-time {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .time-input {
+        width: 60px;
+        text-align: center;
+    }
+
+    /* Comments section */
+    .comments-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--border-color);
+    }
+
+    .comments-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .comment-item {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        position: relative;
+        transition: all 0.2s;
+    }
+
+    .comment-item:hover {
+        box-shadow: var(--shadow-sm);
+    }
+
+    .comment-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .comment-date {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .comment-actions {
+        display: flex;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .comment-item:hover .comment-actions {
+        opacity: 1;
+    }
+
+    .comment-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .comment-btn:hover {
+        color: var(--text-primary);
+        background: var(--bg-hover);
+    }
+
+    .comment-text {
+        color: var(--text-primary);
+        line-height: 1.5;
+        font-size: 0.875rem;
+    }
+
+    .comment-input {
+        width: 100%;
+        min-height: 80px;
+        resize: vertical;
+        margin-bottom: 1rem;
+    }
+
+    /* Notes section */
+    .notes-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--border-color);
+    }
+
+    .notes-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .notes-editor {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+
+    /* Quill editor customization */
+    .ql-toolbar {
+        background: var(--bg-secondary);
+        border: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    .ql-container {
+        border: none !important;
+        font-family: inherit;
+    }
+
+    .ql-editor {
+        min-height: 200px;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .ql-editor.ql-blank::before {
+        color: var(--text-secondary);
+        font-style: normal;
+    }
+
+    /* Stats cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--bg-primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    .trend-up {
+        color: var(--success-color);
+    }
+
+    .trend-down {
+        color: var(--danger-color);
+    }
+
+    /* Ideas sidebar */
+    .ideas-panel {
+        background: var(--bg-primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .ideas-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .idea-card {
+        padding: 12px;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        border: 1px solid transparent;
+    }
+
+    .idea-card:hover {
+        background: var(--bg-hover);
+        transform: translateX(4px);
+        color: var(--text-primary);
+        border-color: var(--primary-color);
+    }
+
+    /* Loading states */
+    .skeleton {
+        background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    .spinner {
+        border: 3px solid var(--bg-secondary);
+        border-top: 3px solid var(--primary-color);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 2rem auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Toast notifications */
+    .toast-container {
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .toast {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 300px;
+        animation: slideIn 0.3s ease-out;
+        position: relative;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .toast.success {
+        border-left: 4px solid var(--success-color);
+    }
+
+    .toast.error {
+        border-left: 4px solid var(--danger-color);
+    }
+
+    .toast.info {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .toast-icon {
+        font-size: 1.25rem;
+    }
+
+    /* Analytics view */
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .chart-container {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .content-wrapper {
+            padding: 1rem;
+        }
+
+        .calendar-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .toolbar-left,
+        .toolbar-right {
+            justify-content: center;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .fc-daygrid-day {
+            min-height: 80px;
+        }
+
+        .modal-content {
+            max-width: 100%;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Accessibility */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
+
+    /* Focus states */
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+    }
+
+    /* Print styles */
+    @media print {
+        .toolbar-right,
+        .filter-panel,
+        .ideas-panel,
+        .modal-backdrop,
+        .toast-container {
+            display: none !important;
+        }
+
+        .card {
+            box-shadow: none;
+            border: 1px solid #000;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Content Calendar</h1>
+        <p class="page-subtitle">Plan and organize your content across all platforms</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Content</div>
+            <div class="stat-value" id="total-content">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">This Month</div>
+            <div class="stat-value" id="month-content">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Scheduled</div>
+            <div class="stat-value" id="scheduled-content">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Published</div>
+            <div class="stat-value" id="published-content">0</div>
+        </div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel" id="filterPanel">
+        <div class="filter-grid">
+            <div class="filter-group">
+                <h5>Content Status</h5>
+                <div class="filter-tags">
+                    <div class="filter-tag" data-filter="organic">Organic</div>
+                    <div class="filter-tag" data-filter="sponsored">Sponsored</div>
+                </div>
+            </div>
+            <div class="filter-group">
+                <h5>Content Type</h5>
+                <div class="filter-tags">
+                    <div class="filter-tag" data-filter="educational">Educational</div>
+                    <div class="filter-tag" data-filter="entertainment">Entertainment</div>
+                    <div class="filter-tag" data-filter="lifestyle">Lifestyle</div>
+                    <div class="filter-tag" data-filter="other">Other</div>
+                </div>
+            </div>
+            <div class="filter-group">
+                <h5>Platforms</h5>
+                <div class="filter-tags" id="platformFilters">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+            <div class="filter-group">
+                <h5>Status</h5>
+                <div class="filter-tags">
+                    <div class="filter-tag" data-filter="planned">Planned</div>
+                    <div class="filter-tag" data-filter="in-progress">In Progress</div>
+                    <div class="filter-tag" data-filter="review">In Review</div>
+                    <div class="filter-tag" data-filter="ready">Ready</div>
+                    <div class="filter-tag" data-filter="posted">Posted</div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 text-right">
+            <button class="btn btn-secondary btn-sm" onclick="clearFilters()">
+                <i class="ph ph-x"></i>
+                Clear Filters
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Calendar Section -->
+        <div class="col-lg-9">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <!-- Calendar Toolbar -->
+                    <div class="calendar-toolbar">
+                        <div class="toolbar-left">
+                            <button class="btn btn-primary" onclick="openNewEventModal()">
+                                <i class="ph ph-plus"></i>
+                                Add Content
+                            </button>
+                            
+                            <button class="btn btn-secondary" onclick="toggleFilterPanel()">
+                                <i class="ph ph-funnel"></i>
+                                Filter
+                            </button>
+                        </div>
+                        
+                        <div class="toolbar-right">
+                            <!-- View Toggle -->
+                            <div class="view-toggle">
+                                <button class="view-btn active" id="calendarViewBtn" onclick="switchView('calendar')">
+                                    <i class="ph ph-calendar"></i>
+                                    Calendar
+                                </button>
+                                <button class="view-btn" id="tableViewBtn" onclick="switchView('table')">
+                                    <i class="ph ph-table"></i>
+                                    Table
+                                </button>
+                                <button class="view-btn" id="analyticsViewBtn" onclick="switchView('analytics')">
+                                    <i class="ph ph-chart-line"></i>
+                                    Analytics
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calendar View -->
+                    <div id="calendarView">
+                        <div class="calendar-nav mb-3">
+                            <button class="nav-btn" onclick="navigateCalendar('prev')">
+                                <i class="ph ph-caret-left"></i>
+                            </button>
+                            <h3 class="calendar-title" id="calendarTitle">January 2025</h3>
+                            <button class="nav-btn" onclick="navigateCalendar('next')">
+                                <i class="ph ph-caret-right"></i>
+                            </button>
+                            
+                            <div class="ms-auto">
+                                <button class="btn btn-secondary btn-sm" onclick="changeCalendarView('dayGridMonth')">Month</button>
+                                <button class="btn btn-secondary btn-sm" onclick="changeCalendarView('timeGridWeek')">Week</button>
+                                <button class="btn btn-secondary btn-sm" onclick="changeCalendarView('timeGridDay')">Day</button>
+                                <button class="btn btn-secondary btn-sm ms-2" onclick="calendarToday()">Today</button>
+                            </div>
+                        </div>
+                        
+                        <div id="calendar"></div>
+                    </div>
+
+                    <!-- Table View -->
+                    <div id="tableView" style="display: none;">
+                        <div class="table-container">
+                            <table class="content-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Platform</th>
+                                        <th>Type</th>
+                                        <th>Link</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contentTableBody">
+                                    <!-- Dynamically populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Analytics View -->
+                    <div id="analyticsView" style="display: none;">
+                        <div class="analytics-grid">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Content Timeline</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="timelineChart" class="chart-container">
+                                        <div class="spinner"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Platform Distribution</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="platformChart" class="chart-container">
+                                        <div class="spinner"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Content Types</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="typeChart" class="chart-container">
+                                        <div class="spinner"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Publishing Status</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="statusChart" class="chart-container">
+                                        <div class="spinner"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <!-- Content Ideas -->
+            <div class="ideas-panel mb-4">
+                <div class="ideas-header">
+                    <h5 class="mb-0">Content Ideas</h5>
+                    <button class="btn btn-secondary btn-icon-only btn-sm" onclick="loadContentIdeas()">
+                        <i class="ph ph-arrows-clockwise"></i>
+                    </button>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <select class="form-control" id="ideaPlatform" onchange="loadContentIdeas()">
+                        <option value="youtube">YouTube</option>
+                        <option value="x">X (Twitter)</option>
+                        <option value="tiktok">TikTok</option>
+                        <option value="instagram">Instagram</option>
+                    </select>
+                </div>
+                
+                <div id="contentIdeas">
+                    <div class="skeleton" style="height: 60px; margin-bottom: 8px;"></div>
+                    <div class="skeleton" style="height: 60px; margin-bottom: 8px;"></div>
+                    <div class="skeleton" style="height: 60px;"></div>
+                </div>
+            </div>
+
+            <!-- Quick Filters -->
+            <div class="ideas-panel">
+                <h5 class="mb-3">Quick Filters</h5>
+                
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="quickFilterYoutube" checked onchange="applyQuickFilters()">
+                    <label class="form-check-label" for="quickFilterYoutube">
+                        <i class="ph ph-youtube-logo"></i> YouTube
+                    </label>
+                </div>
+                
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="quickFilterX" checked onchange="applyQuickFilters()">
+                    <label class="form-check-label" for="quickFilterX">
+                        <i class="ph ph-x-logo"></i> X
+                    </label>
+                </div>
+                
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="quickFilterTiktok" checked onchange="applyQuickFilters()">
+                    <label class="form-check-label" for="quickFilterTiktok">
+                        <i class="ph ph-tiktok-logo"></i> TikTok
+                    </label>
+                </div>
+                
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="quickFilterInstagram" checked onchange="applyQuickFilters()">
+                    <label class="form-check-label" for="quickFilterInstagram">
+                        <i class="ph ph-instagram-logo"></i> Instagram
+                    </label>
+                </div>
+                
+                <hr class="my-3">
+                
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="quickFilterScheduled" checked onchange="applyQuickFilters()">
+                    <label class="form-check-label" for="quickFilterScheduled">
+                        Show Scheduled
+                    </label>
+                </div>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="quickFilterPublished" checked onchange="applyQuickFilters()">
+                    <label class="form-check-label" for="quickFilterPublished">
+                        Show Published
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Modal -->
+<div id="eventModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Add Content</h3>
+        </div>
+        
+        <form id="eventForm">
+            <div class="modal-body">
+                <input type="hidden" id="eventId">
+                
+                <!-- Title -->
+                <div class="form-group full-width">
+                    <label class="form-label">
+                        <i class="ph ph-text-t"></i>
+                        Title
+                    </label>
+                    <input type="text" class="form-control" id="eventTitle" required placeholder="Content title">
+                </div>
+                
+                <div class="form-grid">
+                    <!-- Platform -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="ph ph-globe"></i>
+                            Platform
+                        </label>
+                        <select class="form-control" id="eventPlatform" required>
+                            <option value="YouTube">YouTube</option>
+                            <option value="X">X (Twitter)</option>
+                            <option value="TikTok">TikTok</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="LinkedIn">LinkedIn</option>
+                            <option value="Blog">Blog</option>
+                            <option value="Newsletter">Newsletter</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Content Type -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="ph ph-folder"></i>
+                            Content Type
+                        </label>
+                        <select class="form-control" id="eventContentType">
+                            <option value="educational">Educational</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="lifestyle">Lifestyle</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Date -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="ph ph-calendar"></i>
+                            Publish Date
+                        </label>
+                        <div class="date-picker-container">
+                            <input type="text" class="form-control" id="eventDateDisplay" readonly placeholder="Select date">
+                            <i class="ph ph-calendar date-picker-trigger" onclick="toggleDatePicker()"></i>
+                            <input type="hidden" id="eventDate">
+                            
+                            <!-- Custom Date Picker -->
+                            <div id="customDatePicker" class="custom-date-picker date-picker-hidden">
+                                <div class="date-picker-header">
+                                    <button type="button" class="date-picker-nav" onclick="navigateDatePicker(-1)">
+                                        <i class="ph ph-caret-left"></i>
+                                    </button>
+                                    <h4 class="date-picker-title" id="datePickerTitle">January 2025</h4>
+                                    <button type="button" class="date-picker-nav" onclick="navigateDatePicker(1)">
+                                        <i class="ph ph-caret-right"></i>
+                                    </button>
+                                </div>
+                                <div class="date-picker-calendar" id="datePickerCalendar">
+                                    <!-- Dynamically populated -->
+                                </div>
+                                <div class="date-picker-time">
+                                    <input type="number" class="form-control time-input" id="pickerHours" min="0" max="23" value="12">
+                                    <span>:</span>
+                                    <input type="number" class="form-control time-input" id="pickerMinutes" min="0" max="59" value="00">
+                                </div>
+                                <div class="text-right mt-3">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeDatePicker()">Cancel</button>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="applyDatePicker()">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="ph ph-clock"></i>
+                            Status
+                        </label>
+                        <select class="form-control" id="eventStatus">
+                            <option value="planned">Planned</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="review">In Review</option>
+                            <option value="ready">Ready to Post</option>
+                            <option value="posted">Posted</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Content Status -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="ph ph-tag"></i>
+                            Content Status
+                        </label>
+                        <select class="form-control" id="eventContentStatus">
+                            <option value="organic">Organic</option>
+                            <option value="sponsored">Sponsored</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Content Link -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="ph ph-link"></i>
+                            Content Link
+                        </label>
+                        <input type="url" class="form-control" id="eventContentLink" placeholder="https://...">
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <div class="form-group full-width">
+                    <label class="form-label">
+                        <i class="ph ph-text-align-left"></i>
+                        Description
+                    </label>
+                    <textarea class="form-control" id="eventDescription" rows="3" placeholder="Brief description..."></textarea>
+                </div>
+                
+                <!-- Comments Section -->
+                <div class="comments-section" id="commentsSection" style="display: none;">
+                    <div class="comments-header">
+                        <i class="ph ph-chat-circle"></i>
+                        Comments & Feedback
+                    </div>
+                    
+                    <div id="commentsList">
+                        <!-- Dynamically populated -->
+                    </div>
+                    
+                    <div class="mt-3">
+                        <textarea class="form-control comment-input" id="newComment" placeholder="Add a comment..."></textarea>
+                        <button type="button" class="btn btn-primary btn-sm mt-2" onclick="addComment()">
+                            <i class="ph ph-plus"></i>
+                            Add Comment
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Notes Section -->
+                <div class="notes-section">
+                    <div class="notes-header">
+                        <i class="ph ph-notebook"></i>
+                        Notes & Research
+                    </div>
+                    
+                    <div class="notes-editor">
+                        <div id="notesEditor"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <div>
+                    <button type="button" class="btn btn-danger" id="deleteBtn" onclick="deleteEvent()" style="display: none;">
+                        <i class="ph ph-trash"></i>
+                        Delete
+                    </button>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-secondary" onclick="closeEventModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ph ph-check"></i>
+                        Save
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+// Global variables
+let calendar;
+let currentEvents = [];
+let currentView = 'calendar';
+let activeFilters = {
+    platforms: [],
+    contentTypes: [],
+    statuses: [],
+    contentStatus: [],
+    quickFilters: {
+        youtube: true,
+        x: true,
+        tiktok: true,
+        instagram: true,
+        scheduled: true,
+        published: true
+    }
+};
+let notesQuill;
+let currentEditingEvent = null;
+let datePickerState = {
+    currentDate: new Date(),
+    selectedDate: null
+};
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCalendar();
+    initializeQuillEditor();
+    loadEvents();
+    loadContentIdeas();
+    setupEventListeners();
+});
+
+// Initialize FullCalendar
+function initializeCalendar() {
+    const calendarEl = document.getElementById('calendar');
+    
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: false,
+        height: 'auto',
+        firstDay: 1, // Monday
+        eventDisplay: 'block',
+        displayEventTime: true,
+        displayEventEnd: false,
+        editable: true,
+        eventDurationEditable: false,
+        eventStartEditable: true,
+        
+        events: function(info, successCallback, failureCallback) {
+            const filteredEvents = filterEvents();
+            successCallback(filteredEvents);
+        },
+        
+        eventClick: function(info) {
+            openEventModal(info.event);
+        },
+        
+        dateClick: function(info) {
+            openNewEventModal(info.date);
+        },
+        
+        eventDrop: function(info) {
+            updateEventDate(info.event.id, info.event.start);
+        },
+        
+        datesSet: function(info) {
+            updateCalendarTitle(info);
+        },
+        
+        eventDidMount: function(info) {
+            // Add platform data attribute
+            info.el.setAttribute('data-platform', info.event.extendedProps.platform);
+            
+            // Add status indicator
+            const status = info.event.extendedProps.status;
+            if (status === 'posted') {
+                info.el.style.opacity = '0.7';
+            }
+        }
+    });
+    
+    calendar.render();
+}
+
+// Initialize Quill editor
+function initializeQuillEditor() {
+    notesQuill = new Quill('#notesEditor', {
+        theme: 'snow',
+        placeholder: 'Add notes, concepts, research...',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                ['blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link'],
+                ['clean']
+            ]
+        }
+    });
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Form submission
+    document.getElementById('eventForm').addEventListener('submit', handleEventSubmit);
+    
+    // Modal backdrop click
+    document.getElementById('eventModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeEventModal();
+        }
+    });
+    
+    // Date picker outside click
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.date-picker-container')) {
+            closeDatePicker();
+        }
+    });
+    
+    // Time input formatting
+    ['pickerHours', 'pickerMinutes'].forEach(id => {
+        const input = document.getElementById(id);
+        input.addEventListener('blur', function() {
+            this.value = this.value.padStart(2, '0');
+        });
+    });
+    
+    // Filter tags
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('filter-tag')) {
+            e.target.classList.toggle('active');
+            updateActiveFilters();
+            refreshCalendar();
+        }
+    });
+}
+
+// Load events from server
+async function loadEvents() {
+    try {
+        const response = await fetch('/api/content-calendar/events');
+        const data = await response.json();
+        
+        if (data.success) {
+            currentEvents = data.events;
+            updatePlatformFilters();
+            refreshAllViews();
+            updateStatistics();
+        }
+    } catch (error) {
+        console.error('Error loading events:', error);
+        showToast('Error loading events', 'error');
+    }
+}
+
+// Filter events based on active filters
+function filterEvents() {
+    let filtered = currentEvents;
+    
+    // Platform quick filters
+    if (!activeFilters.quickFilters.youtube && 
+        !activeFilters.quickFilters.x && 
+        !activeFilters.quickFilters.tiktok && 
+        !activeFilters.quickFilters.instagram) {
+        return []; // No platforms selected
+    }
+    
+    filtered = filtered.filter(event => {
+        const platform = event.platform?.toLowerCase();
+        
+        if (platform === 'youtube' && !activeFilters.quickFilters.youtube) return false;
+        if (platform === 'x' && !activeFilters.quickFilters.x) return false;
+        if (platform === 'tiktok' && !activeFilters.quickFilters.tiktok) return false;
+        if (platform === 'instagram' && !activeFilters.quickFilters.instagram) return false;
+        
+        return true;
+    });
+    
+    // Status quick filters
+    filtered = filtered.filter(event => {
+        const isPublished = event.status === 'posted';
+        
+        if (isPublished && !activeFilters.quickFilters.published) return false;
+        if (!isPublished && !activeFilters.quickFilters.scheduled) return false;
+        
+        return true;
+    });
+    
+    // Advanced filters
+    if (activeFilters.platforms.length > 0) {
+        filtered = filtered.filter(event => 
+            activeFilters.platforms.includes(event.platform)
+        );
+    }
+    
+    if (activeFilters.contentTypes.length > 0) {
+        filtered = filtered.filter(event => 
+            activeFilters.contentTypes.includes(event.content_type || 'educational')
+        );
+    }
+    
+    if (activeFilters.statuses.length > 0) {
+        filtered = filtered.filter(event => 
+            activeFilters.statuses.includes(event.status || 'planned')
+        );
+    }
+    
+    if (activeFilters.contentStatus.length > 0) {
+        filtered = filtered.filter(event => {
+            const status = event.is_sponsored ? 'sponsored' : 'organic';
+            return activeFilters.contentStatus.includes(status);
+        });
+    }
+    
+    // Convert to calendar format
+    return filtered.map(event => ({
+        id: event.id,
+        title: event.title,
+        start: event.publish_date,
+        backgroundColor: getEventColor(event.platform),
+        extendedProps: {
+            platform: event.platform,
+            status: event.status,
+            content_type: event.content_type,
+            content_link: event.content_link,
+            description: event.description,
+            notes: event.notes,
+            comments: event.comments || [],
+            is_paid: event.is_paid,
+            is_sponsored: event.is_sponsored,
+            is_free: event.is_free
+        }
+    }));
+}
+
+// Get color for platform
+function getEventColor(platform) {
+    const colors = {
+        'YouTube': '#ff0000',
+        'X': '#000000',
+        'TikTok': '#ff0050',
+        'Instagram': '#e4405f',
+        'LinkedIn': '#0077b5',
+        'Facebook': '#1877f2',
+        'Blog': '#ff6347',
+        'Newsletter': '#9333ea',
+        'Other': '#6b7280'
+    };
+    return colors[platform] || '#3b82f6';
+}
+
+// Update statistics
+function updateStatistics() {
+    const stats = {
+        total: currentEvents.length,
+        month: 0,
+        scheduled: 0,
+        published: 0
+    };
+    
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    currentEvents.forEach(event => {
+        const eventDate = new Date(event.publish_date);
+        
+        if (eventDate >= monthStart && eventDate <= monthEnd) {
+            stats.month++;
+        }
+        
+        if (event.status === 'posted') {
+            stats.published++;
+        } else {
+            stats.scheduled++;
+        }
+    });
+    
+    document.getElementById('total-content').textContent = stats.total;
+    document.getElementById('month-content').textContent = stats.month;
+    document.getElementById('scheduled-content').textContent = stats.scheduled;
+    document.getElementById('published-content').textContent = stats.published;
+}
+
+// Calendar navigation
+function navigateCalendar(direction) {
+    if (direction === 'prev') {
+        calendar.prev();
+    } else {
+        calendar.next();
+    }
+}
+
+function calendarToday() {
+    calendar.today();
+}
+
+function changeCalendarView(viewName) {
+    calendar.changeView(viewName);
+}
+
+function updateCalendarTitle(info) {
+    const date = info.view.currentStart;
+    const title = date.toLocaleDateString('en-US', { 
+        month: 'long', 
+        year: 'numeric' 
+    });
+    document.getElementById('calendarTitle').textContent = title;
+}
+
+// Switch between views
+function switchView(view) {
+    currentView = view;
+    
+    // Hide all views
+    document.getElementById('calendarView').style.display = 'none';
+    document.getElementById('tableView').style.display = 'none';
+    document.getElementById('analyticsView').style.display = 'none';
+    
+    // Update buttons
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected view
+    switch(view) {
+        case 'calendar':
+            document.getElementById('calendarView').style.display = 'block';
+            document.getElementById('calendarViewBtn').classList.add('active');
+            calendar.render();
+            break;
+            
+        case 'table':
+            document.getElementById('tableView').style.display = 'block';
+            document.getElementById('tableViewBtn').classList.add('active');
+            renderTableView();
+            break;
+            
+        case 'analytics':
+            document.getElementById('analyticsView').style.display = 'block';
+            document.getElementById('analyticsViewBtn').classList.add('active');
+            renderAnalytics();
+            break;
+    }
+}
+
+// Render table view
+function renderTableView() {
+    const tbody = document.getElementById('contentTableBody');
+    tbody.innerHTML = '';
+    
+    const filteredEvents = filterEvents();
+    
+    // Sort by date
+    filteredEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+    
+    filteredEvents.forEach(event => {
+        const row = document.createElement('tr');
+        row.onclick = () => openEventModal({ 
+            id: event.id,
+            title: event.title,
+            start: event.start,
+            extendedProps: event.extendedProps
+        });
+        
+        const date = new Date(event.start);
+        const dateStr = date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+        });
+        
+        const statusClass = `status-${event.extendedProps.status || 'planned'}`;
+        const statusText = (event.extendedProps.status || 'planned').replace('-', ' ');
+        
+        row.innerHTML = `
+            <td>${event.title}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td>${dateStr}</td>
+            <td>${event.extendedProps.platform}</td>
+            <td>${event.extendedProps.content_type || 'educational'}</td>
+            <td>
+                ${event.extendedProps.content_link ? 
+                    `<a href="${event.extendedProps.content_link}" target="_blank" onclick="event.stopPropagation()">
+                        <i class="ph ph-link"></i> View
+                    </a>` : 
+                    '-'
+                }
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+    
+    if (filteredEvents.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary">No content found</td></tr>';
+    }
+}
+
+// Render analytics
+function renderAnalytics() {
+    renderTimelineChart();
+    renderPlatformChart();
+    renderContentTypeChart();
+    renderStatusChart();
+}
+
+// Analytics charts
+function renderTimelineChart() {
+    const events = filterEvents();
+    
+    // Group by month
+    const monthData = {};
+    events.forEach(event => {
+        const date = new Date(event.start);
+        const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+        monthData[monthKey] = (monthData[monthKey] || 0) + 1;
+    });
+    
+    // Sort and prepare data
+    const sortedMonths = Object.keys(monthData).sort();
+    const categories = sortedMonths.map(key => {
+        const [year, month] = key.split('-');
+        return new Date(year, month).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    });
+    const data = sortedMonths.map(key => monthData[key]);
+    
+    const options = {
+        series: [{
+            name: 'Content',
+            data: data
+        }],
+        chart: {
+            type: 'bar',
+            height: 300,
+            toolbar: { show: false }
+        },
+        plotOptions: {
+            bar: {
+                borderRadius: 8,
+                columnWidth: '60%'
+            }
+        },
+        xaxis: {
+            categories: categories
+        },
+        colors: ['#3b82f6']
+    };
+    
+    document.getElementById('timelineChart').innerHTML = '';
+    new ApexCharts(document.getElementById('timelineChart'), options).render();
+}
+
+function renderPlatformChart() {
+    const events = filterEvents();
+    
+    // Count by platform
+    const platformCount = {};
+    events.forEach(event => {
+        const platform = event.extendedProps.platform;
+        platformCount[platform] = (platformCount[platform] || 0) + 1;
+    });
+    
+    const options = {
+        series: Object.values(platformCount),
+        labels: Object.keys(platformCount),
+        chart: {
+            type: 'donut',
+            height: 300
+        },
+        legend: {
+            position: 'bottom'
+        }
+    };
+    
+    document.getElementById('platformChart').innerHTML = '';
+    new ApexCharts(document.getElementById('platformChart'), options).render();
+}
+
+function renderContentTypeChart() {
+    const events = filterEvents();
+    
+    // Count by content type
+    const typeCount = {};
+    events.forEach(event => {
+        const type = event.extendedProps.content_type || 'educational';
+        typeCount[type] = (typeCount[type] || 0) + 1;
+    });
+    
+    const options = {
+        series: Object.values(typeCount),
+        labels: Object.keys(typeCount).map(t => t.charAt(0).toUpperCase() + t.slice(1)),
+        chart: {
+            type: 'pie',
+            height: 300
+        },
+        legend: {
+            position: 'bottom'
+        }
+    };
+    
+    document.getElementById('typeChart').innerHTML = '';
+    new ApexCharts(document.getElementById('typeChart'), options).render();
+}
+
+function renderStatusChart() {
+    const events = filterEvents();
+    
+    // Count by status
+    const statusCount = {};
+    events.forEach(event => {
+        const status = event.extendedProps.status || 'planned';
+        statusCount[status] = (statusCount[status] || 0) + 1;
+    });
+    
+    // Order statuses
+    const orderedStatuses = ['planned', 'in-progress', 'review', 'ready', 'posted'];
+    const labels = orderedStatuses.map(s => s.replace('-', ' '));
+    const data = orderedStatuses.map(s => statusCount[s] || 0);
+    
+    const options = {
+        series: [{
+            name: 'Content',
+            data: data
+        }],
+        chart: {
+            type: 'bar',
+            height: 300,
+            toolbar: { show: false }
+        },
+        plotOptions: {
+            bar: {
+                borderRadius: 8,
+                horizontal: true
+            }
+        },
+        xaxis: {
+            categories: labels
+        },
+        colors: ['#10b981']
+    };
+    
+    document.getElementById('statusChart').innerHTML = '';
+    new ApexCharts(document.getElementById('statusChart'), options).render();
+}
+
+// Event modal functions
+function openNewEventModal(date = null) {
+    currentEditingEvent = null;
+    document.getElementById('modalTitle').textContent = 'Add Content';
+    document.getElementById('eventForm').reset();
+    document.getElementById('eventId').value = '';
+    document.getElementById('deleteBtn').style.display = 'none';
+    document.getElementById('commentsSection').style.display = 'none';
+    
+    // Set default date
+    if (date) {
+        datePickerState.selectedDate = date;
+        updateDateDisplay();
+    } else {
+        datePickerState.selectedDate = new Date();
+        updateDateDisplay();
+    }
+    
+    // Reset notes editor
+    notesQuill.setText('');
+    
+    showModal();
+}
+
+function openEventModal(event) {
+    currentEditingEvent = event;
+    const props = event.extendedProps;
+    
+    document.getElementById('modalTitle').textContent = 'Edit Content';
+    document.getElementById('eventId').value = event.id;
+    document.getElementById('deleteBtn').style.display = 'inline-flex';
+    document.getElementById('commentsSection').style.display = 'block';
+    
+    // Fill form
+    document.getElementById('eventTitle').value = event.title;
+    document.getElementById('eventPlatform').value = props.platform;
+    document.getElementById('eventContentType').value = props.content_type || 'educational';
+    document.getElementById('eventStatus').value = props.status || 'planned';
+    document.getElementById('eventContentStatus').value = props.is_sponsored ? 'sponsored' : 'organic';
+    document.getElementById('eventContentLink').value = props.content_link || '';
+    document.getElementById('eventDescription').value = props.description || '';
+    
+    // Set date
+    datePickerState.selectedDate = new Date(event.start);
+    updateDateDisplay();
+    
+    // Set notes
+    if (props.notes) {
+        try {
+            const notesData = JSON.parse(props.notes);
+            notesQuill.setContents(notesData);
+        } catch (e) {
+            notesQuill.setText(props.notes);
+        }
+    } else {
+        notesQuill.setText('');
+    }
+    
+    // Load comments
+    renderComments(props.comments || []);
+    
+    showModal();
+}
+
+function closeEventModal() {
+    hideModal();
+    setTimeout(() => {
+        currentEditingEvent = null;
+    }, 300);
+}
+
+function showModal() {
+    const modal = document.getElementById('eventModal');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function hideModal() {
+    const modal = document.getElementById('eventModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+// Form submission
+async function handleEventSubmit(e) {
+    e.preventDefault();
+    
+    const formData = {
+        title: document.getElementById('eventTitle').value,
+        date: document.getElementById('eventDate').value,
+        platform: document.getElementById('eventPlatform').value,
+        status: document.getElementById('eventStatus').value,
+        content_type: document.getElementById('eventContentType').value,
+        content_link: document.getElementById('eventContentLink').value,
+        description: document.getElementById('eventDescription').value,
+        is_sponsored: document.getElementById('eventContentStatus').value === 'sponsored',
+        is_paid: document.getElementById('eventContentStatus').value === 'sponsored',
+        is_free: document.getElementById('eventContentStatus').value === 'organic',
+        notes: JSON.stringify(notesQuill.getContents()),
+        comments: currentEditingEvent ? currentEditingEvent.extendedProps.comments : []
+    };
+    
+    const eventId = document.getElementById('eventId').value;
+    const isEdit = !!eventId;
+    
+    try {
+        const response = await fetch(
+            isEdit ? `/api/content-calendar/events/${eventId}` : '/api/content-calendar/events',
+            {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            }
+        );
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(isEdit ? 'Event updated successfully' : 'Event created successfully', 'success');
+            closeEventModal();
+            loadEvents();
+        } else {
+            showToast(data.error || 'Error saving event', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error saving event', 'error');
+    }
+}
+
+// Delete event
+async function deleteEvent() {
+    if (!confirm('Are you sure you want to delete this event?')) {
+        return;
+    }
+    
+    const eventId = document.getElementById('eventId').value;
+    
+    try {
+        const response = await fetch(`/api/content-calendar/events/${eventId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Event deleted successfully', 'success');
+            closeEventModal();
+            loadEvents();
+        } else {
+            showToast('Error deleting event', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error deleting event', 'error');
+    }
+}
+
+// Update event date (drag and drop)
+async function updateEventDate(eventId, newDate) {
+    try {
+        const response = await fetch(`/api/content-calendar/events/${eventId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                date: newDate.toISOString() 
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            showToast('Error updating event date', 'error');
+            calendar.refetchEvents();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error updating event date', 'error');
+        calendar.refetchEvents();
+    }
+}
+
+// Comments
+function renderComments(comments) {
+    const container = document.getElementById('commentsList');
+    container.innerHTML = '';
+    
+    comments.forEach((comment, index) => {
+        const commentEl = document.createElement('div');
+        commentEl.className = 'comment-item';
+        
+        const date = new Date(comment.date);
+        const dateStr = date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        commentEl.innerHTML = `
+            <div class="comment-meta">
+                <span class="comment-date">${dateStr}</span>
+                <div class="comment-actions">
+                    <button class="comment-btn" onclick="deleteComment(${index})">
+                        <i class="ph ph-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="comment-text">${comment.text}</div>
+        `;
+        
+        container.appendChild(commentEl);
+    });
+}
+
+async function addComment() {
+    const text = document.getElementById('newComment').value.trim();
+    if (!text) return;
+    
+    const eventId = document.getElementById('eventId').value;
+    
+    try {
+        const response = await fetch(`/api/content-calendar/events/${eventId}/comment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('newComment').value = '';
+            loadEvents();
+            
+            // Update current editing event
+            if (currentEditingEvent) {
+                const newComment = {
+                    text,
+                    date: new Date().toISOString()
+                };
+                currentEditingEvent.extendedProps.comments.push(newComment);
+                renderComments(currentEditingEvent.extendedProps.comments);
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error adding comment', 'error');
+    }
+}
+
+function deleteComment(index) {
+    if (!currentEditingEvent) return;
+    
+    currentEditingEvent.extendedProps.comments.splice(index, 1);
+    renderComments(currentEditingEvent.extendedProps.comments);
+    
+    // Note: You'll need to save this change when the form is submitted
+}
+
+// Date picker
+function toggleDatePicker() {
+    const picker = document.getElementById('customDatePicker');
+    
+    if (picker.classList.contains('date-picker-hidden')) {
+        picker.classList.remove('date-picker-hidden');
+        renderDatePicker();
+    } else {
+        closeDatePicker();
+    }
+}
+
+function closeDatePicker() {
+    document.getElementById('customDatePicker').classList.add('date-picker-hidden');
+}
+
+function renderDatePicker() {
+    const currentDate = datePickerState.currentDate;
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    // Update title
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    document.getElementById('datePickerTitle').textContent = `${monthNames[month]} ${year}`;
+    
+    // Render calendar
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const calendar = document.getElementById('datePickerCalendar');
+    
+    calendar.innerHTML = '';
+    
+    // Day headers
+    ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].forEach(day => {
+        const header = document.createElement('div');
+        header.style.textAlign = 'center';
+        header.style.fontWeight = '600';
+        header.style.fontSize = '0.75rem';
+        header.style.color = 'var(--text-secondary)';
+        header.textContent = day;
+        calendar.appendChild(header);
+    });
+    
+    // Empty cells
+    for (let i = 0; i < firstDay; i++) {
+        calendar.appendChild(document.createElement('div'));
+    }
+    
+    // Days
+    const today = new Date();
+    const selectedDate = datePickerState.selectedDate;
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayEl = document.createElement('button');
+        dayEl.type = 'button';
+        dayEl.className = 'date-picker-day';
+        dayEl.textContent = day;
+        
+        const date = new Date(year, month, day);
+        
+        if (date.toDateString() === today.toDateString()) {
+            dayEl.classList.add('today');
+        }
+        
+        if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+            dayEl.classList.add('selected');
+        }
+        
+        dayEl.onclick = () => selectDate(date);
+        
+        calendar.appendChild(dayEl);
+    }
+}
+
+function navigateDatePicker(direction) {
+    const currentDate = datePickerState.currentDate;
+    currentDate.setMonth(currentDate.getMonth() + direction);
+    renderDatePicker();
+}
+
+function selectDate(date) {
+    datePickerState.selectedDate = date;
+    renderDatePicker();
+}
+
+function applyDatePicker() {
+    const selected = datePickerState.selectedDate;
+    if (!selected) return;
+    
+    const hours = parseInt(document.getElementById('pickerHours').value) || 0;
+    const minutes = parseInt(document.getElementById('pickerMinutes').value) || 0;
+    
+    selected.setHours(hours, minutes, 0, 0);
+    
+    // Format for datetime-local input
+    const year = selected.getFullYear();
+    const month = String(selected.getMonth() + 1).padStart(2, '0');
+    const day = String(selected.getDate()).padStart(2, '0');
+    const hoursStr = String(hours).padStart(2, '0');
+    const minutesStr = String(minutes).padStart(2, '0');
+    
+    document.getElementById('eventDate').value = `${year}-${month}-${day}T${hoursStr}:${minutesStr}`;
+    
+    updateDateDisplay();
+    closeDatePicker();
+}
+
+function updateDateDisplay() {
+    const selected = datePickerState.selectedDate;
+    if (!selected) return;
+    
+    const dateStr = selected.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+    
+    const timeStr = selected.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    document.getElementById('eventDateDisplay').value = `${dateStr} at ${timeStr}`;
+}
+
+// Content ideas
+async function loadContentIdeas() {
+    const platform = document.getElementById('ideaPlatform').value;
+    const container = document.getElementById('contentIdeas');
+    
+    try {
+        const response = await fetch(`/api/content-calendar/ideas?platform=${platform}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            container.innerHTML = data.ideas.map(idea => `
+                <div class="idea-card" onclick="useIdea('${idea}')">
+                    <i class="ph ph-lightbulb text-warning me-2"></i>
+                    ${idea}
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = '<p class="text-secondary">Error loading ideas</p>';
+    }
+}
+
+function useIdea(idea) {
+    document.getElementById('eventTitle').value = idea;
+    openNewEventModal();
+}
+
+// Filters
+function toggleFilterPanel() {
+    const panel = document.getElementById('filterPanel');
+    panel.classList.toggle('show');
+}
+
+function updatePlatformFilters() {
+    const platforms = [...new Set(currentEvents.map(e => e.platform))];
+    const container = document.getElementById('platformFilters');
+    
+    container.innerHTML = platforms.map(platform => `
+        <div class="filter-tag" data-filter="${platform}" data-type="platform">
+            ${platform}
+        </div>
+    `).join('');
+}
+
+function updateActiveFilters() {
+    activeFilters.platforms = [];
+    activeFilters.contentTypes = [];
+    activeFilters.statuses = [];
+    activeFilters.contentStatus = [];
+    
+    document.querySelectorAll('.filter-tag.active').forEach(tag => {
+        const filter = tag.dataset.filter;
+        const type = tag.dataset.type;
+        
+        if (filter === 'organic' || filter === 'sponsored') {
+            activeFilters.contentStatus.push(filter);
+        } else if (['educational', 'entertainment', 'lifestyle', 'other'].includes(filter)) {
+            activeFilters.contentTypes.push(filter);
+        } else if (['planned', 'in-progress', 'review', 'ready', 'posted'].includes(filter)) {
+            activeFilters.statuses.push(filter);
+        } else if (type === 'platform') {
+            activeFilters.platforms.push(filter);
+        }
+    });
+}
+
+function applyQuickFilters() {
+    activeFilters.quickFilters = {
+        youtube: document.getElementById('quickFilterYoutube').checked,
+        x: document.getElementById('quickFilterX').checked,
+        tiktok: document.getElementById('quickFilterTiktok').checked,
+        instagram: document.getElementById('quickFilterInstagram').checked,
+        scheduled: document.getElementById('quickFilterScheduled').checked,
+        published: document.getElementById('quickFilterPublished').checked
+    };
+    
+    refreshCalendar();
+}
+
+function clearFilters() {
+    document.querySelectorAll('.filter-tag.active').forEach(tag => {
+        tag.classList.remove('active');
+    });
+    
+    updateActiveFilters();
+    refreshCalendar();
+}
+
+// Refresh views
+function refreshCalendar() {
+    calendar.refetchEvents();
+    
+    if (currentView === 'table') {
+        renderTableView();
+    } else if (currentView === 'analytics') {
+        renderAnalytics();
+    }
+}
+
+function refreshAllViews() {
+    refreshCalendar();
+    
+    // Always update table and analytics if visible
+    if (currentView === 'table') {
+        renderTableView();
+    } else if (currentView === 'analytics') {
+        renderAnalytics();
+    }
+}
+
+// Toast notifications
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icons = {
+        success: 'ph-check-circle',
+        error: 'ph-x-circle',
+        info: 'ph-info',
+        warning: 'ph-warning'
+    };
+    
+    toast.innerHTML = `
+        <i class="ph ${icons[type]} toast-icon"></i>
+        <span>${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}

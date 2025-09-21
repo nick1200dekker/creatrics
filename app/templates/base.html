@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Soccer Stats Dashboard - Football Analytics{% endblock %}</title>
+    
+    {% block seo_meta %}
+    <meta name="description" content="Advanced soccer statistics and analytics platform. Get detailed player stats, match analysis, and performance insights using AI technology.">
+    <meta name="keywords" content="soccer stats, football analytics, player statistics, match analysis, soccer data">
+    <meta property="og:title" content="Soccer Stats Dashboard - Advanced Football Analytics">
+    <meta property="og:description" content="Get comprehensive soccer statistics and analytics.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta name="twitter:card" content="summary_large_image">
+    {% endblock %}
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='favicons/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicons/favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicons/favicon-32x32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='favicons/apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='favicons/site.webmanifest') }}">
+    <meta name="theme-color" content="#3B82F6">
+    
+    <!-- Import Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Import Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Import Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Import Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#3B82F6',
+                        'brand-purple': '#3B82F6',
+                        'brand-pink': '#2563EB',
+                        'brand-orange': '#F97316',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        :root {
+            --brand-gradient: #3B82F6;
+            --accent-blue: #3B82F6;
+            --sidebar-width: 225px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F8FAFC;
+            color: #1E293B;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Animated Background - Safe version */
+        .animated-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -10;
+            background: #F8FAFC;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 168, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 198, 255, 0.04) 0%, transparent 50%);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .gradient-mesh {
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            top: -25%;
+            left: -25%;
+            background-image: 
+                radial-gradient(at 20% 30%, rgba(59, 130, 246, 0.06) 0px, transparent 50%),
+                radial-gradient(at 80% 20%, rgba(139, 92, 246, 0.06) 0px, transparent 50%),
+                radial-gradient(at 40% 80%, rgba(236, 72, 153, 0.06) 0px, transparent 50%);
+            animation: mesh-animation 30s ease infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes mesh-animation {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-15px, -15px) rotate(0.5deg); }
+            66% { transform: translate(15px, -8px) rotate(-0.5deg); }
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(226, 232, 240, 0.8);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 40;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo-section {
+            padding: 8px 0 0 0;
+            margin: 0;
+            border-bottom: 1px solid #E2E8F0;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 90px;
+        }
+        
+        .logo-section img {
+            height: 200px;
+            width: auto;
+            display: block;
+            object-fit: contain;
+            transition: all 0.2s ease;
+        }
+        
+        .logo-section img:hover {
+            transform: scale(1.05);
+        }
+        
+        .nav-section {
+            padding: 0.75rem 0.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0.8rem;
+            margin: 0.15rem 0;
+            border-radius: 8px;
+            color: #64748B;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            position: relative;
+            text-decoration: none;
+            height: 48px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .nav-item:hover {
+            color: #1E293B;
+            background: #F1F5F9;
+            transform: translateX(2px);
+        }
+        
+        .nav-item:active {
+            transform: translateX(1px);
+            background: #E2E8F0;
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(237, 233, 254, 0.5) 100%);
+            color: var(--accent-blue);
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background: var(--accent-blue);
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .nav-item i {
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
+        
+        .admin-section {
+            padding: 0.5rem 0;
+            margin: 0.75rem;
+            border-top: 1px solid #E2E8F0;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        
+        .user-section {
+            padding: 1rem 0.75rem;
+            border-top: 1px solid #E2E8F0;
+            background: rgba(248, 250, 252, 0.8);
+            flex-shrink: 0;
+        }
+        
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+        
+        .user-card:hover {
+            background: #F8FAFC;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+        
+        .guest-card {
+            text-align: center;
+            padding: 0.5rem;
+        }
+        
+        .guest-avatar-large {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: #E2E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.75rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .guest-avatar-large i {
+            font-size: 1.75rem;
+            color: #94A3B8;
+        }
+        
+        .guest-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #64748B;
+            margin-bottom: 1rem;
+        }
+        
+        .guest-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .guest-btn {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+        
+        .guest-btn-primary {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+        
+        .guest-btn-primary:hover {
+            background: #2563EB;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        .guest-btn-secondary {
+            background: white;
+            color: #475569;
+            border: 1px solid #E2E8F0;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .guest-btn-secondary:hover {
+            background: #F8FAFC;
+            border-color: #CBD5E1;
+            transform: translateY(-1px);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1E293B;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+        
+        .user-plan {
+            font-size: 0.75rem;
+            color: #64748B;
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            padding: 0.6rem 1.2rem;
+            background: var(--brand-gradient);
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: var(--shadow-md);
+            text-decoration: none;
+            display: inline-block;
+            user-select: none;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            padding: 0.6rem 1.2rem;
+            background: white;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: var(--shadow-sm);
+            text-decoration: none;
+            display: inline-block;
+            user-select: none;
+        }
+        
+        .btn-secondary:hover {
+            background: #F8FAFC;
+            border-color: #CBD5E1;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary:active {
+            transform: translateY(0);
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            padding: 0;
+        }
+        
+        .content-wrapper {
+            width: 100%;
+            margin: 0;
+            padding: 1rem;
+            transition: padding 0.3s ease;
+        }
+        
+        .content-panel {
+            background: rgba(248, 250, 252, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            position: relative;
+        }
+        
+        /* Modal - ONLY BASIC STYLES */
+        .guest-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 1rem;
+        }
+        
+        .guest-modal.show {
+            display: flex;
+        }
+        
+        .guest-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .guest-modal-icon {
+            font-size: 3.5rem;
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+        }
+        
+        .guest-modal h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 1rem;
+        }
+        
+        .guest-modal p {
+            color: #64748B;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        
+        .guest-modal-buttons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .guest-modal-buttons a,
+        .guest-modal-buttons button {
+            min-width: 100px;
+        }
+        
+        /* Page transitions */
+        .page-content {
+            animation: fadeInUp 0.4s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Loading skeleton */
+        .skeleton-plan {
+            display: inline-block;
+            background: linear-gradient(90deg, rgba(226, 232, 240, 0.5) 25%, rgba(226, 232, 240, 0.8) 50%, rgba(226, 232, 240, 0.5) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+            height: 0.75rem;
+            width: 60px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Toast Notifications - BASIC STYLES ONLY */
+        .toast {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 0.8rem 1.1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            min-width: 260px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .toast.show { transform: translateX(0); }
+        .toast.success { border-left: 4px solid #10B981; }
+        .toast.error { border-left: 4px solid #EF4444; }
+        .toast.info { border-left: 4px solid #3B82F6; }
+        .toast i { font-size: 1.15rem; }
+        .toast.success i { color: #10B981; }
+        .toast.error i { color: #EF4444; }
+        .toast.info i { color: #3B82F6; }
+        
+        /* Mobile */
+        @media (max-width: 768px) {
+            .content-wrapper {
+                padding: 0.5rem;
+            }
+            
+            .content-panel {
+                padding: 1rem;
+                border-radius: 12px;
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        {% block additional_styles %}{% endblock %}
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg">
+        <div class="gradient-mesh"></div>
+    </div>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Logo Section -->
+        <div class="logo-section">
+            <img src="{{ url_for('static', filename='img/templates/logo.png') }}" alt="Soccer Stats Logo" class="logo-img">
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="nav-section">
+            <a href="{{ url_for('player_stats.index') }}" 
+               class="nav-item {% if request.endpoint == 'player_stats.index' %}active{% endif %}">
+                <i class="ph ph-user-circle-gear"></i>
+                <span>Player Stats</span>
+            </a>
+            
+            <a href="{{ url_for('tp_analytics.index') }}" 
+               class="nav-item {% if request.endpoint == 'tp_analytics.index' %}active{% endif %}">
+                <i class="ph ph-chart-line-up"></i>
+                <span>TP Analytics</span>
+            </a>
+            
+            <a href="{{ url_for('match_center.index') }}" 
+               class="nav-item {% if request.endpoint == 'match_center.index' %}active{% endif %}">
+                <i class="ph ph-calendar-check"></i>
+                <span>Match Center</span>
+            </a>
+            
+            <!-- Upgrade option hidden -->
+            <!--
+            <a href="{{ url_for('payment.index') }}" 
+               class="nav-item {% if request.endpoint == 'payment.index' %}active{% endif %}"
+               onclick="return BaseApp.checkGuestAccess(event, this)">
+                <i class="ph ph-crown"></i>
+                <span>Upgrade</span>
+            </a>
+            -->
+        </nav>
+        
+        <!-- Admin Section -->
+        <div class="admin-section" id="admin-section" style="display: none;">
+            <a href="{{ url_for('player_stats.add_players') }}" 
+               class="nav-item {% if request.endpoint == 'player_stats.add_players' %}active{% endif %}">
+                <i class="ph ph-user-plus"></i>
+                <span>Add Players</span>
+            </a>
+        </div>
+        
+        <!-- User Section -->
+        <div class="user-section" id="user-section">
+            {% if g.user and not g.user.get('is_guest') %}
+            <div class="user-card">
+                <div class="user-avatar">
+                    {{ g.user.get('data', {}).get('username', 'User')[0].upper() }}
+                </div>
+                <div class="user-info">
+                    <div class="user-name">
+                        {{ g.user.get('data', {}).get('username', 'User') }}
+                    </div>
+                    <div class="user-plan" id="user-plan-display">
+                        <span class="skeleton-plan"></span>
+                    </div>
+                </div>
+                <button id="logout-button" class="text-gray-400 hover:text-gray-600 transition-colors p-1" title="Logout">
+                    <i class="ph ph-sign-out text-lg"></i>
+                </button>
+            </div>
+            {% else %}
+            <div class="guest-card">
+                <div class="guest-avatar-large">
+                    <i class="ph ph-user"></i>
+                </div>
+                <div class="guest-title">Guest</div>
+                <div class="guest-buttons">
+                    <a href="/auth/login" class="guest-btn guest-btn-primary">
+                        <i class="ph ph-sign-in"></i>
+                        Login
+                    </a>
+                    <a href="/auth/register" class="guest-btn guest-btn-secondary">
+                        <i class="ph ph-user-plus"></i>
+                        Register
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-wrapper">
+            <div class="content-panel">
+                <div class="page-content">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Mobile Menu Toggle -->
+    <button id="mobile-menu-toggle" class="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md md:hidden">
+        <i class="ph ph-list text-xl"></i>
+    </button>
+    
+    <!-- Guest Access Modal -->
+    <div id="guest-modal" class="guest-modal">
+        <div class="guest-modal-content">
+            <i class="ph ph-lock guest-modal-icon"></i>
+            <h3 id="guest-modal-title">Login Required</h3>
+            <p id="guest-modal-message">Register to unlock all features! As a registered user, you'll get access to advanced analytics, player stats, team insights, and more!</p>
+            <div class="guest-modal-buttons">
+                <a href="/auth/login" class="btn-primary">Login</a>
+                <a href="/auth/register" class="btn-secondary">Register</a>
+                <button onclick="BaseApp.closeGuestModal()" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ISOLATED BASE SCRIPTS - NO CONFLICTS -->
+    <script>
+        // NAMESPACE ALL BASE FUNCTIONALITY TO PREVENT CONFLICTS
+        window.BaseApp = (function() {
+            const isGuest = JSON.parse('{{ (not g.user or g.user.get("is_guest")) | tojson }}');
+            const isDashboard = JSON.parse('{{ (request.endpoint == "home.dashboard") | tojson }}');
+            
+            // Public API - only these functions are exposed globally
+            return {
+                isGuest: isGuest,
+                isDashboard: isDashboard,
+                
+                checkGuestAccess: function(event, element) {
+                    if (isGuest) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        document.getElementById('guest-modal-title').textContent = 'Login Required';
+                        document.getElementById('guest-modal-message').textContent = 'Register to unlock all features! As a registered user, you\'ll get access to advanced analytics, player stats, team insights, and more!';
+                        this.showGuestModal();
+                        return false;
+                    }
+                    return true;
+                },
+                
+                showGuestModal: function(title, message) {
+                    const modal = document.getElementById('guest-modal');
+                    
+                    if (title) {
+                        document.getElementById('guest-modal-title').textContent = title;
+                    }
+                    if (message) {
+                        document.getElementById('guest-modal-message').textContent = message;
+                    }
+                    
+                    modal.classList.add('show');
+                },
+                
+                closeGuestModal: function() {
+                    const modal = document.getElementById('guest-modal');
+                    modal.classList.remove('show');
+                    
+                    setTimeout(() => {
+                        document.getElementById('guest-modal-title').textContent = 'Login Required';
+                        document.getElementById('guest-modal-message').textContent = 'Register to unlock all features! As a registered user, you\'ll get access to advanced analytics, player stats, team insights, and more!';
+                    }, 300);
+                },
+                
+                showToast: function(message, type = 'info') {
+                    const toast = document.createElement('div');
+                    toast.className = `toast ${type}`;
+                    
+                    const icon = type === 'success' ? 'ph-check-circle' : 
+                                type === 'error' ? 'ph-x-circle' : 
+                                'ph-info';
+                    
+                    toast.innerHTML = `
+                        <i class="ph ${icon}"></i>
+                        <span>${message}</span>
+                    `;
+                    
+                    document.body.appendChild(toast);
+                    
+                    setTimeout(() => toast.classList.add('show'), 100);
+                    
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                },
+                
+                // Initialize base app functionality
+                init: function() {
+                    this.initLogout();
+                    this.initMobileMenu();
+                    this.initModal();
+                    this.loadUserData();
+                },
+                
+                // Private methods (still accessible but clearly internal)
+                initLogout: function() {
+                    const logoutButton = document.getElementById('logout-button');
+                    if (logoutButton) {
+                        logoutButton.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            try {
+                                const response = await fetch('/auth/logout', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                });
+                                
+                                if (response.ok) {
+                                    this.showToast('Logged out successfully', 'success');
+                                    setTimeout(() => window.location.href = '/', 1000);
+                                }
+                            } catch (error) {
+                                this.showToast('Logout failed', 'error');
+                            }
+                        });
+                    }
+                },
+                
+                initMobileMenu: function() {
+                    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+                    const sidebar = document.getElementById('sidebar');
+                    
+                    if (mobileMenuToggle && sidebar) {
+                        mobileMenuToggle.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            sidebar.classList.toggle('open');
+                            const icon = mobileMenuToggle.querySelector('i');
+                            icon.className = sidebar.classList.contains('open') 
+                                ? 'ph ph-x text-xl' 
+                                : 'ph ph-list text-xl';
+                        });
+                        
+                        document.addEventListener('click', (e) => {
+                            if (!sidebar.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
+                                sidebar.classList.remove('open');
+                                const icon = mobileMenuToggle.querySelector('i');
+                                icon.className = 'ph ph-list text-xl';
+                            }
+                        });
+                    }
+                },
+                
+                initModal: function() {
+                    const modal = document.getElementById('guest-modal');
+                    if (modal) {
+                        modal.addEventListener('click', (e) => {
+                            if (e.target === modal) {
+                                this.closeGuestModal();
+                            }
+                        });
+                    }
+                },
+                
+                loadUserData: async function() {
+                    if (isGuest) return;
+                    
+                    try {
+                        const response = await fetch('/api/dashboard-stats', {
+                            method: 'GET',
+                            credentials: 'include'
+                        });
+                        
+                        if (response.ok) {
+                            const userData = await response.json();
+                            
+                            const planDisplay = document.getElementById('user-plan-display');
+                            if (planDisplay) {
+                                const plan = userData.subscription_plan || 'Free Plan';
+                                planDisplay.textContent = plan;
+                            }
+                            
+                            const adminSection = document.getElementById('admin-section');
+                            if (adminSection) {
+                                const normalizedPlan = (userData.subscription_plan || 'Free Plan').toLowerCase().trim();
+                                const isAdminPlan = normalizedPlan === 'admin' || 
+                                                  normalizedPlan === 'admin plan' ||
+                                                  normalizedPlan === 'administrator';
+                                
+                                adminSection.style.display = isAdminPlan ? 'block' : 'none';
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('Error loading user data:', error);
+                    }
+                }
+            };
+        })();
+        
+        // Initialize when DOM is ready - but don't interfere with page scripts
+        document.addEventListener('DOMContentLoaded', function() {
+            BaseApp.init();
+        });
+        
+        // Legacy global functions for backward compatibility (redirect to BaseApp)
+        window.checkGuestAccess = function(event, element) {
+            return BaseApp.checkGuestAccess(event, element);
+        };
+        
+        window.showGuestModal = function(title, message) {
+            return BaseApp.showGuestModal(title, message);
+        };
+        
+        window.closeGuestModal = function() {
+            return BaseApp.closeGuestModal();
+        };
+        
+        window.showToast = function(message, type) {
+            return BaseApp.showToast(message, type);
+        };
+        
+        // Expose isGuest globally for other scripts to check
+        window.isGuest = BaseApp.isGuest;
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

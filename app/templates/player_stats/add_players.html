@@ -1,0 +1,1267 @@
+{% extends "base.html" %}
+
+{% block title %}Add Players - Soccer Analytics{% endblock %}
+
+{% block additional_styles %}
+<style>
+.admin-hero {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.admin-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #3B82F6;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.admin-title i {
+    color: #3B82F6;
+    font-size: 2.5rem;
+}
+
+.admin-subtitle {
+    color: #64748B;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.search-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.search-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+}
+
+.search-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.search-title i {
+    font-size: 1.75rem;
+    color: #3B82F6;
+}
+
+.search-form {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 300px;
+    padding: 0.875rem 1.25rem;
+    border: 2px solid #E2E8F0;
+    border-radius: 12px;
+    font-size: 1rem;
+    background: #FAFBFC;
+    transition: all 0.3s ease;
+    cursor: text;
+    position: relative;
+    z-index: 1;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-input::placeholder {
+    color: #94A3B8;
+}
+
+.search-btn {
+    background: #3B82F6;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+.search-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.message-alert {
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    display: none;
+    font-weight: 500;
+    border-left: 4px solid;
+}
+
+.message-success {
+    background: rgba(16, 185, 129, 0.1);
+    border-left-color: #10B981;
+    color: #065F46;
+}
+
+.message-error {
+    background: rgba(239, 68, 68, 0.1);
+    border-left-color: #EF4444;
+    color: #7F1D1D;
+}
+
+.results-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    display: none;
+}
+
+.results-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.results-title i {
+    font-size: 1.75rem;
+    color: #8B5CF6;
+}
+
+.player-result-card {
+    background: #FAFBFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.player-result-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #8B5CF6, #EC4899);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.player-result-card:hover::before {
+    transform: scaleX(1);
+}
+
+.player-result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    background: white;
+}
+
+.player-result-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.result-player-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #8B5CF6, #EC4899);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    overflow: hidden;
+}
+
+.result-player-info {
+    flex: 1;
+}
+
+.result-player-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 0.5rem;
+}
+
+.result-player-details {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.result-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #64748B;
+}
+
+.result-detail i {
+    color: #94A3B8;
+    width: 16px;
+}
+
+.add-player-btn {
+    background: #3B82F6;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    align-self: flex-start;
+    border: none;
+}
+
+.add-player-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+.add-player-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.add-player-btn.added {
+    background: linear-gradient(135deg, #10B981, #059669);
+    cursor: default;
+}
+
+.add-player-btn.added:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.loading-section {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #64748B;
+    display: none;
+}
+
+.add-players-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #F1F5F9;
+    border-top: 4px solid #3B82F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.registry-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 3rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #E2E8F0;
+    position: relative;
+    overflow: hidden;
+}
+
+.registry-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #10B981, #059669);
+}
+
+.registry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.registry-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1E293B;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.registry-title i {
+    font-size: 1.75rem;
+    color: #10B981;
+}
+
+.player-count-badge {
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-left: 0.5rem;
+}
+
+.registry-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.update-all-btn, .refresh-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.update-all-btn {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: white;
+}
+
+.update-all-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.refresh-btn {
+    background: #F8FAFC;
+    color: #475569;
+    border: 1px solid #E2E8F0;
+}
+
+.refresh-btn:hover {
+    background: #E2E8F0;
+    transform: translateY(-1px);
+}
+
+.registry-loading {
+    display: none;
+    text-align: center;
+    padding: 3rem;
+    color: #64748B;
+}
+
+.player-registry-container {
+    position: relative;
+    min-height: 200px;
+}
+
+.player-registry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.registry-player-card {
+    background: #FAFBFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.registry-player-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    background: white;
+}
+
+.registry-player-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.registry-player-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.registry-player-info h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin: 0 0 0.25rem 0;
+}
+
+.registry-player-meta {
+    font-size: 0.875rem;
+    color: #64748B;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.registry-player-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.registry-player-meta i {
+    font-size: 0.875rem;
+    width: 14px;
+}
+
+.registry-player-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.registry-btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    position: relative;
+    z-index: 2;
+}
+
+.delete-btn {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+    color: white;
+}
+
+.delete-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.view-btn {
+    background: #F8FAFC;
+    color: #475569;
+    border: 1px solid #E2E8F0;
+}
+
+.view-btn:hover {
+    background: #E2E8F0;
+    transform: translateY(-1px);
+}
+
+.edit-btn {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: white;
+}
+
+.edit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.nickname-display {
+    font-style: italic;
+    color: #64748B;
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.edit-nickname-form {
+    margin-top: 1rem;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.nickname-edit-input {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #F8FAFC;
+}
+
+.nickname-edit-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    background: white;
+}
+
+.edit-form-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.save-btn, .cancel-btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.save-btn {
+    background: #10B981;
+    color: white;
+}
+
+.cancel-btn {
+    background: #F8FAFC;
+    color: #475569;
+    border: 1px solid #E2E8F0;
+}
+
+@media (max-width: 768px) {
+    .admin-hero {
+        padding: 2rem 1.5rem;
+        text-align: center;
+    }
+    
+    .admin-title {
+        font-size: 2rem;
+    }
+    
+    .admin-subtitle {
+        font-size: 1rem;
+    }
+    
+    .search-form {
+        flex-direction: column;
+    }
+    
+    .search-input {
+        min-width: auto;
+    }
+    
+    .search-section, .results-section {
+        padding: 1.5rem;
+    }
+    
+    .player-result-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .result-player-details {
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .result-detail {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-title {
+        font-size: 1.75rem;
+    }
+    
+    .result-player-details {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .player-result-card {
+        padding: 1.25rem;
+    }
+    
+    .result-player-avatar {
+        width: 50px;
+        height: 50px;
+        font-size: 1.1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <!-- Hero Section -->
+    <div class="admin-hero">
+        <h1 class="admin-title">
+            <i class="ph ph-user-plus"></i>
+            Add Players
+        </h1>
+        <p class="admin-subtitle">
+            Search and add players to the global database
+        </p>
+    </div>
+
+    <!-- Messages -->
+    <div id="successMessage" class="message-alert message-success">
+        <i class="ph ph-check-circle"></i>
+        <span id="successText"></span>
+    </div>
+    
+    <div id="errorMessage" class="message-alert message-error">
+        <i class="ph ph-x-circle"></i>
+        <span id="errorText"></span>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+        <h2 class="search-title">
+            <i class="ph ph-magnifying-glass"></i>
+            Search Players
+        </h2>
+        <div class="search-form">
+            <input type="text" 
+                   id="playerSearch" 
+                   class="search-input" 
+                   placeholder="Search for players (e.g., Haaland, Messi, Ronaldo...)">
+            <button id="searchBtn" class="search-btn">
+                <i class="ph ph-magnifying-glass"></i>
+                Search
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-section" id="loading">
+        <div class="add-players-spinner"></div>
+        <p>Searching players...</p>
+    </div>
+
+    <!-- Search Results -->
+    <div class="results-section" id="searchResults">
+        <h2 class="results-title">
+            <i class="ph ph-users"></i>
+            Search Results
+        </h2>
+        <div id="playerResults"></div>
+    </div>
+
+    <!-- Player Registry Management -->
+    <div class="registry-section">
+        <div class="registry-header">
+            <h2 class="registry-title">
+                <i class="ph ph-database"></i>
+                Player Registry
+                <span class="player-count-badge" id="playerCountBadge">0</span>
+            </h2>
+            <div class="registry-actions">
+                <button id="updateAllBtn" class="update-all-btn">
+                    <i class="ph ph-arrows-clockwise"></i>
+                    Update All Players
+                </button>
+                <button id="refreshRegistryBtn" class="refresh-btn">
+                    <i class="ph ph-arrow-clockwise"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="player-registry-container">
+            <div class="registry-loading" id="registryLoading">
+                <div class="add-players-spinner"></div>
+                <p>Loading player registry...</p>
+            </div>
+            <div id="playerRegistry" class="player-registry-grid"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('playerSearch');
+    const searchBtn = document.getElementById('searchBtn');
+    const searchResults = document.getElementById('searchResults');
+    const playerResults = document.getElementById('playerResults');
+    const loading = document.getElementById('loading');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+    const successText = document.getElementById('successText');
+    const errorText = document.getElementById('errorText');
+
+    // Track players already in database
+    let playersInDB = new Set();
+
+    function searchPlayers() {
+        const query = searchInput.value.trim();
+        if (!query) {
+            showError('Please enter a player name to search');
+            return;
+        }
+
+        hideMessages();
+        loading.style.display = 'block';
+        searchResults.style.display = 'none';
+        searchBtn.disabled = true;
+        searchBtn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> Searching...';
+
+        fetch(`/player-stats/api/search?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = '<i class="ph ph-magnifying-glass"></i> Search';
+                
+                if (data.players && data.players.length > 0) {
+                    displaySearchResults(data.players);
+                    searchResults.style.display = 'block';
+                } else {
+                    showError('No players found for your search');
+                }
+            })
+            .catch(error => {
+                loading.style.display = 'none';
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = '<i class="ph ph-magnifying-glass"></i> Search';
+                showError('Error searching players: ' + error.message);
+            });
+    }
+
+    function displaySearchResults(players) {
+        playerResults.innerHTML = '';
+        
+        players.forEach(player => {
+            const playerCard = document.createElement('div');
+            playerCard.className = 'player-result-card';
+            
+            const initials = player.name ? player.name.split(' ').map(n => n[0]).join('').substring(0, 2) : '??';
+            const isInDB = playersInDB.has(player.id.toString());
+            
+            // Debug logging
+            console.log('Player data:', player);
+            console.log('Current team:', player.current_team);
+            
+            playerCard.innerHTML = `
+                <div class="player-result-header">
+                    <div class="result-player-avatar">
+                        ${player.image_path ? 
+                            `<img src="${player.image_path}" alt="${player.name}" style="width: 100%; height: 100%; object-fit: cover;">` : 
+                            initials}
+                    </div>
+                    <div class="result-player-info">
+                        <h3 class="result-player-name">${player.name || 'Unknown Player'}</h3>
+                        <div class="result-player-details">
+                            ${player.current_team && player.current_team.name ? `
+                            <div class="result-detail">
+                                <i class="ph ph-shield"></i>
+                                <span>${player.current_team.name}</span>
+                            </div>` : 
+                            `<div class="result-detail">
+                                <i class="ph ph-shield"></i>
+                                <span>Free Agent</span>
+                            </div>`}
+                            ${player.position && player.position !== 'Unknown Position' ? `
+                            <div class="result-detail">
+                                <i class="ph ph-user"></i>
+                                <span>${player.position}</span>
+                            </div>` : ''}
+                            ${player.age ? `
+                            <div class="result-detail">
+                                <i class="ph ph-calendar"></i>
+                                <span>Age ${player.age}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                    ${isInDB ? 
+                        `<button class="add-player-btn added" disabled>
+                            <i class="ph ph-check"></i>
+                            Already Added
+                        </button>` :
+                        `<div class="add-player-section">
+                            <div class="nickname-input-container" style="display: none; margin-bottom: 1rem;">
+                                <input type="text" 
+                                       class="nickname-input" 
+                                       placeholder="Enter nickname (optional)" 
+                                       style="width: 100%; padding: 0.5rem; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 0.9rem;">
+                            </div>
+                            <button class="add-player-btn" onclick="toggleNicknameInput(${player.id}, '${player.name?.replace(/'/g, "\\'")}', this)">
+                                <i class="ph ph-plus"></i>
+                                Add Player
+                            </button>
+                        </div>`
+                    }
+                </div>
+            `;
+            
+            playerResults.appendChild(playerCard);
+        });
+    }
+
+    window.toggleNicknameInput = function(playerId, playerName, button) {
+        const container = button.closest('.add-player-section');
+        const nicknameContainer = container.querySelector('.nickname-input-container');
+        const nicknameInput = container.querySelector('.nickname-input');
+        
+        if (nicknameContainer.style.display === 'none') {
+            // Show nickname input
+            nicknameContainer.style.display = 'block';
+            nicknameInput.focus();
+            button.innerHTML = '<i class="ph ph-check"></i> Confirm Add';
+            button.onclick = () => addPlayerWithNickname(playerId, playerName, button);
+        } else {
+            // Add player with nickname
+            addPlayerWithNickname(playerId, playerName, button);
+        }
+    };
+
+    window.addPlayerWithNickname = function(playerId, playerName, button) {
+        hideMessages();
+        
+        const container = button.closest('.add-player-section');
+        const nicknameInput = container.querySelector('.nickname-input');
+        const nickname = nicknameInput.value.trim();
+        
+        const originalHTML = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> Adding...';
+        
+        const requestBody = {
+            player_id: playerId
+        };
+        
+        if (nickname) {
+            requestBody.nickname = nickname;
+        }
+        
+        fetch('/player-stats/api/players', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                return response.json().then(data => Promise.reject(data));
+            }
+        })
+        .then(data => {
+            if (data.message) {
+                button.innerHTML = '<i class="ph ph-check"></i> Added!';
+                button.classList.add('added');
+                const displayName = nickname || playerName;
+                showSuccess(`${displayName} has been added to the database!`);
+                
+                // Add player to tracking set
+                playersInDB.add(playerId.toString());
+                
+                // Reload the registry to show the new player
+                loadPlayerRegistry();
+            } else {
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+                showError('Failed to add player');
+            }
+        })
+        .catch(error => {
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+            showError(error.error || 'Error adding player: ' + error.message);
+        });
+    };
+
+    // Keep the old function for backward compatibility
+    window.addPlayer = function(playerId, playerName) {
+        addPlayerWithNickname(playerId, playerName, event.target.closest('.add-player-btn'));
+    };
+
+    function showSuccess(message) {
+        successText.textContent = message;
+        successMessage.style.display = 'flex';
+        errorMessage.style.display = 'none';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+        }, 5000);
+    }
+
+    function showError(message) {
+        errorText.textContent = message;
+        errorMessage.style.display = 'flex';
+        successMessage.style.display = 'none';
+    }
+
+    function hideMessages() {
+        successMessage.style.display = 'none';
+        errorMessage.style.display = 'none';
+    }
+
+    // Event listeners
+    searchBtn.addEventListener('click', searchPlayers);
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchPlayers();
+        }
+    });
+
+    // Registry management
+    const registryLoading = document.getElementById('registryLoading');
+    const playerRegistry = document.getElementById('playerRegistry');
+    const updateAllBtn = document.getElementById('updateAllBtn');
+    const refreshRegistryBtn = document.getElementById('refreshRegistryBtn');
+    const playerCountBadge = document.getElementById('playerCountBadge');
+
+    // Load player registry on page load
+    loadPlayerRegistry();
+
+    // Event listeners for registry
+    updateAllBtn.addEventListener('click', updateAllPlayers);
+    refreshRegistryBtn.addEventListener('click', loadPlayerRegistry);
+
+    async function updateAllPlayers() {
+        const originalHTML = updateAllBtn.innerHTML;
+        updateAllBtn.disabled = true;
+        updateAllBtn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> Updating...';
+        hideMessages();
+
+        try {
+            const response = await fetch('/player-stats/api/registry/update-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update all players');
+            }
+
+            const result = await response.json();
+            showSuccess(result.message || 'All players updated successfully!');
+            await loadPlayerRegistry(); // Refresh the registry to show updated data
+
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            updateAllBtn.disabled = false;
+            updateAllBtn.innerHTML = originalHTML;
+        }
+    }
+
+    async function loadPlayerRegistry() {
+        try {
+            registryLoading.style.display = 'block';
+            playerRegistry.innerHTML = '';
+            
+            const response = await fetch('/player-stats/api/registry');
+            if (!response.ok) throw new Error('Failed to load registry');
+            
+            const data = await response.json();
+            const players = data.players || [];
+            
+            // Update player count
+            playerCountBadge.textContent = players.length;
+            
+            // Update tracking set
+            playersInDB.clear();
+            players.forEach(player => {
+                playersInDB.add(player.id.toString());
+            });
+            
+            displayPlayerRegistry(players);
+        } catch (error) {
+            console.error('Error loading player registry:', error);
+            showError('Failed to load player registry');
+        } finally {
+            registryLoading.style.display = 'none';
+        }
+    }
+
+    function displayPlayerRegistry(players) {
+        if (players.length === 0) {
+            playerRegistry.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: #64748B; grid-column: 1/-1;">
+                    <i class="ph ph-users" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>No players in registry yet. Add some players to get started!</p>
+                </div>
+            `;
+            return;
+        }
+
+        playerRegistry.innerHTML = players.map(player => {
+            const initials = player.name ? player.name.split(' ').map(n => n[0]).join('').substring(0, 2) : '??';
+            const teamName = player.current_team?.name || 'Free Agent';
+            const position = player.position?.name || 'Unknown Position';
+            const nickname = player.nickname || '';
+            
+            return `
+                <div class="registry-player-card" data-player-id="${player.id}">
+                    <div class="registry-player-header">
+                        <div class="registry-player-avatar">
+                            ${player.image_path ? 
+                                `<img src="${player.image_path}" alt="${player.name}" style="width: 100%; height: 100%; border-radius: 12px; object-fit: cover;">` : 
+                                initials
+                            }
+                        </div>
+                        <div class="registry-player-info">
+                            <h3 style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;" title="${player.name}">${player.name}</h3>
+                            <div class="nickname-display">${nickname ? `"${nickname}"` : ''}</div>
+                            <div class="registry-player-meta">
+                                <span><i class="ph ph-shield"></i> ${teamName}</span>
+                                <span><i class="ph ph-user-circle"></i> ${position}</span>
+                                <span><i class="ph ph-calendar"></i> Added ${formatDate(player.added_at)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="edit-nickname-form">
+                        <input type="text" class="nickname-edit-input" value="${nickname}" placeholder="Enter nickname">
+                        <div class="edit-form-actions">
+                            <button class="save-btn"><i class="ph ph-check"></i> Save</button>
+                            <button class="cancel-btn"><i class="ph ph-x"></i> Cancel</button>
+                        </div>
+                    </div>
+                    <div class="registry-player-actions">
+                        <button class="registry-btn view-btn" data-player-id="${player.id}">
+                            <i class="ph ph-eye"></i>
+                            View
+                        </button>
+                        <button class="registry-btn edit-btn" data-player-id="${player.id}">
+                            <i class="ph ph-pencil-simple"></i>
+                            Edit
+                        </button>
+                        <button class="registry-btn delete-btn" data-player-id="${player.id}" data-player-name="${player.name.replace(/'/g, "\\'")}">
+                            <i class="ph ph-trash"></i>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Add event listeners after DOM update
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const card = this.closest('.registry-player-card');
+                card.querySelector('.registry-player-actions').style.display = 'none';
+                card.querySelector('.edit-nickname-form').style.display = 'flex';
+            });
+        });
+
+        document.querySelectorAll('.cancel-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const card = this.closest('.registry-player-card');
+                const input = card.querySelector('.nickname-edit-input');
+                const originalNickname = card.querySelector('.nickname-display').textContent.replace(/"/g, '');
+                input.value = originalNickname;
+                card.querySelector('.edit-nickname-form').style.display = 'none';
+                card.querySelector('.registry-player-actions').style.display = 'flex';
+            });
+        });
+
+        document.querySelectorAll('.save-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const card = this.closest('.registry-player-card');
+                const playerId = card.dataset.playerId;
+                const input = card.querySelector('.nickname-edit-input');
+                const newNickname = input.value.trim();
+                updatePlayerNickname(playerId, newNickname, card);
+            });
+        });
+
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const playerId = this.getAttribute('data-player-id');
+                window.location.href = `/player-stats/player/${playerId}`;
+            });
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const playerId = this.getAttribute('data-player-id');
+                const playerName = this.getAttribute('data-player-name');
+                deletePlayer(playerId, playerName);
+            });
+        });
+    }
+
+    async function updatePlayerNickname(playerId, nickname, card) {
+        const saveBtn = card.querySelector('.save-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Saving...';
+
+        try {
+            const response = await fetch(`/player-stats/api/players/${playerId}/nickname`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ nickname: nickname })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update nickname');
+            }
+
+            const nicknameDisplay = card.querySelector('.nickname-display');
+            nicknameDisplay.textContent = nickname ? `"${nickname}"` : '';
+
+            card.querySelector('.edit-nickname-form').style.display = 'none';
+            card.querySelector('.registry-player-actions').style.display = 'flex';
+
+            showSuccess('Nickname updated successfully!');
+
+        } catch (error) {
+            console.error('Error updating nickname:', error);
+            showError(error.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="ph ph-check"></i> Save';
+        }
+    }
+
+    async function deletePlayer(playerId, playerName) {
+        if (!confirm(`Are you sure you want to delete ${playerName} from the registry?`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/player-stats/api/players/${playerId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) throw new Error('Delete failed');
+            
+            showSuccess(`${playerName} deleted successfully`);
+            loadPlayerRegistry(); // Refresh the registry
+        } catch (error) {
+            console.error('Error deleting player:', error);
+            showError('Failed to delete player');
+        }
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return 'Unknown';
+        const date = new Date(dateString);
+        return date.toLocaleDateString();
+    }
+
+    // Focus search input on page load
+    searchInput.focus();
+    
+    // Fix for text selection in search input
+    searchInput.addEventListener('mousedown', function(e) {
+        e.stopPropagation();
+    });
+    
+    searchInput.addEventListener('mouseup', function(e) {
+        e.stopPropagation();
+    });
+
+    searchInput.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+
+    searchInput.addEventListener('dblclick', function(e) {
+        e.stopPropagation();
+        this.select();
+    });
+
+    // Allow standard text selection
+    searchInput.addEventListener('selectstart', function(e) {
+        e.stopPropagation();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Thumbnail Creator - Creaver{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="mb-4">Thumbnail Creator</h1>
+            <p class="lead">Create eye-catching thumbnails that boost your click-through rate</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Design Your Thumbnail</h5>
+
+                    <form id="thumbnailForm">
+                        <div class="mb-3">
+                            <label for="prompt" class="form-label">Describe Your Thumbnail</label>
+                            <textarea class="form-control" id="prompt" rows="4"
+                                placeholder="E.g., A vibrant gaming thumbnail with neon colors, featuring a character holding a trophy with shocked expression..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="style" class="form-label">Style</label>
+                            <select class="form-control" id="style">
+                                <option value="realistic">Realistic</option>
+                                <option value="cartoon">Cartoon</option>
+                                <option value="anime">Anime</option>
+                                <option value="3d">3D Rendered</option>
+                                <option value="minimalist">Minimalist</option>
+                                <option value="vibrant">Vibrant & Colorful</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="text_overlay" class="form-label">Text Overlay (Optional)</label>
+                            <input type="text" class="form-control" id="text_overlay"
+                                placeholder="E.g., INSANE VICTORY!">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-magic"></i> Generate Thumbnail
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4" id="resultCard" style="display: none;">
+                <div class="card-body">
+                    <h5 class="card-title">Generated Thumbnail</h5>
+                    <div id="thumbnailResult" class="text-center">
+                        <!-- Generated thumbnail will appear here -->
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-success" onclick="downloadThumbnail()">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button class="btn btn-secondary" onclick="regenerate()">
+                            <i class="fas fa-redo"></i> Regenerate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Tips for Great Thumbnails</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Use bright, contrasting colors
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Include faces with expressions
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Keep text short and bold
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Create visual hierarchy
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Maintain brand consistency
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Dimensions</h5>
+                    <p>YouTube thumbnails: <strong>1280x720 px</strong></p>
+                    <p>Aspect ratio: <strong>16:9</strong></p>
+                    <p>Max file size: <strong>2MB</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('thumbnailForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const prompt = document.getElementById('prompt').value;
+    const style = document.getElementById('style').value;
+    const textOverlay = document.getElementById('text_overlay').value;
+
+    if (!prompt) {
+        alert('Please describe your thumbnail');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/thumbnail/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                prompt: prompt,
+                style: style,
+                text_overlay: textOverlay
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Show result card
+            document.getElementById('resultCard').style.display = 'block';
+            document.getElementById('thumbnailResult').innerHTML = '<p>Thumbnail generation in progress...</p>';
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error generating thumbnail: ' + error.message);
+    }
+});
+
+function downloadThumbnail() {
+    // TODO: Implement download functionality
+    alert('Download functionality coming soon!');
+}
+
+function regenerate() {
+    document.getElementById('thumbnailForm').dispatchEvent(new Event('submit'));
+}
+</script>
+{% endblock %}

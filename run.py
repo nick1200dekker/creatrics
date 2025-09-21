@@ -1,0 +1,156 @@
+import os
+import sys
+import logging
+from flask import Flask, render_template, request
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Configure basic logging
+logging.basicConfig(
+    level=logging.DEBUG,  # Change to DEBUG for more info
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+
+# Create app-specific logger
+app_logger = logging.getLogger('creator-pal')
+app_logger.setLevel(logging.DEBUG)  # Change to DEBUG
+
+# Create Flask app
+app = Flask(__name__, 
+           template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', 'templates'),
+           static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', 'static'))
+
+# Set a secret key for session management
+secret_key = os.environ.get('SECRET_KEY')
+if not secret_key:
+    # Only allow fallback in development
+    if os.environ.get('FLASK_ENV') == 'production':
+        app_logger.error("SECRET_KEY environment variable is required in production")
+        raise ValueError("SECRET_KEY must be set in production environment")
+    
+    # Development fallback - generate a random key for this session
+    import secrets
+    secret_key = secrets.token_hex(32)
+    app_logger.warning("Using generated secret key for development - sessions will not persist across restarts")
+
+app.config['SECRET_KEY'] = secret_key
+
+# Make Supabase URL and key available to all templates
+@app.context_processor
+def inject_supabase_credentials():
+    from app.config import get_config
+    config = get_config()
+    credentials = {
+        'supabase_url': config.get('supabase_url', ''),
+        'supabase_key': config.get('supabase_anon_key', '')
+    }
+    return credentials
+    
+# Make subscription plan available to all templates
+@app.context_processor
+def inject_user_data():
+    from flask import g
+    context = {}
+    
+    # Default plan
+    context['subscription_plan'] = 'Free Plan'
+    
+    # If authenticated, get actual plan
+    if hasattr(g, 'user') and g.user:
+        try:
+            # First try to get from Firebase directly
+            from app.system.services.firebase_service import UserService
+            user_id = g.user.get('id')
+            if user_id:
+                user_data = UserService.get_user(user_id)
+                if user_data and 'subscription_plan' in user_data:
+                    context['subscription_plan'] = user_data['subscription_plan']
+                    app_logger.info(f"Context processor: using plan '{context['subscription_plan']}' from Firebase")
+        except Exception as e:
+            app_logger.warning(f"Error in user_data context processor: {e}")
+    
+    return context
+
+# Import auth middleware
+from app.system.auth.middleware import auth_middleware
+
+# Add authentication middleware
+@app.before_request
+def before_request_middleware():
+    return auth_middleware()
+
+# Import consolidated blueprints
+from app.routes.core.core_routes import bp as core_bp
+from app.routes.home.home_routes import bp as home_bp
+from app.routes.payment import bp as payment_bp
+
+# Import soccer stats blueprints
+from app.routes.player_stats import bp as player_stats_bp
+from app.routes.team_stats import bp as team_stats_bp
+from app.routes.tp_analytics import bp as tp_analytics_bp
+from app.routes.match_center import bp as match_center_bp
+
+# Import Cron blueprint
+from app.routes.cron import bp as cron_bp
+
+# Register blueprints
+app.register_blueprint(core_bp)
+app.register_blueprint(home_bp)
+app.register_blueprint(payment_bp)
+app.register_blueprint(player_stats_bp)
+app.register_blueprint(team_stats_bp)
+app.register_blueprint(tp_analytics_bp)
+app.register_blueprint(match_center_bp)
+
+# Register Cron blueprint
+app.register_blueprint(cron_bp)
+
+# Routes for SEO files at root URL
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    app_logger.info("Serving sitemap.xml from root URL")
+    return app.send_static_file('sitemap.xml')
+
+@app.route('/robots.txt')
+def robots_txt():
+    app_logger.info("Serving robots.txt from root URL")
+    return app.send_static_file('robots.txt')
+
+@app.route('/favicon.ico')
+def favicon():
+    app_logger.info("Serving favicon.ico from root URL")
+    return app.send_static_file('favicons/favicon.ico')
+
+# Error handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    app_logger.warning(f"404 error: {request.path}")
+    return render_template('errors/404.html'), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    app_logger.error(f"500 error: {str(e)}")
+    return render_template('errors/500.html'), 500
+
+# Add request logging
+@app.before_request
+def log_request():
+    app_logger.info(f"Request: {request.method} {request.path} from {request.remote_addr}")
+    # Log auth header for debugging (redact token for security)
+    auth_header = request.headers.get('Authorization')
+    if auth_header:
+        token_part = auth_header.split(' ')[1] if len(auth_header.split(' ')) > 1 else 'NO_TOKEN'
+        if len(token_part) > 10:
+            redacted_token = token_part[:5] + '...' + token_part[-5:]
+            app_logger.debug(f"Auth header present with token: {redacted_token}")
+        else:
+            app_logger.debug("Auth header present with invalid token format")
+    else:
+        app_logger.debug("No auth header present in request")
+
+if __name__ == '__main__':
+    app_logger.info("Starting Flask application...")
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))

@@ -1,0 +1,582 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Creaver{% endblock %}
+
+{% block additional_styles %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+
+    .stat-change {
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        border-radius: 6px;
+    }
+
+    .stat-change.positive {
+        color: #10b981;
+        background: #d1fae5;
+    }
+
+    .stat-change.negative {
+        color: #ef4444;
+        background: #fee2e2;
+    }
+
+    .video-row {
+        padding: 12px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .video-row:hover {
+        background: #f8fafc;
+    }
+
+    .video-thumbnail {
+        width: 120px;
+        height: 68px;
+        border-radius: 8px;
+        background: #e2e8f0;
+        object-fit: cover;
+    }
+
+    .video-stats {
+        display: flex;
+        gap: 16px;
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+    }
+
+    .period-selector {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .period-btn {
+        padding: 6px 12px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .period-btn:hover {
+        background: #f8fafc;
+    }
+
+    .period-btn.active {
+        background: var(--accent-blue);
+        color: white;
+        border-color: var(--accent-blue);
+    }
+
+    .audience-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .progress-bar-container {
+        background: #e2e8f0;
+        border-radius: 4px;
+        height: 8px;
+        overflow: hidden;
+        margin: 4px 0;
+    }
+
+    .progress-bar-fill {
+        background: var(--accent-blue);
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+
+    .realtime-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+        margin-right: 8px;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="mb-2">Analytics Dashboard</h1>
+                    <p class="lead mb-0">Track your content performance and audience insights</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary" onclick="refreshAnalytics()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Stats -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label" style="color: rgba(255,255,255,0.8);">
+                            <span class="realtime-indicator" style="background: white;"></span>
+                            Real-Time
+                        </div>
+                        <div class="stat-value" style="color: white;">
+                            <span id="realtimeViewers">--</span> viewers
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div style="color: rgba(255,255,255,0.8); font-size: 0.875rem;">Last hour</div>
+                        <div style="font-size: 1.25rem; font-weight: 600;">
+                            <span id="viewsLastHour">--</span> views
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-label">Total Views</div>
+                <div class="stat-value" id="totalViews">--</div>
+                <div class="stat-change positive" id="viewsChange">
+                    <i class="fas fa-arrow-up"></i> --
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-label">Subscribers</div>
+                <div class="stat-value" id="totalSubscribers">--</div>
+                <div class="stat-change positive" id="subscribersChange">
+                    <i class="fas fa-arrow-up"></i> --
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-label">Watch Time (hours)</div>
+                <div class="stat-value" id="watchTimeHours">--</div>
+                <div class="stat-change positive" id="watchTimeChange">
+                    <i class="fas fa-arrow-up"></i> --
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-label">Est. Revenue</div>
+                <div class="stat-value" id="revenueEstimate">$--</div>
+                <div class="mt-2">
+                    <small class="text-muted">This month</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Charts Section -->
+        <div class="col-lg-8">
+            <!-- Performance Chart -->
+            <div class="chart-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Performance Overview</h5>
+                    <div class="period-selector">
+                        <button class="period-btn active" onclick="changePeriod('7days')">7 Days</button>
+                        <button class="period-btn" onclick="changePeriod('30days')">30 Days</button>
+                        <button class="period-btn" onclick="changePeriod('90days')">90 Days</button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <select class="form-control form-control-sm" style="width: 150px;" id="metricSelector" onchange="changeMetric()">
+                        <option value="views">Views</option>
+                        <option value="subscribers">Subscribers</option>
+                        <option value="watchtime">Watch Time</option>
+                        <option value="revenue">Revenue</option>
+                    </select>
+                </div>
+                <canvas id="performanceChart" height="100"></canvas>
+            </div>
+
+            <!-- Top Videos -->
+            <div class="chart-container">
+                <h5 class="mb-3">Top Performing Videos</h5>
+                <div id="topVideos">
+                    <!-- Videos will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Audience Section -->
+        <div class="col-lg-4">
+            <!-- Audience Demographics -->
+            <div class="audience-card">
+                <h5 class="mb-3">Audience Demographics</h5>
+
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Age Groups</h6>
+                    <div id="ageGroups">
+                        <!-- Age groups will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Top Countries</h6>
+                    <div id="topCountries">
+                        <!-- Countries will be loaded here -->
+                    </div>
+                </div>
+
+                <div>
+                    <h6 class="text-muted mb-2">Gender Distribution</h6>
+                    <canvas id="genderChart" height="150"></canvas>
+                </div>
+            </div>
+
+            <!-- Traffic Sources -->
+            <div class="audience-card">
+                <h5 class="mb-3">Traffic Sources</h5>
+                <div id="trafficSources">
+                    <!-- Traffic sources will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let performanceChart = null;
+let genderChart = null;
+let currentPeriod = '7days';
+let currentMetric = 'views';
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    loadOverview();
+    loadChartData();
+    loadTopVideos();
+    loadAudienceData();
+    loadRealtimeData();
+
+    // Refresh realtime data every 30 seconds
+    setInterval(loadRealtimeData, 30000);
+});
+
+async function loadOverview() {
+    try {
+        const response = await fetch('/api/analytics/overview');
+        const data = await response.json();
+
+        if (data.success) {
+            const overview = data.overview;
+
+            // Update stats
+            document.getElementById('totalViews').textContent = formatNumber(overview.total_views);
+            document.getElementById('totalSubscribers').textContent = formatNumber(overview.total_subscribers);
+            document.getElementById('watchTimeHours').textContent = formatNumber(overview.watch_time_hours);
+            document.getElementById('revenueEstimate').textContent = `$${overview.revenue_estimate.toFixed(2)}`;
+
+            // Update changes
+            updateChangeIndicator('viewsChange', overview.views_change);
+            updateChangeIndicator('subscribersChange', overview.subscribers_change);
+            updateChangeIndicator('watchTimeChange', overview.watch_time_change);
+        }
+    } catch (error) {
+        console.error('Error loading overview:', error);
+    }
+}
+
+async function loadChartData() {
+    try {
+        const response = await fetch(`/api/analytics/chart-data?period=${currentPeriod}&metric=${currentMetric}`);
+        const data = await response.json();
+
+        if (data.success) {
+            drawChart(data.chartData);
+        }
+    } catch (error) {
+        console.error('Error loading chart data:', error);
+    }
+}
+
+function drawChart(chartData) {
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+
+    if (performanceChart) {
+        performanceChart.destroy();
+    }
+
+    performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return formatNumber(value);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadTopVideos() {
+    try {
+        const response = await fetch('/api/analytics/top-videos');
+        const data = await response.json();
+
+        if (data.success) {
+            const videosHtml = data.videos.map(video => `
+                <div class="video-row">
+                    <img src="${video.thumbnail}" alt="${video.title}" class="video-thumbnail">
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold mb-1">${video.title}</div>
+                        <div class="video-stats">
+                            <span><i class="fas fa-eye"></i> ${formatNumber(video.views)}</span>
+                            <span><i class="fas fa-thumbs-up"></i> ${formatNumber(video.likes)}</span>
+                            <span><i class="fas fa-comment"></i> ${video.comments}</span>
+                            <span>CTR: ${video.ctr}%</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('topVideos').innerHTML = videosHtml;
+        }
+    } catch (error) {
+        console.error('Error loading top videos:', error);
+    }
+}
+
+async function loadAudienceData() {
+    try {
+        const response = await fetch('/api/analytics/audience');
+        const data = await response.json();
+
+        if (data.success) {
+            const audience = data.audience;
+
+            // Display age groups
+            const ageGroupsHtml = Object.entries(audience.demographics.age_groups).map(([age, percentage]) => `
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small>${age}</small>
+                        <small>${percentage}%</small>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('ageGroups').innerHTML = ageGroupsHtml;
+
+            // Display top countries
+            const countriesHtml = audience.demographics.top_countries.map(country => `
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small>${country.country}</small>
+                        <small>${country.percentage}%</small>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: ${country.percentage}%"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('topCountries').innerHTML = countriesHtml;
+
+            // Draw gender chart
+            drawGenderChart(audience.demographics.gender);
+
+            // Display traffic sources
+            const trafficHtml = Object.entries(audience.traffic_sources).map(([source, percentage]) => `
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small>${source.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</small>
+                        <small>${percentage}%</small>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('trafficSources').innerHTML = trafficHtml;
+        }
+    } catch (error) {
+        console.error('Error loading audience data:', error);
+    }
+}
+
+function drawGenderChart(genderData) {
+    const ctx = document.getElementById('genderChart').getContext('2d');
+
+    if (genderChart) {
+        genderChart.destroy();
+    }
+
+    genderChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(genderData).map(g => g.charAt(0).toUpperCase() + g.slice(1)),
+            datasets: [{
+                data: Object.values(genderData),
+                backgroundColor: ['#3B82F6', '#EC4899', '#8B5CF6']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+async function loadRealtimeData() {
+    try {
+        const response = await fetch('/api/analytics/realtime');
+        const data = await response.json();
+
+        if (data.success) {
+            const realtime = data.realtime;
+            document.getElementById('realtimeViewers').textContent = formatNumber(realtime.current_viewers);
+            document.getElementById('viewsLastHour').textContent = formatNumber(realtime.views_last_hour);
+        }
+    } catch (error) {
+        console.error('Error loading realtime data:', error);
+    }
+}
+
+function changePeriod(period) {
+    currentPeriod = period;
+
+    // Update button states
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+
+    // Reload chart
+    loadChartData();
+}
+
+function changeMetric() {
+    currentMetric = document.getElementById('metricSelector').value;
+    loadChartData();
+}
+
+function refreshAnalytics() {
+    loadOverview();
+    loadChartData();
+    loadTopVideos();
+    loadAudienceData();
+    loadRealtimeData();
+
+    // Show toast
+    if (window.BaseApp && window.BaseApp.showToast) {
+        window.BaseApp.showToast('Analytics refreshed', 'success');
+    }
+}
+
+function formatNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toLocaleString();
+}
+
+function updateChangeIndicator(elementId, change) {
+    const element = document.getElementById(elementId);
+    const isPositive = change >= 0;
+
+    element.className = `stat-change ${isPositive ? 'positive' : 'negative'}`;
+    element.innerHTML = `
+        <i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i>
+        ${Math.abs(change).toFixed(1)}%
+    `;
+}
+</script>
+{% endblock %}

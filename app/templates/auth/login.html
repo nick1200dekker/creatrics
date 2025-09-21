@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Football Statistics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    
+    <style>
+        :root {
+            --brand-gradient: #3B82F6;
+            --soft-gradient: linear-gradient(135deg, #DBEAFE 0%, #EDE9FE 50%, #FCE7F3 100%);
+            --accent-blue: #3B82F6;
+            --accent-purple: #3B82F6;
+            --accent-pink: #2563EB;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F8FAFC;
+            color: #1E293B;
+            min-height: 100vh;
+            overflow-x: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        body.loaded {
+            opacity: 1;
+        }
+        
+        /* Animated background */
+        .animated-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: #F8FAFC;
+            overflow: hidden;
+        }
+        
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
+            opacity: 0.6;
+            animation: bgShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes bgShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-15px, -15px) rotate(0.5deg); }
+            66% { transform: translate(15px, -8px) rotate(-0.5deg); }
+        }
+        
+        /* Main container */
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+        
+        /* Login container */
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            max-width: 480px;
+            width: 100%;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+        
+        .login-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--brand-gradient);
+            opacity: 0.8;
+        }
+        
+        /* Logo */
+        .logo-text {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--accent-blue);
+            letter-spacing: -0.02em;
+            margin-bottom: 0.75rem;
+        }
+        
+        /* Form elements */
+        .form-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-subtitle {
+            color: #64748B;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+        }
+        
+        .form-group.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .form-label {
+            display: block;
+            color: #374151;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-input-wrapper {
+            position: relative;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: white;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            color: #1E293B;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .form-input::placeholder {
+            color: #9CA3AF;
+        }
+        
+        .form-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.25rem;
+            color: #9CA3AF;
+            transition: color 0.3s ease;
+        }
+        
+        .form-input:focus ~ .form-icon {
+            color: var(--accent-blue);
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary {
+            background: var(--brand-gradient);
+            color: white;
+            box-shadow: var(--shadow-md);
+            width: 100%;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #374151;
+            border: 2px solid #E5E7EB;
+            width: 100%;
+        }
+        
+        .btn-secondary:hover {
+            background: #F9FAFB;
+            border-color: #D1D5DB;
+            transform: translateY(-1px);
+        }
+        
+        /* Google button specific styles */
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 2rem 0;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+        }
+        
+        .divider.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E5E7EB;
+        }
+        
+        .divider span {
+            padding: 0 1rem;
+            color: #9CA3AF;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        /* Error message */
+        .error-message {
+            background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #DC2626;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: none;
+            border-left: 4px solid #EF4444;
+        }
+        
+        .error-message.session-expired {
+            background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+            border-color: rgba(245, 158, 11, 0.3);
+            color: #D97706;
+            border-left-color: #F59E0B;
+        }
+        
+        /* Success badge */
+        .success-badge {
+            background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #059669;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: none;
+            border-left: 4px solid #10B981;
+            text-align: center;
+        }
+        
+        /* Register link */
+        .register-link {
+            text-align: center;
+            margin-top: 2rem;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .register-link.active {
+            opacity: 1;
+        }
+        
+        .register-link a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+        
+        .register-link a:hover {
+            color: var(--accent-purple);
+        }
+        
+        /* Forgot password link */
+        .forgot-password-link {
+            text-align: right;
+            margin-top: 0.5rem;
+        }
+        
+        .forgot-link {
+            color: #6B7280;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        
+        .forgot-link:hover {
+            color: var(--accent-blue);
+        }
+        
+        /* Policy links */
+        .policy-links {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #E5E7EB;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .policy-links.active {
+            opacity: 1;
+        }
+        
+        .policy-links a {
+            color: #9CA3AF;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            margin: 0 0.75rem;
+        }
+        
+        .policy-links a:hover {
+            color: #6B7280;
+        }
+        
+        .policy-links .separator {
+            color: #E5E7EB;
+            margin: 0 0.25rem;
+        }
+        
+        /* Page transition */
+        .page-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #F8FAFC;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .page-transition.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            .login-page {
+                padding: 1rem;
+            }
+            
+            .login-container {
+                padding: 2rem;
+            }
+            
+            .logo-text {
+                font-size: 2.25rem;
+            }
+            
+            .policy-links a {
+                font-size: 0.75rem;
+                margin: 0 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Page transition overlay -->
+    <div id="page-transition" class="page-transition"></div>
+    
+    <!-- Animated background -->
+    <div class="animated-bg"></div>
+    
+    <div class="login-page">
+        <div style="width: 100%; max-width: 480px;">
+            <!-- Login Container -->
+            <div id="login-container" class="login-container">
+                <!-- Logo text -->
+                <div class="logo-text">FOOTBALL STATISTICS</div>
+                
+                <!-- Form Header -->
+                <div class="form-header">
+                    <p class="form-subtitle">Sign in to access your account</p>
+                </div>
+                
+                <!-- Success message -->
+                <div id="success-message" class="success-badge">
+                    🎉 Registration successful! You can now sign in to your account.
+                </div>
+                
+                <!-- Error message -->
+                <div id="error-message" class="error-message"></div>
+                
+                <!-- Login Form -->
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="form-input-wrapper">
+                            <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" required>
+                            <i class="ph ph-envelope form-icon"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="form-input-wrapper">
+                            <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password" required>
+                            <i class="ph ph-lock form-icon"></i>
+                        </div>
+                        <div class="forgot-password-link">
+                            <a href="/auth/forgot-password" class="forgot-link">Forgot Password?</a>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" id="login-button" class="btn btn-primary">
+                            <i class="ph ph-sign-in"></i>
+                            Sign In
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Divider -->
+                <div class="divider">
+                    <span>Or continue with</span>
+                </div>
+                
+                <!-- Google Sign-in -->
+                <div class="form-group">
+                    <button id="google-login" class="btn btn-secondary">
+                        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
+                        Sign in with Google
+                    </button>
+                </div>
+                
+                <!-- Register Link -->
+                <div class="register-link">
+                    <a href="#" id="register-link">Don't have an account? Create one here</a>
+                </div>
+                
+                <!-- Policy Links -->
+                <div class="policy-links">
+                    <a href="/privacy-policy">Privacy Policy</a>
+                    <span class="separator">•</span>
+                    <a href="/terms-conditions">Terms & Conditions</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Page load animation
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+                animateElements();
+            }, 100);
+            
+            function animateElements() {
+                // Animate login container
+                setTimeout(() => {
+                    document.getElementById('login-container').classList.add('active');
+                }, 200);
+                
+                // Animate form elements
+                const formElements = document.querySelectorAll('.form-group');
+                formElements.forEach((element, index) => {
+                    setTimeout(() => {
+                        element.classList.add('active');
+                    }, 400 + (index * 100));
+                });
+                
+                // Animate divider
+                setTimeout(() => {
+                    document.querySelector('.divider').classList.add('active');
+                }, 800);
+                
+                // Animate register link
+                setTimeout(() => {
+                    document.querySelector('.register-link').classList.add('active');
+                }, 1000);
+                
+                // Animate policy links
+                setTimeout(() => {
+                    document.querySelector('.policy-links').classList.add('active');
+                }, 1100);
+            }
+            
+            // Check URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const reason = urlParams.get('reason');
+            const registrationSuccess = urlParams.get('registration_success');
+            
+            // Show registration success message
+            if (registrationSuccess === 'true') {
+                document.getElementById('success-message').style.display = 'block';
+            }
+            
+            // Show error messages
+            if (reason) {
+                const errorMessages = {
+                    'expired': 'Your session has expired. Please sign in again.',
+                    'unauthorized': 'You need to sign in to access that page.',
+                    'invalid': 'Your session is invalid. Please sign in again.',
+                    'auth_failed': 'Authentication failed. Please try again.',
+                    'missing': 'Session not found. Please sign in.'
+                };
+                
+                const message = errorMessages[reason] || "Please sign in to continue.";
+                showError(message, ['expired', 'invalid', 'auth_failed'].includes(reason));
+            }
+            
+            // Initialize Supabase
+            const supabaseUrl = '{{ supabase_url }}';
+            const supabaseKey = '{{ supabase_key }}';
+            
+            if (!supabaseUrl || !supabaseKey) {
+                showError("Configuration error. Please try again later.");
+                return;
+            }
+            
+            Auth.initSupabase(supabaseUrl, supabaseKey);
+            
+            // Helper functions
+            function showError(message, isWarning = false) {
+                const errorElement = document.getElementById('error-message');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                
+                if (isWarning) {
+                    errorElement.classList.add('session-expired');
+                } else {
+                    errorElement.classList.remove('session-expired');
+                }
+            }
+            
+            function hideError() {
+                document.getElementById('error-message').style.display = 'none';
+            }
+            
+            function showPageTransition() {
+                document.getElementById('page-transition').classList.add('active');
+            }
+            
+            // Handle login form
+            document.getElementById('login-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideError();
+                
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                if (!email || !password) {
+                    showError('Please enter both email and password');
+                    return;
+                }
+                
+                const loginBtn = document.getElementById('login-button');
+                const originalText = loginBtn.innerHTML;
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<i class="ph ph-spinner"></i> Signing in...';
+                
+                try {
+                    await Auth.signIn(email, password);
+                    showPageTransition();
+                    
+                    setTimeout(() => {
+                        window.location.href = "/";
+                    }, 300);
+                } catch (error) {
+                    showError(error.message || "Login failed. Please check your credentials.");
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalText;
+                }
+            });
+            
+            // Handle Google login
+            document.getElementById('google-login').addEventListener('click', async function() {
+                hideError();
+                
+                const originalText = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '<i class="ph ph-spinner"></i> Connecting to Google...';
+                
+                try {
+                    await Auth.signInWithOAuth('google');
+                } catch (error) {
+                    showError(error.message || "Google login failed. Please try again.");
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                }
+            });
+            
+            // Handle register link
+            document.getElementById('register-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                showPageTransition();
+                
+                setTimeout(() => {
+                    window.location.href = "{{ url_for('core.register') }}";
+                }, 300);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,821 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Creaver{% endblock %}
+
+{% block additional_styles %}
+<style>
+/* Dashboard Specific Styles */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.dashboard-header {
+    margin-bottom: 2rem;
+}
+
+/* Welcome Section */
+.welcome-section {
+    background: white;
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.welcome-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+}
+
+.welcome-subtitle {
+    font-size: 1.125rem;
+    color: #475569;
+    margin-bottom: 0;
+    font-weight: 500;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+}
+
+/* Credits Section - Enhanced */
+.credits-section {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.credits-section::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    filter: blur(40px);
+}
+
+.credits-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+}
+
+.credits-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.credits-avatar {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.credits-details h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.credits-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.credits-number {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.credits-label {
+    font-size: 0.875rem;
+    opacity: 0.85;
+}
+
+.credits-action {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.credits-action:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: white;
+}
+
+.credits-action i {
+    font-size: 1.125rem;
+}
+
+/* Guest Hero Section - Enhanced */
+.guest-hero {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    padding: 3rem 2rem;
+    border-radius: 24px;
+    margin-bottom: 3rem;
+    text-align: center;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.guest-hero h1 {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #1E293B;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+}
+
+.guest-hero .gradient-text {
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.guest-hero p {
+    font-size: 1.25rem;
+    color: #64748B;
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.guest-cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.guest-cta-buttons .btn-primary,
+.guest-cta-buttons .btn-secondary {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+}
+
+/* Section Panels */
+.platform-section {
+    background: white;
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* Platform Headers - Enhanced */
+.platform-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.platform-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0F172A;
+    letter-spacing: -0.01em;
+}
+
+.platform-header i {
+    font-size: 1.75rem;
+    opacity: 0.8;
+}
+
+/* Features Grid - Enhanced */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.feature-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    display: block;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.feature-card:hover::before {
+    transform: translateX(0);
+}
+
+.feature-card:hover .feature-icon-inline {
+    color: #3B82F6;
+}
+
+.feature-icon-inline {
+    font-size: 1.25rem;
+    color: #64748B;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    transition: all 0.3s ease;
+}
+
+.feature-content h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 0.5rem;
+}
+
+.feature-content p {
+    font-size: 0.9rem;
+    color: #64748B;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* Coming Soon Section */
+.coming-soon-section {
+    background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+    border-style: dashed;
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.coming-soon-card {
+    background: rgba(248, 250, 252, 0.5);
+    border: 2px dashed rgba(203, 213, 225, 0.6);
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.coming-soon-card:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.coming-soon-card .feature-icon-inline {
+    color: #94A3B8;
+}
+
+.coming-soon-badge {
+    display: inline-block;
+    background: rgba(148, 163, 184, 0.1);
+    color: #94A3B8;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.75rem;
+}
+
+/* Guest Features Section - Enhanced */
+.guest-features {
+    margin: 4rem 0;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(139, 92, 246, 0.02) 100%);
+    border-radius: 32px;
+}
+
+.guest-features h2 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 4rem;
+    color: #0F172A;
+    letter-spacing: -0.02em;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.5rem;
+    margin-bottom: 4rem;
+}
+
+.benefit-card {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 20px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+}
+
+.benefit-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
+}
+
+.benefit-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 2rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.benefit-card:hover .benefit-icon {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+}
+
+.benefit-icon i {
+    font-size: 3rem;
+    color: #3B82F6;
+}
+
+.benefit-card h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+}
+
+.benefit-card p {
+    color: #64748B;
+    line-height: 1.7;
+    font-size: 1.05rem;
+}
+
+/* Final CTA */
+.final-cta {
+    text-align: center;
+    padding: 3rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+    border-radius: 24px;
+    margin: 4rem 0;
+    box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.3);
+}
+
+.final-cta h3 {
+    font-size: 2rem;
+    color: white;
+    font-weight: 800;
+    margin-bottom: 1rem;
+}
+
+.final-cta p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.final-cta .btn-primary {
+    background: white;
+    color: #3B82F6;
+    padding: 1.25rem 3rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.final-cta .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 0;
+    }
+    
+    .welcome-title {
+        font-size: 1.875rem;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1rem;
+    }
+    
+    .guest-hero {
+        padding: 2rem 1.5rem;
+    }
+    
+    .guest-hero h1 {
+        font-size: 2.25rem;
+    }
+    
+    .guest-hero p {
+        font-size: 1.125rem;
+    }
+    
+    .platform-section {
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        border-radius: 12px;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .credits-container {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .credits-info {
+        flex-direction: column;
+    }
+    
+    .credits-number {
+        font-size: 1.75rem;
+    }
+    
+    .benefit-card {
+        padding: 1.5rem 1.25rem;
+    }
+}
+
+/* Loading animation */
+.skeleton-text {
+    display: inline-block;
+    background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 6px;
+    height: 1rem;
+    width: 100px;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Smooth animations */
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        {% if g.user and not g.user.get('is_guest') %}
+        <!-- Logged in user dashboard -->
+        <div class="welcome-section">
+            <h1 class="welcome-title">Welcome back, <span id="username-display">{{ g.user.get('data', {}).get('username', 'Creator') }}</span>!</h1>
+            <p class="welcome-subtitle">Ready to create amazing content today?</p>
+        </div>
+        
+        <!-- Credits Section -->
+        <div class="credits-section">
+            <div class="credits-container">
+                <div class="credits-info">
+                    <div class="credits-avatar">
+                        <span id="user-avatar">{{ g.user.get('data', {}).get('username', 'U')[0].upper() }}</span>
+                    </div>
+                    <div class="credits-details">
+                        <h3>AI Credits</h3>
+                        <div class="credits-amount">
+                            <span class="credits-number" id="credits-display">
+                                <span class="skeleton-text" style="width: 80px; height: 2.5rem;"></span>
+                            </span>
+                            <span class="credits-label">credits remaining</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ url_for('payment.index') }}" class="credits-action">
+                    <i class="ph ph-sparkle"></i>
+                    Get More Credits
+                </a>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Guest user hero section -->
+        <div class="guest-hero">
+            <h1>Create Content That <span class="gradient-text">Gets Results</span></h1>
+            <p>AI-powered tools to help you create viral thumbnails, engaging titles, and optimize your content across YouTube and X</p>
+            <div class="guest-cta-buttons">
+                <a href="/auth/register" class="btn-primary">
+                    <i class="ph ph-rocket-launch"></i>
+                    Start Creating Free
+                </a>
+                <a href="/auth/login" class="btn-secondary">
+                    <i class="ph ph-sign-in"></i>
+                    Sign In
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- YouTube Tools Section -->
+    <div class="platform-section">
+        <div class="platform-header">
+            <i class="ph ph-youtube-logo" style="color: #FF0000;"></i>
+            <h2>YouTube Tools</h2>
+        </div>
+
+        <div class="features-grid">
+            <!-- Video Script -->
+            <a href="{{ url_for('video_script.video_script') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-file-doc feature-icon-inline"></i>Scripts</h3>
+                    <p>Write and manage video scripts</p>
+                </div>
+            </a>
+
+            <!-- Video Title -->
+            <a href="{{ url_for('video_title.video_title') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-text-t feature-icon-inline"></i>Titles</h3>
+                    <p>Generate viral video titles</p>
+                </div>
+            </a>
+
+            <!-- Video Tags -->
+            <a href="{{ url_for('video_tags.video_tags') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-hash feature-icon-inline"></i>Tags</h3>
+                    <p>Find trending tags for reach</p>
+                </div>
+            </a>
+
+            <!-- Video Description -->
+            <a href="{{ url_for('video_description.video_description') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-file-text feature-icon-inline"></i>Descriptions</h3>
+                    <p>Write SEO-optimized descriptions</p>
+                </div>
+            </a>
+
+            <!-- Thumbnail -->
+            <a href="{{ url_for('thumbnail.thumbnail') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-image feature-icon-inline"></i>Thumbnails</h3>
+                    <p>Design thumbnails that get clicks</p>
+                </div>
+            </a>
+
+            <!-- Analytics -->
+            <a href="{{ url_for('analytics.analytics') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-chart-line feature-icon-inline"></i>Analytics</h3>
+                    <p>Track performance metrics</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- X Tools Section -->
+    <div class="platform-section">
+        <div class="platform-header">
+            <i class="ph ph-x-logo" style="color: #000;"></i>
+            <h2>Tools</h2>
+        </div>
+
+        <div class="features-grid">
+            <!-- X Post Editor -->
+            <a href="{{ url_for('x_post_editor.x_post_editor') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-pencil-simple feature-icon-inline"></i>Post Editor</h3>
+                    <p>Create posts and threads</p>
+                </div>
+            </a>
+            
+            <!-- X Analytics -->
+            <a href="{{ url_for('analytics.analytics') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-chart-bar feature-icon-inline"></i>Analytics</h3>
+                    <p>Monitor growth metrics</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Content Management Section -->
+    <div class="platform-section">
+        <div class="platform-header">
+            <i class="ph ph-folder" style="color: #8B5CF6;"></i>
+            <h2>Content Management</h2>
+        </div>
+
+        <div class="features-grid">
+            <!-- Brain Dump -->
+            <a href="{{ url_for('brain_dump.brain_dump') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-brain feature-icon-inline"></i>Brain Dump</h3>
+                    <p>Capture and organize ideas</p>
+                </div>
+            </a>
+
+            <!-- Content Calendar -->
+            <a href="{{ url_for('content_calendar.content_calendar') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-calendar feature-icon-inline"></i>Content Calendar</h3>
+                    <p>Plan and schedule content</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Coming Soon Section -->
+    <div class="platform-section coming-soon-section">
+        <div class="platform-header">
+            <i class="ph ph-sparkle" style="color: #94A3B8;"></i>
+            <h2>Coming Soon</h2>
+        </div>
+
+        <div class="features-grid">
+            <!-- TikTok -->
+            <div class="feature-card coming-soon-card">
+                <div class="feature-content">
+                    <h3><i class="ph ph-tiktok-logo feature-icon-inline"></i>TikTok Tools</h3>
+                    <p>Trending sounds and viral hashtags</p>
+                    <span class="coming-soon-badge">Coming Soon</span>
+                </div>
+            </div>
+            
+            <!-- Instagram -->
+            <div class="feature-card coming-soon-card">
+                <div class="feature-content">
+                    <h3><i class="ph ph-instagram-logo feature-icon-inline"></i>Instagram Suite</h3>
+                    <p>Reels, Stories, and feed optimization</p>
+                    <span class="coming-soon-badge">Coming Soon</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not g.user or g.user.get('is_guest') %}
+    <!-- Guest Benefits Section -->
+    <div class="guest-features">
+        <h2>Why Creators Choose Creaver</h2>
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="ph ph-lightning"></i>
+                </div>
+                <h3>Save Hours</h3>
+                <p>Generate titles, thumbnails, and descriptions in seconds instead of hours</p>
+            </div>
+            
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="ph ph-trend-up"></i>
+                </div>
+                <h3>Grow Faster</h3>
+                <p>Optimize your content with data-driven insights and AI recommendations</p>
+            </div>
+            
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="ph ph-sparkle"></i>
+                </div>
+                <h3>Stand Out</h3>
+                <p>Create unique, engaging content that captures attention and drives engagement</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Final CTA -->
+    <div class="final-cta">
+        <h3>Ready to Transform Your Content?</h3>
+        <p>Join thousands of creators who are growing faster with Creaver</p>
+        <a href="/auth/register" class="btn-primary">
+            <i class="ph ph-rocket-launch"></i>
+            Start Creating for Free
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Load user credits when logged in
+document.addEventListener('DOMContentLoaded', function() {
+    {% if g.user and not g.user.get('is_guest') %}
+    // Fetch dashboard stats
+    fetch('/api/dashboard-stats')
+        .then(response => response.json())
+        .then(data => {
+            // Update credits display with animation
+            const creditsDisplay = document.getElementById('credits-display');
+            if (creditsDisplay && data.credits !== undefined) {
+                creditsDisplay.style.opacity = '0';
+                creditsDisplay.textContent = data.credits.toLocaleString();
+                setTimeout(() => {
+                    creditsDisplay.style.transition = 'opacity 0.5s ease';
+                    creditsDisplay.style.opacity = '1';
+                }, 100);
+            }
+            
+            // Update username if needed
+            const usernameDisplay = document.getElementById('username-display');
+            if (usernameDisplay && data.username) {
+                usernameDisplay.textContent = data.username;
+            }
+            
+            // Update avatar
+            const avatarDisplay = document.getElementById('user-avatar');
+            if (avatarDisplay && data.username) {
+                avatarDisplay.textContent = data.username[0].toUpperCase();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading dashboard stats:', error);
+            // Remove skeleton loader even on error
+            const creditsDisplay = document.getElementById('credits-display');
+            if (creditsDisplay) {
+                creditsDisplay.textContent = '0';
+            }
+        });
+    {% endif %}
+});
+</script>
+{% endblock %}

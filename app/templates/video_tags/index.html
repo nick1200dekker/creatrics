@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Video Tags Generator - Creaver{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="mb-4">Video Tags Generator</h1>
+            <p class="lead">Generate SEO-optimized tags for your videos to maximize reach</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Generate Video Tags</h5>
+
+                    <form id="videoTagsForm">
+                        <div class="mb-3">
+                            <label for="video_title" class="form-label">Video Title</label>
+                            <input type="text" class="form-control" id="video_title"
+                                placeholder="Enter your video title">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="video_description" class="form-label">Video Description</label>
+                            <textarea class="form-control" id="video_description" rows="4"
+                                placeholder="Brief description of your video content, main topics covered..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Video Category</label>
+                            <select class="form-control" id="category">
+                                <option value="">Select category...</option>
+                                <option value="gaming">Gaming</option>
+                                <option value="music">Music</option>
+                                <option value="education">Education</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="howto">How-to & Style</option>
+                                <option value="tech">Science & Technology</option>
+                                <option value="sports">Sports</option>
+                                <option value="travel">Travel & Events</option>
+                                <option value="comedy">Comedy</option>
+                                <option value="news">News & Politics</option>
+                                <option value="pets">Pets & Animals</option>
+                                <option value="autos">Autos & Vehicles</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="keywords" class="form-label">Main Keywords (Optional)</label>
+                            <input type="text" class="form-control" id="keywords"
+                                placeholder="E.g., tutorial, beginner, guide, 2024">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-hashtag"></i> Generate Tags
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4" id="resultCard" style="display: none;">
+                <div class="card-body">
+                    <h5 class="card-title">Generated Video Tags</h5>
+                    <div id="tagsResult" class="mb-3">
+                        <!-- Generated tags will appear here -->
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Tag count: <span id="tagCount">0</span> / 500 characters</small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-success" onclick="copyAllTags()">
+                            <i class="fas fa-copy"></i> Copy All
+                        </button>
+                        <button class="btn btn-secondary" onclick="regenerateTags()">
+                            <i class="fas fa-redo"></i> Regenerate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Tag Optimization Tips</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Use your main keyword first
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Mix single words & phrases
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Include trending keywords
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Add brand/channel name
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Use specific & broad tags
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">YouTube Limits</h5>
+                    <ul>
+                        <li>Max 500 characters total</li>
+                        <li>Use 5-15 relevant tags</li>
+                        <li>Tags are not case-sensitive</li>
+                        <li>Order matters (most important first)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let generatedTags = [];
+
+document.getElementById('videoTagsForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const videoTitle = document.getElementById('video_title').value;
+    const videoDescription = document.getElementById('video_description').value;
+    const category = document.getElementById('category').value;
+    const keywords = document.getElementById('keywords').value;
+
+    if (!videoTitle || !videoDescription) {
+        alert('Please fill in the required fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/video-tags/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                video_title: videoTitle,
+                video_description: videoDescription,
+                category: category,
+                keywords: keywords
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            generatedTags = data.tags;
+            displayTags();
+            document.getElementById('resultCard').style.display = 'block';
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error generating tags: ' + error.message);
+    }
+});
+
+function displayTags() {
+    const tagsHtml = generatedTags.map(tag =>
+        `<span class="badge bg-info text-dark me-2 mb-2 p-2" style="font-size: 0.9rem;">
+            ${tag}
+            <i class="fas fa-times ms-1" style="cursor: pointer;" onclick="removeTag('${tag}')"></i>
+        </span>`
+    ).join('');
+
+    document.getElementById('tagsResult').innerHTML = tagsHtml;
+    updateTagCount();
+}
+
+function removeTag(tag) {
+    generatedTags = generatedTags.filter(t => t !== tag);
+    displayTags();
+}
+
+function updateTagCount() {
+    const totalChars = generatedTags.join(', ').length;
+    document.getElementById('tagCount').textContent = totalChars;
+
+    // Change color if over limit
+    const countElement = document.getElementById('tagCount').parentElement;
+    if (totalChars > 500) {
+        countElement.classList.add('text-danger');
+        countElement.classList.remove('text-muted');
+    } else {
+        countElement.classList.remove('text-danger');
+        countElement.classList.add('text-muted');
+    }
+}
+
+function copyAllTags() {
+    const tagsText = generatedTags.join(', ');
+    navigator.clipboard.writeText(tagsText);
+    // Show brief success message
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed top-50 start-50 translate-middle bg-success text-white p-2 rounded';
+    toast.textContent = 'Tags copied!';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 1000);
+}
+
+function regenerateTags() {
+    document.getElementById('videoTagsForm').dispatchEvent(new Event('submit'));
+}
+</script>
+{% endblock %}

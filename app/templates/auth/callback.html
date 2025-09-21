@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Callback</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    
+    <style>
+        :root {
+            --brand-gradient: #3B82F6;
+            --soft-gradient: linear-gradient(135deg, #DBEAFE 0%, #EDE9FE 50%, #FCE7F3 100%);
+            --accent-blue: #3B82F6;
+            --accent-purple: #3B82F6;
+            --accent-pink: #2563EB;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F8FAFC;
+            color: #1E293B;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background */
+        .animated-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: #F8FAFC;
+            overflow: hidden;
+        }
+        
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
+            opacity: 0.6;
+            animation: bgShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes bgShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-15px, -15px) rotate(0.5deg); }
+            66% { transform: translate(15px, -8px) rotate(-0.5deg); }
+        }
+        
+        /* Main container */
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--brand-gradient);
+            opacity: 0.8;
+        }
+        
+        .container.expanded {
+            max-width: 520px;
+            padding: 3.5rem;
+        }
+        
+        /* Logo */
+        .logo-text {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--accent-blue);
+            letter-spacing: -0.02em;
+            margin-bottom: 2rem;
+        }
+        
+        /* Loading State */
+        .loading-content {
+            padding: 1rem 0;
+        }
+        
+        .status-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 0.75rem;
+        }
+        
+        .status-description {
+            color: #64748B;
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+        
+        /* Progress steps */
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .progress-step {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #E2E8F0;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-step.active {
+            background: var(--brand-gradient);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+            transform: scale(1.3);
+        }
+        
+        /* States */
+        .state-container {
+            display: none;
+        }
+        
+        .state-container.show {
+            display: block;
+        }
+        
+        /* Success state */
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--soft-gradient);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem auto 2rem;
+            font-size: 2.5rem;
+            color: var(--accent-blue);
+            animation: pulse-icon 2s infinite;
+        }
+        
+        @keyframes pulse-icon {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            70% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        
+        /* Error state */
+        .error-content {
+            padding: 1rem 0;
+        }
+        
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem auto 2rem;
+            font-size: 2.5rem;
+            color: #EF4444;
+        }
+        
+        .error-card {
+            background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .error-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #DC2626;
+            margin-bottom: 0.5rem;
+        }
+        
+        .error-message {
+            color: #7F1D1D;
+            line-height: 1.5;
+            font-size: 0.875rem;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary {
+            background: var(--brand-gradient);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #475569;
+            border: 2px solid #E2E8F0;
+            margin-left: 0.75rem;
+            font-size: 0.95rem;
+            padding: 0.875rem 1.25rem;
+        }
+        
+        .btn-secondary:hover {
+            background: #F8FAFC;
+            border-color: #CBD5E1;
+            transform: translateY(-1px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            .container.expanded {
+                padding: 2.25rem;
+            }
+            
+            .logo-text {
+                font-size: 2.25rem;
+            }
+            
+            .btn-secondary {
+                margin-left: 0;
+                margin-top: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="animated-bg"></div>
+    
+    <div class="container" id="main-container">
+        <!-- Logo text -->
+        <div class="logo-text">FOOTBALL STATISTICS</div>
+        
+        <!-- Loading State -->
+        <div id="loading-state" class="state-container show">
+            <div class="loading-content">
+                <div class="status-text" id="status-title">Processing Authentication</div>
+                <div class="status-description" id="status-description">
+                    Verifying your credentials...
+                </div>
+                
+                <!-- Progress indicators -->
+                <div class="progress-steps">
+                    <div class="progress-step" id="step-1"></div>
+                    <div class="progress-step" id="step-2"></div>
+                    <div class="progress-step" id="step-3"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Success State -->
+        <div id="success-state" class="state-container">
+            <div class="success-icon">
+                <i class="ph ph-check-circle"></i>
+            </div>
+            <div class="status-text">Email Confirmed!</div>
+            <div class="status-description">
+                Your email has been verified. Redirecting...
+            </div>
+            <a href="/auth/login?registration_success=true" class="btn btn-primary">
+                <i class="ph ph-sign-in"></i>
+                Continue to Login
+            </a>
+        </div>
+        
+        <!-- Error State -->
+        <div id="error-state" class="state-container">
+            <div class="error-content">
+                <div class="error-icon">
+                    <i class="ph ph-warning-circle"></i>
+                </div>
+                <div class="status-text">Authentication Issue</div>
+                
+                <div class="error-card">
+                    <div class="error-title">What happened?</div>
+                    <div class="error-message" id="error-details">
+                        We couldn't complete the authentication process.
+                    </div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <a href="/auth/login" class="btn btn-primary">
+                        <i class="ph ph-arrow-left"></i>
+                        Back to Login
+                    </a>
+                    <a href="/" class="btn btn-secondary">
+                        <i class="ph ph-house"></i>
+                        Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update progress steps
+        function updateProgressStep(step) {
+            document.querySelectorAll('.progress-step').forEach(el => el.classList.remove('active'));
+            
+            for (let i = 1; i <= step; i++) {
+                const stepEl = document.getElementById(`step-${i}`);
+                if (stepEl) {
+                    stepEl.classList.add('active');
+                }
+            }
+        }
+        
+        // Show different states
+        function showState(stateName) {
+            const container = document.getElementById('main-container');
+            
+            // Hide all states
+            document.querySelectorAll('.state-container').forEach(el => {
+                el.classList.remove('show');
+            });
+            
+            // Expand container for error state
+            if (stateName === 'error') {
+                container.classList.add('expanded');
+            } else {
+                container.classList.remove('expanded');
+            }
+            
+            // Show the requested state
+            const targetState = document.getElementById(stateName + '-state');
+            if (targetState) {
+                targetState.classList.add('show');
+            }
+        }
+        
+        function showError(errorMessage) {
+            document.getElementById('error-details').textContent = errorMessage || 'An unexpected error occurred during authentication.';
+            showState('error');
+        }
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log("Auth callback page loaded");
+            
+            // Start the progress animation
+            updateProgressStep(1);
+            
+            // Get Supabase credentials
+            try {
+                const configResponse = await fetch('/config/public-keys');
+                const config = await configResponse.json();
+                
+                if (config.supabase_url && config.supabase_key) {
+                    Auth.initSupabase(config.supabase_url, config.supabase_key);
+                    console.log("Auth initialized");
+                } else {
+                    throw new Error("Missing Supabase credentials");
+                }
+            } catch (error) {
+                console.error("Failed to initialize Auth:", error);
+                showError("Configuration error. Please try again later.");
+                return;
+            }
+            
+            // Check URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const recoveryType = urlParams.get('type') === 'recovery';
+            const emailConfirmed = urlParams.get('type') === 'signup' || 
+                                urlParams.get('confirmed') === 'true';
+            
+            // Handle password recovery - redirect to reset password page
+            if (recoveryType) {
+                console.log("Password recovery detected, redirecting to reset password page");
+                updateProgressStep(2);
+                // Preserve the hash fragment with tokens for the reset password page
+                const hashFragment = window.location.hash;
+                window.location.href = "/auth/reset-password" + hashFragment;
+                return;
+            }
+            
+            // Handle email confirmation (registration)
+            if (emailConfirmed) {
+                updateProgressStep(3);
+                showState('success');
+                
+                // Auto-redirect after delay
+                setTimeout(() => {
+                    window.location.href = "/auth/login?registration_success=true";
+                }, 2000);
+                return;
+            }
+            
+            // Process OAuth callback
+            if (window.location.hash) {
+                console.log("Processing OAuth callback");
+                updateProgressStep(2);
+                
+                try {
+                    await Auth.handleAuthCallback(window.location.hash);
+                    updateProgressStep(3);
+                    
+                    document.getElementById('status-title').textContent = "Success!";
+                    document.getElementById('status-description').textContent = "Redirecting to dashboard...";
+                    
+                    window.location.href = "/";
+                } catch (error) {
+                    console.error("Auth callback error:", error);
+                    showError("Authentication failed: " + error.message);
+                }
+                return;
+            }
+            
+            // Check for errors
+            const errorCode = urlParams.get('error');
+            const errorDescription = urlParams.get('error_description');
+            
+            if (errorCode || errorDescription) {
+                showError(errorDescription || `Authentication error: ${errorCode}`);
+                return;
+            }
+            
+            // No valid auth data found
+            showError("No authentication information was found. Please try signing in again.");
+        });
+    </script>
+</body>
+</html>

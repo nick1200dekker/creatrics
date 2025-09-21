@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Football Statistics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        :root {
+            --brand-gradient: #3B82F6;
+            --soft-gradient: linear-gradient(135deg, #DBEAFE 0%, #EDE9FE 50%, #FCE7F3 100%);
+            --accent-blue: #3B82F6;
+            --accent-purple: #3B82F6;
+            --accent-pink: #2563EB;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F8FAFC;
+            color: #1E293B;
+            min-height: 100vh;
+            overflow-x: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        body.loaded {
+            opacity: 1;
+        }
+        
+        /* Animated background */
+        .animated-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: #F8FAFC;
+            overflow: hidden;
+        }
+        
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
+            opacity: 0.6;
+            animation: bgShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes bgShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-15px, -15px) rotate(0.5deg); }
+            66% { transform: translate(15px, -8px) rotate(-0.5deg); }
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        
+        .header-content {
+            width: 100%;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-text {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: var(--accent-blue);
+            letter-spacing: -0.02em;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .logo-text:hover {
+            color: var(--accent-purple);
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #64748B;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+        
+        .back-link:hover {
+            color: var(--accent-blue);
+            background: #F1F5F9;
+        }
+        
+        /* Main content */
+        .policy-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 2rem 4rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        
+        .policy-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .policy-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .policy-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--brand-gradient);
+            opacity: 0.8;
+        }
+        
+        /* Alpha notice */
+        .alpha-notice {
+            background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #92400E;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            border-radius: 12px;
+            border-left: 4px solid #F59E0B;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .alpha-notice i {
+            color: #F59E0B;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .alpha-notice-content {
+            flex: 1;
+        }
+        
+        .alpha-notice-content strong {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            color: #92400E;
+        }
+        
+        /* Typography */
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #1E293B;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .update-date {
+            color: #64748B;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1E293B;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            letter-spacing: -0.01em;
+        }
+        
+        h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #374151;
+            margin-top: 1.75rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        p, li {
+            line-height: 1.7;
+            color: #475569;
+            margin-bottom: 1rem;
+        }
+        
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        strong {
+            color: #1E293B;
+            font-weight: 600;
+        }
+        
+        /* Links in content */
+        .policy-content a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .policy-content a:hover {
+            color: var(--accent-purple);
+            text-decoration: underline;
+        }
+        
+        /* Contact section */
+        .contact-section {
+            background: var(--soft-gradient);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .contact-section h3 {
+            margin-top: 0;
+            color: #1E293B;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem 1.5rem;
+            }
+            
+            .logo-text {
+                font-size: 1.5rem;
+            }
+            
+            .policy-container {
+                padding: 2rem 1rem 3rem;
+            }
+            
+            .policy-content {
+                padding: 2rem;
+            }
+            
+            h1 {
+                font-size: 1.875rem;
+            }
+            
+            h2 {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="animated-bg"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-text">Football Statistics</div>
+            <a href="/" class="back-link">
+                <i class="ph ph-arrow-left"></i>
+                Back to Home
+            </a>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <div class="policy-container">
+        <div class="policy-content">
+            <h1>Privacy Policy</h1>
+            <p class="update-date">Last updated: August 28, 2025</p>
+
+            <p>Football Statistics ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how your personal information is collected, used, and disclosed by Football Statistics.</p>
+
+            <p>This Privacy Policy applies to our website and its associated subdomains (collectively, our "Service"). By accessing or using our Service, you signify that you have read, understood, and agree to our collection, storage, use, and disclosure of your personal information as described in this Privacy Policy and our <a href="/terms-conditions">Terms of Service</a>.</p>
+
+            <h2>Definitions and Key Terms</h2>
+            <ul>
+                <li><strong>Personal Data:</strong> Any information that allows for the identification of a natural person.</li>
+                <li><strong>Service:</strong> Refers to the football statistics service provided by Football Statistics.</li>
+                <li><strong>You:</strong> A person or entity that is registered with Football Statistics to use the Services.</li>
+            </ul>
+
+            <h2>Information We Collect</h2>
+            <p>We collect information from you when you register on our site or use our football statistics service. The types of information we collect include:</p>
+            <ul>
+                <li>Name / Username</li>
+                <li>Email Addresses</li>
+                <li>Usage data and analytics</li>
+            </ul>
+
+            <h2>How We Use Your Information</h2>
+            <p>We may use the information we collect to:</p>
+            <ul>
+                <li>Personalize your experience.</li>
+                <li>Improve our website and application.</li>
+                <li>Manage your account.</li>
+                <li>Send periodic emails regarding your account or our services.</li>
+                <li>Provide customer support.</li>
+                <li>Monitor and analyze usage patterns.</li>
+            </ul>
+
+            <h2>Data Protection</h2>
+            <p>We implement a variety of security measures to maintain the safety of your personal information. However, no method of transmission over the Internet is 100% secure.</p>
+
+            <h2>Third-Party Services</h2>
+            <p>We may share information with trusted third parties who assist us in operating our website and conducting our business, so long as those parties agree to keep this information confidential.</p>
+
+            <h2>Cookies</h2>
+            <p>We use cookies to understand and save your preferences for future visits and compile aggregate data about site traffic and site interaction so that we can offer better site experiences and tools in the future.</p>
+
+            <h2>Data Retention</h2>
+            <p>We retain your information only as long as necessary to provide our services and fulfill the purposes outlined in this policy.</p>
+
+            <h2>Your Rights</h2>
+            <p>You have the right to access, correct, or request deletion of your personal data. To exercise these rights, please contact us.</p>
+
+            <h2>Changes to This Policy</h2>
+            <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page.</p>
+
+            <h2>Governing Law</h2>
+            <p>This Privacy Policy is governed by the laws of the Netherlands.</p>
+
+            <h2>Your Consent</h2>
+            <p>By using our Service, you consent to our Privacy Policy.</p>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Page load animation
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 100);
+            
+            // Animate content
+            setTimeout(() => {
+                document.querySelector('.policy-container').classList.add('active');
+            }, 200);
+        });
+    </script>
+</body>
+</html>

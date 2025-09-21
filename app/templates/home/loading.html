@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% set check_auth = true %}
+
+{% block title %}Loading Dashboard{% endblock %}
+
+{% block before_content %}
+<div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <p id="loading-message">Loading your dashboard...</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- This content will be shown after the JavaScript verifies authentication -->
+<div id="dashboard-content" style="display: none;">
+    <p>Loading dashboard content...</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    debugLog("Dashboard loading page initialized");
+    
+    // Redirect to the dashboard
+    window.location.href = "/dashboard";
+});
+</script>
+{% endblock %}
