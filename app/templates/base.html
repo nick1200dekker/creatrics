@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Soccer Stats Dashboard - Football Analytics{% endblock %}</title>
+    <title>{% block title %}Creatrics - AI-Powered Content Creation Tools{% endblock %}</title>
     
 {% block seo_meta %}
-<meta name="description" content="Advanced soccer statistics and analytics platform. Get detailed player stats, match analysis, and performance insights using AI technology.">
-<meta name="keywords" content="soccer stats, football analytics, player statistics, match analysis, soccer data">
-<meta property="og:title" content="Soccer Stats Dashboard - Advanced Football Analytics">
-<meta property="og:description" content="Get comprehensive soccer statistics and analytics.">
+<meta name="description" content="AI-powered content creation platform for YouTube and social media. Generate video scripts, titles, descriptions, thumbnails, and social media posts with advanced AI technology.">
+<meta name="keywords" content="AI content creation, YouTube tools, social media content, video scripts, content generator, AI writing, thumbnail creator, content calendar">
+<meta property="og:title" content="Creatrics - AI-Powered Content Creation Tools">
+<meta property="og:description" content="Create engaging content for YouTube and social media with AI-powered tools. Generate scripts, titles, descriptions, and posts effortlessly.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ request.url }}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Creatrics - AI Content Creation Platform">
+<meta name="twitter:description" content="AI-powered tools for YouTube and social media content creation. Generate scripts, titles, posts, and more.">
 {% endblock %}
 
 <!-- Favicon -->
@@ -762,11 +764,10 @@
         </div>
 
         <!-- X Group - Always starts collapsed -->
-        <div class="nav-group">
+        <div class="nav-group" data-group="X">
             <div class="nav-group-header" onclick="toggleNavGroup(this)">
                 <div class="left-content">
                     <i class="ph ph-x-logo"></i>
-                    <span>X</span>
                 </div>
                 <i class="ph ph-caret-right chevron"></i>
             </div>
@@ -859,7 +860,14 @@ window.restoreNavStates = function() {
     document.querySelectorAll('.nav-group').forEach(group => {
         const header = group.querySelector('.nav-group-header');
         const items = group.querySelector('.nav-group-items');
-        const name = header.querySelector('span').textContent.trim();
+        
+        // Get group name from data-group attribute or span text
+        let name = group.getAttribute('data-group');
+        if (!name) {
+            const span = header.querySelector('span');
+            name = span ? span.textContent.trim() : 'unknown';
+        }
+        
         const savedState = localStorage.getItem('nav-' + name);
         const hasActiveItem = group.querySelector('.nav-subitem.active') !== null;
 
@@ -918,7 +926,14 @@ restoreNavStates();
     // Simple toggle that keeps state in localStorage permanently
     window.toggleNavGroup = function(header) {
         const items = header.nextElementSibling;
-        const name = header.querySelector('span').textContent.trim();
+        const group = header.parentElement;
+        
+        // Get group name from data-group attribute or span text
+        let name = group.getAttribute('data-group');
+        if (!name) {
+            const span = header.querySelector('span');
+            name = span ? span.textContent.trim() : 'unknown';
+        }
         
         if (header.classList.contains('expanded')) {
             header.classList.remove('expanded');

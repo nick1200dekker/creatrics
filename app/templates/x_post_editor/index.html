@@ -1625,9 +1625,13 @@ input:checked + .toggle-slider:before {
         
         const generateButton = document.getElementById('generate-button');
         if (generateButton) {
-            generateButton.classList.add('loading');
-            generateButton.innerHTML = '<span class="button-text">Enhancing...</span>';
             generateButton.disabled = true;
+            generateButton.style.opacity = '0.7';
+            generateButton.style.cursor = 'not-allowed';
+            const buttonText = generateButton.querySelector('.button-text');
+            if (buttonText) {
+                buttonText.textContent = 'Enhancing...';
+            }
         }
         
         try {
@@ -1667,9 +1671,13 @@ input:checked + .toggle-slider:before {
             showToast('Failed to enhance content', 'error');
         } finally {
             if (generateButton) {
-                generateButton.classList.remove('loading');
-                generateButton.innerHTML = '<i class="ph ph-magic-wand"></i><span class="button-text">Enhance</span>';
                 generateButton.disabled = false;
+                generateButton.style.opacity = '';
+                generateButton.style.cursor = '';
+                const buttonText = generateButton.querySelector('.button-text');
+                if (buttonText) {
+                    buttonText.textContent = 'Enhance';
+                }
             }
         }
     }
