@@ -1,16 +1,13 @@
 from flask import render_template, request, jsonify, g, redirect, url_for
 from . import bp
 from app.system.auth.middleware import auth_required
+from app.system.services.firebase_service import db
 from datetime import datetime
 import logging
 import json
 import uuid
 
 logger = logging.getLogger(__name__)
-
-# In-memory storage for demo purposes
-# In production, this should be replaced with proper database operations
-notes_storage = {}
 
 @bp.route('/brain-dump')
 @auth_required
@@ -24,18 +21,21 @@ def get_notes():
     """Get all notes for the current user"""
     try:
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
-        # Get user's notes from storage
-        user_notes = notes_storage[user_id]
-        
-        # Convert to list and sort by updated_at descending (newest first)
-        notes = list(user_notes.values())
+
+        # Get user's notes from Firebase
+        notes_ref = db.collection('users').document(user_id).collection('brain_dump')
+        notes_docs = notes_ref.stream()
+
+        # Convert to list
+        notes = []
+        for doc in notes_docs:
+            note_data = doc.to_dict()
+            note_data['id'] = doc.id
+            notes.append(note_data)
+
+        # Sort by updated_at descending (newest first)
         notes.sort(key=lambda x: x.get('updated_at', ''), reverse=True)
-        
+
         return jsonify({
             'success': True,
             'notes': notes,
@@ -56,31 +56,29 @@ def create_note():
     try:
         data = request.json or {}
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
+
         # Create new note
-        note_id = str(uuid.uuid4())
         now = datetime.utcnow().isoformat() + 'Z'
-        
+
         new_note = {
-            'id': note_id,
             'title': data.get('title', 'Untitled'),
             'content': data.get('content', ''),
             'tags': data.get('tags', []),
             'is_favorite': data.get('is_favorite', False),
             'created_at': now,
-            'updated_at': now,
-            'user_id': user_id
+            'updated_at': now
         }
-        
-        # Store note
-        notes_storage[user_id][note_id] = new_note
-        
+
+        # Store note in Firebase
+        notes_ref = db.collection('users').document(user_id).collection('brain_dump')
+        doc_ref = notes_ref.add(new_note)
+        note_id = doc_ref[1].id
+
+        # Add the ID to the note object for response
+        new_note['id'] = note_id
+
         logger.info(f"Created note {note_id} for user {user_id}")
-        
+
         return jsonify({
             'success': True,
             'note': new_note,
@@ -100,20 +98,20 @@ def get_note(note_id):
     """Get a specific note"""
     try:
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
-        # Check if note exists
-        if note_id not in notes_storage[user_id]:
+
+        # Get note from Firebase
+        note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
+        note_doc = note_ref.get()
+
+        if not note_doc.exists:
             return jsonify({
                 'success': False,
                 'error': 'Note not found'
             }), 404
-        
-        note = notes_storage[user_id][note_id]
-        
+
+        note = note_doc.to_dict()
+        note['id'] = note_doc.id
+
         return jsonify({
             'success': True,
             'note': note
@@ -133,35 +131,42 @@ def update_note(note_id):
     try:
         data = request.json or {}
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
-        # Check if note exists
-        if note_id not in notes_storage[user_id]:
+
+        # Check if note exists in Firebase
+        note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
+        note_doc = note_ref.get()
+
+        if not note_doc.exists:
             return jsonify({
                 'success': False,
                 'error': 'Note not found'
             }), 404
-        
-        # Update note
-        note = notes_storage[user_id][note_id]
-        
+
+        # Prepare update data
+        update_data = {}
+
         # Update fields if provided
         if 'title' in data:
-            note['title'] = data['title'] if data['title'] else 'Untitled'
+            update_data['title'] = data['title'] if data['title'] else 'Untitled'
         if 'content' in data:
-            note['content'] = data['content']
+            update_data['content'] = data['content']
         if 'tags' in data:
-            note['tags'] = data['tags']
+            update_data['tags'] = data['tags']
         if 'is_favorite' in data:
-            note['is_favorite'] = data['is_favorite']
-        
-        note['updated_at'] = datetime.utcnow().isoformat() + 'Z'
-        
+            update_data['is_favorite'] = data['is_favorite']
+
+        update_data['updated_at'] = datetime.utcnow().isoformat() + 'Z'
+
+        # Update note in Firebase
+        note_ref.update(update_data)
+
+        # Get updated note
+        updated_doc = note_ref.get()
+        note = updated_doc.to_dict()
+        note['id'] = updated_doc.id
+
         logger.info(f"Updated note {note_id} for user {user_id}")
-        
+
         return jsonify({
             'success': True,
             'note': note,
@@ -181,23 +186,22 @@ def delete_note(note_id):
     """Delete a note"""
     try:
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
-        # Check if note exists
-        if note_id not in notes_storage[user_id]:
+
+        # Check if note exists in Firebase
+        note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
+        note_doc = note_ref.get()
+
+        if not note_doc.exists:
             return jsonify({
                 'success': False,
                 'error': 'Note not found'
             }), 404
-        
-        # Delete note
-        del notes_storage[user_id][note_id]
-        
+
+        # Delete note from Firebase
+        note_ref.delete()
+
         logger.info(f"Deleted note {note_id} for user {user_id}")
-        
+
         return jsonify({
             'success': True,
             'message': 'Note deleted successfully'
@@ -217,23 +221,29 @@ def toggle_favorite(note_id):
     try:
         data = request.json or {}
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
-        # Check if note exists
-        if note_id not in notes_storage[user_id]:
+
+        # Check if note exists in Firebase
+        note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
+        note_doc = note_ref.get()
+
+        if not note_doc.exists:
             return jsonify({
                 'success': False,
                 'error': 'Note not found'
             }), 404
-        
-        # Update favorite status
-        note = notes_storage[user_id][note_id]
-        note['is_favorite'] = data.get('is_favorite', False)
-        note['updated_at'] = datetime.utcnow().isoformat() + 'Z'
-        
+
+        # Update favorite status in Firebase
+        update_data = {
+            'is_favorite': data.get('is_favorite', False),
+            'updated_at': datetime.utcnow().isoformat() + 'Z'
+        }
+        note_ref.update(update_data)
+
+        # Get updated note
+        updated_doc = note_ref.get()
+        note = updated_doc.to_dict()
+        note['id'] = updated_doc.id
+
         return jsonify({
             'success': True,
             'note': note,
@@ -254,39 +264,38 @@ def search_notes():
     try:
         query = request.args.get('q', '').lower().strip()
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
-        # Get user's notes
-        user_notes = notes_storage[user_id]
-        
-        if not query:
-            # Return all notes if no query
-            notes = list(user_notes.values())
-        else:
-            # Search through notes
-            notes = []
-            for note in user_notes.values():
+
+        # Get all user's notes from Firebase
+        notes_ref = db.collection('users').document(user_id).collection('brain_dump')
+        notes_docs = notes_ref.stream()
+
+        notes = []
+        for doc in notes_docs:
+            note_data = doc.to_dict()
+            note_data['id'] = doc.id
+
+            if not query:
+                # Return all notes if no query
+                notes.append(note_data)
+            else:
                 # Search in title and content
-                title_match = query in (note.get('title', '') or '').lower()
-                
+                title_match = query in (note_data.get('title', '') or '').lower()
+
                 # Remove HTML tags for content search
-                content = note.get('content', '') or ''
+                content = note_data.get('content', '') or ''
                 import re
                 clean_content = re.sub('<[^<]+?>', '', content)
                 content_match = query in clean_content.lower()
-                
+
                 # Search in tags
-                tags_match = any(query in tag.lower() for tag in (note.get('tags', []) or []))
-                
+                tags_match = any(query in tag.lower() for tag in (note_data.get('tags', []) or []))
+
                 if title_match or content_match or tags_match:
-                    notes.append(note)
-        
+                    notes.append(note_data)
+
         # Sort by updated_at descending
         notes.sort(key=lambda x: x.get('updated_at', ''), reverse=True)
-        
+
         return jsonify({
             'success': True,
             'notes': notes,
@@ -307,24 +316,22 @@ def get_all_tags():
     """Get all unique tags used by the user"""
     try:
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
-        # Get user's notes
-        user_notes = notes_storage[user_id]
-        
+
+        # Get all user's notes from Firebase
+        notes_ref = db.collection('users').document(user_id).collection('brain_dump')
+        notes_docs = notes_ref.stream()
+
         # Collect all unique tags
         all_tags = set()
-        for note in user_notes.values():
-            tags = note.get('tags', [])
+        for doc in notes_docs:
+            note_data = doc.to_dict()
+            tags = note_data.get('tags', [])
             if tags:
                 all_tags.update(tags)
-        
+
         # Sort tags alphabetically
         tags_list = sorted(list(all_tags))
-        
+
         return jsonify({
             'success': True,
             'tags': tags_list,
@@ -347,25 +354,26 @@ def export_notes():
         format_type = data.get('format', 'json').lower()
         note_ids = data.get('note_ids', [])
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
-        # Get user's notes
-        user_notes = notes_storage[user_id]
-        
-        # Filter notes if specific IDs provided
+
+        # Get notes from Firebase
+        notes_ref = db.collection('users').document(user_id).collection('brain_dump')
+
+        notes_list = []
         if note_ids:
-            export_notes = {
-                nid: note for nid, note in user_notes.items() 
-                if nid in note_ids
-            }
+            # Get specific notes
+            for note_id in note_ids:
+                note_doc = notes_ref.document(note_id).get()
+                if note_doc.exists:
+                    note_data = note_doc.to_dict()
+                    note_data['id'] = note_doc.id
+                    notes_list.append(note_data)
         else:
-            export_notes = user_notes
-        
-        # Convert to list
-        notes_list = list(export_notes.values())
+            # Get all notes
+            notes_docs = notes_ref.stream()
+            for doc in notes_docs:
+                note_data = doc.to_dict()
+                note_data['id'] = doc.id
+                notes_list.append(note_data)
         
         if format_type == 'json':
             return jsonify({
@@ -479,14 +487,15 @@ def get_stats():
     """Get user's notes statistics"""
     try:
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
-        # Get user's notes
-        user_notes = notes_storage[user_id]
-        notes_list = list(user_notes.values())
+
+        # Get all user's notes from Firebase
+        notes_ref = db.collection('users').document(user_id).collection('brain_dump')
+        notes_docs = notes_ref.stream()
+
+        notes_list = []
+        for doc in notes_docs:
+            note_data = doc.to_dict()
+            notes_list.append(note_data)
         
         # Calculate stats
         total_notes = len(notes_list)
@@ -545,34 +554,30 @@ def import_notes():
         data = request.json or {}
         imported_notes = data.get('notes', [])
         user_id = str(g.user.get('id'))
-        
-        # Initialize user storage if needed
-        if user_id not in notes_storage:
-            notes_storage[user_id] = {}
-        
+
+        # Get Firebase reference
+        notes_ref = db.collection('users').document(user_id).collection('brain_dump')
+
         imported_count = 0
-        
+
         for note_data in imported_notes:
-            # Generate new ID to avoid conflicts
-            note_id = str(uuid.uuid4())
             now = datetime.utcnow().isoformat() + 'Z'
-            
+
             new_note = {
-                'id': note_id,
                 'title': note_data.get('title', 'Imported Note'),
                 'content': note_data.get('content', ''),
                 'tags': note_data.get('tags', []),
                 'is_favorite': note_data.get('is_favorite', False),
                 'created_at': note_data.get('created_at', now),
-                'updated_at': now,
-                'user_id': user_id
+                'updated_at': now
             }
-            
-            notes_storage[user_id][note_id] = new_note
+
+            # Add to Firebase
+            notes_ref.add(new_note)
             imported_count += 1
-        
+
         logger.info(f"Imported {imported_count} notes for user {user_id}")
-        
+
         return jsonify({
             'success': True,
             'message': f'Successfully imported {imported_count} notes',
