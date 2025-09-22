@@ -157,7 +157,6 @@
         background: var(--bg-secondary);
         width: 100%;
         overflow: visible;
-        position: relative;
     }
 
     /* Force uniform row height */
@@ -181,28 +180,6 @@
         position: relative !important;
     }
 
-    /* Reset all transforms that might cause offset */
-    .calendar-wrapper,
-    .content-wrapper,
-    .content-panel,
-    #calendar,
-    .fc,
-    .fc-view-harness,
-    .fc-view,
-    .fc-daygrid {
-        transform: none !important;
-    }
-
-    /* Ensure the sidebar doesn't affect positioning */
-    .sidebar {
-        position: relative !important;
-        z-index: 1 !important;
-    }
-
-    /* Fix the drag mirror positioning */
-    .fc .fc-event.fc-event-mirror {
-        opacity: 0.7 !important;
-    }
 
     /* Fix drag and drop positioning */
     .fc-event-dragging {
@@ -211,11 +188,6 @@
         opacity: 0.7 !important;
     }
 
-    /* Force the drag helper to use fixed positioning */
-    body .fc-event.fc-event-mirror {
-        position: fixed !important;
-        pointer-events: none !important;
-    }
     
     .fc-view {
         width: 100% !important;
@@ -827,25 +799,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         calendar.render();
-
-        // Fix drag offset issue after calendar renders
-        setTimeout(() => {
-            // Override FullCalendar's drag behavior to fix offset
-            const calendarContainer = document.querySelector('.fc');
-            if (calendarContainer) {
-                calendarContainer.addEventListener('mousedown', function(e) {
-                    // Check if clicking on an event
-                    const eventEl = e.target.closest('.fc-event');
-                    if (eventEl && eventEl.classList.contains('fc-event-draggable')) {
-                        // Store the initial click offset within the event
-                        const rect = eventEl.getBoundingClientRect();
-                        eventEl.dataset.dragOffsetX = e.clientX - rect.left;
-                        eventEl.dataset.dragOffsetY = e.clientY - rect.top;
-                    }
-                });
-            }
-        }, 100);
-
         updateMonthDisplay();
         loadEvents();
         
