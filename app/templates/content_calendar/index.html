@@ -17,25 +17,31 @@
 
     /* Main wrapper */
     .calendar-wrapper {
-        background: white;
+        background: var(--bg-secondary);
         border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border: 1px solid #E2E8F0;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-secondary);
         overflow: hidden;
         width: 100%;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .calendar-wrapper {
+        border-color: transparent;
     }
 
     /* Header */
     .calendar-header {
         padding: 1.5rem;
-        border-bottom: 1px solid #E2E8F0;
-        background: #FAFAFA;
+        border-bottom: 1px solid var(--border-primary);
+        background: var(--bg-tertiary);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .calendar-title {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1E293B;
+        color: var(--text-primary);
         display: flex;
         align-items: center;
         gap: 0.75rem;
@@ -51,8 +57,13 @@
         justify-content: space-between;
         align-items: center;
         padding: 1rem 1.5rem;
-        background: white;
-        border-bottom: 1px solid #E2E8F0;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-primary);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .calendar-controls {
+        border-bottom-color: transparent;
     }
 
     .control-group {
@@ -63,9 +74,9 @@
 
     .btn {
         padding: 0.5rem 1rem;
-        background: white;
-        color: #64748B;
-        border: 1px solid #E2E8F0;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-primary);
         border-radius: 8px;
         font-size: 0.875rem;
         font-weight: 500;
@@ -77,7 +88,7 @@
     }
 
     .btn:hover {
-        background: #F8FAFC;
+        background: var(--hover-bg);
         border-color: #3B82F6;
         color: #3B82F6;
     }
@@ -111,16 +122,17 @@
     /* View toggle */
     .view-toggle {
         display: flex;
-        background: #F1F5F9;
+        background: var(--bg-tertiary);
         padding: 2px;
         border-radius: 8px;
+        transition: background-color 0.3s ease;
     }
 
     .view-btn {
         padding: 0.5rem 1rem;
         background: transparent;
         border: none;
-        color: #64748B;
+        color: var(--text-secondary);
         font-size: 0.875rem;
         font-weight: 500;
         cursor: pointer;
@@ -129,8 +141,8 @@
     }
 
     .view-btn:hover {
-        background: white;
-        color: #1E293B;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
     }
 
     .view-btn.active {
@@ -141,9 +153,24 @@
     /* Calendar container */
     #calendar {
         padding: 1.5rem;
-        min-height: 600px;
-        background: white;
+        min-height: 500px;
+        background: var(--bg-secondary);
         width: 100%;
+        overflow: visible;
+        position: relative;
+    }
+
+    /* Force uniform row height */
+    .fc-daygrid-body-balanced .fc-daygrid-day {
+        height: 140px !important;
+    }
+
+    .fc-daygrid-week {
+        min-height: 140px !important;
+    }
+
+    .fc-scroller-harness {
+        overflow: visible !important;
     }
 
     /* FullCalendar overrides - IMPORTANT for sizing */
@@ -151,6 +178,43 @@
         font-family: inherit;
         font-size: 1rem !important;
         width: 100% !important;
+        position: relative !important;
+    }
+
+    /* Reset all transforms that might cause offset */
+    .calendar-wrapper,
+    .content-wrapper,
+    .content-panel,
+    #calendar,
+    .fc,
+    .fc-view-harness,
+    .fc-view,
+    .fc-daygrid {
+        transform: none !important;
+    }
+
+    /* Ensure the sidebar doesn't affect positioning */
+    .sidebar {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+
+    /* Fix the drag mirror positioning */
+    .fc .fc-event.fc-event-mirror {
+        opacity: 0.7 !important;
+    }
+
+    /* Fix drag and drop positioning */
+    .fc-event-dragging {
+        z-index: 10001 !important;
+        cursor: grabbing !important;
+        opacity: 0.7 !important;
+    }
+
+    /* Force the drag helper to use fixed positioning */
+    body .fc-event.fc-event-mirror {
+        position: fixed !important;
+        pointer-events: none !important;
     }
     
     .fc-view {
@@ -160,6 +224,8 @@
     .fc-view-harness {
         min-height: 600px !important;
         width: 100% !important;
+        position: relative !important;
+        z-index: 1 !important;
     }
     
     .fc-view-harness-active {
@@ -177,11 +243,11 @@
 
     .fc-theme-standard td,
     .fc-theme-standard th {
-        border-color: #E2E8F0 !important;
+        border-color: var(--border-primary) !important;
     }
     
     .fc-theme-standard .fc-scrollgrid {
-        border: 1px solid #E2E8F0 !important;
+        border: 1px solid var(--border-primary) !important;
         width: 100% !important;
     }
 
@@ -190,13 +256,13 @@
     }
 
     .fc-col-header-cell {
-        background: #F8FAFC !important;
+        background: var(--bg-tertiary) !important;
         padding: 1rem 0 !important;
         font-size: 0.95rem !important;
     }
 
     .fc-col-header-cell-cushion {
-        color: #475569 !important;
+        color: var(--text-secondary) !important;
         font-weight: 600 !important;
         font-size: 0.95rem !important;
         text-transform: uppercase !important;
@@ -204,35 +270,67 @@
     }
 
     .fc-daygrid-day {
-        background: white !important;
-        min-height: 120px !important;
-        border: 1px solid #E2E8F0 !important;
+        background: var(--bg-secondary) !important;
+        height: 140px !important;
+        border: 1px solid var(--border-primary) !important;
+        position: relative !important;
+        overflow: hidden !important;
     }
-    
+
     .fc-daygrid-day-frame {
-        min-height: 120px !important;
+        height: 140px !important;
         cursor: pointer !important;
+        overflow: hidden !important;
+        position: relative !important;
+    }
+
+    .fc-daygrid-day-events {
+        position: absolute !important;
+        top: 35px !important;
+        left: 2px !important;
+        right: 2px !important;
+        bottom: 2px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding: 3px !important;
+    }
+
+    .fc-daygrid-day-events::-webkit-scrollbar {
+        width: 3px !important;
+    }
+
+    .fc-daygrid-day-events::-webkit-scrollbar-thumb {
+        background: var(--border-primary) !important;
+        border-radius: 2px !important;
     }
 
     .fc-daygrid-day:hover {
-        background: #F8FAFC !important;
+        background: var(--hover-bg) !important;
     }
 
     .fc-daygrid-day-number {
-        color: #1E293B !important;
-        padding: 0.75rem !important;
-        font-size: 1rem !important;
+        color: var(--text-primary) !important;
+        padding: 6px 8px !important;
+        font-size: 0.875rem !important;
         font-weight: 500 !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 1 !important;
     }
 
     .fc-day-today {
-        background: #EFF6FF !important;
+        background: rgba(59, 130, 246, 0.1) !important;
+    }
+
+    html.dark .fc-day-today {
+        background: rgba(59, 130, 246, 0.2) !important;
     }
 
     .fc-day-today .fc-daygrid-day-number {
         font-weight: 700 !important;
         color: #3B82F6 !important;
-        background: white !important;
+        background: transparent !important;
         display: inline-block !important;
         width: 32px !important;
         height: 32px !important;
@@ -243,16 +341,21 @@
         margin: 0.5rem !important;
     }
 
-    /* Events */
+    /* Events - Bigger for better visibility */
     .fc-event {
         background: #3B82F6 !important;
         border: none !important;
-        border-radius: 6px !important;
-        padding: 4px 8px !important;
-        font-size: 0.875rem !important;
+        border-radius: 4px !important;
+        padding: 3px 6px !important;
+        font-size: 0.85rem !important;
         cursor: pointer !important;
         margin: 2px !important;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+        height: 24px !important;
+        line-height: 18px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     
     .fc-event-main {
@@ -267,20 +370,17 @@
     }
     
     .fc-daygrid-event-harness {
-        margin: 2px 4px !important;
-    }
-    
-    .fc-daygrid-day-events {
-        margin-top: 4px !important;
+        margin: 2px 0 !important;
     }
     
     /* Day cells other month */
     .fc-day-other {
-        background: #FAFAFA !important;
+        background: var(--bg-tertiary) !important;
+        opacity: 0.5;
     }
-    
+
     .fc-day-other .fc-daygrid-day-number {
-        color: #9CA3AF !important;
+        color: var(--text-tertiary) !important;
     }
 
     /* Table view */
@@ -297,22 +397,22 @@
     .content-table th {
         text-align: left;
         padding: 0.75rem;
-        background: #F8FAFC;
-        color: #64748B;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
         font-weight: 600;
         font-size: 0.875rem;
-        border-bottom: 1px solid #E2E8F0;
+        border-bottom: 1px solid var(--border-primary);
     }
 
     .content-table td {
         padding: 0.75rem;
-        color: #1E293B;
+        color: var(--text-primary);
         font-size: 0.875rem;
-        border-bottom: 1px solid #F1F5F9;
+        border-bottom: 1px solid var(--border-primary);
     }
 
     .content-table tbody tr:hover {
-        background: #F8FAFC;
+        background: var(--bg-tertiary);
         cursor: pointer;
     }
 
@@ -330,20 +430,20 @@
     }
 
     .stat-card {
-        background: white;
+        background: var(--bg-tertiary);
         padding: 1.5rem;
         border-radius: 8px;
-        border: 1px solid #E2E8F0;
+        border: 1px solid var(--border-primary);
     }
 
     .stat-label {
-        color: #64748B;
+        color: var(--text-secondary);
         font-size: 0.875rem;
         margin-bottom: 0.5rem;
     }
 
     .stat-value {
-        color: #1E293B;
+        color: var(--text-primary);
         font-size: 2rem;
         font-weight: 700;
     }
@@ -367,18 +467,24 @@
     }
 
     .modal-content {
-        background: white;
+        background: var(--bg-secondary);
         border-radius: 12px;
         width: 90%;
         max-width: 600px;
         max-height: 90vh;
         overflow-y: auto;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-primary);
     }
 
     .modal-header {
         padding: 1.5rem;
-        border-bottom: 1px solid #E2E8F0;
+        border-bottom: 1px solid var(--border-primary);
+        background: var(--bg-tertiary);
+    }
+
+    .modal-header h2 {
+        color: var(--text-primary) !important;
     }
 
     .modal-body {
@@ -387,10 +493,11 @@
 
     .modal-footer {
         padding: 1.5rem;
-        border-top: 1px solid #E2E8F0;
+        border-top: 1px solid var(--border-primary);
         display: flex;
         justify-content: flex-end;
         gap: 0.75rem;
+        background: var(--bg-tertiary);
     }
 
     .form-group {
@@ -399,7 +506,7 @@
 
     .form-label {
         display: block;
-        color: #475569;
+        color: var(--text-secondary);
         font-size: 0.875rem;
         font-weight: 500;
         margin-bottom: 0.5rem;
@@ -410,11 +517,11 @@
     .form-textarea {
         width: 100%;
         padding: 0.5rem 0.75rem;
-        background: white;
-        border: 1px solid #E2E8F0;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
         border-radius: 6px;
         font-size: 0.875rem;
-        color: #1E293B;
+        color: var(--text-primary);
         transition: all 0.2s;
     }
 
@@ -436,11 +543,13 @@
         position: fixed;
         bottom: 1rem;
         right: 1rem;
-        background: white;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
         padding: 1rem 1.5rem;
         border-radius: 8px;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         border-left: 4px solid #3B82F6;
+        border: 1px solid var(--border-primary);
         display: flex;
         align-items: center;
         gap: 0.75rem;
@@ -525,7 +634,7 @@
             <button class="btn btn-icon" onclick="previousMonth()">
                 <i class="ph ph-caret-left"></i>
             </button>
-            <span id="current-month" style="min-width: 150px; text-align: center; font-weight: 600; color: #1E293B;">
+            <span id="current-month" style="min-width: 150px; text-align: center; font-weight: 600; color: var(--text-primary);">
                 Loading...
             </span>
             <button class="btn btn-icon" onclick="nextMonth()">
@@ -582,7 +691,7 @@
 <div id="event-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 style="font-size: 1.25rem; font-weight: 600; color: #1E293B;">Add New Event</h2>
+            <h2 style="font-size: 1.25rem; font-weight: 600;">Add New Event</h2>
         </div>
         <div class="modal-body">
             <div class="form-group">
@@ -664,18 +773,40 @@ document.addEventListener('DOMContentLoaded', function() {
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: false, // We're using custom controls
-            height: 650,
-            contentHeight: 600,
-            aspectRatio: 2.2, // Wider aspect ratio
-            expandRows: true,
+            height: 'auto',
+            contentHeight: 'auto',
+            aspectRatio: 1.8,
+            expandRows: false,
             editable: true,
             selectable: true,
-            dayMaxEvents: 3,
+            dayMaxEvents: false, // Show all events
             eventDisplay: 'block',
             displayEventTime: false,
             events: [],
             fixedWeekCount: false, // Don't force 6 weeks
-            
+            dragRevertDuration: 0,
+            dragScroll: true,
+            eventStartEditable: true,
+            eventDurationEditable: false,
+            // Disable the drag preview/mirror that causes offset
+            dragOpacity: 0.7,
+            eventDragStart: function(info) {
+                // Just visual feedback
+                info.el.style.opacity = '0.5';
+            },
+            eventDragStop: function(info) {
+                // Restore opacity
+                info.el.style.opacity = '1';
+            },
+            eventDrop: function(info) {
+                // Silent update - no toast
+                fetch(`/content-calendar/api/event/${info.event.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ publish_date: info.event.start })
+                }).catch(error => console.error('Error updating event:', error));
+            },
+
             dateClick: function(info) {
                 // Pre-fill the date when clicking on a day
                 document.getElementById('event-date').value = info.dateStr + 'T12:00';
@@ -696,6 +827,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         calendar.render();
+
+        // Fix drag offset issue after calendar renders
+        setTimeout(() => {
+            // Override FullCalendar's drag behavior to fix offset
+            const calendarContainer = document.querySelector('.fc');
+            if (calendarContainer) {
+                calendarContainer.addEventListener('mousedown', function(e) {
+                    // Check if clicking on an event
+                    const eventEl = e.target.closest('.fc-event');
+                    if (eventEl && eventEl.classList.contains('fc-event-draggable')) {
+                        // Store the initial click offset within the event
+                        const rect = eventEl.getBoundingClientRect();
+                        eventEl.dataset.dragOffsetX = e.clientX - rect.left;
+                        eventEl.dataset.dragOffsetY = e.clientY - rect.top;
+                    }
+                });
+            }
+        }, 100);
+
         updateMonthDisplay();
         loadEvents();
         
@@ -792,7 +942,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showToast('Event saved successfully', 'success');
+                // No toast message - just close and reload
                 closeEventModal();
                 loadEvents();
             } else {

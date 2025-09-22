@@ -35,6 +35,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
 
 <script>
+    // Immediately apply dark mode to prevent flash
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.documentElement.classList.add('dark');
+    }
+
     tailwind.config = {
         darkMode: 'class',
         theme: {
@@ -59,6 +64,40 @@
         --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+        /* Light mode colors */
+        --bg-primary: #F8FAFC;
+        --bg-secondary: #FFFFFF;
+        --bg-tertiary: #F1F5F9;
+        --text-primary: #1E293B;
+        --text-secondary: #475569;
+        --text-tertiary: #64748B;
+        --border-primary: #E2E8F0;
+        --border-secondary: rgba(226, 232, 240, 0.8);
+        --hover-bg: #F1F5F9;
+        --sidebar-bg: #FFFFFF;
+        --sidebar-text: #475569;
+        --sidebar-hover: #F8FAFC;
+    }
+
+    /* Dark mode colors - balanced dark theme */
+    html.dark {
+        --bg-primary: #18181b;
+        --bg-secondary: #27272a;
+        --bg-tertiary: #3f3f46;
+        --text-primary: #fafafa;
+        --text-secondary: #d4d4d8;
+        --text-tertiary: #a1a1aa;
+        --border-primary: #3f3f46;
+        --border-secondary: rgba(63, 63, 70, 0.5);
+        --hover-bg: #3f3f46;
+        --sidebar-bg: #27272a;
+        --sidebar-text: #d4d4d8;
+        --sidebar-hover: #3f3f46;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
     }
     
     * {
@@ -67,12 +106,13 @@
     
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        background: #F8FAFC;
-        color: #1E293B;
+        background: var(--bg-primary);
+        color: var(--text-primary);
         margin: 0;
         padding: 0;
         min-height: 100vh;
         overflow-x: hidden;
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
     
     /* Animated Background - Safe version */
@@ -83,7 +123,7 @@
         top: 0;
         left: 0;
         z-index: -10;
-        background: #F8FAFC;
+        background: var(--bg-primary);
         overflow: hidden;
         pointer-events: none;
     }
@@ -93,12 +133,16 @@
         position: absolute;
         width: 100%;
         height: 100%;
-        background-image: 
+        background-image:
             radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.04) 0%, transparent 50%),
             radial-gradient(circle at 80% 20%, rgba(255, 119, 168, 0.04) 0%, transparent 50%),
             radial-gradient(circle at 40% 40%, rgba(120, 198, 255, 0.04) 0%, transparent 50%);
         opacity: 0.6;
         pointer-events: none;
+    }
+
+    html.dark .animated-bg::before {
+        display: none;
     }
     
     .gradient-mesh {
@@ -107,12 +151,16 @@
         height: 150%;
         top: -25%;
         left: -25%;
-        background-image: 
+        background-image:
             radial-gradient(at 20% 30%, rgba(59, 130, 246, 0.06) 0px, transparent 50%),
             radial-gradient(at 80% 20%, rgba(139, 92, 246, 0.06) 0px, transparent 50%),
             radial-gradient(at 40% 80%, rgba(236, 72, 153, 0.06) 0px, transparent 50%);
         animation: mesh-animation 30s ease infinite;
         pointer-events: none;
+    }
+
+    html.dark .gradient-mesh {
+        display: none;
     }
     
     @keyframes mesh-animation {
@@ -124,10 +172,10 @@
     /* Sidebar */
     .sidebar {
         width: var(--sidebar-width);
-        background: rgba(255, 255, 255, 0.95);
+        background: var(--sidebar-bg);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(226, 232, 240, 0.8);
+        border-right: 1px solid var(--border-secondary);
         position: fixed;
         top: 0;
         left: 0;
@@ -136,12 +184,17 @@
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.03);
         display: flex;
         flex-direction: column;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .sidebar {
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
     }
     
     .logo-section {
         padding: 8px 0 0 0;
         margin: 0;
-        border-bottom: 1px solid #E2E8F0;
+        border-bottom: 1px solid var(--border-primary);
         flex-shrink: 0;
         display: flex;
         align-items: center;
@@ -187,21 +240,26 @@
     }
     
     .nav-item:hover {
-        color: #1E293B;
-        background: #F1F5F9;
+        color: var(--text-primary);
+        background: var(--hover-bg);
         transform: translateX(2px);
     }
     
     .nav-item:active {
         transform: translateX(1px);
-        background: #E2E8F0;
+        background: var(--border-primary);
     }
     
     .nav-item.active {
-        background: linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(237, 233, 254, 0.5) 100%);
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
         color: var(--accent-blue);
         font-weight: 600;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-sm);
+    }
+
+    html.dark .nav-item.active {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%);
+        color: #60A5FA;
     }
     
     .nav-item.active::before {
@@ -242,7 +300,7 @@
     }
 
     .nav-group-header:hover {
-        background: #F1F5F9;
+        background: var(--hover-bg);
     }
 
     /* Only the icon color changes when expanded */
@@ -258,7 +316,7 @@
     }
 
     .nav-group-header:hover .left-content span {
-        color: #1E293B;
+        color: var(--text-primary);
     }
 
     .nav-group-header .left-content {
@@ -270,7 +328,7 @@
     .nav-group-header .chevron {
         transition: transform 0.2s ease;
         font-size: 0.875rem;
-        color: #94A3B8;
+        color: var(--text-tertiary);
     }
 
     .nav-group-header.expanded .chevron {
@@ -308,29 +366,66 @@
     }
 
     .nav-subitem:hover {
-        color: #1E293B;
-        background: #F1F5F9;
+        color: var(--text-primary);
+        background: var(--hover-bg);
         transform: translateX(2px);
     }
 
     .nav-subitem.active {
-        background: linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(237, 233, 254, 0.5) 100%);
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
         color: var(--accent-blue);
         font-weight: 600;
+    }
+
+    html.dark .nav-subitem.active {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%);
+        color: #60A5FA;
     }
     
     .admin-section {
         padding: 0.5rem 0;
         margin: 0.75rem;
-        border-top: 1px solid #E2E8F0;
-        border-bottom: 1px solid #E2E8F0;
+        border-top: 1px solid var(--border-primary);
+        border-bottom: 1px solid var(--border-primary);
     }
     
     .user-section {
         padding: 1rem 0.75rem;
-        border-top: 1px solid #E2E8F0;
-        background: rgba(248, 250, 252, 0.8);
+        border-top: 1px solid var(--border-primary);
+        background: var(--bg-secondary);
         flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    html.dark .user-section {
+        border-top-color: transparent;
+    }
+
+    .dark-mode-toggle-btn {
+        width: 100%;
+        padding: 0.625rem;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    html.dark .dark-mode-toggle-btn {
+        border-color: transparent;
+        background: var(--bg-tertiary);
+    }
+
+    .dark-mode-toggle-btn:hover {
+        background: var(--hover-bg);
+        color: var(--text-primary);
     }
     
     .user-card {
@@ -340,13 +435,18 @@
         padding: 0.75rem;
         border-radius: 12px;
         transition: all 0.2s ease;
-        background: white;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        border: 1px solid rgba(226, 232, 240, 0.5);
+        background: var(--bg-tertiary);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-secondary);
+    }
+
+    html.dark .user-card {
+        border-color: transparent;
+        background: var(--bg-tertiary);
     }
     
     .user-card:hover {
-        background: #F8FAFC;
+        background: var(--bg-primary);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         transform: translateY(-1px);
     }
@@ -360,7 +460,7 @@
         width: 64px;
         height: 64px;
         border-radius: 16px;
-        background: #E2E8F0;
+        background: var(--border-primary);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -370,7 +470,7 @@
     
     .guest-avatar-large i {
         font-size: 1.75rem;
-        color: #94A3B8;
+        color: var(--text-tertiary);
     }
     
     .guest-title {
@@ -414,14 +514,14 @@
     }
     
     .guest-btn-secondary {
-        background: white;
-        color: #475569;
-        border: 1px solid #E2E8F0;
+        background: var(--bg-secondary);
+        color: var(--sidebar-text);
+        border: 1px solid var(--border-primary);
         box-shadow: var(--shadow-sm);
     }
     
     .guest-btn-secondary:hover {
-        background: #F8FAFC;
+        background: var(--bg-primary);
         border-color: #CBD5E1;
         transform: translateY(-1px);
     }
@@ -448,7 +548,7 @@
     .user-name {
         font-size: 0.9rem;
         font-weight: 600;
-        color: #1E293B;
+        color: var(--text-primary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -488,11 +588,11 @@
     
     .btn-secondary {
         padding: 0.6rem 1.2rem;
-        background: white;
-        color: #475569;
+        background: var(--bg-secondary);
+        color: var(--sidebar-text);
         font-weight: 600;
         font-size: 0.875rem;
-        border: 1px solid #E2E8F0;
+        border: 1px solid var(--border-primary);
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.15s ease;
@@ -503,7 +603,7 @@
     }
     
     .btn-secondary:hover {
-        background: #F8FAFC;
+        background: var(--bg-primary);
         border-color: #CBD5E1;
         transform: translateY(-1px);
         box-shadow: var(--shadow-md);
@@ -530,14 +630,19 @@
     }
     
     .content-panel {
-        background: rgba(248, 250, 252, 0.8);
+        background: var(--bg-tertiary);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border-radius: 16px;
         padding: 1.5rem;
         box-shadow: var(--shadow-lg);
-        border: 1px solid rgba(226, 232, 240, 0.5);
+        border: 1px solid var(--border-secondary);
         position: relative;
+    }
+
+    html.dark .content-panel {
+        border-color: transparent;
+        background: var(--bg-secondary);
     }
     
     /* Modal - ONLY BASIC STYLES */
@@ -560,7 +665,7 @@
     }
     
     .guest-modal-content {
-        background: white;
+        background: var(--bg-secondary);
         border-radius: 16px;
         padding: 2rem;
         max-width: 420px;
@@ -578,7 +683,7 @@
     .guest-modal h3 {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1E293B;
+        color: var(--text-primary);
         margin-bottom: 1rem;
     }
     
@@ -639,10 +744,10 @@
         top: 1.5rem;
         right: 1.5rem;
         padding: 0.8rem 1.1rem;
-        background: white;
+        background: var(--bg-secondary);
         border-radius: 8px;
         box-shadow: var(--shadow-lg);
-        border: 1px solid #E2E8F0;
+        border: 1px solid var(--border-primary);
         display: flex;
         align-items: center;
         gap: 0.6rem;
@@ -686,8 +791,9 @@
         }
     }
     
+    </style>
     {% block additional_styles %}{% endblock %}
-</style></head>
+</head>
 <body>
     <!-- Animated Background -->
     <div class="animated-bg">
@@ -818,6 +924,10 @@
     <!-- User Section -->
     <div class="user-section" id="user-section">
         {% if g.user and not g.user.get('is_guest') %}
+        <button id="dark-mode-toggle" class="dark-mode-toggle-btn" title="Toggle Dark Mode">
+            <i class="ph ph-moon text-lg dark:hidden"></i>
+            <i class="ph ph-sun text-lg hidden dark:block"></i>
+        </button>
         <div class="user-card">
             <div class="user-avatar">
                 {{ g.user.get('data', {}).get('username', 'User')[0].upper() }}
@@ -830,7 +940,7 @@
                     <span class="skeleton-plan"></span>
                 </div>
             </div>
-            <button id="logout-button" class="text-gray-400 hover:text-gray-600 transition-colors p-1" title="Logout">
+            <button id="logout-button" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400 transition-colors p-1" title="Logout">
                 <i class="ph ph-sign-out text-lg"></i>
             </button>
         </div>
@@ -1015,6 +1125,7 @@ restoreNavStates();
             },
             
             init: function() {
+                this.initDarkMode();
                 this.initLogout();
                 this.initMobileMenu();
                 this.initModal();
@@ -1022,6 +1133,24 @@ restoreNavStates();
                 // Nav groups are already restored synchronously earlier
             },
             
+            initDarkMode: function() {
+                // Check for saved dark mode preference or default to light mode
+                const darkMode = localStorage.getItem('darkMode') === 'true';
+
+                if (darkMode) {
+                    document.documentElement.classList.add('dark');
+                }
+
+                // Toggle button functionality
+                const darkModeToggle = document.getElementById('dark-mode-toggle');
+                if (darkModeToggle) {
+                    darkModeToggle.addEventListener('click', () => {
+                        const isDark = document.documentElement.classList.toggle('dark');
+                        localStorage.setItem('darkMode', isDark);
+                    });
+                }
+            },
+
             initLogout: function() {
                 const logoutButton = document.getElementById('logout-button');
                 if (logoutButton) {

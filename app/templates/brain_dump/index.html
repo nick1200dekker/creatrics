@@ -17,30 +17,36 @@
     display: flex;
     height: calc(100vh - 60px);
     gap: 1rem;
-    background: #f8fafc;
+    background: var(--bg-primary);
+    transition: background-color 0.3s ease;
+    padding: 1rem;
+    border-radius: 12px;
 }
 
 /* Left Sidebar - Notes List */
 .notes-sidebar {
     width: 340px;
-    background: white;
+    background: var(--bg-secondary);
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #e5e7eb;
+    border: 1px solid var(--border-primary);
     overflow: hidden;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    border-radius: 12px;
 }
 
 .sidebar-header {
     padding: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: white;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar-title {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #1f2937;
+    color: var(--text-primary);
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
@@ -56,7 +62,7 @@
     background: #3B82F6;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-weight: 600;
     font-size: 0.875rem;
     cursor: pointer;
@@ -79,7 +85,8 @@
 .search-box {
     padding: 1rem 1.5rem;
     position: relative;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-primary);
+    transition: border-color 0.3s ease;
 }
 
 .search-wrapper {
@@ -89,17 +96,18 @@
 .search-input {
     width: 100%;
     padding: 0.625rem 2.5rem 0.625rem 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
     font-size: 0.875rem;
     transition: all 0.2s;
-    background: #f9fafb;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 
 .search-input:focus {
     outline: none;
     border-color: #3B82F6;
-    background: white;
+    background: var(--bg-secondary);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -108,7 +116,7 @@
     right: 0.75rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #9ca3af;
+    color: var(--text-tertiary);
     pointer-events: none;
 }
 
@@ -130,8 +138,8 @@
 .note-item {
     padding: 1rem;
     margin-bottom: 0.5rem;
-    background: #fafafa;
-    border-radius: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
     border: 2px solid transparent;
@@ -139,12 +147,12 @@
 }
 
 .note-item:hover {
-    background: #f3f4f6;
+    background: var(--hover-bg);
     transform: translateX(2px);
 }
 
 .note-item.active {
-    background: white;
+    background: var(--bg-secondary);
     border-color: #3B82F6;
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
 }
@@ -163,7 +171,7 @@
 .note-item-title {
     font-weight: 600;
     font-size: 0.9rem;
-    color: #1f2937;
+    color: var(--text-primary);
     margin-bottom: 0.25rem;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -172,7 +180,7 @@
 
 .note-item-preview {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--text-secondary);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -183,7 +191,7 @@
 
 .note-item-date {
     font-size: 0.7rem;
-    color: #9ca3af;
+    color: var(--text-tertiary);
     display: flex;
     align-items: center;
     gap: 0.25rem;
@@ -192,17 +200,19 @@
 /* Right Side - Editor */
 .editor-area {
     flex: 1;
-    background: white;
+    background: var(--bg-secondary);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--border-primary);
 }
 
 /* Editor Header */
 .editor-header {
     padding: 1.5rem 2rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: linear-gradient(to bottom, #fafafa, #f9fafb);
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
 }
 
 .editor-title-wrapper {
@@ -218,12 +228,12 @@
     border: none;
     outline: none;
     background: transparent;
-    color: #1f2937;
+    color: var(--text-primary);
     padding: 0;
 }
 
 .editor-title-input::placeholder {
-    color: #d1d5db;
+    color: var(--text-tertiary);
     font-weight: 600;
 }
 
@@ -238,18 +248,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s;
-    color: #6b7280;
+    color: var(--text-secondary);
 }
 
 .icon-btn:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
-    color: #374151;
+    background: var(--bg-tertiary);
+    border-color: var(--border-primary);
+    color: var(--text-primary);
 }
 
 .icon-btn.active {
@@ -259,11 +269,11 @@
 /* Editor Toolbar */
 .editor-toolbar {
     padding: 0.75rem 2rem;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-primary);
     display: flex;
     gap: 0.375rem;
     align-items: center;
-    background: white;
+    background: var(--bg-secondary);
     flex-wrap: wrap;
 }
 
@@ -275,8 +285,8 @@
 
 .toolbar-btn {
     padding: 0.375rem;
-    background: white;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
@@ -285,13 +295,13 @@
     justify-content: center;
     width: 34px;
     height: 34px;
-    color: #4b5563;
+    color: var(--text-secondary);
     font-size: 0.875rem;
     font-weight: 600;
 }
 
 .toolbar-btn:hover {
-    background: #f3f4f6;
+    background: var(--hover-bg);
     border-color: #3B82F6;
     color: #3B82F6;
 }
@@ -330,7 +340,7 @@
     flex: 1;
     padding: 2rem;
     overflow-y: auto;
-    background: white;
+    background: var(--bg-secondary);
 }
 
 .editor-content::-webkit-scrollbar {
@@ -347,14 +357,14 @@
     outline: none;
     font-size: 1.05rem;
     line-height: 1.8;
-    color: #374151;
+    color: var(--text-primary);
     max-width: 800px;
     margin: 0 auto;
 }
 
 #editor:empty:before {
     content: "Start writing...";
-    color: #9ca3af;
+    color: var(--text-tertiary);
     font-style: normal;
 }
 
@@ -363,21 +373,21 @@
     font-size: 2.25rem;
     font-weight: 700;
     margin: 1.5rem 0 1rem;
-    color: #111827;
+    color: var(--text-primary);
 }
 
 #editor h2 {
     font-size: 1.75rem;
     font-weight: 600;
     margin: 1.25rem 0 0.75rem;
-    color: #1f2937;
+    color: var(--text-primary);
 }
 
 #editor h3 {
     font-size: 1.375rem;
     font-weight: 600;
     margin: 1rem 0 0.5rem;
-    color: #374151;
+    color: var(--text-primary);
 }
 
 #editor p {
@@ -397,12 +407,12 @@
     border-left: 4px solid #3B82F6;
     padding-left: 1rem;
     margin: 1rem 0;
-    color: #4b5563;
+    color: var(--text-secondary);
     font-style: italic;
 }
 
 #editor code {
-    background: #f3f4f6;
+    background: var(--hover-bg);
     padding: 0.125rem 0.375rem;
     border-radius: 4px;
     font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
@@ -413,8 +423,8 @@
 /* Editor Footer */
 .editor-footer {
     padding: 0.75rem 2rem;
-    border-top: 1px solid #e5e7eb;
-    background: #fafafa;
+    border-top: 1px solid var(--border-primary);
+    background: var(--bg-tertiary);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -422,14 +432,14 @@
 
 .save-status {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
 .save-status.typing {
-    color: #6b7280;
+    color: var(--text-secondary);
 }
 
 .save-status.saving {
@@ -451,8 +461,8 @@
 
 .action-btn {
     padding: 0.5rem 1rem;
-    background: white;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
     border-radius: 6px;
     font-size: 0.875rem;
     font-weight: 500;
@@ -464,8 +474,8 @@
 }
 
 .action-btn:hover {
-    background: #f3f4f6;
-    border-color: #d1d5db;
+    background: var(--hover-bg);
+    border-color: var(--border-primary);
 }
 
 .action-btn.danger {
@@ -473,7 +483,7 @@
 }
 
 .action-btn.danger:hover {
-    background: #fee2e2;
+    background: rgba(239, 68, 68, 0.1);
     border-color: #dc2626;
 }
 
@@ -486,7 +496,7 @@
     justify-content: center;
     padding: 2rem;
     text-align: center;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(102, 126, 234, 0.01) 100%);
+    background: var(--bg-primary);
     min-height: calc(100vh - 60px);
 }
 
@@ -500,12 +510,12 @@
 .empty-state-full .empty-state-title {
     font-size: 2rem;
     font-weight: 700;
-    color: #4b5563;
+    color: var(--text-secondary);
     margin-bottom: 0.75rem;
 }
 
 .empty-state-full .empty-state-text {
-    color: #9ca3af;
+    color: var(--text-tertiary);
     margin-bottom: 2rem;
     font-size: 1.125rem;
     max-width: 400px;
@@ -534,7 +544,7 @@
     justify-content: center;
     padding: 2rem;
     text-align: center;
-    background: white;
+    background: var(--bg-secondary);
 }
 
 .empty-state-icon {
@@ -546,12 +556,12 @@
 .empty-state-title {
     font-size: 1.5rem;
     font-weight: 600;
-    color: #6b7280;
+    color: var(--text-secondary);
     margin-bottom: 0.5rem;
 }
 
 .empty-state-text {
-    color: #9ca3af;
+    color: var(--text-tertiary);
     margin-bottom: 1.5rem;
 }
 
@@ -571,7 +581,7 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    color: #6b7280;
+    color: var(--text-secondary);
 }
 
 .spinner {
@@ -597,7 +607,7 @@
         width: 100%;
         height: 300px;
         border-right: none;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-primary);
     }
     
     .editor-header {
@@ -628,7 +638,7 @@
     bottom: 2rem;
     right: 2rem;
     padding: 1rem 1.5rem;
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;

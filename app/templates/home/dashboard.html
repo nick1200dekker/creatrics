@@ -17,15 +17,20 @@
 
 /* Welcome Section */
 .welcome-section {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 16px;
     padding: 1.75rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
     text-align: center;
     position: relative;
     overflow: hidden;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .welcome-section {
+    border-color: transparent;
 }
 
 .welcome-section::before {
@@ -42,7 +47,7 @@
 .welcome-title {
     font-size: 2.25rem;
     font-weight: 800;
-    color: #0F172A;
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
     line-height: 1.2;
     letter-spacing: -0.02em;
@@ -52,7 +57,7 @@
 
 .welcome-subtitle {
     font-size: 1.125rem;
-    color: #475569;
+    color: var(--text-secondary);
     margin-bottom: 0;
     font-weight: 500;
     opacity: 0.9;
@@ -70,6 +75,11 @@
     box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.25);
     position: relative;
     overflow: hidden;
+}
+
+html.dark .credits-section {
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+    box-shadow: 0 10px 25px -5px rgba(30, 64, 175, 0.3);
 }
 
 .credits-section::after {
@@ -172,15 +182,21 @@
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
     padding: 3rem 2rem;
     border-radius: 24px;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
     text-align: center;
     border: 1px solid rgba(59, 130, 246, 0.1);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .guest-hero {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .guest-hero h1 {
     font-size: 3rem;
     font-weight: 900;
-    color: #1E293B;
+    color: var(--text-primary);
     margin-bottom: 1rem;
     line-height: 1.1;
 }
@@ -194,7 +210,7 @@
 
 .guest-hero p {
     font-size: 1.25rem;
-    color: #64748B;
+    color: var(--text-secondary);
     margin-bottom: 2rem;
     max-width: 600px;
     margin-left: auto;
@@ -216,12 +232,18 @@
 
 /* Section Panels */
 .platform-section {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 16px;
     padding: 1.75rem;
     margin-bottom: 2rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .platform-section {
+    border-color: transparent;
+    background: var(--bg-secondary);
 }
 
 /* Platform Headers - Enhanced */
@@ -237,13 +259,17 @@
 .platform-header h2 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #0F172A;
+    color: var(--text-primary);
     letter-spacing: -0.01em;
 }
 
 .platform-header i {
     font-size: 1.75rem;
     opacity: 0.8;
+}
+
+html.dark .platform-header i {
+    color: var(--text-secondary) !important;
 }
 
 /* Features Grid - Enhanced */
@@ -254,17 +280,22 @@
 }
 
 .feature-card {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 16px;
     padding: 1.25rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
     overflow: hidden;
     text-decoration: none;
     display: block;
+}
+
+html.dark .feature-card {
+    border-color: transparent;
+    background: var(--bg-tertiary);
 }
 
 .feature-card::before {
@@ -304,29 +335,35 @@
 .feature-content h3 {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #1E293B;
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
 }
 
 .feature-content p {
     font-size: 0.9rem;
-    color: #64748B;
+    color: var(--text-tertiary);
     line-height: 1.6;
     margin-bottom: 0;
 }
 
 /* Coming Soon Section */
 .coming-soon-section {
-    background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
     border-style: dashed;
     border-color: rgba(148, 163, 184, 0.3);
+    transition: background 0.3s ease;
+}
+
+html.dark .coming-soon-section {
+    border-color: transparent;
 }
 
 .coming-soon-card {
-    background: rgba(248, 250, 252, 0.5);
-    border: 2px dashed rgba(203, 213, 225, 0.6);
+    background: var(--bg-tertiary);
+    border: 2px dashed var(--border-primary);
     opacity: 0.65;
     cursor: not-allowed;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .coming-soon-card:hover {
@@ -351,88 +388,14 @@
     margin-top: 0.75rem;
 }
 
-/* Guest Features Section - Enhanced */
-.guest-features {
-    margin: 4rem 0;
-    padding: 4rem 2rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(139, 92, 246, 0.02) 100%);
-    border-radius: 32px;
-}
-
-.guest-features h2 {
-    font-size: 2.5rem;
-    font-weight: 900;
-    text-align: center;
-    margin-bottom: 4rem;
-    color: #0F172A;
-    letter-spacing: -0.02em;
-}
-
-.benefits-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2.5rem;
-    margin-bottom: 4rem;
-}
-
-.benefit-card {
-    text-align: center;
-    padding: 3rem 2rem;
-    background: white;
-    border-radius: 20px;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    transition: all 0.3s ease;
-}
-
-.benefit-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
-}
-
-.benefit-icon {
-    width: 100px;
-    height: 100px;
-    margin: 0 auto 2rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-    border-radius: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.benefit-card:hover .benefit-icon {
-    transform: scale(1.1);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-}
-
-.benefit-icon i {
-    font-size: 3rem;
-    color: #3B82F6;
-}
-
-.benefit-card h3 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #0F172A;
-    margin-bottom: 1rem;
-    letter-spacing: -0.01em;
-}
-
-.benefit-card p {
-    color: #64748B;
-    line-height: 1.7;
-    font-size: 1.05rem;
-}
-
 /* Final CTA */
 .final-cta {
     text-align: center;
     padding: 3rem;
     background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
     border-radius: 24px;
-    margin: 4rem 0;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
     box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.3);
 }
 
@@ -492,7 +455,7 @@
     
     .platform-section {
         padding: 1.25rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
         border-radius: 12px;
     }
     
@@ -598,7 +561,7 @@
     <!-- YouTube Tools Section -->
     <div class="platform-section">
         <div class="platform-header">
-            <i class="ph ph-youtube-logo" style="color: #000;"></i>
+            <i class="ph ph-youtube-logo dark:text-gray-400" style="color: #000;"></i>
             <h2>YouTube Tools</h2>
         </div>
 
@@ -656,7 +619,7 @@
     <!-- X Tools Section -->
     <div class="platform-section">
         <div class="platform-header">
-            <i class="ph ph-x-logo" style="color: #000;"></i>
+            <i class="ph ph-x-logo dark:text-gray-400" style="color: #000;"></i>
             <h2>Tools</h2>
         </div>
 
@@ -682,7 +645,7 @@
     <!-- Content Management Section -->
     <div class="platform-section">
         <div class="platform-header">
-            <i class="ph ph-folder" style="color: #000;"></i>
+            <i class="ph ph-folder dark:text-gray-400" style="color: #000;"></i>
             <h2>Content Management</h2>
         </div>
 
@@ -734,36 +697,6 @@
     </div>
 
     {% if not g.user or g.user.get('is_guest') %}
-    <!-- Guest Benefits Section -->
-    <div class="guest-features">
-        <h2>Why Creators Choose Creatrics</h2>
-        <div class="benefits-grid">
-            <div class="benefit-card">
-                <div class="benefit-icon">
-                    <i class="ph ph-lightning"></i>
-                </div>
-                <h3>Save Hours</h3>
-                <p>Generate titles, thumbnails, and descriptions in seconds instead of hours</p>
-            </div>
-            
-            <div class="benefit-card">
-                <div class="benefit-icon">
-                    <i class="ph ph-trend-up"></i>
-                </div>
-                <h3>Grow Faster</h3>
-                <p>Optimize your content with data-driven insights and AI recommendations</p>
-            </div>
-            
-            <div class="benefit-card">
-                <div class="benefit-icon">
-                    <i class="ph ph-sparkle"></i>
-                </div>
-                <h3>Stand Out</h3>
-                <p>Create unique, engaging content that captures attention and drives engagement</p>
-            </div>
-        </div>
-    </div>
-    
     <!-- Final CTA -->
     <div class="final-cta">
         <h3>Ready to Transform Your Content?</h3>

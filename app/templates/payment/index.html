@@ -4,35 +4,48 @@
 
 {% block additional_styles %}
 <style>
-    /* Page Header - Match Player Stats Style */
-    .hero-section {
-        padding: 1.5rem 0 1rem 0;
-        text-align: left;
+    /* Override base template padding */
+    .content-panel {
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
     }
-    
-    .hero-title {
-        font-size: 2.5rem;
-        font-weight: 900;
-        color: #3B82F6;
-        margin-bottom: 0.75rem;
-        line-height: 1.1;
+
+    /* Main wrapper */
+    .payment-wrapper {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-secondary);
+        overflow: hidden;
+        width: 100%;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .payment-wrapper {
+        border-color: transparent;
+    }
+
+    /* Header */
+    .payment-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-primary);
+        background: var(--bg-tertiary);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .payment-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
         display: flex;
         align-items: center;
         gap: 0.75rem;
     }
-    
-    .hero-title i {
+
+    .payment-title i {
         color: #3B82F6;
-        font-size: 2.5rem;
-        pointer-events: none;
-    }
-    
-    .hero-subtitle {
-        color: #64748B;
-        font-size: 1.2rem;
-        margin-bottom: 2rem;
-        font-weight: 500;
-        line-height: 1.6;
     }
     
     @media (max-width: 768px) {
@@ -47,14 +60,14 @@
 
     /* Status section - Enhanced */
     .status-section {
-        background: linear-gradient(135deg, #F8FAFF 0%, #EEF2FF 100%);
-        border-radius: 20px;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
         padding: 2rem;
-        margin-top: 2rem;
-        margin-bottom: 3rem;
-        border: 1px solid rgba(59, 130, 246, 0.08);
+        margin: 1.5rem;
+        border: 1px solid var(--border-primary);
         position: relative;
         overflow: hidden;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
     }
     
     .status-section::before {
@@ -94,12 +107,12 @@
     .status-title {
         font-size: 1.25rem;
         font-weight: 700;
-        color: #1E293B;
+        color: var(--text-primary);
         margin: 0;
     }
     
     .status-subtitle {
-        color: #64748B;
+        color: var(--text-secondary);
         font-size: 0.875rem;
         margin: 0;
         margin-top: 0.25rem;
@@ -146,7 +159,7 @@
     
     .status-info .label {
         font-size: 0.75rem;
-        color: #64748B;
+        color: var(--text-secondary);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -155,7 +168,7 @@
     .status-info .value {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1E293B;
+        color: var(--text-primary);
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -188,7 +201,7 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 2rem;
-        margin-top: 2rem;
+        padding: 1.5rem;
         width: 100%;
         margin-left: 0;
         margin-right: 0;
@@ -196,11 +209,11 @@
 
     /* Plan card styling - Improved */
     .plan-card {
-        background: white;
+        background: var(--bg-secondary);
         border-radius: 16px;
         padding: 1.75rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        border: 1px solid #E5E7EB;
+        border: 1px solid var(--border-secondary);
         transition: all 0.2s ease;
         cursor: pointer;
         position: relative;
@@ -222,8 +235,8 @@
     }
     
     .plan-badge {
-        background: #EEF2FF;
-        color: var(--accent-blue);
+        background: rgba(59, 130, 246, 0.1);
+        color: #3B82F6;
         font-size: 0.75rem;
         font-weight: 600;
         padding: 0.25rem 0.75rem;
@@ -274,14 +287,14 @@
     .plan-title {
         font-size: 1.25rem;
         font-weight: 700;
-        color: #1E293B;
+        color: var(--text-primary);
         margin-bottom: 0.5rem;
     }
     
     .plan-price {
         font-size: 2rem;
         font-weight: 800;
-        color: #1E293B;
+        color: var(--text-primary);
         margin-bottom: 0.25rem;
         display: flex;
         align-items: baseline;
@@ -291,19 +304,19 @@
     
     .plan-price .currency {
         font-size: 1.5rem;
-        color: #64748B;
+        color: var(--text-secondary);
         font-weight: 600;
     }
     
     .plan-price .period {
         font-size: 0.875rem;
-        color: #64748B;
+        color: var(--text-secondary);
         font-weight: 500;
         margin-left: 0.5rem;
     }
     
     .plan-description {
-        color: #64748B;
+        color: var(--text-secondary);
         font-size: 0.875rem;
         margin-bottom: 1.25rem;
         font-weight: 500;
@@ -334,7 +347,7 @@
         gap: 0.625rem;
         padding: 0.5rem 0;
         font-size: 0.875rem;
-        color: #475569;
+        color: var(--text-secondary);
         width: 100%;
         position: relative;
     }
@@ -346,7 +359,7 @@
         left: 24px;
         right: 0;
         height: 1px;
-        background: #F1F5F9;
+        background: var(--bg-tertiary);
     }
     
     .feature-item:last-child::after {
@@ -357,7 +370,7 @@
         color: #10B981;
         font-size: 1rem;
         flex-shrink: 0;
-        background: #ECFDF5;
+        background: rgba(16, 185, 129, 0.1);
         width: 24px;
         height: 24px;
         border-radius: 50%;
@@ -398,9 +411,9 @@
     }
     
     .current-plan-badge {
-        background: #F0F9FF;
+        background: rgba(59, 130, 246, 0.1);
         border: 1.5px solid #3B82F6;
-        color: #1E40AF;
+        color: #3B82F6;
         font-weight: 600;
         padding: 0.75rem 1.25rem;
         border-radius: 10px;
@@ -423,7 +436,7 @@
     .flex-credits-section {
         margin-top: 3.5rem;
         padding: 2.5rem 0 2rem 0;
-        border-top: 1px solid #E5E7EB;
+        border-top: 1px solid var(--border-primary);
         position: relative;
     }
     
@@ -435,12 +448,12 @@
     .flex-credits-title {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1E293B;
+        color: var(--text-primary);
         margin-bottom: 0.5rem;
     }
     
     .flex-credits-subtitle {
-        color: #64748B;
+        color: var(--text-secondary);
         font-size: 0.875rem;
         font-weight: 500;
     }
@@ -454,10 +467,10 @@
     }
     
     .flex-card {
-        background: #FAFBFC;
+        background: var(--bg-tertiary);
         border-radius: 16px;
         padding: 1.75rem;
-        border: 1px solid #E5E7EB;
+        border: 1px solid var(--border-secondary);
         text-align: center;
         transition: all 0.2s ease;
         position: relative;
@@ -482,14 +495,14 @@
     .flex-amount {
         font-size: 1.5rem;
         font-weight: 800;
-        color: #1E293B;
+        color: var(--text-primary);
         margin-bottom: 0.25rem;
     }
     
     .flex-price {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #475569;
+        color: var(--text-secondary);
         margin-bottom: 1.25rem;
     }
     
@@ -498,9 +511,9 @@
         padding: 0.75rem 1.25rem;
         font-size: 0.8rem;
         font-weight: 600;
-        background: #1E293B;
-        color: white;
-        border: none;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s ease;
@@ -509,22 +522,23 @@
     }
     
     .flex-button:hover:not(:disabled) {
-        background: #0F172A;
+        background: var(--bg-tertiary);
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border-color: #3B82F6;
     }
     
     .flex-button:disabled {
-        background: #F3F4F6;
+        background: var(--bg-tertiary);
         color: #9CA3AF;
         cursor: not-allowed;
         transform: none;
         box-shadow: none;
-        border: 1px solid #E5E7EB;
+        border: 1px solid var(--border-secondary);
     }
     
     .locked-message {
-        background: #FEF3C7;
+        background: rgba(251, 191, 36, 0.1);
         border: 1px solid #FCD34D;
         border-radius: 12px;
         padding: 1rem 1.25rem;
@@ -577,13 +591,12 @@
     
     /* Responsive design */
     @media (max-width: 768px) {
-        .hero-section {
-            padding: 1rem 0;
-            text-align: center;
+        .payment-header {
+            padding: 1rem;
         }
-        
-        .hero-title {
-            font-size: 1.6rem;
+
+        .payment-title {
+            font-size: 1.25rem;
         }
         
         .status-section {
@@ -635,14 +648,14 @@
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="hero-section">
-    <h1 class="hero-title">
-        <i class="ph ph-credit-card"></i>
-        Subscription Plans
-    </h1>
-    <p class="hero-subtitle">Choose the perfect plan to unleash your soccer analytics potential</p>
-</section>
+<div class="payment-wrapper">
+    <!-- Header -->
+    <div class="payment-header">
+        <h1 class="payment-title">
+            <i class="ph ph-credit-card"></i>
+            Subscription Plans
+        </h1>
+    </div>
 
 <!-- Current Plan Status -->
 <div class="status-section">
@@ -677,22 +690,22 @@
                 <span class="currency">€</span>0
                 <span class="period">one time</span>
             </div>
-            <p class="plan-description">Perfect for trying out our player statistics</p>
+            <p class="plan-description">Perfect for trying out our content creation tools</p>
         </div>
         
         <div class="plan-features">
             <ul class="feature-list">
                 <li class="feature-item">
                     <i class="ph ph-check feature-icon"></i>
-                    <span>Basic player stats access</span>
+                    <span>5 AI credits one time</span>
                 </li>
                 <li class="feature-item">
                     <i class="ph ph-check feature-icon"></i>
-                    <span>Free player stats access</span>
+                    <span>Basic content tools</span>
                 </li>
                 <li class="feature-item">
                     <i class="ph ph-check feature-icon"></i>
-                    <span>Limited daily access</span>
+                    <span>Limited thumbnail generation</span>
                 </li>
             </ul>
         </div>
@@ -705,46 +718,46 @@
         </div>
     </div>
     
-    <!-- Soccer Pro Plan -->
+    <!-- Premium Plan -->
     <div class="plan-card" id="king-plan-card">
         <div class="plan-header">
-            <div class="king-badge">⚽ Soccer Pro</div>
-            <h3 class="plan-title">Soccer Pro</h3>
+            <div class="king-badge">✨ Premium</div>
+            <h3 class="plan-title">Premium Creator</h3>
             <div class="plan-price">
-                <span class="currency">€</span>9
+                <span class="currency">$</span>29
                 <span class="period">/ month</span>
             </div>
-            <p class="plan-description">Master the soccer analytics field!</p>
+            <p class="plan-description">Unlock unlimited AI-powered content creation!</p>
         </div>
-        
+
         <div class="plan-features">
             <ul class="feature-list">
                 <li class="feature-item">
                     <i class="ph ph-check feature-icon"></i>
-                    <span><strong>Premium player insights</strong></span>
+                    <span><strong>1000 AI credits per month</strong></span>
                 </li>
                 <li class="feature-item">
                     <i class="ph ph-check feature-icon"></i>
-                    <span>Build and manage your squad</span>
+                    <span>Advanced video script generation</span>
                 </li>
                 <li class="feature-item">
                     <i class="ph ph-check feature-icon"></i>
-                    <span>Advanced performance analytics</span>
+                    <span>Premium thumbnail templates</span>
                 </li>
                 <li class="feature-item">
                     <i class="ph ph-check feature-icon"></i>
-                    <span>Save & organize squads</span>
+                    <span>SEO-optimized descriptions</span>
                 </li>
                 <li class="feature-item">
                     <i class="ph ph-check feature-icon"></i>
-                    <span>Export squad data & reports</span>
+                    <span>Priority support & new features</span>
                 </li>
             </ul>
         </div>
-        
+
         <button id="subscribe-king" data-plan="basic" class="plan-button primary" style="display: none;">
             <i class="ph ph-crown"></i>
-            Become Soccer Pro
+            Upgrade to Premium
         </button>
         
         <div id="king-plan-button" style="display: none;">
@@ -755,7 +768,7 @@
         </div>
     </div>
 </div>
-
+</div>
 
 <script>
 // Payment page JavaScript - Handles subscription and flex credit purchases
