@@ -1,126 +1,461 @@
 {% extends "base.html" %}
 
-{% block title %}Video Tags Generator - Creatrics{% endblock %}
+{% block title %}Video Tags Generator - Creaver{% endblock %}
+
+{% block additional_styles %}
+<style>
+/* Reset the default content-panel padding */
+.content-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Main wrapper - matching calendar style */
+.generator-wrapper {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    overflow: hidden;
+    width: 100%;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .generator-wrapper {
+    border-color: transparent;
+}
+
+/* Header - matching calendar style */
+.generator-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-tertiary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.generator-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.generator-title i {
+    color: #3B82F6;
+}
+
+/* Content Area */
+.generator-content {
+    padding: 2rem;
+}
+
+/* Input Section */
+.input-section {
+    margin-bottom: 2rem;
+}
+
+.input-label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.input-helper {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.input-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+.input-textarea:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.char-count {
+    text-align: right;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Generate Button */
+.generate-section {
+    margin-bottom: 2rem;
+}
+
+.generate-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.generate-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+}
+
+.generate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.generate-btn i {
+    font-size: 1.125rem;
+}
+
+/* Results Section */
+.results-section {
+    min-height: 400px;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.results-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.results-info {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.info-label {
+    font-weight: 600;
+}
+
+.info-value {
+    padding: 0.25rem 0.5rem;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    font-weight: 700;
+}
+
+.info-value.good {
+    color: #10B981;
+}
+
+.info-value.warning {
+    color: #F59E0B;
+}
+
+.info-value.error {
+    color: #EF4444;
+}
+
+.results-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.action-btn:hover {
+    background: var(--bg-primary);
+    border-color: #3B82F6;
+}
+
+/* Tags Container */
+.tags-container {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.tag-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    cursor: default;
+}
+
+.tag-item:hover {
+    border-color: #3B82F6;
+    transform: translateY(-1px);
+}
+
+.tag-remove {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.tag-remove:hover {
+    color: #EF4444;
+}
+
+/* Character Count Bar */
+.char-count-bar {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.char-count-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.char-count-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.char-count-value {
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.char-count-progress {
+    height: 8px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.char-count-fill {
+    height: 100%;
+    background: #3B82F6;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.char-count-fill.good {
+    background: #10B981;
+}
+
+.char-count-fill.warning {
+    background: #F59E0B;
+}
+
+.char-count-fill.error {
+    background: #EF4444;
+}
+
+.char-count-hint {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+/* Empty State */
+.empty-results {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.empty-text {
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+}
+
+/* Loading State */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-primary);
+    border-top-color: #3B82F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #10B981;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .generator-content {
+        padding: 1rem;
+    }
+
+    .results-info {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+
+    .generator-title {
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-lg-12">
-            <h1 class="mb-4">Video Tags Generator</h1>
-            <p class="lead">Generate SEO-optimized tags for your videos to maximize reach</p>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Generate Video Tags</h5>
-
-                    <form id="videoTagsForm">
-                        <div class="mb-3">
-                            <label for="video_title" class="form-label">Video Title</label>
-                            <input type="text" class="form-control" id="video_title"
-                                placeholder="Enter your video title">
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="video_description" class="form-label">Video Description</label>
-                            <textarea class="form-control" id="video_description" rows="4"
-                                placeholder="Brief description of your video content, main topics covered..."></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="category" class="form-label">Video Category</label>
-                            <select class="form-control" id="category">
-                                <option value="">Select category...</option>
-                                <option value="gaming">Gaming</option>
-                                <option value="music">Music</option>
-                                <option value="education">Education</option>
-                                <option value="entertainment">Entertainment</option>
-                                <option value="howto">How-to & Style</option>
-                                <option value="tech">Science & Technology</option>
-                                <option value="sports">Sports</option>
-                                <option value="travel">Travel & Events</option>
-                                <option value="comedy">Comedy</option>
-                                <option value="news">News & Politics</option>
-                                <option value="pets">Pets & Animals</option>
-                                <option value="autos">Autos & Vehicles</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="keywords" class="form-label">Main Keywords (Optional)</label>
-                            <input type="text" class="form-control" id="keywords"
-                                placeholder="E.g., tutorial, beginner, guide, 2024">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-lg w-100">
-                            <i class="fas fa-hashtag"></i> Generate Tags
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card shadow-sm mt-4" id="resultCard" style="display: none;">
-                <div class="card-body">
-                    <h5 class="card-title">Generated Video Tags</h5>
-                    <div id="tagsResult" class="mb-3">
-                        <!-- Generated tags will appear here -->
-                    </div>
-                    <div class="mb-3">
-                        <small class="text-muted">Tag count: <span id="tagCount">0</span> / 500 characters</small>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <button class="btn btn-success" onclick="copyAllTags()">
-                            <i class="fas fa-copy"></i> Copy All
-                        </button>
-                        <button class="btn btn-secondary" onclick="regenerateTags()">
-                            <i class="fas fa-redo"></i> Regenerate
-                        </button>
-                    </div>
-                </div>
+<div class="content-panel">
+    <div class="generator-wrapper">
+        <!-- Header -->
+        <div class="generator-header">
+            <div class="generator-title">
+                <i class="ph ph-hash"></i>
+                Video Tags Generator
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Tag Optimization Tips</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Use your main keyword first
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Mix single words & phrases
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Include trending keywords
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Add brand/channel name
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Use specific & broad tags
-                        </li>
-                    </ul>
-                </div>
+        <!-- Content Area -->
+        <div class="generator-content">
+            <!-- Input Section -->
+            <div class="input-section">
+                <label class="input-label">Enter your video topic or description:</label>
+                <p class="input-helper">YouTube allows 400-500 characters total for tags. We'll optimize for maximum reach.</p>
+                <textarea class="input-textarea"
+                          id="videoInput"
+                          placeholder="Example: YouTube monetization guide for beginners, how to get monetized, make money online..."
+                          maxlength="2000"
+                          onkeyup="updateCharCount()"></textarea>
+                <div class="char-count" id="charCount">0 / 2000</div>
             </div>
 
-            <div class="card shadow-sm mt-3">
-                <div class="card-body">
-                    <h5 class="card-title">YouTube Limits</h5>
-                    <ul>
-                        <li>Max 500 characters total</li>
-                        <li>Use 5-15 relevant tags</li>
-                        <li>Tags are not case-sensitive</li>
-                        <li>Order matters (most important first)</li>
-                    </ul>
+            <!-- Generate Button -->
+            <div class="generate-section">
+                <button class="generate-btn" onclick="generateTags()" id="generateBtn">
+                    <i class="fas fa-magic"></i>
+                    Generate Tags
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <div id="resultsContainer">
+                    <!-- Results will appear here -->
                 </div>
             </div>
         </div>
@@ -128,94 +463,236 @@
 </div>
 
 <script>
-let generatedTags = [];
+// State management
+let currentTags = [];
+let totalCharacters = 0;
+let isGenerating = false;
 
-document.getElementById('videoTagsForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateCharCount();
+});
 
-    const videoTitle = document.getElementById('video_title').value;
-    const videoDescription = document.getElementById('video_description').value;
-    const category = document.getElementById('category').value;
-    const keywords = document.getElementById('keywords').value;
+// Update character count
+function updateCharCount() {
+    const input = document.getElementById('videoInput');
+    const count = input.value.length;
+    document.getElementById('charCount').textContent = `${count} / 2000`;
+}
 
-    if (!videoTitle || !videoDescription) {
-        alert('Please fill in the required fields');
+// Generate tags
+async function generateTags() {
+    const input = document.getElementById('videoInput').value.trim();
+
+    if (!input) {
         return;
     }
 
+    if (isGenerating) return;
+
+    isGenerating = true;
+    const generateBtn = document.getElementById('generateBtn');
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+    // Show loading state
+    document.getElementById('resultsContainer').innerHTML = `
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+    `;
+
     try {
-        const response = await fetch('/api/video-tags/generate', {
+        const response = await fetch('/api/generate-video-tags', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                video_title: videoTitle,
-                video_description: videoDescription,
-                category: category,
-                keywords: keywords
+                input: input
             })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            generatedTags = data.tags;
-            displayTags();
-            document.getElementById('resultCard').style.display = 'block';
+            currentTags = data.tags;
+            displayTags(data.tags);
         } else {
-            alert('Error: ' + data.error);
+            throw new Error(data.error || 'Failed to generate tags');
         }
     } catch (error) {
-        alert('Error generating tags: ' + error.message);
+        console.error('Error generating tags:', error);
+        document.getElementById('resultsContainer').innerHTML = `
+            <div class="empty-results">
+                <i class="fas fa-exclamation-triangle empty-icon" style="color: #EF4444;"></i>
+                <p class="empty-text" style="color: #EF4444;">Error generating tags</p>
+            </div>
+        `;
+    } finally {
+        isGenerating = false;
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Tags';
     }
-});
-
-function displayTags() {
-    const tagsHtml = generatedTags.map(tag =>
-        `<span class="badge bg-info text-dark me-2 mb-2 p-2" style="font-size: 0.9rem;">
-            ${tag}
-            <i class="fas fa-times ms-1" style="cursor: pointer;" onclick="removeTag('${tag}')"></i>
-        </span>`
-    ).join('');
-
-    document.getElementById('tagsResult').innerHTML = tagsHtml;
-    updateTagCount();
 }
 
-function removeTag(tag) {
-    generatedTags = generatedTags.filter(t => t !== tag);
-    displayTags();
+// Display tags
+function displayTags(tags) {
+    // Calculate total characters
+    totalCharacters = tags.join(', ').length;
+
+    // Determine character count status
+    let charStatus = 'good';
+    let charStatusClass = 'good';
+    if (totalCharacters < 400) {
+        charStatus = 'warning';
+        charStatusClass = 'warning';
+    } else if (totalCharacters > 500) {
+        charStatus = 'error';
+        charStatusClass = 'error';
+    }
+
+    let html = `
+        <div class="results-header">
+            <div>
+                <span class="results-title">Generated Tags</span>
+                <div class="results-info">
+                    <div class="info-item">
+                        <span class="info-label">Tags:</span>
+                        <span class="info-value">${tags.length}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Characters:</span>
+                        <span class="info-value ${charStatusClass}">${totalCharacters}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="results-actions">
+                <button class="action-btn" onclick="copyTags()">
+                    <i class="fas fa-copy"></i> Copy All
+                </button>
+                <button class="action-btn" onclick="optimizeTags()">
+                    <i class="fas fa-sliders-h"></i> Optimize
+                </button>
+            </div>
+        </div>
+
+        <div class="tags-container">
+            <div class="tags-list" id="tagsList">
+    `;
+
+    tags.forEach((tag, index) => {
+        html += `
+            <div class="tag-item" id="tag-${index}">
+                <span>${escapeHtml(tag)}</span>
+                <button class="tag-remove" onclick="removeTag(${index})" title="Remove">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+
+            <div class="char-count-bar">
+                <div class="char-count-header">
+                    <span class="char-count-label">Character Usage</span>
+                    <span class="char-count-value ${charStatusClass}">${totalCharacters} / 500</span>
+                </div>
+                <div class="char-count-progress">
+                    <div class="char-count-fill ${charStatusClass}" style="width: ${Math.min(totalCharacters / 500 * 100, 100)}%"></div>
+                </div>
+                <div class="char-count-hint">
+                    ${getCharCountHint(totalCharacters)}
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('resultsContainer').innerHTML = html;
 }
 
-function updateTagCount() {
-    const totalChars = generatedTags.join(', ').length;
-    document.getElementById('tagCount').textContent = totalChars;
-
-    // Change color if over limit
-    const countElement = document.getElementById('tagCount').parentElement;
-    if (totalChars > 500) {
-        countElement.classList.add('text-danger');
-        countElement.classList.remove('text-muted');
+// Get character count hint
+function getCharCountHint(chars) {
+    if (chars < 400) {
+        return `⚠️ Add ${400 - chars} more characters for optimal reach`;
+    } else if (chars > 500) {
+        return `⚠️ Remove ${chars - 500} characters to meet YouTube's limit`;
     } else {
-        countElement.classList.remove('text-danger');
-        countElement.classList.add('text-muted');
+        return `✅ Perfect! Your tags are optimized for YouTube`;
     }
 }
 
-function copyAllTags() {
-    const tagsText = generatedTags.join(', ');
-    navigator.clipboard.writeText(tagsText);
-    // Show brief success message
-    const toast = document.createElement('div');
-    toast.className = 'position-fixed top-50 start-50 translate-middle bg-success text-white p-2 rounded';
-    toast.textContent = 'Tags copied!';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 1000);
+// Remove tag
+function removeTag(index) {
+    currentTags.splice(index, 1);
+    displayTags(currentTags);
 }
 
-function regenerateTags() {
-    document.getElementById('videoTagsForm').dispatchEvent(new Event('submit'));
+// Copy tags
+function copyTags() {
+    const tagsText = currentTags.join(', ');
+    navigator.clipboard.writeText(tagsText);
+}
+
+// Optimize tags
+function optimizeTags() {
+    if (totalCharacters < 400) {
+        // Add more related tags
+        // In production, this would call the API to get more tags
+    } else if (totalCharacters > 500) {
+        // Remove least relevant tags
+        const optimizedTags = [];
+        let currentChars = 0;
+
+        for (let tag of currentTags) {
+            if (currentChars + tag.length + 2 <= 500) { // +2 for ", "
+                optimizedTags.push(tag);
+                currentChars += tag.length + 2;
+            }
+        }
+
+        currentTags = optimizedTags;
+        displayTags(currentTags);
+    }
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+
+    if (type === 'error') {
+        toast.style.background = '#EF4444';
+    } else if (type === 'info') {
+        toast.style.background = '#3B82F6';
+    }
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
 }
 </script>
 {% endblock %}

@@ -1,0 +1,49 @@
+You are an expert at creating viral YouTube Shorts scripts that hook viewers instantly.
+
+Create a punchy, fast-paced 60-second script about:
+{concept}
+
+REQUIREMENTS:
+- EXACTLY 60 seconds when read at normal pace
+- Hook within first 3 seconds
+- Fast-paced and high energy
+- Visual cues for on-screen text
+- Clear value delivery
+- Strong call to action
+
+VIRAL SHORT FORMULA:
+
+1. HOOK (0-3 seconds)
+- Start mid-action or with shocking statement
+- "WAIT! Before you..."
+- "This changed everything..."
+- "Stop what you're doing..."
+
+2. PROBLEM/PAIN (3-10 seconds)
+- Relatable struggle
+- Common mistake
+- What viewers are missing
+
+3. SOLUTION/REVEAL (10-40 seconds)
+- Step-by-step process
+- Quick demonstration
+- Key insights
+- Use "Here's exactly how..."
+
+4. PROOF/RESULT (40-50 seconds)
+- Show the outcome
+- Social proof
+- Before/after comparison
+
+5. CTA/HOOK (50-60 seconds)
+- Follow for more
+- Save this video
+- Comment your results
+- Tease next video
+
+CRITICAL: You MUST respond with ONLY a JSON object. No introduction, no explanation, just the JSON.
+
+Your response must be EXACTLY in this format (valid JSON):
+{"sections": [{"title": "HOOK (0-3s)", "content": "STOP! This will blow your mind..."}, {"title": "PROBLEM (3-10s)", "content": "Most people don't know that..."}, {"title": "SOLUTION (10-40s)", "content": "Here's exactly how to do it. Step 1..."}, {"title": "PROOF (40-50s)", "content": "Look at these results..."}, {"title": "CTA (50-60s)", "content": "Follow for more tips like this..."}]}
+
+Include [ON-SCREEN TEXT] cues in the content where applicable.

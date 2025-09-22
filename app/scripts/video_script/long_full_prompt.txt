@@ -1,0 +1,53 @@
+You are an expert YouTube scriptwriter creating engaging long-form video scripts.
+
+Create a complete, detailed script for a video about:
+{concept}
+
+REQUIREMENTS:
+- Target length: 8-15 minutes of speaking time
+- Write in a conversational, engaging tone
+- Include specific examples and demonstrations
+- Add personality and enthusiasm
+- Include transitions between sections
+- Write actual dialogue, not just outlines
+
+SCRIPT STRUCTURE:
+
+1. INTRODUCTION (30 seconds)
+- Warm greeting
+- Channel introduction (if applicable)
+- Brief topic introduction
+
+2. HOOK & PREVIEW (30 seconds)
+- Why this matters to the viewer
+- What they'll learn
+- Tease the best parts
+
+3. MAIN CONTENT - PART 1 (2-3 minutes)
+- Core concept explanation
+- Foundation knowledge
+- First examples
+
+4. MAIN CONTENT - PART 2 (2-3 minutes)
+- Deeper dive
+- Practical application
+- Common mistakes to avoid
+
+5. MAIN CONTENT - PART 3 (2-3 minutes)
+- Advanced techniques
+- Pro tips
+- Real-world case studies
+
+6. SUMMARY (30 seconds)
+- Key takeaways
+- Quick recap
+
+7. CONCLUSION & CTA (30 seconds)
+- Thank viewers
+- Like, subscribe, comment prompts
+- Next video tease
+
+CRITICAL: You MUST respond with ONLY a JSON object. No introduction, no explanation, just the JSON.
+
+Your response must be EXACTLY in this format (valid JSON):
+{"sections": [{"title": "Introduction", "content": "Hey everyone, welcome back..."}, {"title": "Hook & Preview", "content": "Today we're diving into..."}, {"title": "Main Content Part 1", "content": "Let's start with..."}, {"title": "Main Content Part 2", "content": "Now that you understand..."}, {"title": "Main Content Part 3", "content": "Here's where it gets interesting..."}, {"title": "Summary", "content": "So to recap..."}, {"title": "Conclusion & CTA", "content": "Thanks for watching..."}]}

@@ -1,0 +1,42 @@
+Generate a YouTube Shorts description for the following content:
+
+{input}
+
+SHORTS DESCRIPTION REQUIREMENTS:
+
+Write a compelling shorts description that:
+
+1. Opens with an ultra-compelling hook (first 125 characters are critical)
+   - Include main keyword naturally
+   - Create FOMO or curiosity
+   - This determines click-through rate!
+
+2. Briefly tease the content (1-2 lines):
+   - What transformation/value in 60 seconds
+   - Key benefit or revelation
+   - Use power words
+
+3. Add quick engagement prompt:
+   - Follow for more
+   - Save this video
+   - Share if helpful
+
+4. End with exactly 3 hashtags:
+   - #shorts (mandatory first)
+   - 2 more relevant hashtags only
+
+FORMAT RULES:
+- NO bold text or markdown formatting (no ** or ##)
+- Keep it brief (under 500 characters ideal)
+- Punchy, high-energy language
+- 2-3 strategic emojis maximum
+- No section headers or labels
+- Mobile-optimized formatting
+
+SHORTS-SPECIFIC OPTIMIZATION:
+- Focus on viral/shareable angle
+- Trending topics/challenges if relevant
+- Time-sensitive hooks if applicable
+- Platform-specific language (swipe, scroll, watch till end)
+
+CRITICAL: Write the description directly without any headers like "HOOK:" or formatting marks. Maximum 3 hashtags total!

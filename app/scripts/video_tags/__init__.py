@@ -1,0 +1,1 @@
+"""Video Tags Generator Module"""

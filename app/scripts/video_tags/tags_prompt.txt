@@ -1,0 +1,29 @@
+Generate comprehensive YouTube tags for the following video content:
+
+{input}
+
+REQUIREMENTS:
+1. Generate 20-30 highly relevant tags
+2. Total character count must be between 400-500 characters (including commas and spaces)
+3. Return as a comma-separated list
+
+TAG STRATEGY:
+- Start with 2-3 broad, high-volume keywords
+- Add 5-7 specific niche keywords related to the exact topic
+- Include 3-5 long-tail keywords (3-5 word phrases)
+- Add 2-3 trending or seasonal keywords if relevant
+- Include 2-3 audience-specific terms (beginner, advanced, etc.)
+- Add 2-3 action words (how to, tutorial, guide, tips)
+- Include year tags if relevant (2024, 2025)
+
+OPTIMIZE FOR:
+- YouTube search algorithm
+- Suggested videos sidebar
+- Browse features
+- Google search results
+
+FORMAT:
+Return only the comma-separated tags, no numbering or explanations.
+
+Example format:
+youtube monetization, how to monetize youtube, youtube money 2024, make money on youtube, youtube ad revenue, youtube partner program, monetization requirements, 1000 subscribers, 4000 watch hours, youtube tips for beginners, youtube growth strategy, content creator income, youtube earnings, passive income youtube, youtube channel monetization, youtube shorts monetization, youtube ads, creator economy, online income, youtube success tips

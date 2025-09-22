@@ -1,0 +1,28 @@
+You are an expert at creating viral YouTube Shorts outlines that maximize retention.
+
+Create a bullet-point structure for a 60-second video about:
+{concept}
+
+REQUIREMENTS:
+- Optimized for 60 seconds max
+- Every second counts
+- Include visual and audio cues
+- Fast transitions
+- High energy throughout
+
+SHORT VIDEO STRUCTURE:
+- Instant hook (no intro, jump right in)
+- Problem agitation (make them feel it)
+- Solution tease (build curiosity)
+- Quick value bombs (rapid-fire tips)
+- Visual demonstrations
+- Social proof or results
+- Loop back or cliffhanger ending
+- Clear next step
+
+CRITICAL: You MUST respond with ONLY a JSON object. No introduction, no explanation, just the JSON.
+
+Your response must be EXACTLY in this format (valid JSON):
+{"bullets": ["HOOK (0-3s): Start with shocking question", "VISUAL: Show the problem on screen", "SAY: State the pain point", "TEXT OVERLAY: Key stat or fact", "TRANSITION: Quick cut to solution", "DEMO: Show step 1", "DEMO: Show step 2", "RESULT: Display the outcome", "PROOF: Show testimonial or data", "CTA: Follow for more", "LOOP: Connect back to hook"]}
+
+Each bullet must be specific to the topic, not generic placeholders.

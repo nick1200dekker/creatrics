@@ -1,137 +1,532 @@
 {% extends "base.html" %}
 
-{% block title %}Video Description Generator - Creatrics{% endblock %}
+{% block title %}Video Description Generator - Creaver{% endblock %}
+
+{% block additional_styles %}
+<style>
+/* Reset the default content-panel padding */
+.content-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Main wrapper - matching calendar style */
+.generator-wrapper {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    overflow: hidden;
+    width: 100%;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .generator-wrapper {
+    border-color: transparent;
+}
+
+/* Header - matching calendar style */
+.generator-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-tertiary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.generator-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.generator-title i {
+    color: #3B82F6;
+}
+
+/* Video Type Section */
+.video-type-section {
+    margin-bottom: 2rem;
+}
+
+/* Video Type Toggle */
+.video-type-toggle {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-primary);
+    padding: 0.25rem;
+    border-radius: 10px;
+    margin-top: 0.5rem;
+}
+
+.type-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.type-btn.active {
+    background: #3B82F6;
+    color: white;
+}
+
+.type-btn:hover:not(.active) {
+    background: var(--bg-tertiary);
+}
+
+/* Content Area */
+.generator-content {
+    padding: 2rem;
+}
+
+/* Input Section */
+.input-section {
+    margin-bottom: 2rem;
+}
+
+.input-label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.input-textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+.input-textarea:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.char-count {
+    text-align: right;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Reference Section */
+.reference-section {
+    margin-bottom: 2rem;
+}
+
+.reference-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.reference-toggle-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reference-toggle-btn:hover {
+    background: var(--bg-primary);
+    border-color: #3B82F6;
+}
+
+.reference-content {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.reference-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.reference-textarea:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.reference-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.save-reference-btn,
+.clear-reference-btn {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.save-reference-btn {
+    background: #10B981;
+    color: white;
+    border-color: #10B981;
+}
+
+.save-reference-btn:hover {
+    background: #059669;
+}
+
+.clear-reference-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.clear-reference-btn:hover {
+    background: #EF4444;
+    color: white;
+    border-color: #EF4444;
+}
+
+.reference-status {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+/* Generate Button */
+.generate-section {
+    margin-bottom: 2rem;
+}
+
+.generate-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.generate-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+}
+
+.generate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.generate-btn i {
+    font-size: 1.125rem;
+}
+
+/* Results Section */
+.results-section {
+    min-height: 400px;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.results-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.result-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--bg-primary);
+    border-color: #3B82F6;
+}
+
+.description-container {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    padding: 1.5rem;
+    min-height: 300px;
+}
+
+.description-text {
+    width: 100%;
+    min-height: 400px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.description-text:focus {
+    outline: none;
+}
+
+.char-counter {
+    margin-top: 0.5rem;
+    text-align: right;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+}
+
+.char-counter.warning {
+    color: #F59E0B;
+}
+
+.char-counter.danger {
+    color: #EF4444;
+}
+
+/* Empty State */
+.empty-results {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.empty-text {
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+}
+
+/* Loading State */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-primary);
+    border-top-color: #3B82F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #10B981;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .generator-content {
+        padding: 1rem;
+    }
+
+    .generator-title {
+        font-size: 1.25rem;
+    }
+
+    .type-btn {
+        font-size: 0.75rem;
+        padding: 0.625rem;
+    }
+
+    .options-section {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-lg-12">
-            <h1 class="mb-4">Video Description Generator</h1>
-            <p class="lead">Create engaging video descriptions that boost engagement and SEO</p>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Generate Video Description</h5>
-
-                    <form id="videoDescriptionForm">
-                        <div class="mb-3">
-                            <label for="video_title" class="form-label">Video Title</label>
-                            <input type="text" class="form-control" id="video_title"
-                                placeholder="Enter your video title">
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="key_points" class="form-label">Key Points / Topics Covered</label>
-                            <textarea class="form-control" id="key_points" rows="4"
-                                placeholder="List the main topics, highlights, or key takeaways from your video..."></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="tone" class="form-label">Tone</label>
-                            <select class="form-control" id="tone">
-                                <option value="professional">Professional</option>
-                                <option value="casual">Casual</option>
-                                <option value="enthusiastic">Enthusiastic</option>
-                                <option value="educational">Educational</option>
-                                <option value="humorous">Humorous</option>
-                                <option value="informative">Informative</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="cta" class="form-label">Call to Action</label>
-                            <input type="text" class="form-control" id="cta"
-                                placeholder="E.g., Subscribe for more content, Check out our website">
-                        </div>
-
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="include_timestamps">
-                            <label class="form-check-label" for="include_timestamps">
-                                Include timestamp placeholders
-                            </label>
-                        </div>
-
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="include_socials" checked>
-                            <label class="form-check-label" for="include_socials">
-                                Include social media links
-                            </label>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-lg w-100">
-                            <i class="fas fa-file-alt"></i> Generate Description
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card shadow-sm mt-4" id="resultCard" style="display: none;">
-                <div class="card-body">
-                    <h5 class="card-title">Generated Description</h5>
-                    <div class="form-group">
-                        <textarea class="form-control" id="descriptionResult" rows="15"></textarea>
-                    </div>
-                    <div class="mt-3">
-                        <small class="text-muted">Character count: <span id="charCount">0</span> / 5000</small>
-                    </div>
-                    <div class="mt-3 d-flex justify-content-between">
-                        <button class="btn btn-success" onclick="copyDescription()">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
-                        <button class="btn btn-secondary" onclick="regenerateDescription()">
-                            <i class="fas fa-redo"></i> Regenerate
-                        </button>
-                    </div>
-                </div>
+<div class="content-panel">
+    <div class="generator-wrapper">
+        <!-- Header -->
+        <div class="generator-header">
+            <div class="generator-title">
+                <i class="ph ph-text-align-left"></i>
+                Video Description Generator
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Description Elements</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Hook in first 125 characters
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Clear value proposition
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Relevant keywords naturally
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Timestamps for long videos
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Links to related content
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Social media & website
-                        </li>
-                    </ul>
+        <!-- Content Area -->
+        <div class="generator-content">
+            <!-- Video Type Toggle -->
+            <div class="video-type-section">
+                <label class="input-label">Select video type:</label>
+                <div class="video-type-toggle">
+                    <button class="type-btn active" onclick="setVideoType('long')" id="longFormBtn">
+                        <i class="fas fa-film"></i> Long Form
+                    </button>
+                    <button class="type-btn" onclick="setVideoType('short')" id="shortFormBtn">
+                        <i class="fas fa-mobile-alt"></i> Shorts
+                    </button>
                 </div>
             </div>
 
-            <div class="card shadow-sm mt-3">
-                <div class="card-body">
-                    <h5 class="card-title">YouTube Limits</h5>
-                    <ul>
-                        <li>Max 5,000 characters</li>
-                        <li>First 125 chars shown in search</li>
-                        <li>Links are clickable</li>
-                        <li>Supports hashtags (#)</li>
-                    </ul>
+            <!-- Input Section -->
+            <div class="input-section">
+                <label class="input-label">Enter your video details:</label>
+                <textarea class="input-textarea"
+                          id="videoInput"
+                          placeholder="Describe your video topic, main points covered, or paste your script..."
+                          maxlength="5000"
+                          onkeyup="updateCharCount()"></textarea>
+                <div class="char-count" id="charCount">0 / 5000</div>
+            </div>
+
+            <!-- Reference Description Section -->
+            <div class="reference-section">
+                <div class="reference-header">
+                    <label class="input-label">
+                        <i class="fas fa-lightbulb"></i> Reference Description (Optional)
+                    </label>
+                    <button class="reference-toggle-btn" onclick="toggleReferenceSection()" id="referenceToggle">
+                        <i class="fas fa-plus"></i> Add Reference
+                    </button>
+                </div>
+                <div class="reference-content" id="referenceContent" style="display: none;">
+                    <textarea class="reference-textarea"
+                              id="referenceInput"
+                              placeholder="Paste an example of your previous video descriptions here. This helps the AI match your style, extract your social links, and maintain consistency..."
+                              maxlength="5000"></textarea>
+                    <div class="reference-actions">
+                        <button class="save-reference-btn" onclick="saveReference()">
+                            <i class="fas fa-save"></i> Save as Default
+                        </button>
+                        <button class="clear-reference-btn" onclick="clearReference()">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                    <div class="reference-status" id="referenceStatus"></div>
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <div class="generate-section">
+                <button class="generate-btn" onclick="generateDescription()" id="generateBtn">
+                    <i class="fas fa-sparkles"></i>
+                    Generate Description
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section">
+                <div id="resultsContainer">
+                    <!-- Results will appear here -->
                 </div>
             </div>
         </div>
@@ -139,86 +534,286 @@
 </div>
 
 <script>
-document.getElementById('videoDescriptionForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+// State management
+let currentVideoType = 'long';
+let currentDescription = '';
+let isGenerating = false;
+let referenceDescription = '';
+let referenceExpanded = false;
 
-    const videoTitle = document.getElementById('video_title').value;
-    const keyPoints = document.getElementById('key_points').value;
-    const tone = document.getElementById('tone').value;
-    const cta = document.getElementById('cta').value;
-    const includeTimestamps = document.getElementById('include_timestamps').checked;
-    const includeSocials = document.getElementById('include_socials').checked;
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateCharCount();
+    loadSavedReference();
+});
 
-    if (!videoTitle || !keyPoints) {
-        alert('Please fill in the required fields');
+// Set video type
+function setVideoType(type) {
+    currentVideoType = type;
+    document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+    if (type === 'long') {
+        document.getElementById('longFormBtn').classList.add('active');
+    } else {
+        document.getElementById('shortFormBtn').classList.add('active');
+    }
+}
+
+// Toggle reference section
+function toggleReferenceSection() {
+    referenceExpanded = !referenceExpanded;
+    const content = document.getElementById('referenceContent');
+    const toggle = document.getElementById('referenceToggle');
+
+    if (referenceExpanded) {
+        content.style.display = 'block';
+        toggle.innerHTML = '<i class="fas fa-minus"></i> Hide Reference';
+    } else {
+        content.style.display = 'none';
+        toggle.innerHTML = '<i class="fas fa-plus"></i> Add Reference';
+    }
+}
+
+// Load saved reference description
+async function loadSavedReference() {
+    try {
+        const response = await fetch('/api/get-reference-description');
+        const data = await response.json();
+
+        if (data.success && data.reference_description) {
+            referenceDescription = data.reference_description;
+            document.getElementById('referenceInput').value = referenceDescription;
+            document.getElementById('referenceStatus').textContent = 'Saved reference loaded';
+            document.getElementById('referenceStatus').style.color = '#10B981';
+        }
+    } catch (error) {
+        console.log('No saved reference found');
+    }
+}
+
+// Save reference description
+async function saveReference() {
+    const referenceText = document.getElementById('referenceInput').value.trim();
+
+    if (!referenceText) {
         return;
     }
 
     try {
-        const response = await fetch('/api/video-description/generate', {
+        const response = await fetch('/api/save-reference-description', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                video_title: videoTitle,
-                key_points: keyPoints,
-                tone: tone,
-                cta: cta,
-                include_timestamps: includeTimestamps,
-                include_socials: includeSocials
+                reference_description: referenceText
             })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            document.getElementById('descriptionResult').value = data.description;
-            updateCharCount();
-            document.getElementById('resultCard').style.display = 'block';
-            // Scroll to result
-            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+            referenceDescription = referenceText;
+            document.getElementById('referenceStatus').textContent = 'Reference saved successfully';
+            document.getElementById('referenceStatus').style.color = '#10B981';
         } else {
-            alert('Error: ' + data.error);
+            throw new Error(data.error || 'Failed to save');
         }
     } catch (error) {
-        alert('Error generating description: ' + error.message);
+        document.getElementById('referenceStatus').textContent = 'Error saving reference';
+        document.getElementById('referenceStatus').style.color = '#EF4444';
     }
-});
+}
 
-document.getElementById('descriptionResult').addEventListener('input', updateCharCount);
+// Clear reference description
+function clearReference() {
+    document.getElementById('referenceInput').value = '';
+    referenceDescription = '';
+    document.getElementById('referenceStatus').textContent = 'Reference cleared';
+    document.getElementById('referenceStatus').style.color = '#F59E0B';
+}
 
+// Update character count
 function updateCharCount() {
-    const description = document.getElementById('descriptionResult').value;
-    const charCount = description.length;
-    document.getElementById('charCount').textContent = charCount;
+    const input = document.getElementById('videoInput');
+    const count = input.value.length;
+    document.getElementById('charCount').textContent = `${count} / 5000`;
+}
 
-    // Change color if over limit
-    const countElement = document.getElementById('charCount').parentElement;
-    if (charCount > 5000) {
-        countElement.classList.add('text-danger');
-        countElement.classList.remove('text-muted');
-    } else {
-        countElement.classList.remove('text-danger');
-        countElement.classList.add('text-muted');
+// Generate description
+async function generateDescription() {
+    const input = document.getElementById('videoInput').value.trim();
+
+    if (!input) {
+        return;
+    }
+
+    if (isGenerating) return;
+
+    isGenerating = true;
+    const generateBtn = document.getElementById('generateBtn');
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+    // Show loading state
+    document.getElementById('resultsContainer').innerHTML = `
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+    `;
+
+    // Get reference from input or saved
+    const referenceInput = document.getElementById('referenceInput').value.trim();
+    const referenceToUse = referenceInput || referenceDescription;
+
+    try {
+        const response = await fetch('/api/generate-video-description', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                input: input,
+                type: currentVideoType,
+                reference_description: referenceToUse
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentDescription = data.description;
+            displayResults(data.description);
+        } else {
+            throw new Error(data.error || 'Failed to generate description');
+        }
+    } catch (error) {
+        console.error('Error generating description:', error);
+        document.getElementById('resultsContainer').innerHTML = `
+            <div class="empty-results">
+                <i class="fas fa-exclamation-triangle empty-icon" style="color: #EF4444;"></i>
+                <p class="empty-text" style="color: #EF4444;">Error generating description</p>
+            </div>
+        `;
+    } finally {
+        isGenerating = false;
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-sparkles"></i> Generate Description';
     }
 }
 
-function copyDescription() {
-    const description = document.getElementById('descriptionResult');
-    description.select();
-    document.execCommand('copy');
+// Display results
+function displayResults(description) {
+    const charCount = description.length;
+    let charCountClass = '';
+    if (charCount > 5000) {
+        charCountClass = 'danger';
+    } else if (charCount > 4500) {
+        charCountClass = 'warning';
+    }
 
-    // Show brief success message
-    const toast = document.createElement('div');
-    toast.className = 'position-fixed top-50 start-50 translate-middle bg-success text-white p-2 rounded';
-    toast.textContent = 'Description copied!';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 1000);
+    let html = `
+        <div class="results-header">
+            <span class="results-title">Generated Description</span>
+            <div class="result-actions">
+                <button class="action-btn" onclick="copyDescription()" title="Copy">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button class="action-btn" onclick="downloadDescription()" title="Download">
+                    <i class="fas fa-download"></i> Download
+                </button>
+            </div>
+        </div>
+        <div class="description-container">
+            <textarea class="description-text"
+                      id="descriptionText"
+                      onkeyup="updateDescriptionCount()">${escapeHtml(description)}</textarea>
+            <div class="char-counter ${charCountClass}" id="descriptionCounter">
+                ${charCount} / 5000 characters
+            </div>
+        </div>
+    `;
+
+    document.getElementById('resultsContainer').innerHTML = html;
 }
 
-function regenerateDescription() {
-    document.getElementById('videoDescriptionForm').dispatchEvent(new Event('submit'));
+// Update description character count
+function updateDescriptionCount() {
+    const textarea = document.getElementById('descriptionText');
+    if (textarea) {
+        const charCount = textarea.value.length;
+        const counter = document.getElementById('descriptionCounter');
+
+        counter.textContent = `${charCount} / 5000 characters`;
+
+        // Update color based on count
+        counter.classList.remove('warning', 'danger');
+        if (charCount > 5000) {
+            counter.classList.add('danger');
+        } else if (charCount > 4500) {
+            counter.classList.add('warning');
+        }
+
+        // Update current description
+        currentDescription = textarea.value;
+    }
+}
+
+// Copy description
+function copyDescription() {
+    const textarea = document.getElementById('descriptionText');
+    if (textarea) {
+        textarea.select();
+        document.execCommand('copy');
+    }
+}
+
+// Download description
+function downloadDescription() {
+    const text = currentDescription;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `video-description-${currentVideoType}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+
+    if (type === 'error') {
+        toast.style.background = '#EF4444';
+    }
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
 }
 </script>
 {% endblock %}

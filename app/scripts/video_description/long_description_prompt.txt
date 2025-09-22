@@ -1,0 +1,60 @@
+Generate a comprehensive YouTube video description for the following content:
+
+{input}
+
+DESCRIPTION STRUCTURE:
+
+1. OPENING HOOK (First 125 characters):
+   - Start with the most compelling benefit or transformation
+   - Include the main keyword naturally
+   - Create urgency or curiosity
+   - This text shows in search results - make it count!
+
+2. OVERVIEW (2-3 sentences):
+   - Expand on what viewers will learn/gain
+   - Set expectations for the video content
+   - Include secondary keywords naturally
+
+3. KEY TOPICS/CHAPTERS:
+   - List main points covered in the video
+   - Use single asterisk (*) for bullet points
+   - Add emojis for visual appeal
+   - Make it scannable for viewers
+
+4. VALUE PROPOSITION:
+   - Why should they watch THIS video?
+   - What makes your content unique?
+   - What problem does it solve?
+
+5. CALL TO ACTION:
+   - Subscribe reminder with bell icon mention
+   - Like and comment prompts
+   - Share if valuable
+
+6. RESOURCES/LINKS:
+   - Related videos or playlists
+   - Downloads or resources mentioned
+   - Affiliate links if applicable
+
+7. ENGAGEMENT SECTION:
+   - Question for comments
+   - Community building element
+   - Invitation to connect
+
+FORMAT REQUIREMENTS:
+- NO bold text or markdown headers (no ** or ##)
+- Use single asterisk (*) for bullet points only
+- Use line breaks for readability
+- Include 2-3 emojis per section maximum
+- Natural keyword placement (no stuffing)
+- Professional but conversational tone
+- Maximum 5000 characters total
+- Maximum 3 hashtags at the end
+
+SEO OPTIMIZATION:
+- Include primary keyword 2-3 times naturally
+- Add 2-3 secondary keywords
+- Use semantic variations
+- Location keywords if relevant
+
+CRITICAL: Do not include section headers like "HOOK:" or "OVERVIEW:" - just write the content directly. No bold formatting anywhere!

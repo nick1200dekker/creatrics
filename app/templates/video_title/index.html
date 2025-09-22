@@ -1,165 +1,415 @@
 {% extends "base.html" %}
 
-{% block title %}Video Title Generator - Creatrics{% endblock %}
+{% block title %}Video Title Generator - Creaver{% endblock %}
+
+{% block additional_styles %}
+<style>
+/* Reset the default content-panel padding */
+.content-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Main wrapper - matching calendar style */
+.generator-wrapper {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    overflow: hidden;
+    width: 100%;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .generator-wrapper {
+    border-color: transparent;
+}
+
+/* Header - matching calendar style */
+.generator-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-tertiary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.generator-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.generator-title i {
+    color: #3B82F6;
+}
+
+/* Video Type Section */
+.video-type-section {
+    margin-bottom: 2rem;
+}
+
+/* Video Type Toggle */
+.video-type-toggle {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-primary);
+    padding: 0.25rem;
+    border-radius: 10px;
+    margin-top: 0.5rem;
+}
+
+.type-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.type-btn.active {
+    background: #3B82F6;
+    color: white;
+}
+
+.type-btn:hover:not(.active) {
+    background: var(--bg-tertiary);
+}
+
+/* Content Area */
+.generator-content {
+    padding: 2rem;
+}
+
+/* Input Section */
+.input-section {
+    margin-bottom: 2rem;
+}
+
+.input-label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.input-textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+.input-textarea:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.char-count {
+    text-align: right;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Generate Button */
+.generate-section {
+    margin-bottom: 2rem;
+}
+
+.generate-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.generate-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+}
+
+.generate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.generate-btn i {
+    font-size: 1.125rem;
+}
+
+/* Results Section */
+.results-section {
+    min-height: 400px;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.results-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.copy-all-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.copy-all-btn:hover {
+    background: var(--bg-primary);
+    border-color: #3B82F6;
+}
+
+.titles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.title-item {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.title-item:hover {
+    border-color: #3B82F6;
+    transform: translateX(2px);
+}
+
+.title-number {
+    width: 24px;
+    height: 24px;
+    background: #3B82F6;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.title-text {
+    flex: 1;
+    margin: 0 1rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.title-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    background: transparent;
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.action-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: #3B82F6;
+    color: #3B82F6;
+}
+
+/* Empty State */
+.empty-results {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.empty-text {
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+}
+
+/* Loading State */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-primary);
+    border-top-color: #3B82F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #10B981;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .generator-content {
+        padding: 1rem;
+    }
+
+    .generator-title {
+        font-size: 1.25rem;
+    }
+
+    .type-btn {
+        font-size: 0.75rem;
+        padding: 0.625rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-lg-12">
-            <h1 class="mb-4">Video Title Generator</h1>
-            <p class="lead">Create compelling titles that maximize clicks and engagement</p>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Generate Video Titles</h5>
-
-                    <form id="titleForm">
-                        <div class="mb-3">
-                            <label for="topic" class="form-label">Video Topic</label>
-                            <input type="text" class="form-control" id="topic"
-                                placeholder="E.g., iPhone 15 Review, Minecraft Tutorial, Cooking Pasta">
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="content_type" class="form-label">Content Type</label>
-                            <select class="form-control" id="content_type">
-                                <option value="tutorial">Tutorial / How-to</option>
-                                <option value="review">Product Review</option>
-                                <option value="vlog">Vlog / Personal</option>
-                                <option value="list">List / Top 10</option>
-                                <option value="reaction">Reaction / Commentary</option>
-                                <option value="challenge">Challenge / Experiment</option>
-                                <option value="news">News / Update</option>
-                                <option value="entertainment">Entertainment</option>
-                                <option value="educational">Educational</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="tone" class="form-label">Tone</label>
-                            <select class="form-control" id="tone">
-                                <option value="engaging">Engaging / Exciting</option>
-                                <option value="professional">Professional</option>
-                                <option value="casual">Casual / Friendly</option>
-                                <option value="urgent">Urgent / Breaking</option>
-                                <option value="mysterious">Mysterious / Intriguing</option>
-                                <option value="humorous">Humorous / Fun</option>
-                                <option value="emotional">Emotional / Inspiring</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="keywords" class="form-label">Important Keywords (Optional)</label>
-                            <input type="text" class="form-control" id="keywords"
-                                placeholder="E.g., 2024, best, ultimate, honest">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-lg w-100">
-                            <i class="fas fa-magic"></i> Generate Titles
-                        </button>
-                    </form>
-                </div>
+<div class="content-panel">
+    <div class="generator-wrapper">
+        <!-- Header -->
+        <div class="generator-header">
+            <div class="generator-title">
+                <i class="ph ph-sparkle"></i>
+                Video Title Generator
             </div>
+        </div>
 
-            <div class="card shadow-sm mt-4" id="resultCard" style="display: none;">
-                <div class="card-body">
-                    <h5 class="card-title">Generated Titles</h5>
-                    <div id="titlesResult" class="mb-3">
-                        <!-- Generated titles will appear here -->
-                    </div>
-                    <button class="btn btn-secondary" onclick="regenerateTitles()">
-                        <i class="fas fa-redo"></i> Generate More
+        <!-- Content Area -->
+        <div class="generator-content">
+            <!-- Video Type Toggle -->
+            <div class="video-type-section">
+                <label class="input-label">Select video type:</label>
+                <div class="video-type-toggle">
+                    <button class="type-btn active" onclick="setVideoType('long')" id="longFormBtn">
+                        <i class="fas fa-film"></i> Long Form
+                    </button>
+                    <button class="type-btn" onclick="setVideoType('short')" id="shortFormBtn">
+                        <i class="fas fa-mobile-alt"></i> Shorts
                     </button>
                 </div>
             </div>
 
-            <!-- Title Analyzer -->
-            <div class="card shadow-sm mt-4">
-                <div class="card-body">
-                    <h5 class="card-title">Title Analyzer</h5>
-                    <p class="text-muted">Test your title for SEO and engagement potential</p>
-
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" id="analyzeInput"
-                            placeholder="Enter a title to analyze">
-                        <button class="btn btn-outline-primary" onclick="analyzeTitle()">
-                            <i class="fas fa-chart-line"></i> Analyze
-                        </button>
-                    </div>
-
-                    <div id="analysisResult" style="display: none;">
-                        <!-- Analysis results will appear here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Title Best Practices</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Keep under 60 characters
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Front-load keywords
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Use numbers when relevant
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Create curiosity gap
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Be specific and clear
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Avoid clickbait
-                        </li>
-                    </ul>
-                </div>
+            <!-- Input Section -->
+            <div class="input-section">
+                <label class="input-label">Enter your video script or description:</label>
+                <textarea class="input-textarea"
+                          id="videoInput"
+                          placeholder="Paste your script, describe your video topic, or outline your main points..."
+                          maxlength="5000"
+                          onkeyup="updateCharCount()"></textarea>
+                <div class="char-count" id="charCount">0 / 5000</div>
             </div>
 
-            <div class="card shadow-sm mt-3">
-                <div class="card-body">
-                    <h5 class="card-title">Power Words</h5>
-                    <div class="d-flex flex-wrap gap-1">
-                        <span class="badge bg-primary">Ultimate</span>
-                        <span class="badge bg-primary">Essential</span>
-                        <span class="badge bg-primary">Proven</span>
-                        <span class="badge bg-primary">Secret</span>
-                        <span class="badge bg-primary">Amazing</span>
-                        <span class="badge bg-primary">Powerful</span>
-                        <span class="badge bg-primary">Complete</span>
-                        <span class="badge bg-primary">Easy</span>
-                        <span class="badge bg-primary">Quick</span>
-                        <span class="badge bg-primary">Free</span>
-                    </div>
-                </div>
+            <!-- Generate Button -->
+            <div class="generate-section">
+                <button class="generate-btn" onclick="generateTitles()" id="generateBtn">
+                    <i class="fas fa-sparkles"></i>
+                    Generate 10 Titles
+                </button>
             </div>
 
-            <div class="card shadow-sm mt-3">
-                <div class="card-body">
-                    <h5 class="card-title">Title Formulas</h5>
-                    <ul class="small">
-                        <li>How to [Achieve Desired Outcome]</li>
-                        <li>[Number] Ways to [Solve Problem]</li>
-                        <li>Why [Something] is [Adjective]</li>
-                        <li>[Do This] Before [Time/Event]</li>
-                        <li>The Truth About [Topic]</li>
-                        <li>[Topic]: Everything You Need to Know</li>
-                    </ul>
+            <!-- Results Section -->
+            <div class="results-section">
+                <div id="resultsContainer">
+                    <!-- Results will appear here -->
                 </div>
             </div>
         </div>
@@ -167,162 +417,183 @@
 </div>
 
 <script>
-let generatedTitles = [];
+// State management
+let currentVideoType = 'long';
+let currentTitles = [];
+let isGenerating = false;
 
-document.getElementById('titleForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateCharCount();
+});
 
-    const topic = document.getElementById('topic').value;
-    const contentType = document.getElementById('content_type').value;
-    const tone = document.getElementById('tone').value;
-    const keywords = document.getElementById('keywords').value;
+// Set video type
+function setVideoType(type) {
+    currentVideoType = type;
+    document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+    if (type === 'long') {
+        document.getElementById('longFormBtn').classList.add('active');
+    } else {
+        document.getElementById('shortFormBtn').classList.add('active');
+    }
+}
 
-    if (!topic) {
-        alert('Please enter a video topic');
+// Update character count
+function updateCharCount() {
+    const input = document.getElementById('videoInput');
+    const count = input.value.length;
+    document.getElementById('charCount').textContent = `${count} / 5000`;
+}
+
+// Generate titles
+async function generateTitles() {
+    const input = document.getElementById('videoInput').value.trim();
+
+    if (!input) {
         return;
     }
 
+    if (isGenerating) return;
+
+    isGenerating = true;
+    const generateBtn = document.getElementById('generateBtn');
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+    // Show loading state
+    document.getElementById('resultsContainer').innerHTML = `
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+    `;
+
     try {
-        const response = await fetch('/api/video-title/generate', {
+        const response = await fetch('/api/generate-video-titles', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                topic: topic,
-                content_type: contentType,
-                tone: tone,
-                keywords: keywords
+                input: input,
+                type: currentVideoType
             })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            generatedTitles = data.titles;
-            displayTitles();
-            document.getElementById('resultCard').style.display = 'block';
+            currentTitles = data.titles;
+            displayResults(data.titles);
         } else {
-            alert('Error: ' + data.error);
+            throw new Error(data.error || 'Failed to generate titles');
         }
     } catch (error) {
-        alert('Error generating titles: ' + error.message);
-    }
-});
-
-function displayTitles() {
-    const titlesHtml = generatedTitles.map((title, index) =>
-        `<div class="mb-3 p-3 border rounded hover-shadow" style="cursor: pointer;" onclick="copyTitle('${title.replace(/'/g, "\\'")}')">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1">
-                    <h6 class="mb-1">${title}</h6>
-                    <small class="text-muted">${title.length} characters</small>
-                </div>
-                <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); copyTitle('${title.replace(/'/g, "\\'")}')">
-                    <i class="fas fa-copy"></i>
-                </button>
+        console.error('Error generating titles:', error);
+        document.getElementById('resultsContainer').innerHTML = `
+            <div class="empty-results">
+                <i class="fas fa-exclamation-triangle empty-icon" style="color: #EF4444;"></i>
+                <p class="empty-text" style="color: #EF4444;">Error generating titles</p>
             </div>
-        </div>`
-    ).join('');
-
-    document.getElementById('titlesResult').innerHTML = titlesHtml;
-}
-
-function copyTitle(title) {
-    navigator.clipboard.writeText(title);
-    // Show brief success message
-    const toast = document.createElement('div');
-    toast.className = 'position-fixed top-50 start-50 translate-middle bg-success text-white p-2 rounded';
-    toast.textContent = 'Title copied!';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 1000);
-}
-
-function regenerateTitles() {
-    document.getElementById('titleForm').dispatchEvent(new Event('submit'));
-}
-
-async function analyzeTitle() {
-    const title = document.getElementById('analyzeInput').value;
-
-    if (!title) {
-        alert('Please enter a title to analyze');
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/video-title/analyze', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ title: title })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            displayAnalysis(data.analysis);
-        } else {
-            alert('Error: ' + data.error);
-        }
-    } catch (error) {
-        alert('Error analyzing title: ' + error.message);
+        `;
+    } finally {
+        isGenerating = false;
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-sparkles"></i> Generate 10 Titles';
     }
 }
 
-function displayAnalysis(analysis) {
-    const scoreColor = analysis.score >= 80 ? 'success' : analysis.score >= 60 ? 'warning' : 'danger';
-
-    const analysisHtml = `
-        <div class="border-top pt-3">
-            <div class="mb-3">
-                <div class="d-flex justify-content-between mb-2">
-                    <span>Overall Score</span>
-                    <span class="badge bg-${scoreColor}">${analysis.score}/100</span>
-                </div>
-                <div class="progress">
-                    <div class="progress-bar bg-${scoreColor}" style="width: ${analysis.score}%"></div>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <small class="text-muted">
-                    Length: ${analysis.length} chars | Words: ${analysis.word_count}
-                </small>
-            </div>
-
-            <div class="mb-3">
-                <h6>Strengths:</h6>
-                <ul class="small">
-                    ${analysis.strengths.map(s => `<li>${s}</li>`).join('')}
-                </ul>
-            </div>
-
-            <div class="mb-3">
-                <h6>Suggestions:</h6>
-                <ul class="small">
-                    ${analysis.suggestions.map(s => `<li>${s}</li>`).join('')}
-                </ul>
-            </div>
+// Display results
+function displayResults(titles) {
+    let html = `
+        <div class="results-header">
+            <span class="results-title">Generated Titles (${titles.length})</span>
+            <button class="copy-all-btn" onclick="copyAllTitles()">
+                <i class="fas fa-copy"></i> Copy All
+            </button>
         </div>
+        <div class="titles-list">
     `;
 
-    document.getElementById('analysisResult').innerHTML = analysisHtml;
-    document.getElementById('analysisResult').style.display = 'block';
+    titles.forEach((title, index) => {
+        html += `
+            <div class="title-item">
+                <span class="title-number">${index + 1}</span>
+                <span class="title-text" id="title-${index}">${escapeHtml(title)}</span>
+                <div class="title-actions">
+                    <button class="action-btn" onclick="copyTitle(${index})" title="Copy">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="action-btn" onclick="editTitle(${index})" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    document.getElementById('resultsContainer').innerHTML = html;
 }
 
-// Add hover effect style
-const style = document.createElement('style');
-style.textContent = `
-    .hover-shadow {
-        transition: all 0.3s ease;
+// Copy single title
+function copyTitle(index) {
+    const title = currentTitles[index];
+    navigator.clipboard.writeText(title);
+}
+
+// Copy all titles
+function copyAllTitles() {
+    if (currentTitles && currentTitles.length > 0) {
+        const allTitles = currentTitles.join('\n');
+        navigator.clipboard.writeText(allTitles);
     }
-    .hover-shadow:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+// Edit title
+function editTitle(index) {
+    const titleElement = document.getElementById(`title-${index}`);
+    const currentText = currentTitles[index];
+
+    const newTitle = prompt('Edit title:', currentText);
+    if (newTitle && newTitle !== currentText) {
+        currentTitles[index] = newTitle;
+        titleElement.textContent = newTitle;
     }
-`;
-document.head.appendChild(style);
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+
+    if (type === 'error') {
+        toast.style.background = '#EF4444';
+    }
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
 </script>
 {% endblock %}
