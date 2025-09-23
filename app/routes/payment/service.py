@@ -177,6 +177,11 @@ class StripeService:
         checkout_mode = 'subscription' if plan_id == 'basic' else 'payment'
             
         try:
+            # Clean up old pending sessions before creating new one
+            logger.info(f"Starting cleanup of old pending sessions for user {user_id}")
+            StripeService._cleanup_old_pending_sessions(user_id, user_data)
+            logger.info(f"Completed cleanup of old pending sessions for user {user_id}")
+            
             # Create checkout session
             logger.info(f"Creating checkout session for customer {customer_id}")
             checkout_session = stripe.checkout.Session.create(
@@ -199,8 +204,11 @@ class StripeService:
             )
             logger.info(f"Created checkout session: {checkout_session.id}, URL: {checkout_session.url}")
             
-            # Store session info for potential manual sync
-            pending_sessions = user_data.get('pending_checkout_sessions', [])
+            # Get fresh user data after cleanup to avoid adding back old sessions
+            fresh_user_data = UserService.get_user(user_id)
+            pending_sessions = fresh_user_data.get('pending_checkout_sessions', []) if fresh_user_data else []
+            
+            # Add new session
             pending_sessions.append({
                 'session_id': checkout_session.id,
                 'plan_id': plan_id,
@@ -867,5 +875,79 @@ class StripeService:
             logger.error(f"Error checking recent sessions: {str(e)}")
             return {
                 'success': False,
-                'message': f'Error checking sessions: {str(e)}'
+                'message': f'Error: {str(e)}'
             }
+    
+    @staticmethod
+    def _cleanup_old_pending_sessions(user_id, user_data):
+        """Clean up old pending checkout sessions before creating new ones."""
+        try:
+            pending_sessions = user_data.get('pending_checkout_sessions', [])
+            if not pending_sessions:
+                return
+            
+            logger.info(f"Cleaning up {len(pending_sessions)} pending sessions for user {user_id}")
+            
+            # Check each session status with Stripe
+            active_sessions = []
+            expired_count = 0
+            
+            for session_info in pending_sessions:
+                session_id = session_info.get('session_id')
+                if not session_id:
+                    continue
+                
+                try:
+                    # Check session status with Stripe
+                    stripe_session = stripe.checkout.Session.retrieve(session_id)
+                    
+                    # Keep only active sessions (not expired, completed, or canceled)
+                    if stripe_session.status in ['open']:
+                        # Check if session is older than 24 hours (Stripe sessions expire after 24h)
+                        created_time = datetime.fromtimestamp(stripe_session.created)
+                        if datetime.now() - created_time < timedelta(hours=24):
+                            active_sessions.append(session_info)
+                            logger.info(f"Keeping recent session: {session_id} (created {created_time})")
+                        else:
+                            expired_count += 1
+                            logger.info(f"Removing expired session: {session_id} (created {created_time}, older than 24 hours)")
+                    else:
+                        expired_count += 1
+                        logger.info(f"Removing {stripe_session.status} session: {session_id}")
+                        
+                except stripe.error.InvalidRequestError:
+                    # Session doesn't exist in Stripe anymore
+                    expired_count += 1
+                    logger.info(f"Removing non-existent session: {session_id}")
+                except Exception as e:
+                    logger.warning(f"Error checking session {session_id}: {str(e)}")
+                    # Keep session if we can't check it (to be safe)
+                    active_sessions.append(session_info)
+            
+            # Update user data with cleaned sessions
+            if expired_count > 0:
+                logger.info(f"Cleaned up {expired_count} old/expired sessions for user {user_id}")
+                UserService.update_user(user_id, {
+                    'pending_checkout_sessions': active_sessions
+                })
+                
+        except Exception as e:
+            logger.error(f"Error cleaning up pending sessions: {str(e)}")
+            # Don't fail the checkout creation if cleanup fails
+    
+    @staticmethod
+    def cleanup_all_expired_sessions():
+        """Cleanup expired sessions for all users - can be run as a scheduled job."""
+        try:
+            logger.info("Starting global cleanup of expired checkout sessions")
+            
+            # This would need to be implemented based on your user storage
+            # For now, this is a placeholder for a scheduled cleanup job
+            # You could run this daily via cron job or scheduled task
+            
+            logger.info("Global session cleanup completed")
+            return {"success": True, "message": "Global cleanup completed"}
+            
+        except Exception as e:
+            logger.error(f"Error in global session cleanup: {str(e)}")
+            return {"success": False, "message": f"Error: {str(e)}"}

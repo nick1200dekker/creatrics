@@ -846,6 +846,7 @@ html.dark .history-section {
 let selectedModel = 'nano-banana';
 let uploadedFiles = [null, null, null, null];
 let generationHistory = [];
+let numImages = 1;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -860,6 +861,45 @@ function selectModel(model) {
             card.classList.add('selected');
         }
     });
+    updateCreditDisplay();
+}
+
+function increaseNumImages() {
+    if (numImages < 4) {
+        numImages++;
+        updateNumImagesDisplay();
+    }
+}
+
+function decreaseNumImages() {
+    if (numImages > 1) {
+        numImages--;
+        updateNumImagesDisplay();
+    }
+}
+
+function updateNumImagesDisplay() {
+    document.getElementById('numImagesDisplay').textContent = numImages;
+
+    // Update button states
+    document.getElementById('decreaseBtn').disabled = numImages === 1;
+    document.getElementById('increaseBtn').disabled = numImages === 4;
+
+    updateCreditDisplay();
+}
+
+function updateCreditDisplay() {
+    const baseCost = selectedModel === 'nano-banana' ? 5 : 4;
+    const totalCost = baseCost * numImages;
+
+    // Update the credit display in the model cards
+    if (selectedModel === 'nano-banana') {
+        document.getElementById('nano-cost').textContent = totalCost;
+        document.getElementById('seed-cost').textContent = '4';
+    } else {
+        document.getElementById('nano-cost').textContent = '5';
+        document.getElementById('seed-cost').textContent = totalCost;
+    }
 }
 
 function triggerUpload(index) {
@@ -937,6 +977,7 @@ async function generateThumbnail() {
     const formData = new FormData();
     formData.append('prompt', prompt);
     formData.append('model', selectedModel);
+    formData.append('num_images', numImages);
 
     uploadedFiles.forEach(file => {
         if (file) {

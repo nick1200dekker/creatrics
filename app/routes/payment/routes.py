@@ -107,45 +107,21 @@ def api_create_checkout(plan_id):
         success_url = url_for('payment.success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}'
         cancel_url = url_for('payment.cancel', _external=True)
         
-        # Determine checkout mode based on plan type
-        checkout_mode = 'subscription' if plan_id == 'basic' else 'payment'
-        
-        # Create checkout session directly using stripe-python library
+        # Create checkout session using service (includes cleanup)
         try:
-            checkout_session = stripe.checkout.Session.create(
-                customer=customer_id,
-                payment_method_types=['card'],
-                line_items=[{
-                    'price': price_id,
-                    'quantity': 1,
-                }],
-                mode=checkout_mode,
-                success_url=success_url,
-                cancel_url=cancel_url,
-                allow_promotion_codes=True,
-                metadata={
-                    'user_id': user_id,
-                    'plan_id': plan_id
-                }
+            checkout_session = StripeService.create_checkout_session(
+                user_id, 
+                user_data, 
+                plan_id, 
+                success_url, 
+                cancel_url
             )
             
+            if not checkout_session:
+                logger.error(f"Failed to create checkout session for {plan_id}")
+                return jsonify({"success": False, "error": "Failed to create checkout session"}), 500
+            
             logger.info(f"Created API checkout URL for {plan_id}: {checkout_session.url}")
-            
-            # Store session ID in user's pending_sessions for manual sync if needed
-            pending_sessions = user_data.get('pending_checkout_sessions', [])
-            pending_sessions.append({
-                'session_id': checkout_session.id,
-                'plan_id': plan_id,
-                'created_at': datetime.now().isoformat(),
-                'status': 'pending'
-            })
-            
-            # Keep only last 10 sessions
-            pending_sessions = pending_sessions[-10:]
-            
-            UserService.update_user(user_id, {
-                'pending_checkout_sessions': pending_sessions
-            })
             
             # Return the URL instead of redirecting
             return jsonify({

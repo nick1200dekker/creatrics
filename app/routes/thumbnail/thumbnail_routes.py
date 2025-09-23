@@ -37,6 +37,11 @@ def generate_thumbnail():
         # Get form data
         prompt = request.form.get('prompt', '').strip()
         model = request.form.get('model', 'nano-banana')  # Default to Nano Banana
+        num_images = int(request.form.get('num_images', 1))  # Number of generations
+
+        # Validate num_images
+        if num_images < 1 or num_images > 4:
+            num_images = 1
 
         if not prompt:
             return jsonify({
@@ -84,13 +89,16 @@ def generate_thumbnail():
         # Check credits
         credits_manager = CreditsManager()
 
-        # Determine cost based on model
+        # Determine cost based on model and number of images
         if model == 'nano-banana':
             from app.system.credits.config import get_nano_banana_cost
-            required_credits = get_nano_banana_cost()
+            base_credits = get_nano_banana_cost()
         else:  # seeddream
             from app.system.credits.config import get_seeddream_cost
-            required_credits = get_seeddream_cost()
+            base_credits = get_seeddream_cost()
+
+        # Total credits needed
+        required_credits = base_credits * num_images
 
         credit_check = credits_manager.check_sufficient_credits(
             user_id=user_id,
@@ -116,7 +124,8 @@ def generate_thumbnail():
                     "fal-ai/nano-banana/edit",
                     arguments={
                         "prompt": prompt,
-                        "image_urls": image_urls
+                        "image_urls": image_urls,
+                        "num_images": num_images
                     }
                 )
             else:  # seeddream
@@ -124,21 +133,18 @@ def generate_thumbnail():
                     "fal-ai/bytedance/seedream/v4/edit",
                     arguments={
                         "prompt": prompt,
-                        "image_urls": image_urls
+                        "image_urls": image_urls,
+                        "num_images": num_images
                     }
                 )
 
-            # Deduct credits
-            if model == 'nano-banana':
-                deduction_result = credits_manager.deduct_nano_banana_credits(
-                    user_id=user_id,
-                    description=f"Thumbnail generation with Nano Banana"
-                )
-            else:
-                deduction_result = credits_manager.deduct_seeddream_credits(
-                    user_id=user_id,
-                    description=f"Thumbnail generation with SeedDream"
-                )
+            # Deduct credits (using the generic deduct method for multiple generations)
+            deduction_result = credits_manager.deduct_credits(
+                user_id=user_id,
+                amount=required_credits,
+                description=f"Thumbnail generation with {model} ({num_images} images)",
+                feature_id=f"thumbnail_{model}"
+            )
 
             if not deduction_result.get('success'):
                 logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
