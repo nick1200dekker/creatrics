@@ -26,6 +26,16 @@ FAL_SEEDDREAM = {
     'MAX_IMAGES': 4                # Maximum input images
 }
 
+# Fal AI - Topaz Upscale costs
+FAL_TOPAZ_UPSCALE = {
+    'COST': 10,                     # Final cost: 10 credits per upscale
+    'BASE_COST': 8.33,             # Base cost (before margin)
+    'SERVICE': 'fal.ai',
+    'MODEL': 'fal-ai/topaz/upscale/image',
+    'DESCRIPTION': 'Image upscaling using Topaz AI model',
+    'SCALE_FACTOR': 4               # Upscale factor (up to 4x)
+}
+
 # Helper function to get Nano Banana cost
 def get_nano_banana_cost():
     """Get the cost of Nano Banana edit (5 credits)"""
@@ -45,6 +55,16 @@ def get_seeddream_cost():
 def get_base_seeddream_cost():
     """Get the base cost of SeedDream edit (without margin)"""
     return FAL_SEEDDREAM['BASE_COST']
+
+# Helper function to get Topaz upscale cost
+def get_topaz_upscale_cost():
+    """Get the cost of Topaz upscale (10 credits)"""
+    return FAL_TOPAZ_UPSCALE['COST']
+
+# Helper function to get base Topaz upscale cost (without margin)
+def get_base_topaz_upscale_cost():
+    """Get the base cost of Topaz upscale (without margin)"""
+    return FAL_TOPAZ_UPSCALE['BASE_COST']
 
 # Helper function to calculate LLM costs - Uses Claude
 def calculate_llm_cost(model_name, input_tokens, output_tokens, cached_tokens=0):

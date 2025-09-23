@@ -719,6 +719,29 @@ html.dark .history-section {
     100% { transform: rotate(360deg); }
 }
 
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    min-height: 300px;
+    gap: 1rem;
+}
+
+.loading-container .loading-text {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+}
+
+.loading-container .loading-subtext {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
 .loading-text {
     color: white;
     font-size: 0.875rem;
@@ -794,7 +817,7 @@ html.dark .history-section {
     <div class="thumbnail-header">
         <h1 class="thumbnail-title">
             <i class="ph ph-image"></i>
-            Thumbnail Generator
+            Thumbnail
         </h1>
     </div>
 
@@ -842,40 +865,21 @@ html.dark .history-section {
                     </div>
                 </div>
 
-                <!-- Prompt -->
-                <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                        <label class="form-label" style="margin-bottom: 0;">Prompt</label>
-                        <button class="improve-prompt-btn" onclick="improvePrompt()" id="improveBtn" title="Enhance your prompt with AI">
-                            <i class="ph ph-magic-wand"></i>
-                            Improve Prompt
-                        </button>
-                    </div>
-                    <textarea
-                        id="promptInput"
-                        class="prompt-textarea"
-                        placeholder="Examples: Replace face with person from image 2, change background to beach, add text 'AMAZING', remove object"
-                        maxlength="1000"
-                        onkeyup="updateCharCount()"
-                    ></textarea>
-                    <div class="char-count" id="charCount">0 / 1000</div>
-                </div>
-
                 <!-- Model Selection -->
-                <div class="form-group model-selection">
+                <div class="form-group">
                     <div class="generation-options">
                         <div class="model-selection-wrapper">
                             <label class="form-label">Select Model</label>
                             <div class="model-cards">
                                 <div class="model-card selected" data-model="nano-banana" onclick="selectModel('nano-banana')">
-                                    <div class="model-name">Nano Banana</div>
+                                    <div class="model-name">Canvas Editor</div>
                                     <div class="model-credits">
                                         <i class="ph ph-coin"></i>
                                         <span id="nano-cost">5</span> credits
                                     </div>
                                 </div>
                                 <div class="model-card" data-model="seeddream" onclick="selectModel('seeddream')">
-                                    <div class="model-name">SeedDream V4</div>
+                                    <div class="model-name">Photo Editor</div>
                                     <div class="model-credits">
                                         <i class="ph ph-coin"></i>
                                         <span id="seed-cost">4</span> credits
@@ -898,10 +902,33 @@ html.dark .history-section {
                     </div>
                 </div>
 
+                <!-- Prompt -->
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <label class="form-label" style="margin-bottom: 0;">Prompt</label>
+                        <button class="improve-prompt-btn" onclick="improvePrompt()" id="improveBtn" title="Enhance your prompt with AI">
+                            <i class="ph ph-magic-wand"></i>
+                            Improve Prompt
+                            <span id="improveCost" style="margin-left: 0.3rem; opacity: 0.8;">
+                                <i class="ph ph-coin" style="font-size: 0.75rem;"></i>
+                                0.2
+                            </span>
+                        </button>
+                    </div>
+                    <textarea
+                        id="promptInput"
+                        class="prompt-textarea"
+                        placeholder="Examples: Replace face with person from image 2, change background to beach, add text 'AMAZING', remove object"
+                        maxlength="1000"
+                        onkeyup="updateCharCount()"
+                    ></textarea>
+                    <div class="char-count" id="charCount">0 / 1000</div>
+                </div>
+
                 <!-- Generate Button -->
                 <button class="generate-btn" id="generateBtn" onclick="generateThumbnail()">
                     <i class="ph ph-magic-wand"></i>
-                    Generate Thumbnail
+                    Generate
                 </button>
             </div>
 
@@ -995,6 +1022,28 @@ function updateCreditDisplay() {
         document.getElementById('nano-cost').textContent = '5';
         document.getElementById('seed-cost').textContent = totalCost;
     }
+
+    // Update improve prompt cost based on number of uploaded images
+    updateImprovePromptCost();
+}
+
+function updateImprovePromptCost() {
+    // Count uploaded images
+    const imageCount = uploadedFiles.filter(f => f !== null).length;
+
+    // Calculate cost: 0 photos: 0.2, 1: 0.5, 2: 0.7, 3: 0.9, 4: 1.0
+    let cost;
+    if (imageCount === 0) cost = 0.2;
+    else if (imageCount === 1) cost = 0.5;
+    else if (imageCount === 2) cost = 0.7;
+    else if (imageCount === 3) cost = 0.9;
+    else cost = 1.0;
+
+    // Update the display
+    const costSpan = document.getElementById('improveCost');
+    if (costSpan) {
+        costSpan.innerHTML = `<i class="ph ph-coin" style="font-size: 0.75rem;"></i> ${cost}`;
+    }
 }
 
 function triggerUpload(index) {
@@ -1025,6 +1074,7 @@ function handleUpload(index, input) {
                 <input type="file" id="file${index}" accept="image/*" onchange="handleUpload(${index}, this)" style="display: none;">
             `;
             uploadedFiles[index] = file;
+            updateImprovePromptCost();  // Update cost when image is added
         };
         reader.readAsDataURL(file);
     }
@@ -1043,6 +1093,7 @@ function removeImage(index, event) {
             <div class="upload-text">Click to upload</div>
         </div>
     `;
+    updateImprovePromptCost();  // Update cost when image is removed
 }
 
 function updateCharCount() {
@@ -1082,7 +1133,7 @@ async function generateThumbnail() {
 
     // Show loading
     generateBtn.disabled = true;
-    generateBtn.innerHTML = '<div class="loading-spinner" style="width: 16px; height: 16px; border-width: 2px; display: inline-block;"></div> Generating...';
+    generateBtn.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 0.5rem;"><div class="loading-spinner" style="width: 16px; height: 16px; border-width: 2px;"></div> Generating...</span>';
     
     resultContainer.classList.remove('has-result');
     resultContainer.innerHTML = `
@@ -1143,6 +1194,10 @@ async function generateThumbnail() {
                                     <i class="ph ph-download"></i>
                                     Download
                                 </button>
+                                <button class="action-btn" onclick="upscaleImage('${imageUrls[0]}')">
+                                    <i class="ph ph-arrows-out"></i>
+                                    Upscale (10 credits)
+                                </button>
                             </div>
                         </div>
                     `;
@@ -1190,7 +1245,7 @@ async function generateThumbnail() {
         `;
     } finally {
         generateBtn.disabled = false;
-        generateBtn.innerHTML = '<i class="ph ph-magic-wand"></i> Generate Thumbnail';
+        generateBtn.innerHTML = '<i class="ph ph-magic-wand"></i> Generate';
     }
 }
 
@@ -1225,8 +1280,9 @@ function renderHistory() {
     generationHistory.forEach((item, index) => {
         const date = new Date(item.timestamp);
         const timeAgo = getTimeAgo(date);
-        const modelDisplay = item.model === 'nano-banana' ? 'Nano Banana' : 'SeedDream';
-        
+        const modelDisplay = item.model === 'nano-banana' ? 'Canvas Editor' :
+                           item.model === 'topaz-upscale' ? 'Upscaled' : 'Photo Editor';
+
         html += `
             <div class="history-item">
                 <button class="delete-history-btn" onclick="deleteHistoryItem(${index}, event)" title="Delete">
@@ -1274,6 +1330,10 @@ function openLightbox(url) {
                     <i class="ph ph-download"></i>
                     Download
                 </button>
+                <button class="action-btn" onclick="upscaleImage('${url}')">
+                    <i class="ph ph-arrows-out"></i>
+                    Upscale (10 credits)
+                </button>
             </div>
         </div>
     `;
@@ -1317,17 +1377,175 @@ function getTimeAgo(date) {
     return date.toLocaleDateString();
 }
 
-function downloadImage(url, index = null) {
-    const a = document.createElement('a');
-    a.href = url;
-    const timestamp = Date.now();
-    const filename = index ? `thumbnail-${timestamp}-${index}.png` : `thumbnail-${timestamp}.png`;
-    a.download = filename;
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('Download started', 'success');
+async function downloadImage(url, index = null) {
+    try {
+        // Fetch the image as a blob
+        const response = await fetch(url);
+        const blob = await response.blob();
+
+        // Create a blob URL
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Create download link
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        const timestamp = Date.now();
+        const filename = index ? `thumbnail-${timestamp}-${index}.png` : `thumbnail-${timestamp}.png`;
+        a.download = filename;
+
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Clean up the blob URL
+        URL.revokeObjectURL(blobUrl);
+
+        showToast('Download started', 'success');
+    } catch (error) {
+        console.error('Download error:', error);
+        // Fallback to original method if fetch fails
+        const a = document.createElement('a');
+        a.href = url;
+        const timestamp = Date.now();
+        const filename = index ? `thumbnail-${timestamp}-${index}.png` : `thumbnail-${timestamp}.png`;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('Download started', 'success');
+    }
+}
+
+async function upscaleImage(url) {
+    try {
+        // Show loading state in result container
+        const resultContainer = document.getElementById('resultContainer');
+        resultContainer.classList.add('has-result');
+        resultContainer.innerHTML = `
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Upscaling your image...</p>
+                <p class="loading-subtext">This may take a few moments</p>
+            </div>
+        `;
+
+        // Scroll to loading state
+        resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        showToast('Starting upscale process...', 'info');
+
+        // Convert URL to base64 if it's a regular URL
+        let imageData = url;
+        let mimeType = 'image/jpeg';
+
+        if (!url.startsWith('data:')) {
+            // Fetch the image and convert to base64
+            const response = await fetch(url);
+            const blob = await response.blob();
+            mimeType = blob.type || 'image/jpeg';
+
+            const reader = new FileReader();
+            const base64Promise = new Promise((resolve) => {
+                reader.onloadend = () => resolve(reader.result);
+            });
+            reader.readAsDataURL(blob);
+            imageData = await base64Promise;
+        }
+
+        // Send upscale request
+        const upscaleResponse = await fetch('/thumbnail/upscale', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({
+                image_data: imageData,
+                mime_type: mimeType
+            })
+        });
+
+        if (!upscaleResponse.ok) {
+            const error = await upscaleResponse.json();
+
+            // Clear loading state
+            resultContainer.innerHTML = '';
+            resultContainer.classList.remove('has-result');
+
+            if (error.error_type === 'insufficient_credits') {
+                showToast(`Insufficient credits. You need ${error.required_credits} credits but have ${error.current_credits.toFixed(2)}`, 'error');
+            } else {
+                showToast(error.error || 'Failed to upscale image', 'error');
+            }
+            return;
+        }
+
+        const result = await upscaleResponse.json();
+
+        if (result.success && result.result) {
+            // Check different possible response structures
+            let upscaledUrl = null;
+
+            // Try different response formats
+            if (result.result.image && result.result.image.url) {
+                upscaledUrl = result.result.image.url;
+            } else if (result.result.image) {
+                upscaledUrl = result.result.image;
+            } else if (result.result.url) {
+                upscaledUrl = result.result.url;
+            } else if (typeof result.result === 'string') {
+                upscaledUrl = result.result;
+            }
+
+            if (!upscaledUrl) {
+                console.error('Unexpected result structure:', result);
+                resultContainer.innerHTML = '';
+                resultContainer.classList.remove('has-result');
+                showToast('Failed to get upscaled image URL', 'error');
+                return;
+            }
+
+            // Update the result container with the upscaled image
+            resultContainer.innerHTML = `
+                <div class="result-image">
+                    <img src="${upscaledUrl}" alt="Upscaled image">
+                    <div class="result-actions">
+                        <button class="action-btn" onclick="downloadImage('${upscaledUrl}')">
+                            <i class="ph ph-download"></i>
+                            Download Upscaled
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Save to recent generations
+            addToHistory({
+                url: upscaledUrl,
+                prompt: 'Upscaled Image',
+                model: 'topaz-upscale',
+                timestamp: Date.now()
+            });
+
+            showToast(`Image upscaled successfully! Used ${result.credits_used} credits`, 'success');
+
+            // Scroll to result
+            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            // Clear loading state on failure
+            resultContainer.innerHTML = '';
+            resultContainer.classList.remove('has-result');
+            showToast('Failed to get upscaled image', 'error');
+        }
+
+    } catch (error) {
+        console.error('Upscale error:', error);
+        // Clear loading state on error
+        const resultContainer = document.getElementById('resultContainer');
+        resultContainer.innerHTML = '';
+        resultContainer.classList.remove('has-result');
+        showToast('Failed to upscale image', 'error');
+    }
 }
 
 async function improvePrompt() {
@@ -1379,6 +1597,7 @@ async function improvePrompt() {
             },
             body: JSON.stringify({
                 prompt: prompt,
+                model: selectedModel,  // Send selected model
                 image_data: allImagesData.length > 0 ? allImagesData[0].base64 : null,  // Legacy support
                 all_images_with_types: allImagesData  // Send all images with their mime types
             })

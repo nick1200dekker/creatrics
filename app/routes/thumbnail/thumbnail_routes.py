@@ -192,7 +192,7 @@ def generate_thumbnail():
             }), 402
 
         # Set FAL API key
-        fal_client.api_key = os.getenv('FAL_API_KEY')
+        fal_client.api_key = os.getenv('FAL_KEY')
 
         # Generate thumbnail based on model
         try:
@@ -212,8 +212,10 @@ def generate_thumbnail():
                         "prompt": prompt,
                         "image_urls": image_urls,
                         "num_images": num_images,
-                        "width": 1280,  # YouTube thumbnail width
-                        "height": 720   # YouTube thumbnail height (16:9)
+                        "image_size": {
+                            "width": 1280,  # YouTube thumbnail width
+                            "height": 720   # YouTube thumbnail height (16:9)
+                        }
                     }
                 )
 
@@ -258,6 +260,7 @@ def improve_prompt():
         user_id = g.user.get('id')
         data = request.get_json()
         prompt = data.get('prompt', '').strip()
+        model = data.get('model', 'nano-banana')  # Get selected model
         image_data = data.get('image_data')  # First image for backward compatibility
         all_images = data.get('all_images', [])  # Legacy format
         all_images_with_types = data.get('all_images_with_types', [])  # New format with mime types
@@ -271,16 +274,20 @@ def improve_prompt():
         # Check credits for prompt improvement
         credits_manager = CreditsManager()
 
-        # Prompt improvement costs 0.5 credits (with images: 1 credit per image, max 2 credits)
-        if all_images_with_types:
-            # Charge based on number of images (0.5 per image, max 2 credits for 4+ images)
-            required_credits = min(len(all_images_with_types) * 0.5, 2.0)
-        elif all_images:
-            required_credits = min(len(all_images) * 0.5, 2.0)
-        elif image_data:
-            required_credits = 1.0
-        else:
+        # New credit structure: 0.2 base, +0.3 for 1st photo, +0.2 for each additional
+        # 0 photos: 0.2, 1 photo: 0.5, 2 photos: 0.7, 3 photos: 0.9, 4 photos: 1.0
+        num_images = len(all_images_with_types) if all_images_with_types else (len(all_images) if all_images else (1 if image_data else 0))
+
+        if num_images == 0:
+            required_credits = 0.2
+        elif num_images == 1:
             required_credits = 0.5
+        elif num_images == 2:
+            required_credits = 0.7
+        elif num_images == 3:
+            required_credits = 0.9
+        else:  # 4 or more
+            required_credits = 1.0
 
         credit_check = credits_manager.check_sufficient_credits(
             user_id=user_id,
@@ -306,37 +313,40 @@ def improve_prompt():
 
         from improve_prompt import improve_editing_prompt
 
-        # Log the number of images being processed
+        # Log the number of images being processed and model
+        model_name = "Canvas Editor" if model == "nano-banana" else "Photo Editor"
         if all_images_with_types:
-            logger.info(f"Processing prompt improvement with {len(all_images_with_types)} images")
+            logger.info(f"Processing prompt improvement for {model_name} with {len(all_images_with_types)} images")
         elif all_images:
-            logger.info(f"Processing prompt improvement with {len(all_images)} images (legacy)")
+            logger.info(f"Processing prompt improvement for {model_name} with {len(all_images)} images (legacy)")
         elif image_data:
-            logger.info(f"Processing prompt improvement with 1 image (legacy)")
+            logger.info(f"Processing prompt improvement for {model_name} with 1 image (legacy)")
         else:
-            logger.info(f"Processing prompt improvement without images")
+            logger.info(f"Processing prompt improvement for {model_name} without images")
 
-        # Improve the prompt
-        # For now, use the first image as most AI providers don't support multiple images well
-        # But we could combine/stitch them in the future
+        # Improve the prompt with all images
         if all_images_with_types and len(all_images_with_types) > 0:
-            # Use the first image with its proper mime type
-            first_image = all_images_with_types[0]
-            mime_type = first_image.get('mimeType', 'image/jpeg')
-            base64_data = first_image.get('base64', '')
-            logger.info(f"Using image with mime type: {mime_type}")
-            improved_prompt = improve_editing_prompt(prompt, base64_data, mime_type)
+            # Pass all images to the prompt improver
+            logger.info(f"Sending {len(all_images_with_types)} image(s) to prompt improver")
+            improved_prompt = improve_editing_prompt(prompt, None, None, model, all_images_with_types)
             image_context = f"with {len(all_images_with_types)} image(s)"
         elif all_images and len(all_images) > 0:
-            # Legacy format without mime type
-            improved_prompt = improve_editing_prompt(prompt, all_images[0], 'image/jpeg')
+            # Legacy format without mime type - convert to new format
+            converted_images = []
+            for img_base64 in all_images:
+                converted_images.append({
+                    'base64': img_base64,
+                    'mimeType': 'image/jpeg'
+                })
+            logger.info(f"Converting {len(all_images)} legacy image(s) to new format")
+            improved_prompt = improve_editing_prompt(prompt, None, None, model, converted_images)
             image_context = f"with {len(all_images)} image(s)"
         elif image_data:
-            # Backward compatibility
-            improved_prompt = improve_editing_prompt(prompt, image_data, 'image/jpeg')
+            # Backward compatibility - single image
+            improved_prompt = improve_editing_prompt(prompt, image_data, 'image/jpeg', model)
             image_context = "with image"
         else:
-            improved_prompt = improve_editing_prompt(prompt)
+            improved_prompt = improve_editing_prompt(prompt, None, None, model)
             image_context = ""
 
         # Deduct credits after successful improvement
@@ -358,6 +368,106 @@ def improve_prompt():
 
     except Exception as e:
         logger.error(f"Error improving prompt: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/thumbnail/upscale', methods=['POST'])
+@auth_required
+def upscale_image():
+    """Upscale an image using Topaz AI model"""
+    try:
+        user_id = g.user.get('id')
+
+        # Get the image from request
+        if 'image' not in request.files:
+            # Check for base64 data in JSON
+            data = request.get_json()
+            if data and 'image_data' in data:
+                image_base64 = data['image_data']
+                mime_type = data.get('mime_type', 'image/jpeg')
+
+                # Remove data URL prefix if present
+                if image_base64.startswith('data:'):
+                    header, image_base64 = image_base64.split(',', 1)
+                    mime_type = header.split(':')[1].split(';')[0]
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'No image provided'
+                }), 400
+        else:
+            file = request.files['image']
+            if not file or not allowed_file(file.filename):
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid file'
+                }), 400
+
+            # Read and encode the image
+            image_data = file.read()
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            mime_type = f'image/{ext if ext != "jpg" else "jpeg"}'
+
+        # Check credits using configured cost
+        credits_manager = CreditsManager()
+        from app.system.credits.config import get_topaz_upscale_cost
+        required_credits = get_topaz_upscale_cost()  # Get configured cost for upscaling
+
+        credit_check = credits_manager.check_sufficient_credits(
+            user_id=user_id,
+            required_credits=required_credits
+        )
+
+        if not credit_check.get('sufficient', False):
+            return jsonify({
+                'success': False,
+                'error': f'Insufficient credits. Required: {required_credits}, Available: {credit_check.get("current_credits", 0):.2f}',
+                'error_type': 'insufficient_credits',
+                'required_credits': required_credits,
+                'current_credits': credit_check.get('current_credits', 0)
+            }), 402
+
+        # Import and use the upscale module
+        import sys
+        from pathlib import Path
+
+        # Add scripts directory to path
+        scripts_dir = Path(__file__).parent.parent.parent / 'scripts' / 'thumbnail'
+        sys.path.insert(0, str(scripts_dir))
+
+        from upscale import upscale_image as do_upscale
+
+        # Perform the upscaling
+        result = do_upscale(image_base64, mime_type)
+
+        if not result.get('success'):
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Upscaling failed')
+            }), 500
+
+        # Deduct credits
+        deduction_result = credits_manager.deduct_credits(
+            user_id=user_id,
+            amount=required_credits,
+            description="Image upscaling with Topaz AI",
+            feature_id="thumbnail_upscale"
+        )
+
+        if not deduction_result.get('success'):
+            logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+
+        return jsonify({
+            'success': True,
+            'result': result.get('result'),
+            'credits_used': required_credits
+        })
+
+    except Exception as e:
+        logger.error(f"Error upscaling image: {str(e)}")
         return jsonify({
             'success': False,
             'error': str(e)
