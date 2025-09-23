@@ -49,7 +49,7 @@ def api_create_checkout(plan_id):
         
         # Map plan_id to actual Stripe price ID
         price_id_map = {
-            'basic': os.environ.get('STRIPE_BASIC_PRICE_ID'),  # Soccer Pro subscription
+            'basic': os.environ.get('STRIPE_BASIC_PRICE_ID'),  # Premium Creator subscription
             'flex1': os.environ.get('STRIPE_FLEX1_PRICE_ID'),  # 500 credits one-time
             'flex2': os.environ.get('STRIPE_FLEX2_PRICE_ID')   # 1000 credits one-time
         }
@@ -75,14 +75,14 @@ def api_create_checkout(plan_id):
             
             # More flexible plan name matching
             is_king_plan = any(plan_name in normalized_plan for plan_name in [
-                'soccer pro', 'pro plan', 'basic plan', 'basic', 'pro'
+                'premium creator', 'premium', 'soccer pro', 'pro plan', 'basic plan', 'basic', 'pro'
             ])
             
             logger.info(f"Flex credit check - User plan: '{current_plan}', normalized: '{normalized_plan}', is_king: {is_king_plan}")
             
             if not is_king_plan:
                 logger.warning(f"User {user_id} attempted to buy flex credits without King plan (plan: '{current_plan}')")
-                return jsonify({"success": False, "error": "Flex Credits are only available to Soccer Pro subscribers"}), 403
+                return jsonify({"success": False, "error": "Flex Credits are only available to Premium Creator subscribers"}), 403
             
         # Get or create customer ID
         customer_id = user_data.get('stripe_customer_id')

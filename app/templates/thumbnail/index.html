@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% set check_auth = true %}
 
-{% block title %}Thumbnail Generator - Creator Tools{% endblock %}
+{% block title %}AI Thumbnail Generator - Create Eye-Catching YouTube Thumbnails | Creatrics{% endblock %}
+
+{% block seo_meta %}
+<meta name="description" content="Generate stunning YouTube thumbnails with AI. Create click-worthy designs that boost views and engagement. Professional thumbnail creation made simple with Creatrics AI technology.">
+<meta name="keywords" content="AI thumbnail generator, YouTube thumbnail creator, thumbnail design tool, viral thumbnails, content creation AI">
+{% endblock %}
 
 {% block additional_styles %}
 <style>
@@ -227,6 +232,70 @@ html.dark .thumbnail-wrapper {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
+}
+
+/* Number of Images Selector */
+.generation-options {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.model-selection-wrapper {
+    flex: 1;
+}
+
+.num-images-wrapper {
+    width: 120px;
+}
+
+.num-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 0.5rem;
+}
+
+.num-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+
+.num-btn:hover {
+    background: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+}
+
+.num-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.num-btn:disabled:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-primary);
+}
+
+.num-display {
+    min-width: 20px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .model-card {
@@ -700,20 +769,36 @@ html.dark .history-section {
 
                 <!-- Model Selection -->
                 <div class="form-group model-selection">
-                    <label class="form-label">Select Model</label>
-                    <div class="model-cards">
-                        <div class="model-card selected" data-model="nano-banana" onclick="selectModel('nano-banana')">
-                            <div class="model-name">Nano Banana</div>
-                            <div class="model-credits">
-                                <i class="ph ph-coin"></i>
-                                5 credits
+                    <div class="generation-options">
+                        <div class="model-selection-wrapper">
+                            <label class="form-label">Select Model</label>
+                            <div class="model-cards">
+                                <div class="model-card selected" data-model="nano-banana" onclick="selectModel('nano-banana')">
+                                    <div class="model-name">Nano Banana</div>
+                                    <div class="model-credits">
+                                        <i class="ph ph-coin"></i>
+                                        <span id="nano-cost">5</span> credits
+                                    </div>
+                                </div>
+                                <div class="model-card" data-model="seeddream" onclick="selectModel('seeddream')">
+                                    <div class="model-name">SeedDream V4</div>
+                                    <div class="model-credits">
+                                        <i class="ph ph-coin"></i>
+                                        <span id="seed-cost">4</span> credits
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="model-card" data-model="seeddream" onclick="selectModel('seeddream')">
-                            <div class="model-name">SeedDream V4</div>
-                            <div class="model-credits">
-                                <i class="ph ph-coin"></i>
-                                4 credits
+                        <div class="num-images-wrapper">
+                            <label class="form-label">Generations</label>
+                            <div class="num-selector">
+                                <button class="num-btn" onclick="decreaseNumImages()" id="decreaseBtn">
+                                    <i class="ph ph-minus"></i>
+                                </button>
+                                <span class="num-display" id="numImagesDisplay">1</span>
+                                <button class="num-btn" onclick="increaseNumImages()" id="increaseBtn">
+                                    <i class="ph ph-plus"></i>
+                                </button>
                             </div>
                         </div>
                     </div>

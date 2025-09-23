@@ -899,7 +899,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Determine plan type - More flexible plan name matching
         const normalizedPlan = currentPlan.toLowerCase().trim();
         const isFreePlan = normalizedPlan === 'free plan' || normalizedPlan === 'free';
-        isKingPlan = normalizedPlan === 'soccer pro' || 
+        isKingPlan = normalizedPlan === 'premium creator' || 
+                     normalizedPlan === 'premium' ||
+                     normalizedPlan === 'soccer pro' || 
                      normalizedPlan === 'king plan' || 
                      normalizedPlan === 'basic plan' ||
                      normalizedPlan === 'basic' ||

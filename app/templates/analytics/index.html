@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% set check_auth = true %}
 
-{% block title %}Analytics - Creator Tools{% endblock %}
+{% block title %}Content Analytics Dashboard - Track Performance & Growth | Creatrics{% endblock %}
+
+{% block seo_meta %}
+<meta name="description" content="Comprehensive analytics dashboard for content creators. Track YouTube and social media performance, monitor growth metrics, and optimize your content strategy with Creatrics analytics.">
+<meta name="keywords" content="content analytics, YouTube analytics, social media metrics, creator dashboard, performance tracking, content insights">
+{% endblock %}
 
 {% block head %}
 {{ super() }}
@@ -796,7 +801,7 @@ html.dark .pagination-btn {
                     <i class="ph ph-x-logo"></i>
                 </button>
                 <button class="platform-btn {% if youtube_connected and not x_connected %}active{% endif %}" data-platform="youtube"
-                        onclick="{% if youtube_connected %}switchPlatform('youtube'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}">
+                        onclick="{% if youtube_connected %}switchPlatform('youtube'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}" title="YouTube Analytics">
                     <i class="ph ph-youtube-logo"></i>
                     <span>YouTube</span>
                 </button>

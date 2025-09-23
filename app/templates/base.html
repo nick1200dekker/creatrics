@@ -6,15 +6,50 @@
     <title>{% block title %}Creatrics - AI-Powered Content Creation Tools{% endblock %}</title>
     
 {% block seo_meta %}
-<meta name="description" content="AI-powered content creation platform for YouTube and social media. Generate video scripts, titles, descriptions, thumbnails, and social media posts with advanced AI technology.">
-<meta name="keywords" content="AI content creation, YouTube tools, social media content, video scripts, content generator, AI writing, thumbnail creator, content calendar">
-<meta property="og:title" content="Creatrics - AI-Powered Content Creation Tools">
-<meta property="og:description" content="Create engaging content for YouTube and social media with AI-powered tools. Generate scripts, titles, descriptions, and posts effortlessly.">
+<meta name="description" content="Creatrics - Professional AI-powered content creation suite for creators. Generate viral YouTube scripts, engaging social media posts, eye-catching thumbnails, and comprehensive analytics. Boost your content strategy with advanced AI technology.">
+<meta name="keywords" content="AI content creation, YouTube content generator, social media AI tools, video script writer, thumbnail generator, content analytics, AI writing assistant, viral content creator, social media scheduler, YouTube optimization">
+<meta name="author" content="Creatrics">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="{{ request.url }}">
+
+<!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ request.url }}">
+<meta property="og:title" content="Creatrics - AI-Powered Content Creation Suite">
+<meta property="og:description" content="Transform your content creation with AI. Generate viral scripts, engaging posts, stunning thumbnails, and track performance - all in one powerful platform.">
+<meta property="og:image" content="{{ url_for('static', filename='images/og-image.png', _external=True) }}">
+<meta property="og:site_name" content="Creatrics">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="{{ request.url }}">
 <meta name="twitter:title" content="Creatrics - AI Content Creation Platform">
-<meta name="twitter:description" content="AI-powered tools for YouTube and social media content creation. Generate scripts, titles, posts, and more.">
+<meta name="twitter:description" content="Create viral content with AI. Scripts, thumbnails, posts, analytics - everything creators need in one platform.">
+<meta name="twitter:image" content="{{ url_for('static', filename='images/twitter-card.png', _external=True) }}">
+<meta name="twitter:creator" content="@creatrics">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Creatrics",
+  "description": "AI-powered content creation platform for YouTube and social media creators",
+  "url": "{{ request.url_root }}",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "creator": {
+    "@type": "Organization",
+    "name": "Creatrics"
+  }
+}
+</script>
 {% endblock %}
 
 <!-- Favicon -->

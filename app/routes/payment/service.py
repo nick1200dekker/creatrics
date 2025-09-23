@@ -476,36 +476,36 @@ class StripeService:
                         logger.error(f"❌ Failed to add flex credits: {credit_result.get('message', 'Unknown error')}")
                         
                 elif plan_id == 'basic' and mode == 'subscription':
-                    # New Soccer Pro subscription
-                    credits_to_add = 400
+                    # New Premium Creator subscription
+                    credits_to_add = 1000
                     
-                    logger.info(f"Processing new Soccer Pro subscription for user {user_id}")
+                    logger.info(f"Processing new Premium Creator subscription for user {user_id}")
                     
-                    # Update user to Soccer Pro plan FIRST
+                    # Update user to Premium Creator plan FIRST
                     update_result = UserService.update_user(user_id, {
-                        'subscription_plan': 'Soccer Pro'
+                        'subscription_plan': 'Premium Creator'
                     })
                     
                     if update_result:
-                        logger.info(f"✅ Updated user {user_id} to Soccer Pro plan")
+                        logger.info(f"✅ Updated user {user_id} to Premium Creator plan")
                     else:
                         logger.error(f"❌ Failed to update user plan")
                     
-                    # Add initial 400 credits
+                    # Add initial 1000 credits
                     credit_result = credits_manager.add_credits(
                         user_id,
                         credits_to_add,
-                        f"Soccer Pro subscription - initial credits (session: {session_id[:20]}...)",
+                        f"Premium Creator subscription - initial credits (session: {session_id[:20]}...)",
                         "subscription_initial"
                     )
                     
                     if credit_result['success']:
-                        logger.info(f"✅ Successfully added 400 initial credits to user {user_id}")
+                        logger.info(f"✅ Successfully added 1000 initial credits to user {user_id}")
                         logger.info(f"New balance: {credit_result.get('credits_remaining', 'unknown')}")
                         
                         # Record the transaction
                         StripeService._record_credit_transaction(
-                            user_id, transaction_id, credits_to_add, "Soccer Pro initial"
+                            user_id, transaction_id, credits_to_add, "Premium Creator initial"
                         )
                     else:
                         logger.error(f"❌ Failed to add initial credits: {credit_result.get('message', 'Unknown error')}")
@@ -577,14 +577,14 @@ class StripeService:
                 logger.error(f"User not found for Stripe customer: {customer_id}")
                 return
             
-            # Check if this is the Soccer Pro plan
+            # Check if this is the Premium Creator plan
             if product_id == os.environ.get('STRIPE_BASIC_PLAN_ID'):
-                # Update user to Soccer Pro plan (credits handled in checkout.session.completed)
+                # Update user to Premium Creator plan (credits handled in checkout.session.completed)
                 UserService.update_user(user_id, {
-                    'subscription_plan': 'Soccer Pro'
+                    'subscription_plan': 'Premium Creator'
                 })
                 
-                logger.info(f"✅ Updated user {user_id} to Soccer Pro plan")
+                logger.info(f"✅ Updated user {user_id} to Premium Creator plan")
                 
         except Exception as e:
             logger.error(f"Error in subscription creation handler: {str(e)}")
@@ -624,9 +624,9 @@ class StripeService:
             # Update plan based on product and status
             if product_id == os.environ.get('STRIPE_BASIC_PLAN_ID') and status == 'active':
                 UserService.update_user(user_id, {
-                    'subscription_plan': 'Soccer Pro'
+                    'subscription_plan': 'Premium Creator'
                 })
-                logger.info(f"✅ Updated user {user_id} subscription to Soccer Pro")
+                logger.info(f"✅ Updated user {user_id} subscription to Premium Creator")
             elif status in ['canceled', 'unpaid']:
                 UserService.update_user(user_id, {
                     'subscription_plan': 'Free Plan'
@@ -720,30 +720,30 @@ class StripeService:
                     subscription = stripe.Subscription.retrieve(subscription_id)
                     product_id = subscription['items']['data'][0]['price']['product']
                     
-                    # Only process Soccer Pro renewals
+                    # Only process Premium Creator renewals
                     if product_id == os.environ.get('STRIPE_BASIC_PLAN_ID'):
-                        logger.info(f"Processing Soccer Pro renewal for user {user_id}")
+                        logger.info(f"Processing Premium Creator renewal for user {user_id}")
                         
                         credits_manager = CreditsManager()
                         credit_result = credits_manager.add_credits(
                             user_id,
-                            400,
-                            f"Soccer Pro monthly renewal credits (invoice: {invoice_id[:20]}...)",
+                            1000,
+                            f"Premium Creator monthly renewal credits (invoice: {invoice_id[:20]}...)",
                             "subscription_renewal"
                         )
                         
                         if credit_result['success']:
-                            logger.info(f"✅ Successfully added 400 renewal credits to user {user_id}")
+                            logger.info(f"✅ Successfully added 1000 renewal credits to user {user_id}")
                             logger.info(f"New balance: {credit_result.get('credits_remaining', 'unknown')}")
                             
                             # Record the transaction
                             StripeService._record_credit_transaction(
-                                user_id, transaction_id, 400, "Soccer Pro renewal"
+                                user_id, transaction_id, 1000, "Premium Creator renewal"
                             )
                         else:
                             logger.error(f"❌ Failed to add renewal credits: {credit_result.get('message', 'Unknown error')}")
                     else:
-                        logger.info(f"Invoice payment is not for Soccer Pro plan, skipping")
+                        logger.info(f"Invoice payment is not for Premium Creator plan, skipping")
                         
                 except Exception as sub_error:
                     logger.error(f"Error retrieving subscription details: {str(sub_error)}")

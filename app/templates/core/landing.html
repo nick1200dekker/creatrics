@@ -3,7 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creatrics - Content Creator Platform</title>
+    <title>Creatrics - AI-Powered Content Creation Platform | Generate Viral Content</title>
+    <meta name="description" content="Transform your content creation with Creatrics AI. Generate viral YouTube scripts, engaging social posts, stunning thumbnails, and track performance analytics. Join thousands of creators boosting their content strategy.">
+    <meta name="keywords" content="AI content creation, YouTube script generator, social media content, viral content creator, thumbnail generator, content analytics, AI writing tools">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ request.url }}">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Creatrics - AI Content Creation Platform">
+    <meta property="og:description" content="Generate viral content with AI. Scripts, thumbnails, social posts, and analytics - everything creators need.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:image" content="{{ url_for('static', filename='images/landing-og.png', _external=True) }}">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Creatrics - AI Content Creation Platform">
+    <meta name="twitter:description" content="Generate viral content with AI. Everything creators need in one platform.">
+    <meta name="twitter:image" content="{{ url_for('static', filename='images/landing-twitter.png', _external=True) }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
