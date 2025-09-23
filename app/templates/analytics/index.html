@@ -25,6 +25,51 @@
     padding: 0 !important;
 }
 
+/* Fix dark mode toggle visibility on analytics page */
+#dark-mode-toggle {
+    position: relative !important;
+    z-index: 1000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 44px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+}
+
+#dark-mode-toggle i {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+/* Ensure proper icon visibility during theme transitions */
+html:not(.dark) #dark-mode-toggle .ph-moon {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+html:not(.dark) #dark-mode-toggle .ph-sun {
+    display: none !important;
+}
+
+html.dark #dark-mode-toggle .ph-sun {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+html.dark #dark-mode-toggle .ph-moon {
+    display: none !important;
+}
+
+.user-section {
+    position: relative !important;
+    z-index: 999 !important;
+    overflow: visible !important;
+}
+
 /* Main container fix */
 .analytics-container {
     padding: 1rem;
@@ -715,18 +760,10 @@ html.dark .pagination-btn {
             
             <!-- Timeframe Selector (center) -->
             <div class="timeframe-selector">
-                <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">
-                    7 Days
-                </button>
-                <button class="timeframe-btn" data-timeframe="30days" onclick="changeTimeframe('30days')">
-                    30 Days
-                </button>
-                <button class="timeframe-btn" data-timeframe="90days" onclick="changeTimeframe('90days')">
-                    90 Days
-                </button>
-                <button class="timeframe-btn active" data-timeframe="6months" onclick="changeTimeframe('6months')">
-                    6 Months
-                </button>
+                <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">7 Days</button>
+                <button class="timeframe-btn active" data-timeframe="30days" onclick="changeTimeframe('30days')">30 Days</button>
+                <button class="timeframe-btn" data-timeframe="90days" onclick="changeTimeframe('90days')">90 Days</button>
+                <button class="timeframe-btn" data-timeframe="6months" onclick="changeTimeframe('6months')">6 Months</button>
             </div>
         </div>
     </div>
@@ -756,7 +793,13 @@ html.dark .pagination-btn {
         <!-- Overview Metrics -->
         <div class="premium-card">
             <div class="p-4">
-                <h2 class="text-lg font-semibold mb-4">Overview</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold">Overview</h2>
+                    <button id="x-refresh-btn" class="secondary-button" onclick="refreshXData()" title="Refresh X data">
+                        <i class="ph ph-arrow-clockwise"></i>
+                        <span>Refresh Data</span>
+                    </button>
+                </div>
                 
                 <div id="x-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="loading-container">
@@ -995,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeAnalytics() {
     // Global variables
     let currentPlatform = '{% if x_connected %}x{% elif youtube_connected %}youtube{% else %}none{% endif %}';
-    let currentTimeframe = '6months';
+    let currentTimeframe = '30days';
     let chartViews = {
         impressions: 'daily',
         engagement: 'daily'
@@ -1998,7 +2041,7 @@ function initializeAnalytics() {
         // Update overview title
         const overviewTitle = document.getElementById('youtube-overview-title');
         if (overviewTitle) {
-            overviewTitle.textContent = `Channel Overview (${label})`;
+            overviewTitle.textContent = `Channel Overview`;
             console.log('Updated overview title to:', overviewTitle.textContent);
         } else {
             console.log('Could not find youtube-overview-title element');
@@ -2007,13 +2050,13 @@ function initializeAnalytics() {
         // Update performance chart title
         const performanceTitle = document.getElementById('youtube-performance-title');
         if (performanceTitle) {
-            performanceTitle.innerHTML = `<i class="ph ph-chart-bar"></i> Performance Overview (${label})`;
+            performanceTitle.innerHTML = `<i class="ph ph-chart-bar"></i> Performance Overview`;
         }
         
         // Update traffic sources title
         const trafficTitle = document.getElementById('youtube-traffic-title');
         if (trafficTitle) {
-            trafficTitle.innerHTML = `<i class="ph ph-funnel"></i> Traffic Sources (${label})`;
+            trafficTitle.innerHTML = `<i class="ph ph-funnel"></i> Traffic Sources`;
         }
     }
     
@@ -2380,6 +2423,53 @@ function initializeAnalytics() {
             </div>
         `;
     }
+    
+    // X data refresh function
+    window.refreshXData = function() {
+        const refreshBtn = document.getElementById('x-refresh-btn');
+        const originalContent = refreshBtn.innerHTML;
+        
+        // Show loading state
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<div class="loading-spinner"></div><span>Refreshing...</span>';
+        
+        fetch('/analytics/x/refresh', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                if (window.BaseApp && window.BaseApp.showToast) {
+                    window.BaseApp.showToast('X data refreshed successfully!', 'success');
+                }
+                
+                // Reload the analytics data
+                setTimeout(() => {
+                    loadXAnalytics();
+                }, 1000);
+            } else {
+                // Show error message
+                if (window.BaseApp && window.BaseApp.showToast) {
+                    window.BaseApp.showToast(data.error || 'Failed to refresh data', 'error');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing X data:', error);
+            if (window.BaseApp && window.BaseApp.showToast) {
+                window.BaseApp.showToast('Failed to refresh X data', 'error');
+            }
+        })
+        .finally(() => {
+            // Restore button state
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = originalContent;
+        });
+    };
     
     // YouTube data refresh function
     window.refreshYouTubeData = function() {

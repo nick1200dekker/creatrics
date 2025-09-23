@@ -931,6 +931,42 @@ def youtube_daily_views():
         logger.error(f"Error fetching YouTube daily views: {str(e)}")
         return jsonify({'error': 'Failed to fetch daily views data'}), 500
 
+@bp.route('/analytics/x/refresh', methods=['POST'])
+@auth_required
+def refresh_x_data():
+    """Manually refresh X analytics data"""
+    user_id = g.user.get('id')
+    
+    try:
+        # Import the X analytics function
+        from app.scripts.accounts.x_analytics import fetch_x_analytics
+        
+        logger.info(f"Manual X analytics refresh requested for user {user_id}")
+        
+        # Fetch fresh data
+        result = fetch_x_analytics(user_id)
+        
+        if result:
+            logger.info(f"X analytics refresh completed successfully for user {user_id}")
+            return jsonify({
+                'success': True,
+                'message': 'X analytics data refreshed successfully',
+                'timestamp': result.get('timestamp')
+            })
+        else:
+            logger.error(f"X analytics refresh failed for user {user_id}")
+            return jsonify({
+                'success': False,
+                'error': 'Failed to refresh X analytics data'
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error refreshing X analytics for user {user_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to refresh analytics data'
+        }), 500
+
 @bp.route('/analytics/youtube/refresh', methods=['POST'])
 @auth_required
 def refresh_youtube_data():
