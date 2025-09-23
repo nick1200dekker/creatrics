@@ -76,7 +76,7 @@ html.dark #dark-mode-toggle .ph-moon {
     width: 100%;
 }
 
-/* Premium card styling - Fixed */
+/* Premium card styling - Fixed with consistent heights */
 .premium-card {
     background-color: #ffffff;
     border-radius: 12px;
@@ -84,11 +84,20 @@ html.dark #dark-mode-toggle .ph-moon {
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     margin-bottom: 1.5rem;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
 }
 
 html.dark .premium-card {
     background-color: #27272a;
     border: 1px solid #3f3f46;
+}
+
+.premium-card .p-4 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Header card specific */
@@ -342,6 +351,9 @@ html.dark .metric-value {
     margin-bottom: 1.5rem;
     position: relative;
     overflow: hidden;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
 }
 
 html.dark .chart-card {
@@ -738,15 +750,18 @@ html.dark .pagination-btn {
     <div class="header-card">
         <div class="flex items-center justify-between p-4">
             <h1 class="analytics-title">
-                <i class="ph ph-chart-bar text-teal-primary mr-3 text-2xl"></i>
+                <i class="ph ph-chart-bar mr-3 text-2xl" style="color: #3B82F6;"></i>
                 Analytics Dashboard
             </h1>
         </div>
 
         <!-- Platform Tabs and Timeframe Selector -->
-        <div class="flex items-center justify-center px-4 pb-4 relative">
-            <!-- Platform Selector (left) -->
-            <div class="platform-selector absolute left-4">
+        <div class="flex items-center justify-between px-4 pb-4">
+            <!-- Empty space for balance -->
+            <div style="width: 200px;"></div>
+            
+            <!-- Platform Selector (center) -->
+            <div class="platform-selector">
                 <button class="platform-btn icon-only {% if x_connected %}active{% endif %}" data-platform="x" 
                         onclick="{% if x_connected %}switchPlatform('x'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}" title="X Analytics">
                     <i class="ph ph-x-logo"></i>
@@ -758,7 +773,7 @@ html.dark .pagination-btn {
                 </button>
             </div>
             
-            <!-- Timeframe Selector (center) -->
+            <!-- Timeframe Selector (right) -->
             <div class="timeframe-selector">
                 <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">7 Days</button>
                 <button class="timeframe-btn active" data-timeframe="30days" onclick="changeTimeframe('30days')">30 Days</button>
