@@ -627,6 +627,12 @@ html.dark #x-posts-filter {
     color: #6b7280;
 }
 
+/* Center loading spinner when it's the only child in grid */
+.grid > .loading-container:only-child {
+    grid-column: 1 / -1;
+    min-height: 200px;
+}
+
 .loading-spinner {
     display: inline-block;
     width: 1.5rem;
