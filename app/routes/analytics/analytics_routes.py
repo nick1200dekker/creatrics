@@ -840,6 +840,95 @@ def youtube_overview():
         logger.error(f"Error fetching YouTube overview: {str(e)}")
         return jsonify({'error': 'Failed to fetch analytics data'}), 500
 
+@bp.route('/analytics/youtube/daily-views')
+@auth_required
+def youtube_daily_views():
+    """Get YouTube daily views data with timeframe support"""
+    user_id = g.user.get('id')
+    timeframe = request.args.get('timeframe', '30days')
+    
+    try:
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app()
+        
+        db = firestore.client()
+        
+        # Get latest data which includes daily_data
+        latest_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
+        latest_doc = latest_ref.get()
+        
+        if not latest_doc.exists:
+            return jsonify({'error': 'No YouTube analytics data available'}), 404
+        
+        latest_data = latest_doc.to_dict()
+        daily_data = latest_data.get('daily_data', [])
+        
+        if not daily_data:
+            return jsonify({'error': 'No daily data available'}), 404
+        
+        # Filter by timeframe
+        timeframe_days = {
+            '7days': 7,
+            '30days': 30,
+            '90days': 90
+        }.get(timeframe, 30)
+        
+        cutoff_date = datetime.now() - timedelta(days=timeframe_days)
+        cutoff_date_str = cutoff_date.strftime('%Y-%m-%d')
+        
+        filtered_data = [
+            day for day in daily_data 
+            if day.get('date', '') >= cutoff_date_str
+        ]
+        
+        # Sort by date
+        filtered_data.sort(key=lambda x: x.get('date', ''))
+        
+        return jsonify({
+            'daily_data': filtered_data,
+            'timeframe': timeframe
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching YouTube daily views: {str(e)}")
+        return jsonify({'error': 'Failed to fetch daily views data'}), 500
+
+@bp.route('/analytics/youtube/refresh', methods=['POST'])
+@auth_required
+def refresh_youtube_data():
+    """Manually refresh YouTube analytics data"""
+    user_id = g.user.get('id')
+    
+    try:
+        # Import the YouTube analytics function
+        from app.scripts.accounts.youtube_analytics import fetch_youtube_analytics
+        
+        logger.info(f"Manual YouTube analytics refresh requested for user {user_id}")
+        
+        # Fetch fresh data
+        result = fetch_youtube_analytics(user_id)
+        
+        if result:
+            logger.info(f"YouTube analytics refresh completed successfully for user {user_id}")
+            return jsonify({
+                'success': True,
+                'message': 'YouTube analytics data refreshed successfully',
+                'timestamp': result.get('timestamp')
+            })
+        else:
+            logger.error(f"YouTube analytics refresh failed for user {user_id}")
+            return jsonify({
+                'success': False,
+                'error': 'Failed to refresh YouTube analytics data'
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error refreshing YouTube analytics for user {user_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to refresh analytics data'
+        }), 500
+
 def calculate_trends(historical_data):
     """Calculate trends from historical data"""
     if len(historical_data) < 2:

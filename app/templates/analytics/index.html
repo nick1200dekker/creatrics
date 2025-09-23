@@ -295,6 +295,8 @@ html.dark .metric-value {
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
 }
 
 html.dark .chart-card {
@@ -326,6 +328,7 @@ html.dark .chart-title {
     width: 100%;
     height: 300px;
     position: relative;
+    overflow: hidden;
 }
 
 /* Chart toggle */
@@ -877,10 +880,22 @@ html.dark .pagination-btn {
     <!-- YouTube Analytics Content -->
     {% if youtube_connected %}
     <div id="youtube-content" class="tab-content {% if youtube_connected and not x_connected %}active{% endif %}">
+        <!-- Note about YouTube data -->
+        <div class="data-note mb-4">
+            <i class="ph ph-info"></i>
+            <span>YouTube analytics show daily breakdowns for the selected timeframe. Use the refresh button to get the latest data from YouTube.</span>
+        </div>
+        
         <!-- Overview Metrics -->
         <div class="premium-card">
             <div class="p-4">
-                <h2 class="text-lg font-semibold mb-4">Channel Overview (Last 90 Days)</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold">Channel Overview (Last 90 Days)</h2>
+                    <button id="youtube-refresh-btn" class="secondary-button" onclick="refreshYouTubeData()" title="Refresh YouTube data">
+                        <i class="ph ph-arrow-clockwise"></i>
+                        <span>Refresh Data</span>
+                    </button>
+                </div>
                 
                 <div id="youtube-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="loading-container">
@@ -893,12 +908,12 @@ html.dark .pagination-btn {
 
         <!-- Charts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Views & Watch Time Chart -->
+            <!-- Performance Overview Chart -->
             <div class="chart-card">
                 <div class="chart-header">
                     <h3 class="chart-title">
-                        <i class="ph ph-eye"></i>
-                        Views & Watch Time
+                        <i class="ph ph-chart-bar"></i>
+                        Performance Overview (90 Days)
                     </h3>
                 </div>
                 <div id="youtube-views-chart" class="chart-container">
@@ -913,7 +928,7 @@ html.dark .pagination-btn {
                 <div class="chart-header">
                     <h3 class="chart-title">
                         <i class="ph ph-funnel"></i>
-                        Traffic Sources
+                        Traffic Sources (30 Days)
                     </h3>
                 </div>
                 <div id="youtube-traffic-chart" class="chart-container">
@@ -1039,6 +1054,9 @@ function initializeAnalytics() {
         
         if (currentPlatform === 'x') {
             loadXAnalytics();
+        } else if (currentPlatform === 'youtube') {
+            // Reload YouTube analytics with new timeframe
+            loadYouTubeAnalytics();
         }
     };
     
@@ -1059,6 +1077,15 @@ function initializeAnalytics() {
         }
         
         currentPlatform = platform;
+        
+        // Show/hide timeframe selector based on platform
+        const timeframeSelector = document.querySelector('.timeframe-selector');
+        if (timeframeSelector) {
+            // YouTube now supports timeframes too!
+            timeframeSelector.style.opacity = '1';
+            timeframeSelector.style.pointerEvents = 'auto';
+            timeframeSelector.title = '';
+        }
         
         if (platform === 'x' && contentElement) {
             loadXAnalytics();
@@ -1955,6 +1982,7 @@ function initializeAnalytics() {
     
     // YouTube Analytics functions
     function loadYouTubeAnalytics() {
+        // Load overview data
         fetch('/analytics/youtube/overview')
             .then(response => response.json())
             .then(data => {
@@ -1963,12 +1991,32 @@ function initializeAnalytics() {
                     return;
                 }
                 renderYouTubeMetrics(data.current);
-                renderYouTubeCharts(data.current);
                 renderYouTubeVideos(data.current?.top_videos || []);
+                
+                // Load daily data for charts
+                loadYouTubeDailyData(data.current);
             })
             .catch(error => {
                 console.error('Error loading YouTube overview:', error);
                 showYouTubeError('Failed to load analytics data');
+            });
+    }
+    
+    function loadYouTubeDailyData(overviewData) {
+        fetch(`/analytics/youtube/daily-views?timeframe=${currentTimeframe}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('No daily data available:', data.error);
+                    // Still render charts with overview data
+                    renderYouTubeCharts(overviewData);
+                    return;
+                }
+                renderYouTubeChartsWithDailyData(data.daily_data, overviewData);
+            })
+            .catch(error => {
+                console.error('Error loading YouTube daily data:', error);
+                renderYouTubeCharts(overviewData);
             });
     }
     
@@ -2022,28 +2070,203 @@ function initializeAnalytics() {
         `;
     }
     
-    function renderYouTubeCharts(metrics) {
-        // Traffic sources chart
-        if (metrics.traffic_sources && metrics.traffic_sources.length > 0) {
-            const trafficOptions = {
-                series: metrics.traffic_sources.map(s => s.views),
-                chart: {
-                    type: 'donut',
-                    height: 300,
-                    background: 'transparent'
-                },
-                labels: metrics.traffic_sources.map(s => s.source),
-                colors: ['#3B82F6', '#60A5FA', '#EF4444', '#F59E0B', '#8B5CF6'],
-                legend: {
-                    position: 'right',
-                    labels: { colors: '#6b7280' }
-                },
-                dataLabels: { enabled: false },
-                tooltip: { theme: 'light' }
-            };
+    function renderYouTubeChartsWithDailyData(dailyData, overviewData) {
+        // Performance Overview chart with daily data
+        const viewsContainer = document.querySelector("#youtube-views-chart");
+        if (viewsContainer) {
+            viewsContainer.innerHTML = ''; // Clear loading state
             
-            const trafficChart = new ApexCharts(document.querySelector("#youtube-traffic-chart"), trafficOptions);
-            trafficChart.render();
+            if (dailyData && dailyData.length > 0) {
+                const viewsOptions = {
+                    series: [
+                        {
+                            name: 'Views',
+                            type: 'column',
+                            data: dailyData.map(d => ({
+                                x: d.date,
+                                y: d.views || 0
+                            }))
+                        },
+                        {
+                            name: 'Watch Time (hrs)',
+                            type: 'line',
+                            data: dailyData.map(d => ({
+                                x: d.date,
+                                y: d.watch_time_hours || 0
+                            }))
+                        }
+                    ],
+                    chart: {
+                        height: 300,
+                        type: 'line',
+                        toolbar: { show: false },
+                        background: 'transparent'
+                    },
+                    stroke: {
+                        width: [0, 3],
+                        curve: 'smooth'
+                    },
+                    plotOptions: {
+                        bar: {
+                            columnWidth: '60%'
+                        }
+                    },
+                    colors: ['#3B82F6', '#10B981'],
+                    xaxis: {
+                        type: 'datetime',
+                        labels: { 
+                            style: { colors: '#6b7280' },
+                            rotate: -45
+                        }
+                    },
+                    yaxis: [
+                        {
+                            title: { text: 'Views', style: { color: '#6b7280' } },
+                            labels: { 
+                                style: { colors: '#6b7280' },
+                                formatter: function(val) {
+                                    return Math.round(val).toString();
+                                }
+                            }
+                        },
+                        {
+                            opposite: true,
+                            title: { text: 'Watch Time (hrs)', style: { color: '#6b7280' } },
+                            labels: { 
+                                style: { colors: '#6b7280' },
+                                formatter: function(val) {
+                                    return val.toFixed(2) + 'h';
+                                }
+                            }
+                        }
+                    ],
+                    tooltip: { theme: 'light' },
+                    legend: { show: true, position: 'top' },
+                    grid: {
+                        borderColor: 'rgba(229, 231, 235, 0.5)'
+                    }
+                };
+                
+                const viewsChart = new ApexCharts(viewsContainer, viewsOptions);
+                viewsChart.render();
+            } else {
+                viewsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No daily data available</div></div>';
+            }
+        }
+        
+        // Render traffic sources chart
+        renderTrafficSourcesChart(overviewData);
+    }
+    
+    function renderYouTubeCharts(metrics) {
+        // Fallback chart when no daily data available
+        const viewsContainer = document.querySelector("#youtube-views-chart");
+        if (viewsContainer) {
+            viewsContainer.innerHTML = ''; // Clear loading state
+            
+            if (metrics.views || metrics.watch_time_hours || metrics.subscribers_gained) {
+                const formatNumber = (num) => {
+                    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+                    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+                    return num.toLocaleString();
+                };
+                
+                const viewsOptions = {
+                    series: [{
+                        name: 'Metrics',
+                        data: [
+                            { x: 'Views', y: metrics.views || 0 },
+                            { x: 'Watch Time (hrs)', y: metrics.watch_time_hours || 0 },
+                            { x: 'Subscribers Gained', y: metrics.subscribers_gained || 0 },
+                            { x: 'Total Engagement', y: metrics.total_engagement || 0 }
+                        ]
+                    }],
+                    chart: {
+                        type: 'bar',
+                        height: 300,
+                        toolbar: { show: false },
+                        background: 'transparent'
+                    },
+                    plotOptions: {
+                        bar: {
+                            borderRadius: 4,
+                            horizontal: false,
+                            columnWidth: '60%'
+                        }
+                    },
+                    colors: ['#3B82F6'],
+                    xaxis: {
+                        labels: { 
+                            style: { colors: '#6b7280' },
+                            rotate: -45
+                        }
+                    },
+                    yaxis: {
+                        labels: { 
+                            style: { colors: '#6b7280' },
+                            formatter: function(val) {
+                                return formatNumber(val);
+                            }
+                        }
+                    },
+                    tooltip: {
+                        theme: 'light',
+                        y: {
+                            formatter: function(val, opts) {
+                                const category = opts.w.globals.labels[opts.dataPointIndex];
+                                if (category === 'Watch Time (hrs)') {
+                                    return val.toLocaleString() + ' hours';
+                                }
+                                return formatNumber(val);
+                            }
+                        }
+                    },
+                    dataLabels: { enabled: false },
+                    grid: {
+                        borderColor: 'rgba(229, 231, 235, 0.5)'
+                    }
+                };
+                
+                const viewsChart = new ApexCharts(viewsContainer, viewsOptions);
+                viewsChart.render();
+            } else {
+                viewsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No performance data available</div></div>';
+            }
+        }
+        
+        // Render traffic sources chart
+        renderTrafficSourcesChart(metrics);
+    }
+    
+    function renderTrafficSourcesChart(metrics) {
+        // Traffic sources chart
+        const trafficContainer = document.querySelector("#youtube-traffic-chart");
+        if (trafficContainer) {
+            trafficContainer.innerHTML = ''; // Clear loading state
+            
+            if (metrics.traffic_sources && metrics.traffic_sources.length > 0) {
+                const trafficOptions = {
+                    series: metrics.traffic_sources.map(s => s.views),
+                    chart: {
+                        type: 'donut',
+                        height: 300,
+                        background: 'transparent'
+                    },
+                    labels: metrics.traffic_sources.map(s => s.source),
+                    colors: ['#3B82F6', '#60A5FA', '#EF4444', '#F59E0B', '#8B5CF6'],
+                    legend: {
+                        position: 'bottom',
+                        labels: { colors: '#6b7280' }
+                    },
+                    dataLabels: { enabled: false },
+                    tooltip: { theme: 'light' }
+                };
+                
+                const trafficChart = new ApexCharts(trafficContainer, trafficOptions);
+                trafficChart.render();
+            } else {
+                trafficContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No traffic data available</div></div>';
+            }
         }
     }
     
@@ -2113,6 +2336,53 @@ function initializeAnalytics() {
             </div>
         `;
     }
+    
+    // YouTube data refresh function
+    window.refreshYouTubeData = function() {
+        const refreshBtn = document.getElementById('youtube-refresh-btn');
+        const originalContent = refreshBtn.innerHTML;
+        
+        // Show loading state
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<div class="loading-spinner"></div><span>Refreshing...</span>';
+        
+        fetch('/analytics/youtube/refresh', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                if (window.BaseApp && window.BaseApp.showToast) {
+                    window.BaseApp.showToast('YouTube data refreshed successfully!', 'success');
+                }
+                
+                // Reload the analytics data
+                setTimeout(() => {
+                    loadYouTubeAnalytics();
+                }, 1000);
+            } else {
+                // Show error message
+                if (window.BaseApp && window.BaseApp.showToast) {
+                    window.BaseApp.showToast(data.error || 'Failed to refresh data', 'error');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing YouTube data:', error);
+            if (window.BaseApp && window.BaseApp.showToast) {
+                window.BaseApp.showToast('Failed to refresh YouTube data', 'error');
+            }
+        })
+        .finally(() => {
+            // Restore button state
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = originalContent;
+        });
+    };
 }
 </script>
 {% endblock %}

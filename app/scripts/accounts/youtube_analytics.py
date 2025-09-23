@@ -153,7 +153,7 @@ class YouTubeAnalytics:
             start_date_90d = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
             start_date_30d = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
             
-            # Basic metrics
+            # Basic metrics (aggregate)
             metrics_90d = None
             try:
                 metrics_90d = youtube_analytics.reports().query(
@@ -164,6 +164,19 @@ class YouTubeAnalytics:
                 ).execute()
             except Exception as e:
                 logger.error(f"Error fetching basic metrics: {str(e)}")
+            
+            # Daily metrics for time series
+            daily_metrics = None
+            try:
+                daily_metrics = youtube_analytics.reports().query(
+                    ids=f'channel=={self.channel_id}',
+                    startDate=start_date_90d,
+                    endDate=end_date,
+                    dimensions='day',
+                    metrics='views,estimatedMinutesWatched,subscribersGained'
+                ).execute()
+            except Exception as e:
+                logger.warning(f"Could not fetch daily metrics: {str(e)}")
             
             # Traffic sources
             traffic_sources = None
@@ -196,7 +209,7 @@ class YouTubeAnalytics:
                 logger.warning(f"Could not fetch top videos: {str(e)}")
             
             # Process the data
-            processed_analytics = self._process_analytics(metrics_90d, traffic_sources, top_videos)
+            processed_analytics = self._process_analytics(metrics_90d, daily_metrics, traffic_sources, top_videos)
             
             # Store analytics data
             self._store_analytics(processed_analytics)
@@ -210,7 +223,7 @@ class YouTubeAnalytics:
             logger.error(f"Error fetching analytics data: {str(e)}")
             return None
     
-    def _process_analytics(self, metrics_90d, traffic_sources, top_videos):
+    def _process_analytics(self, metrics_90d, daily_metrics, traffic_sources, top_videos):
         """Process raw analytics data into structured metrics"""
         now = datetime.now()
         
@@ -250,6 +263,7 @@ class YouTubeAnalytics:
             # Data collections
             "traffic_sources": [],
             "top_videos": [],
+            "daily_data": [],
             "status": "success"
         }
         
@@ -285,6 +299,24 @@ class YouTubeAnalytics:
             
             processed["avg_daily_views"] = round(processed["views"] / 90, 0)
             processed["avg_daily_watch_time"] = round(processed["watch_time_minutes"] / 90, 0)
+        
+        # Process daily metrics
+        if daily_metrics and 'rows' in daily_metrics:
+            column_index = {col['name']: idx for idx, col in enumerate(daily_metrics['columnHeaders'])}
+            
+            for row in daily_metrics['rows']:
+                day = row[column_index['day']]
+                views = int(row[column_index.get('views', 0)])
+                watch_time_minutes = int(row[column_index.get('estimatedMinutesWatched', 0)])
+                subscribers_gained = int(row[column_index.get('subscribersGained', 0)])
+                
+                processed["daily_data"].append({
+                    "date": day,
+                    "views": views,
+                    "watch_time_minutes": watch_time_minutes,
+                    "watch_time_hours": round(watch_time_minutes / 60, 2),
+                    "subscribers_gained": subscribers_gained
+                })
         
         # Process traffic sources
         if traffic_sources and 'rows' in traffic_sources:
