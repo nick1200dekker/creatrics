@@ -1,0 +1,703 @@
+{% extends "base.html" %}
+{% set check_auth = true %}
+
+{% block title %}Account Settings - Creator Tools{% endblock %}
+
+{% block head %}
+{{ super() }}
+<!-- Disable Turbo for this page to ensure full reload -->
+<meta name="turbo-visit-control" content="reload">
+<meta name="turbo-cache-control" content="no-cache">
+{% endblock %}
+
+{% block additional_styles %}
+<style>
+/* Reset default content-panel padding like Brain Dump */
+.content-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Main Container */
+.accounts-wrapper {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-primary);
+    overflow: hidden;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Header Section */
+.accounts-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.page-title i {
+    color: #3B82F6;
+}
+
+/* Content Section */
+.accounts-content {
+    padding: 2rem;
+}
+
+/* Flash Messages */
+.flash-message {
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.flash-message.error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #EF4444;
+}
+
+html.dark .flash-message.error {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #F87171;
+}
+
+.flash-message.success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10B981;
+}
+
+html.dark .flash-message.success {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #34D399;
+}
+
+/* Account Cards Grid */
+.accounts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Account Card */
+.account-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.account-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+html.dark .account-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.platform-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.platform-icon.x-platform {
+    background: linear-gradient(135deg, #1DA1F2 0%, #0E71C8 100%);
+}
+
+.platform-icon.youtube-platform {
+    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+}
+
+.platform-icon.tiktok-platform {
+    background: linear-gradient(135deg, #000000 0%, #333333 100%);
+}
+
+.platform-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Connection Status */
+.connection-status {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 60px;
+}
+
+.status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.status-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #3B82F6;
+    color: white;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .form-input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.form-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-tertiary);
+}
+
+/* Buttons */
+.action-button {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+}
+
+.action-button.primary {
+    background: #3B82F6;
+    color: white;
+}
+
+.action-button.primary:hover {
+    background: #2563EB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.action-button.secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+}
+
+.action-button.secondary:hover {
+    background: var(--hover-bg);
+    transform: translateY(-1px);
+}
+
+.dashboard-button {
+    padding: 0.625rem 1.25rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.dashboard-button:hover {
+    background: var(--hover-bg);
+    transform: translateY(-1px);
+}
+
+/* Info Section */
+.info-section {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+
+.info-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.info-text {
+    font-size: 0.825rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Super Powers Modal */
+.super-powers-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.super-powers-modal.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.super-powers-container {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.super-powers-modal.visible .super-powers-container {
+    transform: translateY(0) scale(1);
+}
+
+.modal-content {
+    text-align: center;
+}
+
+.modal-progress {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.modal-time {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.modal-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-primary);
+    border-top: 2px solid #3B82F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.25rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .accounts-header {
+        padding: 1rem;
+    }
+    
+    .accounts-content {
+        padding: 1rem;
+    }
+    
+    .accounts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .page-title {
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="accounts-wrapper">
+    <!-- Super Powers Modal -->
+    {% if show_super_powers %}
+    <div class="super-powers-modal" id="superPowersModal">
+        <div class="super-powers-container">
+            <button class="modal-close-btn" onclick="closeSuperPowers()">
+                <i class="ph ph-x"></i>
+            </button>
+            <div class="modal-content">
+                <p class="modal-progress">
+                    {% if request.args.get('platform') == 'youtube' %}
+                        YouTube Account setup in progress
+                    {% elif request.args.get('platform') == 'tiktok' %}
+                        TikTok Account setup in progress
+                    {% else %}
+                        X Account setup in progress
+                    {% endif %}
+                </p>
+                <p class="modal-time">This will take approximately 5 minutes</p>
+                <div class="modal-loading">
+                    <div class="loading-spinner"></div>
+                    <span>Setting up your experience...</span>
+                </div>
+                <button class="action-button primary" onclick="closeSuperPowers()">
+                    Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Header -->
+    <div class="accounts-header">
+        <div class="header-content">
+            <h1 class="page-title">
+                <i class="ph ph-link"></i>
+                Social Accounts
+            </h1>
+            <a href="{{ url_for('home.dashboard') }}" class="dashboard-button" data-turbo="false">
+                <i class="ph ph-house"></i>
+                Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <!-- Content -->
+    <div class="accounts-content">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        <i class="ph ph-{{ 'check-circle' if category == 'success' else 'warning-circle' }}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Account Cards -->
+        <div class="accounts-grid">
+            <!-- X Account -->
+            <div class="account-card">
+                <div class="card-header">
+                    <div class="platform-icon x-platform">
+                        <i class="ph ph-x-logo"></i>
+                    </div>
+                    <h2 class="platform-name">X Account</h2>
+                </div>
+                
+                {% if x_connected %}
+                    <div class="connection-status">
+                        <div class="status-info">
+                            <span class="status-label">Connected</span>
+                            <span class="status-value">@{{ x_username }}</span>
+                        </div>
+                        <span class="status-badge">Active</span>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}">
+                        <input type="hidden" name="platform" value="x">
+                        <button type="submit" class="action-button secondary">
+                            <i class="ph ph-link-break"></i>
+                            Disconnect Account
+                        </button>
+                    </form>
+                {% else %}
+                    <form method="POST" action="{{ url_for('accounts.connect_account') }}">
+                        <input type="hidden" name="platform" value="x">
+                        
+                        <div class="form-group">
+                            <label for="x_username" class="form-label">Username</label>
+                            <input type="text" 
+                                   id="x_username" 
+                                   name="x_username" 
+                                   class="form-input" 
+                                   placeholder="username" 
+                                   required>
+                        </div>
+                        
+                        <button type="submit" class="action-button primary">
+                            <i class="ph ph-link"></i>
+                            Configure Account
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+            
+            <!-- YouTube Account -->
+            <div class="account-card">
+                <div class="card-header">
+                    <div class="platform-icon youtube-platform">
+                        <i class="ph ph-youtube-logo"></i>
+                    </div>
+                    <h2 class="platform-name">YouTube Channel</h2>
+                </div>
+                
+                {% if youtube_connected %}
+                    <div class="connection-status">
+                        <div class="status-info">
+                            <span class="status-label">Connected</span>
+                            <span class="status-value">{{ youtube_channel }}</span>
+                        </div>
+                        <span class="status-badge">Active</span>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}">
+                        <input type="hidden" name="platform" value="youtube">
+                        <button type="submit" class="action-button secondary">
+                            <i class="ph ph-link-break"></i>
+                            Disconnect Channel
+                        </button>
+                    </form>
+                {% else %}
+                    <div class="form-group">
+                        <label for="youtube_channel" class="form-label">Channel</label>
+                        <input type="text" 
+                               id="youtube_channel" 
+                               name="youtube_channel" 
+                               class="form-input" 
+                               placeholder="Press connect button" 
+                               disabled>
+                    </div>
+                    
+                    <a href="{{ url_for('accounts.youtube_connect_redirect') }}" 
+                       class="action-button primary" 
+                       data-turbo="false">
+                        <i class="ph ph-link"></i>
+                        Connect with YouTube
+                    </a>
+                {% endif %}
+            </div>
+            
+            <!-- TikTok Account -->
+            <div class="account-card">
+                <div class="card-header">
+                    <div class="platform-icon tiktok-platform">
+                        <i class="ph ph-music-notes"></i>
+                    </div>
+                    <h2 class="platform-name">TikTok Account</h2>
+                </div>
+                
+                {% if tiktok_connected %}
+                    <div class="connection-status">
+                        <div class="status-info">
+                            <span class="status-label">Connected</span>
+                            <span class="status-value">@{{ tiktok_username }}</span>
+                        </div>
+                        <span class="status-badge">Active</span>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}">
+                        <input type="hidden" name="platform" value="tiktok">
+                        <button type="submit" class="action-button secondary">
+                            <i class="ph ph-link-break"></i>
+                            Disconnect Account
+                        </button>
+                    </form>
+                {% else %}
+                    <form method="POST" action="{{ url_for('accounts.connect_account') }}">
+                        <input type="hidden" name="platform" value="tiktok">
+                        
+                        <div class="form-group">
+                            <label for="tiktok_username" class="form-label">Username</label>
+                            <input type="text" 
+                                   id="tiktok_username" 
+                                   name="tiktok_username" 
+                                   class="form-input" 
+                                   placeholder="username" 
+                                   required>
+                        </div>
+                        
+                        <button type="submit" class="action-button primary">
+                            <i class="ph ph-link"></i>
+                            Configure Account
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Info Section -->
+        <div class="info-section">
+            <h3 class="info-title">Why configure your accounts?</h3>
+            <p class="info-text">
+                Configuring your social accounts allows CreatorPal to provide personalized content suggestions 
+                and analyze engagement metrics. For YouTube, connecting via the API gives you access to detailed 
+                analytics data including views, watch time, audience demographics, and more.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure Turbo is fully disabled for this page
+    if (window.Turbo) {
+        Turbo.cache.clear();
+    }
+    
+    // Handle Super Powers modal
+    const superPowersModal = document.getElementById('superPowersModal');
+    
+    if (superPowersModal) {
+        // Show modal with animation
+        setTimeout(function() {
+            superPowersModal.classList.add('visible');
+        }, 100);
+    }
+});
+
+function closeSuperPowers() {
+    const modal = document.getElementById('superPowersModal');
+    if (modal) {
+        modal.classList.remove('visible');
+        
+        // Remove modal after transition
+        setTimeout(function() {
+            modal.style.display = 'none';
+        }, 300);
+    }
+}
+
+// Disable Turbo for all links on this page to ensure clean navigation
+document.addEventListener('click', function(e) {
+    const link = e.target.closest('a');
+    if (link && !link.hasAttribute('data-turbo')) {
+        link.setAttribute('data-turbo', 'false');
+    }
+});
+</script>
+{% endblock %}

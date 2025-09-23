@@ -205,15 +205,6 @@
     height: 100%;
 }
 
-.note-item-date {
-    font-size: 0.7rem;
-    color: var(--text-tertiary);
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    flex-shrink: 0;
-    margin-top: auto;
-}
 
 .note-delete-btn {
     width: 28px;
@@ -1064,8 +1055,6 @@ function displayNotes(notesToShow) {
     }
     
     notesList.innerHTML = notesToShow.map(note => {
-        const date = new Date(note.updated_at);
-        const dateStr = formatDate(date);
         const preview = stripHtml(note.content || '').substring(0, 100);
         
         return `
@@ -1074,10 +1063,6 @@ function displayNotes(notesToShow) {
                 <div class="note-item-content" onclick="selectNote('${note.id}')">
                     <div class="note-item-title">${escapeHtml(note.title || 'Untitled')}</div>
                     <div class="note-item-preview">${escapeHtml(preview || 'No content')}</div>
-                    <div class="note-item-date">
-                        <i class="ph ph-clock"></i>
-                        ${dateStr}
-                    </div>
                 </div>
                 <button class="note-delete-btn" onclick="event.stopPropagation(); deleteNote('${note.id}')" title="Delete note">
                     <i class="ph ph-trash"></i>

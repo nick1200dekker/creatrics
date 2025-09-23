@@ -860,7 +860,7 @@
                     <span>Thumbnail</span>
                 </a>
 
-                <a href="{{ url_for('analytics.analytics') }}?from=youtube"
+                <a href="{{ url_for('analytics.index') }}?from=youtube"
                    class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and request.args.get('from') != 'x' %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-chart-line"></i>
@@ -885,7 +885,7 @@
                     <span>Post Editor</span>
                 </a>
 
-                <a href="{{ url_for('analytics.analytics') }}?from=x"
+                <a href="{{ url_for('analytics.index') }}?from=x"
                    class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and request.args.get('from') == 'x' %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-chart-bar"></i>
@@ -906,6 +906,13 @@
            onclick="return BaseApp.checkGuestAccess(event, this)">
             <i class="ph ph-calendar"></i>
             <span>Content Calendar</span>
+        </a>
+
+        <a href="{{ url_for('accounts.index') }}"
+           class="nav-item {% if request.endpoint and 'accounts' in request.endpoint %}active{% endif %}"
+           onclick="return BaseApp.checkGuestAccess(event, this)">
+            <i class="ph ph-user-gear"></i>
+            <span>Account Settings</span>
         </a>
 
         <a href="{{ url_for('payment.index') }}"

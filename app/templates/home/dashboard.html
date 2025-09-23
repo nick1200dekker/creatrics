@@ -607,7 +607,7 @@ html.dark .coming-soon-section {
             </a>
 
             <!-- Analytics -->
-            <a href="{{ url_for('analytics.analytics') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+            <a href="{{ url_for('analytics.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-chart-line feature-icon-inline"></i>Analytics</h3>
                     <p>Track performance metrics</p>
@@ -633,7 +633,7 @@ html.dark .coming-soon-section {
             </a>
             
             <!-- X Analytics -->
-            <a href="{{ url_for('analytics.analytics') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+            <a href="{{ url_for('analytics.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-chart-bar feature-icon-inline"></i>Analytics</h3>
                     <p>Monitor growth metrics</p>
@@ -663,6 +663,14 @@ html.dark .coming-soon-section {
                 <div class="feature-content">
                     <h3><i class="ph ph-calendar feature-icon-inline"></i>Content Calendar</h3>
                     <p>Plan and schedule content</p>
+                </div>
+            </a>
+
+            <!-- Account Settings -->
+            <a href="{{ url_for('accounts.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-user-gear feature-icon-inline"></i>Account Settings</h3>
+                    <p>Connect your social accounts</p>
                 </div>
             </a>
         </div>

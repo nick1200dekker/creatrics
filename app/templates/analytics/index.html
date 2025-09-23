@@ -1,582 +1,2118 @@
 {% extends "base.html" %}
+{% set check_auth = true %}
 
-{% block title %}Analytics - Creatrics{% endblock %}
+{% block title %}Analytics - Creator Tools{% endblock %}
+
+{% block head %}
+{{ super() }}
+<!-- Include ApexCharts for visualizations -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@latest/dist/apexcharts.min.js"></script>
+{% endblock %}
 
 {% block additional_styles %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-    }
+/* Core Variables */
+:root {
+    --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    --button-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+}
 
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
+/* Force override base.html styles for this page */
+.main-content .content-panel {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+}
 
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1e293b;
-    }
+/* Main container fix */
+.analytics-container {
+    padding: 1rem;
+    width: 100%;
+}
 
-    .stat-label {
-        font-size: 0.875rem;
-        color: #64748b;
-        margin-bottom: 8px;
-    }
+/* Premium card styling - Fixed */
+.premium-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
 
-    .stat-change {
-        font-size: 0.875rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 8px;
-        border-radius: 6px;
-    }
+html.dark .premium-card {
+    background-color: #27272a;
+    border: 1px solid #3f3f46;
+}
 
-    .stat-change.positive {
-        color: #10b981;
-        background: #d1fae5;
-    }
+/* Header card specific */
+.header-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
 
-    .stat-change.negative {
-        color: #ef4444;
-        background: #fee2e2;
-    }
+html.dark .header-card {
+    background: #27272a;
+    border: 1px solid #3f3f46;
+}
 
-    .video-row {
-        padding: 12px;
-        border-bottom: 1px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
+/* Flex utilities */
+.flex { display: flex !important; }
+.items-center { align-items: center !important; }
+.justify-between { justify-content: space-between !important; }
+.justify-center { justify-content: center !important; }
+.relative { position: relative !important; }
+.absolute { position: absolute !important; }
+.left-4 { left: 1rem !important; }
 
-    .video-row:hover {
-        background: #f8fafc;
-    }
+/* Padding utilities */
+.p-4 { padding: 1rem !important; }
+.px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+.pb-4 { padding-bottom: 1rem !important; }
 
-    .video-thumbnail {
-        width: 120px;
-        height: 68px;
-        border-radius: 8px;
-        background: #e2e8f0;
-        object-fit: cover;
-    }
+/* Margin utilities */
+.mb-4 { margin-bottom: 1rem !important; }
+.mb-6 { margin-bottom: 1.5rem !important; }
+.mr-3 { margin-right: 0.75rem !important; }
+.ml-3 { margin-left: 0.75rem !important; }
+.mt-2 { margin-top: 0.5rem !important; }
 
-    .video-stats {
-        display: flex;
-        gap: 16px;
-        font-size: 0.875rem;
-        color: #64748b;
-    }
+/* Text utilities */
+.text-xl { font-size: 1.25rem !important; }
+.text-lg { font-size: 1.125rem !important; }
+.text-xs { font-size: 0.75rem !important; }
+.text-2xl { font-size: 1.5rem !important; }
+.font-bold { font-weight: 700 !important; }
+.font-semibold { font-weight: 600 !important; }
+.font-medium { font-weight: 500 !important; }
+.text-center { text-align: center !important; }
 
-    .chart-container {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        margin-top: 20px;
-    }
+/* Text colors */
+.text-white { color: white !important; }
+.text-teal-primary { color: #14b8a6 !important; }
+.text-gray-400 { color: #9ca3af !important; }
+.text-green-400 { color: #4ade80 !important; }
+.text-yellow-400 { color: #facc15 !important; }
+.text-red-400 { color: #f87171 !important; }
 
-    .period-selector {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 20px;
-    }
+/* Header title */
+.analytics-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+}
 
-    .period-btn {
-        padding: 6px 12px;
-        border: 1px solid #e2e8f0;
-        background: white;
-        border-radius: 6px;
-        font-size: 0.875rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
+html.dark .analytics-title {
+    color: #fafafa;
+}
 
-    .period-btn:hover {
-        background: #f8fafc;
-    }
+/* Secondary button */
+.secondary-button {
+    background: #f3f4f6;
+    color: #1f2937;
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem 1rem;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
 
-    .period-btn.active {
-        background: var(--accent-blue);
-        color: white;
-        border-color: var(--accent-blue);
-    }
+html.dark .secondary-button {
+    background: #3f3f46;
+    color: #fafafa;
+    border: 1px solid #52525b;
+}
 
-    .audience-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-    }
+.secondary-button:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
 
-    .progress-bar-container {
-        background: #e2e8f0;
-        border-radius: 4px;
-        height: 8px;
-        overflow: hidden;
-        margin: 4px 0;
-    }
+/* Platform selector */
+.platform-selector {
+    display: inline-flex;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 2px;
+}
 
-    .progress-bar-fill {
-        background: var(--accent-blue);
-        height: 100%;
-        transition: width 0.3s ease;
-    }
+html.dark .platform-selector {
+    background: #3f3f46;
+    border: 1px solid #52525b;
+}
 
-    .realtime-indicator {
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        background: #10b981;
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-        margin-right: 8px;
-    }
+.platform-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
 
-    @keyframes pulse {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
+.platform-btn:hover {
+    color: #1f2937;
+    background: #ffffff;
+}
+
+html.dark .platform-btn:hover {
+    color: #fafafa;
+    background: #52525b;
+}
+
+.platform-btn.active {
+    color: #3B82F6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.platform-btn.icon-only {
+    padding: 0.5rem;
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+}
+
+/* Timeframe selector */
+.timeframe-selector {
+    display: inline-flex;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+html.dark .timeframe-selector {
+    background: #3f3f46;
+    border: 1px solid #52525b;
+}
+
+.timeframe-btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.timeframe-btn:hover {
+    color: #1f2937;
+}
+
+html.dark .timeframe-btn:hover {
+    color: #fafafa;
+}
+
+.timeframe-btn.active {
+    background: #3B82F6;
+    color: white;
+}
+
+/* Metric cards */
+.metric-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+html.dark .metric-card {
+    background: #3f3f46;
+    border: 1px solid #52525b;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metric-label {
+    color: #6b7280;
+    font-size: 0.813rem;
+    font-weight: 500;
+    margin-bottom: 0.375rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+html.dark .metric-label {
+    color: #9ca3af;
+}
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1;
+}
+
+html.dark .metric-value {
+    color: #fafafa;
+}
+
+.metric-trend {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 0.375rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.trend-up { color: #10b981; }
+.trend-down { color: #ef4444; }
+.trend-neutral { color: #6b7280; }
+
+/* Chart containers */
+.chart-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+html.dark .chart-card {
+    background: #27272a;
+    border: 1px solid #3f3f46;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.chart-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+html.dark .chart-title {
+    color: #fafafa;
+}
+
+.chart-container {
+    width: 100%;
+    height: 300px;
+    position: relative;
+}
+
+/* Chart toggle */
+.chart-toggle {
+    display: inline-flex;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+html.dark .chart-toggle {
+    background: #3f3f46;
+    border: 1px solid #52525b;
+}
+
+.toggle-btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+    color: #1f2937;
+}
+
+html.dark .toggle-btn:hover {
+    color: #fafafa;
+}
+
+.toggle-btn.active {
+    background: #3B82F6;
+    color: white;
+}
+
+/* Data table */
+.data-table-wrapper {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+html.dark .data-table-wrapper {
+    background: #27272a;
+    border: 1px solid #3f3f46;
+}
+
+.data-table-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+html.dark .data-table-header {
+    border-bottom: 1px solid #3f3f46;
+}
+
+.data-table-container {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    background-color: #f9fafb;
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+html.dark .data-table th {
+    background-color: #3f3f46;
+    color: #fafafa;
+    border-bottom: 1px solid #52525b;
+}
+
+.data-table td {
+    color: #374151;
+    font-size: 0.875rem;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+html.dark .data-table td {
+    color: #d1d5db;
+    border-bottom: 1px solid #3f3f46;
+}
+
+.data-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+html.dark .data-table tbody tr:hover {
+    background-color: #3f3f46;
+}
+
+/* Post preview */
+.post-preview {
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.post-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    text-decoration: none;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.post-link:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Engagement badge */
+.engagement-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.engagement-high {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.engagement-medium {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+}
+
+.engagement-low {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* Filter dropdown */
+#x-posts-filter {
+    background: #f3f4f6;
+    color: #1f2937;
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    height: 36px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 8px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+}
+
+html.dark #x-posts-filter {
+    background-color: #3f3f46;
+    color: #fafafa;
+    border: 1px solid #52525b;
+}
+
+/* Data note */
+.data-note {
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    color: #fbbf24;
+    font-size: 0.813rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Loading states */
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #6b7280;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 3px solid #e5e7eb;
+    border-radius: 50%;
+    border-top-color: #3B82F6;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+html.dark .empty-state-title {
+    color: #fafafa;
+}
+
+.empty-state-description {
+    font-size: 0.875rem;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Tab content */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+html.dark .pagination {
+    border-top: 1px solid #3f3f46;
+}
+
+.pagination-btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    font-size: 0.813rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+html.dark .pagination-btn {
+    background: #3f3f46;
+    border: 1px solid #52525b;
+    color: #d1d5db;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #e5e7eb;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-btn.active {
+    background: #3B82F6;
+    color: white;
+    border-color: transparent;
+}
+
+.pagination-info {
+    color: #6b7280;
+    font-size: 0.813rem;
+    margin: 0 1rem;
+}
+
+/* Grid system */
+.grid { display: grid !important; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+.gap-4 { gap: 1rem !important; }
+.gap-6 { gap: 1.5rem !important; }
+.col-span-full { grid-column: 1 / -1 !important; }
+.hidden { display: none !important; }
+
+@media (min-width: 768px) {
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+}
+
+@media (min-width: 1024px) {
+    .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .analytics-container {
+        padding: 0.5rem;
     }
+    
+    .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .platform-selector {
+        width: 100%;
+        position: static !important;
+        margin-bottom: 1rem;
+    }
+    
+    .timeframe-selector {
+        width: 100%;
+    }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="mb-2">Analytics Dashboard</h1>
-                    <p class="lead mb-0">Track your content performance and audience insights</p>
-                </div>
-                <div>
-                    <button class="btn btn-primary" onclick="refreshAnalytics()">
-                        <i class="fas fa-sync"></i> Refresh
-                    </button>
-                </div>
+<div class="analytics-container">
+    <!-- Header -->
+    <div class="header-card">
+        <div class="flex items-center justify-between p-4">
+            <h1 class="analytics-title">
+                <i class="ph ph-chart-bar text-teal-primary mr-3 text-2xl"></i>
+                Analytics Dashboard
+            </h1>
+        </div>
+
+        <!-- Platform Tabs and Timeframe Selector -->
+        <div class="flex items-center justify-center px-4 pb-4 relative">
+            <!-- Platform Selector (left) -->
+            <div class="platform-selector absolute left-4">
+                <button class="platform-btn icon-only {% if x_connected %}active{% endif %}" data-platform="x" 
+                        onclick="{% if x_connected %}switchPlatform('x'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}" title="X Analytics">
+                    <i class="ph ph-x-logo"></i>
+                </button>
+                <button class="platform-btn {% if youtube_connected and not x_connected %}active{% endif %}" data-platform="youtube"
+                        onclick="{% if youtube_connected %}switchPlatform('youtube'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}">
+                    <i class="ph ph-youtube-logo"></i>
+                    <span>YouTube</span>
+                </button>
+            </div>
+            
+            <!-- Timeframe Selector (center) -->
+            <div class="timeframe-selector">
+                <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">
+                    7 Days
+                </button>
+                <button class="timeframe-btn" data-timeframe="30days" onclick="changeTimeframe('30days')">
+                    30 Days
+                </button>
+                <button class="timeframe-btn" data-timeframe="90days" onclick="changeTimeframe('90days')">
+                    90 Days
+                </button>
+                <button class="timeframe-btn active" data-timeframe="6months" onclick="changeTimeframe('6months')">
+                    6 Months
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Real-time Stats -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="stat-label" style="color: rgba(255,255,255,0.8);">
-                            <span class="realtime-indicator" style="background: white;"></span>
-                            Real-Time
-                        </div>
-                        <div class="stat-value" style="color: white;">
-                            <span id="realtimeViewers">--</span> viewers
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <div style="color: rgba(255,255,255,0.8); font-size: 0.875rem;">Last hour</div>
-                        <div style="font-size: 1.25rem; font-weight: 600;">
-                            <span id="viewsLastHour">--</span> views
-                        </div>
+    <!-- No accounts connected state -->
+    {% if not x_connected and not youtube_connected %}
+    <div class="premium-card">
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="ph ph-link-break"></i>
+            </div>
+            <div class="empty-state-title">No Accounts Connected</div>
+            <div class="empty-state-description">
+                Connect your social media accounts to start tracking analytics
+            </div>
+            <a href="{{ url_for('accounts.index') }}" class="secondary-button mt-4">
+                <i class="ph ph-link"></i>
+                <span>Connect Accounts</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- X Analytics Content -->
+    {% if x_connected %}
+    <div id="x-content" class="tab-content {% if x_connected %}active{% endif %}">
+        <!-- Overview Metrics -->
+        <div class="premium-card">
+            <div class="p-4">
+                <h2 class="text-lg font-semibold mb-4">Overview</h2>
+                
+                <div id="x-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="loading-container">
+                        <div class="loading-spinner"></div>
+                        <span class="ml-3">Loading metrics...</span>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Daily Impressions Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="ph ph-eye"></i>
+                        <span id="impressions-title">Daily Impressions</span>
+                    </h3>
+                    <div class="chart-toggle">
+                        <button class="toggle-btn active" id="impressions-daily-btn" onclick="toggleChartView('impressions', 'daily')">Daily</button>
+                        <button class="toggle-btn" onclick="toggleChartView('impressions', 'rolling')">Rolling Avg (10 Posts)</button>
+                    </div>
+                </div>
+                <div id="x-impressions-note" class="data-note hidden">
+                    <i class="ph ph-info"></i>
+                    <span>Rolling average requires more historical data. Building over time...</span>
+                </div>
+                <div id="x-impressions-chart" class="chart-container"></div>
+            </div>
+
+            <!-- Daily Engagement Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="ph ph-heart"></i>
+                        <span id="engagement-title">Daily Engagement</span>
+                    </h3>
+                    <div class="chart-toggle">
+                        <button class="toggle-btn active" id="engagement-daily-btn" onclick="toggleChartView('engagement', 'daily')">Daily</button>
+                        <button class="toggle-btn" onclick="toggleChartView('engagement', 'rolling')">Rolling Avg (10 Posts)</button>
+                    </div>
+                </div>
+                <div id="x-engagement-note" class="data-note hidden">
+                    <i class="ph ph-info"></i>
+                    <span>Rolling average requires more historical data. Building over time...</span>
+                </div>
+                <div id="x-engagement-chart" class="chart-container"></div>
+            </div>
+
+            <!-- Daily Posts Count -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="ph ph-article"></i>
+                        <span id="posts-count-title">Daily Posts Count</span>
+                    </h3>
+                </div>
+                <div id="x-posts-count-chart" class="chart-container"></div>
+            </div>
+
+            <!-- Followers Growth -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="ph ph-users"></i>
+                        <span id="followers-title">Followers Growth</span>
+                    </h3>
+                </div>
+                <div id="x-followers-note" class="data-note hidden">
+                    <i class="ph ph-info"></i>
+                    <span>Building over time...</span>
+                </div>
+                <div id="x-followers-chart" class="chart-container"></div>
+            </div>
+        </div>
+
+        <!-- Posts Table -->
+        <div class="data-table-wrapper">
+            <div class="data-table-header">
+                <h3 class="text-lg font-semibold">All Posts</h3>
+                <select id="x-posts-filter" onchange="loadXPosts(this.value)">
+                    <option value="all">Most Recent</option>
+                    <option value="views">Top by Views</option>
+                    <option value="engagement">Top by Engagement</option>
+                </select>
+            </div>
+            
+            <div class="data-table-container">
+                <table class="data-table" id="x-posts-table">
+                    <thead>
+                        <tr>
+                            <th>Post</th>
+                            <th>Date</th>
+                            <th>Views</th>
+                            <th>Likes</th>
+                            <th>Retweets</th>
+                            <th>Replies</th>
+                            <th>Engagement Rate</th>
+                            <th>Link</th>
+                        </tr>
+                    </thead>
+                    <tbody id="x-posts-tbody">
+                        <tr>
+                            <td colspan="8" class="text-center">
+                                <div class="loading-container">
+                                    <div class="loading-spinner"></div>
+                                    <span class="ml-3">Loading posts...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination" id="x-posts-pagination"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- YouTube Analytics Content -->
+    {% if youtube_connected %}
+    <div id="youtube-content" class="tab-content {% if youtube_connected and not x_connected %}active{% endif %}">
+        <!-- Overview Metrics -->
+        <div class="premium-card">
+            <div class="p-4">
+                <h2 class="text-lg font-semibold mb-4">Channel Overview (Last 90 Days)</h2>
+                
+                <div id="youtube-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="loading-container">
+                        <div class="loading-spinner"></div>
+                        <span class="ml-3">Loading metrics...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Views & Watch Time Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="ph ph-eye"></i>
+                        Views & Watch Time
+                    </h3>
+                </div>
+                <div id="youtube-views-chart" class="chart-container">
+                    <div class="loading-container">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Traffic Sources Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="ph ph-funnel"></i>
+                        Traffic Sources
+                    </h3>
+                </div>
+                <div id="youtube-traffic-chart" class="chart-container">
+                    <div class="loading-container">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Videos Table -->
+        <div class="data-table-wrapper">
+            <div class="data-table-header">
+                <h3 class="text-lg font-semibold">Top Videos</h3>
+            </div>
+            
+            <div class="data-table-container">
+                <table class="data-table" id="youtube-videos-table">
+                    <thead>
+                        <tr>
+                            <th>Video</th>
+                            <th>Views</th>
+                            <th>Watch Time (hrs)</th>
+                            <th>Avg View Duration</th>
+                            <th>Likes</th>
+                            <th>Comments</th>
+                            <th>Engagement Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="youtube-videos-tbody">
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="loading-container">
+                                    <div class="loading-spinner"></div>
+                                    <span class="ml-3">Loading videos...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-
-    <!-- Overview Stats -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="stat-card">
-                <div class="stat-label">Total Views</div>
-                <div class="stat-value" id="totalViews">--</div>
-                <div class="stat-change positive" id="viewsChange">
-                    <i class="fas fa-arrow-up"></i> --
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="stat-card">
-                <div class="stat-label">Subscribers</div>
-                <div class="stat-value" id="totalSubscribers">--</div>
-                <div class="stat-change positive" id="subscribersChange">
-                    <i class="fas fa-arrow-up"></i> --
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="stat-card">
-                <div class="stat-label">Watch Time (hours)</div>
-                <div class="stat-value" id="watchTimeHours">--</div>
-                <div class="stat-change positive" id="watchTimeChange">
-                    <i class="fas fa-arrow-up"></i> --
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="stat-card">
-                <div class="stat-label">Est. Revenue</div>
-                <div class="stat-value" id="revenueEstimate">$--</div>
-                <div class="mt-2">
-                    <small class="text-muted">This month</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Charts Section -->
-        <div class="col-lg-8">
-            <!-- Performance Chart -->
-            <div class="chart-container">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Performance Overview</h5>
-                    <div class="period-selector">
-                        <button class="period-btn active" onclick="changePeriod('7days')">7 Days</button>
-                        <button class="period-btn" onclick="changePeriod('30days')">30 Days</button>
-                        <button class="period-btn" onclick="changePeriod('90days')">90 Days</button>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <select class="form-control form-control-sm" style="width: 150px;" id="metricSelector" onchange="changeMetric()">
-                        <option value="views">Views</option>
-                        <option value="subscribers">Subscribers</option>
-                        <option value="watchtime">Watch Time</option>
-                        <option value="revenue">Revenue</option>
-                    </select>
-                </div>
-                <canvas id="performanceChart" height="100"></canvas>
-            </div>
-
-            <!-- Top Videos -->
-            <div class="chart-container">
-                <h5 class="mb-3">Top Performing Videos</h5>
-                <div id="topVideos">
-                    <!-- Videos will be loaded here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Audience Section -->
-        <div class="col-lg-4">
-            <!-- Audience Demographics -->
-            <div class="audience-card">
-                <h5 class="mb-3">Audience Demographics</h5>
-
-                <div class="mb-4">
-                    <h6 class="text-muted mb-2">Age Groups</h6>
-                    <div id="ageGroups">
-                        <!-- Age groups will be loaded here -->
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <h6 class="text-muted mb-2">Top Countries</h6>
-                    <div id="topCountries">
-                        <!-- Countries will be loaded here -->
-                    </div>
-                </div>
-
-                <div>
-                    <h6 class="text-muted mb-2">Gender Distribution</h6>
-                    <canvas id="genderChart" height="150"></canvas>
-                </div>
-            </div>
-
-            <!-- Traffic Sources -->
-            <div class="audience-card">
-                <h5 class="mb-3">Traffic Sources</h5>
-                <div id="trafficSources">
-                    <!-- Traffic sources will be loaded here -->
-                </div>
-            </div>
-        </div>
-    </div>
+    {% endif %}
 </div>
 
 <script>
-let performanceChart = null;
-let genderChart = null;
-let currentPeriod = '7days';
-let currentMetric = 'views';
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if ApexCharts is loaded
+    if (typeof ApexCharts === 'undefined') {
+        console.error('ApexCharts library failed to load. Trying to reload...');
+        // Try loading ApexCharts again
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/apexcharts@latest/dist/apexcharts.min.js';
+        script.onload = function() {
+            console.log('ApexCharts loaded successfully');
+            initializeAnalytics();
+        };
+        script.onerror = function() {
+            console.error('Failed to load ApexCharts');
+        };
+        document.head.appendChild(script);
+        return;
+    }
 
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    loadOverview();
-    loadChartData();
-    loadTopVideos();
-    loadAudienceData();
-    loadRealtimeData();
-
-    // Refresh realtime data every 30 seconds
-    setInterval(loadRealtimeData, 30000);
+    initializeAnalytics();
 });
 
-async function loadOverview() {
-    try {
-        const response = await fetch('/api/analytics/overview');
-        const data = await response.json();
-
-        if (data.success) {
-            const overview = data.overview;
-
-            // Update stats
-            document.getElementById('totalViews').textContent = formatNumber(overview.total_views);
-            document.getElementById('totalSubscribers').textContent = formatNumber(overview.total_subscribers);
-            document.getElementById('watchTimeHours').textContent = formatNumber(overview.watch_time_hours);
-            document.getElementById('revenueEstimate').textContent = `$${overview.revenue_estimate.toFixed(2)}`;
-
-            // Update changes
-            updateChangeIndicator('viewsChange', overview.views_change);
-            updateChangeIndicator('subscribersChange', overview.subscribers_change);
-            updateChangeIndicator('watchTimeChange', overview.watch_time_change);
+function initializeAnalytics() {
+    // Global variables
+    let currentPlatform = '{% if x_connected %}x{% elif youtube_connected %}youtube{% else %}none{% endif %}';
+    let currentTimeframe = '6months';
+    let chartViews = {
+        impressions: 'daily',
+        engagement: 'daily'
+    };
+    let xPostsData = {
+        all: [],
+        currentPage: 1,
+        itemsPerPage: 12,
+        currentFilter: 'all'
+    };
+    let charts = {
+        impressions: null,
+        engagement: null,
+        postsCount: null,
+        followers: null
+    };
+    
+    // Timeframe change handler
+    window.changeTimeframe = function(timeframe) {
+        currentTimeframe = timeframe;
+        
+        document.querySelectorAll('.timeframe-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.timeframe === timeframe) {
+                btn.classList.add('active');
+            }
+        });
+        
+        const impressionsTitle = document.getElementById('impressions-title');
+        const engagementTitle = document.getElementById('engagement-title');
+        const postsCountTitle = document.getElementById('posts-count-title');
+        const followersTitle = document.getElementById('followers-title');
+        const impressionsDailyBtn = document.getElementById('impressions-daily-btn');
+        const engagementDailyBtn = document.getElementById('engagement-daily-btn');
+        
+        if (timeframe === '6months') {
+            if (impressionsTitle) impressionsTitle.textContent = 'Weekly Impressions';
+            if (engagementTitle) engagementTitle.textContent = 'Weekly Engagement';
+            if (postsCountTitle) postsCountTitle.textContent = 'Weekly Posts Count';
+            if (followersTitle) followersTitle.textContent = 'Followers Growth';
+            if (impressionsDailyBtn) impressionsDailyBtn.textContent = 'Weekly';
+            if (engagementDailyBtn) engagementDailyBtn.textContent = 'Weekly';
+        } else {
+            if (impressionsTitle) impressionsTitle.textContent = 'Daily Impressions';
+            if (engagementTitle) engagementTitle.textContent = 'Daily Engagement';
+            if (postsCountTitle) postsCountTitle.textContent = 'Daily Posts Count';
+            if (followersTitle) followersTitle.textContent = 'Followers Growth';
+            if (impressionsDailyBtn) impressionsDailyBtn.textContent = 'Daily';
+            if (engagementDailyBtn) engagementDailyBtn.textContent = 'Daily';
         }
-    } catch (error) {
-        console.error('Error loading overview:', error);
-    }
-}
-
-async function loadChartData() {
-    try {
-        const response = await fetch(`/api/analytics/chart-data?period=${currentPeriod}&metric=${currentMetric}`);
-        const data = await response.json();
-
-        if (data.success) {
-            drawChart(data.chartData);
+        
+        if (currentPlatform === 'x') {
+            loadXAnalytics();
         }
-    } catch (error) {
-        console.error('Error loading chart data:', error);
+    };
+    
+    // Platform switching
+    window.switchPlatform = function(platform) {
+        document.querySelectorAll('.platform-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-platform="${platform}"]`).classList.add('active');
+        
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        const contentElement = document.getElementById(`${platform}-content`);
+        if (contentElement) {
+            contentElement.classList.add('active');
+        }
+        
+        currentPlatform = platform;
+        
+        if (platform === 'x' && contentElement) {
+            loadXAnalytics();
+        } else if (platform === 'youtube' && contentElement) {
+            loadYouTubeAnalytics();
+        }
+    };
+    
+    // Toggle chart view
+    window.toggleChartView = function(chartType, viewType) {
+        chartViews[chartType] = viewType;
+        
+        const chartCard = document.querySelector(`#x-${chartType}-chart`).closest('.chart-card');
+        const toggleBtns = chartCard.querySelectorAll('.toggle-btn');
+        toggleBtns.forEach(btn => {
+            btn.classList.remove('active');
+            
+            if ((viewType === 'daily' && (btn.textContent.includes('Daily') || btn.textContent.includes('Weekly'))) ||
+                (viewType === 'rolling' && btn.textContent.includes('Rolling'))) {
+                btn.classList.add('active');
+            }
+        });
+        
+        if (chartType === 'impressions') {
+            loadImpressionsChart();
+        } else if (chartType === 'engagement') {
+            loadEngagementChart();
+        }
+    };
+
+    function getTickInterval(timeframe) {
+        const intervals = {
+            '7days': 1,
+            '30days': 5,
+            '90days': 15,
+            '6months': 30
+        };
+        return intervals[timeframe] || 30;
     }
-}
+    
+    // Load initial data
+    {% if x_connected %}
+    const impressionsTitle = document.getElementById('impressions-title');
+    const engagementTitle = document.getElementById('engagement-title');
+    const postsCountTitle = document.getElementById('posts-count-title');
+    const followersTitle = document.getElementById('followers-title');
+    const impressionsDailyBtn = document.getElementById('impressions-daily-btn');
+    const engagementDailyBtn = document.getElementById('engagement-daily-btn');
+    
+    if (impressionsTitle) impressionsTitle.textContent = 'Weekly Impressions';
+    if (engagementTitle) engagementTitle.textContent = 'Weekly Engagement';
+    if (postsCountTitle) postsCountTitle.textContent = 'Weekly Posts Count';
+    if (followersTitle) followersTitle.textContent = 'Followers Growth';
+    if (impressionsDailyBtn) impressionsDailyBtn.textContent = 'Weekly';
+    if (engagementDailyBtn) engagementDailyBtn.textContent = 'Weekly';
+    
+    loadXAnalytics();
+    {% endif %}
+    
+    {% if youtube_connected and not x_connected %}
+    loadYouTubeAnalytics();
+    {% endif %}
+    
+    // X Analytics functions
+    function loadXAnalytics() {
+        fetch(`/analytics/x/overview?timeframe=${currentTimeframe}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showXError(data.error);
+                    return;
+                }
+                renderXMetrics(data.current, data.trends);
+            })
+            .catch(error => {
+                console.error('Error loading X overview:', error);
+                showXError('Failed to load analytics data');
+            });
 
-function drawChart(chartData) {
-    const ctx = document.getElementById('performanceChart').getContext('2d');
-
-    if (performanceChart) {
-        performanceChart.destroy();
+        loadImpressionsChart();
+        loadEngagementChart();
+        loadPostsCountChart();
+        loadFollowersChart();
+        loadXPosts('all');
     }
+    
+    function renderXMetrics(metrics, trends) {
+        const metricsGrid = document.getElementById('x-metrics-grid');
+        
+        const formatNumber = (num) => {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toLocaleString();
+        };
+        
+        const getTrendIcon = (trend) => {
+            if (trend > 0) return '<i class="ph ph-trending-up"></i>';
+            if (trend < 0) return '<i class="ph ph-trending-down"></i>';
+            return '<i class="ph ph-minus"></i>';
+        };
+        
+        const getTrendClass = (trend) => {
+            if (trend > 0) return 'trend-up';
+            if (trend < 0) return 'trend-down';
+            return 'trend-neutral';
+        };
+        
+        metricsGrid.innerHTML = `
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="ph ph-users"></i>
+                    Followers
+                </div>
+                <div class="metric-value">${formatNumber(metrics.followers_count || 0)}</div>
+                <div class="metric-trend ${getTrendClass(trends?.followers_trend || 0)}">
+                    ${getTrendIcon(trends?.followers_trend || 0)}
+                    <span>${Math.abs(trends?.followers_trend || 0).toFixed(1)}%</span>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="ph ph-eye"></i>
+                    Avg Views Per Post
+                </div>
+                <div class="metric-value">${formatNumber(Math.round(metrics.avg_views_per_post || 0))}</div>
+                <div class="text-xs mt-2 text-gray-400">
+                    ${metrics.posts_in_timeframe || 0} posts in timeframe
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="ph ph-heart"></i>
+                    Engagement Rate
+                </div>
+                <div class="metric-value">${(metrics.timeframe_engagement_rate || 0).toFixed(1)}%</div>
+                <div class="text-xs mt-2 text-gray-400">
+                    ${metrics.posts_in_timeframe || 0} posts in timeframe
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="ph ph-scales"></i>
+                    Following Ratio
+                </div>
+                <div class="metric-value">${(metrics.followers_to_following_ratio || 0).toFixed(1)}%</div>
+                <div class="text-xs mt-2 ${
+                    metrics.ratio_status === 'Good' ? 'text-green-400' : 
+                    metrics.ratio_status === 'Average' ? 'text-yellow-400' : 'text-red-400'
+                }">
+                    ${metrics.ratio_status || 'N/A'}
+                </div>
+            </div>
+        `;
+    }
+    
+    function loadImpressionsChart() {
+        document.getElementById('x-impressions-chart').innerHTML = '';
 
-    performanceChart = new Chart(ctx, {
-        type: 'line',
-        data: chartData,
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: false
+        fetch(`/analytics/x/impressions?timeframe=${currentTimeframe}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.error) {
+                    renderImpressionsChart(data.impressions_data, data.has_sufficient_data);
+                } else {
+                    document.getElementById('x-impressions-chart').innerHTML = '<div class="empty-state">Failed to load impressions data</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading impressions:', error);
+                document.getElementById('x-impressions-chart').innerHTML = '<div class="empty-state">Failed to load impressions data</div>';
+            });
+    }
+    
+    function renderImpressionsChart(impressionsData, hasSufficientData) {
+        const container = document.getElementById('x-impressions-chart');
+        if (!container) {
+            console.error('Chart container not found: x-impressions-chart');
+            return;
+        }
+
+        if (!impressionsData || impressionsData.length === 0) {
+            container.innerHTML = '<div class="empty-state">No impressions data available</div>';
+            return;
+        }
+        container.innerHTML = '';
+        
+        const noteElement = document.getElementById('x-impressions-note');
+        if (noteElement) {
+            if (chartViews.impressions === 'rolling' && !hasSufficientData) {
+                noteElement.classList.remove('hidden');
+            } else {
+                noteElement.classList.add('hidden');
+            }
+        }
+        
+        const isWeekly = impressionsData[0]?.is_week || false;
+        const tickInterval = getTickInterval(currentTimeframe);
+        
+        const series = [];
+        
+        if (chartViews.impressions === 'rolling') {
+            const rollingData = impressionsData
+                .filter(d => d.rolling_avg !== null && d.rolling_avg !== undefined)
+                .map(d => ({
+                    x: d.date,
+                    y: Math.round(d.rolling_avg)
+                }));
+            
+            series.push({
+                name: 'Rolling Avg (10 Posts)',
+                data: rollingData
+            });
+        } else {
+            series.push({
+                name: isWeekly ? 'Weekly Impressions' : 'Daily Impressions',
+                data: impressionsData.map(d => ({
+                    x: d.date,
+                    y: d.daily_impressions || 0
+                }))
+            });
+        }
+        
+        const chartOptions = {
+            series: series,
+            chart: {
+                type: chartViews.impressions === 'rolling' ? 'line' : 'bar',
+                height: 300,
+                toolbar: { show: false },
+                background: 'transparent',
+                fontFamily: 'Inter, sans-serif'
+            },
+            dataLabels: { enabled: false },
+            stroke: {
+                curve: 'smooth',
+                width: chartViews.impressions === 'rolling' ? 3 : 0
+            },
+            plotOptions: {
+                bar: {
+                    columnWidth: '70%',
+                    borderRadius: 4
                 }
             },
-            scales: {
+            colors: ['#3B82F6'],
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    style: { colors: '#6b7280', fontSize: '11px' },
+                    rotate: -45
+                }
+            },
+            yaxis: {
+                title: { text: 'Impressions', style: { color: '#6b7280' } },
+                labels: {
+                    style: { colors: '#6b7280' },
+                    formatter: function(val) {
+                        if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+                        if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
+                        return Math.round(val).toString();
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'light',
                 y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return formatNumber(value);
+                    formatter: function(val) {
+                        return val.toLocaleString() + ' impressions';
+                    }
+                }
+            },
+            grid: {
+                borderColor: 'rgba(229, 231, 235, 0.5)'
+            }
+        };
+        
+        if (charts.impressions) {
+            charts.impressions.destroy();
+        }
+        
+        charts.impressions = new ApexCharts(container, chartOptions);
+        charts.impressions.render();
+    }
+    
+    function loadEngagementChart() {
+        document.getElementById('x-engagement-chart').innerHTML = '';
+        
+        fetch(`/analytics/x/engagement?timeframe=${currentTimeframe}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.error) {
+                    renderEngagementChart(data.engagement_data, data.has_sufficient_data);
+                } else {
+                    document.getElementById('x-engagement-chart').innerHTML = '<div class="empty-state">Failed to load engagement data</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading engagement:', error);
+                document.getElementById('x-engagement-chart').innerHTML = '<div class="empty-state">Failed to load engagement data</div>';
+            });
+    }
+    
+    function renderEngagementChart(engagementData, hasSufficientData) {
+        if (!engagementData || engagementData.length === 0) {
+            document.getElementById('x-engagement-chart').innerHTML = '<div class="empty-state">No engagement data available</div>';
+            return;
+        }
+        
+        const container = document.getElementById('x-engagement-chart');
+        container.innerHTML = '';
+        
+        const noteElement = document.getElementById('x-engagement-note');
+        if (noteElement) {
+            if (chartViews.engagement === 'rolling' && !hasSufficientData) {
+                noteElement.classList.remove('hidden');
+            } else {
+                noteElement.classList.add('hidden');
+            }
+        }
+        
+        const isWeekly = engagementData[0]?.is_week || false;
+        const tickInterval = getTickInterval(currentTimeframe);
+        
+        const series = [];
+        
+        if (chartViews.engagement === 'rolling') {
+            const rollingData = engagementData
+                .filter(d => d.rolling_engagement_rate !== null && d.rolling_engagement_rate !== undefined)
+                .map(d => ({
+                    x: d.date,
+                    y: d.rolling_engagement_rate
+                }));
+            
+            series.push({
+                name: 'Rolling Avg (10 Posts)',
+                type: 'line',
+                data: rollingData
+            });
+        } else {
+            series.push({
+                name: 'Engagement Rate',
+                type: 'line',
+                data: engagementData.map(d => ({
+                    x: d.date,
+                    y: d.engagement_rate || 0
+                }))
+            });
+            series.push({
+                name: isWeekly ? 'Weekly Engagements' : 'Total Engagements',
+                type: 'column',
+                data: engagementData.map(d => ({
+                    x: d.date,
+                    y: Math.round(d.total_engagement || 0)
+                }))
+            });
+        }
+        
+        const chartOptions = {
+            series: series,
+            chart: {
+                height: 300,
+                type: 'line',
+                toolbar: { show: false },
+                background: 'transparent',
+                animations: {
+                    enabled: true,
+                    speed: 400
+                }
+            },
+            stroke: {
+                width: chartViews.engagement === 'rolling' ? [3] : [3, 0],
+                curve: ['smooth', 'straight'],
+                lineCap: 'round'
+            },
+            colors: chartViews.engagement === 'rolling' ? ['#3B82F6'] : ['#3B82F6', '#60A5FA'],
+            plotOptions: {
+                bar: {
+                    columnWidth: '70%',
+                    borderRadius: 4
+                }
+            },
+            fill: {
+                type: 'solid',
+                opacity: chartViews.engagement === 'rolling' ? [1] : [1, 0.8]
+            },
+            dataLabels: { enabled: false },
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    style: { colors: '#6b7280', fontSize: '11px' },
+                    rotate: -45
+                }
+            },
+            yaxis: chartViews.engagement === 'rolling' ? 
+                {
+                    title: { text: 'Engagement Rate (%)', style: { color: '#6b7280' } },
+                    labels: { 
+                        style: { colors: '#6b7280' },
+                        formatter: function(val) {
+                            return val !== null ? val.toFixed(1) + '%' : '';
+                        }
+                    },
+                    min: 0
+                } : 
+                [
+                    {
+                        title: { text: 'Engagement Rate (%)', style: { color: '#6b7280' } },
+                        labels: { 
+                            style: { colors: '#6b7280' },
+                            formatter: function(val) {
+                                return val.toFixed(1) + '%';
+                            }
+                        },
+                        min: 0
+                    },
+                    {
+                        opposite: true,
+                        title: { text: 'Total Engagements', style: { color: '#6b7280' } },
+                        labels: { 
+                            style: { colors: '#6b7280' },
+                            formatter: function(val) {
+                                return Math.round(val).toString();
+                            }
+                        },
+                        min: 0
+                    }
+                ],
+            tooltip: {
+                theme: 'light',
+                shared: chartViews.engagement === 'rolling' ? false : true,
+                intersect: false,
+                y: {
+                    formatter: function(val, opts) {
+                        if (chartViews.engagement === 'rolling') {
+                            return val !== null ? val.toFixed(1) + '%' : 'No data';
+                        } else {
+                            if (opts && opts.seriesIndex === 0) {
+                                return val.toFixed(1) + '%';
+                            } else {
+                                return Math.round(val).toLocaleString() + ' engagements';
+                            }
                         }
                     }
                 }
-            }
-        }
-    });
-}
-
-async function loadTopVideos() {
-    try {
-        const response = await fetch('/api/analytics/top-videos');
-        const data = await response.json();
-
-        if (data.success) {
-            const videosHtml = data.videos.map(video => `
-                <div class="video-row">
-                    <img src="${video.thumbnail}" alt="${video.title}" class="video-thumbnail">
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold mb-1">${video.title}</div>
-                        <div class="video-stats">
-                            <span><i class="fas fa-eye"></i> ${formatNumber(video.views)}</span>
-                            <span><i class="fas fa-thumbs-up"></i> ${formatNumber(video.likes)}</span>
-                            <span><i class="fas fa-comment"></i> ${video.comments}</span>
-                            <span>CTR: ${video.ctr}%</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            document.getElementById('topVideos').innerHTML = videosHtml;
-        }
-    } catch (error) {
-        console.error('Error loading top videos:', error);
-    }
-}
-
-async function loadAudienceData() {
-    try {
-        const response = await fetch('/api/analytics/audience');
-        const data = await response.json();
-
-        if (data.success) {
-            const audience = data.audience;
-
-            // Display age groups
-            const ageGroupsHtml = Object.entries(audience.demographics.age_groups).map(([age, percentage]) => `
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between mb-1">
-                        <small>${age}</small>
-                        <small>${percentage}%</small>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: ${percentage}%"></div>
-                    </div>
-                </div>
-            `).join('');
-
-            document.getElementById('ageGroups').innerHTML = ageGroupsHtml;
-
-            // Display top countries
-            const countriesHtml = audience.demographics.top_countries.map(country => `
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between mb-1">
-                        <small>${country.country}</small>
-                        <small>${country.percentage}%</small>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: ${country.percentage}%"></div>
-                    </div>
-                </div>
-            `).join('');
-
-            document.getElementById('topCountries').innerHTML = countriesHtml;
-
-            // Draw gender chart
-            drawGenderChart(audience.demographics.gender);
-
-            // Display traffic sources
-            const trafficHtml = Object.entries(audience.traffic_sources).map(([source, percentage]) => `
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between mb-1">
-                        <small>${source.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</small>
-                        <small>${percentage}%</small>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: ${percentage}%"></div>
-                    </div>
-                </div>
-            `).join('');
-
-            document.getElementById('trafficSources').innerHTML = trafficHtml;
-        }
-    } catch (error) {
-        console.error('Error loading audience data:', error);
-    }
-}
-
-function drawGenderChart(genderData) {
-    const ctx = document.getElementById('genderChart').getContext('2d');
-
-    if (genderChart) {
-        genderChart.destroy();
-    }
-
-    genderChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(genderData).map(g => g.charAt(0).toUpperCase() + g.slice(1)),
-            datasets: [{
-                data: Object.values(genderData),
-                backgroundColor: ['#3B82F6', '#EC4899', '#8B5CF6']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
+            },
+            legend: { show: false },
+            grid: {
+                borderColor: 'rgba(229, 231, 235, 0.5)'
+            },
+            markers: {
+                size: 0,
+                strokeWidth: 0,
+                hover: {
+                    size: chartViews.engagement === 'rolling' ? 6 : 4
                 }
             }
+        };
+        
+        if (charts.engagement) {
+            charts.engagement.destroy();
         }
-    });
-}
-
-async function loadRealtimeData() {
-    try {
-        const response = await fetch('/api/analytics/realtime');
-        const data = await response.json();
-
-        if (data.success) {
-            const realtime = data.realtime;
-            document.getElementById('realtimeViewers').textContent = formatNumber(realtime.current_viewers);
-            document.getElementById('viewsLastHour').textContent = formatNumber(realtime.views_last_hour);
+        
+        charts.engagement = new ApexCharts(container, chartOptions);
+        charts.engagement.render();
+    }
+    
+    function loadPostsCountChart() {
+        document.getElementById('x-posts-count-chart').innerHTML = '';
+        
+        fetch(`/analytics/x/posts-count?timeframe=${currentTimeframe}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.error) {
+                    renderPostsCountChart(data.posts_count_data);
+                } else {
+                    document.getElementById('x-posts-count-chart').innerHTML = '<div class="empty-state">Failed to load posts count data</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading posts count:', error);
+                document.getElementById('x-posts-count-chart').innerHTML = '<div class="empty-state">Failed to load posts count data</div>';
+            });
+    }
+    
+    function renderPostsCountChart(postsCountData) {
+        if (!postsCountData || postsCountData.length === 0) {
+            document.getElementById('x-posts-count-chart').innerHTML = '<div class="empty-state">No posts data available</div>';
+            return;
         }
-    } catch (error) {
-        console.error('Error loading realtime data:', error);
+        
+        const container = document.getElementById('x-posts-count-chart');
+        container.innerHTML = '';
+        
+        const isWeekly = postsCountData[0]?.is_week || false;
+        const dates = postsCountData.map(d => d.date);
+        const tickInterval = getTickInterval(currentTimeframe);
+        
+        const chartOptions = {
+            series: [{
+                name: isWeekly ? 'Weekly Posts' : 'Daily Posts',
+                data: postsCountData.map(d => ({
+                    x: d.date,
+                    y: d.posts_count || 0
+                }))
+            }],
+            chart: {
+                type: 'bar',
+                height: 300,
+                toolbar: { show: false },
+                background: 'transparent',
+                animations: {
+                    enabled: true,
+                    speed: 400
+                }
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 4,
+                    columnWidth: '60%'
+                }
+            },
+            dataLabels: { enabled: false },
+            colors: ['#8B5CF6'],
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    style: { colors: '#6b7280', fontSize: '11px' },
+                    rotate: -45
+                }
+            },
+            yaxis: {
+                title: { text: 'Number of Posts', style: { color: '#6b7280' } },
+                labels: { 
+                    style: { colors: '#6b7280' },
+                    formatter: function(val) {
+                        return Math.round(val).toString();
+                    }
+                },
+                min: 0
+            },
+            tooltip: {
+                theme: 'light',
+                y: {
+                    formatter: function(val) {
+                        return val + ' posts';
+                    }
+                }
+            },
+            grid: {
+                borderColor: 'rgba(229, 231, 235, 0.5)'
+            }
+        };
+        
+        if (charts.postsCount) {
+            charts.postsCount.destroy();
+        }
+        
+        charts.postsCount = new ApexCharts(container, chartOptions);
+        charts.postsCount.render();
     }
-}
-
-function changePeriod(period) {
-    currentPeriod = period;
-
-    // Update button states
-    document.querySelectorAll('.period-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-
-    // Reload chart
-    loadChartData();
-}
-
-function changeMetric() {
-    currentMetric = document.getElementById('metricSelector').value;
-    loadChartData();
-}
-
-function refreshAnalytics() {
-    loadOverview();
-    loadChartData();
-    loadTopVideos();
-    loadAudienceData();
-    loadRealtimeData();
-
-    // Show toast
-    if (window.BaseApp && window.BaseApp.showToast) {
-        window.BaseApp.showToast('Analytics refreshed', 'success');
+    
+    function loadFollowersChart() {
+        document.getElementById('x-followers-chart').innerHTML = '';
+        
+        fetch(`/analytics/x/followers-history?timeframe=${currentTimeframe}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.error) {
+                    renderFollowersChart(data.followers_data, data.has_sufficient_data);
+                } else {
+                    document.getElementById('x-followers-chart').innerHTML = '<div class="empty-state">Failed to load followers data</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading followers history:', error);
+                document.getElementById('x-followers-chart').innerHTML = '<div class="empty-state">Failed to load followers data</div>';
+            });
     }
-}
-
-function formatNumber(num) {
-    if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
+    
+    function renderFollowersChart(followersData, hasSufficientData) {
+        if (!followersData || followersData.length === 0) {
+            document.getElementById('x-followers-chart').innerHTML = '<div class="empty-state">No followers data available</div>';
+            return;
+        }
+        
+        const container = document.getElementById('x-followers-chart');
+        container.innerHTML = '';
+        
+        const noteElement = document.getElementById('x-followers-note');
+        if (!hasSufficientData) {
+            noteElement.classList.remove('hidden');
+        } else {
+            noteElement.classList.add('hidden');
+        }
+        
+        const isWeekly = followersData[0]?.is_week || false;
+        const dates = followersData.map(d => d.date);
+        const tickInterval = getTickInterval(currentTimeframe);
+        
+        const followers = followersData.map(d => d.followers_count || 0);
+        const maxFollowers = Math.max(...followers);
+        
+        const chartOptions = {
+            series: [
+                {
+                    name: 'Total Followers',
+                    type: 'line',
+                    data: followersData.map(d => ({
+                        x: d.date,
+                        y: d.followers_count || 0
+                    }))
+                }
+            ],
+            chart: {
+                height: 300,
+                type: 'line',
+                toolbar: { show: false },
+                background: 'transparent',
+                animations: {
+                    enabled: true,
+                    speed: 400,
+                    animateGradually: {
+                        enabled: true,
+                        delay: 50
+                    }
+                }
+            },
+            stroke: {
+                width: [3],
+                curve: 'smooth',
+                lineCap: 'round'
+            },
+            colors: ['#3B82F6'],
+            dataLabels: { enabled: false },
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    style: { colors: '#6b7280', fontSize: '11px' },
+                    rotate: -45
+                }
+            },
+            yaxis: {
+                title: { text: 'Total Followers', style: { color: '#6b7280' } },
+                labels: { 
+                    style: { colors: '#6b7280' },
+                    formatter: function(val) {
+                        if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+                        if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
+                        return Math.round(val).toString();
+                    }
+                },
+                min: Math.floor(Math.min(...followers) * 0.95),
+                max: Math.ceil(maxFollowers * 1.05)
+            },
+            tooltip: {
+                theme: 'light',
+                y: {
+                    formatter: function(val) {
+                        return val.toLocaleString() + ' followers';
+                    }
+                }
+            },
+            grid: {
+                borderColor: 'rgba(229, 231, 235, 0.5)'
+            },
+            legend: {
+                show: false
+            },
+            markers: {
+                size: 0,
+                strokeWidth: 0,
+                hover: {
+                    size: 6
+                }
+            }
+        };
+        
+        if (charts.followers) {
+            charts.followers.destroy();
+        }
+        
+        charts.followers = new ApexCharts(container, chartOptions);
+        charts.followers.render();
     }
-    return num.toLocaleString();
-}
+    
+    function loadXPosts(filter) {
+        xPostsData.currentFilter = filter;
+        xPostsData.currentPage = 1;
 
-function updateChangeIndicator(elementId, change) {
-    const element = document.getElementById(elementId);
-    const isPositive = change >= 0;
+        fetch('/analytics/x/posts-paginated?page=1&per_page=' + xPostsData.itemsPerPage + '&filter=' + filter)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showXPostsError(data.error);
+                    return;
+                }
 
-    element.className = `stat-change ${isPositive ? 'positive' : 'negative'}`;
-    element.innerHTML = `
-        <i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i>
-        ${Math.abs(change).toFixed(1)}%
-    `;
+                xPostsData.all = data.posts || [];
+                renderXPosts();
+                renderXPostsPagination(data.total_posts, data.total_pages);
+            })
+            .catch(error => {
+                console.error('Error loading X posts:', error);
+                showXPostsError('Failed to load posts');
+            });
+    }
+
+    // Make loadXPosts available globally for HTML onclick handlers
+    window.loadXPosts = loadXPosts;
+    
+    function renderXPosts() {
+        const tbody = document.getElementById('x-posts-tbody');
+        const posts = xPostsData.all;
+        
+        if (!posts || posts.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="ph ph-article"></i>
+                            </div>
+                            <div class="empty-state-title">No Posts Found</div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        const formatDate = (dateStr) => {
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            } catch {
+                return dateStr;
+            }
+        };
+        
+        const formatNumber = (num) => {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toLocaleString();
+        };
+        
+        const getEngagementClass = (rate) => {
+            if (rate >= 5) return 'engagement-high';
+            if (rate >= 2) return 'engagement-medium';
+            return 'engagement-low';
+        };
+        
+        tbody.innerHTML = posts.map(post => `
+            <tr>
+                <td>
+                    <div class="post-preview">${post.text || 'No text'}</div>
+                </td>
+                <td>${formatDate(post.created_at)}</td>
+                <td class="font-medium">${formatNumber(post.views || 0)}</td>
+                <td>${formatNumber(post.likes || 0)}</td>
+                <td>${formatNumber(post.retweets || 0)}</td>
+                <td>${formatNumber(post.replies || 0)}</td>
+                <td>
+                    <span class="engagement-badge ${getEngagementClass(post.engagement_rate || 0)}">
+                        ${(post.engagement_rate || 0).toFixed(1)}%
+                    </span>
+                </td>
+                <td>
+                    ${post.id ? `<a href="https://twitter.com/i/web/status/${post.id}" target="_blank" class="post-link">
+                        <i class="ph ph-arrow-square-out"></i>
+                        <span>View</span>
+                    </a>` : '-'}
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    function renderXPostsPagination(totalPosts, totalPages) {
+        const pagination = document.getElementById('x-posts-pagination');
+        if (!pagination) return;
+        
+        const currentPage = xPostsData.currentPage;
+        
+        let paginationHTML = `
+            <button class="pagination-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                <i class="ph ph-caret-left"></i>
+                Previous
+            </button>
+        `;
+        
+        const maxVisible = 5;
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+        
+        if (endPage - startPage < maxVisible - 1) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `
+                <button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">
+                    ${i}
+                </button>
+            `;
+        }
+        
+        paginationHTML += `
+            <button class="pagination-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                Next
+                <i class="ph ph-caret-right"></i>
+            </button>
+            <span class="pagination-info">
+                ${((currentPage - 1) * xPostsData.itemsPerPage) + 1} - ${Math.min(currentPage * xPostsData.itemsPerPage, totalPosts)} of ${totalPosts}
+            </span>
+        `;
+        
+        pagination.innerHTML = paginationHTML;
+    }
+    
+    window.changePage = function(page) {
+        if (page < 1) return;
+        
+        xPostsData.currentPage = page;
+        
+        fetch(`/analytics/x/posts-paginated?page=${page}&per_page=${xPostsData.itemsPerPage}&filter=${xPostsData.currentFilter}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    xPostsData.all = data.posts || [];
+                    renderXPosts();
+                    renderXPostsPagination(data.total_posts, data.total_pages);
+                    
+                    document.querySelector('.data-table-wrapper').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading page:', error);
+            });
+    };
+    
+    function showXError(message) {
+        document.getElementById('x-metrics-grid').innerHTML = `
+            <div class="col-span-full">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="ph ph-warning"></i>
+                    </div>
+                    <div class="empty-state-title">Error Loading Data</div>
+                    <div class="empty-state-description">${message}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function showXPostsError(message) {
+        document.getElementById('x-posts-tbody').innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="ph ph-warning"></i>
+                        </div>
+                        <div class="empty-state-title">Error Loading Posts</div>
+                        <div class="empty-state-description">${message}</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+    
+    // YouTube Analytics functions
+    function loadYouTubeAnalytics() {
+        fetch('/analytics/youtube/overview')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showYouTubeError(data.error);
+                    return;
+                }
+                renderYouTubeMetrics(data.current);
+                renderYouTubeCharts(data.current);
+                renderYouTubeVideos(data.current?.top_videos || []);
+            })
+            .catch(error => {
+                console.error('Error loading YouTube overview:', error);
+                showYouTubeError('Failed to load analytics data');
+            });
+    }
+    
+    function renderYouTubeMetrics(metrics) {
+        const metricsGrid = document.getElementById('youtube-metrics-grid');
+        
+        const formatNumber = (num) => {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toLocaleString();
+        };
+        
+        const formatDuration = (seconds) => {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        };
+        
+        metricsGrid.innerHTML = `
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="ph ph-eye"></i>
+                    Total Views
+                </div>
+                <div class="metric-value">${formatNumber(metrics.views || 0)}</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="ph ph-clock"></i>
+                    Watch Time
+                </div>
+                <div class="metric-value">${formatNumber(metrics.watch_time_hours || 0)}h</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="ph ph-timer"></i>
+                    Avg View Duration
+                </div>
+                <div class="metric-value">${formatDuration(metrics.avg_view_duration_seconds || 0)}</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">
+                    <i class="ph ph-users-three"></i>
+                    Subscribers Gained
+                </div>
+                <div class="metric-value">+${formatNumber(metrics.subscribers_gained || 0)}</div>
+            </div>
+        `;
+    }
+    
+    function renderYouTubeCharts(metrics) {
+        // Traffic sources chart
+        if (metrics.traffic_sources && metrics.traffic_sources.length > 0) {
+            const trafficOptions = {
+                series: metrics.traffic_sources.map(s => s.views),
+                chart: {
+                    type: 'donut',
+                    height: 300,
+                    background: 'transparent'
+                },
+                labels: metrics.traffic_sources.map(s => s.source),
+                colors: ['#3B82F6', '#60A5FA', '#EF4444', '#F59E0B', '#8B5CF6'],
+                legend: {
+                    position: 'right',
+                    labels: { colors: '#6b7280' }
+                },
+                dataLabels: { enabled: false },
+                tooltip: { theme: 'light' }
+            };
+            
+            const trafficChart = new ApexCharts(document.querySelector("#youtube-traffic-chart"), trafficOptions);
+            trafficChart.render();
+        }
+    }
+    
+    function renderYouTubeVideos(videos) {
+        const tbody = document.getElementById('youtube-videos-tbody');
+        
+        if (!videos || videos.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="ph ph-video"></i>
+                            </div>
+                            <div class="empty-state-title">No Videos Found</div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        const formatNumber = (num) => {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toLocaleString();
+        };
+        
+        const formatDuration = (seconds) => {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        };
+        
+        tbody.innerHTML = videos.map(video => `
+            <tr>
+                <td>
+                    <a href="https://youtube.com/watch?v=${video.id}" target="_blank" class="post-link">
+                        <i class="ph ph-play"></i>
+                        Video ${video.id}
+                    </a>
+                </td>
+                <td class="font-medium">${formatNumber(video.views || 0)}</td>
+                <td>${(video.watch_time_minutes / 60).toFixed(1)}</td>
+                <td>${formatDuration(video.avg_view_duration || 0)}</td>
+                <td>${formatNumber(video.likes || 0)}</td>
+                <td>${formatNumber(video.comments || 0)}</td>
+                <td>
+                    <span class="engagement-badge ${video.engagement_rate >= 5 ? 'engagement-high' : video.engagement_rate >= 2 ? 'engagement-medium' : 'engagement-low'}">
+                        ${(video.engagement_rate || 0).toFixed(1)}%
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    function showYouTubeError(message) {
+        document.getElementById('youtube-metrics-grid').innerHTML = `
+            <div class="col-span-full">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="ph ph-warning"></i>
+                    </div>
+                    <div class="empty-state-title">Error Loading Data</div>
+                    <div class="empty-state-description">${message}</div>
+                </div>
+            </div>
+        `;
+    }
 }
 </script>
 {% endblock %}

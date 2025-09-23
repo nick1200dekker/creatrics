@@ -96,6 +96,8 @@ from app.routes.video_script import bp as video_script_bp
 from app.routes.brain_dump import bp as brain_dump_bp
 from app.routes.content_calendar import bp as content_calendar_bp
 from app.routes.analytics import bp as analytics_bp
+from app.routes.accounts import bp as accounts_bp
+from app.routes.accounts.youtube import bp as youtube_bp
 
 # Import X (Twitter) blueprints
 from app.routes.x_post_editor import bp as x_post_editor_bp
@@ -115,6 +117,8 @@ app.register_blueprint(video_script_bp)
 app.register_blueprint(brain_dump_bp)
 app.register_blueprint(content_calendar_bp)
 app.register_blueprint(analytics_bp)
+app.register_blueprint(accounts_bp)
+app.register_blueprint(youtube_bp)
 app.register_blueprint(x_post_editor_bp)
 
 # Register Cron blueprint
