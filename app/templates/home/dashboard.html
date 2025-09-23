@@ -4,11 +4,33 @@
 
 {% block additional_styles %}
 <style>
+/* Reset default content-panel padding like Analytics */
+.content-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Dashboard wrapper - full height like analytics */
+.dashboard-wrapper {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    overflow: hidden;
+    width: 100%;
+    min-height: calc(100vh - 60px);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .dashboard-wrapper {
+    border-color: transparent;
+}
+
 /* Dashboard Specific Styles */
 .dashboard-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0;
+    padding: 2rem;
 }
 
 .dashboard-header {
@@ -506,8 +528,9 @@ html.dark .coming-soon-section {
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <div class="dashboard-header">
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <div class="dashboard-header">
         {% if g.user and not g.user.get('is_guest') %}
         <!-- Logged in user dashboard -->
         <div class="welcome-section">
@@ -607,7 +630,7 @@ html.dark .coming-soon-section {
             </a>
 
             <!-- Analytics -->
-            <a href="{{ url_for('analytics.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+            <a href="{{ url_for('analytics.index', platform='youtube') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-chart-line feature-icon-inline"></i>Analytics</h3>
                     <p>Track performance metrics</p>
@@ -633,7 +656,7 @@ html.dark .coming-soon-section {
             </a>
             
             <!-- X Analytics -->
-            <a href="{{ url_for('analytics.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+            <a href="{{ url_for('analytics.index', platform='x') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-chart-bar feature-icon-inline"></i>Analytics</h3>
                     <p>Monitor growth metrics</p>
@@ -715,6 +738,7 @@ html.dark .coming-soon-section {
         </a>
     </div>
     {% endif %}
+    </div>
 </div>
 
 <script>

@@ -881,8 +881,8 @@
                     <span>Thumbnail</span>
                 </a>
 
-                <a href="{{ url_for('analytics.index') }}?from=youtube"
-                   class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and request.args.get('from') != 'x' %}active{% endif %}"
+                <a href="{{ url_for('analytics.index', platform='youtube') }}"
+                   class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and (request.args.get('platform') == 'youtube' or (not request.args.get('platform') and current_platform == 'youtube')) %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-chart-line"></i>
                     <span>Analytics</span>
@@ -906,8 +906,8 @@
                     <span>Post Editor</span>
                 </a>
 
-                <a href="{{ url_for('analytics.index') }}?from=x"
-                   class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and request.args.get('from') == 'x' %}active{% endif %}"
+                <a href="{{ url_for('analytics.index', platform='x') }}"
+                   class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and (request.args.get('platform') == 'x' or (not request.args.get('platform') and current_platform == 'x')) %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-chart-bar"></i>
                     <span>Analytics</span>

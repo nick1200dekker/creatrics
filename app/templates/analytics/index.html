@@ -1078,8 +1078,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeAnalytics() {
-    // Global variables
-    let currentPlatform = '{% if x_connected %}x{% elif youtube_connected %}youtube{% else %}none{% endif %}';
+    // Check URL parameters for platform
+    const urlParams = new URLSearchParams(window.location.search);
+    const platformParam = urlParams.get('platform');
+
+    // Determine initial platform based on URL parameter or connected accounts
+    let defaultPlatform = '{% if x_connected %}x{% elif youtube_connected %}youtube{% else %}none{% endif %}';
+    let currentPlatform = platformParam || defaultPlatform;
+
+    // Validate platform parameter
+    const xConnected = {{ 'true' if x_connected else 'false' }};
+    const youtubeConnected = {{ 'true' if youtube_connected else 'false' }};
+
+    if (platformParam === 'x' && !xConnected) {
+        currentPlatform = defaultPlatform;
+    } else if (platformParam === 'youtube' && !youtubeConnected) {
+        currentPlatform = defaultPlatform;
+    }
+
     let currentTimeframe = '30days';
     let chartViews = {
         impressions: 'daily',
@@ -1213,28 +1229,20 @@ function initializeAnalytics() {
         return intervals[timeframe] || 30;
     }
     
-    // Load initial data
-    {% if x_connected %}
-    const impressionsTitle = document.getElementById('impressions-title');
-    const engagementTitle = document.getElementById('engagement-title');
-    const postsCountTitle = document.getElementById('posts-count-title');
-    const followersTitle = document.getElementById('followers-title');
-    const impressionsDailyBtn = document.getElementById('impressions-daily-btn');
-    const engagementDailyBtn = document.getElementById('engagement-daily-btn');
-    
-    if (impressionsTitle) impressionsTitle.textContent = 'Weekly Impressions';
-    if (engagementTitle) engagementTitle.textContent = 'Weekly Engagement';
-    if (postsCountTitle) postsCountTitle.textContent = 'Weekly Posts Count';
-    if (followersTitle) followersTitle.textContent = 'Followers Growth';
-    if (impressionsDailyBtn) impressionsDailyBtn.textContent = 'Weekly';
-    if (engagementDailyBtn) engagementDailyBtn.textContent = 'Weekly';
-    
-    loadXAnalytics();
-    {% endif %}
-    
-    {% if youtube_connected and not x_connected %}
-    loadYouTubeAnalytics();
-    {% endif %}
+    // Load initial data based on platform
+    if (currentPlatform === 'x' && xConnected) {
+        // Switch to X platform
+        switchPlatform('x');
+    } else if (currentPlatform === 'youtube' && youtubeConnected) {
+        // Switch to YouTube platform
+        switchPlatform('youtube');
+    } else if (xConnected) {
+        // Default to X if connected
+        switchPlatform('x');
+    } else if (youtubeConnected) {
+        // Default to YouTube if connected
+        switchPlatform('youtube');
+    }
     
     // X Analytics functions
     function loadXAnalytics() {

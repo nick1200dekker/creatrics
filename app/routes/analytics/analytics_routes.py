@@ -15,16 +15,27 @@ logger = logging.getLogger('analytics_routes')
 def index():
     """Render the Analytics page"""
     user_id = g.user.get('id')
-    
+
     # Fetch user data to check connected accounts
     user_data = UserService.get_user(user_id)
-    
+
     x_connected = bool(user_data.get('x_account', '')) if user_data else False
     youtube_connected = bool(user_data.get('youtube_credentials', '')) if user_data else False
-    
+
+    # Get platform from query parameter or default to first connected
+    platform = request.args.get('platform')
+    if not platform:
+        if x_connected:
+            platform = 'x'
+        elif youtube_connected:
+            platform = 'youtube'
+        else:
+            platform = None
+
     return render_template('analytics/index.html',
                          x_connected=x_connected,
-                         youtube_connected=youtube_connected)
+                         youtube_connected=youtube_connected,
+                         current_platform=platform)
 
 @bp.route('/analytics/x/overview')
 @auth_required
