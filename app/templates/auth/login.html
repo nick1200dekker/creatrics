@@ -1,14 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Creatrics</title>
+    <title>Login - CREATRICS</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
-    
+
+    <!-- Apply dark mode class immediately if saved -->
+    <script>
+        // Apply dark mode immediately to prevent flash
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
     <style>
         :root {
             --brand-gradient: #3B82F6;
@@ -20,6 +28,34 @@
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+            /* Light mode colors - matching base.html */
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F1F5F9;
+            --text-primary: #1E293B;
+            --text-secondary: #475569;
+            --text-tertiary: #64748B;
+            --border-primary: #E2E8F0;
+            --border-secondary: #E2E8F0;
+            --hover-bg: #F1F5F9;
+            --input-bg: #FFFFFF;
+            --input-border: #E5E7EB;
+        }
+
+        /* Dark mode colors - matching base.html */
+        html.dark {
+            --bg-primary: #18181b;
+            --bg-secondary: #27272a;
+            --bg-tertiary: #3f3f46;
+            --text-primary: #fafafa;
+            --text-secondary: #d4d4d8;
+            --text-tertiary: #a1a1aa;
+            --border-primary: #3f3f46;
+            --border-secondary: #52525b;
+            --hover-bg: #3f3f46;
+            --input-bg: #3f3f46;
+            --input-border: #52525b;
         }
         
         * {
@@ -30,12 +66,12 @@
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #F8FAFC;
-            color: #1E293B;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.5s ease, background-color 0.3s ease, color 0.3s ease;
         }
         
         body.loaded {
@@ -50,8 +86,9 @@
             top: 0;
             left: 0;
             z-index: -1;
-            background: #F8FAFC;
+            background: var(--bg-primary);
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
         
         .animated-bg::before {
@@ -59,12 +96,16 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
                 radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
             opacity: 0.6;
             animation: bgShift 20s ease-in-out infinite;
+        }
+
+        html.dark .animated-bg::before {
+            opacity: 0.3;
         }
         
         @keyframes bgShift {
@@ -85,20 +126,24 @@
         
         /* Login container */
         .login-container {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--bg-secondary);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 20px;
             padding: 3rem;
             box-shadow: var(--shadow-xl);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-primary);
             position: relative;
             overflow: hidden;
             max-width: 480px;
             width: 100%;
             opacity: 0;
             transform: translateY(30px);
-            transition: all 0.6s ease;
+            transition: all 0.6s ease, background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        html.dark .login-container {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
         }
         
         .login-container.active {
@@ -134,7 +179,7 @@
         }
         
         .form-subtitle {
-            color: #64748B;
+            color: var(--text-secondary);
             font-size: 1rem;
             font-weight: 500;
         }
@@ -153,7 +198,7 @@
         
         .form-label {
             display: block;
-            color: #374151;
+            color: var(--text-primary);
             font-weight: 600;
             font-size: 0.875rem;
             margin-bottom: 0.5rem;
@@ -166,10 +211,10 @@
         .form-input {
             width: 100%;
             padding: 1rem 1rem 1rem 3rem;
-            background: white;
-            border: 2px solid #E5E7EB;
+            background: var(--input-bg);
+            border: 2px solid var(--input-border);
             border-radius: 12px;
-            color: #1E293B;
+            color: var(--text-primary);
             font-size: 1rem;
             font-weight: 500;
             transition: all 0.3s ease;
@@ -182,9 +227,13 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
             transform: translateY(-1px);
         }
+
+        html.dark .form-input:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
         
         .form-input::placeholder {
-            color: #9CA3AF;
+            color: var(--text-tertiary);
         }
         
         .form-icon {
@@ -193,7 +242,7 @@
             top: 50%;
             transform: translateY(-50%);
             font-size: 1.25rem;
-            color: #9CA3AF;
+            color: var(--text-tertiary);
             transition: color 0.3s ease;
         }
         
@@ -253,15 +302,15 @@
         }
         
         .btn-secondary {
-            background: white;
-            color: #374151;
-            border: 2px solid #E5E7EB;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-primary);
             width: 100%;
         }
         
         .btn-secondary:hover {
-            background: #F9FAFB;
-            border-color: #D1D5DB;
+            background: var(--bg-tertiary);
+            border-color: var(--border-secondary);
             transform: translateY(-1px);
         }
         
@@ -296,7 +345,7 @@
         
         .divider span {
             padding: 0 1rem;
-            color: #9CA3AF;
+            color: var(--text-tertiary);
             font-size: 0.875rem;
             font-weight: 500;
         }
@@ -394,7 +443,7 @@
         }
         
         .policy-links a {
-            color: #9CA3AF;
+            color: var(--text-tertiary);
             text-decoration: none;
             font-size: 0.8rem;
             font-weight: 500;
@@ -430,6 +479,32 @@
             pointer-events: all;
         }
         
+        /* Dark mode toggle button */
+        .dark-mode-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-md);
+        }
+
+        .dark-mode-toggle:hover {
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .dark-mode-toggle i {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
         /* Responsive */
         @media (max-width: 640px) {
             .login-page {
@@ -448,13 +523,24 @@
                 font-size: 0.75rem;
                 margin: 0 0.5rem;
             }
+
+            .dark-mode-toggle {
+                top: 1rem;
+                right: 1rem;
+                padding: 0.5rem;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Dark mode toggle button -->
+    <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
+        <i class="ph ph-sun" id="dark-mode-icon"></i>
+    </button>
+
     <!-- Page transition overlay -->
     <div id="page-transition" class="page-transition"></div>
-    
+
     <!-- Animated background -->
     <div class="animated-bg"></div>
     
@@ -463,7 +549,7 @@
             <!-- Login Container -->
             <div id="login-container" class="login-container">
                 <!-- Logo text -->
-                <div class="logo-text">Creatrics</div>
+                <div class="logo-text">CREATRICS</div>
                 
                 <!-- Form Header -->
                 <div class="form-header">
@@ -537,12 +623,36 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize dark mode toggle
+            initDarkMode();
+
             // Page load animation
             setTimeout(() => {
                 document.body.classList.add('loaded');
                 animateElements();
             }, 100);
             
+            function initDarkMode() {
+                const darkModeToggle = document.getElementById('dark-mode-toggle');
+                const darkModeIcon = document.getElementById('dark-mode-icon');
+
+                // Update icon based on current mode
+                function updateIcon() {
+                    const isDark = document.documentElement.classList.contains('dark');
+                    darkModeIcon.className = isDark ? 'ph ph-moon' : 'ph ph-sun';
+                }
+
+                // Initial icon update
+                updateIcon();
+
+                // Toggle dark mode on button click
+                darkModeToggle.addEventListener('click', () => {
+                    const isDark = document.documentElement.classList.toggle('dark');
+                    localStorage.setItem('darkMode', isDark);
+                    updateIcon();
+                });
+            }
+
             function animateElements() {
                 // Animate login container
                 setTimeout(() => {
