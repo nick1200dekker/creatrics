@@ -509,8 +509,7 @@ class AIProviderManager:
                                     # Extract mime type and base64 data
                                     header, base64_data = image_data.split(',', 1)
                                     mime_type = header.split(':')[1].split(';')[0]
-                                    
-                                    import base64
+
                                     image_bytes = base64.b64decode(base64_data)
                                     content_parts.append(types.Part.from_bytes(
                                         data=image_bytes,
