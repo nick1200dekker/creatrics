@@ -46,30 +46,15 @@ def generate_video_script():
             required_credits=required_credits
         )
 
-        # For free users, allow limited uses
+        # Check for sufficient credits - strict enforcement
         if not credit_check.get('sufficient', False):
-            # Check if user is on free plan
-            user_plan = g.user.get('subscription_plan', 'Free Plan')
-            if user_plan == 'Free Plan':
-                # Allow free users some limited generations
-                if current_credits >= 0:  # They have at least their initial free credits
-                    pass  # Allow generation
-                else:
-                    return jsonify({
-                        "success": False,
-                        "error": f"Insufficient credits. Please upgrade to continue.",
-                        "error_type": "insufficient_credits",
-                        "current_credits": current_credits,
-                        "required_credits": required_credits
-                    }), 402
-            else:
-                return jsonify({
-                    "success": False,
-                    "error": f"Insufficient credits. Required: {required_credits:.2f}, Available: {current_credits:.2f}",
-                    "error_type": "insufficient_credits",
-                    "current_credits": current_credits,
-                    "required_credits": required_credits
-                }), 402
+            return jsonify({
+                "success": False,
+                "error": f"Insufficient credits. Required: {required_credits:.2f}, Available: {current_credits:.2f}",
+                "error_type": "insufficient_credits",
+                "current_credits": current_credits,
+                "required_credits": required_credits
+            }), 402
 
         # Step 2: Generate script
         generation_result = script_generator.generate_script(

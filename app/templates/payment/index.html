@@ -265,19 +265,6 @@
         position: relative;
     }
     
-    .king-badge::before {
-        content: '€';
-        position: absolute;
-        left: -8px;
-        top: -2px;
-        font-size: 0.8rem;
-        animation: sparkle 2s infinite;
-    }
-    
-    @keyframes sparkle {
-        0%, 100% { opacity: 0; transform: scale(0.8); }
-        50% { opacity: 1; transform: scale(1.2); }
-    }
     
     .plan-header {
         margin-bottom: 1.5rem;
@@ -721,10 +708,10 @@
     <!-- Premium Plan -->
     <div class="plan-card" id="king-plan-card">
         <div class="plan-header">
-            <div class="king-badge">€ Premium</div>
+            <div class="king-badge">Premium</div>
             <h3 class="plan-title">Premium Creator</h3>
             <div class="plan-price">
-                <span class="currency">$</span>29
+                <span class="currency">€</span>29
                 <span class="period">/ month</span>
             </div>
             <p class="plan-description">Unlock unlimited AI-powered content creation!</p>

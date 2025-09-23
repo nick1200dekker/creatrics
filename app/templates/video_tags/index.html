@@ -337,6 +337,51 @@ html.dark .generator-wrapper {
     margin-bottom: 1rem;
 }
 
+/* Insufficient Credits Card */
+.insufficient-credits-card {
+    text-align: center;
+    padding: 2.5rem;
+    background: var(--bg-tertiary);
+    border: 2px solid #F59E0B;
+    border-radius: 12px;
+    margin: 2rem auto;
+    max-width: 400px;
+}
+
+.credit-icon-wrapper {
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.upgrade-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 2rem;
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.upgrade-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    color: white;
+}
+
 .empty-text {
     color: var(--text-tertiary);
     font-size: 0.875rem;
@@ -519,14 +564,34 @@ async function generateTags() {
             currentTags = data.tags;
             displayTags(data.tags);
         } else {
-            throw new Error(data.error || 'Failed to generate tags');
+            // Check if it's an insufficient credits error
+            if (data.error_type === 'insufficient_credits') {
+                document.getElementById('resultsContainer').innerHTML = `
+                    <div class="insufficient-credits-card">
+                        <div class="credit-icon-wrapper">
+                            <i class="ph ph-coins" style="font-size: 3rem; color: #F59E0B;"></i>
+                        </div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                            You need <strong>${data.required_credits?.toFixed(2) || '0.00'}</strong> credits but only have
+                            <strong>${data.current_credits?.toFixed(2) || '0.00'}</strong> credits.
+                        </p>
+                        <a href="/payment" class="upgrade-btn-primary">
+                            <i class="ph ph-crown"></i>
+                            Upgrade Plan
+                        </a>
+                    </div>
+                `;
+            } else {
+                throw new Error(data.error || 'Failed to generate tags');
+            }
         }
     } catch (error) {
         console.error('Error generating tags:', error);
         document.getElementById('resultsContainer').innerHTML = `
             <div class="empty-results">
                 <i class="fas fa-exclamation-triangle empty-icon" style="color: #EF4444;"></i>
-                <p class="empty-text" style="color: #EF4444;">Error generating tags</p>
+                <p class="empty-text" style="color: #EF4444;">Error generating tags. Please try again.</p>
             </div>
         `;
     } finally {

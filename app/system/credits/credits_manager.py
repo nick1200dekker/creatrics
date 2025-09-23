@@ -1,19 +1,17 @@
 """
-Credits management system for soccer stats app
-Updated with SeedDance Pro instead of Kling
+Credits management system for creator tools app
+Only LLM and Fal AI models
 """
 import logging
 import math
 from datetime import datetime
 from firebase_admin import firestore
 from app.system.credits.config import (
-    get_image_upscaling_cost,
-    get_base_image_upscaling_cost,
-    get_image_to_video_cost,
-    get_base_image_to_video_cost,
-    get_custom_template_search_cost,
-    get_base_custom_template_search_cost,
-    calculate_llm_cost, 
+    get_nano_banana_cost,
+    get_base_nano_banana_cost,
+    get_seeddream_cost,
+    get_base_seeddream_cost,
+    calculate_llm_cost,
     get_min_llm_cost,
     DEFAULT_MARGIN,
     apply_margin
@@ -505,12 +503,88 @@ class CreditsManager:
                 result['tokens_used'] = {'input': input_tokens, 'output': output_tokens}
             
             return result
-            
+
         except Exception as e:
             logger.error(f"Error deducting LLM credits: {str(e)}")
             return {
                 'success': False,
                 'message': f"Error deducting LLM credits: {str(e)}",
+                'credits_remaining': self.get_user_credits(user_id)
+            }
+
+    def deduct_nano_banana_credits(self, user_id, description, feature_id=None):
+        """
+        Deduct credits for Nano Banana edit usage
+
+        Args:
+            user_id (str): User ID
+            description (str): Transaction description
+            feature_id (str): Optional feature ID
+
+        Returns:
+            dict: Transaction result
+        """
+        try:
+            # Get cost (5 credits)
+            final_cost = get_nano_banana_cost()
+
+            # Enhanced description
+            detailed_description = f"Nano Banana Edit - {description}"
+
+            # Deduct credits
+            result = self.deduct_credits(user_id, final_cost, detailed_description, feature_id)
+
+            if result['success']:
+                logger.info(f"Nano Banana credits deducted: {final_cost} credits")
+                result['credits_cost'] = final_cost
+                result['service'] = 'fal.ai'
+                result['model'] = 'fal-ai/nano-banana/edit'
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error deducting Nano Banana credits: {str(e)}")
+            return {
+                'success': False,
+                'message': f"Error deducting Nano Banana credits: {str(e)}",
+                'credits_remaining': self.get_user_credits(user_id)
+            }
+
+    def deduct_seeddream_credits(self, user_id, description, feature_id=None):
+        """
+        Deduct credits for SeedDream edit usage
+
+        Args:
+            user_id (str): User ID
+            description (str): Transaction description
+            feature_id (str): Optional feature ID
+
+        Returns:
+            dict: Transaction result
+        """
+        try:
+            # Get cost (4 credits)
+            final_cost = get_seeddream_cost()
+
+            # Enhanced description
+            detailed_description = f"SeedDream Edit - {description}"
+
+            # Deduct credits
+            result = self.deduct_credits(user_id, final_cost, detailed_description, feature_id)
+
+            if result['success']:
+                logger.info(f"SeedDream credits deducted: {final_cost} credits")
+                result['credits_cost'] = final_cost
+                result['service'] = 'fal.ai'
+                result['model'] = 'fal-ai/bytedance/seedream/v4/edit'
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error deducting SeedDream credits: {str(e)}")
+            return {
+                'success': False,
+                'message': f"Error deducting SeedDream credits: {str(e)}",
                 'credits_remaining': self.get_user_credits(user_id)
             }
     

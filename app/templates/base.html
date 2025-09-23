@@ -759,33 +759,81 @@
         100% { background-position: -200% 0; }
     }
     
-    /* Toast Notifications - BASIC STYLES ONLY */
+    /* Toast Notifications - Elegant and Compact */
     .toast {
         position: fixed;
         top: 1.5rem;
         right: 1.5rem;
-        padding: 0.8rem 1.1rem;
+        padding: 0.75rem 1rem;
         background: var(--bg-secondary);
         border-radius: 8px;
-        box-shadow: var(--shadow-lg);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         border: 1px solid var(--border-primary);
         display: flex;
         align-items: center;
-        gap: 0.6rem;
-        min-width: 260px;
+        gap: 0.75rem;
+        min-width: 200px;
+        max-width: 320px;
         transform: translateX(400px);
-        transition: transform 0.3s ease;
-        z-index: 1000;
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        z-index: 10000;
+        font-size: 0.875rem;
+        font-weight: 500;
     }
-    
-    .toast.show { transform: translateX(0); }
-    .toast.success { border-left: 4px solid #10B981; }
-    .toast.error { border-left: 4px solid #EF4444; }
-    .toast.info { border-left: 4px solid #3B82F6; }
-    .toast i { font-size: 1.15rem; }
+
+    .toast.show {
+        transform: translateX(0);
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .toast.success {
+        border-left: 3px solid #10B981;
+        background: linear-gradient(to right, rgba(16, 185, 129, 0.1), var(--bg-secondary));
+    }
+    .toast.error {
+        border-left: 3px solid #EF4444;
+        background: linear-gradient(to right, rgba(239, 68, 68, 0.1), var(--bg-secondary));
+    }
+    .toast.info {
+        border-left: 3px solid #3B82F6;
+        background: linear-gradient(to right, rgba(59, 130, 246, 0.1), var(--bg-secondary));
+    }
+
+    .toast i {
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
     .toast.success i { color: #10B981; }
     .toast.error i { color: #EF4444; }
     .toast.info i { color: #3B82F6; }
+
+    .toast span {
+        flex: 1;
+        line-height: 1.4;
+        color: var(--text-primary);
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 640px) {
+        .toast {
+            top: auto;
+            bottom: 1rem;
+            right: 1rem;
+            left: 1rem;
+            max-width: calc(100% - 2rem);
+        }
+    }
     
     /* Mobile */
     @media (max-width: 768px) {
@@ -874,7 +922,7 @@
                     <span>Video Description</span>
                 </a>
 
-                <a href="{{ url_for('thumbnail.thumbnail') }}"
+                <a href="{{ url_for('thumbnail.index') }}"
                    class="nav-subitem {% if request.endpoint and 'thumbnail' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-image"></i>

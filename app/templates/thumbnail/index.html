@@ -1,160 +1,617 @@
 {% extends "base.html" %}
+{% set check_auth = true %}
 
-{% block title %}Thumbnail Creator - Creatrics{% endblock %}
+{% block title %}Thumbnail Generator - Creator Tools{% endblock %}
+
+{% block additional_styles %}
+<style>
+/* Reset default content-panel padding */
+.content-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Main wrapper */
+.thumbnail-wrapper {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    overflow: hidden;
+    width: 100%;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .thumbnail-wrapper {
+    border-color: transparent;
+}
+
+/* Header Section */
+.thumbnail-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.page-title i {
+    color: #3B82F6;
+}
+
+/* Content Section */
+.thumbnail-content {
+    padding: 2rem;
+}
+
+/* Model Selection */
+.model-selector {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.model-card {
+    flex: 1;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-primary);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.model-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.model-card.selected {
+    border-color: #3B82F6;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+.model-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.model-cost {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.model-cost .credits {
+    color: #F59E0B;
+    font-weight: 600;
+}
+
+/* Image Upload Section */
+.upload-section {
+    margin-bottom: 2rem;
+}
+
+.section-label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.images-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+    .images-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.image-slot {
+    position: relative;
+    aspect-ratio: 16/9;
+    background: var(--bg-tertiary);
+    border: 2px dashed var(--border-primary);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.image-slot:hover {
+    border-color: #3B82F6;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, transparent 100%);
+}
+
+.image-slot.has-image {
+    border-style: solid;
+}
+
+.image-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-slot-placeholder {
+    text-align: center;
+    padding: 1rem;
+}
+
+.upload-icon {
+    font-size: 2rem;
+    color: #3B82F6;
+    margin-bottom: 0.5rem;
+}
+
+.upload-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.image-slot:hover .remove-image-btn {
+    opacity: 1;
+}
+
+/* Prompt Section */
+.prompt-section {
+    margin-bottom: 2rem;
+}
+
+.prompt-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    resize: vertical;
+    transition: all 0.2s ease;
+}
+
+.prompt-textarea:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.char-count {
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 0.25rem;
+}
+
+/* Generate Button */
+.generate-section {
+    margin-bottom: 2rem;
+}
+
+.generate-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.generate-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.generate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Results Section */
+.results-container {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-primary);
+}
+
+.result-image {
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.result-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.download-btn {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.download-btn:hover {
+    background: var(--hover-bg);
+    transform: translateY(-1px);
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 3rem;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--border-primary);
+    border-top-color: #3B82F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Error State */
+.error-state {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    color: #EF4444;
+    text-align: center;
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-lg-12">
-            <h1 class="mb-4">Thumbnail Creator</h1>
-            <p class="lead">Create eye-catching thumbnails that boost your click-through rate</p>
-        </div>
+<div class="thumbnail-wrapper">
+    <!-- Header -->
+    <div class="thumbnail-header">
+        <h1 class="page-title">
+            <i class="ph ph-image"></i>
+            Thumbnail Generator
+        </h1>
     </div>
 
-    <div class="row mt-4">
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Design Your Thumbnail</h5>
-
-                    <form id="thumbnailForm">
-                        <div class="mb-3">
-                            <label for="prompt" class="form-label">Describe Your Thumbnail</label>
-                            <textarea class="form-control" id="prompt" rows="4"
-                                placeholder="E.g., A vibrant gaming thumbnail with neon colors, featuring a character holding a trophy with shocked expression..."></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="style" class="form-label">Style</label>
-                            <select class="form-control" id="style">
-                                <option value="realistic">Realistic</option>
-                                <option value="cartoon">Cartoon</option>
-                                <option value="anime">Anime</option>
-                                <option value="3d">3D Rendered</option>
-                                <option value="minimalist">Minimalist</option>
-                                <option value="vibrant">Vibrant & Colorful</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="text_overlay" class="form-label">Text Overlay (Optional)</label>
-                            <input type="text" class="form-control" id="text_overlay"
-                                placeholder="E.g., INSANE VICTORY!">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-lg w-100">
-                            <i class="fas fa-magic"></i> Generate Thumbnail
-                        </button>
-                    </form>
-                </div>
+    <!-- Content -->
+    <div class="thumbnail-content">
+        <!-- Model Selection -->
+        <div class="model-selector">
+            <div class="model-card selected" data-model="nano-banana" onclick="selectModel('nano-banana')">
+                <div class="model-name">Nano Banana</div>
+                <div class="model-cost"><span class="credits">5 credits</span> per generation</div>
             </div>
+            <div class="model-card" data-model="seeddream" onclick="selectModel('seeddream')">
+                <div class="model-name">SeedDream V4</div>
+                <div class="model-cost"><span class="credits">4 credits</span> per generation</div>
+            </div>
+        </div>
 
-            <div class="card shadow-sm mt-4" id="resultCard" style="display: none;">
-                <div class="card-body">
-                    <h5 class="card-title">Generated Thumbnail</h5>
-                    <div id="thumbnailResult" class="text-center">
-                        <!-- Generated thumbnail will appear here -->
+        <!-- Image Upload Section -->
+        <div class="upload-section">
+            <label class="section-label">Upload Images (1-4 images required)</label>
+            <div class="images-grid" id="imagesGrid">
+                <div class="image-slot" onclick="triggerFileUpload(0)">
+                    <input type="file" id="imageInput0" accept="image/*" onchange="handleImageUpload(0, this)" style="display: none;">
+                    <div class="image-slot-placeholder">
+                        <i class="ph ph-upload upload-icon"></i>
+                        <div class="upload-text">Click to upload image 1</div>
                     </div>
-                    <div class="mt-3">
-                        <button class="btn btn-success" onclick="downloadThumbnail()">
-                            <i class="fas fa-download"></i> Download
-                        </button>
-                        <button class="btn btn-secondary" onclick="regenerate()">
-                            <i class="fas fa-redo"></i> Regenerate
-                        </button>
+                </div>
+                <div class="image-slot" onclick="triggerFileUpload(1)">
+                    <input type="file" id="imageInput1" accept="image/*" onchange="handleImageUpload(1, this)" style="display: none;">
+                    <div class="image-slot-placeholder">
+                        <i class="ph ph-upload upload-icon"></i>
+                        <div class="upload-text">Click to upload image 2</div>
+                    </div>
+                </div>
+                <div class="image-slot" onclick="triggerFileUpload(2)">
+                    <input type="file" id="imageInput2" accept="image/*" onchange="handleImageUpload(2, this)" style="display: none;">
+                    <div class="image-slot-placeholder">
+                        <i class="ph ph-upload upload-icon"></i>
+                        <div class="upload-text">Click to upload image 3</div>
+                    </div>
+                </div>
+                <div class="image-slot" onclick="triggerFileUpload(3)">
+                    <input type="file" id="imageInput3" accept="image/*" onchange="handleImageUpload(3, this)" style="display: none;">
+                    <div class="image-slot-placeholder">
+                        <i class="ph ph-upload upload-icon"></i>
+                        <div class="upload-text">Click to upload image 4</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Tips for Great Thumbnails</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Use bright, contrasting colors
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Include faces with expressions
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Keep text short and bold
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Create visual hierarchy
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Maintain brand consistency
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="card shadow-sm mt-3">
-                <div class="card-body">
-                    <h5 class="card-title">Dimensions</h5>
-                    <p>YouTube thumbnails: <strong>1280x720 px</strong></p>
-                    <p>Aspect ratio: <strong>16:9</strong></p>
-                    <p>Max file size: <strong>2MB</strong></p>
-                </div>
-            </div>
+        <!-- Prompt Section -->
+        <div class="prompt-section">
+            <label class="section-label" for="promptInput">Describe your thumbnail</label>
+            <textarea
+                id="promptInput"
+                class="prompt-textarea"
+                placeholder="E.g., Create an eye-catching YouTube thumbnail with bold text saying 'AMAZING DISCOVERY' and dramatic lighting..."
+                onkeyup="updateCharCount()"
+                maxlength="1000"
+            ></textarea>
+            <div class="char-count" id="charCount">0 / 1000</div>
         </div>
+
+        <!-- Generate Button -->
+        <div class="generate-section">
+            <button class="generate-btn" id="generateBtn" onclick="generateThumbnail()">
+                <i class="ph ph-magic-wand"></i>
+                Generate Thumbnail
+            </button>
+        </div>
+
+        <!-- Results Container -->
+        <div id="resultsContainer"></div>
     </div>
 </div>
 
 <script>
-document.getElementById('thumbnailForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+let selectedModel = 'nano-banana';
+let uploadedImages = [null, null, null, null];
 
-    const prompt = document.getElementById('prompt').value;
-    const style = document.getElementById('style').value;
-    const textOverlay = document.getElementById('text_overlay').value;
+function selectModel(model) {
+    selectedModel = model;
+    document.querySelectorAll('.model-card').forEach(card => {
+        if (card.dataset.model === model) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    });
+}
 
+function triggerFileUpload(index) {
+    if (event.target.classList.contains('remove-image-btn')) {
+        return;
+    }
+    document.getElementById(`imageInput${index}`).click();
+}
+
+function handleImageUpload(index, input) {
+    const file = input.files[0];
+    if (file) {
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('Image must be less than 10MB', 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const slot = document.querySelectorAll('.image-slot')[index];
+            slot.classList.add('has-image');
+            slot.innerHTML = `
+                <img src="${e.target.result}" alt="Uploaded image ${index + 1}">
+                <button class="remove-image-btn" onclick="removeImage(${index}, event)">
+                    <i class="ph ph-x"></i>
+                </button>
+                <input type="file" id="imageInput${index}" accept="image/*" onchange="handleImageUpload(${index}, this)" style="display: none;">
+            `;
+            uploadedImages[index] = file;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function removeImage(index, event) {
+    event.stopPropagation();
+    uploadedImages[index] = null;
+    const slot = document.querySelectorAll('.image-slot')[index];
+    slot.classList.remove('has-image');
+    slot.innerHTML = `
+        <input type="file" id="imageInput${index}" accept="image/*" onchange="handleImageUpload(${index}, this)" style="display: none;">
+        <div class="image-slot-placeholder">
+            <i class="ph ph-upload upload-icon"></i>
+            <div class="upload-text">Click to upload image ${index + 1}</div>
+        </div>
+    `;
+}
+
+function updateCharCount() {
+    const prompt = document.getElementById('promptInput');
+    const count = prompt.value.length;
+    document.getElementById('charCount').textContent = `${count} / 1000`;
+}
+
+async function generateThumbnail() {
+    const prompt = document.getElementById('promptInput').value.trim();
+    const generateBtn = document.getElementById('generateBtn');
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    // Validate inputs
     if (!prompt) {
-        alert('Please describe your thumbnail');
+        showToast('Please enter a prompt', 'error');
         return;
     }
 
+    // Check if at least one image is uploaded
+    const hasImages = uploadedImages.some(img => img !== null);
+    if (!hasImages) {
+        showToast('Please upload at least one image', 'error');
+        return;
+    }
+
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('prompt', prompt);
+    formData.append('model', selectedModel);
+
+    // Add uploaded images
+    uploadedImages.forEach((file, index) => {
+        if (file) {
+            formData.append('images', file);
+        }
+    });
+
+    // Show loading state
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="ph ph-spinner"></i> Generating...';
+    resultsContainer.innerHTML = `
+        <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Creating your thumbnail...</div>
+        </div>
+    `;
+
     try {
-        const response = await fetch('/api/thumbnail/generate', {
+        const response = await fetch('/thumbnail/generate', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                prompt: prompt,
-                style: style,
-                text_overlay: textOverlay
-            })
+            body: formData
         });
 
         const data = await response.json();
 
         if (data.success) {
-            // Show result card
-            document.getElementById('resultCard').style.display = 'block';
-            document.getElementById('thumbnailResult').innerHTML = '<p>Thumbnail generation in progress...</p>';
+            const result = data.result;
+            let imageUrl = '';
+
+            // Handle different response formats from Fal AI
+            if (result.images && result.images.length > 0) {
+                imageUrl = result.images[0].url || result.images[0];
+            } else if (result.image) {
+                imageUrl = result.image.url || result.image;
+            } else if (result.output) {
+                imageUrl = result.output;
+            }
+
+            if (imageUrl) {
+                resultsContainer.innerHTML = `
+                    <div class="results-header">
+                        <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Generated Thumbnail</h3>
+                    </div>
+                    <img src="${imageUrl}" alt="Generated thumbnail" class="result-image">
+                    <div class="result-actions">
+                        <button class="download-btn" onclick="downloadImage('${imageUrl}')">
+                            <i class="ph ph-download"></i>
+                            Download
+                        </button>
+                    </div>
+                `;
+            } else {
+                throw new Error('No image in response');
+            }
         } else {
-            alert('Error: ' + data.error);
+            // Check for insufficient credits
+            if (data.error_type === 'insufficient_credits') {
+                resultsContainer.innerHTML = `
+                    <div class="insufficient-credits-card" style="text-align: center; padding: 2rem; background: var(--bg-tertiary); border: 2px solid #F59E0B; border-radius: 12px;">
+                        <div class="credit-icon-wrapper" style="margin-bottom: 1rem;">
+                            <i class="ph ph-coins" style="font-size: 3rem; color: #F59E0B;"></i>
+                        </div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                            You need <strong>${data.required_credits}</strong> credits but only have
+                            <strong>${data.current_credits?.toFixed(2)}</strong> credits.
+                        </p>
+                        <a href="/payment" class="generate-btn" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);">
+                            <i class="ph ph-crown"></i>
+                            Upgrade Plan
+                        </a>
+                    </div>
+                `;
+            } else {
+                throw new Error(data.error || 'Generation failed');
+            }
         }
     } catch (error) {
-        alert('Error generating thumbnail: ' + error.message);
+        console.error('Error:', error);
+        resultsContainer.innerHTML = `
+            <div class="error-state">
+                <i class="ph ph-warning" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+                <div>Error: ${error.message}</div>
+            </div>
+        `;
+    } finally {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="ph ph-magic-wand"></i> Generate Thumbnail';
     }
-});
-
-function downloadThumbnail() {
-    // TODO: Implement download functionality
-    alert('Download functionality coming soon!');
 }
 
-function regenerate() {
-    document.getElementById('thumbnailForm').dispatchEvent(new Event('submit'));
+function downloadImage(url) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `thumbnail-${Date.now()}.png`;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function showToast(message, type = 'info') {
+    if (window.BaseApp && window.BaseApp.showToast) {
+        window.BaseApp.showToast(message, type);
+    }
 }
 </script>
 {% endblock %}
