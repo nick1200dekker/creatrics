@@ -3,13 +3,8 @@
 firebase-credentials.json
 client_secret.json
 client_secrets.json
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+youtube_oauth_client.json
+youtube_client_secret.json
 env/
 build/
 develop-eggs/
