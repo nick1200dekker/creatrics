@@ -130,6 +130,15 @@ html.dark .credits-section {
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    padding: 0.5rem;
+    border-radius: 12px;
+    margin: -0.5rem;
+}
+
+.credits-info:hover {
+    transform: translateY(-2px);
+    background-color: rgba(59, 130, 246, 0.05);
 }
 
 .credits-avatar {
@@ -541,7 +550,7 @@ html.dark .coming-soon-section {
         <!-- Credits Section -->
         <div class="credits-section">
             <div class="credits-container">
-                <div class="credits-info">
+                <a href="{{ url_for('credits_history.index') }}" class="credits-info" style="text-decoration: none; color: inherit; cursor: pointer;">
                     <div class="credits-avatar">
                         <span id="user-avatar">{{ g.user.get('data', {}).get('username', 'U')[0].upper() }}</span>
                     </div>
@@ -553,8 +562,11 @@ html.dark .coming-soon-section {
                             </span>
                             <span class="credits-label">credits remaining</span>
                         </div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                            <i class="ph ph-clock-counter-clockwise"></i> View history
+                        </div>
                     </div>
-                </div>
+                </a>
                 <a href="{{ url_for('payment.index') }}" class="credits-action">
                     <i class="ph ph-sparkle"></i>
                     Get More Credits

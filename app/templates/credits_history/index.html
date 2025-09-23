@@ -1,0 +1,699 @@
+{% extends "base.html" %}
+{% set check_auth = true %}
+
+{% block title %}Credits History - Creator Tools{% endblock %}
+
+{% block additional_styles %}
+<style>
+/* Reset default content-panel padding */
+.content-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Main wrapper */
+.history-wrapper {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    overflow: hidden;
+    width: 100%;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .history-wrapper {
+    border-color: rgba(255, 255, 255, 0.05);
+    background: rgba(17, 24, 39, 0.5);
+}
+
+/* Header Section */
+.history-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .history-header {
+    background: rgba(30, 41, 59, 0.5);
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.page-title i {
+    color: #F59E0B;
+    font-size: 1.75rem;
+}
+
+/* Credits Balance Card */
+.balance-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+    border-radius: 10px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    transition: all 0.2s ease;
+}
+
+.balance-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.balance-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.balance-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #F59E0B;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.balance-icon {
+    font-size: 1.25rem;
+}
+
+/* Content Section */
+.history-content {
+    padding: 2rem;
+}
+
+/* Stats Row */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    padding: 1.25rem;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    border: 1px solid var(--border-primary);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    opacity: 0.3;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-value.credits-spent {
+    color: #EF4444;
+}
+
+.stat-card:has(.credits-spent)::before {
+    background: linear-gradient(90deg, transparent, #EF4444, transparent);
+}
+
+.stat-value.credits-earned {
+    color: #10B981;
+}
+
+.stat-card:has(.credits-earned)::before {
+    background: linear-gradient(90deg, transparent, #10B981, transparent);
+}
+
+.stat-value.total-transactions {
+    color: #3B82F6;
+}
+
+.stat-card:has(.total-transactions)::before {
+    background: linear-gradient(90deg, transparent, #3B82F6, transparent);
+}
+
+/* Filter Section */
+.filter-section {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    padding: 0.5rem;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    border: 1px solid var(--border-primary);
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.filter-btn::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+    transition: width 0.3s ease;
+}
+
+.filter-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    color: #3B82F6;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.filter-btn.active::before {
+    width: 80%;
+}
+
+/* Transactions Table */
+.transactions-table {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+html.dark .transactions-table {
+    background: rgba(17, 24, 39, 0.3);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 1.5fr 2fr 0.8fr 1fr;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border-primary);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.transaction-row {
+    display: grid;
+    grid-template-columns: 1.5fr 2fr 0.8fr 1fr;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.transaction-row::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: transparent;
+    transition: background 0.2s ease;
+}
+
+.transaction-row:hover {
+    background: var(--hover-bg);
+    padding-left: 1.75rem;
+}
+
+.transaction-row:hover::before {
+    background: linear-gradient(180deg, #3B82F6 0%, #8B5CF6 100%);
+}
+
+.transaction-row:last-child {
+    border-bottom: none;
+}
+
+.transaction-date {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.transaction-description {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.transaction-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    width: fit-content;
+    transition: all 0.2s ease;
+}
+
+.type-deduction {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.1) 100%);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.type-addition {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.type-purchase {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.1) 100%);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.transaction-type:hover {
+    transform: scale(1.05);
+}
+
+.transaction-amount {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+.amount-deduction {
+    color: #EF4444;
+}
+
+.amount-addition {
+    color: #10B981;
+}
+
+.transaction-amount i {
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, transparent 100%);
+    border-radius: 12px;
+    border: 2px dashed var(--border-primary);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-text {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.get-credits-btn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.get-credits-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.get-credits-btn:hover::before {
+    left: 100%;
+}
+
+.get-credits-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 3rem;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-primary);
+    border-top-color: #F59E0B;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .history-content {
+        padding: 1rem;
+    }
+
+    .table-header,
+    .transaction-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .table-header {
+        display: none;
+    }
+
+    .transaction-row {
+        background: var(--bg-tertiary);
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+        border: 1px solid var(--border-primary);
+    }
+
+    .transaction-row > div {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .transaction-row > div:before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-tertiary);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .balance-card {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="history-wrapper">
+    <!-- Header -->
+    <div class="history-header">
+        <div class="header-content">
+            <h1 class="page-title">
+                <i class="ph ph-coins"></i>
+                Credits History
+            </h1>
+            <div class="balance-card">
+                <span class="balance-label">Current Balance:</span>
+                <span class="balance-amount" id="currentBalance">
+                    <i class="ph ph-coins balance-icon"></i>
+                    <span id="balanceValue">--</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="history-content">
+        <!-- Stats Row -->
+        <div class="stats-row" id="statsRow" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-label">Credits Spent</div>
+                <div class="stat-value credits-spent" id="creditsSpent">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Credits Earned</div>
+                <div class="stat-value credits-earned" id="creditsEarned">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Transactions</div>
+                <div class="stat-value total-transactions" id="totalTransactions">0</div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <button class="filter-btn active" onclick="filterTransactions('all')">All</button>
+            <button class="filter-btn" onclick="filterTransactions('deduction')">Spent</button>
+            <button class="filter-btn" onclick="filterTransactions('addition')">Earned</button>
+        </div>
+
+        <!-- Transactions Container -->
+        <div id="transactionsContainer">
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <div style="margin-top: 1rem; color: var(--text-secondary);">Loading transactions...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let allTransactions = [];
+let currentFilter = 'all';
+
+// Load transaction history on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadTransactionHistory();
+});
+
+async function loadTransactionHistory() {
+    try {
+        const response = await fetch('/credits-history/data');
+        const data = await response.json();
+
+        if (data.success) {
+            // Update current balance
+            document.getElementById('balanceValue').textContent = data.current_credits.toFixed(2);
+
+            // Store all transactions
+            allTransactions = data.transactions;
+
+            // Calculate stats
+            updateStats();
+
+            // Display transactions
+            displayTransactions(allTransactions);
+        } else {
+            showError('Failed to load transaction history');
+        }
+    } catch (error) {
+        console.error('Error loading transaction history:', error);
+        showError('Error loading transaction history');
+    }
+}
+
+function updateStats() {
+    let creditsSpent = 0;
+    let creditsEarned = 0;
+
+    allTransactions.forEach(tx => {
+        if (tx.amount < 0) {
+            creditsSpent += Math.abs(tx.amount);
+        } else {
+            creditsEarned += tx.amount;
+        }
+    });
+
+    document.getElementById('creditsSpent').textContent = creditsSpent.toFixed(2);
+    document.getElementById('creditsEarned').textContent = creditsEarned.toFixed(2);
+    document.getElementById('totalTransactions').textContent = allTransactions.length;
+
+    // Show stats row if there are transactions
+    if (allTransactions.length > 0) {
+        document.getElementById('statsRow').style.display = 'grid';
+    }
+}
+
+function displayTransactions(transactions) {
+    const container = document.getElementById('transactionsContainer');
+
+    if (transactions.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="ph ph-receipt empty-icon"></i>
+                <h3 class="empty-title">No Transactions Yet</h3>
+                <p class="empty-text">Your credit transaction history will appear here</p>
+                <a href="/payment" class="get-credits-btn">
+                    <i class="ph ph-crown"></i>
+                    Get Credits
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    // Create table
+    let html = `
+        <div class="transactions-table">
+            <div class="table-header">
+                <div>Date</div>
+                <div>Description</div>
+                <div>Type</div>
+                <div>Amount</div>
+            </div>
+    `;
+
+    transactions.forEach(tx => {
+        const isDeduction = tx.amount < 0;
+        const type = tx.type || (isDeduction ? 'deduction' : 'addition');
+        const typeClass = type === 'purchase' ? 'type-purchase' : (isDeduction ? 'type-deduction' : 'type-addition');
+        const amountClass = isDeduction ? 'amount-deduction' : 'amount-addition';
+        const amountSign = isDeduction ? '' : '+';
+        const typeLabel = type === 'purchase' ? 'Purchase' : (isDeduction ? 'Spent' : 'Earned');
+        const typeIcon = type === 'purchase' ? 'ph-shopping-cart' : (isDeduction ? 'ph-minus-circle' : 'ph-plus-circle');
+
+        html += `
+            <div class="transaction-row">
+                <div class="transaction-date" data-label="Date">${tx.formatted_date}</div>
+                <div class="transaction-description" data-label="Description">${tx.description}</div>
+                <div data-label="Type">
+                    <span class="transaction-type ${typeClass}">
+                        <i class="ph ${typeIcon}"></i>
+                        ${typeLabel}
+                    </span>
+                </div>
+                <div class="transaction-amount ${amountClass}" data-label="Amount">
+                    <i class="ph ph-coins"></i>
+                    ${amountSign}${Math.abs(tx.amount).toFixed(2)}
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function filterTransactions(type) {
+    currentFilter = type;
+
+    // Update filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+
+    // Filter transactions
+    let filtered = allTransactions;
+    if (type === 'deduction') {
+        filtered = allTransactions.filter(tx => tx.amount < 0);
+    } else if (type === 'addition') {
+        filtered = allTransactions.filter(tx => tx.amount >= 0);
+    }
+
+    displayTransactions(filtered);
+}
+
+function showError(message) {
+    const container = document.getElementById('transactionsContainer');
+    container.innerHTML = `
+        <div class="empty-state">
+            <i class="ph ph-warning empty-icon" style="color: #EF4444;"></i>
+            <h3 class="empty-title">Error</h3>
+            <p class="empty-text">${message}</p>
+        </div>
+    `;
+}
+</script>
+{% endblock %}
