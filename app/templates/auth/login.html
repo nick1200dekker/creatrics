@@ -340,7 +340,7 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: #E5E7EB;
+            background: var(--border-primary);
         }
         
         .divider span {
@@ -467,9 +467,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #F8FAFC;
+            background: var(--bg-primary);
             z-index: 9999;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, background-color 0.3s ease;
             opacity: 0;
             pointer-events: none;
         }
