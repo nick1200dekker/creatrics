@@ -25,16 +25,19 @@
     padding: 0 !important;
 }
 
-/* Main wrapper with background like brain dump */
+/* Single background panel like video script generator */
 .analytics-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    background: var(--bg-primary);
-    transition: background-color 0.3s ease;
-    padding: 1rem;
+    background: var(--bg-secondary);
     border-radius: 12px;
-    min-height: calc(100vh - 60px);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    overflow: hidden;
+    width: 100%;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .analytics-wrapper {
+    border-color: transparent;
 }
 
 /* Fix dark mode toggle visibility on analytics page */
@@ -82,13 +85,9 @@ html.dark #dark-mode-toggle .ph-moon {
     overflow: visible !important;
 }
 
-/* Main container */
+/* Content area inside the panel */
 .analytics-container {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
     padding: 1.5rem;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Premium card styling - Fixed with consistent heights */
@@ -115,17 +114,15 @@ html.dark .premium-card {
     flex-direction: column;
 }
 
-/* Header styling to match brain dump */
+/* Header inside the panel */
 .analytics-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 1.5rem;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-tertiary);
     transition: background-color 0.3s ease, border-color 0.3s ease;
-    margin-bottom: 1rem;
 }
 
 .analytics-title {
@@ -789,37 +786,39 @@ html.dark .pagination-btn {
 {% endblock %}
 
 {% block content %}
-<div class="analytics-wrapper">
-    <!-- Header -->
-    <div class="analytics-header">
-        <h1 class="analytics-title">
-            <i class="ph ph-chart-bar"></i>
-            <span>Analytics</span>
-        </h1>
-        
-        <!-- Platform Selector (center) -->
-        <div class="platform-selector">
-            <button class="platform-btn icon-only {% if x_connected %}active{% endif %}" data-platform="x" 
-                    onclick="{% if x_connected %}switchPlatform('x'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}" title="X Analytics">
-                <i class="ph ph-x-logo"></i>
-            </button>
-            <button class="platform-btn {% if youtube_connected and not x_connected %}active{% endif %}" data-platform="youtube"
-                    onclick="{% if youtube_connected %}switchPlatform('youtube'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}">
-                <i class="ph ph-youtube-logo"></i>
-                <span>YouTube</span>
-            </button>
+<div class="content-panel">
+    <div class="analytics-wrapper">
+        <!-- Header -->
+        <div class="analytics-header">
+            <h1 class="analytics-title">
+                <i class="ph ph-chart-bar"></i>
+                <span>Analytics</span>
+            </h1>
+            
+            <!-- Platform Selector (center) -->
+            <div class="platform-selector">
+                <button class="platform-btn icon-only {% if x_connected %}active{% endif %}" data-platform="x" 
+                        onclick="{% if x_connected %}switchPlatform('x'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}" title="X Analytics">
+                    <i class="ph ph-x-logo"></i>
+                </button>
+                <button class="platform-btn {% if youtube_connected and not x_connected %}active{% endif %}" data-platform="youtube"
+                        onclick="{% if youtube_connected %}switchPlatform('youtube'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}">
+                    <i class="ph ph-youtube-logo"></i>
+                    <span>YouTube</span>
+                </button>
+            </div>
+            
+            <!-- Timeframe Selector (right) -->
+            <div class="timeframe-selector">
+                <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">7 Days</button>
+                <button class="timeframe-btn active" data-timeframe="30days" onclick="changeTimeframe('30days')">30 Days</button>
+                <button class="timeframe-btn" data-timeframe="90days" onclick="changeTimeframe('90days')">90 Days</button>
+                <button class="timeframe-btn" data-timeframe="6months" onclick="changeTimeframe('6months')">6 Months</button>
+            </div>
         </div>
-        
-        <!-- Timeframe Selector (right) -->
-        <div class="timeframe-selector">
-            <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">7 Days</button>
-            <button class="timeframe-btn active" data-timeframe="30days" onclick="changeTimeframe('30days')">30 Days</button>
-            <button class="timeframe-btn" data-timeframe="90days" onclick="changeTimeframe('90days')">90 Days</button>
-            <button class="timeframe-btn" data-timeframe="6months" onclick="changeTimeframe('6months')">6 Months</button>
-        </div>
-    </div>
 
-    <div class="analytics-container">
+        <!-- Content Area -->
+        <div class="analytics-container">
 
     <!-- No accounts connected state -->
     {% if not x_connected and not youtube_connected %}
@@ -1064,7 +1063,8 @@ html.dark .pagination-btn {
         </div>
     </div>
     {% endif %}
-</div>
+        </div>
+    </div>
 </div>
 
 <script>
