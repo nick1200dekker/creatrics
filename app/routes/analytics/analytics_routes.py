@@ -870,7 +870,9 @@ def youtube_daily_views():
         timeframe_days = {
             '7days': 7,
             '30days': 30,
-            '90days': 90
+            '90days': 90,
+            '6months': 180,
+            '1year': 365
         }.get(timeframe, 30)
         
         cutoff_date = datetime.now() - timedelta(days=timeframe_days)
@@ -884,8 +886,44 @@ def youtube_daily_views():
         # Sort by date
         filtered_data.sort(key=lambda x: x.get('date', ''))
         
+        # Calculate overview metrics from filtered daily data
+        total_views = sum(day.get('views', 0) for day in filtered_data)
+        total_watch_time_minutes = sum(day.get('watch_time_minutes', 0) for day in filtered_data)
+        total_watch_time_hours = round(total_watch_time_minutes / 60, 2) if total_watch_time_minutes > 0 else 0
+        total_subscribers_gained = sum(day.get('subscribers_gained', 0) for day in filtered_data)
+        
+        # Calculate averages
+        num_days = len(filtered_data) if filtered_data else 1
+        avg_daily_views = round(total_views / num_days, 1) if num_days > 0 else 0
+        avg_daily_watch_time = round(total_watch_time_minutes / num_days, 1) if num_days > 0 else 0
+        
+        # Calculate average view duration from daily data
+        total_watch_time_seconds = total_watch_time_minutes * 60
+        avg_view_duration_seconds = round(total_watch_time_seconds / total_views) if total_views > 0 else 0
+        
+        # Get traffic sources from timeframe-specific data
+        latest_data = latest_doc.to_dict()
+        traffic_sources_by_timeframe = latest_data.get('traffic_sources_by_timeframe', {})
+        
+        # Get traffic sources for the requested timeframe
+        timeframe_traffic_sources = traffic_sources_by_timeframe.get(timeframe, [])
+        
+        calculated_metrics = {
+            'views': total_views,
+            'watch_time_minutes': total_watch_time_minutes,
+            'watch_time_hours': total_watch_time_hours,
+            'subscribers_gained': total_subscribers_gained,
+            'avg_daily_views': avg_daily_views,
+            'avg_daily_watch_time': avg_daily_watch_time,
+            'avg_view_duration_seconds': avg_view_duration_seconds,
+            'traffic_sources': timeframe_traffic_sources,
+            'timeframe': timeframe,
+            'date_range': f"Last {timeframe_days} days" if timeframe_days < 365 else "Last year"
+        }
+        
         return jsonify({
             'daily_data': filtered_data,
+            'calculated_metrics': calculated_metrics,
             'timeframe': timeframe
         })
         
@@ -928,6 +966,41 @@ def refresh_youtube_data():
             'success': False,
             'error': 'Failed to refresh analytics data'
         }), 500
+
+@bp.route('/analytics/youtube/top-videos')
+@auth_required
+def youtube_top_videos():
+    """Get YouTube top videos for specific timeframe"""
+    user_id = g.user.get('id')
+    timeframe = request.args.get('timeframe', '30days')
+    
+    try:
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app()
+        
+        db = firestore.client()
+        
+        # Get latest data which includes top_videos_by_timeframe
+        latest_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
+        latest_doc = latest_ref.get()
+        
+        if not latest_doc.exists:
+            return jsonify({'error': 'No YouTube analytics data available'}), 404
+        
+        latest_data = latest_doc.to_dict()
+        top_videos_by_timeframe = latest_data.get('top_videos_by_timeframe', {})
+        
+        # Get videos for the requested timeframe
+        videos = top_videos_by_timeframe.get(timeframe, [])
+        
+        return jsonify({
+            'top_videos': videos,
+            'timeframe': timeframe
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching YouTube top videos: {str(e)}")
+        return jsonify({'error': 'Failed to fetch top videos data'}), 500
 
 def calculate_trends(historical_data):
     """Calculate trends from historical data"""

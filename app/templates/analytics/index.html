@@ -880,17 +880,12 @@ html.dark .pagination-btn {
     <!-- YouTube Analytics Content -->
     {% if youtube_connected %}
     <div id="youtube-content" class="tab-content {% if youtube_connected and not x_connected %}active{% endif %}">
-        <!-- Note about YouTube data -->
-        <div class="data-note mb-4">
-            <i class="ph ph-info"></i>
-            <span>YouTube analytics show daily breakdowns for the selected timeframe. Use the refresh button to get the latest data from YouTube.</span>
-        </div>
         
         <!-- Overview Metrics -->
         <div class="premium-card">
             <div class="p-4">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold">Channel Overview (Last 90 Days)</h2>
+                    <h2 id="youtube-overview-title" class="text-lg font-semibold">Channel Overview</h2>
                     <button id="youtube-refresh-btn" class="secondary-button" onclick="refreshYouTubeData()" title="Refresh YouTube data">
                         <i class="ph ph-arrow-clockwise"></i>
                         <span>Refresh Data</span>
@@ -911,9 +906,9 @@ html.dark .pagination-btn {
             <!-- Performance Overview Chart -->
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3 class="chart-title">
+                    <h3 id="youtube-performance-title" class="chart-title">
                         <i class="ph ph-chart-bar"></i>
-                        Performance Overview (90 Days)
+                        Performance Overview
                     </h3>
                 </div>
                 <div id="youtube-views-chart" class="chart-container">
@@ -926,9 +921,9 @@ html.dark .pagination-btn {
             <!-- Traffic Sources Chart -->
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3 class="chart-title">
+                    <h3 id="youtube-traffic-title" class="chart-title">
                         <i class="ph ph-funnel"></i>
-                        Traffic Sources (30 Days)
+                        Traffic Sources
                     </h3>
                 </div>
                 <div id="youtube-traffic-chart" class="chart-container">
@@ -1055,8 +1050,11 @@ function initializeAnalytics() {
         if (currentPlatform === 'x') {
             loadXAnalytics();
         } else if (currentPlatform === 'youtube') {
-            // Reload YouTube analytics with new timeframe
-            loadYouTubeAnalytics();
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => {
+                updateYouTubeTitles();
+                loadYouTubeAnalytics();
+            }, 100);
         }
     };
     
@@ -1090,7 +1088,11 @@ function initializeAnalytics() {
         if (platform === 'x' && contentElement) {
             loadXAnalytics();
         } else if (platform === 'youtube' && contentElement) {
-            loadYouTubeAnalytics();
+            // Use setTimeout to ensure the YouTube content is visible
+            setTimeout(() => {
+                updateYouTubeTitles();
+                loadYouTubeAnalytics();
+            }, 100);
         }
     };
     
@@ -1980,43 +1982,85 @@ function initializeAnalytics() {
         `;
     }
     
-    // YouTube Analytics functions
-    function loadYouTubeAnalytics() {
-        // Load overview data
-        fetch('/analytics/youtube/overview')
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    showYouTubeError(data.error);
-                    return;
-                }
-                renderYouTubeMetrics(data.current);
-                renderYouTubeVideos(data.current?.top_videos || []);
-                
-                // Load daily data for charts
-                loadYouTubeDailyData(data.current);
-            })
-            .catch(error => {
-                console.error('Error loading YouTube overview:', error);
-                showYouTubeError('Failed to load analytics data');
-            });
+    // Update YouTube titles based on timeframe
+    function updateYouTubeTitles() {
+        const timeframeLabels = {
+            '7days': 'Last 7 Days',
+            '30days': 'Last 30 Days',
+            '90days': 'Last 90 Days',
+            '6months': 'Last 6 Months',
+            '1year': 'Last Year'
+        };
+        
+        const label = timeframeLabels[currentTimeframe] || 'Last 90 Days';
+        console.log('Updating YouTube titles with timeframe:', currentTimeframe, 'label:', label);
+        
+        // Update overview title
+        const overviewTitle = document.getElementById('youtube-overview-title');
+        if (overviewTitle) {
+            overviewTitle.textContent = `Channel Overview (${label})`;
+            console.log('Updated overview title to:', overviewTitle.textContent);
+        } else {
+            console.log('Could not find youtube-overview-title element');
+        }
+        
+        // Update performance chart title
+        const performanceTitle = document.getElementById('youtube-performance-title');
+        if (performanceTitle) {
+            performanceTitle.innerHTML = `<i class="ph ph-chart-bar"></i> Performance Overview (${label})`;
+        }
+        
+        // Update traffic sources title
+        const trafficTitle = document.getElementById('youtube-traffic-title');
+        if (trafficTitle) {
+            trafficTitle.innerHTML = `<i class="ph ph-funnel"></i> Traffic Sources (${label})`;
+        }
     }
     
-    function loadYouTubeDailyData(overviewData) {
+    // YouTube Analytics functions
+    function loadYouTubeAnalytics() {
+        // Go directly to timeframe-specific data instead of loading overview first
+        loadYouTubeDailyData();
+    }
+    
+    function loadYouTubeDailyData() {
         fetch(`/analytics/youtube/daily-views?timeframe=${currentTimeframe}`)
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
                     console.error('No daily data available:', data.error);
-                    // Still render charts with overview data
-                    renderYouTubeCharts(overviewData);
+                    showYouTubeError('No daily data available');
                     return;
                 }
-                renderYouTubeChartsWithDailyData(data.daily_data, overviewData);
+                
+                // Update metrics with calculated values based on timeframe
+                if (data.calculated_metrics) {
+                    renderYouTubeMetrics(data.calculated_metrics);
+                }
+                
+                renderYouTubeChartsWithDailyData(data.daily_data, data.calculated_metrics);
+                
+                // Load top videos for the current timeframe
+                loadYouTubeTopVideos();
             })
             .catch(error => {
                 console.error('Error loading YouTube daily data:', error);
-                renderYouTubeCharts(overviewData);
+                showYouTubeError('Failed to load analytics data');
+            });
+    }
+    
+    function loadYouTubeTopVideos() {
+        fetch(`/analytics/youtube/top-videos?timeframe=${currentTimeframe}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error loading top videos:', data.error);
+                    return;
+                }
+                renderYouTubeVideos(data.top_videos || []);
+            })
+            .catch(error => {
+                console.error('Error loading YouTube top videos:', error);
             });
     }
     

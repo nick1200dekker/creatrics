@@ -151,6 +151,7 @@ class YouTubeAnalytics:
             # Date ranges
             end_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
             start_date_90d = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+            start_date_180d = (datetime.now() - timedelta(days=180)).strftime('%Y-%m-%d')  # 6 months
             start_date_30d = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
             
             # Basic metrics (aggregate)
@@ -165,12 +166,12 @@ class YouTubeAnalytics:
             except Exception as e:
                 logger.error(f"Error fetching basic metrics: {str(e)}")
             
-            # Daily metrics for time series
+            # Daily metrics for time series (6 months for better timeframe support)
             daily_metrics = None
             try:
                 daily_metrics = youtube_analytics.reports().query(
                     ids=f'channel=={self.channel_id}',
-                    startDate=start_date_90d,
+                    startDate=start_date_180d,
                     endDate=end_date,
                     dimensions='day',
                     metrics='views,estimatedMinutesWatched,subscribersGained'
@@ -178,10 +179,29 @@ class YouTubeAnalytics:
             except Exception as e:
                 logger.warning(f"Could not fetch daily metrics: {str(e)}")
             
-            # Traffic sources
-            traffic_sources = None
+            # Traffic sources for different timeframes
+            traffic_sources_7d = None
+            traffic_sources_30d = None
+            traffic_sources_90d = None
+            traffic_sources_180d = None
+            
+            # 7 days
             try:
-                traffic_sources = youtube_analytics.reports().query(
+                traffic_sources_7d = youtube_analytics.reports().query(
+                    ids=f'channel=={self.channel_id}',
+                    startDate=start_date_7d,
+                    endDate=end_date,
+                    dimensions='insightTrafficSourceType',
+                    metrics='views',
+                    sort='-views',
+                    maxResults=10
+                ).execute()
+            except Exception as e:
+                logger.warning(f"Could not fetch 7-day traffic sources: {str(e)}")
+            
+            # 30 days
+            try:
+                traffic_sources_30d = youtube_analytics.reports().query(
                     ids=f'channel=={self.channel_id}',
                     startDate=start_date_30d,
                     endDate=end_date,
@@ -191,12 +211,60 @@ class YouTubeAnalytics:
                     maxResults=10
                 ).execute()
             except Exception as e:
-                logger.warning(f"Could not fetch traffic sources: {str(e)}")
+                logger.warning(f"Could not fetch 30-day traffic sources: {str(e)}")
             
-            # Top videos
-            top_videos = None
+            # 90 days
             try:
-                top_videos = youtube_analytics.reports().query(
+                traffic_sources_90d = youtube_analytics.reports().query(
+                    ids=f'channel=={self.channel_id}',
+                    startDate=start_date_90d,
+                    endDate=end_date,
+                    dimensions='insightTrafficSourceType',
+                    metrics='views',
+                    sort='-views',
+                    maxResults=10
+                ).execute()
+            except Exception as e:
+                logger.warning(f"Could not fetch 90-day traffic sources: {str(e)}")
+            
+            # 6 months (180 days)
+            try:
+                traffic_sources_180d = youtube_analytics.reports().query(
+                    ids=f'channel=={self.channel_id}',
+                    startDate=start_date_180d,
+                    endDate=end_date,
+                    dimensions='insightTrafficSourceType',
+                    metrics='views',
+                    sort='-views',
+                    maxResults=10
+                ).execute()
+            except Exception as e:
+                logger.warning(f"Could not fetch 180-day traffic sources: {str(e)}")
+            
+            # Top videos for different timeframes
+            top_videos_7d = None
+            top_videos_30d = None
+            top_videos_90d = None
+            top_videos_180d = None
+            
+            # 7 days
+            start_date_7d = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+            try:
+                top_videos_7d = youtube_analytics.reports().query(
+                    ids=f'channel=={self.channel_id}',
+                    startDate=start_date_7d,
+                    endDate=end_date,
+                    dimensions='video',
+                    metrics='views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,likes,dislikes,comments,shares,subscribersGained',
+                    sort='-views',
+                    maxResults=10
+                ).execute()
+            except Exception as e:
+                logger.warning(f"Could not fetch 7-day top videos: {str(e)}")
+            
+            # 30 days
+            try:
+                top_videos_30d = youtube_analytics.reports().query(
                     ids=f'channel=={self.channel_id}',
                     startDate=start_date_30d,
                     endDate=end_date,
@@ -206,10 +274,50 @@ class YouTubeAnalytics:
                     maxResults=10
                 ).execute()
             except Exception as e:
-                logger.warning(f"Could not fetch top videos: {str(e)}")
+                logger.warning(f"Could not fetch 30-day top videos: {str(e)}")
+            
+            # 90 days
+            try:
+                top_videos_90d = youtube_analytics.reports().query(
+                    ids=f'channel=={self.channel_id}',
+                    startDate=start_date_90d,
+                    endDate=end_date,
+                    dimensions='video',
+                    metrics='views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,likes,dislikes,comments,shares,subscribersGained',
+                    sort='-views',
+                    maxResults=10
+                ).execute()
+            except Exception as e:
+                logger.warning(f"Could not fetch 90-day top videos: {str(e)}")
+            
+            # 6 months (180 days)
+            try:
+                top_videos_180d = youtube_analytics.reports().query(
+                    ids=f'channel=={self.channel_id}',
+                    startDate=start_date_180d,
+                    endDate=end_date,
+                    dimensions='video',
+                    metrics='views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,likes,dislikes,comments,shares,subscribersGained',
+                    sort='-views',
+                    maxResults=10
+                ).execute()
+            except Exception as e:
+                logger.warning(f"Could not fetch 180-day top videos: {str(e)}")
             
             # Process the data
-            processed_analytics = self._process_analytics(metrics_90d, daily_metrics, traffic_sources, top_videos)
+            top_videos_data = {
+                '7days': top_videos_7d,
+                '30days': top_videos_30d,
+                '90days': top_videos_90d,
+                '6months': top_videos_180d
+            }
+            traffic_sources_data = {
+                '7days': traffic_sources_7d,
+                '30days': traffic_sources_30d,
+                '90days': traffic_sources_90d,
+                '6months': traffic_sources_180d
+            }
+            processed_analytics = self._process_analytics(metrics_90d, daily_metrics, traffic_sources_data, top_videos_data)
             
             # Store analytics data
             self._store_analytics(processed_analytics)
@@ -223,7 +331,7 @@ class YouTubeAnalytics:
             logger.error(f"Error fetching analytics data: {str(e)}")
             return None
     
-    def _process_analytics(self, metrics_90d, daily_metrics, traffic_sources, top_videos):
+    def _process_analytics(self, metrics_90d, daily_metrics, traffic_sources_data, top_videos_data):
         """Process raw analytics data into structured metrics"""
         now = datetime.now()
         
@@ -261,8 +369,20 @@ class YouTubeAnalytics:
             "total_engagement": 0,
             
             # Data collections
-            "traffic_sources": [],
-            "top_videos": [],
+            "traffic_sources": [],  # Keep for backward compatibility (90 days)
+            "traffic_sources_by_timeframe": {
+                "7days": [],
+                "30days": [],
+                "90days": [],
+                "6months": []
+            },
+            "top_videos": [],  # Keep for backward compatibility (30 days)
+            "top_videos_by_timeframe": {
+                "7days": [],
+                "30days": [],
+                "90days": [],
+                "6months": []
+            },
             "daily_data": [],
             "status": "success"
         }
@@ -318,48 +438,62 @@ class YouTubeAnalytics:
                     "subscribers_gained": subscribers_gained
                 })
         
-        # Process traffic sources
-        if traffic_sources and 'rows' in traffic_sources:
-            column_index = {col['name']: idx for idx, col in enumerate(traffic_sources['columnHeaders'])}
-            
-            for row in traffic_sources['rows']:
-                source_name = row[column_index['insightTrafficSourceType']]
-                source_views = int(row[column_index['views']])
+        # Process traffic sources for all timeframes
+        for timeframe, traffic_sources in traffic_sources_data.items():
+            if traffic_sources and 'rows' in traffic_sources:
+                column_index = {col['name']: idx for idx, col in enumerate(traffic_sources['columnHeaders'])}
                 
-                processed["traffic_sources"].append({
-                    "source": source_name,
-                    "views": source_views,
-                    "percentage": round((source_views / processed["views"] * 100), 2) if processed["views"] > 0 else 0
-                })
+                for row in traffic_sources['rows']:
+                    source_name = row[column_index['insightTrafficSourceType']]
+                    source_views = int(row[column_index['views']])
+                    
+                    source_data = {
+                        "source": source_name,
+                        "views": source_views,
+                        "percentage": round((source_views / processed["views"] * 100), 2) if processed["views"] > 0 else 0
+                    }
+                    
+                    processed["traffic_sources_by_timeframe"][timeframe].append(source_data)
+                    
+                    # Keep backward compatibility - use 90 days for the old traffic_sources field
+                    if timeframe == '90days':
+                        processed["traffic_sources"].append(source_data)
         
-        # Process top videos
-        if top_videos and 'rows' in top_videos:
-            column_index = {col['name']: idx for idx, col in enumerate(top_videos['columnHeaders'])}
-            
-            for row in top_videos['rows']:
-                video_id = row[column_index['video']]
-                if '==' in video_id:
-                    video_id = video_id.split('==')[1]
+        # Process top videos for all timeframes
+        for timeframe, top_videos in top_videos_data.items():
+            if top_videos and 'rows' in top_videos:
+                column_index = {col['name']: idx for idx, col in enumerate(top_videos['columnHeaders'])}
                 
-                video_views = int(row[column_index['views']])
-                video_likes = int(row[column_index.get('likes', 0)])
-                video_comments = int(row[column_index.get('comments', 0)])
-                video_shares = int(row[column_index.get('shares', 0)])
-                video_total_engagement = video_likes + video_comments + video_shares
-                
-                processed["top_videos"].append({
-                    "id": video_id,
-                    "views": video_views,
-                    "watch_time_minutes": int(row[column_index['estimatedMinutesWatched']]),
-                    "avg_view_duration": float(row[column_index['averageViewDuration']]),
-                    "avg_view_percentage": float(row[column_index.get('averageViewPercentage', 0)]),
-                    "likes": video_likes,
-                    "dislikes": int(row[column_index.get('dislikes', 0)]),
-                    "comments": video_comments,
-                    "shares": video_shares,
-                    "subscribers_gained": int(row[column_index.get('subscribersGained', 0)]),
-                    "engagement_rate": round((video_total_engagement / video_views) * 100, 2) if video_views > 0 else 0
-                })
+                for row in top_videos['rows']:
+                    video_id = row[column_index['video']]
+                    if '==' in video_id:
+                        video_id = video_id.split('==')[1]
+                    
+                    video_views = int(row[column_index['views']])
+                    video_likes = int(row[column_index.get('likes', 0)])
+                    video_comments = int(row[column_index.get('comments', 0)])
+                    video_shares = int(row[column_index.get('shares', 0)])
+                    video_total_engagement = video_likes + video_comments + video_shares
+                    
+                    video_data = {
+                        "id": video_id,
+                        "views": video_views,
+                        "watch_time_minutes": int(row[column_index['estimatedMinutesWatched']]),
+                        "avg_view_duration": float(row[column_index['averageViewDuration']]),
+                        "avg_view_percentage": float(row[column_index.get('averageViewPercentage', 0)]),
+                        "likes": video_likes,
+                        "dislikes": int(row[column_index.get('dislikes', 0)]),
+                        "comments": video_comments,
+                        "shares": video_shares,
+                        "subscribers_gained": int(row[column_index.get('subscribersGained', 0)]),
+                        "engagement_rate": round((video_total_engagement / video_views) * 100, 2) if video_views > 0 else 0
+                    }
+                    
+                    processed["top_videos_by_timeframe"][timeframe].append(video_data)
+                    
+                    # Keep backward compatibility - use 30 days for the old top_videos field
+                    if timeframe == '30days':
+                        processed["top_videos"].append(video_data)
         
         return processed
     
