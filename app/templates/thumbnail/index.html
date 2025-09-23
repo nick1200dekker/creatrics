@@ -13,61 +13,52 @@
     border: none !important;
 }
 
-/* Main Container */
+/* Main wrapper - matching other pages style */
 .thumbnail-wrapper {
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-/* Card matching your app style exactly */
-.card {
     background: var(--bg-secondary);
-    backdrop-filter: blur(20px);
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-secondary);
-    margin-bottom: 1.5rem;
     overflow: hidden;
-    transition: all 0.3s ease;
+    width: 100%;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-html.dark .card {
+html.dark .thumbnail-wrapper {
     border-color: transparent;
 }
 
-/* Header matching your app */
-.card-header {
+/* Header - matching other pages style */
+.thumbnail-header {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, transparent 100%);
+    background: var(--bg-secondary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-html.dark .card-header {
-    border-bottom-color: var(--border-primary);
-}
-
-.page-title {
+.thumbnail-title {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin: 0;
-    font-family: 'Inter', sans-serif;
 }
 
-.page-title i {
-    color: var(--accent-blue);
-    font-size: 1.75rem;
+.thumbnail-title i {
+    color: #3B82F6;
+}
+
+/* Content Area */
+.thumbnail-content {
+    padding: 2rem;
 }
 
 /* Main Editor Grid */
-.editor-container {
+.editor-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
-    padding: 2rem;
 }
 
 @media (max-width: 1024px) {
@@ -78,6 +69,12 @@ html.dark .card-header {
 
 /* Form Groups */
 .form-group {
+    margin-bottom: 1.75rem;
+}
+
+/* Reduce spacing for model selection */
+.form-group.model-selection {
+    margin-top: -0.5rem;
     margin-bottom: 1.75rem;
 }
 
@@ -309,7 +306,8 @@ html.dark .card-header {
     background: var(--bg-tertiary);
     border: 2px dashed var(--border-primary);
     border-radius: 12px;
-    min-height: 400px;
+    aspect-ratio: 16/9;
+    max-height: 360px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -387,9 +385,23 @@ html.dark .card-header {
 }
 
 /* History Section */
+.history-section {
+    margin-top: 2rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    overflow: hidden;
+}
+
+html.dark .history-section {
+    border-color: transparent;
+}
+
 .history-header {
-    padding: 1rem 2rem;
+    padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
 }
 
 .section-title {
@@ -400,11 +412,10 @@ html.dark .card-header {
     align-items: center;
     gap: 0.5rem;
     margin: 0;
-    font-family: 'Inter', sans-serif;
 }
 
 .section-title i {
-    color: var(--accent-blue);
+    color: #3B82F6;
 }
 
 .history-content {
@@ -424,6 +435,35 @@ html.dark .card-header {
     overflow: hidden;
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
+}
+
+.delete-history-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.history-item:hover .delete-history-btn {
+    opacity: 1;
+}
+
+.delete-history-btn:hover {
+    background: rgba(239, 68, 68, 1);
+    transform: scale(1.1);
 }
 
 .history-item:hover {
@@ -593,24 +633,22 @@ html.dark .card-header {
 
 {% block content %}
 <div class="thumbnail-wrapper">
-    <!-- Main Header -->
-    <div class="card">
-        <div class="card-header">
-            <h1 class="page-title">
-                <i class="ph ph-image"></i>
-                Thumbnail Generator
-            </h1>
-        </div>
+    <!-- Header -->
+    <div class="thumbnail-header">
+        <h1 class="thumbnail-title">
+            <i class="ph ph-image"></i>
+            Thumbnail Generator
+        </h1>
     </div>
 
-    <!-- Editor Card -->
-    <div class="card">
-        <div class="editor-container">
+    <!-- Content -->
+    <div class="thumbnail-content">
+        <div class="editor-grid">
             <!-- Left Panel - Input -->
             <div class="input-section">
                 <!-- Upload Images -->
                 <div class="form-group">
-                    <label class="form-label">Upload Images (1-4 required)</label>
+                    <label class="form-label">Upload Image(s)</label>
                     <div class="upload-grid">
                         <div class="upload-slot" onclick="triggerUpload(0)">
                             <span class="upload-number">1</span>
@@ -647,7 +685,7 @@ html.dark .card-header {
                     </div>
                 </div>
 
-                <!-- Prompt and Model in same height -->
+                <!-- Prompt -->
                 <div class="form-group">
                     <label class="form-label">Describe your thumbnail</label>
                     <textarea
@@ -660,7 +698,8 @@ html.dark .card-header {
                     <div class="char-count" id="charCount">0 / 1000</div>
                 </div>
 
-                <div class="form-group">
+                <!-- Model Selection -->
+                <div class="form-group model-selection">
                     <label class="form-label">Select Model</label>
                     <div class="model-cards">
                         <div class="model-card selected" data-model="nano-banana" onclick="selectModel('nano-banana')">
@@ -689,9 +728,9 @@ html.dark .card-header {
 
             <!-- Right Panel - Output -->
             <div class="output-section">
-                <div class="form-group" style="height: 100%;">
+                <div class="form-group">
                     <label class="form-label">Result</label>
-                    <div class="result-container" id="resultContainer" style="height: calc(100% - 30px);">
+                    <div class="result-container" id="resultContainer">
                         <div class="result-placeholder">
                             <i class="ph ph-image-square"></i>
                             <p>Your generated thumbnail will appear here</p>
@@ -701,19 +740,19 @@ html.dark .card-header {
             </div>
         </div>
     </div>
+</div>
 
-    <!-- History Section -->
-    <div class="card">
-        <div class="history-header">
-            <h2 class="section-title">
-                <i class="ph ph-clock-counter-clockwise"></i>
-                Recent Generations
-            </h2>
-        </div>
-        <div class="history-content">
-            <div id="historyContainer">
-                <!-- History will be loaded here -->
-            </div>
+<!-- History Section -->
+<div class="history-section">
+    <div class="history-header">
+        <h2 class="section-title">
+            <i class="ph ph-clock-counter-clockwise"></i>
+            Recent Generations
+        </h2>
+    </div>
+    <div class="history-content">
+        <div id="historyContainer">
+            <!-- History will be loaded here -->
         </div>
     </div>
 </div>
@@ -945,6 +984,9 @@ function renderHistory() {
         
         html += `
             <div class="history-item" onclick="useHistoryItem(${index})">
+                <button class="delete-history-btn" onclick="deleteHistoryItem(${index}, event)" title="Delete">
+                    <i class="ph ph-trash"></i>
+                </button>
                 <div class="history-thumbnail">
                     <img src="${item.url}" alt="${item.prompt}">
                 </div>
@@ -976,7 +1018,7 @@ function renderEmptyHistory() {
 function useHistoryItem(index) {
     const item = generationHistory[index];
     const resultContainer = document.getElementById('resultContainer');
-    
+
     resultContainer.classList.add('has-result');
     resultContainer.innerHTML = `
         <div class="result-image">
@@ -989,9 +1031,24 @@ function useHistoryItem(index) {
             </div>
         </div>
     `;
-    
+
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteHistoryItem(index, event) {
+    event.stopPropagation();
+
+    // Remove item from history
+    generationHistory.splice(index, 1);
+
+    // Save updated history
+    localStorage.setItem('thumbnailHistory', JSON.stringify(generationHistory));
+
+    // Re-render history
+    renderHistory();
+
+    showToast('Thumbnail removed from history', 'success');
 }
 
 function getTimeAgo(date) {
