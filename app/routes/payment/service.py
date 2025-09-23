@@ -155,9 +155,9 @@ class StripeService:
             current_plan = user_data.get('subscription_plan', 'Free Plan')
             normalized_plan = current_plan.lower().strip()
             
-            # More flexible plan name matching
+            # More flexible plan name matching (including admin access)
             is_king_plan = any(plan_name in normalized_plan for plan_name in [
-                'soccer pro', 'pro plan', 'basic plan', 'basic', 'pro'
+                'premium creator', 'premium', 'soccer pro', 'pro plan', 'basic plan', 'basic', 'pro', 'admin', 'administrator'
             ])
             
             logger.info(f"Flex credit check - User plan: '{current_plan}', normalized: '{normalized_plan}', is_king: {is_king_plan}")

@@ -646,17 +646,17 @@
 
 <!-- Current Plan Status -->
 <div class="status-section">
-    <div class="status-header">
-        <div class="status-icon">
-            <i class="ph ph-crown"></i>
+    <div class="status-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="status-icon">
+                <i class="ph ph-crown"></i>
+            </div>
+            <div>
+                <div class="status-title">Your Current Plan: <span id="current-plan-inline" style="color: #3B82F6;">Loading...</span></div>
+                <div class="status-subtitle">Manage your subscription</div>
+            </div>
         </div>
-        <div>
-            <div class="status-title">Your Current Plan: <span id="current-plan-inline" style="color: #3B82F6;">Loading...</span></div>
-            <div class="status-subtitle">Manage your subscription</div>
-        </div>
-    </div>
-    
-    <div class="status-details no-manage" id="status-details">
+        
         <div id="manage-section" style="display: none;">
             <button id="manage-subscription-btn" class="manage-button">
                 <i class="ph ph-gear"></i>
@@ -753,6 +753,44 @@
                 Current Plan
             </div>
         </div>
+        
+        <button id="manage-subscription-card-btn" class="plan-button primary" style="display: none;">
+            <i class="ph ph-gear"></i>
+            Manage Subscription
+        </button>
+    </div>
+</div>
+
+<!-- Flex Credits Section -->
+<div class="flex-credits-section" id="flex-credits-section" style="display: none;">
+    <div class="flex-credits-header">
+        <h2 class="flex-credits-title">Need More Credits?</h2>
+        <p class="flex-credits-subtitle">Purchase additional credits for your Premium Creator plan</p>
+    </div>
+    
+    <div id="flex-locked-message" class="locked-message" style="display: none;">
+        <i class="ph ph-lock"></i>
+        Flex Credits are only available to Premium Creator subscribers
+    </div>
+    
+    <div class="flex-credits-grid">
+        <!-- 500 Credits -->
+        <div class="flex-card">
+            <div class="flex-amount">500 Credits</div>
+            <div class="flex-price">€10</div>
+            <button id="buy-flex1" data-plan="flex1" class="flex-button">
+                Purchase 500 Credits
+            </button>
+        </div>
+        
+        <!-- 1000 Credits -->
+        <div class="flex-card">
+            <div class="flex-amount">1000 Credits</div>
+            <div class="flex-price">€19</div>
+            <button id="buy-flex2" data-plan="flex2" class="flex-button">
+                Purchase 1000 Credits
+            </button>
+        </div>
     </div>
 </div>
 </div>
@@ -789,9 +827,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (element) element.style.display = 'none';
         });
         
-        // Hide manage button initially
+        // Hide manage buttons initially
         const manageSection = document.getElementById('manage-section');
+        const cardManageBtn = document.getElementById('manage-subscription-card-btn');
         if (manageSection) manageSection.style.display = 'none';
+        if (cardManageBtn) cardManageBtn.style.display = 'none';
         
         // Add event listeners for subscription buttons
         subscribeButtons.forEach(id => {
@@ -818,10 +858,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Add event listener for manage button
+        // Add event listener for manage button (both locations)
         const manageBtn = document.getElementById('manage-subscription-btn');
+        const manageCardBtn = document.getElementById('manage-subscription-card-btn');
+        
         if (manageBtn) {
             manageBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                openStripePortal();
+            });
+        }
+        
+        if (manageCardBtn) {
+            manageCardBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 openStripePortal();
             });
@@ -899,13 +948,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Determine plan type - More flexible plan name matching
         const normalizedPlan = currentPlan.toLowerCase().trim();
         const isFreePlan = normalizedPlan === 'free plan' || normalizedPlan === 'free';
+        const isAdmin = normalizedPlan === 'admin' || normalizedPlan === 'administrator';
         isKingPlan = normalizedPlan === 'premium creator' || 
                      normalizedPlan === 'premium' ||
                      normalizedPlan === 'soccer pro' || 
                      normalizedPlan === 'king plan' || 
                      normalizedPlan === 'basic plan' ||
                      normalizedPlan === 'basic' ||
-                     normalizedPlan === 'king';
+                     normalizedPlan === 'king' ||
+                     isAdmin;
         
         console.log("Plan analysis:", { 
             currentPlan, 
@@ -914,20 +965,20 @@ document.addEventListener('DOMContentLoaded', function() {
             isKingPlan 
         });
         
-        // Show manage button for paid plans and adjust layout
+        // Show manage button in status section for Premium users and admins
         const manageSection = document.getElementById('manage-section');
         const statusDetails = document.getElementById('status-details');
         
         if (manageSection) {
-            if (isKingPlan) {
+            if (isKingPlan || isAdmin) {
                 manageSection.style.display = 'block';
-                // Only remove no-manage class if it exists
+                // Remove no-manage class to show proper layout
                 if (statusDetails && statusDetails.classList.contains('no-manage')) {
                     statusDetails.classList.remove('no-manage');
                 }
             } else {
                 manageSection.style.display = 'none';
-                // Only add no-manage class if it doesn't exist
+                // Add no-manage class for proper layout
                 if (statusDetails && !statusDetails.classList.contains('no-manage')) {
                     statusDetails.classList.add('no-manage');
                 }
@@ -935,21 +986,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Update flex credits section
+        const flexCreditsSection = document.getElementById('flex-credits-section');
         const flexLockedMessage = document.getElementById('flex-locked-message');
         const flexButtons = document.querySelectorAll('.flex-button');
         
-        if (isKingPlan) {
-            // Enable flex credit purchases for King plan
+        if (isKingPlan || isAdmin) {
+            // Show flex credits section for Premium Creator or Admin
+            if (flexCreditsSection) flexCreditsSection.style.display = 'block';
             if (flexLockedMessage) flexLockedMessage.style.display = 'none';
             flexButtons.forEach(btn => {
                 btn.disabled = false;
             });
         } else {
-            // Disable flex credit purchases for non-King plans
-            if (flexLockedMessage) flexLockedMessage.style.display = 'block';
-            flexButtons.forEach(btn => {
-                btn.disabled = true;
-            });
+            // Hide flex credits section for other plans
+            if (flexCreditsSection) flexCreditsSection.style.display = 'none';
         }
         
         // Highlight current plan and show appropriate buttons
