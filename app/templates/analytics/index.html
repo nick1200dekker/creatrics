@@ -1102,6 +1102,17 @@ function initializeAnalytics() {
         currentPlatform = defaultPlatform;
     }
 
+    // Function to get chart colors based on theme
+    function getChartColors() {
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        return {
+            text: isDarkMode ? '#d1d5db' : '#6b7280',
+            title: isDarkMode ? '#9ca3af' : '#6b7280',
+            grid: isDarkMode ? '#374151' : '#e5e7eb',
+            tooltip: isDarkMode ? 'dark' : 'light'
+        };
+    }
+
     let currentTimeframe = '30days';
     let chartViews = {
         impressions: 'daily',
@@ -1424,7 +1435,8 @@ function initializeAnalytics() {
                 height: 300,
                 toolbar: { show: false },
                 background: 'transparent',
-                fontFamily: 'Inter, sans-serif'
+                fontFamily: 'Inter, sans-serif',
+                zoom: { enabled: false }
             },
             dataLabels: { enabled: false },
             stroke: {
@@ -1441,14 +1453,14 @@ function initializeAnalytics() {
             xaxis: {
                 type: 'datetime',
                 labels: {
-                    style: { colors: '#6b7280', fontSize: '11px' },
+                    style: { colors: getChartColors().text, fontSize: '11px' },
                     rotate: -45
                 }
             },
             yaxis: {
-                title: { text: 'Impressions', style: { color: '#6b7280' } },
+                title: { text: 'Impressions', style: { color: getChartColors().title } },
                 labels: {
-                    style: { colors: '#6b7280' },
+                    style: { colors: getChartColors().text },
                     formatter: function(val) {
                         if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
                         if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
@@ -1457,7 +1469,7 @@ function initializeAnalytics() {
                 }
             },
             tooltip: {
-                theme: 'light',
+                theme: getChartColors().tooltip,
                 y: {
                     formatter: function(val) {
                         return val.toLocaleString() + ' impressions';
@@ -1562,6 +1574,7 @@ function initializeAnalytics() {
                 type: 'line',
                 toolbar: { show: false },
                 background: 'transparent',
+                zoom: { enabled: false },
                 animations: {
                     enabled: true,
                     speed: 400
@@ -1587,26 +1600,26 @@ function initializeAnalytics() {
             xaxis: {
                 type: 'datetime',
                 labels: {
-                    style: { colors: '#6b7280', fontSize: '11px' },
+                    style: { colors: getChartColors().text, fontSize: '11px' },
                     rotate: -45
                 }
             },
-            yaxis: chartViews.engagement === 'rolling' ? 
+            yaxis: chartViews.engagement === 'rolling' ?
                 {
-                    title: { text: 'Engagement Rate (%)', style: { color: '#6b7280' } },
-                    labels: { 
-                        style: { colors: '#6b7280' },
+                    title: { text: 'Engagement Rate (%)', style: { color: getChartColors().title } },
+                    labels: {
+                        style: { colors: getChartColors().text },
                         formatter: function(val) {
                             return val !== null ? val.toFixed(1) + '%' : '';
                         }
                     },
                     min: 0
-                } : 
+                } :
                 [
                     {
-                        title: { text: 'Engagement Rate (%)', style: { color: '#6b7280' } },
-                        labels: { 
-                            style: { colors: '#6b7280' },
+                        title: { text: 'Engagement Rate (%)', style: { color: getChartColors().title } },
+                        labels: {
+                            style: { colors: getChartColors().text },
                             formatter: function(val) {
                                 return val.toFixed(1) + '%';
                             }
@@ -1615,9 +1628,9 @@ function initializeAnalytics() {
                     },
                     {
                         opposite: true,
-                        title: { text: 'Total Engagements', style: { color: '#6b7280' } },
-                        labels: { 
-                            style: { colors: '#6b7280' },
+                        title: { text: 'Total Engagements', style: { color: getChartColors().title } },
+                        labels: {
+                            style: { colors: getChartColors().text },
                             formatter: function(val) {
                                 return Math.round(val).toString();
                             }
@@ -1626,7 +1639,7 @@ function initializeAnalytics() {
                     }
                 ],
             tooltip: {
-                theme: 'light',
+                theme: getChartColors().tooltip,
                 shared: chartViews.engagement === 'rolling' ? false : true,
                 intersect: false,
                 y: {
@@ -1713,6 +1726,7 @@ function initializeAnalytics() {
                 height: 300,
                 toolbar: { show: false },
                 background: 'transparent',
+                zoom: { enabled: false },
                 animations: {
                     enabled: true,
                     speed: 400
@@ -1729,14 +1743,14 @@ function initializeAnalytics() {
             xaxis: {
                 type: 'datetime',
                 labels: {
-                    style: { colors: '#6b7280', fontSize: '11px' },
+                    style: { colors: getChartColors().text, fontSize: '11px' },
                     rotate: -45
                 }
             },
             yaxis: {
-                title: { text: 'Number of Posts', style: { color: '#6b7280' } },
-                labels: { 
-                    style: { colors: '#6b7280' },
+                title: { text: 'Number of Posts', style: { color: getChartColors().title } },
+                labels: {
+                    style: { colors: getChartColors().text },
                     formatter: function(val) {
                         return Math.round(val).toString();
                     }
@@ -1744,7 +1758,7 @@ function initializeAnalytics() {
                 min: 0
             },
             tooltip: {
-                theme: 'light',
+                theme: getChartColors().tooltip,
                 y: {
                     formatter: function(val) {
                         return val + ' posts';
@@ -1826,6 +1840,7 @@ function initializeAnalytics() {
                 type: 'line',
                 toolbar: { show: false },
                 background: 'transparent',
+                zoom: { enabled: false },
                 animations: {
                     enabled: true,
                     speed: 400,
@@ -1845,14 +1860,14 @@ function initializeAnalytics() {
             xaxis: {
                 type: 'datetime',
                 labels: {
-                    style: { colors: '#6b7280', fontSize: '11px' },
+                    style: { colors: getChartColors().text, fontSize: '11px' },
                     rotate: -45
                 }
             },
             yaxis: {
-                title: { text: 'Total Followers', style: { color: '#6b7280' } },
-                labels: { 
-                    style: { colors: '#6b7280' },
+                title: { text: 'Total Followers', style: { color: getChartColors().title } },
+                labels: {
+                    style: { colors: getChartColors().text },
                     formatter: function(val) {
                         if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
                         if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
@@ -1863,7 +1878,7 @@ function initializeAnalytics() {
                 max: Math.ceil(maxFollowers * 1.05)
             },
             tooltip: {
-                theme: 'light',
+                theme: getChartColors().tooltip,
                 y: {
                     formatter: function(val) {
                         return val.toLocaleString() + ' followers';
@@ -2243,7 +2258,8 @@ function initializeAnalytics() {
                         height: 300,
                         type: 'line',
                         toolbar: { show: false },
-                        background: 'transparent'
+                        background: 'transparent',
+                        zoom: { enabled: false }
                     },
                     stroke: {
                         width: [0, 3],
@@ -2257,16 +2273,16 @@ function initializeAnalytics() {
                     colors: ['#3B82F6', '#10B981'],
                     xaxis: {
                         type: 'datetime',
-                        labels: { 
-                            style: { colors: '#6b7280' },
+                        labels: {
+                            style: { colors: getChartColors().text },
                             rotate: -45
                         }
                     },
                     yaxis: [
                         {
-                            title: { text: 'Views', style: { color: '#6b7280' } },
-                            labels: { 
-                                style: { colors: '#6b7280' },
+                            title: { text: 'Views', style: { color: getChartColors().title } },
+                            labels: {
+                                style: { colors: getChartColors().text },
                                 formatter: function(val) {
                                     return Math.round(val).toString();
                                 }
@@ -2274,17 +2290,21 @@ function initializeAnalytics() {
                         },
                         {
                             opposite: true,
-                            title: { text: 'Watch Time (hrs)', style: { color: '#6b7280' } },
-                            labels: { 
-                                style: { colors: '#6b7280' },
+                            title: { text: 'Watch Time (hrs)', style: { color: getChartColors().title } },
+                            labels: {
+                                style: { colors: getChartColors().text },
                                 formatter: function(val) {
                                     return val.toFixed(2) + 'h';
                                 }
                             }
                         }
                     ],
-                    tooltip: { theme: 'light' },
-                    legend: { show: true, position: 'top' },
+                    tooltip: { theme: getChartColors().tooltip },
+                    legend: {
+                        show: true,
+                        position: 'top',
+                        labels: { colors: getChartColors().text }
+                    },
                     grid: {
                         borderColor: 'rgba(229, 231, 235, 0.5)'
                     }
@@ -2328,7 +2348,8 @@ function initializeAnalytics() {
                         type: 'bar',
                         height: 300,
                         toolbar: { show: false },
-                        background: 'transparent'
+                        background: 'transparent',
+                        zoom: { enabled: false }
                     },
                     plotOptions: {
                         bar: {
@@ -2339,21 +2360,21 @@ function initializeAnalytics() {
                     },
                     colors: ['#3B82F6'],
                     xaxis: {
-                        labels: { 
-                            style: { colors: '#6b7280' },
+                        labels: {
+                            style: { colors: getChartColors().text },
                             rotate: -45
                         }
                     },
                     yaxis: {
-                        labels: { 
-                            style: { colors: '#6b7280' },
+                        labels: {
+                            style: { colors: getChartColors().text },
                             formatter: function(val) {
                                 return formatNumber(val);
                             }
                         }
                     },
                     tooltip: {
-                        theme: 'light',
+                        theme: getChartColors().tooltip,
                         y: {
                             formatter: function(val, opts) {
                                 const category = opts.w.globals.labels[opts.dataPointIndex];
@@ -2393,16 +2414,17 @@ function initializeAnalytics() {
                     chart: {
                         type: 'donut',
                         height: 300,
-                        background: 'transparent'
+                        background: 'transparent',
+                        zoom: { enabled: false }
                     },
                     labels: metrics.traffic_sources.map(s => s.source),
                     colors: ['#3B82F6', '#60A5FA', '#EF4444', '#F59E0B', '#8B5CF6'],
                     legend: {
                         position: 'bottom',
-                        labels: { colors: '#6b7280' }
+                        labels: { colors: getChartColors().text }
                     },
                     dataLabels: { enabled: false },
-                    tooltip: { theme: 'light' }
+                    tooltip: { theme: getChartColors().tooltip }
                 };
                 
                 const trafficChart = new ApexCharts(trafficContainer, trafficOptions);
