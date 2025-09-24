@@ -55,11 +55,9 @@ class VideoScriptGenerator:
             # Get the appropriate prompt template
             prompt_template = self.get_prompt_template(video_type, script_format)
             if not prompt_template:
-                # Use fallback prompt
-                prompt_template = self.get_fallback_prompt(video_type, script_format)
-
-            # Skip prompt template - we'll use simple direct prompts
-            # prompt = prompt_template.format(concept=concept)
+                logger.error(f"Failed to load prompt template for {video_type}_{script_format}")
+                # Fall back to inline prompt generation
+                prompt_template = None
 
             # Get AI provider
             ai_provider = get_ai_provider()
@@ -71,26 +69,36 @@ class VideoScriptGenerator:
                     if best_effort:
                         # Best effort mode - let AI decide based on content
                         if video_type == 'short':
-                            duration_str = "YouTube Short (15-60 seconds, you decide based on content)"
                             # Set a reasonable default for token calculation
                             duration = 30
                         else:
-                            duration_str = "YouTube video (you decide the appropriate length based on content depth)"
                             # Set a reasonable default for token calculation
                             duration = 10
+
+                    # Use prompt template if available, otherwise use inline prompt
+                    if prompt_template:
+                        # Calculate word count for shorts
+                        duration_words = duration * 2 if video_type == 'short' else duration * 150
+
+                        # Format the prompt template with variables
+                        simple_prompt = prompt_template.format(
+                            concept=concept,
+                            duration=duration,
+                            duration_words=duration_words
+                        )
                     else:
-                        # Specific duration requested
+                        # Fallback to inline prompts (keeping existing logic)
                         if video_type == 'short':
-                            duration_str = f"{duration}-second YouTube Short"
+                            duration_str = f"{duration}-second YouTube Short" if not best_effort else "YouTube Short (15-60 seconds, you decide based on content)"
                         else:
-                            duration_str = f"{duration}-minute YouTube video"
+                            duration_str = f"{duration}-minute YouTube video" if not best_effort else "YouTube video (you decide the appropriate length based on content depth)"
 
-                    # Create more explicit duration-aware prompts with better instructions
-                    if script_format == 'bullet':
-                        if video_type == 'short':
-                            duration_instruction = f"- This is a VERY SHORT video ({duration} seconds only). Write 5-8 key points." if not best_effort else "- Determine the appropriate length (15-60 seconds)."
+                        # Create inline prompts as before
+                        if script_format == 'bullet':
+                            if video_type == 'short':
+                                duration_instruction = f"- This is a VERY SHORT video ({duration} seconds only). Write 5-8 key points." if not best_effort else "- Determine the appropriate length (15-60 seconds)."
 
-                            simple_prompt = f"""Write simple talking points for a {duration_str} based on this content:
+                                simple_prompt = f"""Write simple talking points for a {duration_str} based on this content:
 
 {concept}
 
@@ -101,10 +109,10 @@ CRITICAL REQUIREMENTS:
 - Instead of full sentences, provide short, high-level TOPICS or SUBJECTS to talk about. These should be concise cues for a YouTuber to expand on while recording.
 
 Write ONLY the talking points now:"""
-                        else:
-                            duration_instruction = f"- The video should be approximately {duration} minutes long." if not best_effort else "- Determine the appropriate video length based on content."
+                            else:
+                                duration_instruction = f"- The video should be approximately {duration} minutes long." if not best_effort else "- Determine the appropriate video length based on content."
 
-                            simple_prompt = f"""Write talking points for a {duration_str} based on this content:
+                                simple_prompt = f"""Write talking points for a {duration_str} based on this content:
 
 {concept}
 
@@ -115,11 +123,11 @@ CRITICAL REQUIREMENTS:
 - Instead of full sentences, provide short, high-level TOPICS or SUBJECTS to talk about. These should be concise cues for a YouTuber to expand on while recording.
 
 Write ONLY the talking points now:"""
-                    else:
-                        if video_type == 'short':
-                            duration_instruction = f"- This script must be EXACTLY {duration} seconds when read aloud (about {duration * 2} words)." if not best_effort else "- Determine the appropriate length based on the content (15-60 seconds)."
+                        else:
+                            if video_type == 'short':
+                                duration_instruction = f"- This script must be EXACTLY {duration} seconds when read aloud (about {duration * 2} words)." if not best_effort else "- Determine the appropriate length based on the content (15-60 seconds)."
 
-                            simple_prompt = f"""Write a complete script for a {duration_str} based on this content:
+                                simple_prompt = f"""Write a complete script for a {duration_str} based on this content:
 
 {concept}
 
@@ -130,10 +138,10 @@ CRITICAL REQUIREMENTS:
 - Just pure flowing text for the video.
 
 Write ONLY the spoken script text now:"""
-                        else:
-                            duration_instruction = f"- The script should be approximately {duration} minutes when read aloud (about {duration * 150} words)." if not best_effort else "- Determine the appropriate video length based on content (3-20 minutes)."
+                            else:
+                                duration_instruction = f"- The script should be approximately {duration} minutes when read aloud (about {duration * 150} words)." if not best_effort else "- Determine the appropriate video length based on content (3-20 minutes)."
 
-                            simple_prompt = f"""Write a complete script for a {duration_str} based on this information:
+                                simple_prompt = f"""Write a complete script for a {duration_str} based on this information:
 
 {concept}
 

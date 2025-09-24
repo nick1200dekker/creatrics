@@ -488,6 +488,409 @@ html.dark .edit-mode-textarea {
     width: 100px;
 }
 
+/* Saved Scripts Section */
+.saved-scripts-section {
+    margin-top: 1.5rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.saved-scripts-header {
+    padding: 1rem 1.5rem;
+    background: var(--bg-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.saved-scripts-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.toggle-saved-btn {
+    padding: 0.4rem 0.6rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+}
+
+.toggle-saved-btn:hover {
+    background: #3B82F6;
+    border-color: #3B82F6;
+    color: white;
+}
+
+.saved-scripts-search {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.script-search {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    color: var(--text-primary);
+}
+
+.saved-scripts-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.saved-script-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 0.875rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.saved-script-card:hover {
+    border-color: #3B82F6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+    transform: translateX(2px);
+}
+
+.saved-script-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.saved-script-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.saved-script-preview {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.saved-script-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.saved-script-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.saved-script-btn:hover {
+    background: #3B82F6;
+    border-color: #3B82F6;
+    color: white;
+}
+
+/* Save Script Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.save-script-modal {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 1.5rem;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.modal-title i {
+    color: #3B82F6;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-field {
+    margin-bottom: 1.25rem;
+}
+
+.modal-label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.modal-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.modal-input:focus {
+    border-color: #3B82F6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-primary);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.modal-btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-btn-cancel {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+}
+
+.modal-btn-cancel:hover {
+    background: var(--bg-secondary);
+}
+
+.modal-btn-save {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.modal-btn-save:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+}
+
+.modal-btn-save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* AI Agent Section */
+.ai-agent-section {
+    margin-top: 1.5rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.ai-agent-header {
+    padding: 1rem 1.5rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.ai-agent-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.ai-agent-title i {
+    color: #8B5CF6;
+}
+
+.ai-agent-content {
+    padding: 1.5rem;
+}
+
+.ai-prompt-group {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.ai-modify-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.ai-modify-input:focus {
+    border-color: #8B5CF6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.ai-modify-btn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+}
+
+.ai-modify-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+}
+
+.ai-modify-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ai-suggestions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.suggestion-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.suggestion-chip {
+    padding: 0.5rem 0.875rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 20px;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: all 0.2s ease;
+}
+
+.suggestion-chip i {
+    font-size: 0.875rem;
+}
+
+.suggestion-chip:hover {
+    background: #8B5CF6;
+    border-color: #8B5CF6;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+}
+
 /* Premium Generate Button */
 .generate-btn {
     width: 100%;
@@ -1083,6 +1486,25 @@ html.dark .actions-dropdown-menu {
                             Generate Script
                         </button>
                     </div>
+
+                    <!-- Saved Scripts Section -->
+                    <div class="saved-scripts-section" id="savedScriptsSection" style="display: none;">
+                        <div class="saved-scripts-header">
+                            <h3 class="saved-scripts-title">
+                                <i class="ph ph-folder-open"></i>
+                                Saved Scripts
+                            </h3>
+                            <button class="toggle-saved-btn" onclick="toggleSavedScripts()">
+                                <i class="ph ph-caret-up"></i>
+                            </button>
+                        </div>
+                        <div class="saved-scripts-search" id="savedScriptsSearch" style="display: block;">
+                            <input type="text" id="scriptSearchInput" class="script-search" placeholder="Search saved scripts..." onkeyup="searchScripts()">
+                        </div>
+                        <div class="saved-scripts-list" id="savedScriptsGrid" style="display: block;">
+                            <!-- Saved scripts will be loaded here -->
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right Panel - Results -->
@@ -1099,6 +1521,46 @@ html.dark .actions-dropdown-menu {
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Script Modal -->
+<div class="modal-overlay" id="saveScriptModal">
+    <div class="save-script-modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-floppy-disk"></i>
+                Save Your Script
+            </h3>
+        </div>
+        <div class="modal-body">
+            <div class="modal-field">
+                <label class="modal-label">Script Title</label>
+                <input type="text"
+                       id="scriptTitleInput"
+                       class="modal-input"
+                       placeholder="Enter a descriptive title for your script"
+                       maxlength="100">
+            </div>
+            <div class="modal-field">
+                <label class="modal-label">Description (Optional)</label>
+                <input type="text"
+                       id="scriptDescriptionInput"
+                       class="modal-input"
+                       placeholder="Add notes about this script"
+                       maxlength="200">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeSaveModal()">
+                <i class="ph ph-x"></i>
+                Cancel
+            </button>
+            <button class="modal-btn modal-btn-save" onclick="saveScript()" id="modalSaveBtn">
+                <i class="ph ph-floppy-disk"></i>
+                Save Script
+            </button>
         </div>
     </div>
 </div>
@@ -1120,6 +1582,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start with best effort mode (slider hidden)
     document.getElementById('targetDurationCheckbox').checked = false;
     document.getElementById('durationWrapper').classList.remove('active');
+    // Load saved scripts
+    loadSavedScripts();
+
+    // Close modal when clicking outside
+    document.getElementById('saveScriptModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeSaveModal();
+        }
+    });
+
+    // Allow Enter key to save in modal
+    document.getElementById('scriptTitleInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            saveScript();
+        }
+    });
 });
 
 // Set video type
@@ -1265,9 +1743,18 @@ function displayScript(script) {
                         <i class="ph ph-pencil"></i>
                         ${isEditing ? 'Save Edits' : 'Edit Script'}
                     </button>
+                    <button class="dropdown-item" onclick="saveScriptDialog()">
+                        <i class="ph ph-floppy-disk"></i>
+                        Save Script
+                    </button>
                     <button class="dropdown-item" onclick="openFullscreen()">
                         <i class="ph ph-arrows-out"></i>
                         Teleprompter
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" onclick="undoLastChange()" ${scriptVersions.length <= 1 ? 'disabled' : ''}>
+                        <i class="ph ph-arrow-counter-clockwise"></i>
+                        Undo
                     </button>
                     <div class="dropdown-divider"></div>
                     <button class="dropdown-item" onclick="copyScript()">
@@ -1311,6 +1798,50 @@ function displayScript(script) {
     }
 
     html += '</div>';
+
+    // Add AI Agent section
+    html += `
+        <div class="ai-agent-section">
+            <div class="ai-agent-header">
+                <h4 class="ai-agent-title">
+                    <i class="ph ph-robot"></i>
+                    AI Agent - Modify Your Script
+                </h4>
+            </div>
+            <div class="ai-agent-content">
+                <div class="ai-prompt-group">
+                    <input type="text"
+                           id="aiModifyInput"
+                           class="ai-modify-input"
+                           placeholder="e.g., 'make it shorter', 'add more humor', 'change tone to professional', 'focus more on benefits'"
+                           onkeypress="if(event.key === 'Enter') modifyScriptWithAI()"/>
+                    <button class="ai-modify-btn" onclick="modifyScriptWithAI()" id="aiModifyBtn">
+                        <i class="ph ph-magic-wand"></i>
+                        Modify
+                    </button>
+                </div>
+                <div class="ai-suggestions">
+                    <span class="suggestion-label">Quick actions:</span>
+                    <button class="suggestion-chip" onclick="setAIPrompt('Make it 30% shorter')">
+                        <i class="ph ph-scissors"></i> Shorten
+                    </button>
+                    <button class="suggestion-chip" onclick="setAIPrompt('Make it more engaging and energetic')">
+                        <i class="ph ph-lightning"></i> More Energy
+                    </button>
+                    <button class="suggestion-chip" onclick="setAIPrompt('Add a strong hook at the beginning')">
+                        <i class="ph ph-hook"></i> Better Hook
+                    </button>
+                    <button class="suggestion-chip" onclick="setAIPrompt('Make the tone more casual and conversational')">
+                        <i class="ph ph-chat-circle"></i> Casual Tone
+                    </button>
+                    <button class="suggestion-chip" onclick="setAIPrompt('Add a clear call-to-action')">
+                        <i class="ph ph-megaphone"></i> Add CTA
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
     document.getElementById('resultsContainer').innerHTML = html;
 }
 
@@ -1571,5 +2102,339 @@ function escapeHtml(text) {
     };
     return text.replace(/[&<>"']/g, m => map[m]);
 }
+
+// Save script modal functions
+function saveScriptDialog() {
+    const modal = document.getElementById('saveScriptModal');
+    modal.classList.add('active');
+
+    // Focus on title input
+    setTimeout(() => {
+        document.getElementById('scriptTitleInput').focus();
+    }, 100);
+
+    // Close dropdown
+    document.getElementById('actionsDropdown').classList.remove('open');
+}
+
+function closeSaveModal() {
+    const modal = document.getElementById('saveScriptModal');
+    modal.classList.remove('active');
+
+    // Clear inputs
+    document.getElementById('scriptTitleInput').value = '';
+    document.getElementById('scriptDescriptionInput').value = '';
+}
+
+// Save script functionality
+async function saveScript() {
+    const title = document.getElementById('scriptTitleInput').value.trim();
+    const description = document.getElementById('scriptDescriptionInput').value.trim();
+
+    if (!title) {
+        showToast('Please enter a title for your script', 'warning');
+        document.getElementById('scriptTitleInput').focus();
+        return;
+    }
+
+    const saveBtn = document.getElementById('modalSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="ph ph-spinner"></i> Saving...';
+
+    try {
+        const scriptToSave = isEditing ? document.getElementById('editableScript').value : currentScript;
+
+        const response = await fetch('/api/video-script/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: title,
+                script: scriptToSave,
+                videoType: currentVideoType,
+                scriptFormat: currentScriptFormat,
+                duration: targetDurationMode ? currentDuration : null,
+                concept: document.getElementById('conceptInput').value
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showToast('Script saved successfully!', 'success');
+            loadSavedScripts(); // Refresh the saved scripts list
+            document.getElementById('savedScriptsSection').style.display = 'block';
+            closeSaveModal(); // Close the modal
+        } else {
+            showToast('Failed to save script', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving script:', error);
+        showToast('Failed to save script', 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="ph ph-floppy-disk"></i> Save Script';
+    }
+}
+
+// Load saved scripts
+let savedScripts = [];
+async function loadSavedScripts() {
+    try {
+        const response = await fetch('/api/video-script/list');
+        const data = await response.json();
+
+        if (data.success) {
+            savedScripts = data.scripts;
+            displaySavedScripts(savedScripts);
+
+            // Show section if there are saved scripts
+            if (savedScripts.length > 0) {
+                document.getElementById('savedScriptsSection').style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading saved scripts:', error);
+    }
+}
+
+// Display saved scripts
+function displaySavedScripts(scripts) {
+    const grid = document.getElementById('savedScriptsGrid');
+
+    if (scripts.length === 0) {
+        grid.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No saved scripts yet</p>';
+        return;
+    }
+
+    grid.innerHTML = scripts.map(script => {
+        const preview = typeof script.script === 'string'
+            ? script.script.substring(0, 80)
+            : script.script.bullets ? script.script.bullets[0] : '';
+
+        const date = new Date(script.created_at).toLocaleDateString();
+        const type = script.video_type === 'short' ? '📱 Short' : '🎬 Long';
+        const format = script.script_format === 'bullet' ? 'Bullets' : 'Full';
+
+        return `
+            <div class="saved-script-card" onclick="loadScript('${script.id}')">
+                <div class="saved-script-title">${escapeHtml(script.title)}</div>
+                <div class="saved-script-meta">
+                    <span>${type} • ${format}</span>
+                    <span>${date}</span>
+                </div>
+                <div class="saved-script-preview">${escapeHtml(preview)}...</div>
+                <div class="saved-script-actions">
+                    <button class="saved-script-btn" onclick="event.stopPropagation(); loadScript('${script.id}')">
+                        <i class="ph ph-folder-open"></i> Load
+                    </button>
+                    <button class="saved-script-btn" onclick="event.stopPropagation(); deleteScript('${script.id}')">
+                        <i class="ph ph-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Load a specific script
+async function loadScript(scriptId) {
+    try {
+        const response = await fetch(`/api/video-script/${scriptId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            const script = data.script;
+
+            // Update the UI with loaded script
+            currentScript = script.script;
+            currentVideoType = script.video_type;
+            currentScriptFormat = script.script_format;
+
+            // Update the concept input if available
+            if (script.concept) {
+                document.getElementById('conceptInput').value = script.concept;
+                updateCharCount();
+            }
+
+            // Update video type buttons
+            setVideoType(currentVideoType);
+
+            // Update script format buttons
+            setScriptFormat(currentScriptFormat);
+
+            // Update duration if available
+            if (script.duration) {
+                document.getElementById('targetDurationCheckbox').checked = true;
+                toggleTargetDuration();
+                document.getElementById('durationSlider').value = script.duration;
+                updateDuration(script.duration);
+            }
+
+            // Display the loaded script
+            displayScript(currentScript);
+
+            // Add to versions for undo
+            scriptVersions = [currentScript];
+
+            showToast('Script loaded successfully!', 'success');
+        }
+    } catch (error) {
+        console.error('Error loading script:', error);
+        showToast('Failed to load script', 'error');
+    }
+}
+
+// Delete script
+async function deleteScript(scriptId) {
+    if (!confirm('Are you sure you want to delete this script?')) return;
+
+    try {
+        const response = await fetch(`/api/video-script/${scriptId}`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showToast('Script deleted successfully!', 'success');
+            loadSavedScripts(); // Refresh the list
+        }
+    } catch (error) {
+        console.error('Error deleting script:', error);
+        showToast('Failed to delete script', 'error');
+    }
+}
+
+// Search scripts
+function searchScripts() {
+    const searchTerm = document.getElementById('scriptSearchInput').value.toLowerCase();
+
+    if (!searchTerm) {
+        displaySavedScripts(savedScripts);
+        return;
+    }
+
+    const filtered = savedScripts.filter(script => {
+        const titleMatch = script.title.toLowerCase().includes(searchTerm);
+        const contentMatch = typeof script.script === 'string'
+            ? script.script.toLowerCase().includes(searchTerm)
+            : script.script.bullets && script.script.bullets.some(b => b.toLowerCase().includes(searchTerm));
+
+        return titleMatch || contentMatch;
+    });
+
+    displaySavedScripts(filtered);
+}
+
+// Toggle saved scripts section
+function toggleSavedScripts() {
+    const grid = document.getElementById('savedScriptsGrid');
+    const search = document.getElementById('savedScriptsSearch');
+    const btn = document.querySelector('.toggle-saved-btn i');
+
+    if (grid.style.display === 'none') {
+        grid.style.display = 'block';
+        search.style.display = 'block';
+        btn.className = 'ph ph-caret-up';
+    } else {
+        grid.style.display = 'none';
+        search.style.display = 'none';
+        btn.className = 'ph ph-caret-down';
+    }
+}
+
+// Set AI prompt from suggestion chips
+function setAIPrompt(prompt) {
+    document.getElementById('aiModifyInput').value = prompt;
+    document.getElementById('aiModifyInput').focus();
+}
+
+// AI Modification
+async function modifyScriptWithAI() {
+    const modifyInput = document.getElementById('aiModifyInput');
+    const modification = modifyInput.value.trim();
+
+    if (!modification) {
+        showToast('Please enter a modification request', 'warning');
+        modifyInput.focus();
+        return;
+    }
+
+    const scriptToModify = isEditing ? document.getElementById('editableScript').value : currentScript;
+
+    // Disable the button and show loading state
+    const modifyBtn = document.getElementById('aiModifyBtn');
+    modifyBtn.disabled = true;
+    modifyBtn.innerHTML = '<i class="ph ph-spinner"></i> Modifying...';
+
+    // Show loading state
+    showToast('Modifying script with AI...', 'info');
+
+    try {
+        // For now, we'll call the generate endpoint with the modification request
+        // In the future, this could be a dedicated endpoint
+        const modificationPrompt = `Please modify the following script according to this request: "${modification}"\n\nOriginal Script:\n${typeof scriptToModify === 'string' ? scriptToModify : scriptToModify.bullets.join('\n')}`;
+
+        const response = await fetch('/api/generate-video-script', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                concept: modificationPrompt,
+                videoType: currentVideoType,
+                scriptFormat: currentScriptFormat,
+                duration: targetDurationMode ? currentDuration : null
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Store current version for undo
+            scriptVersions.push(currentScript);
+
+            // Update with modified script
+            currentScript = data.script;
+            displayScript(currentScript);
+            showToast('Script modified successfully!', 'success');
+
+            // Clear the input
+            modifyInput.value = '';
+        } else {
+            showToast('Failed to modify script', 'error');
+        }
+    } catch (error) {
+        console.error('Error modifying script:', error);
+        showToast('Failed to modify script', 'error');
+    } finally {
+        // Re-enable the button
+        modifyBtn.disabled = false;
+        modifyBtn.innerHTML = '<i class="ph ph-magic-wand"></i> Modify';
+    }
+}
+
+// Undo last change
+function undoLastChange() {
+    if (scriptVersions.length <= 1) {
+        showToast('No previous version to undo to', 'info');
+        return;
+    }
+
+    // Remove current version
+    scriptVersions.pop();
+
+    // Get previous version
+    currentScript = scriptVersions[scriptVersions.length - 1];
+
+    // Display the previous version
+    displayScript(currentScript);
+
+    showToast('Reverted to previous version', 'success');
+
+    // Close dropdown
+    document.getElementById('actionsDropdown').classList.remove('open');
+}
+
 </script>
 {% endblock %}
