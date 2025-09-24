@@ -211,7 +211,7 @@ class VideoTagsGenerator:
 
             # Add some generic relevant tags if needed
             generic_tags = [
-                'youtube', 'video', 'tutorial', 'how to', 'guide', '2024', '2025',
+                'youtube', 'video', 'tutorial', 'how to', 'guide',
                 'tips', 'tricks', 'learn', 'best', 'top', 'amazing', 'must watch',
                 'viral', 'trending', 'new', 'latest', 'explained', 'for beginners'
             ]
@@ -237,7 +237,7 @@ class VideoTagsGenerator:
         # Common YouTube tags
         base_tags = [
             'youtube', 'video', 'content', 'tutorial', 'guide', 'how to',
-            '2024', '2025', 'tips', 'tricks', 'learn', 'education',
+            'tips', 'tricks', 'learn', 'education',
             'entertainment', 'viral', 'trending', 'fyp', 'for you page'
         ]
 

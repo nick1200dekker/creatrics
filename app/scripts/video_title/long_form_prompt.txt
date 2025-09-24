@@ -18,7 +18,7 @@ REQUIREMENTS:
 BEST PRACTICES TO FOLLOW:
 1. Lead with the benefit or transformation
 2. Use "How to" for educational content
-3. Include the year for timely content (2024, 2025)
+3. Include the current year for timely content when relevant
 4. Use brackets or parentheses for emphasis [TESTED], (WORKS!)
 5. Question titles that viewers want answered
 6. Contrast/comparison titles (This vs That)

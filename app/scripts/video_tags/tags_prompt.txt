@@ -14,7 +14,7 @@ TAG STRATEGY:
 - Add 2-3 trending or seasonal keywords if relevant
 - Include 2-3 audience-specific terms (beginner, advanced, etc.)
 - Add 2-3 action words (how to, tutorial, guide, tips)
-- Include year tags if relevant (2024, 2025)
+- Include current year tags if relevant
 
 OPTIMIZE FOR:
 - YouTube search algorithm
@@ -26,4 +26,4 @@ FORMAT:
 Return only the comma-separated tags, no numbering or explanations.
 
 Example format:
-youtube monetization, how to monetize youtube, youtube money 2024, make money on youtube, youtube ad revenue, youtube partner program, monetization requirements, 1000 subscribers, 4000 watch hours, youtube tips for beginners, youtube growth strategy, content creator income, youtube earnings, passive income youtube, youtube channel monetization, youtube shorts monetization, youtube ads, creator economy, online income, youtube success tips
+youtube monetization, how to monetize youtube, youtube money guide, make money on youtube, youtube ad revenue, youtube partner program, monetization requirements, 1000 subscribers, 4000 watch hours, youtube tips for beginners, youtube growth strategy, content creator income, youtube earnings, passive income youtube, youtube channel monetization, youtube shorts monetization, youtube ads, creator economy, online income, youtube success tips

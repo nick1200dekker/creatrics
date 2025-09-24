@@ -191,7 +191,7 @@ class VideoTitleGenerator:
             ]
         else:
             return [
-                f"How to Master {topic} - Complete Guide 2024",
+                f"How to Master {topic} - Complete Guide",
                 f"{topic}: Everything You Need to Know (Beginner to Pro)",
                 f"The Hidden Truth About {topic} Nobody Tells You",
                 f"I Spent 100 Hours Learning {topic} - Here's What I Discovered",
