@@ -306,36 +306,59 @@
         position: relative;
     }
 
+    /* Custom drag ghost that follows cursor */
+    .drag-ghost {
+        position: fixed !important;
+        z-index: 100000 !important;
+        pointer-events: none !important;
+        border: none !important;
+        border-radius: 4px !important;
+        padding: 3px 8px !important;
+        font-size: 0.85rem !important;
+        cursor: grabbing !important;
+        margin: 0 !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+        height: auto !important;
+        line-height: 18px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 200px !important;
+        color: white !important;
+        font-weight: 500 !important;
+        opacity: 0.95 !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
+    .drag-ghost.organic {
+        background: #10B981 !important;
+    }
+
+    .drag-ghost.sponsored {
+        background: #F59E0B !important;
+    }
+
+    .drag-ghost.warning {
+        background: #FB923C !important;
+    }
+
+    .drag-ghost.danger {
+        background: #EF4444 !important;
+    }
+
     /* Fix FullCalendar drag and drop */
     .fc-event {
         position: relative !important;
         z-index: 10 !important;
     }
 
+    /* Hide FullCalendar's default drag mirror */
     .fc-event-dragging {
-        z-index: 10001 !important;
-        cursor: grabbing !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-    }
-
-    /* Keep original event visible during drag */
-    .fc-event.fc-dragging:not(.fc-event-mirror) {
-        opacity: 0.7 !important;
-        visibility: visible !important;
-        display: block !important;
-    }
-
-    /* FullCalendar drag mirror (the preview of where it will drop) */
-    .fc-event-mirror {
         opacity: 0.5 !important;
-        border: 2px dashed #3B82F6 !important;
     }
 
-    /* Ensure dragged element stays visible */
-    .fc-event-dragging .fc-event-main {
-        opacity: 1 !important;
+    .fc-event-mirror {
+        display: none !important;
     }
 
     /* Force uniform row height */
@@ -489,7 +512,7 @@
         border-radius: 4px !important;
         padding: 3px 6px !important;
         font-size: 0.85rem !important;
-        cursor: pointer !important;
+        cursor: move !important;
         margin: 2px !important;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
         height: 24px !important;
@@ -1281,6 +1304,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let editingEventId = null;
     let currentMonth = new Date();
     let draggedEventEl = null;
+    let dragGhost = null;
     
     // Check if FullCalendar loaded
     if (typeof FullCalendar === 'undefined') {
@@ -1294,6 +1318,58 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         return;
+    }
+    
+    // Create custom drag ghost element
+    function createDragGhost(eventEl, event) {
+        // Remove any existing ghost
+        removeDragGhost();
+        
+        // Create new ghost element
+        dragGhost = document.createElement('div');
+        dragGhost.className = 'drag-ghost';
+        dragGhost.textContent = event.title;
+        
+        // Add appropriate classes based on event properties
+        const eventData = events.find(e => e.id == event.id);
+        if (eventData) {
+            if (eventData.content_type === 'sponsored') {
+                dragGhost.classList.add('sponsored');
+            } else {
+                dragGhost.classList.add('organic');
+            }
+            
+            // Add warning/danger classes
+            const eventDate = new Date(eventData.publish_date);
+            const today = new Date();
+            const daysUntil = Math.floor((eventDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (eventData.status !== 'ready') {
+                if (daysUntil <= 3 && daysUntil >= 0 && eventData.status === 'in-progress') {
+                    dragGhost.classList.add('warning');
+                } else if (daysUntil < 0) {
+                    dragGhost.classList.add('danger');
+                }
+            }
+        }
+        
+        document.body.appendChild(dragGhost);
+        
+        return dragGhost;
+    }
+    
+    function removeDragGhost() {
+        if (dragGhost && dragGhost.parentNode) {
+            dragGhost.parentNode.removeChild(dragGhost);
+            dragGhost = null;
+        }
+    }
+    
+    function updateDragGhostPosition(e) {
+        if (dragGhost) {
+            dragGhost.style.left = e.clientX + 'px';
+            dragGhost.style.top = e.clientY + 'px';
+        }
     }
     
     // Initialize calendar
@@ -1315,64 +1391,39 @@ document.addEventListener('DOMContentLoaded', function() {
             events: [],
             fixedWeekCount: false,
             droppable: true,
-            dragRevertDuration: 0,  // Instant revert on cancel
-            dragScroll: true,  // Enable scrolling while dragging
-            
-            // Fix drag positioning - keep element visible and follow mouse
+            eventStartEditable: true,
+            eventDurationEditable: false,
+            dragRevertDuration: 500,
+            dragScroll: true,
+
             eventDragStart: function(info) {
-                draggedEventEl = info.el;
-                // Keep the original element visible during drag
-                info.el.style.opacity = '0.8';
-                info.el.style.visibility = 'visible';
-                info.el.style.display = 'block';
-                info.el.style.pointerEvents = 'none';  // Allow mouse events to pass through
-
-                // Create a visual feedback that follows the mouse
-                const dragHelper = info.el.cloneNode(true);
-                dragHelper.id = 'drag-helper';
-                dragHelper.style.position = 'fixed';
-                dragHelper.style.zIndex = '10000';
-                dragHelper.style.pointerEvents = 'none';
-                dragHelper.style.opacity = '0.7';
-                dragHelper.style.transform = 'scale(1.05)';
-                dragHelper.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
-                document.body.appendChild(dragHelper);
-
-                // Update helper position on mouse move
-                const moveHelper = (e) => {
-                    if (dragHelper) {
-                        dragHelper.style.left = (e.clientX - dragHelper.offsetWidth / 2) + 'px';
-                        dragHelper.style.top = (e.clientY - dragHelper.offsetHeight / 2) + 'px';
-                    }
-                };
-                document.addEventListener('mousemove', moveHelper);
-                info.el.moveHelper = moveHelper;
+                // Create and show custom drag ghost
+                const ghost = createDragGhost(info.el, info.event);
+                
+                // Add mouse move listener
+                document.addEventListener('mousemove', updateDragGhostPosition);
+                
+                // Initial position
+                updateDragGhostPosition(info.jsEvent);
+                
+                // Make original event semi-transparent
+                info.el.style.opacity = '0.5';
             },
 
             eventDragStop: function(info) {
-                // Remove drag helper
-                const dragHelper = document.getElementById('drag-helper');
-                if (dragHelper) {
-                    dragHelper.remove();
-                }
-
-                // Remove move handler
-                if (info.el.moveHelper) {
-                    document.removeEventListener('mousemove', info.el.moveHelper);
-                    delete info.el.moveHelper;
-                }
-
-                // Reset original element
-                if (draggedEventEl) {
-                    draggedEventEl.style.opacity = '';
-                    draggedEventEl.style.visibility = '';
-                    draggedEventEl.style.display = '';
-                    draggedEventEl.style.pointerEvents = '';
-                    draggedEventEl = null;
-                }
+                // Remove ghost and listeners
+                removeDragGhost();
+                document.removeEventListener('mousemove', updateDragGhostPosition);
+                
+                // Reset opacity
+                info.el.style.opacity = '';
             },
             
             eventDrop: function(info) {
+                // Clean up any remaining ghost
+                removeDragGhost();
+                document.removeEventListener('mousemove', updateDragGhostPosition);
+                
                 // Update event date on backend
                 const eventData = {
                     publish_date: info.event.start.toISOString()
@@ -1462,6 +1513,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
     }
+    
+    // Clean up on page unload
+    window.addEventListener('beforeunload', function() {
+        removeDragGhost();
+    });
     
     // Content type selector
     window.selectContentType = function(type) {
@@ -1884,7 +1940,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             title: event.title,
                             start: event.publish_date,
                             backgroundColor: backgroundColor,
-                            classNames: [event.content_type === 'sponsored' ? 'sponsored' : 'organic']
+                            classNames: [event.content_type === 'sponsored' ? 'sponsored' : 'organic'],
+                            editable: true,  // Ensure each event is draggable
+                            startEditable: true
                         });
                     });
                 }
