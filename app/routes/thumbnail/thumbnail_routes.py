@@ -7,12 +7,18 @@ from flask import render_template, request, jsonify, g
 from app.routes.thumbnail import bp
 from app.system.auth.middleware import auth_required
 from app.system.credits.credits_manager import CreditsManager
+from app.system.services.firebase_service import db
+from datetime import datetime
 import logging
 import base64
 import fal_client
 import os
 from PIL import Image
 import io
+
+# Import preset prompts
+from app.scripts.thumbnail.canvas_presets import CANVAS_PRESETS
+from app.scripts.thumbnail.photo_presets import PHOTO_PRESETS
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +101,9 @@ def preprocess_image_for_thumbnail(image_data):
 @auth_required
 def index():
     """Render the thumbnail editor page"""
-    return render_template('thumbnail/index.html')
+    return render_template('thumbnail/index.html',
+                         canvas_presets=CANVAS_PRESETS,
+                         photo_presets=PHOTO_PRESETS)
 
 @bp.route('/thumbnail/generate', methods=['POST'])
 @auth_required
@@ -229,6 +237,40 @@ def generate_thumbnail():
 
             if not deduction_result.get('success'):
                 logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+
+            # Save thumbnails to Firebase for user
+            try:
+                thumbnails_ref = db.collection('users').document(user_id).collection('thumbnails')
+                now = datetime.utcnow().isoformat() + 'Z'
+
+                # Extract image URLs from result
+                image_urls = []
+                if result.get('images'):
+                    image_urls = [img.get('url', img) if isinstance(img, dict) else img for img in result['images']]
+                elif result.get('image'):
+                    image_urls = [result['image'].get('url', result['image']) if isinstance(result['image'], dict) else result['image']]
+                elif result.get('output'):
+                    image_urls = [result['output']]
+
+                # Save each generated thumbnail to Firebase
+                saved_thumbnails = []
+                for img_url in image_urls:
+                    thumbnail_data = {
+                        'url': img_url,
+                        'prompt': prompt,
+                        'model': model,
+                        'created_at': now,
+                        'updated_at': now,
+                        'credits_used': base_credits  # Credits per image
+                    }
+                    doc_ref = thumbnails_ref.add(thumbnail_data)
+                    thumbnail_data['id'] = doc_ref[1].id
+                    saved_thumbnails.append(thumbnail_data)
+
+                logger.info(f"Saved {len(saved_thumbnails)} thumbnails for user {user_id}")
+            except Exception as save_error:
+                logger.error(f"Failed to save thumbnails to Firebase: {str(save_error)}")
+                # Continue even if saving fails
 
             # Return result
             return jsonify({
@@ -460,6 +502,40 @@ def upscale_image():
         if not deduction_result.get('success'):
             logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
 
+        # Save upscaled thumbnail to Firebase
+        try:
+            thumbnails_ref = db.collection('users').document(user_id).collection('thumbnails')
+            now = datetime.utcnow().isoformat() + 'Z'
+
+            # Extract upscaled image URL
+            upscaled_url = None
+            if result.get('result'):
+                result_data = result['result']
+                if isinstance(result_data, dict):
+                    if result_data.get('image', {}).get('url'):
+                        upscaled_url = result_data['image']['url']
+                    elif result_data.get('image'):
+                        upscaled_url = result_data['image']
+                    elif result_data.get('url'):
+                        upscaled_url = result_data['url']
+                elif isinstance(result_data, str):
+                    upscaled_url = result_data
+
+            if upscaled_url:
+                thumbnail_data = {
+                    'url': upscaled_url,
+                    'prompt': 'Upscaled Image',
+                    'model': 'topaz-upscale',
+                    'created_at': now,
+                    'updated_at': now,
+                    'credits_used': required_credits
+                }
+                doc_ref = thumbnails_ref.add(thumbnail_data)
+                logger.info(f"Saved upscaled thumbnail for user {user_id}")
+        except Exception as save_error:
+            logger.error(f"Failed to save upscaled thumbnail to Firebase: {str(save_error)}")
+            # Continue even if saving fails
+
         return jsonify({
             'success': True,
             'result': result.get('result'),
@@ -471,6 +547,90 @@ def upscale_image():
         return jsonify({
             'success': False,
             'error': str(e)
+        }), 500
+
+@bp.route('/thumbnail/history', methods=['GET'])
+@auth_required
+def get_thumbnail_history():
+    """Get thumbnail generation history for the current user"""
+    try:
+        user_id = g.user.get('id')
+
+        # Get user's thumbnails from Firebase
+        thumbnails_ref = db.collection('users').document(user_id).collection('thumbnails')
+
+        # Query with ordering and limit
+        limit = request.args.get('limit', 100, type=int)
+        offset = request.args.get('offset', 0, type=int)
+
+        # Get thumbnails ordered by creation date (newest first)
+        query = thumbnails_ref.order_by('created_at', direction='DESCENDING')
+
+        if limit:
+            query = query.limit(limit)
+        if offset:
+            query = query.offset(offset)
+
+        thumbnails_docs = query.stream()
+
+        # Convert to list
+        thumbnails = []
+        for doc in thumbnails_docs:
+            thumbnail_data = doc.to_dict()
+            thumbnail_data['id'] = doc.id
+            thumbnails.append(thumbnail_data)
+
+        # Get total count
+        total_count = len(list(thumbnails_ref.stream()))
+
+        return jsonify({
+            'success': True,
+            'thumbnails': thumbnails,
+            'total': total_count,
+            'limit': limit,
+            'offset': offset
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching thumbnail history: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch thumbnail history'
+        }), 500
+
+@bp.route('/thumbnail/history/<thumbnail_id>', methods=['DELETE'])
+@auth_required
+def delete_thumbnail(thumbnail_id):
+    """Delete a specific thumbnail from user's history"""
+    try:
+        user_id = g.user.get('id')
+
+        # Get thumbnail reference
+        thumbnail_ref = db.collection('users').document(user_id).collection('thumbnails').document(thumbnail_id)
+
+        # Check if thumbnail exists
+        thumbnail_doc = thumbnail_ref.get()
+        if not thumbnail_doc.exists:
+            return jsonify({
+                'success': False,
+                'error': 'Thumbnail not found'
+            }), 404
+
+        # Delete the thumbnail
+        thumbnail_ref.delete()
+
+        logger.info(f"Deleted thumbnail {thumbnail_id} for user {user_id}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Thumbnail deleted successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error deleting thumbnail: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to delete thumbnail'
         }), 500
 
 @bp.route('/thumbnail/estimate_cost', methods=['POST'])

@@ -298,6 +298,143 @@ html.dark .thumbnail-wrapper {
     color: var(--text-primary);
 }
 
+/* Preset Prompts */
+.preset-prompts-section {
+    margin-top: 1.5rem;
+}
+
+.preset-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.preset-header i {
+    color: var(--accent-blue);
+    font-size: 1rem;
+}
+
+.preset-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.preset-grid::-webkit-scrollbar {
+    display: none;
+}
+
+.preset-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.preset-card:hover {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.preset-card:hover .preset-title {
+    color: white;
+}
+
+.preset-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.preset-title {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.presets-hidden {
+    display: none !important;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-primary);
+}
+
+.pagination-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.preset-category {
+    width: 100%;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-primary);
+}
+
+.preset-category:first-child {
+    margin-top: 1rem;
+    padding-top: 0;
+    border-top: none;
+}
+
 .model-card {
     background: var(--bg-tertiary);
     border: 2px solid var(--border-primary);
@@ -943,6 +1080,37 @@ html.dark .history-section {
                         </div>
                     </div>
                 </div>
+
+                <!-- Preset Prompts Section -->
+                <div class="preset-prompts-section">
+                    <div class="preset-header" onclick="togglePresets()" style="cursor: pointer; user-select: none;">
+                        <i class="ph ph-sparkle"></i>
+                        <span>Quick Presets</span>
+                        <i class="ph ph-caret-right" id="presetToggleIcon" style="transition: transform 0.2s; margin-left: 0.25rem;"></i>
+                    </div>
+                    <!-- Canvas Editor Presets -->
+                    <div class="preset-grid" id="canvasPresets" style="display: none;">
+                        {% for preset in canvas_presets %}
+                        {% if preset.get('category') %}
+                        <div class="preset-category">{{ preset.title }}</div>
+                        {% else %}
+                        <div class="preset-card" onclick="applyPreset('{{ preset.prompt | e }}')" title="{{ preset.prompt }}">
+                            <div class="preset-icon">{{ preset.icon }}</div>
+                            <div class="preset-title">{{ preset.title }}</div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <!-- Photo Editor Presets -->
+                    <div class="preset-grid presets-hidden" id="photoPresets" style="display: none;">
+                        {% for preset in photo_presets %}
+                        <div class="preset-card" onclick="applyPreset('{{ preset.prompt | e }}')" title="{{ preset.prompt }}">
+                            <div class="preset-icon">{{ preset.icon }}</div>
+                            <div class="preset-title">{{ preset.title }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -969,6 +1137,8 @@ let selectedModel = 'nano-banana';
 let uploadedFiles = [null, null, null, null];
 let generationHistory = [];
 let numImages = 1;
+let currentPage = 1;
+const itemsPerPage = 16;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -984,6 +1154,54 @@ function selectModel(model) {
         }
     });
     updateCreditDisplay();
+
+    // Switch preset prompts based on selected model (only if presets are visible)
+    const canvasPresets = document.getElementById('canvasPresets');
+    const photoPresets = document.getElementById('photoPresets');
+    const isPresetsExpanded = canvasPresets.style.display !== 'none' || photoPresets.style.display !== 'none';
+
+    if (isPresetsExpanded) {
+        if (model === 'nano-banana') {
+            canvasPresets.style.display = 'flex';
+            photoPresets.style.display = 'none';
+        } else {
+            canvasPresets.style.display = 'none';
+            photoPresets.style.display = 'flex';
+        }
+    }
+}
+
+function togglePresets() {
+    const canvasPresets = document.getElementById('canvasPresets');
+    const photoPresets = document.getElementById('photoPresets');
+    const toggleIcon = document.getElementById('presetToggleIcon');
+    const currentModel = selectedModel;
+
+    // Check if either preset is currently visible
+    const isExpanded = canvasPresets.style.display !== 'none' || photoPresets.style.display !== 'none';
+
+    if (isExpanded) {
+        // Collapse
+        canvasPresets.style.display = 'none';
+        photoPresets.style.display = 'none';
+        toggleIcon.style.transform = 'rotate(0deg)';
+    } else {
+        // Expand and show correct presets based on model
+        if (currentModel === 'nano-banana') {
+            canvasPresets.style.display = 'flex';
+            photoPresets.style.display = 'none';
+        } else {
+            canvasPresets.style.display = 'none';
+            photoPresets.style.display = 'flex';
+        }
+        toggleIcon.style.transform = 'rotate(90deg)';
+    }
+}
+
+function applyPreset(prompt) {
+    document.getElementById('promptInput').value = prompt;
+    updateCharCount();
+    showToast('Preset applied', 'success');
 }
 
 function increaseNumImages() {
@@ -1175,8 +1393,14 @@ async function generateThumbnail() {
                             <div class="result-grid-item">
                                 <img src="${url}" alt="Generated thumbnail ${index + 1}" onclick="openLightbox('${url}')">
                                 <div class="result-item-actions">
-                                    <button class="action-btn" onclick="downloadImage('${url}', ${index + 1})">
+                                    <button class="action-btn" onclick="editImage('${url}')" title="Edit">
+                                        <i class="ph ph-pencil"></i>
+                                    </button>
+                                    <button class="action-btn" onclick="downloadImage('${url}', ${index + 1})" title="Download">
                                         <i class="ph ph-download"></i>
+                                    </button>
+                                    <button class="action-btn" onclick="upscaleImage('${url}')" title="Upscale (10 credits)">
+                                        <i class="ph ph-arrows-out"></i>
                                     </button>
                                 </div>
                             </div>
@@ -1190,6 +1414,10 @@ async function generateThumbnail() {
                         <div class="result-image">
                             <img src="${imageUrls[0]}" alt="Generated thumbnail" onclick="openLightbox('${imageUrls[0]}')">
                             <div class="result-actions">
+                                <button class="action-btn" onclick="editImage('${imageUrls[0]}')">
+                                    <i class="ph ph-pencil"></i>
+                                    Edit
+                                </button>
                                 <button class="action-btn" onclick="downloadImage('${imageUrls[0]}')">
                                     <i class="ph ph-download"></i>
                                     Download
@@ -1203,15 +1431,8 @@ async function generateThumbnail() {
                     `;
                 }
 
-                // Add each image to history
-                imageUrls.forEach(url => {
-                    addToHistory({
-                        url: url,
-                        prompt: prompt,
-                        model: selectedModel,
-                        timestamp: new Date()
-                    });
-                });
+                // Refresh history to show new thumbnails
+                loadHistory();
             }
         } else {
             if (data.error_type === 'insufficient_credits') {
@@ -1249,43 +1470,65 @@ async function generateThumbnail() {
     }
 }
 
-function addToHistory(item) {
-    generationHistory.unshift(item);
-    if (generationHistory.length > 12) {
-        generationHistory.pop();
-    }
-    localStorage.setItem('thumbnailHistory', JSON.stringify(generationHistory));
-    renderHistory();
-}
+// No longer needed - history is now stored on server
+// function addToHistory(item) { }
 
-function loadHistory() {
-    const saved = localStorage.getItem('thumbnailHistory');
-    if (saved) {
-        generationHistory = JSON.parse(saved);
-        renderHistory();
-    } else {
+async function loadHistory() {
+    try {
+        const response = await fetch('/thumbnail/history?limit=100', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch history');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            generationHistory = data.thumbnails || [];
+            console.log(`Loaded ${generationHistory.length} items from server`);
+            renderHistory();
+        } else {
+            generationHistory = [];
+            renderEmptyHistory();
+        }
+    } catch (error) {
+        console.error('Error loading history:', error);
+        generationHistory = [];
         renderEmptyHistory();
     }
 }
 
 function renderHistory() {
     const container = document.getElementById('historyContainer');
-    
+
     if (generationHistory.length === 0) {
         renderEmptyHistory();
         return;
     }
 
+    // Calculate pagination
+    const totalItems = generationHistory.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+    const pageItems = generationHistory.slice(startIndex, endIndex);
+
     let html = '<div class="history-grid">';
-    generationHistory.forEach((item, index) => {
-        const date = new Date(item.timestamp);
+    pageItems.forEach((item, relativeIndex) => {
+        const actualIndex = startIndex + relativeIndex;
+        const date = new Date(item.created_at || item.timestamp);
         const timeAgo = getTimeAgo(date);
         const modelDisplay = item.model === 'nano-banana' ? 'Canvas Editor' :
                            item.model === 'topaz-upscale' ? 'Upscaled' : 'Photo Editor';
 
         html += `
             <div class="history-item">
-                <button class="delete-history-btn" onclick="deleteHistoryItem(${index}, event)" title="Delete">
+                <button class="delete-history-btn" onclick="deleteHistoryItem(${actualIndex}, event)" title="Delete">
                     <i class="ph ph-trash"></i>
                 </button>
                 <div class="history-thumbnail" onclick="openLightbox('${item.url}')">
@@ -1302,7 +1545,33 @@ function renderHistory() {
         `;
     });
     html += '</div>';
+
+    // Add pagination controls (show even if just 1 page to display total count)
+    html += `
+        <div class="pagination-controls">
+            <button class="pagination-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                <i class="ph ph-caret-left"></i>
+            </button>
+            <div class="pagination-info">
+                Page ${currentPage} of ${totalPages}
+            </div>
+            <button class="pagination-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                <i class="ph ph-caret-right"></i>
+            </button>
+        </div>
+    `;
+
     container.innerHTML = html;
+}
+
+function changePage(page) {
+    const totalPages = Math.ceil(generationHistory.length / itemsPerPage);
+    if (page >= 1 && page <= totalPages) {
+        currentPage = page;
+        renderHistory();
+        // Scroll to history section
+        document.querySelector('.history-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 function renderEmptyHistory() {
@@ -1326,6 +1595,10 @@ function openLightbox(url) {
         <div class="result-image">
             <img src="${url}" alt="Selected thumbnail">
             <div class="result-actions">
+                <button class="action-btn" onclick="editImage('${url}')">
+                    <i class="ph ph-pencil"></i>
+                    Edit
+                </button>
                 <button class="action-btn" onclick="downloadImage('${url}')">
                     <i class="ph ph-download"></i>
                     Download
@@ -1351,19 +1624,50 @@ function downloadLightboxImage() {
     // Not used anymore
 }
 
-function deleteHistoryItem(index, event) {
+async function deleteHistoryItem(index, event) {
     event.stopPropagation();
 
-    // Remove item from history
-    generationHistory.splice(index, 1);
+    const item = generationHistory[index];
+    if (!item || !item.id) {
+        showToast('Cannot delete this item', 'error');
+        return;
+    }
 
-    // Save updated history
-    localStorage.setItem('thumbnailHistory', JSON.stringify(generationHistory));
+    try {
+        const response = await fetch(`/thumbnail/history/${item.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
 
-    // Re-render history
-    renderHistory();
+        if (!response.ok) {
+            throw new Error('Failed to delete thumbnail');
+        }
 
-    showToast('Thumbnail removed from history', 'success');
+        const data = await response.json();
+
+        if (data.success) {
+            // Remove item from local array
+            generationHistory.splice(index, 1);
+
+            // Adjust current page if necessary
+            const totalPages = Math.ceil(generationHistory.length / itemsPerPage);
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            }
+
+            // Re-render history
+            renderHistory();
+
+            showToast('Thumbnail removed from history', 'success');
+        } else {
+            showToast(data.error || 'Failed to delete thumbnail', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting thumbnail:', error);
+        showToast('Failed to delete thumbnail', 'error');
+    }
 }
 
 function getTimeAgo(date) {
@@ -1414,6 +1718,43 @@ async function downloadImage(url, index = null) {
         a.click();
         document.body.removeChild(a);
         showToast('Download started', 'success');
+    }
+}
+
+async function editImage(url) {
+    try {
+        // Fetch the image and convert to file object
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const file = new File([blob], 'edit-image.jpg', { type: blob.type });
+
+        // Clear existing uploads
+        uploadedFiles = [null, null, null, null];
+
+        // Add to first slot
+        uploadedFiles[0] = file;
+
+        // Update UI to show image in first slot
+        const slot = document.querySelector('.upload-slot');
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            slot.innerHTML = `
+                <img src="${e.target.result}" alt="Uploaded image">
+                <button class="remove-btn" onclick="event.stopPropagation(); removeUpload(0)">
+                    <i class="ph ph-x"></i>
+                </button>
+                <input type="file" id="file0" accept="image/*" onchange="handleUpload(0, this)" style="display: none;">
+            `;
+        };
+        reader.readAsDataURL(file);
+
+        // Scroll to upload section
+        document.querySelector('.input-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        showToast('Image loaded for editing', 'success');
+    } catch (error) {
+        console.error('Error loading image for edit:', error);
+        showToast('Failed to load image for editing', 'error');
     }
 }
 
@@ -1511,6 +1852,10 @@ async function upscaleImage(url) {
                 <div class="result-image">
                     <img src="${upscaledUrl}" alt="Upscaled image">
                     <div class="result-actions">
+                        <button class="action-btn" onclick="editImage('${upscaledUrl}')">
+                            <i class="ph ph-pencil"></i>
+                            Edit
+                        </button>
                         <button class="action-btn" onclick="downloadImage('${upscaledUrl}')">
                             <i class="ph ph-download"></i>
                             Download Upscaled
@@ -1519,13 +1864,8 @@ async function upscaleImage(url) {
                 </div>
             `;
 
-            // Save to recent generations
-            addToHistory({
-                url: upscaledUrl,
-                prompt: 'Upscaled Image',
-                model: 'topaz-upscale',
-                timestamp: Date.now()
-            });
+            // Refresh history to show the upscaled image
+            loadHistory();
 
             showToast(`Image upscaled successfully! Used ${result.credits_used} credits`, 'success');
 
