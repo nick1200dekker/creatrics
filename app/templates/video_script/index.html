@@ -517,7 +517,7 @@ html.dark .edit-mode-textarea:focus {
 /* Saved Scripts Section */
 .saved-scripts-section {
     margin-top: 1.5rem;
-    background: var(--bg-primary);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
     border-radius: 12px;
     overflow: hidden;
@@ -526,11 +526,15 @@ html.dark .edit-mode-textarea:focus {
 
 .saved-scripts-header {
     padding: 1rem 1.5rem;
-    background: var(--bg-secondary);
+    background: var(--bg-primary);
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border-primary);
+}
+
+html.dark .saved-scripts-header {
+    background: var(--bg-secondary);
 }
 
 .saved-scripts-title {
@@ -578,16 +582,25 @@ html.dark .edit-mode-textarea:focus {
     max-height: 400px;
     overflow-y: auto;
     padding: 0.5rem;
+    background: var(--bg-secondary);
+}
+
+html.dark .saved-scripts-list {
+    background: var(--bg-secondary);
 }
 
 .saved-script-card {
-    background: var(--bg-secondary);
+    background: var(--bg-primary);
     border: 1px solid var(--border-primary);
     border-radius: 8px;
     padding: 0.875rem;
     margin-bottom: 0.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
+}
+
+html.dark .saved-script-card {
+    background: var(--bg-tertiary);
 }
 
 .saved-script-card:hover {

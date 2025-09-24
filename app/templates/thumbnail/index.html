@@ -1102,7 +1102,7 @@ html.dark .history-section {
                         {% endfor %}
                     </div>
                     <!-- Photo Editor Presets -->
-                    <div class="preset-grid presets-hidden" id="photoPresets" style="display: none;">
+                    <div class="preset-grid" id="photoPresets" style="display: none;">
                         {% for preset in photo_presets %}
                         <div class="preset-card" onclick="applyPreset('{{ preset.prompt | e }}')" title="{{ preset.prompt }}">
                             <div class="preset-icon">{{ preset.icon }}</div>
@@ -1190,7 +1190,7 @@ function togglePresets() {
         if (currentModel === 'nano-banana') {
             canvasPresets.style.display = 'flex';
             photoPresets.style.display = 'none';
-        } else {
+        } else if (currentModel === 'seeddream') {
             canvasPresets.style.display = 'none';
             photoPresets.style.display = 'flex';
         }
