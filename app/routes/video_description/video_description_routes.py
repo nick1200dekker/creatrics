@@ -170,6 +170,35 @@ def get_reference_description():
         logger.error(f"Error getting reference description: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# Clear/Delete reference description
+@bp.route('/api/clear-reference-description', methods=['POST', 'DELETE'])
+@auth_required
+def clear_reference_description():
+    """Clear user's reference description from Firestore"""
+    try:
+        from app.system.services.firebase_service import db
+
+        if not db:
+            return jsonify({'success': False, 'error': 'Database not available'}), 500
+
+        user_id = g.user.get('id')
+
+        # Clear from Firestore
+        doc_ref = db.collection('users').document(user_id)
+        doc_ref.update({
+            'yt_reference_description': firestore.DELETE_FIELD,
+            'yt_reference_updated_at': firestore.DELETE_FIELD
+        })
+
+        return jsonify({
+            'success': True,
+            'message': 'Reference description cleared successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error clearing reference description: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # Legacy endpoint compatibility
 @bp.route('/api/video-description/generate', methods=['POST'])
 @auth_required

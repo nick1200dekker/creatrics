@@ -37,7 +37,7 @@ class VideoScriptGenerator:
             return None
 
     def generate_script(self, concept: str, video_type: str = 'long',
-                       script_format: str = 'full', user_id: str = None) -> Dict:
+                       script_format: str = 'full', duration: int = None, user_id: str = None) -> Dict:
         """
         Generate video script using AI
 
@@ -45,6 +45,7 @@ class VideoScriptGenerator:
             concept: Video concept or topic description
             video_type: Either 'long' or 'short'
             script_format: Either 'full' or 'bullet'
+            duration: Target duration (minutes for long, seconds for short)
             user_id: User ID for tracking
 
         Returns:
@@ -65,11 +66,84 @@ class VideoScriptGenerator:
 
             if ai_provider:
                 try:
-                    # Very simple prompts giving AI complete freedom
-                    if script_format == 'bullet':
-                        simple_prompt = f"Write a bullet-point outline for a {'60-second YouTube Short' if video_type == 'short' else '10-minute YouTube video'} about: {concept}. Just write bullet points, nothing else."
+                    # Handle best effort mode (duration is None) or specific duration
+                    best_effort = duration is None
+                    if best_effort:
+                        # Best effort mode - let AI decide based on content
+                        if video_type == 'short':
+                            duration_str = "YouTube Short (15-60 seconds, you decide based on content)"
+                            # Set a reasonable default for token calculation
+                            duration = 30
+                        else:
+                            duration_str = "YouTube video (you decide the appropriate length based on content depth)"
+                            # Set a reasonable default for token calculation
+                            duration = 10
                     else:
-                        simple_prompt = f"Write a script for a {'60-second YouTube Short' if video_type == 'short' else '10-minute YouTube video'} about: {concept}. Just write the script text."
+                        # Specific duration requested
+                        if video_type == 'short':
+                            duration_str = f"{duration}-second YouTube Short"
+                        else:
+                            duration_str = f"{duration}-minute YouTube video"
+
+                    # Create more explicit duration-aware prompts with better instructions
+                    if script_format == 'bullet':
+                        if video_type == 'short':
+                            if best_effort:
+                                simple_prompt = f"Write simple talking points for a {duration_str} based on this content: {concept}\n\nDetermine the appropriate length (15-60 seconds). Write ONLY the key points to cover, one per line, no bullet symbols, no formatting. Just the actual words and phrases to say."
+                            else:
+                                simple_prompt = f"Write simple talking points for a {duration}-second YouTube Short based on this content: {concept}\n\nThis is a VERY SHORT video ({duration} seconds only). Write 5-8 key points, one per line, no bullet symbols or formatting. Just the actual phrases to say."
+                        else:
+                            if best_effort:
+                                simple_prompt = f"Write talking points for a {duration_str} based on this content: {concept}\n\nDetermine the appropriate video length based on content. Write key points to cover, one per line, no bullet symbols or formatting. Just the actual phrases and points to discuss."
+                            else:
+                                simple_prompt = f"Write talking points for a {duration}-minute YouTube video based on this content: {concept}\n\nThe video should be approximately {duration} minutes long. Write key points to cover, one per line, no bullet symbols or formatting. Just the actual phrases and points to discuss."
+                    else:
+                        if video_type == 'short':
+                            if best_effort:
+                                simple_prompt = f"Write a complete script for a {duration_str} based on this content: {concept}\n\nDetermine the appropriate length based on the content (15-60 seconds). Write ONLY the words to be spoken - no formatting, no headers, no timestamps. Just pure flowing text for the video."
+                            else:
+                                simple_prompt = f"Write a complete script for a {duration}-second YouTube Short based on this content: {concept}\n\nIMPORTANT: This script must be EXACTLY {duration} seconds when read aloud (about {duration * 2} words). Write ONLY the words to be spoken - no formatting, no headers, no timestamps. Just pure flowing text."
+                        else:
+                            if best_effort:
+                                simple_prompt = f"""Write a complete script for a {duration_str} based on this information:
+
+{concept}
+
+CRITICAL REQUIREMENTS:
+- Determine the appropriate video length based on content (3-20 minutes)
+- Write ONLY the words to be spoken - no headers, no timestamps, no formatting
+- NO section titles, NO markdown, NO brackets or notes
+- Just write flowing, conversational text as if reading from a teleprompter
+- Use ALL the specific details provided above
+- Start directly with the opening words and flow naturally throughout
+
+Write ONLY the spoken script text now:"""
+                            else:
+                                simple_prompt = f"""Write a complete script for a {duration}-minute YouTube video based on this information:
+
+{concept}
+
+CRITICAL REQUIREMENTS:
+- Write ONLY the words to be spoken - no headers, no timestamps, no formatting
+- NO section titles like "INTRO" or "CONCLUSION"
+- NO markdown formatting (no ##, **, __, etc.)
+- NO brackets, parentheses with notes, or stage directions
+- Just write flowing, conversational text as if reading from a teleprompter
+- The script should be approximately {duration} minutes when read aloud (about {duration * 150} words)
+- Use ALL the specific details provided above
+- Start directly with the opening words like "Hey everyone" or similar
+- Flow naturally from intro to main content to conclusion without breaks
+
+Write ONLY the spoken script text now:"""
+
+                    # Calculate appropriate max tokens based on duration
+                    if video_type == 'short':
+                        # For shorts: ~3 tokens per word, ~2 words per second
+                        max_tokens = min(1000, duration * 8)
+                    else:
+                        # For long form: ~3 tokens per word, ~150 words per minute
+                        # Increased multiplier for more complete scripts
+                        max_tokens = min(8000, duration * 500)
 
                     # Generate using AI provider with simple prompt
                     response = ai_provider.create_completion(
@@ -77,7 +151,7 @@ class VideoScriptGenerator:
                             {"role": "user", "content": simple_prompt}
                         ],
                         temperature=0.8,
-                        max_tokens=2000 if video_type == 'long' else 800
+                        max_tokens=max_tokens
                     )
 
                     # Get the content - handle both dict and string responses
@@ -86,20 +160,32 @@ class VideoScriptGenerator:
                     else:
                         response_content = str(response)
 
-                    # Just format whatever AI gave us - no JSON parsing
+                    # Clean up any formatting that might have slipped through
+                    import re
+                    clean_content = response_content
+                    # Remove markdown headers
+                    clean_content = re.sub(r'^#+\s+.*$', '', clean_content, flags=re.MULTILINE)
+                    # Remove markdown bold/italic
+                    clean_content = re.sub(r'\*\*|__|\_\_|\*|_', '', clean_content)
+                    # Remove timestamps
+                    clean_content = re.sub(r'\[\d+:\d+(?:-\d+:\d+)?\]|\(\d+:\d+(?:-\d+:\d+)?\)', '', clean_content)
+                    # Remove section headers in caps
+                    clean_content = re.sub(r'^[A-Z][A-Z\s]+:', '', clean_content, flags=re.MULTILINE)
+                    # Remove bullet symbols
+                    clean_content = re.sub(r'^[•\-\*]\s+', '', clean_content, flags=re.MULTILINE)
+                    # Remove extra line breaks
+                    clean_content = re.sub(r'\n{3,}', '\n\n', clean_content)
+                    clean_content = clean_content.strip()
+
+                    # Format based on script type
                     if script_format == 'bullet':
-                        # Split into lines
-                        lines = response_content.strip().split('\n')
-                        bullets = [line.strip() for line in lines if line.strip()]
+                        # Split into lines for bullet points
+                        lines = clean_content.split('\n')
+                        bullets = [line.strip() for line in lines if line.strip() and len(line.strip()) > 5]
                         script = {'bullets': bullets if bullets else ['Generated script content']}
                     else:
-                        # Just return as one big script
-                        script = {
-                            'sections': [{
-                                'title': 'Your Video Script',
-                                'content': response_content.strip() if response_content.strip() else 'Generated script content'
-                            }]
-                        }
+                        # Return as clean script text
+                        script = clean_content if clean_content else 'Generated script content'
 
                     return {
                         'success': True,
@@ -118,7 +204,9 @@ class VideoScriptGenerator:
                     # Fall through to fallback
 
             # Fallback: Generate without AI
-            script = self.generate_fallback_script(concept, video_type, script_format)
+            if duration is None:
+                duration = 30 if video_type == 'short' else 10
+            script = self.generate_fallback_script(concept, video_type, script_format, duration)
 
             return {
                 'success': True,
@@ -267,10 +355,18 @@ class VideoScriptGenerator:
             # Return None to indicate parsing failed
             return None
 
-    def generate_fallback_script(self, concept: str, video_type: str, script_format: str) -> any:
+    def generate_fallback_script(self, concept: str, video_type: str, script_format: str, duration: int = None) -> any:
         """Generate fallback script when AI is not available"""
 
         topic = concept[:100] if concept else "Your Topic"
+        if duration is None:
+            duration = 30 if video_type == 'short' else 10
+
+        # Create duration-aware text
+        if video_type == 'short':
+            duration_text = f"{duration} seconds"
+        else:
+            duration_text = f"{duration} minutes"
 
         if video_type == 'short' and script_format == 'bullet':
             return {
@@ -332,44 +428,61 @@ class VideoScriptGenerator:
                 ]
             }
         else:  # long form full script
+            # Parse the concept to extract key information
+            concept_lines = concept.split('\n')
+            main_topic = concept_lines[0] if concept_lines else topic
+            details = '\n'.join(concept_lines[1:]) if len(concept_lines) > 1 else ''
+
+            # Calculate content for target duration
+            words_needed = duration * 150
+            intro_words = int(words_needed * 0.1)  # 10% for intro
+            main_words = int(words_needed * 0.7)    # 70% for main content
+            conclusion_words = int(words_needed * 0.1)  # 10% for conclusion
+
             return {
                 'sections': [
                     {
                         'title': 'INTRODUCTION',
-                        'content': f"Hey everyone, welcome back to the channel! Today we're diving deep into {topic}. "
-                                  f"If you've been wondering about {topic}, you're in the right place. "
-                                  f"I'm going to share everything you need to know, including some tips that most people miss."
+                        'content': f"Hey everyone, welcome back to the channel! Today we're diving deep into {main_topic}. "
+                                  f"This is a topic that's been generating a lot of buzz lately, and I've got all the details you need to know. "
+                                  f"We're going to break down everything that's been revealed, what it means for you, and why this matters. "
+                                  f"So grab a drink, get comfortable, and let's jump right into it!"
                     },
                     {
                         'title': 'HOOK & PREVIEW',
-                        'content': f"By the end of this video, you'll understand exactly how {topic} works and how to apply it. "
-                                  f"We'll cover three main points: First... Second... And third... "
-                                  f"So make sure you watch until the end because the last tip is a game-changer."
+                        'content': f"So here's what happened: {main_topic}. This is huge news that affects everyone in the community. "
+                                  f"In this video, we'll cover all the leaked information, analyze what it means, and discuss the impact. "
+                                  f"I'll share my thoughts on why this is significant and what you should be looking out for. "
+                                  f"Trust me, you don't want to miss any of this - there are some really exciting developments here!"
                     },
                     {
                         'title': 'MAIN CONTENT - PART 1',
-                        'content': f"Let's start with the basics of {topic}. [Explain core concept in detail]. "
-                                  f"This is important because [explain why]. "
-                                  f"For example, [give specific example or demonstration]."
+                        'content': f"Let's start with what we know for certain about {main_topic}. {details[:500] if details else 'The details are fascinating.'} "
+                                  f"This information comes from reliable sources and has been confirmed by multiple people in the community. "
+                                  f"What makes this particularly interesting is the timing and the way it was revealed. "
+                                  f"Let me break down each component so you understand the full picture."
                     },
                     {
                         'title': 'MAIN CONTENT - PART 2',
-                        'content': f"Now that you understand the foundation, let's talk about [next aspect of {topic}]. "
-                                  f"This is where most people get stuck. [Explain common problems]. "
-                                  f"The solution is actually quite simple: [explain solution with steps]."
+                        'content': f"Now, let's dig deeper into the implications of this news. {details[500:1000] if len(details) > 500 else 'There are several key points to consider.'} "
+                                  f"This changes things in several important ways that you need to be aware of. "
+                                  f"First, it affects how we approach the game going forward. Second, it opens up new opportunities. "
+                                  f"And third, it addresses concerns that many players have had for months."
                     },
                     {
                         'title': 'MAIN CONTENT - PART 3',
-                        'content': f"Finally, let's discuss the advanced techniques for {topic}. "
-                                  f"These are the strategies that separate beginners from experts. "
-                                  f"[Share advanced tips, tricks, and insights]."
+                        'content': f"Let's talk strategy and what this means for you specifically. {details[1000:] if len(details) > 1000 else 'Here are the key takeaways.'} "
+                                  f"Whether you're a new player, a returning player, or a veteran, this impacts you differently. "
+                                  f"For new players, this is an excellent opportunity to catch up. For veterans, it's a chance to complete collections. "
+                                  f"And for everyone, it's a limited-time event that won't come around again soon."
                     },
                     {
                         'title': 'CONCLUSION & CTA',
-                        'content': f"So that's everything you need to know about {topic}! "
-                                  f"To recap: [summarize main points]. "
-                                  f"If you found this helpful, please hit the like button and subscribe for more content like this. "
-                                  f"Leave a comment below with your experience, and I'll see you in the next video!"
+                        'content': f"So that covers everything about {main_topic}! This is definitely one of the most exciting developments we've seen recently. "
+                                  f"Remember, this is time-sensitive information, so make sure you're prepared when it launches. "
+                                  f"If you found this breakdown helpful, please hit that like button - it really helps the channel grow. "
+                                  f"Subscribe and ring the bell so you don't miss any updates, and drop a comment with your thoughts! "
+                                  f"What are you most excited about? Let me know below. Thanks for watching, and I'll see you in the next one!"
                     }
                 ]
             }

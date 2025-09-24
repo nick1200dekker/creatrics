@@ -22,6 +22,7 @@ def generate_video_script():
         concept = data.get('concept', '').strip()
         video_type = data.get('videoType', 'long')  # 'long' or 'short'
         script_format = data.get('scriptFormat', 'full')  # 'full' or 'bullet'
+        duration = data.get('duration', 10 if video_type == 'long' else 30)  # Default durations
 
         if not concept:
             return jsonify({'success': False, 'error': 'Please provide a video concept or topic'}), 400
@@ -61,6 +62,7 @@ def generate_video_script():
             concept=concept,
             video_type=video_type,
             script_format=script_format,
+            duration=duration,
             user_id=user_id
         )
 

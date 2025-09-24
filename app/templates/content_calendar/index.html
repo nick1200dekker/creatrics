@@ -57,6 +57,51 @@
         color: #3B82F6;
     }
 
+    /* Analytics Panel */
+    .analytics-panel {
+        padding: 1.5rem 2rem;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-primary);
+        display: none;
+    }
+
+    .analytics-panel.show {
+        display: block;
+    }
+
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .analytics-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .analytics-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .analytics-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .analytics-sub {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+
     /* Controls */
     .calendar-controls {
         display: flex;
@@ -66,6 +111,8 @@
         background: var(--bg-secondary);
         border-bottom: 1px solid var(--border-primary);
         transition: background-color 0.3s ease, border-color 0.3s ease;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
 
     html.dark .calendar-controls {
@@ -125,6 +172,12 @@
         justify-content: center;
     }
 
+    /* Toggle button */
+    .toggle-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
     /* View toggle */
     .view-toggle {
         display: flex;
@@ -163,12 +216,24 @@
         background: var(--bg-secondary);
         width: 100%;
         overflow: visible;
+        position: relative;
     }
 
     /* Fix FullCalendar drag and drop */
+    .fc-event {
+        position: relative !important;
+        z-index: 10 !important;
+    }
+
     .fc-event-dragging {
         z-index: 10001 !important;
-        position: fixed !important;
+        cursor: grabbing !important;
+        opacity: 0.8 !important;
+    }
+
+    /* FullCalendar drag mirror */
+    .fc-event-mirror {
+        opacity: 0.5 !important;
     }
 
     /* Force uniform row height */
@@ -316,9 +381,8 @@
         margin: 0.5rem !important;
     }
 
-    /* Events */
+    /* Events with status colors */
     .fc-event {
-        background: #3B82F6 !important;
         border: none !important;
         border-radius: 4px !important;
         padding: 3px 6px !important;
@@ -332,6 +396,24 @@
         overflow: hidden !important;
         text-overflow: ellipsis !important;
     }
+
+    /* Content type badges */
+    .fc-event.organic {
+        background: #10B981 !important;
+    }
+
+    .fc-event.sponsored {
+        background: #F59E0B !important;
+    }
+
+    /* Status-based coloring for upcoming/overdue */
+    .fc-event.warning {
+        background: #FB923C !important;
+    }
+
+    .fc-event.danger {
+        background: #EF4444 !important;
+    }
     
     .fc-event-main {
         color: white !important;
@@ -339,7 +421,6 @@
     }
 
     .fc-event:hover {
-        background: #2563EB !important;
         transform: translateY(-1px) !important;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
     }
@@ -391,6 +472,11 @@
         cursor: pointer;
     }
 
+    /* Hide old content in table */
+    .content-table tbody tr.old-content {
+        display: none;
+    }
+
     /* Kanban view */
     #kanban-view {
         padding: 1.5rem;
@@ -413,6 +499,7 @@
         border: 1px solid var(--border-primary);
         display: flex;
         flex-direction: column;
+        transition: all 0.3s ease;
     }
 
     .kanban-column-header {
@@ -444,6 +531,7 @@
         padding: 0.5rem;
         overflow-y: auto;
         min-height: 400px;
+        transition: background 0.2s ease;
     }
 
     .kanban-card {
@@ -454,6 +542,7 @@
         margin-bottom: 0.5rem;
         cursor: move;
         transition: all 0.2s;
+        position: relative;
     }
 
     .kanban-card:hover {
@@ -464,6 +553,22 @@
     .kanban-card.dragging {
         opacity: 0.5;
         cursor: grabbing;
+    }
+
+    /* Hide old content in kanban */
+    .kanban-card.old-content {
+        display: none;
+    }
+
+    /* Warning and danger states for kanban cards */
+    .kanban-card.warning {
+        border-color: #FB923C;
+        background: rgba(251, 146, 60, 0.1);
+    }
+
+    .kanban-card.danger {
+        border-color: #EF4444;
+        background: rgba(239, 68, 68, 0.1);
     }
 
     .kanban-card-title {
@@ -487,6 +592,18 @@
         background: var(--bg-tertiary);
         color: var(--text-secondary);
         border: 1px solid var(--border-primary);
+    }
+
+    .kanban-tag.organic {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10B981;
+        border-color: #10B981;
+    }
+
+    .kanban-tag.sponsored {
+        background: rgba(245, 158, 11, 0.1);
+        color: #F59E0B;
+        border-color: #F59E0B;
     }
 
     .kanban-card-date {
@@ -533,7 +650,7 @@
         color: #2563EB;
     }
 
-    .status-done {
+    .status-ready {
         background: #D1FAE5;
         color: #059669;
     }
@@ -553,7 +670,7 @@
         color: #93C5FD;
     }
 
-    html.dark .status-done {
+    html.dark .status-ready {
         background: #064E3B;
         color: #6EE7B7;
     }
@@ -585,6 +702,8 @@
         overflow-y: auto;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         border: 1px solid var(--border-primary);
+        position: relative;
+        margin: auto;
     }
 
     .modal-header {
@@ -648,38 +767,36 @@
         resize: vertical;
     }
 
-    /* Toast */
-    .toast {
-        position: fixed;
-        bottom: 1rem;
-        right: 1rem;
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #3B82F6;
-        border: 1px solid var(--border-primary);
+    /* Content type selector */
+    .content-type-selector {
         display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        transform: translateY(100px);
-        opacity: 0;
-        transition: all 0.3s;
-        z-index: 2000;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
     }
 
-    .toast.show {
-        transform: translateY(0);
-        opacity: 1;
+    .content-type-option {
+        flex: 1;
+        padding: 0.5rem;
+        border: 1px solid var(--border-primary);
+        border-radius: 6px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+        background: var(--bg-primary);
+        font-size: 0.875rem;
+        color: var(--text-secondary);
     }
 
-    .toast.success {
-        border-left-color: #10B981;
+    .content-type-option:hover {
+        border-color: var(--border-secondary);
+        background: var(--hover-bg);
     }
 
-    .toast.error {
-        border-left-color: #EF4444;
+    .content-type-option.selected {
+        border-color: #3B82F6;
+        background: rgba(59, 130, 246, 0.05);
+        color: var(--text-primary);
+        font-weight: 500;
     }
 
     /* Loading */
@@ -703,6 +820,30 @@
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .calendar-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .control-group {
+            justify-content: center;
+        }
+
+        .analytics-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .kanban-board {
+            flex-direction: column;
+        }
+
+        .kanban-column {
+            width: 100%;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -716,12 +857,48 @@
         </h1>
     </div>
     
+    <!-- Analytics Panel -->
+    <div id="analytics-panel" class="analytics-panel">
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <div class="analytics-label">Total Posts</div>
+                <div class="analytics-value" id="total-posts">0</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-label">Organic Content</div>
+                <div class="analytics-value" id="organic-posts">0</div>
+                <div class="analytics-sub" id="organic-percentage">0%</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-label">Sponsored Content</div>
+                <div class="analytics-value" id="sponsored-posts">0</div>
+                <div class="analytics-sub" id="sponsored-percentage">0%</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-label">Scheduled</div>
+                <div class="analytics-value" id="scheduled-posts">0</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-label">In Progress</div>
+                <div class="analytics-value" id="progress-posts">0</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-label">Ready</div>
+                <div class="analytics-value" id="ready-posts">0</div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Controls -->
     <div class="calendar-controls">
         <div class="control-group">
             <button class="btn btn-primary" onclick="openNewEventModal()">
                 <i class="ph ph-plus"></i>
                 Add Event
+            </button>
+            <button class="btn toggle-btn" onclick="toggleAnalytics()">
+                <i class="ph ph-chart-line"></i>
+                Analytics
             </button>
         </div>
         
@@ -764,6 +941,7 @@
                     <th>Title</th>
                     <th>Date</th>
                     <th>Platform</th>
+                    <th>Type</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -816,11 +994,11 @@
                 </div>
             </div>
             
-            <div class="kanban-column" data-status="done">
+            <div class="kanban-column" data-status="ready">
                 <div class="kanban-column-header">
                     <div class="kanban-column-title">
                         <i class="ph ph-check-circle"></i>
-                        Done
+                        Ready
                     </div>
                     <span class="kanban-column-count">0</span>
                 </div>
@@ -840,6 +1018,19 @@
         </div>
         <div class="modal-body">
             <input type="hidden" id="event-id" value="">
+            
+            <!-- Content Type Selector -->
+            <div class="form-group">
+                <label class="form-label">Content Type</label>
+                <div class="content-type-selector">
+                    <div class="content-type-option selected" data-type="organic" onclick="selectContentType('organic')">
+                        Organic Content
+                    </div>
+                    <div class="content-type-option" data-type="sponsored" onclick="selectContentType('sponsored')">
+                        Sponsored Content
+                    </div>
+                </div>
+            </div>
             
             <div class="form-group">
                 <label class="form-label">Title *</label>
@@ -869,7 +1060,7 @@
                     <option value="draft">Draft</option>
                     <option value="in-progress">In Progress</option>
                     <option value="review">Review</option>
-                    <option value="done">Done</option>
+                    <option value="ready">Ready</option>
                 </select>
             </div>
             
@@ -905,6 +1096,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let events = [];
     let currentView = 'calendar';
     let editingEventId = null;
+    let currentMonth = new Date();
+    let draggedEventEl = null;
     
     // Check if FullCalendar loaded
     if (typeof FullCalendar === 'undefined') {
@@ -938,44 +1131,91 @@ document.addEventListener('DOMContentLoaded', function() {
             displayEventTime: false,
             events: [],
             fixedWeekCount: false,
+            droppable: true,
             
-            // Fix drag and drop positioning
-            eventAllow: function(dropInfo, draggedEvent) {
-                return true;
+            // Fix drag positioning
+            eventDragStart: function(info) {
+                draggedEventEl = info.el;
+                info.el.style.opacity = '0.8';
             },
             
-            eventDragStart: function(info) {
-                // Create a custom drag image
-                const dragImage = info.el.cloneNode(true);
-                dragImage.style.position = 'absolute';
-                dragImage.style.top = '-1000px';
-                document.body.appendChild(dragImage);
-                info.jsEvent.dataTransfer.effectAllowed = 'move';
-                info.jsEvent.dataTransfer.setDragImage(dragImage, 0, 0);
-                setTimeout(() => dragImage.remove(), 0);
+            eventDragStop: function(info) {
+                if (draggedEventEl) {
+                    draggedEventEl.style.opacity = '';
+                    draggedEventEl = null;
+                }
             },
             
             eventDrop: function(info) {
                 // Update event date on backend
+                const eventData = {
+                    publish_date: info.event.start.toISOString()
+                };
+                
                 fetch(`/content-calendar/api/event/${info.event.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ publish_date: info.event.start })
-                }).catch(error => {
+                    body: JSON.stringify(eventData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        info.revert();
+                    }
+                    // Update local events array without full reload
+                    const eventIndex = events.findIndex(e => e.id == info.event.id);
+                    if (eventIndex !== -1) {
+                        events[eventIndex].publish_date = info.event.start.toISOString();
+                    }
+                })
+                .catch(error => {
                     console.error('Error updating event:', error);
                     info.revert();
                 });
             },
 
             dateClick: function(info) {
-                // Pre-fill the date when clicking on a day
-                document.getElementById('event-date').value = info.dateStr + 'T12:00';
+                // Format the date properly for datetime-local input
+                const clickedDate = new Date(info.date);
+                const year = clickedDate.getFullYear();
+                const month = String(clickedDate.getMonth() + 1).padStart(2, '0');
+                const day = String(clickedDate.getDate()).padStart(2, '0');
+                const dateString = `${year}-${month}-${day}T12:00`;
+                
+                // Open modal with the date pre-filled
                 openNewEventModal();
+                document.getElementById('event-date').value = dateString;
             },
             
             eventClick: function(info) {
                 // Open edit modal instead of delete
                 openEditEventModal(info.event.id);
+            },
+            
+            eventDidMount: function(info) {
+                // Add custom classes based on event properties
+                const event = events.find(e => e.id == info.event.id);
+                if (event) {
+                    // Add content type class
+                    if (event.content_type === 'sponsored') {
+                        info.el.classList.add('sponsored');
+                    } else {
+                        info.el.classList.add('organic');
+                    }
+                    
+                    // Add warning/danger classes based on status and date
+                    const eventDate = new Date(event.publish_date);
+                    const today = new Date();
+                    const daysUntil = Math.floor((eventDate - today) / (1000 * 60 * 60 * 24));
+                    
+                    if (event.status !== 'ready') {
+                        if (daysUntil <= 3 && daysUntil >= 0 && event.status === 'in-progress') {
+                            info.el.classList.add('warning');
+                        } else if (daysUntil < 0) {
+                            info.el.classList.add('danger');
+                        }
+                    }
+                }
             }
         });
         
@@ -995,6 +1235,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
+    }
+    
+    // Content type selector
+    window.selectContentType = function(type) {
+        document.querySelectorAll('.content-type-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        document.querySelector(`.content-type-option[data-type="${type}"]`).classList.add('selected');
+    };
+    
+    // Toggle analytics
+    window.toggleAnalytics = function() {
+        const panel = document.getElementById('analytics-panel');
+        panel.classList.toggle('show');
+        
+        if (panel.classList.contains('show')) {
+            updateAnalytics();
+        }
+    };
+    
+    // Update analytics
+    function updateAnalytics() {
+        const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+        const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+        
+        // Filter events for current month
+        const monthEvents = events.filter(event => {
+            if (!event.publish_date) return false;
+            const eventDate = new Date(event.publish_date);
+            return eventDate >= monthStart && eventDate <= monthEnd;
+        });
+        
+        const totalPosts = monthEvents.length;
+        const organicPosts = monthEvents.filter(e => e.content_type !== 'sponsored').length;
+        const sponsoredPosts = monthEvents.filter(e => e.content_type === 'sponsored').length;
+        const scheduledPosts = monthEvents.filter(e => e.publish_date).length;
+        const progressPosts = monthEvents.filter(e => e.status === 'in-progress').length;
+        const readyPosts = monthEvents.filter(e => e.status === 'ready').length;
+        
+        document.getElementById('total-posts').textContent = totalPosts;
+        document.getElementById('organic-posts').textContent = organicPosts;
+        document.getElementById('sponsored-posts').textContent = sponsoredPosts;
+        document.getElementById('scheduled-posts').textContent = scheduledPosts;
+        document.getElementById('progress-posts').textContent = progressPosts;
+        document.getElementById('ready-posts').textContent = readyPosts;
+        
+        // Calculate percentages
+        if (totalPosts > 0) {
+            document.getElementById('organic-percentage').textContent = `${Math.round((organicPosts / totalPosts) * 100)}%`;
+            document.getElementById('sponsored-percentage').textContent = `${Math.round((sponsoredPosts / totalPosts) * 100)}%`;
+        } else {
+            document.getElementById('organic-percentage').textContent = '0%';
+            document.getElementById('sponsored-percentage').textContent = '0%';
+        }
     }
     
     // Make functions globally available
@@ -1031,14 +1325,22 @@ document.addEventListener('DOMContentLoaded', function() {
     window.previousMonth = function() {
         if (calendar) {
             calendar.prev();
+            currentMonth = calendar.getDate();
             updateMonthDisplay();
+            if (document.getElementById('analytics-panel').classList.contains('show')) {
+                updateAnalytics();
+            }
         }
     };
     
     window.nextMonth = function() {
         if (calendar) {
             calendar.next();
+            currentMonth = calendar.getDate();
             updateMonthDisplay();
+            if (document.getElementById('analytics-panel').classList.contains('show')) {
+                updateAnalytics();
+            }
         }
     };
     
@@ -1052,6 +1354,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('event-platform').value = 'YouTube';
         document.getElementById('event-status').value = 'draft';
         document.getElementById('event-notes').value = '';
+        
+        // Reset content type selector
+        selectContentType('organic');
+        
         document.getElementById('event-modal').classList.add('show');
     };
     
@@ -1070,6 +1376,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('event-platform').value = event.platform || 'YouTube';
         document.getElementById('event-status').value = event.status || 'draft';
         document.getElementById('event-notes').value = event.notes || '';
+        
+        // Set content type
+        selectContentType(event.content_type === 'sponsored' ? 'sponsored' : 'organic');
+        
         document.getElementById('event-modal').classList.add('show');
     };
     
@@ -1085,9 +1395,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const platform = document.getElementById('event-platform').value;
         const status = document.getElementById('event-status').value;
         const notes = document.getElementById('event-notes').value;
+        const contentType = document.querySelector('.content-type-option.selected').dataset.type;
         
         if (!title) {
-            showToast('Please fill in the title', 'error');
             return;
         }
         
@@ -1096,7 +1406,8 @@ document.addEventListener('DOMContentLoaded', function() {
             publish_date: date || null,
             platform: platform,
             status: status,
-            notes: notes
+            notes: notes,
+            content_type: contentType
         };
         
         const url = eventId ? 
@@ -1117,14 +1428,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success || data.event_id) {
                 closeEventModal();
                 loadEvents();
-                showToast(eventId ? 'Event updated' : 'Event created', 'success');
-            } else {
-                showToast('Failed to save event', 'error');
             }
         })
         .catch(error => {
             console.error('Error saving event:', error);
-            showToast('Error saving event', 'error');
         });
     };
     
@@ -1142,14 +1449,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     closeEventModal();
                     loadEvents();
-                    showToast('Event deleted', 'success');
-                } else {
-                    showToast('Failed to delete event', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error deleting event:', error);
-                showToast('Error deleting event', 'error');
             });
         }
     };
@@ -1159,17 +1462,42 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Kanban drag and drop
+    let dragTimeout = null;
+    
     window.allowDrop = function(ev) {
         ev.preventDefault();
-        ev.currentTarget.parentElement.classList.add('drag-over');
+        
+        // Clear any existing timeout
+        if (dragTimeout) {
+            clearTimeout(dragTimeout);
+        }
+        
+        // Add drag-over class with a small delay to prevent flashing
+        dragTimeout = setTimeout(() => {
+            ev.currentTarget.parentElement.classList.add('drag-over');
+        }, 50);
     };
     
     window.dropCard = function(ev) {
         ev.preventDefault();
+        
+        // Clear timeout
+        if (dragTimeout) {
+            clearTimeout(dragTimeout);
+            dragTimeout = null;
+        }
+        
+        // Remove drag-over class
         ev.currentTarget.parentElement.classList.remove('drag-over');
         
         const eventId = ev.dataTransfer.getData('eventId');
         const newStatus = ev.currentTarget.parentElement.dataset.status;
+        
+        // Find the dragged card and immediately move it visually
+        const card = document.querySelector(`.kanban-card[data-event-id="${eventId}"]`);
+        if (card) {
+            ev.currentTarget.appendChild(card);
+        }
         
         // Update status on backend
         fetch(`/content-calendar/api/event/${eventId}`, {
@@ -1180,17 +1508,28 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Update the events array
+                const eventIndex = events.findIndex(e => e.id == eventId);
+                if (eventIndex !== -1) {
+                    events[eventIndex].status = newStatus;
+                }
+                // Re-render to update counts
+                renderKanban();
+            } else {
+                // Revert if failed
                 loadEvents();
             }
         })
         .catch(error => {
             console.error('Error updating event status:', error);
+            loadEvents();
         });
     };
     
     function updateMonthDisplay() {
         if (!calendar) return;
         const date = calendar.getDate();
+        currentMonth = date;
         const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         document.getElementById('current-month').textContent = monthYear;
     }
@@ -1205,13 +1544,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (calendar) {
                     calendar.removeAllEvents();
                     data.filter(event => event.publish_date).forEach(event => {
+                        const eventDate = new Date(event.publish_date);
+                        const today = new Date();
+                        const daysUntil = Math.floor((eventDate - today) / (1000 * 60 * 60 * 24));
+                        
+                        // Determine background color
+                        let backgroundColor = getEventColor(event);
+                        
                         calendar.addEvent({
                             id: event.id,
                             title: event.title,
                             start: event.publish_date,
-                            backgroundColor: getEventColor(event.platform)
+                            backgroundColor: backgroundColor,
+                            classNames: [event.content_type === 'sponsored' ? 'sponsored' : 'organic']
                         });
                     });
+                }
+                
+                // Update analytics if visible
+                if (document.getElementById('analytics-panel').classList.contains('show')) {
+                    updateAnalytics();
                 }
                 
                 // Update other views if visible
@@ -1226,28 +1578,66 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
-    function getEventColor(platform) {
-        const colors = {
-            'YouTube': '#FF0000',
-            'X': '#1DA1F2',
-            'Instagram': '#E4405F',
-            'TikTok': '#000000',
-            'Blog': '#F97316',
-            'Other': '#6B7280'
-        };
-        return colors[platform] || '#3B82F6';
+    function getEventColor(event) {
+        const eventDate = new Date(event.publish_date);
+        const today = new Date();
+        const daysUntil = Math.floor((eventDate - today) / (1000 * 60 * 60 * 24));
+        
+        // Check status-based coloring
+        if (event.status !== 'ready') {
+            if (daysUntil <= 3 && daysUntil >= 0 && event.status === 'in-progress') {
+                return '#FB923C'; // Warning orange
+            } else if (daysUntil < 0) {
+                return '#EF4444'; // Danger red
+            }
+        }
+        
+        // Default to content type coloring
+        if (event.content_type === 'sponsored') {
+            return '#F59E0B'; // Sponsored yellow
+        } else {
+            return '#10B981'; // Organic green
+        }
+    }
+    
+    function shouldHideOldContent(event) {
+        if (!event.publish_date) return false;
+        
+        const eventDate = new Date(event.publish_date);
+        const today = new Date();
+        const daysSince = Math.floor((today - eventDate) / (1000 * 60 * 60 * 24));
+        
+        return daysSince > 1;
     }
     
     function renderTable() {
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
         
-        events.forEach(event => {
+        // Filter out old content
+        const visibleEvents = events.filter(event => !shouldHideOldContent(event));
+        
+        visibleEvents.forEach(event => {
             const row = document.createElement('tr');
+            
+            // Add warning/danger classes
+            const eventDate = event.publish_date ? new Date(event.publish_date) : null;
+            const today = new Date();
+            const daysUntil = eventDate ? Math.floor((eventDate - today) / (1000 * 60 * 60 * 24)) : null;
+            
+            if (eventDate && event.status !== 'ready') {
+                if (daysUntil <= 3 && daysUntil >= 0 && event.status === 'in-progress') {
+                    row.style.background = 'rgba(251, 146, 60, 0.1)';
+                } else if (daysUntil < 0) {
+                    row.style.background = 'rgba(239, 68, 68, 0.1)';
+                }
+            }
+            
             row.innerHTML = `
                 <td>${event.title}</td>
                 <td>${event.publish_date ? new Date(event.publish_date).toLocaleDateString() : '-'}</td>
                 <td>${event.platform || '-'}</td>
+                <td><span class="kanban-tag ${event.content_type === 'sponsored' ? 'sponsored' : 'organic'}">${event.content_type === 'sponsored' ? 'Sponsored' : 'Organic'}</span></td>
                 <td><span class="status-badge status-${event.status || 'draft'}">${event.status || 'draft'}</span></td>
                 <td>
                     <button class="btn btn-icon" onclick="editEvent('${event.id}')">
@@ -1261,21 +1651,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function renderKanban() {
         // Clear all columns
-        const columns = ['draft', 'in-progress', 'review', 'done'];
+        const columns = ['draft', 'in-progress', 'review', 'ready'];
         columns.forEach(status => {
             const column = document.querySelector(`.kanban-column[data-status="${status}"] .kanban-column-body`);
             column.innerHTML = '';
         });
+        
+        // Filter out old content
+        const visibleEvents = events.filter(event => !shouldHideOldContent(event));
         
         // Group events by status
         const eventsByStatus = {
             'draft': [],
             'in-progress': [],
             'review': [],
-            'done': []
+            'ready': []
         };
         
-        events.forEach(event => {
+        visibleEvents.forEach(event => {
             const status = event.status || 'draft';
             if (eventsByStatus[status]) {
                 eventsByStatus[status].push(event);
@@ -1295,10 +1688,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.draggable = true;
                 card.dataset.eventId = event.id;
                 
+                // Add warning/danger classes
+                const eventDate = event.publish_date ? new Date(event.publish_date) : null;
+                const today = new Date();
+                const daysUntil = eventDate ? Math.floor((eventDate - today) / (1000 * 60 * 60 * 24)) : null;
+                
+                if (eventDate && event.status !== 'ready') {
+                    if (daysUntil <= 3 && daysUntil >= 0 && event.status === 'in-progress') {
+                        card.classList.add('warning');
+                    } else if (daysUntil < 0) {
+                        card.classList.add('danger');
+                    }
+                }
+                
                 card.innerHTML = `
                     <div class="kanban-card-title">${event.title}</div>
                     <div class="kanban-card-meta">
                         ${event.platform ? `<span class="kanban-tag">${event.platform}</span>` : ''}
+                        <span class="kanban-tag ${event.content_type === 'sponsored' ? 'sponsored' : 'organic'}">${event.content_type === 'sponsored' ? 'Sponsored' : 'Organic'}</span>
                     </div>
                     ${event.publish_date ? `
                         <div class="kanban-card-date">
@@ -1320,6 +1727,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.querySelectorAll('.kanban-column').forEach(col => {
                         col.classList.remove('drag-over');
                     });
+                    
+                    // Clear any pending timeout
+                    if (dragTimeout) {
+                        clearTimeout(dragTimeout);
+                        dragTimeout = null;
+                    }
                 });
                 
                 card.addEventListener('click', function(e) {
@@ -1333,21 +1746,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `
-            <i class="ph ph-${type === 'success' ? 'check' : 'x'}"></i>
-            <span>${message}</span>
-        `;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => toast.classList.add('show'), 100);
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
     
     // Add event listeners for kanban columns to handle drag leave
     document.querySelectorAll('.kanban-column-body').forEach(column => {

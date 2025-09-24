@@ -218,13 +218,19 @@ class AIProviderManager:
                             'content': msg['content']
                         })
                 
-                response = client.messages.create(
-                    model=self.api_model_name,
-                    messages=claude_messages,
-                    system=system_message,
-                    temperature=temperature,
-                    max_tokens=max_tokens
-                )
+                # Claude API call with proper system message handling
+                kwargs_claude = {
+                    'model': self.api_model_name,
+                    'messages': claude_messages,
+                    'temperature': temperature,
+                    'max_tokens': max_tokens
+                }
+
+                # Only add system if it exists and is a string
+                if system_message and isinstance(system_message, str):
+                    kwargs_claude['system'] = system_message
+
+                response = client.messages.create(**kwargs_claude)
                 
                 # Return unified format
                 return {

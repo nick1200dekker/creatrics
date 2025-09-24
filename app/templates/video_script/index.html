@@ -203,6 +203,262 @@ html.dark .input-textarea:focus {
     font-weight: 500;
 }
 
+/* Duration Slider Styles */
+.duration-slider-container {
+    padding: 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+}
+
+.slider-wrapper {
+    position: relative;
+    padding: 0.5rem 0;
+}
+
+.duration-slider {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(59, 130, 246, 0.15);
+    border-radius: 10px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+html.dark .duration-slider {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+/* Track fill effect */
+.duration-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right, #3B82F6 0%, #3B82F6 var(--value, 50%), rgba(59, 130, 246, 0.15) var(--value, 50%), rgba(59, 130, 246, 0.15) 100%);
+    border-radius: 10px;
+}
+
+.duration-slider::-moz-range-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(59, 130, 246, 0.15);
+    border-radius: 10px;
+}
+
+html.dark .duration-slider::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, #3B82F6 0%, #3B82F6 var(--value, 50%), rgba(59, 130, 246, 0.2) var(--value, 50%), rgba(59, 130, 246, 0.2) 100%);
+}
+
+html.dark .duration-slider::-moz-range-track {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.duration-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border: 2px solid #3B82F6;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+    margin-top: -6px;
+}
+
+.duration-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border: 2px solid #3B82F6;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+    border: 2px solid #3B82F6;
+}
+
+.duration-slider:hover::-webkit-slider-thumb {
+    transform: scale(1.2);
+    box-shadow: 0 3px 12px rgba(59, 130, 246, 0.4);
+}
+
+.duration-slider:hover::-moz-range-thumb {
+    transform: scale(1.2);
+    box-shadow: 0 3px 12px rgba(59, 130, 246, 0.4);
+}
+
+.duration-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.75rem;
+}
+
+.duration-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #3B82F6;
+}
+
+.duration-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.duration-range {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    margin-top: 0.25rem;
+    opacity: 0.7;
+}
+
+/* Target Duration Checkbox */
+.target-duration-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.target-duration-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #3B82F6;
+}
+
+.target-duration-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Duration Slider Container - hidden by default */
+.duration-slider-wrapper {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease;
+}
+
+.duration-slider-wrapper.active {
+    max-height: 100px;
+}
+
+/* Edit Mode Textarea */
+.edit-mode-textarea {
+    width: 100%;
+    padding: 1.5rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    outline: none;
+    resize: vertical;
+    min-height: 400px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+}
+
+html.dark .edit-mode-textarea {
+    background: var(--bg-secondary);
+}
+
+.edit-mode-textarea:focus {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Fullscreen Mode */
+.fullscreen-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+}
+
+.fullscreen-container.active {
+    display: flex;
+}
+
+.fullscreen-header {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fullscreen-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.fullscreen-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fullscreen-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.fullscreen-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.teleprompter-fullscreen {
+    font-size: 2.5rem;
+    line-height: 2.2;
+    color: white;
+    max-width: 1200px;
+    margin: 0 auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    text-align: center;
+}
+
+.scroll-speed-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+}
+
+.scroll-speed-slider {
+    width: 100px;
+}
+
 /* Premium Generate Button */
 .generate-btn {
     width: 100%;
@@ -281,28 +537,27 @@ html.dark .results-header {
     color: #3B82F6;
 }
 
-.results-actions {
-    display: flex;
-    gap: 0.5rem;
+/* Actions Dropdown */
+.actions-dropdown {
+    position: relative;
 }
 
-/* Premium Action Buttons */
-.action-btn {
+.actions-dropdown-btn {
     padding: 0.5rem 1rem;
     background: var(--bg-tertiary);
     color: var(--text-primary);
     border: 1px solid var(--border-primary);
     border-radius: 8px;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: 0.5rem;
 }
 
-.action-btn:hover {
+.actions-dropdown-btn:hover {
     background: #3B82F6;
     border-color: #3B82F6;
     color: white;
@@ -310,8 +565,67 @@ html.dark .results-header {
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
-.action-btn i {
+.actions-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    min-width: 180px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+}
+
+.actions-dropdown.open .actions-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    padding: 0.625rem 1rem;
+    color: var(--text-primary);
     font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background: var(--hover-bg);
+    color: #3B82F6;
+}
+
+.dropdown-item i {
+    width: 16px;
+    text-align: center;
+}
+
+.dropdown-item:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.dropdown-item:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--border-primary);
+    margin: 0.25rem 0;
 }
 
 /* Script Content Area */
@@ -594,10 +908,6 @@ html.dark .script-content {
         align-items: stretch;
     }
 
-    .results-actions {
-        justify-content: center;
-    }
-
     .script-content {
         padding: 1.5rem;
         max-height: 400px;
@@ -606,11 +916,18 @@ html.dark .script-content {
     .input-panel {
         padding: 1rem;
     }
+    
+    .actions-dropdown-menu {
+        position: fixed;
+        right: 1rem;
+        left: 1rem;
+        width: auto;
+    }
 }
 
 /* Enhance focus states for accessibility */
 .toggle-btn:focus,
-.action-btn:focus,
+.actions-dropdown-btn:focus,
 .generate-btn:focus {
     outline: 2px solid #3B82F6;
     outline-offset: 2px;
@@ -633,6 +950,10 @@ html.dark .bullet-item {
 html.dark .bullet-item:hover {
     background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, transparent 100%);
     border-left-color: rgba(59, 130, 246, 0.4);
+}
+
+html.dark .actions-dropdown-menu {
+    background: var(--bg-primary);
 }
 </style>
 {% endblock %}
@@ -666,8 +987,34 @@ html.dark .bullet-item:hover {
                                     </button>
                                     <button class="toggle-btn" onclick="setVideoType('short')" id="shortVideoBtn">
                                         <i class="ph ph-device-mobile"></i>
-                                        Short (60s)
+                                        Shorts
                                     </button>
+                                </div>
+
+                                <!-- Target Duration Option -->
+                                <div class="target-duration-container">
+                                    <input type="checkbox" id="targetDurationCheckbox" class="target-duration-checkbox" onchange="toggleTargetDuration()">
+                                    <label for="targetDurationCheckbox" class="target-duration-label">
+                                        Set target duration
+                                    </label>
+                                </div>
+
+                                <!-- Duration Slider (hidden by default) -->
+                                <div class="duration-slider-wrapper" id="durationWrapper">
+                                    <div class="duration-slider-container">
+                                        <div class="slider-wrapper">
+                                            <input type="range"
+                                                   class="duration-slider"
+                                                   id="durationSlider"
+                                                   min="1"
+                                                   max="20"
+                                                   value="10"
+                                                   oninput="updateDuration(this.value)">
+                                        </div>
+                                        <div class="duration-display">
+                                            <span class="duration-value" id="durationValue">10 minutes</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -730,20 +1077,57 @@ let currentVideoType = 'long';
 let currentScriptFormat = 'full';
 let currentScript = '';
 let isGenerating = false;
+let currentDuration = 10; // Default duration for long form (minutes)
+let targetDurationMode = false; // Default is best effort (AI decides)
+let isEditing = false;
+let scriptVersions = []; // Store all generated scripts
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     updateCharCount();
+    // Start with best effort mode (slider hidden)
+    document.getElementById('targetDurationCheckbox').checked = false;
+    document.getElementById('durationWrapper').classList.remove('active');
 });
 
 // Set video type
 function setVideoType(type) {
     currentVideoType = type;
     document.querySelectorAll('#longVideoBtn, #shortVideoBtn').forEach(btn => btn.classList.remove('active'));
+    const slider = document.getElementById('durationSlider');
+    const valueDisplay = document.getElementById('durationValue');
+    const rangeDisplay = document.getElementById('durationRange');
+
     if (type === 'long') {
         document.getElementById('longVideoBtn').classList.add('active');
+        // Set slider for long form (1-20 minutes)
+        slider.min = 1;
+        slider.max = 20;
+        slider.value = 10;
+        currentDuration = 10;
+        valueDisplay.textContent = '10 minutes';
+        rangeDisplay.textContent = '1 - 20 minutes';
     } else {
         document.getElementById('shortVideoBtn').classList.add('active');
+        // Set slider for shorts (1-60 seconds)
+        slider.min = 1;
+        slider.max = 60;
+        slider.value = 30;
+        currentDuration = 30;
+        valueDisplay.textContent = '30 seconds';
+        rangeDisplay.textContent = '1 - 60 seconds';
+    }
+}
+
+// Update duration display
+function updateDuration(value) {
+    currentDuration = parseInt(value);
+    const valueDisplay = document.getElementById('durationValue');
+
+    if (currentVideoType === 'long') {
+        valueDisplay.textContent = `${value} minute${value > 1 ? 's' : ''}`;
+    } else {
+        valueDisplay.textContent = `${value} second${value > 1 ? 's' : ''}`;
     }
 }
 
@@ -799,7 +1183,8 @@ async function generateScript() {
             body: JSON.stringify({
                 concept: input,
                 videoType: currentVideoType,
-                scriptFormat: currentScriptFormat
+                scriptFormat: currentScriptFormat,
+                duration: targetDurationMode ? currentDuration : null
             })
         });
 
@@ -807,6 +1192,7 @@ async function generateScript() {
 
         if (data.success) {
             currentScript = data.script;
+            scriptVersions.push(currentScript); // Store the script version
             displayScript(data.script);
             showToast('Script generated successfully!', 'success');
         } else {
@@ -837,40 +1223,67 @@ function displayScript(script) {
                 <i class="ph ph-check-circle"></i>
                 Generated Script
             </h3>
-            <div class="results-actions">
-                <button class="action-btn" onclick="copyScript()" title="Copy to clipboard">
-                    <i class="ph ph-copy"></i>
-                    Copy
+            <div class="actions-dropdown" id="actionsDropdown">
+                <button class="actions-dropdown-btn" onclick="toggleDropdown()">
+                    <i class="ph ph-dots-three"></i>
+                    Actions
                 </button>
-                <button class="action-btn" onclick="downloadScript()" title="Download as text file">
-                    <i class="ph ph-download"></i>
-                    Download
-                </button>
+                <div class="actions-dropdown-menu">
+                    <button class="dropdown-item" onclick="toggleEditMode()">
+                        <i class="ph ph-pencil"></i>
+                        ${isEditing ? 'Save Edits' : 'Edit Script'}
+                    </button>
+                    <button class="dropdown-item" onclick="openFullscreen()">
+                        <i class="ph ph-arrows-out"></i>
+                        Teleprompter
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" onclick="copyScript()">
+                        <i class="ph ph-copy"></i>
+                        Copy Script
+                    </button>
+                    <button class="dropdown-item" onclick="downloadScript()">
+                        <i class="ph ph-download"></i>
+                        Download
+                    </button>
+                </div>
             </div>
         </div>
-        <div class="script-content">
+        <div class="script-content" id="scriptContent">
     `;
 
-    if (typeof script === 'string') {
-        // Full script format
-        html += formatScriptText(script);
-    } else if (script.sections) {
-        // Structured script with sections
-        script.sections.forEach(section => {
-            html += `
-                <div class="script-section">
-                    <div class="script-section-title">${escapeHtml(section.title)}</div>
-                    <div class="script-text">${formatScriptText(section.content)}</div>
-                </div>
-            `;
-        });
-    } else if (script.bullets) {
-        // Bullet points format
-        html += '<ul class="bullet-list">';
-        script.bullets.forEach(bullet => {
-            html += `<li class="bullet-item">${escapeHtml(bullet)}</li>`;
-        });
-        html += '</ul>';
+    if (isEditing) {
+        // Edit mode
+        let editText = '';
+        if (typeof script === 'string') {
+            editText = script;
+        } else if (script.sections) {
+            editText = script.sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
+        } else if (script.bullets) {
+            editText = script.bullets.join('\n\n');
+        }
+
+        html += `<textarea class="edit-mode-textarea" id="editableScript" oninput="updateCurrentScript(this.value)">${escapeHtml(editText)}</textarea>`;
+    } else {
+        // Normal display
+        if (typeof script === 'string') {
+            html += formatScriptText(script);
+        } else if (script.sections) {
+            script.sections.forEach(section => {
+                html += `
+                    <div class="script-section">
+                        <div class="script-section-title">${escapeHtml(section.title)}</div>
+                        <div class="script-text">${formatScriptText(section.content)}</div>
+                    </div>
+                `;
+            });
+        } else if (script.bullets) {
+            html += '<ul class="bullet-list">';
+            script.bullets.forEach(bullet => {
+                html += `<li class="bullet-item">${escapeHtml(bullet)}</li>`;
+            });
+            html += '</ul>';
+        }
     }
 
     html += '</div>';
@@ -882,16 +1295,158 @@ function formatScriptText(text) {
     return escapeHtml(text).replace(/\n/g, '<br>');
 }
 
+// Toggle dropdown
+function toggleDropdown() {
+    const dropdown = document.getElementById('actionsDropdown');
+    dropdown.classList.toggle('open');
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function closeDropdown(e) {
+        if (!dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
+            document.removeEventListener('click', closeDropdown);
+        }
+    });
+    
+    event.stopPropagation();
+}
+
+// Toggle edit mode
+function toggleEditMode() {
+    isEditing = !isEditing;
+    if (currentScript) {
+        displayScript(currentScript);
+    }
+    
+    // Close dropdown after action
+    document.getElementById('actionsDropdown').classList.remove('open');
+}
+
+// Update current script when editing
+function updateCurrentScript(newText) {
+    // Store the edited text as current script
+    currentScript = newText;
+}
+
+// Toggle target duration mode
+function toggleTargetDuration() {
+    targetDurationMode = document.getElementById('targetDurationCheckbox').checked;
+    const wrapper = document.getElementById('durationWrapper');
+
+    if (targetDurationMode) {
+        // Show slider
+        wrapper.classList.add('active');
+        updateDuration(document.getElementById('durationSlider').value);
+    } else {
+        // Hide slider - use best effort
+        wrapper.classList.remove('active');
+    }
+}
+
+// Open fullscreen teleprompter
+function openFullscreen() {
+    // Close dropdown first
+    document.getElementById('actionsDropdown').classList.remove('open');
+    
+    // Get the most current version of the script
+    let textToDisplay = '';
+    
+    // Check if we're in edit mode first and get the edited text
+    const editableScript = document.getElementById('editableScript');
+    if (isEditing && editableScript) {
+        textToDisplay = editableScript.value;
+    } else if (typeof currentScript === 'string') {
+        textToDisplay = currentScript;
+    } else if (currentScript && currentScript.sections) {
+        // Include both title and content for full context
+        textToDisplay = currentScript.sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n');
+    } else if (currentScript && currentScript.bullets) {
+        textToDisplay = currentScript.bullets.join('\n\n');
+    }
+
+    // Make sure we have text to display
+    if (!textToDisplay) {
+        showToast('No script available to display', 'error');
+        return;
+    }
+
+    const fullscreenHTML = `
+        <div class="fullscreen-container active" id="fullscreenContainer">
+            <div class="fullscreen-header">
+                <div class="fullscreen-controls">
+                    <button class="fullscreen-btn" onclick="closeFullscreen()">
+                        <i class="ph ph-x"></i> Close
+                    </button>
+                    <button class="fullscreen-btn" onclick="toggleScroll()" id="scrollBtn">
+                        <i class="ph ph-play"></i> Auto-scroll
+                    </button>
+                    <div class="scroll-speed-control">
+                        <label>Speed:</label>
+                        <input type="range" class="scroll-speed-slider" id="scrollSpeed" min="1" max="10" value="5">
+                    </div>
+                </div>
+            </div>
+            <div class="fullscreen-content" id="fullscreenContent">
+                <div class="teleprompter-fullscreen" id="teleprompterText">
+                    ${escapeHtml(textToDisplay).replace(/\n/g, '<br>')}
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', fullscreenHTML);
+    
+    // Reset scroll to top
+    document.getElementById('fullscreenContent').scrollTop = 0;
+}
+
+// Close fullscreen
+function closeFullscreen() {
+    const container = document.getElementById('fullscreenContainer');
+    if (container) {
+        if (scrollInterval) {
+            clearInterval(scrollInterval);
+            scrollInterval = null;
+        }
+        container.remove();
+    }
+}
+
+// Auto-scroll functionality
+let scrollInterval = null;
+function toggleScroll() {
+    const btn = document.getElementById('scrollBtn');
+    const content = document.getElementById('fullscreenContent');
+
+    if (scrollInterval) {
+        clearInterval(scrollInterval);
+        scrollInterval = null;
+        btn.innerHTML = '<i class="ph ph-play"></i> Auto-scroll';
+    } else {
+        const speed = document.getElementById('scrollSpeed').value;
+        scrollInterval = setInterval(() => {
+            content.scrollTop += speed / 2;
+        }, 50);
+        btn.innerHTML = '<i class="ph ph-pause"></i> Pause';
+    }
+}
+
 // Copy script
 async function copyScript() {
-    let textToCopy = currentScript;
+    let textToCopy = '';
 
-    if (typeof currentScript !== 'string') {
-        if (currentScript.sections) {
-            textToCopy = currentScript.sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
-        } else if (currentScript.bullets) {
-            textToCopy = currentScript.bullets.map(bullet => `• ${bullet}`).join('\n');
+    // Get the current text (edited or original)
+    if (isEditing) {
+        const editableScript = document.getElementById('editableScript');
+        if (editableScript) {
+            textToCopy = editableScript.value;
         }
+    } else if (typeof currentScript === 'string') {
+        textToCopy = currentScript;
+    } else if (currentScript.sections) {
+        textToCopy = currentScript.sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
+    } else if (currentScript.bullets) {
+        textToCopy = currentScript.bullets.map(bullet => `• ${bullet}`).join('\n');
     }
 
     try {
@@ -901,18 +1456,26 @@ async function copyScript() {
         console.error('Failed to copy:', err);
         showToast('Failed to copy script', 'error');
     }
+    
+    // Close dropdown after action
+    document.getElementById('actionsDropdown').classList.remove('open');
 }
 
 // Download script
 function downloadScript() {
-    let textToDownload = currentScript;
+    let textToDownload = '';
 
-    if (typeof currentScript !== 'string') {
-        if (currentScript.sections) {
-            textToDownload = currentScript.sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
-        } else if (currentScript.bullets) {
-            textToDownload = currentScript.bullets.map(bullet => `• ${bullet}`).join('\n');
+    if (isEditing) {
+        const editableScript = document.getElementById('editableScript');
+        if (editableScript) {
+            textToDownload = editableScript.value;
         }
+    } else if (typeof currentScript === 'string') {
+        textToDownload = currentScript;
+    } else if (currentScript.sections) {
+        textToDownload = currentScript.sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
+    } else if (currentScript.bullets) {
+        textToDownload = currentScript.bullets.map(bullet => `• ${bullet}`).join('\n');
     }
 
     const blob = new Blob([textToDownload], { type: 'text/plain' });
@@ -926,6 +1489,9 @@ function downloadScript() {
     window.URL.revokeObjectURL(url);
 
     showToast('Script downloaded successfully!', 'success');
+    
+    // Close dropdown after action
+    document.getElementById('actionsDropdown').classList.remove('open');
 }
 
 // Show toast notification

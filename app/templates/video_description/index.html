@@ -1071,11 +1071,36 @@ async function saveReference() {
 }
 
 // Clear reference description
-function clearReference() {
-    document.getElementById('referenceInput').value = '';
-    referenceDescription = '';
-    showReferenceStatus('Reference cleared', 'warning');
-    showToast('Reference cleared', 'success');
+async function clearReference() {
+    try {
+        // Clear from backend
+        const response = await fetch('/api/clear-reference-description', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Clear locally
+            document.getElementById('referenceInput').value = '';
+            referenceDescription = '';
+            showReferenceStatus('Reference cleared permanently', 'warning');
+            showToast('Reference cleared successfully', 'success');
+        } else {
+            showReferenceStatus('Failed to clear reference', 'error');
+            showToast('Failed to clear reference', 'error');
+        }
+    } catch (error) {
+        console.error('Error clearing reference:', error);
+        // Even if backend fails, clear locally
+        document.getElementById('referenceInput').value = '';
+        referenceDescription = '';
+        showReferenceStatus('Reference cleared locally', 'warning');
+        showToast('Reference cleared', 'success');
+    }
 }
 
 // Show reference status
