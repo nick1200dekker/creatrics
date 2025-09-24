@@ -433,7 +433,7 @@ html.dark .edit-mode-textarea {
     overflow-y: auto;
     padding: 3rem;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
 }
 
@@ -1257,8 +1257,6 @@ function displayScript(script) {
         let editText = '';
         if (typeof script === 'string') {
             editText = script;
-        } else if (script.sections) {
-            editText = script.sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
         } else if (script.bullets) {
             editText = script.bullets.join('\n\n');
         }
@@ -1268,21 +1266,15 @@ function displayScript(script) {
         // Normal display
         if (typeof script === 'string') {
             html += formatScriptText(script);
-        } else if (script.sections) {
-            script.sections.forEach(section => {
-                html += `
-                    <div class="script-section">
-                        <div class="script-section-title">${escapeHtml(section.title)}</div>
-                        <div class="script-text">${formatScriptText(section.content)}</div>
-                    </div>
-                `;
-            });
-        } else if (script.bullets) {
+        } else if (script && Array.isArray(script.bullets)) {
             html += '<ul class="bullet-list">';
             script.bullets.forEach(bullet => {
                 html += `<li class="bullet-item">${escapeHtml(bullet)}</li>`;
             });
             html += '</ul>';
+        } else {
+            // Fallback for any unexpected format
+            html += formatScriptText('Error: Could not display script. Please try generating again.');
         }
     }
 
@@ -1357,9 +1349,6 @@ function openFullscreen() {
         textToDisplay = editableScript.value;
     } else if (typeof currentScript === 'string') {
         textToDisplay = currentScript;
-    } else if (currentScript && currentScript.sections) {
-        // Include both title and content for full context
-        textToDisplay = currentScript.sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n');
     } else if (currentScript && currentScript.bullets) {
         textToDisplay = currentScript.bullets.join('\n\n');
     }
@@ -1443,8 +1432,6 @@ async function copyScript() {
         }
     } else if (typeof currentScript === 'string') {
         textToCopy = currentScript;
-    } else if (currentScript.sections) {
-        textToCopy = currentScript.sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
     } else if (currentScript.bullets) {
         textToCopy = currentScript.bullets.map(bullet => `• ${bullet}`).join('\n');
     }
@@ -1472,8 +1459,6 @@ function downloadScript() {
         }
     } else if (typeof currentScript === 'string') {
         textToDownload = currentScript;
-    } else if (currentScript.sections) {
-        textToDownload = currentScript.sections.map(s => `${s.title}\n\n${s.content}`).join('\n\n---\n\n');
     } else if (currentScript.bullets) {
         textToDownload = currentScript.bullets.map(bullet => `• ${bullet}`).join('\n');
     }

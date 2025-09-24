@@ -88,51 +88,65 @@ class VideoScriptGenerator:
                     # Create more explicit duration-aware prompts with better instructions
                     if script_format == 'bullet':
                         if video_type == 'short':
-                            if best_effort:
-                                simple_prompt = f"Write simple talking points for a {duration_str} based on this content: {concept}\n\nDetermine the appropriate length (15-60 seconds). Write ONLY the key points to cover, one per line, no bullet symbols, no formatting. Just the actual words and phrases to say."
-                            else:
-                                simple_prompt = f"Write simple talking points for a {duration}-second YouTube Short based on this content: {concept}\n\nThis is a VERY SHORT video ({duration} seconds only). Write 5-8 key points, one per line, no bullet symbols or formatting. Just the actual phrases to say."
+                            duration_instruction = f"- This is a VERY SHORT video ({duration} seconds only). Write 5-8 key points." if not best_effort else "- Determine the appropriate length (15-60 seconds)."
+
+                            simple_prompt = f"""Write simple talking points for a {duration_str} based on this content:
+
+{concept}
+
+CRITICAL REQUIREMENTS:
+{duration_instruction}
+- Write ONLY the key points to cover, one per line.
+- NO bullet symbols or formatting.
+- Instead of full sentences, provide short, high-level TOPICS or SUBJECTS to talk about. These should be concise cues for a YouTuber to expand on while recording.
+
+Write ONLY the talking points now:"""
                         else:
-                            if best_effort:
-                                simple_prompt = f"Write talking points for a {duration_str} based on this content: {concept}\n\nDetermine the appropriate video length based on content. Write key points to cover, one per line, no bullet symbols or formatting. Just the actual phrases and points to discuss."
-                            else:
-                                simple_prompt = f"Write talking points for a {duration}-minute YouTube video based on this content: {concept}\n\nThe video should be approximately {duration} minutes long. Write key points to cover, one per line, no bullet symbols or formatting. Just the actual phrases and points to discuss."
+                            duration_instruction = f"- The video should be approximately {duration} minutes long." if not best_effort else "- Determine the appropriate video length based on content."
+
+                            simple_prompt = f"""Write talking points for a {duration_str} based on this content:
+
+{concept}
+
+CRITICAL REQUIREMENTS:
+{duration_instruction}
+- Write key points to cover, one per line.
+- NO bullet symbols or formatting.
+- Instead of full sentences, provide short, high-level TOPICS or SUBJECTS to talk about. These should be concise cues for a YouTuber to expand on while recording.
+
+Write ONLY the talking points now:"""
                     else:
                         if video_type == 'short':
-                            if best_effort:
-                                simple_prompt = f"Write a complete script for a {duration_str} based on this content: {concept}\n\nDetermine the appropriate length based on the content (15-60 seconds). Write ONLY the words to be spoken - no formatting, no headers, no timestamps. Just pure flowing text for the video."
-                            else:
-                                simple_prompt = f"Write a complete script for a {duration}-second YouTube Short based on this content: {concept}\n\nIMPORTANT: This script must be EXACTLY {duration} seconds when read aloud (about {duration * 2} words). Write ONLY the words to be spoken - no formatting, no headers, no timestamps. Just pure flowing text."
-                        else:
-                            if best_effort:
-                                simple_prompt = f"""Write a complete script for a {duration_str} based on this information:
+                            duration_instruction = f"- This script must be EXACTLY {duration} seconds when read aloud (about {duration * 2} words)." if not best_effort else "- Determine the appropriate length based on the content (15-60 seconds)."
+
+                            simple_prompt = f"""Write a complete script for a {duration_str} based on this content:
 
 {concept}
 
 CRITICAL REQUIREMENTS:
-- Determine the appropriate video length based on content (3-20 minutes)
-- Write ONLY the words to be spoken - no headers, no timestamps, no formatting
-- NO section titles, NO markdown, NO brackets or notes
-- Just write flowing, conversational text as if reading from a teleprompter
-- Use ALL the specific details provided above
-- Start directly with the opening words and flow naturally throughout
+{duration_instruction}
+- Each sentence MUST be on a new line.
+- Write ONLY the words to be spoken - no formatting, no headers, no timestamps.
+- Just pure flowing text for the video.
 
 Write ONLY the spoken script text now:"""
-                            else:
-                                simple_prompt = f"""Write a complete script for a {duration}-minute YouTube video based on this information:
+                        else:
+                            duration_instruction = f"- The script should be approximately {duration} minutes when read aloud (about {duration * 150} words)." if not best_effort else "- Determine the appropriate video length based on content (3-20 minutes)."
+
+                            simple_prompt = f"""Write a complete script for a {duration_str} based on this information:
 
 {concept}
 
 CRITICAL REQUIREMENTS:
-- Write ONLY the words to be spoken - no headers, no timestamps, no formatting
-- NO section titles like "INTRO" or "CONCLUSION"
-- NO markdown formatting (no ##, **, __, etc.)
-- NO brackets, parentheses with notes, or stage directions
-- Just write flowing, conversational text as if reading from a teleprompter
-- The script should be approximately {duration} minutes when read aloud (about {duration * 150} words)
-- Use ALL the specific details provided above
-- Start directly with the opening words like "Hey everyone" or similar
-- Flow naturally from intro to main content to conclusion without breaks
+{duration_instruction}
+- Each sentence MUST be on a new line.
+- Write ONLY the words to be spoken - no headers, no timestamps, no formatting.
+- NO section titles like "INTRO" or "CONCLUSION".
+- NO markdown formatting (no ##, **, __, etc.).
+- NO brackets, parentheses with notes, or stage directions.
+- Just write flowing, conversational text as if reading from a teleprompter.
+- Use ALL the specific details provided above.
+- Start directly with the opening words and flow naturally throughout.
 
 Write ONLY the spoken script text now:"""
 
@@ -163,17 +177,24 @@ Write ONLY the spoken script text now:"""
                     # Clean up any formatting that might have slipped through
                     import re
                     clean_content = response_content
-                    # Remove markdown headers
-                    clean_content = re.sub(r'^#+\s+.*$', '', clean_content, flags=re.MULTILINE)
-                    # Remove markdown bold/italic
-                    clean_content = re.sub(r'\*\*|__|\_\_|\*|_', '', clean_content)
-                    # Remove timestamps
-                    clean_content = re.sub(r'\[\d+:\d+(?:-\d+:\d+)?\]|\(\d+:\d+(?:-\d+:\d+)?\)', '', clean_content)
-                    # Remove section headers in caps
-                    clean_content = re.sub(r'^[A-Z][A-Z\s]+:', '', clean_content, flags=re.MULTILINE)
-                    # Remove bullet symbols
+                    
+                    # Only do minimal cleaning to preserve content
+                    # Remove markdown bold/italic (but be more careful)
+                    clean_content = re.sub(r'\*\*([^*]+)\*\*', r'\1', clean_content)  # **text** -> text
+                    clean_content = re.sub(r'\*([^*]+)\*', r'\1', clean_content)      # *text* -> text
+                    clean_content = re.sub(r'__([^_]+)__', r'\1', clean_content)      # __text__ -> text
+                    clean_content = re.sub(r'_([^_]+)_', r'\1', clean_content)        # _text_ -> text
+                    
+                    # Remove timestamps only if they're clearly timestamps
+                    clean_content = re.sub(r'\[\d{1,2}:\d{2}(?:-\d{1,2}:\d{2})?\]', '', clean_content)
+                    
+                    # Remove obvious section headers (very conservative)
+                    clean_content = re.sub(r'^(INTRODUCTION|CONCLUSION|OUTRO|INTRO):?\s*$', '', clean_content, flags=re.MULTILINE)
+                    
+                    # Remove bullet symbols only at start of lines
                     clean_content = re.sub(r'^[•\-\*]\s+', '', clean_content, flags=re.MULTILINE)
-                    # Remove extra line breaks
+                    
+                    # Clean up excessive line breaks
                     clean_content = re.sub(r'\n{3,}', '\n\n', clean_content)
                     clean_content = clean_content.strip()
 

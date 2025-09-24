@@ -797,11 +797,11 @@ html.dark .pagination-btn {
             <!-- Platform Selector (center) -->
             <div class="platform-selector">
                 <button class="platform-btn icon-only {% if x_connected %}active{% endif %}" data-platform="x" 
-                        onclick="{% if x_connected %}switchPlatform('x'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}" title="X Analytics">
+                        onclick="{% if x_connected %}switchPlatform('x');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="X Analytics">
                     <i class="ph ph-x-logo"></i>
                 </button>
                 <button class="platform-btn {% if youtube_connected and not x_connected %}active{% endif %}" data-platform="youtube"
-                        onclick="{% if youtube_connected %}switchPlatform('youtube'){% else %}window.location.href='{{ url_for('accounts.index') }}'{% endif %}" title="YouTube Analytics">
+                        onclick="{% if youtube_connected %}switchPlatform('youtube');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="YouTube Analytics">
                     <i class="ph ph-youtube-logo"></i>
                     <span>YouTube</span>
                 </button>
