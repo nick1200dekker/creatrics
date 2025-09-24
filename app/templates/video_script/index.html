@@ -533,6 +533,9 @@ html.dark .edit-mode-textarea {
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
+    resize: both;
+    max-width: none;
+    max-height: none;
 }
 
 html.dark .results-panel {
@@ -666,7 +669,7 @@ html.dark .results-header {
     font-size: 0.9rem;
     line-height: 1.6;
     overflow-y: auto;
-    max-height: 600px;
+    min-height: 400px;
     scrollbar-width: thin;
     scrollbar-color: var(--border-primary) transparent;
 }
