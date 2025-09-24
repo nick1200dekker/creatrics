@@ -390,6 +390,35 @@ html.dark .edit-mode-textarea {
     z-index: 9999;
     display: none;
     flex-direction: column;
+    transition: background-color 0.3s ease;
+}
+
+/* Light mode for teleprompter */
+.fullscreen-container.light-mode {
+    background: #ffffff;
+}
+
+.fullscreen-container.light-mode .fullscreen-header {
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.fullscreen-container.light-mode .fullscreen-btn {
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    color: #333;
+}
+
+.fullscreen-container.light-mode .fullscreen-btn:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.fullscreen-container.light-mode .teleprompter-fullscreen {
+    color: #000;
+}
+
+.fullscreen-container.light-mode .scroll-speed-control {
+    color: #333;
 }
 
 .fullscreen-container.active {
@@ -1369,6 +1398,9 @@ function openFullscreen() {
                     <button class="fullscreen-btn" onclick="toggleScroll()" id="scrollBtn">
                         <i class="ph ph-play"></i> Auto-scroll
                     </button>
+                    <button class="fullscreen-btn" onclick="toggleTeleprompterTheme()" id="themeBtn">
+                        <i class="ph ph-sun"></i> Light Mode
+                    </button>
                     <div class="scroll-speed-control">
                         <label>Speed:</label>
                         <input type="range" class="scroll-speed-slider" id="scrollSpeed" min="1" max="10" value="5">
@@ -1398,6 +1430,22 @@ function closeFullscreen() {
             scrollInterval = null;
         }
         container.remove();
+    }
+}
+
+// Toggle teleprompter theme
+function toggleTeleprompterTheme() {
+    const container = document.getElementById('fullscreenContainer');
+    const themeBtn = document.getElementById('themeBtn');
+    
+    if (container.classList.contains('light-mode')) {
+        // Switch to dark mode
+        container.classList.remove('light-mode');
+        themeBtn.innerHTML = '<i class="ph ph-sun"></i> Light Mode';
+    } else {
+        // Switch to light mode
+        container.classList.add('light-mode');
+        themeBtn.innerHTML = '<i class="ph ph-moon"></i> Dark Mode';
     }
 }
 
