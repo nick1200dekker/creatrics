@@ -313,17 +313,16 @@
         pointer-events: none !important;
         border: none !important;
         border-radius: 4px !important;
-        padding: 3px 8px !important;
+        padding: 3px 6px !important;
         font-size: 0.85rem !important;
         cursor: grabbing !important;
         margin: 0 !important;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-        height: auto !important;
+        height: 24px !important;
         line-height: 18px !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
-        max-width: 200px !important;
         color: white !important;
         font-weight: 500 !important;
         opacity: 0.95 !important;
@@ -485,25 +484,26 @@
     }
 
     .fc-day-today {
-        background: rgba(59, 130, 246, 0.1) !important;
+        background: transparent !important;
+        position: relative;
     }
 
-    html.dark .fc-day-today {
-        background: rgba(59, 130, 246, 0.2) !important;
+    /* Add a dot indicator for today */
+    .fc-day-today::after {
+        content: '';
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 8px;
+        height: 8px;
+        background: #3B82F6;
+        border-radius: 50%;
+        z-index: 2;
     }
 
     .fc-day-today .fc-daygrid-day-number {
-        font-weight: 700 !important;
-        color: #3B82F6 !important;
-        background: transparent !important;
-        display: inline-block !important;
-        width: 32px !important;
-        height: 32px !important;
-        line-height: 32px !important;
-        text-align: center !important;
-        border-radius: 50% !important;
-        padding: 0 !important;
-        margin: 0.5rem !important;
+        font-weight: 600 !important;
+        color: var(--text-primary) !important;
     }
 
     /* Events with status colors */
@@ -1324,12 +1324,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function createDragGhost(eventEl, event) {
         // Remove any existing ghost
         removeDragGhost();
-        
+
+        // Get the original element's dimensions
+        const rect = eventEl.getBoundingClientRect();
+
         // Create new ghost element
         dragGhost = document.createElement('div');
         dragGhost.className = 'drag-ghost';
         dragGhost.textContent = event.title;
-        
+
+        // Apply the exact width of the original element
+        dragGhost.style.width = rect.width + 'px';
+        dragGhost.style.minWidth = rect.width + 'px';
+        dragGhost.style.maxWidth = rect.width + 'px';
+
         // Add appropriate classes based on event properties
         const eventData = events.find(e => e.id == event.id);
         if (eventData) {
@@ -1338,12 +1346,12 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 dragGhost.classList.add('organic');
             }
-            
+
             // Add warning/danger classes
             const eventDate = new Date(eventData.publish_date);
             const today = new Date();
             const daysUntil = Math.floor((eventDate - today) / (1000 * 60 * 60 * 24));
-            
+
             if (eventData.status !== 'ready') {
                 if (daysUntil <= 3 && daysUntil >= 0 && eventData.status === 'in-progress') {
                     dragGhost.classList.add('warning');
@@ -1352,9 +1360,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        
+
         document.body.appendChild(dragGhost);
-        
+
         return dragGhost;
     }
     
