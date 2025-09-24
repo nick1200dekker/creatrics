@@ -357,26 +357,52 @@ html.dark .duration-slider::-moz-range-track {
 /* Edit Mode Textarea */
 .edit-mode-textarea {
     width: 100%;
-    padding: 1.5rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
+    height: 100%;
+    flex: 1;
+    padding: 2rem;
+    background: var(--bg-primary);
+    border: none;
     outline: none;
-    resize: vertical;
+    resize: none;
     min-height: 400px;
     font-size: 0.9rem;
     line-height: 1.6;
     color: var(--text-primary);
     font-family: 'Inter', sans-serif;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-primary) transparent;
+    box-sizing: border-box;
 }
 
 html.dark .edit-mode-textarea {
-    background: var(--bg-secondary);
+    background: var(--bg-tertiary);
 }
 
 .edit-mode-textarea:focus {
-    border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+    background: var(--bg-primary);
+}
+
+html.dark .edit-mode-textarea:focus {
+    background: var(--bg-tertiary);
+}
+
+.edit-mode-textarea::-webkit-scrollbar {
+    width: 6px;
+}
+
+.edit-mode-textarea::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.edit-mode-textarea::-webkit-scrollbar-thumb {
+    background: var(--border-primary);
+    border-radius: 3px;
+}
+
+.edit-mode-textarea::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
 }
 
 /* Fullscreen Mode */
@@ -647,6 +673,8 @@ html.dark .edit-mode-textarea {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     animation: modalSlideIn 0.3s ease;
+    position: relative;
+    left: -15%;
 }
 
 @keyframes modalSlideIn {
@@ -794,7 +822,7 @@ html.dark .edit-mode-textarea {
 }
 
 .ai-agent-title i {
-    color: #8B5CF6;
+    color: #3B82F6;
 }
 
 .ai-agent-content {
@@ -819,14 +847,14 @@ html.dark .edit-mode-textarea {
 }
 
 .ai-modify-input:focus {
-    border-color: #8B5CF6;
+    border-color: #3B82F6;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .ai-modify-btn {
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -837,13 +865,13 @@ html.dark .edit-mode-textarea {
     align-items: center;
     gap: 0.5rem;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 .ai-modify-btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-    background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
 }
 
 .ai-modify-btn:disabled {
@@ -884,11 +912,11 @@ html.dark .edit-mode-textarea {
 }
 
 .suggestion-chip:hover {
-    background: #8B5CF6;
-    border-color: #8B5CF6;
+    background: #3B82F6;
+    border-color: #3B82F6;
     color: white;
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
 /* Premium Generate Button */
@@ -1073,8 +1101,16 @@ html.dark .results-header {
     line-height: 1.6;
     overflow-y: auto;
     min-height: 400px;
+    display: flex;
+    flex-direction: column;
     scrollbar-width: thin;
     scrollbar-color: var(--border-primary) transparent;
+}
+
+/* When in edit mode, remove padding to let textarea handle it */
+.script-content:has(.edit-mode-textarea) {
+    padding: 0;
+    overflow: hidden;
 }
 
 html.dark .script-content {
@@ -1488,7 +1524,7 @@ html.dark .actions-dropdown-menu {
                     </div>
 
                     <!-- Saved Scripts Section -->
-                    <div class="saved-scripts-section" id="savedScriptsSection" style="display: none;">
+                    <div class="saved-scripts-section" id="savedScriptsSection">
                         <div class="saved-scripts-header">
                             <h3 class="saved-scripts-title">
                                 <i class="ph ph-folder-open"></i>
@@ -1498,10 +1534,10 @@ html.dark .actions-dropdown-menu {
                                 <i class="ph ph-caret-up"></i>
                             </button>
                         </div>
-                        <div class="saved-scripts-search" id="savedScriptsSearch" style="display: block;">
+                        <div class="saved-scripts-search" id="savedScriptsSearch" style="display: none;">
                             <input type="text" id="scriptSearchInput" class="script-search" placeholder="Search saved scripts..." onkeyup="searchScripts()">
                         </div>
-                        <div class="saved-scripts-list" id="savedScriptsGrid" style="display: block;">
+                        <div class="saved-scripts-list" id="savedScriptsGrid" style="display: none;">
                             <!-- Saved scripts will be loaded here -->
                         </div>
                     </div>
@@ -1580,8 +1616,12 @@ let scriptVersions = []; // Store all generated scripts
 document.addEventListener('DOMContentLoaded', function() {
     updateCharCount();
     // Start with best effort mode (slider hidden)
-    document.getElementById('targetDurationCheckbox').checked = false;
-    document.getElementById('durationWrapper').classList.remove('active');
+    const targetCheckbox = document.getElementById('targetDurationCheckbox');
+    if (targetCheckbox) targetCheckbox.checked = false;
+
+    const durationWrapper = document.getElementById('durationWrapper');
+    if (durationWrapper) durationWrapper.classList.remove('active');
+
     // Load saved scripts
     loadSavedScripts();
 
@@ -1609,23 +1649,31 @@ function setVideoType(type) {
     const rangeDisplay = document.getElementById('durationRange');
 
     if (type === 'long') {
-        document.getElementById('longVideoBtn').classList.add('active');
+        const longBtn = document.getElementById('longVideoBtn');
+        if (longBtn) longBtn.classList.add('active');
+
         // Set slider for long form (1-20 minutes)
-        slider.min = 1;
-        slider.max = 20;
-        slider.value = 10;
+        if (slider) {
+            slider.min = 1;
+            slider.max = 20;
+            slider.value = 10;
+        }
         currentDuration = 10;
-        valueDisplay.textContent = '10 minutes';
-        rangeDisplay.textContent = '1 - 20 minutes';
+        if (valueDisplay) valueDisplay.textContent = '10 minutes';
+        if (rangeDisplay) rangeDisplay.textContent = '1 - 20 minutes';
     } else {
-        document.getElementById('shortVideoBtn').classList.add('active');
+        const shortBtn = document.getElementById('shortVideoBtn');
+        if (shortBtn) shortBtn.classList.add('active');
+
         // Set slider for shorts (1-60 seconds)
-        slider.min = 1;
-        slider.max = 60;
-        slider.value = 30;
+        if (slider) {
+            slider.min = 1;
+            slider.max = 60;
+            slider.value = 30;
+        }
         currentDuration = 30;
-        valueDisplay.textContent = '30 seconds';
-        rangeDisplay.textContent = '1 - 60 seconds';
+        if (valueDisplay) valueDisplay.textContent = '30 seconds';
+        if (rangeDisplay) rangeDisplay.textContent = '1 - 60 seconds';
     }
 }
 
@@ -2163,7 +2211,6 @@ async function saveScript() {
         if (data.success) {
             showToast('Script saved successfully!', 'success');
             loadSavedScripts(); // Refresh the saved scripts list
-            document.getElementById('savedScriptsSection').style.display = 'block';
             closeSaveModal(); // Close the modal
         } else {
             showToast('Failed to save script', 'error');
@@ -2188,10 +2235,7 @@ async function loadSavedScripts() {
             savedScripts = data.scripts;
             displaySavedScripts(savedScripts);
 
-            // Show section if there are saved scripts
-            if (savedScripts.length > 0) {
-                document.getElementById('savedScriptsSection').style.display = 'block';
-            }
+            // Section is always visible, but content is collapsed by default
         }
     } catch (error) {
         console.error('Error loading saved scripts:', error);
@@ -2332,7 +2376,9 @@ function toggleSavedScripts() {
     const search = document.getElementById('savedScriptsSearch');
     const btn = document.querySelector('.toggle-saved-btn i');
 
-    if (grid.style.display === 'none') {
+    if (!grid || !search || !btn) return;
+
+    if (grid.style.display === 'none' || grid.style.display === '') {
         grid.style.display = 'block';
         search.style.display = 'block';
         btn.className = 'ph ph-caret-up';
