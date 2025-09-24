@@ -59,10 +59,9 @@
 
     /* Analytics Panel */
     .analytics-panel {
-        padding: 1.5rem 2rem;
-        background: var(--bg-tertiary);
-        border-bottom: 1px solid var(--border-primary);
+        padding: 1.5rem;
         display: none;
+        min-height: 600px;
     }
 
     .analytics-panel.show {
@@ -100,6 +99,94 @@
         font-size: 0.875rem;
         color: var(--text-secondary);
         margin-top: 0.25rem;
+    }
+
+    /* Daily Posts Chart */
+    .chart-container {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 250px;
+        margin-top: 1rem;
+    }
+
+    .chart-bars {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        height: 200px;
+        gap: 2px;
+        padding: 0 0.5rem;
+    }
+
+    .chart-bar {
+        flex: 1;
+        background: #3B82F6;
+        border-radius: 4px 4px 0 0;
+        min-height: 4px;
+        position: relative;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+
+    .chart-bar:hover {
+        opacity: 0.8;
+    }
+
+    .chart-bar-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: 6px;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        margin-bottom: 0.5rem;
+        z-index: 10;
+    }
+
+    .chart-bar:hover .chart-bar-tooltip {
+        opacity: 1;
+    }
+
+    .chart-x-axis {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0.5rem 0;
+        color: var(--text-tertiary);
+        font-size: 0.65rem;
+    }
+
+    .chart-x-label {
+        flex: 1;
+        text-align: center;
+    }
+
+    .chart-y-axis {
+        position: absolute;
+        left: -30px;
+        top: 0;
+        bottom: 50px;
+        width: 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding-right: 0.5rem;
+        color: var(--text-tertiary);
+        font-size: 0.65rem;
     }
 
     /* Controls */
@@ -228,12 +315,27 @@
     .fc-event-dragging {
         z-index: 10001 !important;
         cursor: grabbing !important;
-        opacity: 0.8 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: block !important;
     }
 
-    /* FullCalendar drag mirror */
+    /* Keep original event visible during drag */
+    .fc-event.fc-dragging:not(.fc-event-mirror) {
+        opacity: 0.7 !important;
+        visibility: visible !important;
+        display: block !important;
+    }
+
+    /* FullCalendar drag mirror (the preview of where it will drop) */
     .fc-event-mirror {
         opacity: 0.5 !important;
+        border: 2px dashed #3B82F6 !important;
+    }
+
+    /* Ensure dragged element stays visible */
+    .fc-event-dragging .fc-event-main {
+        opacity: 1 !important;
     }
 
     /* Force uniform row height */
@@ -741,6 +843,45 @@
         margin-bottom: 0.5rem;
     }
 
+    /* Date picker wrapper */
+    .date-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .date-input-wrapper .form-input {
+        flex: 1;
+        padding-right: 2.5rem;
+        cursor: pointer;
+    }
+
+    .date-picker-btn {
+        position: absolute;
+        right: 0.5rem;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 0.5rem;
+        transition: color 0.2s ease;
+        font-size: 1.1rem;
+    }
+
+    .date-picker-btn:hover {
+        color: #3B82F6;
+    }
+
+    /* Force datetime-local to show picker on click */
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        position: absolute;
+        right: 0;
+        width: 2.5rem;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
     .form-input,
     .form-select,
     .form-textarea {
@@ -857,38 +998,6 @@
         </h1>
     </div>
     
-    <!-- Analytics Panel -->
-    <div id="analytics-panel" class="analytics-panel">
-        <div class="analytics-grid">
-            <div class="analytics-card">
-                <div class="analytics-label">Total Posts</div>
-                <div class="analytics-value" id="total-posts">0</div>
-            </div>
-            <div class="analytics-card">
-                <div class="analytics-label">Organic Content</div>
-                <div class="analytics-value" id="organic-posts">0</div>
-                <div class="analytics-sub" id="organic-percentage">0%</div>
-            </div>
-            <div class="analytics-card">
-                <div class="analytics-label">Sponsored Content</div>
-                <div class="analytics-value" id="sponsored-posts">0</div>
-                <div class="analytics-sub" id="sponsored-percentage">0%</div>
-            </div>
-            <div class="analytics-card">
-                <div class="analytics-label">Scheduled</div>
-                <div class="analytics-value" id="scheduled-posts">0</div>
-            </div>
-            <div class="analytics-card">
-                <div class="analytics-label">In Progress</div>
-                <div class="analytics-value" id="progress-posts">0</div>
-            </div>
-            <div class="analytics-card">
-                <div class="analytics-label">Ready</div>
-                <div class="analytics-value" id="ready-posts">0</div>
-            </div>
-        </div>
-    </div>
-    
     <!-- Controls -->
     <div class="calendar-controls">
         <div class="control-group">
@@ -896,12 +1005,8 @@
                 <i class="ph ph-plus"></i>
                 Add Event
             </button>
-            <button class="btn toggle-btn" onclick="toggleAnalytics()">
-                <i class="ph ph-chart-line"></i>
-                Analytics
-            </button>
         </div>
-        
+
         <div class="view-toggle">
             <button class="view-btn active" onclick="switchView('calendar')">
                 <i class="ph ph-calendar"></i>
@@ -914,6 +1019,10 @@
             <button class="view-btn" onclick="switchView('kanban')">
                 <i class="ph ph-kanban"></i>
                 Kanban
+            </button>
+            <button class="view-btn" onclick="toggleAnalytics()" id="analytics-toggle-btn">
+                <i class="ph ph-chart-line"></i>
+                Analytics
             </button>
         </div>
         
@@ -932,7 +1041,74 @@
     
     <!-- Calendar View -->
     <div id="calendar"></div>
-    
+
+    <!-- Analytics Panel -->
+    <div id="analytics-panel" class="analytics-panel">
+        <!-- Content Type Row -->
+        <div class="analytics-section">
+            <h3 style="color: var(--text-secondary); font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Content Type</h3>
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <div class="analytics-label">Total Posts</div>
+                    <div class="analytics-value" id="total-posts">0</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">Organic Content</div>
+                    <div class="analytics-value" id="organic-posts">0</div>
+                    <div class="analytics-sub" id="organic-percentage">0%</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">Sponsored Content</div>
+                    <div class="analytics-value" id="sponsored-posts">0</div>
+                    <div class="analytics-sub" id="sponsored-percentage">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Row -->
+        <div class="analytics-section" style="margin-top: 2rem;">
+            <h3 style="color: var(--text-secondary); font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Content Status</h3>
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <div class="analytics-label">Draft</div>
+                    <div class="analytics-value" id="draft-posts">0</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">Scheduled</div>
+                    <div class="analytics-value" id="scheduled-posts">0</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">In Progress</div>
+                    <div class="analytics-value" id="progress-posts">0</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">Review</div>
+                    <div class="analytics-value" id="review-posts">0</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">Ready</div>
+                    <div class="analytics-value" id="ready-posts">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Posts Chart -->
+        <div class="chart-container">
+            <h3 style="color: var(--text-secondary); font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Posts Per Day</h3>
+            <div class="chart-wrapper">
+                <div class="chart-y-axis" id="chart-y-axis">
+                    <!-- Y-axis labels will be generated dynamically -->
+                </div>
+                <div class="chart-bars" id="chart-bars">
+                    <!-- Bars will be generated dynamically -->
+                </div>
+                <div class="chart-x-axis" id="chart-x-axis">
+                    <!-- X-axis labels will be generated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Table View -->
     <div id="table-view">
         <table class="content-table">
@@ -1039,7 +1215,14 @@
             
             <div class="form-group">
                 <label class="form-label">Date & Time (optional - leave empty for drafts)</label>
-                <input type="datetime-local" id="event-date" class="form-input">
+                <div class="date-input-wrapper">
+                    <input type="datetime-local" id="event-date" class="form-input"
+                           onclick="this.showPicker ? this.showPicker() : this.focus()"
+                           placeholder="Click to select date and time">
+                    <button type="button" class="date-picker-btn" onclick="document.getElementById('event-date').showPicker ? document.getElementById('event-date').showPicker() : document.getElementById('event-date').click()">
+                        <i class="ph ph-calendar"></i>
+                    </button>
+                </div>
             </div>
             
             <div class="form-group">
@@ -1132,16 +1315,59 @@ document.addEventListener('DOMContentLoaded', function() {
             events: [],
             fixedWeekCount: false,
             droppable: true,
+            dragRevertDuration: 0,  // Instant revert on cancel
+            dragScroll: true,  // Enable scrolling while dragging
             
-            // Fix drag positioning
+            // Fix drag positioning - keep element visible and follow mouse
             eventDragStart: function(info) {
                 draggedEventEl = info.el;
+                // Keep the original element visible during drag
                 info.el.style.opacity = '0.8';
+                info.el.style.visibility = 'visible';
+                info.el.style.display = 'block';
+                info.el.style.pointerEvents = 'none';  // Allow mouse events to pass through
+
+                // Create a visual feedback that follows the mouse
+                const dragHelper = info.el.cloneNode(true);
+                dragHelper.id = 'drag-helper';
+                dragHelper.style.position = 'fixed';
+                dragHelper.style.zIndex = '10000';
+                dragHelper.style.pointerEvents = 'none';
+                dragHelper.style.opacity = '0.7';
+                dragHelper.style.transform = 'scale(1.05)';
+                dragHelper.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                document.body.appendChild(dragHelper);
+
+                // Update helper position on mouse move
+                const moveHelper = (e) => {
+                    if (dragHelper) {
+                        dragHelper.style.left = (e.clientX - dragHelper.offsetWidth / 2) + 'px';
+                        dragHelper.style.top = (e.clientY - dragHelper.offsetHeight / 2) + 'px';
+                    }
+                };
+                document.addEventListener('mousemove', moveHelper);
+                info.el.moveHelper = moveHelper;
             },
-            
+
             eventDragStop: function(info) {
+                // Remove drag helper
+                const dragHelper = document.getElementById('drag-helper');
+                if (dragHelper) {
+                    dragHelper.remove();
+                }
+
+                // Remove move handler
+                if (info.el.moveHelper) {
+                    document.removeEventListener('mousemove', info.el.moveHelper);
+                    delete info.el.moveHelper;
+                }
+
+                // Reset original element
                 if (draggedEventEl) {
                     draggedEventEl.style.opacity = '';
+                    draggedEventEl.style.visibility = '';
+                    draggedEventEl.style.display = '';
+                    draggedEventEl.style.pointerEvents = '';
                     draggedEventEl = null;
                 }
             },
@@ -1245,13 +1471,32 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector(`.content-type-option[data-type="${type}"]`).classList.add('selected');
     };
     
-    // Toggle analytics
+    // Toggle analytics - now works like a view switch
     window.toggleAnalytics = function() {
-        const panel = document.getElementById('analytics-panel');
-        panel.classList.toggle('show');
-        
-        if (panel.classList.contains('show')) {
+        const isAnalyticsActive = document.getElementById('analytics-toggle-btn').classList.contains('active');
+
+        if (!isAnalyticsActive) {
+            // Switch to analytics view
+            currentView = 'analytics';
+
+            // Update buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('analytics-toggle-btn').classList.add('active');
+
+            // Hide all other views
+            document.getElementById('calendar').style.display = 'none';
+            document.getElementById('table-view').style.display = 'none';
+            document.getElementById('kanban-view').style.display = 'none';
+
+            // Show analytics panel
+            const panel = document.getElementById('analytics-panel');
+            panel.classList.add('show');
             updateAnalytics();
+        } else {
+            // Switch back to calendar view
+            switchView('calendar');
         }
     };
     
@@ -1270,15 +1515,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalPosts = monthEvents.length;
         const organicPosts = monthEvents.filter(e => e.content_type !== 'sponsored').length;
         const sponsoredPosts = monthEvents.filter(e => e.content_type === 'sponsored').length;
+        const draftPosts = monthEvents.filter(e => e.status === 'draft').length;
         const scheduledPosts = monthEvents.filter(e => e.publish_date).length;
         const progressPosts = monthEvents.filter(e => e.status === 'in-progress').length;
+        const reviewPosts = monthEvents.filter(e => e.status === 'review').length;
         const readyPosts = monthEvents.filter(e => e.status === 'ready').length;
-        
+
         document.getElementById('total-posts').textContent = totalPosts;
         document.getElementById('organic-posts').textContent = organicPosts;
         document.getElementById('sponsored-posts').textContent = sponsoredPosts;
+        document.getElementById('draft-posts').textContent = draftPosts;
         document.getElementById('scheduled-posts').textContent = scheduledPosts;
         document.getElementById('progress-posts').textContent = progressPosts;
+        document.getElementById('review-posts').textContent = reviewPosts;
         document.getElementById('ready-posts').textContent = readyPosts;
         
         // Calculate percentages
@@ -1289,12 +1538,85 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('organic-percentage').textContent = '0%';
             document.getElementById('sponsored-percentage').textContent = '0%';
         }
+
+        // Generate daily posts chart
+        generateDailyChart(monthEvents, monthStart, monthEnd);
+    }
+
+    // Generate daily posts chart
+    function generateDailyChart(monthEvents, monthStart, monthEnd) {
+        const daysInMonth = monthEnd.getDate();
+        const dailyCounts = new Array(daysInMonth).fill(0);
+
+        // Count posts per day
+        monthEvents.forEach(event => {
+            if (event.publish_date) {
+                const day = new Date(event.publish_date).getDate() - 1; // 0-indexed
+                if (day >= 0 && day < daysInMonth) {
+                    dailyCounts[day]++;
+                }
+            }
+        });
+
+        const maxCount = Math.max(...dailyCounts, 1); // At least 1 for scale
+        const yAxisSteps = 5;
+        const yAxisMax = Math.ceil(maxCount / yAxisSteps) * yAxisSteps || 5;
+
+        // Generate Y-axis labels
+        const yAxisContainer = document.getElementById('chart-y-axis');
+        yAxisContainer.innerHTML = '';
+        for (let i = yAxisSteps; i >= 0; i--) {
+            const label = document.createElement('div');
+            label.textContent = Math.round((yAxisMax / yAxisSteps) * i);
+            yAxisContainer.appendChild(label);
+        }
+
+        // Generate bars
+        const barsContainer = document.getElementById('chart-bars');
+        barsContainer.innerHTML = '';
+
+        dailyCounts.forEach((count, index) => {
+            const barWrapper = document.createElement('div');
+            barWrapper.className = 'chart-bar';
+            barWrapper.style.height = `${(count / yAxisMax) * 100}%`;
+
+            // Add tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'chart-bar-tooltip';
+            const date = new Date(monthStart);
+            date.setDate(index + 1);
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            tooltip.textContent = `${dateStr}: ${count} ${count === 1 ? 'post' : 'posts'}`;
+            barWrapper.appendChild(tooltip);
+
+            barsContainer.appendChild(barWrapper);
+        });
+
+        // Generate X-axis labels (show every few days to avoid crowding)
+        const xAxisContainer = document.getElementById('chart-x-axis');
+        xAxisContainer.innerHTML = '';
+
+        const labelInterval = daysInMonth > 15 ? 5 : 3; // Show every 5 days if month > 15 days, else every 3
+
+        for (let i = 0; i < daysInMonth; i++) {
+            const label = document.createElement('div');
+            label.className = 'chart-x-label';
+
+            // Only show some labels to avoid crowding
+            if (i === 0 || (i + 1) % labelInterval === 0 || i === daysInMonth - 1) {
+                label.textContent = i + 1;
+            } else {
+                label.textContent = '';
+            }
+
+            xAxisContainer.appendChild(label);
+        }
     }
     
     // Make functions globally available
     window.switchView = function(view) {
         currentView = view;
-        
+
         // Update buttons
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -1302,12 +1624,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.classList.add('active');
             }
         });
-        
+
         // Show/hide views
         document.getElementById('calendar').style.display = view === 'calendar' ? 'block' : 'none';
         document.getElementById('table-view').style.display = view === 'table' ? 'block' : 'none';
         document.getElementById('kanban-view').style.display = view === 'kanban' ? 'block' : 'none';
-        
+
+        // Hide analytics panel if switching to non-analytics view
+        const analyticsPanel = document.getElementById('analytics-panel');
+        if (view !== 'analytics' && analyticsPanel) {
+            analyticsPanel.classList.remove('show');
+        }
+
         if (view === 'calendar') {
             // Re-render calendar when switching back to it
             if (calendar) {
