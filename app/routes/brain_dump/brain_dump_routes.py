@@ -365,6 +365,12 @@ def share_note(note_id):
     """Create a public share link for a note"""
     try:
         user_id = str(g.user.get('id'))
+        data = request.get_json() or {}
+        permission = data.get('permission', 'view')  # Default to view-only
+
+        # Validate permission
+        if permission not in ['view', 'edit']:
+            permission = 'view'
 
         # Get the note from Firebase
         note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
@@ -388,6 +394,7 @@ def share_note(note_id):
             'title': note_data.get('title', 'Untitled'),
             'content': note_data.get('content', ''),
             'tags': note_data.get('tags', []),
+            'permission': permission,  # Store permission level
             'shared_at': datetime.utcnow().isoformat() + 'Z',
             'expires_at': (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z',  # 30 days expiry
             'views': 0
@@ -497,6 +504,62 @@ def view_shared_note(share_id):
     except Exception as e:
         logger.error(f"Error viewing shared note: {e}")
         return render_template('errors/404.html'), 404
+
+@bp.route('/api/shared/note/<share_id>', methods=['PUT'])
+def update_shared_note(share_id):
+    """Update a shared note if user has edit permission"""
+    try:
+        data = request.get_json() or {}
+        content = data.get('content')
+        title = data.get('title')
+
+        # Get shared note from Firebase
+        shared_ref = db.collection('shared_notes').document(share_id)
+        shared_doc = shared_ref.get()
+
+        if not shared_doc.exists:
+            return jsonify({
+                'success': False,
+                'error': 'Shared note not found'
+            }), 404
+
+        shared_data = shared_doc.to_dict()
+
+        # Check if note has edit permission
+        if shared_data.get('permission') != 'edit':
+            return jsonify({
+                'success': False,
+                'error': 'This note is read-only'
+            }), 403
+
+        # Update the shared note
+        update_data = {}
+        if content is not None:
+            update_data['content'] = content
+        if title is not None:
+            update_data['title'] = title
+        update_data['last_edited'] = datetime.utcnow().isoformat() + 'Z'
+
+        shared_ref.update(update_data)
+
+        # Also update the original note
+        owner_id = shared_data.get('owner_id')
+        note_id = shared_data.get('note_id')
+        if owner_id and note_id:
+            original_ref = db.collection('users').document(owner_id).collection('brain_dump').document(note_id)
+            original_ref.update(update_data)
+
+        return jsonify({
+            'success': True,
+            'message': 'Note updated successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error updating shared note: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to update note'
+        }), 500
 
 @bp.route('/api/brain-dump/export', methods=['POST'])
 @auth_required

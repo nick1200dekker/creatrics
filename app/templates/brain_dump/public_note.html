@@ -169,6 +169,52 @@
             font-size: 0.875rem;
         }
 
+        [contenteditable="true"] {
+            outline: none;
+            transition: background 0.2s;
+        }
+
+        [contenteditable="true"]:hover {
+            background: rgba(59, 130, 246, 0.03);
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin: -0.5rem;
+        }
+
+        [contenteditable="true"]:focus {
+            background: rgba(59, 130, 246, 0.05);
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin: -0.5rem;
+        }
+
+        .edit-indicator {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #10B981;
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .edit-indicator.saving {
+            opacity: 1;
+            background: #3B82F6;
+        }
+
+        .edit-indicator.saved {
+            opacity: 1;
+            background: #10B981;
+        }
+
         @media (max-width: 640px) {
             body {
                 padding: 0;
@@ -197,11 +243,16 @@
                     Creatrics
                 </div>
                 <div class="share-badge">
-                    <i class="ph ph-share-network"></i>
-                    Shared
+                    {% if note.permission == 'edit' %}
+                        <i class="ph ph-pencil"></i>
+                        Editable
+                    {% else %}
+                        <i class="ph ph-eye"></i>
+                        View Only
+                    {% endif %}
                 </div>
             </div>
-            <h1 class="note-title">{{ note.title }}</h1>
+            <h1 class="note-title" id="noteTitle" {% if note.permission == 'edit' %}contenteditable="true"{% endif %}>{{ note.title }}</h1>
             <div class="note-meta">
                 <div class="meta-item">
                     <i class="ph ph-calendar"></i>
@@ -243,7 +294,7 @@
             </div>
             {% endif %}
 
-            <div class="note-content">{{ note.content }}</div>
+            <div class="note-content" id="noteContent" {% if note.permission == 'edit' %}contenteditable="true"{% endif %}>{{ note.content }}</div>
         </div>
 
         <div class="footer">
@@ -260,5 +311,87 @@
             </div>
         </div>
     </div>
+{% if note.permission == 'edit' %}
+    <div class="edit-indicator" id="editIndicator">
+        <i class="ph ph-circle"></i>
+        <span id="editStatus">Ready</span>
+    </div>
+
+    <script>
+        let saveTimer = null;
+        const shareId = '{{ share_id }}';
+
+        // Auto-save on content change
+        function setupAutoSave() {
+            const title = document.getElementById('noteTitle');
+            const content = document.getElementById('noteContent');
+
+            title.addEventListener('input', handleChange);
+            content.addEventListener('input', handleChange);
+        }
+
+        function handleChange() {
+            clearTimeout(saveTimer);
+            showStatus('saving');
+
+            saveTimer = setTimeout(() => {
+                saveNote();
+            }, 1000);
+        }
+
+        async function saveNote() {
+            const title = document.getElementById('noteTitle').innerText;
+            const content = document.getElementById('noteContent').innerText;
+
+            try {
+                const response = await fetch(`/api/shared/note/${shareId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showStatus('saved');
+                } else {
+                    showStatus('error');
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showStatus('error');
+            }
+        }
+
+        function showStatus(status) {
+            const indicator = document.getElementById('editIndicator');
+            const statusText = document.getElementById('editStatus');
+            const icon = indicator.querySelector('i');
+
+            indicator.className = 'edit-indicator ' + status;
+
+            switch(status) {
+                case 'saving':
+                    icon.className = 'ph ph-circle-notch';
+                    statusText.textContent = 'Saving...';
+                    break;
+                case 'saved':
+                    icon.className = 'ph ph-check-circle';
+                    statusText.textContent = 'Saved';
+                    setTimeout(() => {
+                        indicator.className = 'edit-indicator';
+                    }, 2000);
+                    break;
+                case 'error':
+                    icon.className = 'ph ph-x-circle';
+                    statusText.textContent = 'Error';
+                    break;
+            }
+        }
+
+        // Initialize
+        setupAutoSave();
+    </script>
+{% endif %}
 </body>
 </html>

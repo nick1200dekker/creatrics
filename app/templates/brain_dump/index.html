@@ -534,6 +534,69 @@ html.dark .brain-dump-wrapper {
     color: white;
 }
 
+/* Permission Options */
+.share-permission-container {
+    margin-bottom: 1.5rem;
+}
+
+.share-permission-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.permission-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.permission-option {
+    display: block;
+    cursor: pointer;
+}
+
+.permission-option input[type="radio"] {
+    display: none;
+}
+
+.permission-option-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 2px solid var(--border-primary);
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.permission-option-content i {
+    font-size: 1.25rem;
+    color: var(--text-tertiary);
+}
+
+.permission-title {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    margin-bottom: 0.125rem;
+}
+
+.permission-desc {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.permission-option input[type="radio"]:checked + .permission-option-content {
+    border-color: #3B82F6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.permission-option input[type="radio"]:checked + .permission-option-content i {
+    color: #3B82F6;
+}
+
 /* Editor Toolbar */
 .editor-toolbar {
     padding: 0.75rem 2rem;
@@ -1142,6 +1205,32 @@ html.dark .brain-dump-wrapper {
             </h3>
         </div>
 
+        <div class="share-permission-container" id="sharePermissionContainer">
+            <div class="share-permission-label">Share Permission</div>
+            <div class="permission-options">
+                <label class="permission-option">
+                    <input type="radio" name="sharePermission" value="view" checked>
+                    <span class="permission-option-content">
+                        <i class="ph ph-eye"></i>
+                        <div>
+                            <div class="permission-title">View Only</div>
+                            <div class="permission-desc">Others can only read the note</div>
+                        </div>
+                    </span>
+                </label>
+                <label class="permission-option">
+                    <input type="radio" name="sharePermission" value="edit">
+                    <span class="permission-option-content">
+                        <i class="ph ph-pencil"></i>
+                        <div>
+                            <div class="permission-title">Can Edit</div>
+                            <div class="permission-desc">Others can edit and update the note</div>
+                        </div>
+                    </span>
+                </label>
+            </div>
+        </div>
+
         <div class="share-link-container" id="shareLinkContainer" style="display: none;">
             <div class="share-link-label">Share Link</div>
             <div class="share-link-input-group">
@@ -1153,7 +1242,7 @@ html.dark .brain-dump-wrapper {
         </div>
 
         <div class="share-info">
-            <p id="shareStatus">Click "Create Share Link" to generate a public URL for this note.</p>
+            <p id="shareStatus">Choose permission level and click "Create Share Link".</p>
             <p style="margin-top: 0.5rem; font-size: 0.7rem;">Links expire after 30 days</p>
         </div>
 
@@ -1949,10 +2038,14 @@ function toggleShare() {
 async function createShareLink() {
     if (!currentNoteId) return;
 
+    // Get selected permission
+    const permission = document.querySelector('input[name="sharePermission"]:checked').value;
+
     try {
         const response = await fetch(`/api/brain-dump/notes/${currentNoteId}/share`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ permission })
         });
 
         const data = await response.json();
