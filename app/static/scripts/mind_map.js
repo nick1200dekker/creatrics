@@ -148,16 +148,21 @@ function resetZoom() {
 }
 
 function applyZoom() {
+    console.log('Applying zoom:', currentZoom, 'pan:', panX, panY);
+    
     const container = document.getElementById('canvasContainer');
     const svg = document.getElementById('connectionsSvg');
     
     if (container) {
-        container.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+        const transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+        container.style.transform = transform;
+        console.log('Container transform:', transform);
     }
     
-    // DON'T transform the SVG - keep it fixed to the canvas
+    // Keep SVG fixed - no transform
     if (svg) {
         svg.style.transform = 'none';
+        console.log('SVG transform: none (fixed)');
     }
     
     updateZoomDisplay();
@@ -202,46 +207,47 @@ function addNewNode() {
     return node;
 }
 
-// Connection functions
+// Update all connections
 function updateConnections() {
-    connections.forEach(conn => {
+    console.log('Updating connections, zoom:', currentZoom, 'pan:', panX, panY);
+    
+    connections.forEach((conn, index) => {
         const node1 = document.getElementById(conn.from);
         const node2 = document.getElementById(conn.to);
         
         if (node1 && node2 && conn.element) {
-            // Get node positions in container coordinates
-            const node1X = parseInt(node1.style.left) || 0;
-            const node1Y = parseInt(node1.style.top) || 0;
-            const node2X = parseInt(node2.style.left) || 0;
-            const node2Y = parseInt(node2.style.top) || 0;
+            // Get the actual screen positions of the nodes using getBoundingClientRect
+            const canvas = document.getElementById('mindMapCanvas');
+            const canvasRect = canvas.getBoundingClientRect();
             
-            // Get node centers
-            const x1 = node1X + node1.offsetWidth/2;
-            const y1 = node1Y + node1.offsetHeight/2;
-            const x2 = node2X + node2.offsetWidth/2;
-            const y2 = node2Y + node2.offsetHeight/2;
+            const node1Rect = node1.getBoundingClientRect();
+            const node2Rect = node2.getBoundingClientRect();
+            
+            // Calculate positions relative to the canvas
+            const x1 = node1Rect.left + node1Rect.width/2 - canvasRect.left;
+            const y1 = node1Rect.top + node1Rect.height/2 - canvasRect.top;
+            const x2 = node2Rect.left + node2Rect.width/2 - canvasRect.left;
+            const y2 = node2Rect.top + node2Rect.height/2 - canvasRect.top;
+            
+            console.log(`Connection ${index}: Screen positions Node1(${x1}, ${y1}) -> Node2(${x2}, ${y2})`);
             
             // Calculate edge points (where line should start/end)
             const angle = Math.atan2(y2 - y1, x2 - x1);
             
             // Start point (edge of first node)
-            const startX = x1 + Math.cos(angle) * (node1.offsetWidth/2 + 5);
-            const startY = y1 + Math.sin(angle) * (node1.offsetHeight/2 + 5);
+            const startX = x1 + Math.cos(angle) * (node1Rect.width/2 + 5);
+            const startY = y1 + Math.sin(angle) * (node1Rect.height/2 + 5);
             
             // End point (edge of second node)  
-            const endX = x2 - Math.cos(angle) * (node2.offsetWidth/2 + 15);
-            const endY = y2 - Math.sin(angle) * (node2.offsetHeight/2 + 15);
+            const endX = x2 - Math.cos(angle) * (node2Rect.width/2 + 15);
+            const endY = y2 - Math.sin(angle) * (node2Rect.height/2 + 15);
             
-            // Transform coordinates for zoom and pan
-            const transformedStartX = startX * currentZoom + panX;
-            const transformedStartY = startY * currentZoom + panY;
-            const transformedEndX = endX * currentZoom + panX;
-            const transformedEndY = endY * currentZoom + panY;
+            console.log(`Final line coordinates: (${startX}, ${startY}) -> (${endX}, ${endY})`);
             
-            conn.element.setAttribute('x1', transformedStartX);
-            conn.element.setAttribute('y1', transformedStartY);
-            conn.element.setAttribute('x2', transformedEndX);
-            conn.element.setAttribute('y2', transformedEndY);
+            conn.element.setAttribute('x1', startX);
+            conn.element.setAttribute('y1', startY);
+            conn.element.setAttribute('x2', endX);
+            conn.element.setAttribute('y2', endY);
         }
     });
 }
