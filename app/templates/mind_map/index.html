@@ -263,20 +263,36 @@ html.dark .mind-map-wrapper {
     transition: all 0.2s ease;
     z-index: 10;
     box-shadow: var(--shadow-sm);
-    resize: both;
-    overflow: auto;
+    overflow: visible;
 }
 
-.mind-node:hover {
-    resize: both;
+/* Resize handle */
+.mind-node::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    background: linear-gradient(-45deg, transparent 30%, #666 30%, #666 40%, transparent 40%, transparent 60%, #666 60%, #666 70%, transparent 70%);
+    cursor: nw-resize;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.mind-node:hover::after {
+    opacity: 0.7;
+}
+
+.mind-node.selected::after {
+    opacity: 1;
 }
 
 /* Node shapes */
 .mind-node.shape-circle {
     border-radius: 50%;
-    width: 120px;
-    height: 120px;
-    min-width: 120px;
+    min-width: 80px;
+    min-height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -285,9 +301,8 @@ html.dark .mind-map-wrapper {
 
 .mind-node.shape-square {
     border-radius: 8px;
-    width: 140px;
-    height: 140px;
-    min-width: 140px;
+    min-width: 80px;
+    min-height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -297,9 +312,8 @@ html.dark .mind-map-wrapper {
 .mind-node.shape-diamond {
     border-radius: 8px;
     transform: rotate(45deg);
-    width: 120px;
-    height: 120px;
-    min-width: 120px;
+    min-width: 80px;
+    min-height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -926,6 +940,9 @@ html.dark .connection-line:hover {
 
                 <div class="property-group">
                     <div class="property-label">Actions</div>
+                    <button class="property-input" onclick="copySelectedNode()" style="background: #10B981; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer; margin-bottom: 0.5rem;">
+                        <i class="ph ph-copy"></i> Copy Node
+                    </button>
                     <button class="property-input" id="deleteNodeBtn" onclick="deleteSelectedNode()" style="background: #EF4444; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer; margin-bottom: 0.5rem;">
                         <i class="ph ph-trash"></i> Delete Node
                     </button>
@@ -1010,6 +1027,9 @@ let firstConnectionNode = null;
 let connections = [];
 let nodeCounter = 0;
 let currentMapId = 'map1';
+let currentZoom = 1;
+let panX = 0;
+let panY = 0;
 let maps = {
     'map1': {
         id: 'map1',
@@ -1025,11 +1045,71 @@ let maps = {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Mind Map...');
     
-    // Add canvas click to deselect
+    // Canvas deselect will be handled in the mouseup event below
+    
+    // Load existing data from Firebase
+    loadFromFirebase();
+    
+    // Setup zoom controls
+    setupZoomControls();
+    
+    // Get canvas reference
     const canvas = document.getElementById('mindMapCanvas');
-    if (canvas) {
-        canvas.addEventListener('click', function(e) {
-            if (e.target === canvas) {
+    
+    // Add mouse wheel zoom
+    canvas.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+        const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.3), 3);
+        
+        if (newZoom !== currentZoom) {
+            // Zoom towards mouse position
+            const zoomChange = newZoom / currentZoom;
+            panX = mouseX - (mouseX - panX) * zoomChange;
+            panY = mouseY - (mouseY - panY) * zoomChange;
+            
+            currentZoom = newZoom;
+            applyZoom();
+        }
+    });
+    
+    // Add canvas panning
+    let isPanning = false;
+    let panStartX, panStartY;
+    let panStartPanX, panStartPanY;
+    
+    canvas.addEventListener('mousedown', function(e) {
+        if (e.target === canvas && e.button === 0) { // Left mouse button on empty canvas
+            isPanning = true;
+            panStartX = e.clientX;
+            panStartY = e.clientY;
+            panStartPanX = panX;
+            panStartPanY = panY;
+            canvas.style.cursor = 'grabbing';
+        }
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (isPanning) {
+            panX = panStartPanX + (e.clientX - panStartX);
+            panY = panStartPanY + (e.clientY - panStartY);
+            applyZoom();
+        }
+    });
+    
+    document.addEventListener('mouseup', function(e) {
+        if (isPanning) {
+            isPanning = false;
+            canvas.style.cursor = 'grab';
+            
+            // If we didn't move much, treat it as a click to deselect
+            const moveDistance = Math.abs(e.clientX - panStartX) + Math.abs(e.clientY - panStartY);
+            if (moveDistance < 5 && e.target === canvas) { // Less than 5px movement = click on canvas
                 // Deselect all nodes
                 document.querySelectorAll('.mind-node').forEach(n => n.classList.remove('selected'));
                 selectedNode = null;
@@ -1040,12 +1120,70 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log('Deselected all nodes');
             }
-        });
+        }
+    });
+});
+
+// Setup zoom control functionality
+function setupZoomControls() {
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+    const zoomLevel = document.getElementById('zoomLevel');
+    
+    if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => zoomIn());
+    }
+    if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => zoomOut());
+    }
+    if (zoomResetBtn) {
+        zoomResetBtn.addEventListener('click', () => resetZoom());
     }
     
-    // Load existing data from Firebase
-    loadFromFirebase();
-});
+    // Update initial zoom display
+    updateZoomDisplay();
+}
+
+// Zoom functions
+function zoomIn() {
+    currentZoom = Math.min(currentZoom * 1.2, 3); // Max zoom 300%
+    applyZoom();
+}
+
+function zoomOut() {
+    currentZoom = Math.max(currentZoom / 1.2, 0.3); // Min zoom 30%
+    applyZoom();
+}
+
+function resetZoom() {
+    currentZoom = 1;
+    panX = 0;
+    panY = 0;
+    applyZoom();
+}
+
+function applyZoom() {
+    const container = document.getElementById('canvasContainer');
+    const svg = document.getElementById('connectionsSvg');
+    
+    if (container) {
+        container.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+    }
+    if (svg) {
+        svg.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+    }
+    
+    updateZoomDisplay();
+    updateConnections();
+}
+
+function updateZoomDisplay() {
+    const zoomLevel = document.getElementById('zoomLevel');
+    if (zoomLevel) {
+        zoomLevel.textContent = Math.round(currentZoom * 100) + '%';
+    }
+}
 
 // Add new node function
 function addNewNode() {
@@ -1209,25 +1347,93 @@ function changeNodeColor(color) {
     
     // Update color selection
     document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
-    document.querySelector(`[data-color="${color}"]`).classList.add('selected');
-    
     console.log('Changed node color to:', color);
+}
+
+// Function to copy selected node
+function copySelectedNode() {
+    if (!selectedNode) return;
+    
+    const originalNode = selectedNode;
+    const container = document.getElementById('canvasContainer');
+    if (!container) return;
+    
+    nodeCounter++;
+    
+    // Get original node properties
+    const originalRect = originalNode.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    
+    const x = (originalRect.left - containerRect.left) + 50; // Offset by 50px
+    const y = (originalRect.top - containerRect.top) + 50;
+    
+    // Create new node
+    const node = document.createElement('div');
+    node.className = originalNode.className;
+    node.id = 'node_' + nodeCounter;
+    node.style.left = x + 'px';
+    node.style.top = y + 'px';
+    node.style.width = originalNode.style.width || '180px';
+    node.style.height = originalNode.style.height || 'auto';
+    
+    // Copy background color if set
+    if (originalNode.style.backgroundColor) {
+        node.style.backgroundColor = originalNode.style.backgroundColor;
+    }
+    
+    // Copy text content and styling
+    const nodeText = document.createElement('div');
+    nodeText.className = 'node-text';
+    nodeText.textContent = originalNode.querySelector('.node-text').textContent + ' (Copy)';
+    
+    // Copy font size if set
+    const originalTextStyle = originalNode.querySelector('.node-text').style;
+    if (originalTextStyle.fontSize) {
+        nodeText.style.fontSize = originalTextStyle.fontSize;
+    }
+    
+    node.appendChild(nodeText);
+    container.appendChild(node);
+    
+    // Make draggable and add click handlers
+    makeDraggable(node);
+    addNodeClickHandlers(node);
+    
+    // Select the new node
+    selectNode(node);
+    
+    console.log('Copied node:', originalNode.id, 'to', node.id);
+    return node;
 }
 
 // Function to delete selected node
 function deleteSelectedNode() {
-    if (!selectedNode) {
-        alert('Please select a node first');
-        return;
-    }
+    if (!selectedNode) return;
     
-    if (confirm('Delete this node?')) {
-        selectedNode.remove();
-        selectedNode = null;
-        
-        // Clear properties panel
-        document.getElementById('nodeText').value = '';
-    }
+    const nodeId = selectedNode.id;
+    
+    // Remove node from DOM
+    selectedNode.remove();
+    
+    // Remove connections related to this node
+    connections = connections.filter(conn => {
+        if (conn.from === nodeId || conn.to === nodeId) {
+            if (conn.element) {
+                conn.element.remove();
+            }
+            return false;
+        }
+        return true;
+    });
+    
+    // Clear selection
+    selectedNode = null;
+    
+    // Clear properties panel
+    const textArea = document.getElementById('nodeText');
+    if (textArea) textArea.value = '';
+    
+    console.log('Deleted node:', nodeId);
 }
 
 // Function to enable connection mode
@@ -1247,40 +1453,87 @@ function addConnectionMode() {
     }
 }
 
-// Make node draggable
+// Make node draggable and resizable
 function makeDraggable(node) {
     let isDragging = false;
-    let startX, startY, initialX, initialY;
+    let isResizing = false;
+    let startX, startY, initialX, initialY, initialWidth, initialHeight;
     
     node.addEventListener('mousedown', function(e) {
         if (e.target.contentEditable === 'true') return;
         
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        initialX = parseInt(node.style.left) || 0;
-        initialY = parseInt(node.style.top) || 0;
+        const rect = node.getBoundingClientRect();
+        const isResizeArea = (e.clientX > rect.right - 15) && (e.clientY > rect.bottom - 15);
         
-        node.style.cursor = 'grabbing';
+        if (isResizeArea) {
+            // Start resizing
+            isResizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialWidth = node.offsetWidth;
+            initialHeight = node.offsetHeight;
+            node.style.cursor = 'nw-resize';
+        } else {
+            // Start dragging
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialX = parseInt(node.style.left) || 0;
+            initialY = parseInt(node.style.top) || 0;
+            node.style.cursor = 'grabbing';
+        }
+        
         e.preventDefault();
+        e.stopPropagation();
     });
     
     document.addEventListener('mousemove', function(e) {
-        if (!isDragging) return;
-        
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
-        
-        node.style.left = (initialX + deltaX) + 'px';
-        node.style.top = (initialY + deltaY) + 'px';
-        
-        // Update connections
-        updateConnections();
+        if (isDragging) {
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            node.style.left = (initialX + deltaX) + 'px';
+            node.style.top = (initialY + deltaY) + 'px';
+            
+            // Update connections
+            updateConnections();
+        } else if (isResizing) {
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            const newWidth = Math.max(120, initialWidth + deltaX);
+            const newHeight = Math.max(60, initialHeight + deltaY);
+            
+            // Allow resizing all nodes
+            node.style.width = newWidth + 'px';
+            node.style.height = newHeight + 'px';
+            
+            // For shaped nodes, maintain aspect ratio
+            if (node.classList.contains('shape-circle')) {
+                const size = Math.max(newWidth, newHeight);
+                node.style.width = size + 'px';
+                node.style.height = size + 'px';
+            } else if (node.classList.contains('shape-square')) {
+                const size = Math.max(newWidth, newHeight);
+                node.style.width = size + 'px';
+                node.style.height = size + 'px';
+            } else if (node.classList.contains('shape-diamond')) {
+                const size = Math.max(newWidth, newHeight);
+                node.style.width = size + 'px';
+                node.style.height = size + 'px';
+            }
+            
+            // Update connections
+            updateConnections();
+        }
     });
     
     document.addEventListener('mouseup', function() {
         if (isDragging) {
             isDragging = false;
+            node.style.cursor = 'move';
+        } else if (isResizing) {
+            isResizing = false;
             node.style.cursor = 'move';
         }
     });
@@ -1343,14 +1596,11 @@ function updateConnections() {
         const node2 = document.getElementById(conn.to);
         
         if (node1 && node2 && conn.element) {
-            const rect1 = node1.getBoundingClientRect();
-            const rect2 = node2.getBoundingClientRect();
-            const canvasRect = document.getElementById('mindMapCanvas').getBoundingClientRect();
-            
-            const x1 = rect1.left + rect1.width/2 - canvasRect.left;
-            const y1 = rect1.top + rect1.height/2 - canvasRect.top;
-            const x2 = rect2.left + rect2.width/2 - canvasRect.left;
-            const y2 = rect2.top + rect2.height/2 - canvasRect.top;
+            // Get node positions relative to their container
+            const x1 = parseInt(node1.style.left) + node1.offsetWidth/2;
+            const y1 = parseInt(node1.style.top) + node1.offsetHeight/2;
+            const x2 = parseInt(node2.style.left) + node2.offsetWidth/2;
+            const y2 = parseInt(node2.style.top) + node2.offsetHeight/2;
             
             conn.element.setAttribute('x1', x1);
             conn.element.setAttribute('y1', y1);
