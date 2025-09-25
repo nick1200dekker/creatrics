@@ -312,16 +312,16 @@ html.dark .post-editor-wrapper {
 .voice-tone-select {
     width: 100%;
     padding: 0.5rem 0.75rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
+    background: transparent;
+    border: none;
     border-radius: 6px;
-    color: var(--text-primary);
+    color: #D1D5DB;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23D1D5DB' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
     background-position: right 0.5rem center;
     background-repeat: no-repeat;
     background-size: 1.2em 1.2em;
@@ -688,7 +688,55 @@ input:checked + .toggle-slider:before {
 }
 
 .post-media {
-    margin-top: 1rem;
+    margin-top: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.media-preview-container {
+    position: relative;
+    display: block;
+    width: fit-content;
+    margin: 0 auto;
+    flex-shrink: 0;
+}
+
+.media-preview-container img,
+.media-preview-container video {
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    max-height: 300px;
+    border-radius: 8px;
+    display: block;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.media-preview-container .remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    opacity: 0.8;
+}
+
+.media-preview-container .remove-btn:hover {
+    opacity: 1;
+    background: rgba(220, 38, 38, 0.8);
+    transform: scale(1.1);
 }
 
 .post-footer {
@@ -2503,23 +2551,32 @@ input:checked + .toggle-slider:before {
     function createMediaElement(mediaData) {
         const container = document.createElement('div');
         container.className = 'media-preview-container';
-        container.style = 'position: relative; display: inline-block; margin-right: 1rem;';
         
         let mediaElement;
         if (mediaData.media_type === 'video') {
             mediaElement = document.createElement('video');
             mediaElement.controls = true;
             mediaElement.muted = true;
-            mediaElement.style = 'max-width: 200px; max-height: 200px; border-radius: 8px;';
         } else {
             mediaElement = document.createElement('img');
-            mediaElement.style = 'max-width: 200px; max-height: 200px; border-radius: 8px;';
+            // Handle broken images
+            mediaElement.onerror = () => {
+                console.warn('Failed to load media:', mediaData.url);
+                container.remove();
+                markAsChanged();
+            };
         }
         
         mediaElement.src = mediaData.url;
         
+        // Store metadata as data attributes for later retrieval
+        mediaElement.setAttribute('data-filename', mediaData.filename || '');
+        mediaElement.setAttribute('data-media-type', mediaData.media_type || 'image');
+        mediaElement.setAttribute('data-file-size', mediaData.file_size || 0);
+        mediaElement.setAttribute('data-mime-type', mediaData.mime_type || '');
+        
         const removeBtn = document.createElement('button');
-        removeBtn.style = 'position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--bg-secondary); border: 1px solid var(--border-primary); cursor: pointer;';
+        removeBtn.className = 'remove-btn';
         removeBtn.innerHTML = '<i class="ph ph-x"></i>';
         removeBtn.onclick = () => {
             container.remove();
@@ -2622,7 +2679,10 @@ input:checked + .toggle-slider:before {
                 mediaElements.forEach(element => {
                     postData.media.push({
                         url: element.src,
-                        media_type: element.tagName.toLowerCase() === 'video' ? 'video' : 'image'
+                        filename: element.getAttribute('data-filename') || '',
+                        media_type: element.getAttribute('data-media-type') || (element.tagName.toLowerCase() === 'video' ? 'video' : 'image'),
+                        file_size: parseInt(element.getAttribute('data-file-size')) || 0,
+                        mime_type: element.getAttribute('data-mime-type') || ''
                     });
                 });
             }
@@ -2675,8 +2735,13 @@ input:checked + .toggle-slider:before {
                 
                 if (mediaContainer && postData.media && postData.media.length > 0) {
                     postData.media.forEach(media => {
-                        const mediaElement = createMediaElement(media);
-                        mediaContainer.appendChild(mediaElement);
+                        // Only create media element if URL is valid
+                        if (media.url && media.url.trim() !== '') {
+                            const mediaElement = createMediaElement(media);
+                            mediaContainer.appendChild(mediaElement);
+                        } else {
+                            console.warn('Skipping media with invalid URL:', media);
+                        }
                     });
                 }
             });
