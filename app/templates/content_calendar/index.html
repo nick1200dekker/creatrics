@@ -42,6 +42,9 @@
         border-bottom: 1px solid var(--border-primary);
         background: var(--bg-secondary);
         transition: background-color 0.3s ease, border-color 0.3s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .calendar-title {
@@ -259,6 +262,36 @@
         justify-content: center;
     }
 
+    /* Week Start Toggle */
+    .week-start-toggle {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .week-toggle-btn {
+        padding: 0.5rem 1rem;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .week-toggle-btn:hover {
+        background: var(--hover-bg);
+        border-color: #3B82F6;
+        color: #3B82F6;
+    }
+
+    .week-toggle-btn.active {
+        background: #3B82F6;
+        color: white;
+        border-color: #3B82F6;
+    }
+
     /* Toggle button */
     .toggle-btn {
         padding: 0.5rem 0.75rem;
@@ -329,20 +362,30 @@
         transform: translate(-50%, -50%) !important;
     }
 
-    .drag-ghost.organic {
-        background: #10B981 !important;
+    /* Platform colors for drag ghost */
+    .drag-ghost.platform-youtube {
+        background: #FF0000 !important;
     }
 
-    .drag-ghost.sponsored {
-        background: #F59E0B !important;
+    .drag-ghost.platform-x,
+    .drag-ghost.platform-twitter {
+        background: #000000 !important;
     }
 
-    .drag-ghost.warning {
-        background: #FB923C !important;
+    .drag-ghost.platform-instagram {
+        background: #E4405F !important;
     }
 
-    .drag-ghost.danger {
-        background: #EF4444 !important;
+    .drag-ghost.platform-tiktok {
+        background: #010101 !important;
+    }
+
+    .drag-ghost.platform-blog {
+        background: #6B7280 !important;
+    }
+
+    .drag-ghost.platform-other {
+        background: #9CA3AF !important;
     }
 
     /* Fix FullCalendar drag and drop */
@@ -510,7 +553,7 @@
     .fc-event {
         border: none !important;
         border-radius: 4px !important;
-        padding: 3px 6px !important;
+        padding: 3px 20px 3px 6px !important;
         font-size: 0.85rem !important;
         cursor: move !important;
         margin: 2px !important;
@@ -520,24 +563,44 @@
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        position: relative !important;
     }
 
-    /* Content type badges */
-    .fc-event.organic {
-        background: #10B981 !important;
+    /* Platform-based coloring */
+    .fc-event.platform-youtube {
+        background: #FF0000 !important;
     }
 
-    .fc-event.sponsored {
-        background: #F59E0B !important;
+    .fc-event.platform-x,
+    .fc-event.platform-twitter {
+        background: #000000 !important;
     }
 
-    /* Status-based coloring for upcoming/overdue */
-    .fc-event.warning {
-        background: #FB923C !important;
+    .fc-event.platform-instagram {
+        background: #E4405F !important;
     }
 
-    .fc-event.danger {
-        background: #EF4444 !important;
+    .fc-event.platform-tiktok {
+        background: #010101 !important;
+    }
+
+    .fc-event.platform-blog {
+        background: #6B7280 !important;
+    }
+
+    .fc-event.platform-other {
+        background: #9CA3AF !important;
+    }
+
+    /* Money icon for sponsored posts */
+    .fc-event.sponsored::after {
+        content: '💰';
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.7rem;
+        line-height: 1;
     }
     
     .fc-event-main {
@@ -683,17 +746,6 @@
     /* Hide old content in kanban */
     .kanban-card.old-content {
         display: none;
-    }
-
-    /* Warning and danger states for kanban cards */
-    .kanban-card.warning {
-        border-color: #FB923C;
-        background: rgba(251, 146, 60, 0.1);
-    }
-
-    .kanban-card.danger {
-        border-color: #EF4444;
-        background: rgba(239, 68, 68, 0.1);
     }
 
     .kanban-card-title {
@@ -987,6 +1039,11 @@
 
     /* Responsive */
     @media (max-width: 768px) {
+        .calendar-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
         .calendar-controls {
             flex-direction: column;
             align-items: stretch;
@@ -1019,6 +1076,14 @@
             <i class="ph ph-calendar"></i>
             Content Calendar
         </h1>
+        <div class="week-start-toggle">
+            <button class="week-toggle-btn active" onclick="setWeekStart(1)">
+                Start: Mon
+            </button>
+            <button class="week-toggle-btn" onclick="setWeekStart(0)">
+                Start: Sun
+            </button>
+        </div>
     </div>
     
     <!-- Controls -->
@@ -1305,6 +1370,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMonth = new Date();
     let draggedEventEl = null;
     let dragGhost = null;
+    let weekStart = 1; // 1 = Monday (default), 0 = Sunday
     
     // Check if FullCalendar loaded
     if (typeof FullCalendar === 'undefined') {
@@ -1338,26 +1404,18 @@ document.addEventListener('DOMContentLoaded', function() {
         dragGhost.style.minWidth = rect.width + 'px';
         dragGhost.style.maxWidth = rect.width + 'px';
 
-        // Add appropriate classes based on event properties
+        // Add platform class for coloring
         const eventData = events.find(e => e.id == event.id);
         if (eventData) {
-            if (eventData.content_type === 'sponsored') {
-                dragGhost.classList.add('sponsored');
+            if (eventData.platform) {
+                dragGhost.classList.add('platform-' + eventData.platform.toLowerCase().replace(/[^a-z0-9]/g, ''));
             } else {
-                dragGhost.classList.add('organic');
+                dragGhost.classList.add('platform-other');
             }
 
-            // Add warning/danger classes
-            const eventDate = new Date(eventData.publish_date);
-            const today = new Date();
-            const daysUntil = Math.floor((eventDate - today) / (1000 * 60 * 60 * 24));
-
-            if (eventData.status !== 'ready') {
-                if (daysUntil <= 3 && daysUntil >= 0 && eventData.status === 'in-progress') {
-                    dragGhost.classList.add('warning');
-                } else if (daysUntil < 0) {
-                    dragGhost.classList.add('danger');
-                }
+            // Add money emoji for sponsored content
+            if (eventData.content_type === 'sponsored') {
+                dragGhost.textContent = event.title + ' 💰';
             }
         }
 
@@ -1403,6 +1461,7 @@ document.addEventListener('DOMContentLoaded', function() {
             eventDurationEditable: false,
             dragRevertDuration: 500,
             dragScroll: true,
+            firstDay: weekStart,
 
             eventDragStart: function(info) {
                 // Create and show custom drag ghost
@@ -1481,24 +1540,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Add custom classes based on event properties
                 const event = events.find(e => e.id == info.event.id);
                 if (event) {
-                    // Add content type class
+                    // Add sponsored class for money icon
                     if (event.content_type === 'sponsored') {
                         info.el.classList.add('sponsored');
-                    } else {
-                        info.el.classList.add('organic');
                     }
-                    
-                    // Add warning/danger classes based on status and date
-                    const eventDate = new Date(event.publish_date);
-                    const today = new Date();
-                    const daysUntil = Math.floor((eventDate - today) / (1000 * 60 * 60 * 24));
-                    
-                    if (event.status !== 'ready') {
-                        if (daysUntil <= 3 && daysUntil >= 0 && event.status === 'in-progress') {
-                            info.el.classList.add('warning');
-                        } else if (daysUntil < 0) {
-                            info.el.classList.add('danger');
-                        }
+
+                    // Add platform class for coloring
+                    if (event.platform) {
+                        const platformClass = 'platform-' + event.platform.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        info.el.classList.add(platformClass);
+                    } else {
+                        info.el.classList.add('platform-other');
                     }
                 }
             }
@@ -1677,6 +1729,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Week start toggle
+    window.setWeekStart = function(startDay) {
+        weekStart = startDay;
+
+        // Update button states
+        document.querySelectorAll('.week-toggle-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if ((startDay === 1 && btn.textContent.includes('Mon')) ||
+                (startDay === 0 && btn.textContent.includes('Sun'))) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Update calendar
+        if (calendar) {
+            calendar.setOption('firstDay', weekStart);
+        }
+
+        // Save preference
+        localStorage.setItem('calendarWeekStart', weekStart);
+    };
+
+    // Load saved week start preference
+    const savedWeekStart = localStorage.getItem('calendarWeekStart');
+    if (savedWeekStart !== null) {
+        weekStart = parseInt(savedWeekStart);
+        // Update button states after DOM loads
+        setTimeout(() => {
+            document.querySelectorAll('.week-toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.week-toggle-btn:${weekStart === 0 ? 'last-child' : 'first-child'}`).classList.add('active');
+        }, 0);
+    }
+
     // Make functions globally available
     window.switchView = function(view) {
         currentView = view;
@@ -1943,12 +2030,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Determine background color
                         let backgroundColor = getEventColor(event);
                         
+                        const classNames = [];
+                        if (event.content_type === 'sponsored') {
+                            classNames.push('sponsored');
+                        }
+                        if (event.platform) {
+                            classNames.push('platform-' + event.platform.toLowerCase().replace(/[^a-z0-9]/g, ''));
+                        } else {
+                            classNames.push('platform-other');
+                        }
+
                         calendar.addEvent({
                             id: event.id,
                             title: event.title,
                             start: event.publish_date,
                             backgroundColor: backgroundColor,
-                            classNames: [event.content_type === 'sponsored' ? 'sponsored' : 'organic'],
+                            classNames: classNames,
                             editable: true,  // Ensure each event is draggable
                             startEditable: true
                         });
@@ -1973,24 +2070,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function getEventColor(event) {
-        const eventDate = new Date(event.publish_date);
-        const today = new Date();
-        const daysUntil = Math.floor((eventDate - today) / (1000 * 60 * 60 * 24));
-        
-        // Check status-based coloring
-        if (event.status !== 'ready') {
-            if (daysUntil <= 3 && daysUntil >= 0 && event.status === 'in-progress') {
-                return '#FB923C'; // Warning orange
-            } else if (daysUntil < 0) {
-                return '#EF4444'; // Danger red
-            }
-        }
-        
-        // Default to content type coloring
-        if (event.content_type === 'sponsored') {
-            return '#F59E0B'; // Sponsored yellow
-        } else {
-            return '#10B981'; // Organic green
+        // Platform-based coloring only
+        const platform = (event.platform || 'Other').toLowerCase();
+        switch(platform) {
+            case 'youtube': return '#FF0000';
+            case 'x':
+            case 'twitter': return '#000000';
+            case 'instagram': return '#E4405F';
+            case 'tiktok': return '#010101';
+            case 'blog': return '#6B7280';
+            default: return '#9CA3AF';
         }
     }
     
@@ -2014,21 +2103,12 @@ document.addEventListener('DOMContentLoaded', function() {
         visibleEvents.forEach(event => {
             const row = document.createElement('tr');
             
-            // Add warning/danger classes
-            const eventDate = event.publish_date ? new Date(event.publish_date) : null;
-            const today = new Date();
-            const daysUntil = eventDate ? Math.floor((eventDate - today) / (1000 * 60 * 60 * 24)) : null;
-            
-            if (eventDate && event.status !== 'ready') {
-                if (daysUntil <= 3 && daysUntil >= 0 && event.status === 'in-progress') {
-                    row.style.background = 'rgba(251, 146, 60, 0.1)';
-                } else if (daysUntil < 0) {
-                    row.style.background = 'rgba(239, 68, 68, 0.1)';
-                }
-            }
+            // Add platform color as accent
+            const platformColor = getEventColor(event);
+            row.style.borderLeft = `3px solid ${platformColor}`;
             
             row.innerHTML = `
-                <td>${event.title}</td>
+                <td>${event.title}${event.content_type === 'sponsored' ? ' 💰' : ''}</td>
                 <td>${event.publish_date ? new Date(event.publish_date).toLocaleDateString() : '-'}</td>
                 <td>${event.platform || '-'}</td>
                 <td><span class="kanban-tag ${event.content_type === 'sponsored' ? 'sponsored' : 'organic'}">${event.content_type === 'sponsored' ? 'Sponsored' : 'Organic'}</span></td>
@@ -2082,21 +2162,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.draggable = true;
                 card.dataset.eventId = event.id;
                 
-                // Add warning/danger classes
-                const eventDate = event.publish_date ? new Date(event.publish_date) : null;
-                const today = new Date();
-                const daysUntil = eventDate ? Math.floor((eventDate - today) / (1000 * 60 * 60 * 24)) : null;
-                
-                if (eventDate && event.status !== 'ready') {
-                    if (daysUntil <= 3 && daysUntil >= 0 && event.status === 'in-progress') {
-                        card.classList.add('warning');
-                    } else if (daysUntil < 0) {
-                        card.classList.add('danger');
-                    }
-                }
+                // Add platform-based styling
+                const platform = (event.platform || 'Other').toLowerCase();
+                card.style.borderLeft = `3px solid ${getEventColor(event)}`;
                 
                 card.innerHTML = `
-                    <div class="kanban-card-title">${event.title}</div>
+                    <div class="kanban-card-title">${event.title}${event.content_type === 'sponsored' ? ' 💰' : ''}</div>
                     <div class="kanban-card-meta">
                         ${event.platform ? `<span class="kanban-tag">${event.platform}</span>` : ''}
                         <span class="kanban-tag ${event.content_type === 'sponsored' ? 'sponsored' : 'organic'}">${event.content_type === 'sponsored' ? 'Sponsored' : 'Organic'}</span>
