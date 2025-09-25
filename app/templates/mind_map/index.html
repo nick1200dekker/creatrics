@@ -27,8 +27,88 @@
     width: 100%;
     transition: background-color 0.3s ease, border-color 0.3s ease;
     display: flex;
+    flex-direction: column;
     min-height: calc(100vh - 60px);
     position: relative;
+}
+
+/* Map Tabs */
+.mind-map-tabs {
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-primary);
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.tab-list {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.tab.active {
+    background: #3B82F6;
+    color: white;
+    border-color: #3B82F6;
+}
+
+.tab:hover:not(.active) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.tab-close {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.tab-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.tab-add {
+    background: var(--bg-secondary);
+    border: 1px dashed var(--border-primary);
+    border-radius: 8px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tab-add:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-style: solid;
 }
 
 html.dark .mind-map-wrapper {
@@ -38,7 +118,7 @@ html.dark .mind-map-wrapper {
 /* Toolbar */
 .mind-map-toolbar {
     position: absolute;
-    top: 1.5rem;
+    top: 4.5rem;
     left: 1.5rem;
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
@@ -85,7 +165,7 @@ html.dark .mind-map-wrapper {
 /* Controls panel */
 .mind-map-controls {
     position: absolute;
-    top: 1.5rem;
+    top: 4.5rem;
     right: 1.5rem;
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
@@ -94,7 +174,7 @@ html.dark .mind-map-wrapper {
     width: 280px;
     z-index: 100;
     box-shadow: var(--shadow-md);
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - 150px);
     overflow-y: auto;
 }
 
@@ -137,10 +217,12 @@ html.dark .mind-map-wrapper {
 .mind-map-canvas {
     width: 100%;
     height: 100%;
+    min-height: 600px;
     position: relative;
     overflow: hidden;
     cursor: grab;
     background: var(--bg-secondary);
+    flex: 1;
 }
 
 .mind-map-canvas.dragging {
@@ -378,7 +460,7 @@ html.dark .mind-map-wrapper {
 .zoom-controls {
     position: absolute;
     bottom: 1.5rem;
-    right: 1.5rem;
+    left: 1.5rem;
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
     border-radius: 12px;
@@ -422,7 +504,7 @@ html.dark .mind-map-wrapper {
 .mini-map {
     position: absolute;
     bottom: 1.5rem;
-    left: 1.5rem;
+    right: 1.5rem;
     width: 200px;
     height: 150px;
     background: var(--bg-primary);
@@ -699,6 +781,19 @@ html.dark .connection-line:hover {
 {% block content %}
 <div class="content-panel">
     <div class="mind-map-wrapper">
+        <!-- Map Tabs -->
+        <div class="mind-map-tabs" id="mapTabs">
+            <div class="tab-list">
+                <div class="tab active" data-map-id="map1">
+                    <span>Map 1</span>
+                    <button class="tab-close" onclick="closeMap('map1')" title="Close Map">×</button>
+                </div>
+                <button class="tab-add" onclick="createNewMap()" title="New Map">
+                    <i class="ph ph-plus"></i>
+                </button>
+            </div>
+        </div>
+
         <!-- Toolbar -->
         <div class="mind-map-toolbar">
             <button class="toolbar-btn" id="selectTool" title="Select" data-tool="select">
@@ -730,7 +825,7 @@ html.dark .connection-line:hover {
                 <i class="ph ph-arrow-u-up-right"></i>
             </button>
             <div class="toolbar-divider"></div>
-            <button class="toolbar-btn" id="saveBtn" title="Save">
+            <button class="toolbar-btn" id="saveBtn" title="Save" onclick="saveToFirebase()">
                 <i class="ph ph-floppy-disk"></i>
             </button>
             <button class="toolbar-btn" id="exportBtn" title="Export">
@@ -842,7 +937,7 @@ html.dark .connection-line:hover {
         </div>
 
         <!-- Canvas -->
-        <div class="mind-map-canvas" id="mindMapCanvas">
+        <div class="mind-map-canvas" id="mindMapCanvas" style="flex: 1; position: relative;">
             <svg class="canvas-svg" id="connectionsSvg">
                 <defs>
                     <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
@@ -890,7 +985,7 @@ html.dark .connection-line:hover {
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='scripts/mind_map.js') }}"></script>
+<!-- Removed conflicting mind_map.js -->
 <script>
 // Debug: Check if elements exist
 console.log('🔍 Debug: Checking elements...');
@@ -914,15 +1009,42 @@ let connectionMode = false;
 let firstConnectionNode = null;
 let connections = [];
 let nodeCounter = 0;
+let currentMapId = 'map1';
+let maps = {
+    'map1': {
+        id: 'map1',
+        name: 'Map 1',
+        nodes: [],
+        connections: [],
+        created: new Date().toISOString(),
+        updated: new Date().toISOString()
+    }
+};
 
 // Initialize mind map when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Mind Map...');
     
-    // Add initial node
-    setTimeout(() => {
-        addNewNode();
-    }, 500);
+    // Add canvas click to deselect
+    const canvas = document.getElementById('mindMapCanvas');
+    if (canvas) {
+        canvas.addEventListener('click', function(e) {
+            if (e.target === canvas) {
+                // Deselect all nodes
+                document.querySelectorAll('.mind-node').forEach(n => n.classList.remove('selected'));
+                selectedNode = null;
+                
+                // Clear properties panel
+                const textArea = document.getElementById('nodeText');
+                if (textArea) textArea.value = '';
+                
+                console.log('Deselected all nodes');
+            }
+        });
+    }
+    
+    // Load existing data from Firebase
+    loadFromFirebase();
 });
 
 // Add new node function
@@ -944,19 +1066,21 @@ function addNewNode() {
     
     const nodeText = document.createElement('div');
     nodeText.className = 'node-text';
-    nodeText.textContent = nodeCounter === 1 ? 'Central Idea' : 'New Node';
-    
-    if (nodeCounter === 1) {
-        node.classList.add('root');
-    }
+    nodeText.textContent = 'New Node';
     
     node.appendChild(nodeText);
     container.appendChild(node);
     
-    // Make draggable
+    // Make draggable and add click handlers
     makeDraggable(node);
+    addNodeClickHandlers(node);
     
-    // Add click handlers
+    console.log('Added node:', node.id, 'at', x, y);
+    return node;
+}
+
+// Add click handlers to node
+function addNodeClickHandlers(node) {
     let clickCount = 0;
     let clickTimer = null;
     
@@ -978,9 +1102,6 @@ function addNewNode() {
             clickCount = 0;
         }
     });
-    
-    console.log('Added node:', node.id, 'at', x, y);
-    return node;
 }
 
 // Function to select a node
@@ -1236,6 +1357,282 @@ function updateConnections() {
             conn.element.setAttribute('x2', x2);
             conn.element.setAttribute('y2', y2);
         }
+    });
+}
+
+// Map Management Functions
+function createNewMap() {
+    const mapCount = Object.keys(maps).length + 1;
+    const newMapId = 'map' + mapCount;
+    
+    maps[newMapId] = {
+        id: newMapId,
+        name: 'Map ' + mapCount,
+        nodes: [],
+        connections: [],
+        created: new Date().toISOString(),
+        updated: new Date().toISOString()
+    };
+    
+    // Add tab
+    const tabList = document.querySelector('.tab-list');
+    const addButton = document.querySelector('.tab-add');
+    
+    const newTab = document.createElement('div');
+    newTab.className = 'tab';
+    newTab.setAttribute('data-map-id', newMapId);
+    newTab.innerHTML = `
+        <span>Map ${mapCount}</span>
+        <button class="tab-close" onclick="closeMap('${newMapId}')" title="Close Map">×</button>
+    `;
+    
+    newTab.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('tab-close')) {
+            switchToMap(newMapId);
+        }
+    });
+    
+    tabList.insertBefore(newTab, addButton);
+    switchToMap(newMapId);
+    
+    console.log('Created new map:', newMapId);
+}
+
+function switchToMap(mapId) {
+    if (!maps[mapId]) return;
+    
+    // Save current map state
+    saveCurrentMapState();
+    
+    // Switch active tab
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`[data-map-id="${mapId}"]`).classList.add('active');
+    
+    // Clear canvas
+    clearCanvas();
+    
+    // Load new map
+    currentMapId = mapId;
+    loadMapState(mapId);
+    
+    console.log('Switched to map:', mapId);
+}
+
+function closeMap(mapId) {
+    if (Object.keys(maps).length <= 1) {
+        alert('Cannot close the last map');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to close this map?')) {
+        delete maps[mapId];
+        
+        // Remove tab
+        const tab = document.querySelector(`[data-map-id="${mapId}"]`);
+        if (tab) tab.remove();
+        
+        // Switch to first available map if this was active
+        if (currentMapId === mapId) {
+            const firstMapId = Object.keys(maps)[0];
+            switchToMap(firstMapId);
+        }
+        
+        console.log('Closed map:', mapId);
+    }
+}
+
+function clearCanvas() {
+    // Clear nodes
+    const container = document.getElementById('canvasContainer');
+    if (container) {
+        container.innerHTML = '';
+    }
+    
+    // Clear connections
+    const svg = document.getElementById('connectionsSvg');
+    if (svg) {
+        const lines = svg.querySelectorAll('.connection-line');
+        lines.forEach(line => line.remove());
+    }
+    
+    connections = [];
+    selectedNode = null;
+    nodeCounter = 0;
+}
+
+function saveCurrentMapState() {
+    if (!maps[currentMapId]) return;
+    
+    // Save nodes
+    const nodes = [];
+    document.querySelectorAll('.mind-node').forEach(node => {
+        nodes.push({
+            id: node.id,
+            text: node.querySelector('.node-text').textContent,
+            x: parseInt(node.style.left) || 0,
+            y: parseInt(node.style.top) || 0,
+            width: node.style.width,
+            height: node.style.height,
+            backgroundColor: node.style.backgroundColor || '',
+            shape: getNodeShape(node),
+            fontSize: node.querySelector('.node-text').style.fontSize || '14px'
+        });
+    });
+    
+    maps[currentMapId].nodes = nodes;
+    maps[currentMapId].connections = [...connections];
+    maps[currentMapId].updated = new Date().toISOString();
+}
+
+function loadMapState(mapId) {
+    const mapData = maps[mapId];
+    if (!mapData) return;
+    
+    // Load nodes
+    mapData.nodes.forEach(nodeData => {
+        const node = document.createElement('div');
+        node.className = 'mind-node';
+        node.id = nodeData.id;
+        node.style.left = nodeData.x + 'px';
+        node.style.top = nodeData.y + 'px';
+        node.style.width = nodeData.width || '180px';
+        node.style.height = nodeData.height || 'auto';
+        
+        if (nodeData.backgroundColor) {
+            node.style.backgroundColor = nodeData.backgroundColor;
+        }
+        
+        if (nodeData.shape && nodeData.shape !== 'rectangle') {
+            node.classList.add('shape-' + nodeData.shape);
+        }
+        
+        const nodeText = document.createElement('div');
+        nodeText.className = 'node-text';
+        nodeText.textContent = nodeData.text;
+        nodeText.style.fontSize = nodeData.fontSize;
+        
+        node.appendChild(nodeText);
+        document.getElementById('canvasContainer').appendChild(node);
+        
+        makeDraggable(node);
+        addNodeClickHandlers(node);
+        
+        const nodeIdNum = parseInt(nodeData.id.replace('node_', ''));
+        if (nodeIdNum > nodeCounter) {
+            nodeCounter = nodeIdNum;
+        }
+    });
+    
+    // Load connections
+    connections = [...mapData.connections];
+    connections.forEach(conn => {
+        const svg = document.getElementById('connectionsSvg');
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('class', 'connection-line');
+        line.setAttribute('stroke', '#3B82F6');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('marker-end', 'url(#arrowhead)');
+        line.setAttribute('data-connection-id', conn.id);
+        
+        conn.element = line;
+        svg.appendChild(line);
+    });
+    
+    updateConnections();
+}
+
+function getNodeShape(node) {
+    if (node.classList.contains('shape-circle')) return 'circle';
+    if (node.classList.contains('shape-square')) return 'square';
+    if (node.classList.contains('shape-diamond')) return 'diamond';
+    return 'rectangle';
+}
+
+// Firebase Save Function
+async function saveToFirebase() {
+    try {
+        saveCurrentMapState();
+        
+        const response = await fetch('/api/mind-map/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                maps: maps,
+                currentMapId: currentMapId
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Show save indicator
+            const indicator = document.getElementById('saveIndicator');
+            if (indicator) {
+                indicator.classList.add('show');
+                setTimeout(() => indicator.classList.remove('show'), 2000);
+            }
+            console.log('Saved to Firebase successfully');
+        } else {
+            console.error('Save failed:', result.error);
+            alert('Failed to save: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Save error:', error);
+        alert('Failed to save mind map');
+    }
+}
+
+// Load from Firebase
+async function loadFromFirebase() {
+    try {
+        const response = await fetch('/api/mind-map/load');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            maps = result.data.maps || maps;
+            currentMapId = result.data.currentMapId || 'map1';
+            
+            // Rebuild tabs
+            rebuildTabs();
+            
+            // Load current map
+            clearCanvas();
+            loadMapState(currentMapId);
+            
+            console.log('Loaded from Firebase successfully');
+        }
+    } catch (error) {
+        console.error('Load error:', error);
+    }
+}
+
+function rebuildTabs() {
+    const tabList = document.querySelector('.tab-list');
+    const addButton = document.querySelector('.tab-add');
+    
+    // Clear existing tabs except add button
+    document.querySelectorAll('.tab').forEach(tab => tab.remove());
+    
+    // Add tabs for each map
+    Object.values(maps).forEach(map => {
+        const tab = document.createElement('div');
+        tab.className = 'tab';
+        if (map.id === currentMapId) tab.classList.add('active');
+        tab.setAttribute('data-map-id', map.id);
+        tab.innerHTML = `
+            <span>${map.name}</span>
+            <button class="tab-close" onclick="closeMap('${map.id}')" title="Close Map">×</button>
+        `;
+        
+        tab.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('tab-close')) {
+                switchToMap(map.id);
+            }
+        });
+        
+        tabList.insertBefore(tab, addButton);
     });
 }
 
