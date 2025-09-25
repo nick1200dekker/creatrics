@@ -1,4 +1,6 @@
-Generate a comprehensive YouTube video description for the following content:
+Generate a YouTube video description for the following content:
+
+IMPORTANT: Write naturally as if you're the actual creator. Avoid generic AI phrases.
 
 {input}
 
@@ -45,11 +47,20 @@ FORMAT REQUIREMENTS:
 - NO bold text or markdown headers (no ** or ##)
 - Use single asterisk (*) for bullet points only
 - Use line breaks for readability
-- Include 2-3 emojis per section maximum
+- Include emojis based on reference style (if provided)
 - Natural keyword placement (no stuffing)
-- Professional but conversational tone
+- Match the tone from reference (if provided)
 - Maximum 5000 characters total
 - Maximum 3 hashtags at the end
+
+AVOID THESE GENERIC AI PHRASES:
+- "In this video, you'll learn..."
+- "Don't forget to like and subscribe"
+- "Comprehensive guide"
+- "Everything you need to know"
+- "Make sure to hit the bell"
+- "Step-by-step tutorial"
+Instead, write uniquely and authentically
 
 SEO OPTIMIZATION:
 - Include primary keyword 2-3 times naturally
@@ -57,4 +68,8 @@ SEO OPTIMIZATION:
 - Use semantic variations
 - Location keywords if relevant
 
-CRITICAL: Do not include section headers like "HOOK:" or "OVERVIEW:" - just write the content directly. No bold formatting anywhere!
+CRITICAL:
+- Do not include section headers like "HOOK:" or "OVERVIEW:" - just write the content directly
+- No bold formatting anywhere
+- If a reference is provided, MATCH its writing style exactly
+- Write as if you ARE the creator, not describing what they should write

@@ -730,6 +730,145 @@ html.dark .char-count-progress {
     font-size: 0.875rem;
 }
 
+/* Edit Modal Styles */
+.edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.edit-modal-content {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.edit-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.edit-modal-header h3 {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.edit-modal-body {
+    padding: 1.5rem;
+}
+
+.edit-textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+.edit-textarea:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.edit-modal-body .char-count {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    text-align: right;
+}
+
+.edit-modal-body .char-count.success {
+    color: #059669;
+}
+
+.edit-modal-body .char-count.warning {
+    color: #D97706;
+}
+
+.edit-modal-body .char-count.error {
+    color: #DC2626;
+}
+
+.edit-modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-primary);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.btn-cancel, .btn-save {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-cancel {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.btn-cancel:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.btn-save {
+    background: #3B82F6;
+    color: white;
+}
+
+.btn-save:hover {
+    background: #2563EB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .generator-content {
@@ -1018,8 +1157,8 @@ function displayTags(tags) {
                 <button class="action-btn" onclick="copyTags()" title="Copy all tags to clipboard">
                     <i class="ph ph-copy"></i> Copy All
                 </button>
-                <button class="action-btn" onclick="optimizeTags()" title="Auto-optimize tag length">
-                    <i class="ph ph-sliders"></i> Optimize
+                <button class="action-btn" onclick="editTags()" title="Edit tags">
+                    <i class="ph ph-pencil"></i> Edit
                 </button>
             </div>
         </div>
@@ -1081,32 +1220,81 @@ async function copyTags() {
     }
 }
 
-// Optimize tags
-function optimizeTags() {
-    if (totalCharacters < 400) {
-        showToast('Add more descriptive tags to reach optimal length', 'info');
+// Edit tags
+function editTags() {
+    if (!currentTags || currentTags.length === 0) {
+        showToast('No tags to edit', 'error');
         return;
-    } else if (totalCharacters > 500) {
-        // Remove tags from the end until we're under 500 characters
-        const optimizedTags = [];
-        let currentChars = 0;
-
-        for (let tag of currentTags) {
-            const tagWithComma = currentChars === 0 ? tag : `, ${tag}`;
-            if (currentChars + tagWithComma.length <= 500) {
-                optimizedTags.push(tag);
-                currentChars += tagWithComma.length;
-            } else {
-                break;
-            }
-        }
-
-        currentTags = optimizedTags;
-        displayTags(currentTags);
-        showToast('Tags optimized for YouTube limits!', 'success');
-    } else {
-        showToast('Your tags are already optimized!', 'success');
     }
+
+    // Create a modal for editing
+    const currentTagsText = currentTags.join(', ');
+    const modal = document.createElement('div');
+    modal.className = 'edit-modal';
+    modal.innerHTML = `
+        <div class="edit-modal-content">
+            <div class="edit-modal-header">
+                <h3>Edit Tags</h3>
+                <button onclick="closeEditModal()" class="close-btn">&times;</button>
+            </div>
+            <div class="edit-modal-body">
+                <textarea id="editTagsTextarea" class="edit-textarea" placeholder="Edit your tags here (separate with commas)">${escapeHtml(currentTagsText)}</textarea>
+                <div class="char-count" id="editCharCount"></div>
+            </div>
+            <div class="edit-modal-footer">
+                <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-save" onclick="saveTags()">Save Tags</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Update character count
+    const textarea = document.getElementById('editTagsTextarea');
+    const updateEditCharCount = () => {
+        const count = textarea.value.length;
+        const countEl = document.getElementById('editCharCount');
+        countEl.textContent = `${count}/500 characters`;
+        countEl.className = 'char-count ' + (count > 500 ? 'error' : count > 450 ? 'warning' : 'success');
+    };
+
+    textarea.addEventListener('input', updateEditCharCount);
+    updateEditCharCount();
+
+    // Focus and select all text
+    textarea.focus();
+    textarea.select();
+}
+
+function closeEditModal() {
+    const modal = document.querySelector('.edit-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function saveTags() {
+    const textarea = document.getElementById('editTagsTextarea');
+    const newTagsText = textarea.value.trim();
+
+    if (!newTagsText) {
+        showToast('Tags cannot be empty', 'error');
+        return;
+    }
+
+    if (newTagsText.length > 500) {
+        showToast('Tags exceed 500 character limit', 'error');
+        return;
+    }
+
+    // Parse the tags
+    const newTags = newTagsText.split(',').map(tag => tag.trim()).filter(tag => tag);
+
+    currentTags = newTags;
+    displayTags(currentTags);
+    closeEditModal();
+    showToast('Tags updated successfully!', 'success');
 }
 
 // Show toast notification

@@ -32,7 +32,7 @@ class VideoDescriptionGenerator:
 
             if not prompt_file.exists():
                 logger.error(f"Prompt file not found: {prompt_file}")
-                return self.get_fallback_prompt(video_type, reference_description)
+                return self.get_fallback_prompt(video_type, reference_description, style_analysis)
 
             with open(prompt_file, 'r', encoding='utf-8') as f:
                 template = f.read()
@@ -45,7 +45,7 @@ class VideoDescriptionGenerator:
 
         except Exception as e:
             logger.error(f"Error reading prompt template: {e}")
-            return self.get_fallback_prompt(video_type, reference_description)
+            return self.get_fallback_prompt(video_type, reference_description, style_analysis)
 
     def generate_description(self, input_text: str, video_type: str = 'long',
                            reference_description: str = "", user_id: str = None) -> Dict:
@@ -125,7 +125,7 @@ class VideoDescriptionGenerator:
 
             # Fallback: Generate without AI
             description = self.generate_fallback_description(
-                input_text, video_type, reference_description
+                input_text, video_type, reference_description, style_analysis
             )
 
             return {
@@ -172,8 +172,115 @@ class VideoDescriptionGenerator:
 
         return '\n'.join(cleaned_lines)
 
+    def create_style_instructions(self, style_analysis: Dict) -> str:
+        """Create detailed style instructions from analysis"""
+        if not style_analysis:
+            return "Write in a clear, engaging style."
+
+        instructions = []
+
+        # Sentence structure
+        if style_analysis.get('avg_sentence_length'):
+            instructions.append(f"- Average sentence length: {style_analysis['avg_sentence_length']} words")
+            instructions.append(f"- Sentence length variation: {style_analysis.get('sentence_variation', 'moderate')}")
+
+        # Vocabulary
+        instructions.append(f"- Vocabulary complexity: {style_analysis.get('vocab_complexity', 'moderate')}")
+
+        # Emojis
+        emoji_freq = style_analysis.get('emoji_frequency', 'none')
+        if emoji_freq != 'none':
+            instructions.append(f"- Emoji usage: {emoji_freq}")
+            if style_analysis.get('emoji_list'):
+                instructions.append(f"- Common emojis: {' '.join(style_analysis['emoji_list'][:5])}")
+
+        # Capitalization
+        instructions.append(f"- Capitalization style: {style_analysis.get('caps_style', 'standard')}")
+
+        # Punctuation
+        instructions.append(f"- Punctuation style: {style_analysis.get('punctuation_style', 'standard')}")
+
+        # Formality
+        instructions.append(f"- Tone formality: {style_analysis.get('formality', 'balanced')}")
+
+        # Special patterns
+        if style_analysis.get('has_timestamps'):
+            instructions.append("- Include timestamps for sections")
+        if style_analysis.get('uses_bullets'):
+            instructions.append("- Use bullet points for lists")
+        if style_analysis.get('uses_arrows'):
+            instructions.append("- Use arrow symbols for emphasis")
+
+        # Common phrases
+        if style_analysis.get('common_phrases'):
+            instructions.append(f"- Use these phrases: {', '.join(style_analysis['common_phrases'])}")
+
+        instructions.append(f"- Line break frequency: {style_analysis.get('line_break_frequency', 'moderate')}")
+
+        return '\n'.join(instructions)
+
+    def create_system_style_instructions(self, style_analysis: Dict) -> str:
+        """Create system-level style instructions for the AI"""
+        if not style_analysis:
+            return ""
+
+        instructions = []
+
+        # Sentence length guidance
+        avg_length = style_analysis.get('avg_sentence_length', 15)
+        if avg_length < 10:
+            instructions.append("- Keep sentences SHORT and PUNCHY (under 10 words average)")
+        elif avg_length > 20:
+            instructions.append("- Use LONGER, more detailed sentences (20+ words average)")
+        else:
+            instructions.append("- Use medium-length sentences (10-20 words average)")
+
+        # Vocabulary guidance
+        vocab = style_analysis.get('vocab_complexity', 'moderate')
+        if vocab == 'simple':
+            instructions.append("- Use SIMPLE, everyday words - avoid complex vocabulary")
+        elif vocab == 'complex':
+            instructions.append("- Use sophisticated vocabulary and technical terms")
+
+        # Emoji guidance
+        emoji_freq = style_analysis.get('emoji_frequency', 'none')
+        if emoji_freq == 'heavy':
+            emojis = style_analysis.get('emoji_list', [])
+            instructions.append(f"- Use LOTS of emojis throughout (like: {' '.join(emojis[:5])})")
+        elif emoji_freq == 'moderate':
+            instructions.append("- Include some emojis for visual appeal")
+        elif emoji_freq == 'light':
+            instructions.append("- Use emojis sparingly")
+        else:
+            instructions.append("- Do NOT use emojis")
+
+        # Capitalization guidance
+        caps = style_analysis.get('caps_style', 'standard')
+        if caps == 'frequent':
+            instructions.append("- Use CAPS for EMPHASIS frequently")
+        elif caps == 'occasional':
+            instructions.append("- Occasionally use CAPS for emphasis")
+
+        # Formality guidance
+        formality = style_analysis.get('formality', 'balanced')
+        if formality == 'casual':
+            instructions.append("- Write VERY casually - use slang, contractions, informal language")
+        elif formality == 'formal':
+            instructions.append("- Maintain formal, professional tone throughout")
+        else:
+            instructions.append("- Balance casual friendliness with professionalism")
+
+        # Punctuation guidance
+        punct = style_analysis.get('punctuation_style', 'standard')
+        if punct == 'enthusiastic':
+            instructions.append("- Use exclamation points frequently! Show excitement!")
+        elif punct == 'questioning':
+            instructions.append("- Use questions to engage the viewer")
+
+        return '\n'.join(instructions) if instructions else "Write naturally and engagingly."
+
     def generate_fallback_description(self, input_text: str, video_type: str,
-                                     reference_description: str = "") -> str:
+                                     reference_description: str = "", style_analysis: Dict = None) -> str:
         """Generate fallback description when AI is not available"""
 
         topic = input_text[:200] if input_text else "your topic"
@@ -250,7 +357,7 @@ class VideoDescriptionGenerator:
 
         return '\n'.join(description_parts)
 
-    def get_fallback_prompt(self, video_type: str, reference_description: str = "") -> str:
+    def get_fallback_prompt(self, video_type: str, reference_description: str = "", style_analysis: Dict = None) -> str:
         """Get fallback prompt if file is not found"""
 
         base_prompt = f"""Generate a YouTube {'Shorts' if video_type == 'short' else 'video'} description for:
@@ -268,5 +375,7 @@ class VideoDescriptionGenerator:
 
         if reference_description:
             base_prompt += f"\n\nUse this reference description for style and to extract social links:\n{reference_description}"
+            if style_analysis:
+                base_prompt += f"\n\nStyle Analysis:\n{self.create_style_instructions(style_analysis)}"
 
         return base_prompt

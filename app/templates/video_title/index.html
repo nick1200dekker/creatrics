@@ -966,9 +966,6 @@ function displayResults(titles) {
                     <button class="title-action-btn copy" onclick="copyTitle(${index})" title="Copy title">
                         <i class="ph ph-copy"></i>
                     </button>
-                    <button class="title-action-btn edit" onclick="editTitle(${index})" title="Edit title">
-                        <i class="ph ph-pencil"></i>
-                    </button>
                 </div>
             </div>
         `;
@@ -1010,18 +1007,6 @@ async function copyAllTitles() {
     }
 }
 
-// Edit title
-function editTitle(index) {
-    const titleElement = document.getElementById(`title-${index}`);
-    const currentText = currentTitles[index];
-
-    const newTitle = prompt('Edit title:', currentText);
-    if (newTitle && newTitle.trim() !== currentText) {
-        currentTitles[index] = newTitle.trim();
-        titleElement.textContent = newTitle.trim();
-        showToast('Title updated!', 'success');
-    }
-}
 
 // Show toast notification
 function showToast(message, type = 'success') {

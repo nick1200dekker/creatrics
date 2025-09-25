@@ -6,6 +6,7 @@ import os
 import logging
 import json
 import re
+from datetime import datetime
 from typing import List, Dict, Optional
 from pathlib import Path
 from app.system.ai_provider.ai_provider import get_ai_provider
@@ -53,8 +54,17 @@ class VideoTagsGenerator:
             # Get the prompt template
             prompt_template = self.get_prompt_template()
 
-            # Format the prompt with user input
-            prompt = prompt_template.format(input=input_text)
+            # Get current date info
+            now = datetime.now()
+            current_date = now.strftime("%B %d, %Y")
+            current_year = now.year
+
+            # Format the prompt with user input and date
+            prompt = prompt_template.format(
+                input=input_text,
+                current_date=current_date,
+                current_year=current_year
+            )
 
             # Get AI provider
             ai_provider = get_ai_provider()
@@ -62,12 +72,16 @@ class VideoTagsGenerator:
             if ai_provider:
                 try:
                     # System prompt to ensure correct format
-                    system_prompt = """You are a YouTube SEO expert specializing in tag generation.
+                    # Get current date for system prompt
+                    now = datetime.now()
+                    system_prompt = f"""You are a YouTube SEO expert specializing in tag generation.
+                    Current date: {now.strftime('%B %d, %Y')}. Always use current and up-to-date references.
                     Generate relevant tags that will help the video rank well in YouTube search.
                     Return tags as a comma-separated list.
                     Focus on a mix of broad and specific tags.
                     Include trending and evergreen keywords when relevant.
-                    The total character count should be between 400-500 characters."""
+                    The total character count should be between 400-500 characters.
+                    IMPORTANT: Use {now.year} for any year references, not past years."""
 
                     # Generate using AI provider
                     response = ai_provider.create_completion(
@@ -259,8 +273,12 @@ class VideoTagsGenerator:
 
     def get_fallback_prompt(self) -> str:
         """Get fallback prompt if file is not found"""
-        return """Generate YouTube tags for the following video content:
-        {input}
+        now = datetime.now()
+        return f"""Generate YouTube tags for the following video content:
+
+        IMPORTANT: Current date is {now.strftime('%B %d, %Y')}. Use current and relevant time references.
+
+        {{input}}
 
         Requirements:
         - Generate 20-30 relevant tags
@@ -269,6 +287,7 @@ class VideoTagsGenerator:
         - Tags should help with SEO and discoverability
         - Total character count should be between 400-500 characters
         - Return as comma-separated list
+        - Use {now.year} for any year references, not past years
 
         Focus on:
         - Main topic keywords

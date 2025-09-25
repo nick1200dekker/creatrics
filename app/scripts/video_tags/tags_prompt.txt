@@ -1,5 +1,7 @@
 Generate comprehensive YouTube tags for the following video content:
 
+IMPORTANT: Current date is {current_date}. Use current and relevant time references.
+
 {input}
 
 REQUIREMENTS:
@@ -14,7 +16,7 @@ TAG STRATEGY:
 - Add 2-3 trending or seasonal keywords if relevant
 - Include 2-3 audience-specific terms (beginner, advanced, etc.)
 - Add 2-3 action words (how to, tutorial, guide, tips)
-- Include current year tags if relevant
+- Include current year tags if relevant (current year: {current_year})
 
 OPTIMIZE FOR:
 - YouTube search algorithm

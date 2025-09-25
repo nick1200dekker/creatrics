@@ -27,6 +27,8 @@
     border: 1px solid var(--border-primary);
     overflow: hidden;
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* Header Section */
@@ -59,6 +61,8 @@
 /* Content Section */
 .accounts-content {
     padding: 2rem;
+    width: 100%;
+    max-width: none;
 }
 
 /* Flash Messages */
@@ -99,9 +103,24 @@ html.dark .flash-message.success {
 /* Account Cards Grid */
 .accounts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
+    width: 100%;
+    max-width: none;
+}
+
+/* On larger screens, use full width */
+@media (min-width: 1280px) {
+    .accounts-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1279px) {
+    .accounts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 /* Account Card */
@@ -116,6 +135,12 @@ html.dark .flash-message.success {
 .account-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.account-card.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
 }
 
 html.dark .account-card:hover {
@@ -151,7 +176,8 @@ html.dark .account-card:hover {
 }
 
 .platform-icon.tiktok-platform {
-    background: linear-gradient(135deg, #000000 0%, #333333 100%);
+    background: linear-gradient(135deg, #666666 0%, #999999 100%);
+    opacity: 0.6;
 }
 
 .platform-name {
@@ -577,12 +603,12 @@ html.dark .form-input:focus {
             </div>
             
             <!-- TikTok Account -->
-            <div class="account-card">
+            <div class="account-card disabled">
                 <div class="card-header">
                     <div class="platform-icon tiktok-platform">
                         <i class="ph ph-music-notes"></i>
                     </div>
-                    <h2 class="platform-name">TikTok Account</h2>
+                    <h2 class="platform-name">TikTok Account <span style="font-size: 0.75rem; color: var(--text-tertiary); margin-left: 0.5rem;">(Coming Soon)</span></h2>
                 </div>
                 
                 {% if tiktok_connected %}
