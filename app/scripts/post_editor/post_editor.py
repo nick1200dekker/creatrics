@@ -26,7 +26,7 @@ class PostEditor:
     """Enhanced PostEditor with multi-media support: Focus on content generation ONLY"""
     
     def __init__(self):
-        self.presets = ['grammar', 'storytelling', 'hook_story_punch']
+        self.presets = ['grammar', 'storytelling', 'hook_story_punch', 'mimic']
         
         # Define supported media types and their configurations
         self.supported_media_types = {
@@ -371,8 +371,8 @@ class PostEditor:
                 enhanced_posts.append(post_text)
                 continue
             
-            # Create context-aware prompt for thread posts
-            if len(posts) > 1:
+            # Create context-aware prompt for thread posts (skip for presets with specific structure requirements)
+            if preset not in ['mimic', 'storytelling', 'hook_story_punch'] and len(posts) > 1:
                 if i == 0:
                     context_note = f"\n\nThis is the first post in a {len(posts)}-post thread. Set up the topic engagingly."
                 elif i == len(posts) - 1:
@@ -396,7 +396,10 @@ class PostEditor:
                         media_descriptions.append("image")
                 
                 if media_descriptions:
-                    media_context = f"\n\nThis post includes the following media: {', '.join(media_descriptions)}. Consider referencing or complementing this media in your enhanced content."
+                    if preset in ['mimic', 'storytelling', 'hook_story_punch']:
+                        media_context = f"\n\nThis post includes the following media: {', '.join(media_descriptions)}."
+                    else:
+                        media_context = f"\n\nThis post includes the following media: {', '.join(media_descriptions)}. Consider referencing or complementing this media in your enhanced content."
             
             # Format the prompt with the input text
             prompt = prompt_template.format(text=post_text) + context_note + media_context
@@ -406,16 +409,22 @@ class PostEditor:
                 prompt = f"{prompt}\n\nAdditional context: {additional_context}"
             
             try:
+                # Set different system message based on preset
+                if preset == 'mimic':
+                    system_message = "You are a style mimic specialist. You must COMPLETELY REWRITE the entire post from scratch to match the reference examples exactly. Do not make small edits - REWRITE EVERY SENTENCE using the exact style patterns from the examples. Transform the entire post to sound like the same person wrote it. Be extremely aggressive in your rewriting."
+                else:
+                    system_message = "You are a helpful assistant that enhances social media posts for better engagement and clarity. Focus on improving this specific post while maintaining its core message."
+                
                 # Log the full prompt for debugging
                 logger.info(f"=== PROMPT FOR POST {i+1} ===")
-                logger.info(f"System message: You are a helpful assistant that enhances social media posts for better engagement and clarity. Focus on improving this specific post while maintaining its core message.")
+                logger.info(f"System message: {system_message}")
                 logger.info(f"User prompt:\n{prompt}")
                 logger.info(f"=== END PROMPT ===")
                 
                 # Call the AI API for this specific post
                 response = ai_provider.create_completion(
                     messages=[
-                        {"role": "system", "content": "You are a helpful assistant that enhances social media posts for better engagement and clarity. Focus on improving this specific post while maintaining its core message."},
+                        {"role": "system", "content": system_message},
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.7,

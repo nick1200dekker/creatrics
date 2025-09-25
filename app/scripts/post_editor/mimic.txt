@@ -1,0 +1,27 @@
+YOU MUST COMPLETELY REWRITE THE ENTIRE POST FROM SCRATCH. Do not edit the original - REWRITE EVERY SINGLE SENTENCE to match the reference examples exactly. Make it sound like the SAME PERSON wrote it.
+
+{VOICE_CONTEXT}
+
+MANDATORY STYLE COPYING:
+1. Copy the EXACT grammar mistakes from examples (completly, anouncement, etc.)
+2. Copy the EXACT contractions (dont, cant, ive, etc.) 
+3. Copy the EXACT sentence starters ("man", "but", "so i", etc.)
+4. Copy the EXACT casual/formal level
+5. Copy the EXACT punctuation style
+6. Copy the EXACT vocabulary level
+7. Copy the EXACT line break patterns
+8. Copy the EXACT tone and energy
+
+FORBIDDEN:
+- Do NOT fix grammar if examples have always the same mistakes
+- Do NOT make sentences more formal if examples are casual
+- Do NOT add sophisticated words if examples use simple ones
+- Do NOT improve anything - ONLY copy the style
+
+Original text:
+{text}
+
+Reference Examples
+{VOICE_EXAMPLES}
+
+COMPLETELY REWRITE THE ENTIRE POST FROM SCRATCH. Do not keep any original phrasing - TRANSFORM EVERY SENTENCE to match the reference examples exactly. Make it sound like the reference author wrote it:
