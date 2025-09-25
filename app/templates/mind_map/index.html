@@ -236,17 +236,8 @@ html.dark .mind-map-wrapper {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 1;
-}
-
-.canvas-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    z-index: 2;
     transform-origin: 0 0;
-    z-index: 2; /* Ensure it's above the SVG */
 }
 
 /* Nodes */
@@ -1055,6 +1046,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Get canvas reference
     const canvas = document.getElementById('mindMapCanvas');
+    const svg = document.getElementById('connectionsSvg');
+    
+    // Initialize SVG dimensions - keep it simple
+    if (svg && canvas) {
+        svg.style.width = '100%';
+        svg.style.height = '100%';
+        svg.removeAttribute('viewBox'); // Remove viewBox to use pixel coordinates
+    }
     
     // Add mouse wheel zoom
     canvas.addEventListener('wheel', function(e) {
@@ -1170,8 +1169,10 @@ function applyZoom() {
     if (container) {
         container.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
     }
+    
+    // DON'T transform the SVG - keep it fixed to the canvas
     if (svg) {
-        svg.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+        svg.style.transform = 'none';
     }
     
     updateZoomDisplay();
@@ -1596,16 +1597,39 @@ function updateConnections() {
         const node2 = document.getElementById(conn.to);
         
         if (node1 && node2 && conn.element) {
-            // Get node positions relative to their container
-            const x1 = parseInt(node1.style.left) + node1.offsetWidth/2;
-            const y1 = parseInt(node1.style.top) + node1.offsetHeight/2;
-            const x2 = parseInt(node2.style.left) + node2.offsetWidth/2;
-            const y2 = parseInt(node2.style.top) + node2.offsetHeight/2;
+            // Get node positions in container coordinates
+            const node1X = parseInt(node1.style.left) || 0;
+            const node1Y = parseInt(node1.style.top) || 0;
+            const node2X = parseInt(node2.style.left) || 0;
+            const node2Y = parseInt(node2.style.top) || 0;
             
-            conn.element.setAttribute('x1', x1);
-            conn.element.setAttribute('y1', y1);
-            conn.element.setAttribute('x2', x2);
-            conn.element.setAttribute('y2', y2);
+            // Get node centers
+            const x1 = node1X + node1.offsetWidth/2;
+            const y1 = node1Y + node1.offsetHeight/2;
+            const x2 = node2X + node2.offsetWidth/2;
+            const y2 = node2Y + node2.offsetHeight/2;
+            
+            // Calculate edge points (where line should start/end)
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+            
+            // Start point (edge of first node)
+            const startX = x1 + Math.cos(angle) * (node1.offsetWidth/2 + 5);
+            const startY = y1 + Math.sin(angle) * (node1.offsetHeight/2 + 5);
+            
+            // End point (edge of second node)  
+            const endX = x2 - Math.cos(angle) * (node2.offsetWidth/2 + 15); // 15px for arrow
+            const endY = y2 - Math.sin(angle) * (node2.offsetHeight/2 + 15);
+            
+            // Transform coordinates for zoom and pan
+            const transformedStartX = startX * currentZoom + panX;
+            const transformedStartY = startY * currentZoom + panY;
+            const transformedEndX = endX * currentZoom + panX;
+            const transformedEndY = endY * currentZoom + panY;
+            
+            conn.element.setAttribute('x1', transformedStartX);
+            conn.element.setAttribute('y1', transformedStartY);
+            conn.element.setAttribute('x2', transformedEndX);
+            conn.element.setAttribute('y2', transformedEndY);
         }
     });
 }
