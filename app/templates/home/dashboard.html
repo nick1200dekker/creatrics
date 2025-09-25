@@ -686,6 +686,13 @@ html.dark .coming-soon-card {
                     <p>Track performance metrics</p>
                 </div>
             </a>
+            <!-- Competitors -->
+            <a href="{{ url_for('competitors.competitors') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-users-three feature-icon-inline"></i>Competitors</h3>
+                    <p>Analyze competitor strategies</p>
+                </div>
+            </a>
         </div>
     </div>
 
@@ -728,6 +735,14 @@ html.dark .coming-soon-card {
                 <div class="feature-content">
                     <h3><i class="ph ph-brain feature-icon-inline"></i>Brain Dump</h3>
                     <p>Capture and organize ideas</p>
+                </div>
+            </a>
+
+            <!-- Content Wiki -->
+            <a href="{{ url_for('content_wiki.content_wiki') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-books feature-icon-inline"></i>Content Wiki</h3>
+                    <p>Build your knowledge base</p>
                 </div>
             </a>
 

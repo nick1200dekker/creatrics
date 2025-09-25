@@ -1024,6 +1024,13 @@
                     <i class="ph ph-chart-line"></i>
                     <span>Analytics</span>
                 </a>
+
+                <a href="{{ url_for('competitors.competitors') }}"
+                   class="nav-subitem {% if request.endpoint and 'competitors' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-users-three"></i>
+                    <span>Competitors</span>
+                </a>
             </div>
         </div>
 
@@ -1057,6 +1064,13 @@
            onclick="return BaseApp.checkGuestAccess(event, this)">
             <i class="ph ph-brain"></i>
             <span>Brain Dump</span>
+        </a>
+
+        <a href="{{ url_for('content_wiki.content_wiki') }}"
+           class="nav-item {% if request.endpoint and 'content_wiki' in request.endpoint %}active{% endif %}"
+           onclick="return BaseApp.checkGuestAccess(event, this)">
+            <i class="ph ph-books"></i>
+            <span>Content Wiki</span>
         </a>
 
         <a href="{{ url_for('content_calendar.content_calendar') }}"
