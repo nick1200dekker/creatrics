@@ -12,6 +12,7 @@ from datetime import datetime
 from . import bp
 from app.system.auth.middleware import auth_required
 from app.system.services.firebase_service import UserService
+from app.scripts.accounts.x_analytics import XAnalytics
 
 def get_user_posts_collection():
     """Get the user's posts collection reference"""
@@ -95,22 +96,43 @@ def index():
         # Get first 20 drafts and total count for initial load
         recent_drafts = get_user_drafts_safe(user_id, limit=20, offset=0)
         total_count = get_total_drafts_count(user_id)
-        
+
         # Determine if there are more drafts to load
         has_more = len(recent_drafts) < total_count
-        
+
+        # Get user data for template, including x_account if available
+        user_data = g.user.copy() if hasattr(g, 'user') else {}
+
+        # Try to get x_account from Firebase if not in g.user
+        if 'x_account' not in user_data:
+            try:
+                from firebase_admin import firestore
+                db = firestore.client()
+                user_doc = db.collection('users').document(str(user_id)).get()
+                if user_doc.exists:
+                    firebase_user = user_doc.to_dict()
+                    user_data['x_account'] = firebase_user.get('x_account', '')
+            except Exception as e:
+                current_app.logger.warning(f"Could not fetch x_account: {e}")
+                user_data['x_account'] = ''
+
         return render_template('x_post_editor/index.html',
                              recent_drafts=recent_drafts,
                              total_count=total_count,
                              has_more=has_more,
-                             loaded_count=len(recent_drafts))
+                             loaded_count=len(recent_drafts),
+                             user=user_data)
     except Exception as e:
         current_app.logger.error(f"Error loading post editor page: {str(e)}")
+        # Get user data for template
+        user_data = g.user if hasattr(g, 'user') else {}
+
         return render_template('x_post_editor/index.html',
                              recent_drafts=[],
                              total_count=0,
                              has_more=False,
-                             loaded_count=0)
+                             loaded_count=0,
+                             user=user_data)
 
 # Add alias function for base template compatibility
 @bp.route('/editor')
@@ -164,10 +186,16 @@ def get_draft(draft_id):
     """Get a specific draft by ID"""
     try:
         user_id = g.user.get('id')
+        current_app.logger.info(f"Loading draft {draft_id} for user {user_id}")
+        
         collection = get_user_posts_collection()
+        current_app.logger.info(f"Got collection reference for user {user_id}")
+        
         doc = collection.document(draft_id).get()
+        current_app.logger.info(f"Retrieved document {draft_id}, exists: {doc.exists}")
         
         if not doc.exists:
+            current_app.logger.warning(f"Draft {draft_id} not found for user {user_id}")
             return jsonify({
                 "success": False,
                 "error": "Draft not found"
@@ -175,17 +203,22 @@ def get_draft(draft_id):
         
         draft_data = doc.to_dict()
         draft_data['id'] = doc.id
+        current_app.logger.info(f"Draft data keys: {list(draft_data.keys())}")
         
         # Update media URLs to ensure they don't expire
         if 'posts' in draft_data and isinstance(draft_data['posts'], list):
+            current_app.logger.info(f"Updating media URLs for {len(draft_data['posts'])} posts")
             update_media_urls_in_posts(user_id, draft_data['posts'])
         
+        current_app.logger.info(f"Successfully loaded draft {draft_id}")
         return jsonify({
             "success": True,
             "draft": draft_data
         })
     except Exception as e:
         current_app.logger.error(f"Error reading draft {draft_id}: {str(e)}")
+        import traceback
+        current_app.logger.error(f"Full traceback: {traceback.format_exc()}")
         return jsonify({
             "success": False,
             "error": str(e)
@@ -662,7 +695,14 @@ def estimate_cost():
         posts = data.get('posts', [])
         preset = data.get('preset', 'storytelling')
         additional_context = data.get('additional_context', '')
-        use_brand_voice = data.get('use_brand_voice', False)
+        voice_tone = data.get('voice_tone', 'standard')
+        custom_voice_posts = data.get('custom_voice_posts', None)
+        
+        # Handle new custom voice format
+        if voice_tone.startswith('custom:'):
+            custom_voice_username = voice_tone.replace('custom:', '')
+            voice_tone = 'custom'
+            custom_voice_posts = custom_voice_username
         
         # Validate we have posts with content
         has_content = any(post.get('text', '').strip() for post in posts)
@@ -723,7 +763,14 @@ def generate_content():
         posts = data.get('posts', [])
         preset = data.get('preset', 'storytelling')
         additional_context = data.get('additional_context', '')
-        use_brand_voice = data.get('use_brand_voice', False)
+        voice_tone = data.get('voice_tone', 'standard')
+        custom_voice_posts = data.get('custom_voice_posts', None)
+        
+        # Handle new custom voice format
+        if voice_tone.startswith('custom:'):
+            custom_voice_username = voice_tone.replace('custom:', '')
+            voice_tone = 'custom'
+            custom_voice_posts = custom_voice_username
         
         # Validate we have posts with content
         has_content = any(post.get('text', '').strip() for post in posts)
@@ -775,7 +822,8 @@ def generate_content():
             preset=preset,
             additional_context=additional_context,
             user_id=user_id,
-            use_brand_voice=use_brand_voice
+            voice_tone=voice_tone,
+            custom_voice_posts=custom_voice_posts
         )
         
         if not generation_result['success']:
@@ -811,24 +859,161 @@ def generate_content():
             "error": "An unexpected error occurred while generating content. Please try again."
         }), 500
 
-@bp.route('/check-brand-voice', methods=['GET'])
+@bp.route('/fetch-x-posts', methods=['POST'])
 @auth_required
-def check_brand_voice():
-    """Check if the user has brand voice data available"""
+def fetch_x_posts():
+    """Fetch X posts for a given username for voice mimicking"""
     try:
-        from app.scripts.post_editor.post_editor import PostEditor
+        data = request.get_json()
+        username = data.get('username', '').strip().replace('@', '')
         
-        editor = PostEditor()
-        has_brand_voice = editor.has_brand_voice_data(g.user.get('id'))
+        if not username:
+            return jsonify({
+                "success": False,
+                "error": "Username is required"
+            }), 400
+
+        # Initialize X Analytics
+        user_id = g.user.get('id')
+        analytics = XAnalytics(user_id=user_id)
+
+        # Override the handle temporarily
+        original_handle = analytics.x_handle
+        analytics.x_handle = username
+
+        # Fetch timeline data (limited to 15 posts for voice analysis)
+        timeline_data = analytics.get_timeline_data(max_posts=15)
+
+        # Restore original handle
+        analytics.x_handle = original_handle
+
+        if not timeline_data or len(timeline_data) == 0:
+            return jsonify({
+                "success": False,
+                "error": "Could not fetch posts for this user. Make sure the username is correct and the account is public."
+            }), 404
+
+        posts = timeline_data
+
+        # Extract just the text content for voice analysis
+        post_texts = []
+        for post in posts[:15]:
+            try:
+                if isinstance(post, dict):
+                    # Handle dict format
+                    if 'text' in post:
+                        post_texts.append(post['text'])
+                    elif 'content' in post:
+                        post_texts.append(post['content'])
+                elif isinstance(post, str):
+                    # Handle string format
+                    post_texts.append(post)
+                elif hasattr(post, 'text'):
+                    # Handle object with text attribute
+                    post_texts.append(post.text)
+                else:
+                    # Try to convert to string as fallback
+                    post_str = str(post)
+                    if post_str and post_str != 'None':
+                        post_texts.append(post_str)
+            except Exception as e:
+                current_app.logger.warning(f"Error processing post: {e}")
+                continue
+
+        if not post_texts:
+            return jsonify({
+                "success": False,
+                "error": "No text content found in user's posts"
+            }), 404
+
+        # Store in Firebase
+        try:
+            from firebase_admin import firestore
+            db = firestore.client()
+            
+            # Store in users/{user_id}/x_post_editor_voices/{username}
+            voice_ref = db.collection('users').document(str(user_id)).collection('x_post_editor_voices').document(username)
+            voice_ref.set({
+                'username': username,
+                'posts': post_texts,
+                'created_at': firestore.SERVER_TIMESTAMP,
+                'updated_at': firestore.SERVER_TIMESTAMP
+            })
+            
+            current_app.logger.info(f"Stored custom voice {username} for user {user_id}")
+            
+        except Exception as e:
+            current_app.logger.error(f"Error storing custom voice in Firebase: {e}")
+            # Continue anyway, return the posts even if storage fails
+
+        return jsonify({
+            "success": True,
+            "posts": post_texts,
+            "username": username
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching X posts: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@bp.route('/custom-voices', methods=['GET'])
+@auth_required
+def get_custom_voices():
+    """Get all custom voices for the current user"""
+    try:
+        user_id = g.user.get('id')
+        from firebase_admin import firestore
+        db = firestore.client()
+        
+        voices_ref = db.collection('users').document(str(user_id)).collection('x_post_editor_voices')
+        voices = []
+        
+        for doc in voices_ref.stream():
+            voice_data = doc.to_dict()
+            voices.append({
+                'username': voice_data.get('username'),
+                'created_at': voice_data.get('created_at'),
+                'post_count': len(voice_data.get('posts', []))
+            })
         
         return jsonify({
             "success": True,
-            "has_brand_voice_data": has_brand_voice
+            "voices": voices
         })
+        
     except Exception as e:
-        current_app.logger.error(f"Error checking brand voice: {str(e)}")
+        current_app.logger.error(f"Error getting custom voices: {e}")
         return jsonify({
             "success": False,
-            "error": str(e),
-            "has_brand_voice_data": False
+            "error": str(e)
+        }), 500
+
+@bp.route('/custom-voices/<username>', methods=['DELETE'])
+@auth_required
+def delete_custom_voice(username):
+    """Delete a custom voice"""
+    try:
+        user_id = g.user.get('id')
+        from firebase_admin import firestore
+        db = firestore.client()
+        
+        # Delete from Firebase
+        voice_ref = db.collection('users').document(str(user_id)).collection('x_post_editor_voices').document(username)
+        voice_ref.delete()
+        
+        current_app.logger.info(f"Deleted custom voice {username} for user {user_id}")
+        
+        return jsonify({
+            "success": True,
+            "message": f"Custom voice {username} deleted successfully"
         })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error deleting custom voice: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500

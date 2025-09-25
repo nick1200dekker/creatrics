@@ -1,4 +1,8 @@
-Only fix critical grammar issues that affect understanding. Keep the original style and tone intact. Focus on:
+Only fix critical grammar issues that affect understanding. Keep the original style and tone intact.
+
+{VOICE_CONTEXT}
+
+Focus on:
 - Fix only major grammar errors that impact clarity
 - Add whitespace only if text is a dense block without breaks
 - Keep the original voice and personality
@@ -9,5 +13,7 @@ Only fix critical grammar issues that affect understanding. Keep the original st
 
 Original text:
 {text}
+
+{VOICE_EXAMPLES}
 
 Improved version:

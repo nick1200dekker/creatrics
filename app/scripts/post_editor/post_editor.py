@@ -313,7 +313,8 @@ class PostEditor:
             return 0
 
     def generate(self, posts: list, preset: str, additional_context: Optional[str] = None, 
-                 user_id: Optional[str] = None, use_brand_voice: bool = False) -> dict:
+                 user_id: Optional[str] = None, voice_tone: str = 'standard',
+                 custom_voice_posts: Optional[str] = None) -> dict:
         """
         Generate improved content for all posts in a thread based on the selected preset.
         
@@ -330,6 +331,29 @@ class PostEditor:
         prompt_template = self.get_default_prompt(preset)
         if not prompt_template:
             raise ValueError(f"Could not load prompt for preset: {preset}")
+
+        # Prepare voice context and examples if needed
+        voice_context_str = ""
+        voice_examples_str = ""
+        if voice_tone != 'standard':
+            if voice_tone == 'connected' and user_id:
+                # Use connected account's posts
+                voice_data = self.get_brand_voice_context(user_id)
+                if voice_data:
+                    voice_context_str = "CRITICAL: Match the EXACT style from the reference examples below - same energy, same formatting, same voice."
+                    voice_examples_str = voice_data
+            elif voice_tone == 'custom' and custom_voice_posts:
+                # Use custom username posts from Firebase
+                voice_data = self.format_custom_voice_context(custom_voice_posts, user_id)
+                if voice_data:
+                    voice_context_str = "CRITICAL: Match the EXACT style from the reference examples below - same energy, same formatting, same voice."
+                    voice_examples_str = voice_data
+
+        # Replace placeholders in template if they exist
+        if '{VOICE_CONTEXT}' in prompt_template:
+            prompt_template = prompt_template.replace('{VOICE_CONTEXT}', voice_context_str)
+        if '{VOICE_EXAMPLES}' in prompt_template:
+            prompt_template = prompt_template.replace('{VOICE_EXAMPLES}', voice_examples_str)
         
         enhanced_posts = []
         total_input_tokens = 0
@@ -376,21 +400,18 @@ class PostEditor:
             
             # Format the prompt with the input text
             prompt = prompt_template.format(text=post_text) + context_note + media_context
-            
+
             # Add any additional context if provided
             if additional_context:
                 prompt = f"{prompt}\n\nAdditional context: {additional_context}"
             
-            # Add brand voice context if requested
-            if use_brand_voice and user_id:
-                brand_voice_context = self.get_brand_voice_context(user_id)
-                if brand_voice_context:
-                    logger.info(f"Adding Brand Voice context for user {user_id}. Length: {len(brand_voice_context)} chars")
-                    prompt = f"{prompt}\n\n{brand_voice_context}"
-                else:
-                    logger.info(f"Brand Voice requested but no context found for user {user_id}")
-            
             try:
+                # Log the full prompt for debugging
+                logger.info(f"=== PROMPT FOR POST {i+1} ===")
+                logger.info(f"System message: You are a helpful assistant that enhances social media posts for better engagement and clarity. Focus on improving this specific post while maintaining its core message.")
+                logger.info(f"User prompt:\n{prompt}")
+                logger.info(f"=== END PROMPT ===")
+                
                 # Call the AI API for this specific post
                 response = ai_provider.create_completion(
                     messages=[
@@ -474,16 +495,21 @@ class PostEditor:
                 logger.info(f"No meaningful post examples found for user {user_id}")
                 return ""
                 
-            # Format the brand voice context
-            brand_voice_context = f"Brand Voice Context for @{screen_name}:\n\n"
-            brand_voice_context += "Below are examples of this user's best performing posts. Match their style exactly.\n\n"
-            brand_voice_context += "MATCH: LENGTH, EMOJIS, TONE, BULLET POINTS, FORMATTING\n\n"
-            
+            # Format the brand voice context with improved instructions
+            brand_voice_context = f"\n\nVOICE REFERENCE - @{screen_name}:\n\n"
+            brand_voice_context += "Study these examples carefully and match EXACTLY:\n"
+            brand_voice_context += "• Their sentence structure and length\n"
+            brand_voice_context += "• Their emoji usage (amount and placement)\n"
+            brand_voice_context += "• Their punctuation style\n"
+            brand_voice_context += "• Their energy level and tone\n"
+            brand_voice_context += "• Their formatting patterns\n\n"
+            brand_voice_context += "REFERENCE POSTS:\n\n"
+
             # Add the top post examples
-            for i, post in enumerate(post_examples[:15], 1):
-                brand_voice_context += f"Top Post {i}: {post}\n\n"
-                
-            brand_voice_context += "OUTPUT FINAL CONTENT ONLY WITH NO EXPLANATIONS.\n"
+            for i, post in enumerate(post_examples[:10], 1):
+                brand_voice_context += f"━━━ Example {i} ━━━\n{post}\n\n"
+
+            brand_voice_context += "WRITE IN THEIR EXACT VOICE - OUTPUT ONLY"
             
             logger.info(f"Generated brand voice context for user {user_id} with {len(post_examples)} posts")
             return brand_voice_context
@@ -492,7 +518,69 @@ class PostEditor:
             logger.error(f"Error getting brand voice context: {e}")
             logger.error(traceback.format_exc())
             return ""
-    
+
+    def format_custom_voice_context(self, custom_voice_username: str, user_id: str) -> str:
+        """Format custom voice context from Firebase stored posts"""
+        try:
+            from firebase_admin import firestore
+            db = firestore.client()
+            
+            # Get custom voice data from Firebase
+            voice_ref = db.collection('users').document(str(user_id)).collection('x_post_editor_voices').document(custom_voice_username)
+            voice_doc = voice_ref.get()
+            
+            if not voice_doc.exists:
+                logger.info(f"No custom voice found for username {custom_voice_username}")
+                return ""
+            
+            voice_data = voice_doc.to_dict()
+            posts = voice_data.get('posts', [])
+            
+            if not posts or not isinstance(posts, list):
+                return ""
+            
+            # Clean and filter posts
+            post_examples = []
+            for post in posts:
+                if isinstance(post, str):
+                    post_text = post.strip()
+                elif isinstance(post, dict):
+                    post_text = post.get('text', '').strip()
+                else:
+                    continue
+                    
+                if post_text and len(post_text) > 10:
+                    import re
+                    clean_text = re.sub(r'https?://\S+', '', post_text).strip()
+                    if clean_text:
+                        post_examples.append(clean_text)
+            
+            if not post_examples:
+                return ""
+
+            # Format the voice context with better instructions
+            voice_context = f"\n\nCUSTOM VOICE REFERENCE - @{custom_voice_username}:\n\n"
+            voice_context += "Analyze and perfectly mimic:\n"
+            voice_context += "• Sentence length and structure\n"
+            voice_context += "• Word choice and vocabulary\n"
+            voice_context += "• Emoji patterns (if any)\n"
+            voice_context += "• Capitalization style\n"
+            voice_context += "• Overall energy and tone\n\n"
+            voice_context += "REFERENCE POSTS TO MIMIC:\n\n"
+
+            for i, post in enumerate(post_examples[:10], 1):
+                voice_context += f"━━━ Post {i} ━━━\n{post}\n\n"
+
+            voice_context += "WRITE EXACTLY IN THIS STYLE"
+            
+            logger.info(f"Generated custom voice context for @{custom_voice_username} with {len(post_examples)} posts")
+            return voice_context
+
+        except Exception as e:
+            logger.error(f"Error formatting custom voice context: {e}")
+            return ""
+
+
     def has_brand_voice_data(self, user_id: str) -> bool:
         """Check if the user has brand voice data available"""
         try:

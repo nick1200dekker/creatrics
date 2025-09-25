@@ -1,5 +1,7 @@
 Transform this post into a clean, engaging social media post using the Hook-Story-Punch framework:
 
+{VOICE_CONTEXT}
+
 HOOK (First Line):
 - Start with your strongest point
 - Create instant curiosity
@@ -76,5 +78,7 @@ Your first line is everything
 
 Original text:
 {text}
+
+{VOICE_EXAMPLES}
 
 Transformed version:

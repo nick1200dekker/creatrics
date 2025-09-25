@@ -8,39 +8,100 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         :root {
+            --bg-primary: #F8FAFC;
+            --bg-secondary: rgba(255, 255, 255, 0.95);
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --border-color: rgba(239, 68, 68, 0.2);
+
             --brand-gradient: #3B82F6;
             --error-gradient: linear-gradient(135deg, #EF4444 0%, #F97316 50%, #EC4899 100%);
             --soft-gradient: linear-gradient(135deg, #FEE2E2 0%, #FED7AA 50%, #FCE7F3 100%);
+            --status-bg: linear-gradient(135deg, rgba(254, 226, 226, 0.8) 0%, rgba(254, 215, 170, 0.8) 100%);
             --accent-blue: #3B82F6;
             --accent-purple: #3B82F6;
             --accent-pink: #2563EB;
             --accent-red: #EF4444;
+
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+            --gradient-opacity: 0.04;
         }
-        
+
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: rgba(30, 41, 59, 0.95);
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --border-color: rgba(239, 68, 68, 0.3);
+
+            --soft-gradient: linear-gradient(135deg, rgba(254, 226, 226, 0.15) 0%, rgba(254, 215, 170, 0.15) 100%);
+            --status-bg: linear-gradient(135deg, rgba(254, 226, 226, 0.1) 0%, rgba(254, 215, 170, 0.1) 100%);
+
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+
+            --gradient-opacity: 0.08;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #F8FAFC;
-            color: #1E293B;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.5s ease, background-color 0.3s ease, color 0.3s ease;
         }
-        
+
         body.loaded {
             opacity: 1;
         }
-        
+
+        /* Theme toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .theme-toggle i {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover i {
+            transform: rotate(20deg);
+        }
+
         /* Animated background */
         .animated-bg {
             position: fixed;
@@ -49,29 +110,30 @@
             top: 0;
             left: 0;
             z-index: -1;
-            background: #F8FAFC;
+            background: var(--bg-primary);
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
-        
+
         .animated-bg::before {
             content: '';
             position: absolute;
             width: 100%;
             height: 100%;
-            background-image: 
-                radial-gradient(circle at 20% 80%, rgba(239, 68, 68, 0.04) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.04) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(239, 68, 68, var(--gradient-opacity)) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(249, 115, 22, var(--gradient-opacity)) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(236, 72, 153, var(--gradient-opacity)) 0%, transparent 50%);
             opacity: 0.6;
             animation: bgShift 20s ease-in-out infinite;
         }
-        
+
         @keyframes bgShift {
             0%, 100% { transform: translate(0, 0) rotate(0deg); }
             33% { transform: translate(-15px, -15px) rotate(0.5deg); }
             66% { transform: translate(15px, -8px) rotate(-0.5deg); }
         }
-        
+
         /* Floating error elements */
         .floating-error {
             position: absolute;
@@ -82,7 +144,7 @@
             user-select: none;
             color: #EF4444;
         }
-        
+
         @keyframes floatError {
             0% {
                 transform: translateY(100vh) rotate(0deg);
@@ -99,7 +161,7 @@
                 opacity: 0;
             }
         }
-        
+
         /* Main container */
         .error-page {
             min-height: 100vh;
@@ -109,16 +171,16 @@
             padding: 2rem;
             position: relative;
         }
-        
+
         /* Error container */
         .error-container {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--bg-secondary);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 20px;
             padding: 3rem;
             box-shadow: var(--shadow-xl);
-            border: 1px solid rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--border-color);
             position: relative;
             overflow: hidden;
             max-width: 600px;
@@ -126,14 +188,14 @@
             text-align: center;
             opacity: 0;
             transform: translateY(30px);
-            transition: all 0.6s ease;
+            transition: all 0.6s ease, background-color 0.3s ease;
         }
-        
+
         .error-container.active {
             opacity: 1;
             transform: translateY(0);
         }
-        
+
         .error-container::before {
             content: '';
             position: absolute;
@@ -144,7 +206,7 @@
             background: var(--error-gradient);
             opacity: 0.8;
         }
-        
+
         /* Error icon */
         .error-icon {
             width: 120px;
@@ -160,7 +222,7 @@
             box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
             animation: shake 2s ease-in-out infinite;
         }
-        
+
         @keyframes shake {
             0%, 50%, 100% {
                 transform: translateX(0);
@@ -172,7 +234,7 @@
                 transform: translateX(5px);
             }
         }
-        
+
         /* Typography */
         .error-number {
             font-size: 5rem;
@@ -185,21 +247,21 @@
             line-height: 1;
             letter-spacing: -0.02em;
         }
-        
+
         .error-title {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 1rem;
-            color: #1E293B;
+            color: var(--text-primary);
         }
-        
+
         .error-description {
             font-size: 1.125rem;
-            color: #64748B;
+            color: var(--text-secondary);
             margin-bottom: 2.5rem;
             line-height: 1.6;
         }
-        
+
         /* Buttons */
         .error-buttons {
             display: flex;
@@ -207,7 +269,7 @@
             justify-content: center;
             flex-wrap: wrap;
         }
-        
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -224,13 +286,13 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .btn-primary {
             background: var(--brand-gradient);
             color: white;
             box-shadow: var(--shadow-md);
         }
-        
+
         .btn-primary::before {
             content: '';
             position: absolute;
@@ -241,58 +303,58 @@
             background: rgba(255, 255, 255, 0.2);
             transition: left 0.6s ease;
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-lg);
         }
-        
+
         .btn-primary:hover::before {
             left: 100%;
         }
-        
+
         .btn-refresh {
             background: var(--error-gradient);
             color: white;
             box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
         }
-        
+
         .btn-refresh:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 35px rgba(239, 68, 68, 0.5);
         }
-        
+
         .btn-refresh.loading {
             pointer-events: none;
             opacity: 0.8;
         }
-        
+
         .btn-refresh.loading i {
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-        
+
         /* Status section */
         .status-section {
             margin-top: 2rem;
             padding: 1.5rem;
-            background: linear-gradient(135deg, rgba(254, 226, 226, 0.8) 0%, rgba(254, 215, 170, 0.8) 100%);
+            background: var(--status-bg);
             border-radius: 16px;
-            border: 1px solid rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--border-color);
             opacity: 0;
             transform: translateY(10px);
-            transition: all 0.4s ease;
+            transition: all 0.4s ease, background 0.3s ease;
         }
-        
+
         .status-section.active {
             opacity: 1;
             transform: translateY(0);
         }
-        
+
         .status-title {
             font-weight: 700;
             color: var(--accent-red);
@@ -302,30 +364,30 @@
             justify-content: center;
             gap: 0.5rem;
         }
-        
+
         .status-text {
-            color: #64748B;
+            color: var(--text-secondary);
             font-size: 0.95rem;
         }
-        
+
         /* Auto-retry countdown */
         .retry-countdown {
             margin-top: 1rem;
             font-size: 0.875rem;
-            color: #9CA3AF;
+            color: var(--text-secondary);
             opacity: 0;
             transition: opacity 0.4s ease;
         }
-        
+
         .retry-countdown.active {
             opacity: 1;
         }
-        
+
         .countdown-number {
             font-weight: 700;
             color: var(--accent-red);
         }
-        
+
         /* Page transition */
         .page-transition {
             position: fixed;
@@ -333,37 +395,42 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #F8FAFC;
+            background: var(--bg-primary);
             z-index: 9999;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, background-color 0.3s ease;
             opacity: 0;
             pointer-events: none;
         }
-        
+
         .page-transition.active {
             opacity: 1;
             pointer-events: all;
         }
-        
+
         /* Mobile responsive */
         @media (max-width: 768px) {
+            .theme-toggle {
+                top: 1rem;
+                right: 1rem;
+            }
+
             .error-container {
                 padding: 2rem;
             }
-            
+
             .error-number {
                 font-size: 4rem;
             }
-            
+
             .error-title {
                 font-size: 1.5rem;
             }
-            
+
             .error-buttons {
                 flex-direction: column;
                 align-items: center;
             }
-            
+
             .btn {
                 width: 100%;
                 max-width: 250px;
@@ -373,9 +440,14 @@
     </style>
 </head>
 <body>
+    <!-- Theme toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <i class="ph ph-sun" id="theme-icon"></i>
+    </button>
+
     <!-- Page transition overlay -->
     <div id="page-transition" class="page-transition"></div>
-    
+
     <!-- Animated background -->
     <div class="animated-bg">
         <!-- Floating Error Elements -->
@@ -386,21 +458,21 @@
         <div class="floating-error" style="left: 75%; animation-delay: 16s;">⛔</div>
         <div class="floating-error" style="left: 90%; animation-delay: 20s;">🔄</div>
     </div>
-    
+
     <!-- Main Error Container -->
     <div class="error-page">
         <div class="error-container" id="error-container">
             <div class="error-icon">
                 <i class="ph ph-warning-circle"></i>
             </div>
-            
+
             <div class="error-number">500</div>
             <h1 class="error-title">Server Error</h1>
             <p class="error-description">
-                Whoops! Our soccer stats servers are having a moment. 
-                Even the best comedians need a break sometimes. We're working on getting things back up and running!
+                Oops! Our creative servers are taking a moment.
+                Even the best AI assistants need a break sometimes. We're working on getting Creatrics back up and running!
             </p>
-            
+
             <div class="error-buttons">
                 <button onclick="refreshPage()" class="btn btn-refresh" id="refresh-btn">
                     <i class="ph ph-arrow-clockwise"></i>
@@ -411,14 +483,14 @@
                     Back to Home
                 </a>
             </div>
-            
+
             <div class="status-section" id="status-section">
                 <div class="status-title">
                     <i class="ph ph-gear"></i>
                     What's Happening?
                 </div>
                 <div class="status-text">
-                    Our servers are experiencing some technical difficulties. This usually resolves itself quickly, 
+                    Our servers are experiencing some technical difficulties. This usually resolves itself quickly,
                     but if the problem persists, our team has been automatically notified and is working on a fix.
                 </div>
                 <div class="retry-countdown" id="retry-countdown">
@@ -427,17 +499,41 @@
             </div>
         </div>
     </div>
-    
+
     <script>
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            icon.className = theme === 'dark' ? 'ph ph-moon' : 'ph ph-sun';
+        }
+
+        // Initialize theme
+        initTheme();
+
         // Page load animation
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 document.body.classList.add('loaded');
                 document.getElementById('error-container').classList.add('active');
-                
+
                 setTimeout(() => {
                     document.getElementById('status-section').classList.add('active');
-                    
+
                     // Start countdown if enabled
                     if (window.enableAutoRetry) {
                         setTimeout(() => {
@@ -448,7 +544,7 @@
                 }, 300);
             }, 100);
         });
-        
+
         // Create more floating error elements dynamically
         function createFloatingError() {
             const errorEmojis = ['⚠️', '🔧', '💥', '🛠️', '⛔', '🔄', '⚡', '🚨', '🔥', '💭'];
@@ -459,34 +555,34 @@
             error.style.animationDuration = (Math.random() * 12 + 15) + 's';
             error.style.fontSize = (Math.random() * 1 + 1.5) + 'rem';
             document.querySelector('.animated-bg').appendChild(error);
-            
+
             setTimeout(() => error.remove(), 25000);
         }
-        
+
         // Create new floating errors periodically
         setInterval(createFloatingError, 5000);
-        
+
         // Refresh page function with loading state
         function refreshPage() {
             const refreshBtn = document.getElementById('refresh-btn');
             refreshBtn.classList.add('loading');
             refreshBtn.innerHTML = '<i class="ph ph-arrow-clockwise"></i> Refreshing...';
-            
+
             // Stop countdown if running
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
             }
-            
+
             // Add a small delay to show the loading state
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
         }
-        
+
         // Auto-retry countdown (disabled by default)
         window.enableAutoRetry = false; // Set to true to enable auto-retry
         let autoRetryTimer = 30;
-        
+
         function startCountdown() {
             const updateTimer = () => {
                 if (autoRetryTimer > 0) {
@@ -497,10 +593,10 @@
                     refreshPage();
                 }
             };
-            
+
             window.countdownInterval = setInterval(updateTimer, 1000);
         }
-        
+
         // Add interactive flair to error icon
         document.querySelector('.error-icon').addEventListener('click', function() {
             this.style.transform = 'scale(1.1) rotate(15deg)';
@@ -508,12 +604,12 @@
                 this.style.transform = '';
             }, 600);
         });
-        
+
         // Page transition function
         function showPageTransition() {
             document.getElementById('page-transition').classList.add('active');
         }
-        
+
         // Handle home button click with transition
         document.getElementById('home-btn').addEventListener('click', function(e) {
             e.preventDefault();
@@ -522,7 +618,7 @@
                 window.location.href = this.getAttribute('href');
             }, 300);
         });
-        
+
         // Server status messages (rotate every 10 seconds)
         const statusMessages = [
             {
@@ -531,23 +627,23 @@
             },
             {
                 title: "Server Status",
-                text: "We're running diagnostics to identify the issue. Most server errors are resolved within a few minutes. Thank you for your patience!"
+                text: "We're running diagnostics to identify the issue. Most server errors are resolved within a few minutes. Thank you for your patience while we get Creatrics back online!"
             },
             {
                 title: "Quick Tip",
-                text: "While you wait, why not think about your favorite soccer stats? Sometimes the best insights come from unexpected moments like this!"
+                text: "While you wait, why not think about your next viral content idea? Sometimes the best creative insights come from unexpected moments like this!"
             }
         ];
-        
+
         let currentStatusIndex = 0;
         setInterval(() => {
             currentStatusIndex = (currentStatusIndex + 1) % statusMessages.length;
             const statusSection = document.getElementById('status-section');
             const statusTitle = statusSection.querySelector('.status-title');
             const statusText = statusSection.querySelector('.status-text');
-            
+
             statusSection.style.opacity = '0';
-            
+
             setTimeout(() => {
                 statusTitle.innerHTML = `<i class="ph ph-gear"></i> ${statusMessages[currentStatusIndex].title}`;
                 statusText.textContent = statusMessages[currentStatusIndex].text;

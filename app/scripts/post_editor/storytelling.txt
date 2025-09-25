@@ -1,4 +1,6 @@
-Transform this post into a clean, engaging social media post using powerful storytelling hooks. 
+Transform this post into a clean, engaging social media post using powerful storytelling hooks.
+
+{VOICE_CONTEXT}
 
 FORMATTING:
 - Short, impactful sentences (max 2 lines)
@@ -77,5 +79,7 @@ Still can't believe it.
 
 Original post:
 {text}
+
+{VOICE_EXAMPLES}
 
 Transformed version:

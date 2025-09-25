@@ -8,37 +8,82 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         :root {
-            --brand-gradient: #3B82F6;
-            --soft-gradient: linear-gradient(135deg, #DBEAFE 0%, #EDE9FE 50%, #FCE7F3 100%);
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F8FAFC;
+            --bg-tertiary: #F1F5F9;
+            --text-primary: #1E293B;
+            --text-secondary: #475569;
+            --text-tertiary: #64748B;
+            --border-primary: #E2E8F0;
+            --brand-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
             --accent-blue: #3B82F6;
-            --accent-purple: #3B82F6;
-            --accent-pink: #2563EB;
+            --accent-blue-dark: #2563EB;
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        
+
+        /* Dark mode variables */
+        html.dark {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-tertiary: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #CBD5E1;
+            --text-tertiary: #94A3B8;
+            --border-primary: #334155;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #F8FAFC;
-            color: #1E293B;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.5s ease, background-color 0.3s ease, color 0.3s ease;
         }
-        
+
         body.loaded {
             opacity: 1;
         }
-        
+
+        /* Dark mode toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-md);
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .theme-toggle i {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
         /* Animated background */
         .animated-bg {
             position: fixed;
@@ -47,56 +92,68 @@
             top: 0;
             left: 0;
             z-index: -1;
-            background: #F8FAFC;
+            background: var(--bg-secondary);
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
-        
+
         .animated-bg::before {
             content: '';
             position: absolute;
             width: 100%;
             height: 100%;
-            background-image: 
-                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
-            opacity: 0.6;
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
+            opacity: 0.8;
             animation: bgShift 20s ease-in-out infinite;
         }
-        
+
+        html.dark .animated-bg::before {
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+        }
+
         @keyframes bgShift {
             0%, 100% { transform: translate(0, 0) rotate(0deg); }
             33% { transform: translate(-15px, -15px) rotate(0.5deg); }
             66% { transform: translate(15px, -8px) rotate(-0.5deg); }
         }
-        
-        /* Floating soccer elements */
-        .floating-soccer {
+
+        /* Floating elements */
+        .floating-element {
             position: absolute;
             font-size: 2rem;
-            opacity: 0.3;
-            animation: floatSoccer 15s infinite linear;
+            opacity: 0.2;
+            animation: floatElement 15s infinite linear;
             pointer-events: none;
             z-index: 1;
         }
 
-        @keyframes floatSoccer {
+        html.dark .floating-element {
+            opacity: 0.1;
+        }
+
+        @keyframes floatElement {
             0% {
                 transform: translateY(100vh) rotate(0deg);
                 opacity: 0;
             }
             10% {
-                opacity: 0.3;
+                opacity: 0.2;
             }
             90% {
-                opacity: 0.3;
+                opacity: 0.2;
             }
             100% {
                 transform: translateY(-100px) rotate(360deg);
                 opacity: 0;
             }
         }
-        
+
         /* Main container */
         .error-page {
             min-height: 100vh;
@@ -106,16 +163,16 @@
             padding: 2rem;
             position: relative;
         }
-        
+
         /* Error container */
         .error-container {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--bg-primary);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 20px;
             padding: 3rem;
             box-shadow: var(--shadow-xl);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-primary);
             position: relative;
             overflow: hidden;
             max-width: 600px;
@@ -125,12 +182,12 @@
             transform: translateY(30px);
             transition: all 0.6s ease;
         }
-        
+
         .error-container.active {
             opacity: 1;
             transform: translateY(0);
         }
-        
+
         .error-container::before {
             content: '';
             position: absolute;
@@ -141,23 +198,25 @@
             background: var(--brand-gradient);
             opacity: 0.8;
         }
-        
+
         /* Error icon */
         .error-icon {
             width: 120px;
             height: 120px;
-            background: var(--soft-gradient);
+            background: var(--brand-gradient);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 2rem;
             font-size: 3rem;
-            color: var(--accent-blue);
+            color: white;
             box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
             animation: bounce 2s ease-in-out infinite;
+            cursor: pointer;
+            transition: transform 0.6s ease;
         }
-        
+
         @keyframes bounce {
             0%, 20%, 50%, 80%, 100% {
                 transform: translateY(0);
@@ -169,7 +228,7 @@
                 transform: translateY(-5px);
             }
         }
-        
+
         /* Typography */
         .error-number {
             font-size: 5rem;
@@ -182,21 +241,21 @@
             line-height: 1;
             letter-spacing: -0.02em;
         }
-        
+
         .error-title {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 1rem;
-            color: #1E293B;
+            color: var(--text-primary);
         }
-        
+
         .error-description {
             font-size: 1.125rem;
-            color: #64748B;
+            color: var(--text-secondary);
             margin-bottom: 2.5rem;
             line-height: 1.6;
         }
-        
+
         /* Buttons */
         .error-buttons {
             display: flex;
@@ -204,7 +263,7 @@
             justify-content: center;
             flex-wrap: wrap;
         }
-        
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -221,13 +280,13 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .btn-primary {
             background: var(--brand-gradient);
             color: white;
             box-shadow: var(--shadow-md);
         }
-        
+
         .btn-primary::before {
             content: '';
             position: absolute;
@@ -238,34 +297,33 @@
             background: rgba(255, 255, 255, 0.2);
             transition: left 0.6s ease;
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-lg);
         }
-        
+
         .btn-primary:hover::before {
             left: 100%;
         }
-        
+
         .btn-secondary {
-            background: white;
-            color: #475569;
-            border: 2px solid #E2E8F0;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-primary);
         }
-        
+
         .btn-secondary:hover {
-            background: #F8FAFC;
-            border-color: #CBD5E1;
+            background: var(--bg-secondary);
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
         }
-        
-        /* Fun elements */
-        .soccer-suggestion {
-            background: rgba(255, 255, 255, 0.1);
+
+        /* Fun suggestion box */
+        .suggestion-box {
+            background: var(--bg-tertiary);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-primary);
             border-radius: 15px;
             padding: 20px;
             margin-top: 30px;
@@ -275,15 +333,15 @@
             transition: all 0.5s ease;
         }
 
-        .soccer-suggestion.active {
+        .suggestion-box.active {
             opacity: 1;
             transform: translateY(0);
         }
 
-        .soccer-suggestion-title {
+        .suggestion-title {
             font-size: 1.2rem;
             font-weight: 600;
-            color: #3b82f6;
+            color: var(--accent-blue);
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -291,11 +349,12 @@
             gap: 8px;
         }
 
-        .soccer-suggestion-text {
-            color: #64748B;
+        .suggestion-text {
+            color: var(--text-secondary);
             font-style: italic;
+            transition: opacity 0.3s ease;
         }
-        
+
         /* Page transition */
         .page-transition {
             position: fixed;
@@ -303,164 +362,196 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #F8FAFC;
+            background: var(--bg-primary);
             z-index: 9999;
             transition: opacity 0.3s ease;
             opacity: 0;
             pointer-events: none;
         }
-        
+
         .page-transition.active {
             opacity: 1;
             pointer-events: all;
         }
-        
+
         /* Mobile responsive */
         @media (max-width: 768px) {
             .error-container {
                 padding: 2rem;
             }
-            
+
             .error-number {
                 font-size: 4rem;
             }
-            
+
             .error-title {
                 font-size: 1.5rem;
             }
-            
+
             .error-buttons {
                 flex-direction: column;
                 align-items: center;
             }
-            
+
             .btn {
                 width: 100%;
                 max-width: 250px;
                 justify-content: center;
             }
+
+            .theme-toggle {
+                top: 1rem;
+                right: 1rem;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Dark mode toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+        <i class="ph ph-sun" id="theme-icon"></i>
+    </button>
+
     <!-- Page transition overlay -->
     <div id="page-transition" class="page-transition"></div>
-    
+
     <!-- Animated background -->
     <div class="animated-bg">
-        <!-- Floating Soccer Elements -->
-        <div class="floating-soccer" style="left: 10%; animation-delay: 0s;">⚽</div>
-        <div class="floating-soccer" style="left: 25%; animation-delay: 3s;">🥅</div>
-        <div class="floating-soccer" style="left: 40%; animation-delay: 6s;">🏆</div>
-        <div class="floating-soccer" style="left: 60%; animation-delay: 9s;">🔍</div>
-        <div class="floating-soccer" style="left: 75%; animation-delay: 12s;">❓</div>
-        <div class="floating-soccer" style="left: 90%; animation-delay: 15s;">🏠</div>
+        <!-- Floating Elements -->
+        <div class="floating-element" style="left: 10%; animation-delay: 0s;">🔍</div>
+        <div class="floating-element" style="left: 25%; animation-delay: 3s;">📊</div>
+        <div class="floating-element" style="left: 40%; animation-delay: 6s;">✨</div>
+        <div class="floating-element" style="left: 60%; animation-delay: 9s;">🚀</div>
+        <div class="floating-element" style="left: 75%; animation-delay: 12s;">❓</div>
+        <div class="floating-element" style="left: 90%; animation-delay: 15s;">🏠</div>
     </div>
-    
+
     <!-- Main Error Container -->
     <div class="error-page">
         <div class="error-container" id="error-container">
-            <div class="error-icon">
+            <div class="error-icon" onclick="iconClick()">
                 <i class="ph ph-magnifying-glass"></i>
             </div>
-            
+
             <div class="error-number">404</div>
             <h1 class="error-title">Page Not Found</h1>
             <p class="error-description">
-                Oops! The page you're looking for seems to have been tackled by our defense. 
-                Don't worry, even the best players sometimes miss the goal!
+                Oops! The page you're looking for doesn't exist.
+                It might have been moved, deleted, or you may have typed the wrong URL.
             </p>
-            
+
             <div class="error-buttons">
                 <a href="{{ url_for('home.dashboard') }}" class="btn btn-primary" id="home-btn">
                     <i class="ph ph-house"></i>
                     Back to Home
                 </a>
-                <a href="{{ url_for('content_calendar.content_calendar') }}" class="btn btn-secondary" id="calendar-btn">
-                    <i class="ph ph-calendar"></i>
-                    Content Calendar
-                </a>
+                <button onclick="goBack()" class="btn btn-secondary">
+                    <i class="ph ph-arrow-left"></i>
+                    Go Back
+                </button>
             </div>
-            
-            <div class="soccer-suggestion" id="soccer-suggestion">
-                <div class="soccer-suggestion-title">
-                    <i class="ph ph-soccer-ball"></i>
-                    Soccer Tip of the Day
+
+            <div class="suggestion-box" id="suggestion-box">
+                <div class="suggestion-title">
+                    <i class="ph ph-lightbulb"></i>
+                    Did you know?
                 </div>
-                <div class="soccer-suggestion-text" id="soccer-text">
-                    "When you're looking for a page but find amazing soccer stats instead ⚽"
+                <div class="suggestion-text" id="suggestion-text">
+                    Creatrics helps you create amazing content with AI-powered tools.
                 </div>
             </div>
         </div>
     </div>
-    
+
     <script>
+        // Check for saved theme preference or default to light
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.className = currentTheme;
+        updateThemeIcon();
+
         // Page load animation
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 document.body.classList.add('loaded');
                 document.getElementById('error-container').classList.add('active');
-                
+
                 setTimeout(() => {
-                    document.getElementById('soccer-suggestion').classList.add('active');
+                    document.getElementById('suggestion-box').classList.add('active');
                 }, 300);
             }, 100);
         });
-        
-        // Soccer suggestions
-        const soccerSuggestions = [
-            "When you're looking for a page but find amazing soccer stats instead ⚽",
-            "404: Page not found, but great goals are scored every day 🥅",
-            "This page is hiding better than a goalkeeper's clean sheet record 🧤",
-            "Error 404: Page went offside and never came back ⚽",
-            "The page you're looking for is in another stadium 🏟️",
-            "404: Like a penalty kick - sometimes you just miss the target 🎯"
+
+        // Theme toggle function
+        function toggleTheme() {
+            const html = document.documentElement;
+            const newTheme = html.className === 'dark' ? 'light' : 'dark';
+            html.className = newTheme;
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const icon = document.getElementById('theme-icon');
+            const isDark = document.documentElement.className === 'dark';
+            icon.className = isDark ? 'ph ph-moon' : 'ph ph-sun';
+        }
+
+        // Suggestions rotation
+        const suggestions = [
+            "Creatrics helps you create amazing content with AI-powered tools.",
+            "Use our Post Editor to craft perfect social media posts.",
+            "Generate viral video scripts in seconds with AI.",
+            "Optimize your YouTube tags for maximum reach.",
+            "Create engaging titles that boost your click-through rates.",
+            "Plan your content strategy with our Content Calendar.",
+            "Transform your ideas into compelling descriptions."
         ];
-        
-        // Rotate soccer suggestions
-        let currentSoccerIndex = 0;
+
+        // Rotate suggestions
+        let currentSuggestionIndex = 0;
         setInterval(() => {
-            currentSoccerIndex = (currentSoccerIndex + 1) % soccerSuggestions.length;
-            const soccerText = document.getElementById('soccer-text');
-            soccerText.style.opacity = '0';
-            
+            currentSuggestionIndex = (currentSuggestionIndex + 1) % suggestions.length;
+            const suggestionText = document.getElementById('suggestion-text');
+            suggestionText.style.opacity = '0';
+
             setTimeout(() => {
-                soccerText.textContent = soccerSuggestions[currentSoccerIndex];
-                soccerText.style.opacity = '1';
+                suggestionText.textContent = suggestions[currentSuggestionIndex];
+                suggestionText.style.opacity = '1';
             }, 300);
         }, 5000);
-        
-        // Create more floating soccer elements dynamically
-        function createFloatingSoccer() {
-            const soccerElements = ['⚽', '🥅', '🏆', '🔍', '❓', '🏠', '🏟️', '✨', '📊', '🚀'];
-            const soccer = document.createElement('div');
-            soccer.className = 'floating-soccer';
-            soccer.textContent = soccerElements[Math.floor(Math.random() * soccerElements.length)];
-            soccer.style.left = Math.random() * 100 + '%';
-            soccer.style.animationDuration = (Math.random() * 10 + 10) + 's';
-            soccer.style.fontSize = (Math.random() * 1 + 1.5) + 'rem';
-            document.querySelector('.animated-bg').appendChild(soccer);
-            
-            setTimeout(() => soccer.remove(), 20000);
+
+        // Create more floating elements dynamically
+        function createFloatingElement() {
+            const elements = ['🔍', '📊', '✨', '🚀', '💡', '📝', '🎯', '🎨', '📈', '🌟'];
+            const element = document.createElement('div');
+            element.className = 'floating-element';
+            element.textContent = elements[Math.floor(Math.random() * elements.length)];
+            element.style.left = Math.random() * 100 + '%';
+            element.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            element.style.fontSize = (Math.random() * 1 + 1.5) + 'rem';
+            document.querySelector('.animated-bg').appendChild(element);
+
+            setTimeout(() => element.remove(), 20000);
         }
-        
-        // Create new floating soccer elements periodically
-        setInterval(createFloatingSoccer, 4000);
-        
-        // Add interactive flair to error icon
-        document.querySelector('.error-icon').addEventListener('click', function() {
-            this.style.transform = 'scale(1.1) rotate(360deg)';
+
+        // Create new floating elements periodically
+        setInterval(createFloatingElement, 4000);
+
+        // Interactive icon click
+        function iconClick() {
+            const icon = document.querySelector('.error-icon');
+            icon.style.transform = 'scale(1.1) rotate(360deg)';
             setTimeout(() => {
-                this.style.transform = '';
+                icon.style.transform = '';
             }, 600);
-        });
-        
+        }
+
         // Page transition function
         function showPageTransition() {
             document.getElementById('page-transition').classList.add('active');
         }
-        
-        // Handle button clicks with transition
+
+        // Handle home button click with transition
         document.getElementById('home-btn').addEventListener('click', function(e) {
             e.preventDefault();
             showPageTransition();
@@ -468,14 +559,15 @@
                 window.location.href = this.getAttribute('href');
             }, 300);
         });
-        
-        document.getElementById('create-btn').addEventListener('click', function(e) {
-            e.preventDefault();
-            showPageTransition();
-            setTimeout(() => {
-                window.location.href = this.getAttribute('href');
-            }, 300);
-        });
+
+        // Go back function
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = "{{ url_for('home.dashboard') }}";
+            }
+        }
     </script>
 </body>
 </html>
