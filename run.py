@@ -95,6 +95,7 @@ from app.routes.video_description import bp as video_description_bp
 from app.routes.video_script import bp as video_script_bp
 from app.routes.competitors import bp as competitors_bp
 from app.routes.brain_dump import bp as brain_dump_bp
+from app.routes.mind_map import mind_map_bp
 from app.routes.content_wiki import bp as content_wiki_bp
 from app.routes.content_calendar import bp as content_calendar_bp
 from app.routes.analytics import bp as analytics_bp
@@ -119,6 +120,7 @@ app.register_blueprint(video_description_bp)
 app.register_blueprint(video_script_bp)
 app.register_blueprint(competitors_bp)
 app.register_blueprint(brain_dump_bp)
+app.register_blueprint(mind_map_bp)
 app.register_blueprint(content_wiki_bp)
 app.register_blueprint(content_calendar_bp)
 app.register_blueprint(analytics_bp)

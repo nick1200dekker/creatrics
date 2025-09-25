@@ -1065,6 +1065,12 @@
             <i class="ph ph-brain"></i>
             <span>Brain Dump</span>
         </a>
+        <a href="{{ url_for('mind_map.mind_map') }}"
+           class="nav-item {% if request.endpoint and 'mind_map' in request.endpoint %}active{% endif %}"
+           onclick="return BaseApp.checkGuestAccess(event, this)">
+            <i class="ph ph-graph"></i>
+            <span>Mind Map</span>
+        </a>
 
         <a href="{{ url_for('content_wiki.content_wiki') }}"
            class="nav-item {% if request.endpoint and 'content_wiki' in request.endpoint %}active{% endif %}"

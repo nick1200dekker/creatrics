@@ -738,6 +738,14 @@ html.dark .coming-soon-card {
                 </div>
             </a>
 
+            <!-- Mind Map -->
+            <a href="{{ url_for('mind_map.mind_map') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-graph feature-icon-inline"></i>Mind Map</h3>
+                    <p>Visual brainstorming & connections</p>
+                </div>
+            </a>
+
             <!-- Content Wiki -->
             <a href="{{ url_for('content_wiki.content_wiki') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
