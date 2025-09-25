@@ -749,7 +749,7 @@ function deleteSelectedNode() {
     console.log('Deleted node:', nodeId);
 }
 
-// Make functions globally available
+// Make functions and variables globally available
 window.addNewNode = addNewNode;
 window.updateConnections = updateConnections;
 window.saveToFirebase = saveToFirebase;
@@ -757,3 +757,29 @@ window.createNewMap = createNewMap;
 window.switchToMap = switchToMap;
 window.copySelectedNode = copySelectedNode;
 window.deleteSelectedNode = deleteSelectedNode;
+
+// Export variables to global scope with getters/setters
+Object.defineProperty(window, 'maps', {
+    get: () => maps,
+    set: (value) => { maps = value; }
+});
+
+Object.defineProperty(window, 'currentMapId', {
+    get: () => currentMapId,
+    set: (value) => { currentMapId = value; }
+});
+
+Object.defineProperty(window, 'selectedNode', {
+    get: () => selectedNode,
+    set: (value) => { selectedNode = value; }
+});
+
+Object.defineProperty(window, 'connections', {
+    get: () => connections,
+    set: (value) => { connections = value; }
+});
+
+Object.defineProperty(window, 'connectionMode', {
+    get: () => connectionMode,
+    set: (value) => { connectionMode = value; }
+});

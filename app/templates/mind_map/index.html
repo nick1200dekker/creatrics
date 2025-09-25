@@ -58,7 +58,7 @@
                 <i class="ph ph-arrow-u-up-right"></i>
             </button>
             <div class="toolbar-divider"></div>
-            <button class="toolbar-btn" id="saveBtn" title="Save" onclick="saveToFirebase()">
+            <button class="toolbar-btn" id="saveBtn" title="Save" onclick="handleSave()">
                 <i class="ph ph-floppy-disk"></i>
             </button>
             <button class="toolbar-btn" id="exportBtn" title="Export">
@@ -110,9 +110,9 @@
                         <div class="color-option" style="background: #3B82F6;" onclick="changeNodeColor('#3B82F6')" title="Blue"></div>
                         <div class="color-option" style="background: #EF4444;" onclick="changeNodeColor('#EF4444')" title="Red"></div>
                         <div class="color-option" style="background: #10B981;" onclick="changeNodeColor('#10B981')" title="Green"></div>
-                        <div class="color-option" style="background: #F59E0B;" onclick="changeNodeColor('#F59E0B')" title="Yellow"></div>
+                        <div class="color-option" style="background: #F59E0B;" onclick="changeNodeColor('#F59E0B')" title="Orange"></div>
                         <div class="color-option" style="background: #8B5CF6;" onclick="changeNodeColor('#8B5CF6')" title="Purple"></div>
-                        <div class="color-option" style="background: #F97316;" onclick="changeNodeColor('#F97316')" title="Orange"></div>
+                        <div class="color-option" style="background: #EC4899;" onclick="changeNodeColor('#EC4899')" title="Pink"></div>
                         <div class="color-option" style="background: #06B6D4;" onclick="changeNodeColor('#06B6D4')" title="Cyan"></div>
                         <div class="color-option" style="background: #84CC16;" onclick="changeNodeColor('#84CC16')" title="Lime"></div>
                     </div>
@@ -186,6 +186,21 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='scripts/mind_map.js') }}"></script>
 <script>
+console.log('Inline script loaded');
+console.log('Available functions:', {
+    saveToFirebase: typeof saveToFirebase,
+    addNewNode: typeof addNewNode,
+    createNewMap: typeof createNewMap
+});
+
+// Wait for external script to fully load
+setTimeout(() => {
+    console.log('After timeout - Available functions:', {
+        saveToFirebase: typeof saveToFirebase,
+        maps: typeof maps,
+        currentMapId: typeof currentMapId
+    });
+}, 100);
 // Simple utility functions for UI interactions
 function togglePropertiesPanel() {
     const panel = document.getElementById('controlsPanel');
@@ -230,7 +245,16 @@ function toggleConnectionMode() {
 }
 
 function updateSelectedNode() {
-    if (!selectedNode) return;
+    console.log('updateSelectedNode called, selectedNode:', selectedNode);
+    
+    if (!selectedNode) {
+        console.log('No selected node, trying to get from window.selectedNode');
+        selectedNode = window.selectedNode;
+        if (!selectedNode) {
+            console.log('Still no selected node');
+            return;
+        }
+    }
     
     const textArea = document.getElementById('nodeText');
     const shapeSelect = document.getElementById('nodeShape');
@@ -258,18 +282,71 @@ function updateSelectedNode() {
 }
 
 function changeNodeColor(color) {
-    if (!selectedNode) {
+    let nodeToColor = selectedNode || window.selectedNode;
+    
+    if (!nodeToColor) {
         alert('Please select a node first');
         return;
     }
     
-    selectedNode.style.backgroundColor = color;
+    console.log('Changing color to:', color);
+    console.log('Selected node:', nodeToColor);
+    console.log('Node style before:', nodeToColor.style.cssText);
+    
+    // Set the background color
+    nodeToColor.style.backgroundColor = color;
+    
+    console.log('Node style after:', nodeToColor.style.cssText);
+    console.log('Node has background-color in style?', nodeToColor.style.cssText.includes('background-color'));
     
     // Update color selection
     document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
-    document.querySelector(`[style*="${color}"]`).classList.add('selected');
+    const colorElement = document.querySelector(`[onclick*="${color}"]`);
+    if (colorElement) {
+        colorElement.classList.add('selected');
+    }
     
     console.log('Changed node color to:', color);
+}
+
+async function handleSave() {
+    console.log('Save button clicked');
+    
+    const saveBtn = document.getElementById('saveBtn');
+    const originalHTML = saveBtn.innerHTML;
+    
+    // Check if saveToFirebase function exists
+    if (typeof saveToFirebase === 'function') {
+        console.log('Calling saveToFirebase...');
+        
+        // Show loading state
+        saveBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i>';
+        saveBtn.disabled = true;
+        
+        try {
+            await saveToFirebase();
+            
+            // Show success state
+            saveBtn.innerHTML = '<i class="ph ph-check"></i>';
+            setTimeout(() => {
+                saveBtn.innerHTML = originalHTML;
+                saveBtn.disabled = false;
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Save error:', error);
+            
+            // Show error state
+            saveBtn.innerHTML = '<i class="ph ph-x"></i>';
+            setTimeout(() => {
+                saveBtn.innerHTML = originalHTML;
+                saveBtn.disabled = false;
+            }, 1000);
+        }
+    } else {
+        console.error('saveToFirebase function not found!');
+        alert('Save function not available. Please refresh the page.');
+    }
 }
 
 function closeMap(mapId) {

@@ -220,8 +220,8 @@ html.dark .mind-map-wrapper {
 /* Nodes */
 .mind-node {
     position: absolute;
-    background: var(--bg-primary);
-    border: 2px solid var(--border-primary);
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
     border-radius: 12px;
     padding: 1rem;
     min-width: 120px;
@@ -230,7 +230,7 @@ html.dark .mind-map-wrapper {
     cursor: move;
     transition: all 0.2s ease;
     z-index: 10;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
     overflow: visible;
 }
 
@@ -293,14 +293,15 @@ html.dark .mind-map-wrapper {
 }
 
 .mind-node:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.15);
     border-color: #3B82F6;
+    transform: translateY(-1px);
 }
 
 .mind-node.selected {
-    border-color: #3B82F6 !important;
+    border-color: #3b82f6 !important;
     border-width: 3px !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), var(--shadow-lg) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 4px 8px -1px rgba(0, 0, 0, 0.15) !important;
     transform: scale(1.02);
 }
 
@@ -314,15 +315,24 @@ html.dark .mind-map-wrapper {
     color: white;
 }
 
+/* Special styling for colored nodes */
+.mind-node[style*="background-color"] .node-text {
+    color: white !important;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
 .node-text {
     font-size: 14px;
-    line-height: 1.4;
-    color: var(--text-primary);
+    line-height: 1.5;
+    color: #1f2937;
+    font-weight: 500;
     outline: none;
     border: none;
     background: transparent;
     width: 100%;
     resize: none;
+    text-align: center;
 }
 
 .node-text[contenteditable="true"]:focus {
@@ -482,23 +492,23 @@ html.dark .mind-map-wrapper {
     background: var(--bg-secondary);
 }
 
-/* Dark mode adjustments */
-html.dark .mind-node {
+/* Dark mode adjustments - only for default nodes */
+html.dark .mind-node:not([style*="background-color"]) {
     background: #374151 !important;
     border-color: #4B5563 !important;
     color: #F9FAFB !important;
 }
 
 html.dark .mind-node:hover {
-    border-color: #3B82F6 !important;
+    border-color: #60a5fa !important;
 }
 
-html.dark .mind-node .node-text {
+html.dark .mind-node:not([style*="background-color"]) .node-text {
     color: #F9FAFB !important;
 }
 
 html.dark .node-text[contenteditable="true"]:focus {
-    background: #4B5563 !important;
+    background: rgba(75, 85, 99, 0.3) !important;
     color: #F9FAFB !important;
 }
 
@@ -511,17 +521,19 @@ html.dark .mind-node.root .node-text {
     color: white !important;
 }
 
+/* Preserve custom colors in dark mode */
 html.dark .mind-node[style*="background-color"] .node-text {
-    color: #1F2937 !important;
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 html.dark .mind-node.selected {
-    border-color: #3B82F6 !important;
+    border-color: #60a5fa !important;
     border-width: 3px !important;
 }
 
 html.dark .connection-line {
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 html.dark .connection-line:hover {
