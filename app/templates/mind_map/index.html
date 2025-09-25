@@ -27,7 +27,7 @@
         <div class="mind-map-tabs" id="mapTabs">
             <div class="tab-list">
                 <div class="tab active" data-map-id="map1">
-                    <span>Map 1</span>
+                    <span class="tab-name" ondblclick="editTabName(this)" title="Double-click to rename">Map 1</span>
                     <button class="tab-close" onclick="closeMap('map1')" title="Close Map">×</button>
                 </div>
                 <button class="tab-add" onclick="createNewMap()" title="New Map">
@@ -41,31 +41,18 @@
             <button class="toolbar-btn" id="selectTool" title="Select" data-tool="select">
                 <i class="ph ph-cursor"></i>
             </button>
-            <button class="toolbar-btn active" id="addNodeBtn" title="Add Node" onclick="addNewNode()">
+            <button class="toolbar-btn" id="addNodeBtn" title="Add Node" onclick="addNewNode()">
                 <i class="ph ph-plus"></i>
             </button>
-            <button class="toolbar-btn" id="connectTool" title="Connect Nodes" data-tool="connect">
+            <button class="toolbar-btn" id="connectTool" title="Connect Nodes" onclick="toggleConnectionMode()">
                 <i class="ph ph-flow-arrow"></i>
             </button>
-            <button class="toolbar-btn" id="propertiesBtn" title="Properties Panel" onclick="togglePropertiesPanel()">
+            <button class="toolbar-btn active" id="propertiesBtn" title="Properties Panel" onclick="togglePropertiesPanel()">
                 <i class="ph ph-gear"></i>
-            </button>
-            <div class="toolbar-divider"></div>
-            <button class="toolbar-btn" id="undoBtn" title="Undo">
-                <i class="ph ph-arrow-u-up-left"></i>
-            </button>
-            <button class="toolbar-btn" id="redoBtn" title="Redo">
-                <i class="ph ph-arrow-u-up-right"></i>
             </button>
             <div class="toolbar-divider"></div>
             <button class="toolbar-btn" id="saveBtn" title="Save" onclick="handleSave()">
                 <i class="ph ph-floppy-disk"></i>
-            </button>
-            <button class="toolbar-btn" id="exportBtn" title="Export">
-                <i class="ph ph-download"></i>
-            </button>
-            <button class="toolbar-btn" id="miniMapBtn" title="Toggle Mini Map" onclick="toggleMiniMap()">
-                <i class="ph ph-map-trifold"></i>
             </button>
         </div>
 
@@ -130,14 +117,11 @@
 
                 <div class="property-group">
                     <div class="property-label">Actions</div>
-                    <button class="property-input" onclick="copySelectedNode()" style="background: #10B981; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer; margin-bottom: 0.5rem;">
+                    <button class="property-input" onclick="copySelectedNode()" style="background: #3B82F6; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer; margin-bottom: 0.5rem;">
                         <i class="ph ph-copy"></i> Copy Node
                     </button>
-                    <button class="property-input" id="deleteNodeBtn" onclick="deleteSelectedNode()" style="background: #EF4444; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer; margin-bottom: 0.5rem;">
+                    <button class="property-input" id="deleteNodeBtn" onclick="deleteSelectedNode()" style="background: #3B82F6; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer;">
                         <i class="ph ph-trash"></i> Delete Node
-                    </button>
-                    <button class="property-input" onclick="toggleConnectionMode()" style="background: #3B82F6; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer;">
-                        <i class="ph ph-flow-arrow"></i> Connect Mode
                     </button>
                 </div>
             </div>
@@ -169,10 +153,6 @@
             </button>
         </div>
 
-        <!-- Mini Map -->
-        <div class="mini-map" id="miniMap">
-            <canvas class="mini-map-canvas" id="miniMapCanvas"></canvas>
-        </div>
 
         <!-- Loading State -->
         <div class="mind-map-loading" id="loadingState" style="display: none;">
@@ -215,31 +195,28 @@ function togglePropertiesPanel() {
     }
 }
 
-function toggleMiniMap() {
-    const miniMap = document.getElementById('miniMap');
-    const btn = document.getElementById('miniMapBtn');
-    
-    if (miniMap.classList.contains('show')) {
-        miniMap.classList.remove('show');
-        btn.classList.remove('active');
-    } else {
-        miniMap.classList.add('show');
-        btn.classList.add('active');
-    }
-}
 
 function toggleConnectionMode() {
-    connectionMode = !connectionMode;
-    const btn = event.target;
+    const btn = document.getElementById('connectTool');
     
     if (connectionMode) {
-        btn.style.background = '#EF4444';
-        btn.innerHTML = '<i class="ph ph-x"></i> Cancel Connect';
-        alert('Click two nodes to connect them');
-        firstConnectionNode = null;
+        // Exit connection mode
+        connectionMode = false;
+        btn.classList.remove('active');
+        btn.innerHTML = '<i class="ph ph-flow-arrow"></i>';
+        btn.title = 'Connect Nodes';
+        
+        // Reset any selected node for connection
+        if (firstConnectionNode) {
+            firstConnectionNode.style.border = '';
+            firstConnectionNode = null;
+        }
     } else {
-        btn.style.background = '#3B82F6';
-        btn.innerHTML = '<i class="ph ph-flow-arrow"></i> Connect Mode';
+        // Enter connection mode
+        connectionMode = true;
+        btn.classList.add('active');
+        btn.innerHTML = '<i class="ph ph-x"></i>';
+        btn.title = 'Cancel Connect';
         firstConnectionNode = null;
     }
 }
@@ -349,6 +326,57 @@ async function handleSave() {
     }
 }
 
+function editTabName(spanElement) {
+    const currentName = spanElement.textContent;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentName;
+    input.style.background = 'transparent';
+    input.style.border = '1px solid #3B82F6';
+    input.style.borderRadius = '4px';
+    input.style.padding = '2px 4px';
+    input.style.fontSize = '0.875rem';
+    input.style.width = '80px';
+    
+    spanElement.parentNode.replaceChild(input, spanElement);
+    input.focus();
+    input.select();
+    
+    function finishEdit() {
+        const newName = input.value.trim() || currentName;
+        const newSpan = document.createElement('span');
+        newSpan.className = 'tab-name';
+        newSpan.textContent = newName;
+        newSpan.ondblclick = () => editTabName(newSpan);
+        newSpan.title = 'Double-click to rename';
+        
+        input.parentNode.replaceChild(newSpan, input);
+        
+        // Update the map name in the maps object
+        const tab = newSpan.closest('.tab');
+        const mapId = tab.getAttribute('data-map-id');
+        if (maps[mapId]) {
+            maps[mapId].name = newName;
+        }
+        
+        console.log('Renamed map', mapId, 'to', newName);
+    }
+    
+    input.addEventListener('blur', finishEdit);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            finishEdit();
+        } else if (e.key === 'Escape') {
+            const newSpan = document.createElement('span');
+            newSpan.className = 'tab-name';
+            newSpan.textContent = currentName;
+            newSpan.ondblclick = () => editTabName(newSpan);
+            newSpan.title = 'Double-click to rename';
+            input.parentNode.replaceChild(newSpan, input);
+        }
+    });
+}
+
 function closeMap(mapId) {
     if (Object.keys(maps).length <= 1) {
         alert('Cannot close the last map');
@@ -370,6 +398,39 @@ function closeMap(mapId) {
         
         console.log('Closed map:', mapId);
     }
+}
+
+function updateConnectionArrow() {
+    if (!selectedConnection) return;
+    
+    const arrowSelect = document.getElementById('connectionArrow');
+    if (arrowSelect) {
+        selectedConnection.arrowType = arrowSelect.value;
+        
+        if (arrowSelect.value === 'arrow') {
+            selectedConnection.element.setAttribute('marker-end', 'url(#arrowhead)');
+        } else {
+            selectedConnection.element.removeAttribute('marker-end');
+        }
+        
+        console.log('Updated connection arrow type to:', arrowSelect.value);
+    }
+}
+
+function changeConnectionColor(color) {
+    if (!selectedConnection) return;
+    
+    selectedConnection.color = color;
+    selectedConnection.element.setAttribute('stroke', color);
+    
+    // Update color selection
+    document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+    const colorElement = document.querySelector(`[onclick*="${color}"]`);
+    if (colorElement) {
+        colorElement.classList.add('selected');
+    }
+    
+    console.log('Changed connection color to:', color);
 }
 </script>
 {% endblock %}

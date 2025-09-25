@@ -469,15 +469,25 @@ function createConnection(node1, node2) {
         id: 'conn_' + Date.now(),
         from: node1.id,
         to: node2.id,
-        element: null
+        element: null,
+        arrowType: 'arrow', // 'arrow', 'none'
+        color: '#3B82F6',
+        width: 2
     };
     
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line.setAttribute('class', 'connection-line');
-    line.setAttribute('stroke', '#3B82F6');
-    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke', connection.color);
+    line.setAttribute('stroke-width', connection.width);
     line.setAttribute('marker-end', 'url(#arrowhead)');
     line.setAttribute('data-connection-id', connection.id);
+    line.style.cursor = 'pointer';
+    
+    // Add click handler for connection selection
+    line.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectConnection(connection);
+    });
     
     connection.element = line;
     connections.push(connection);
@@ -497,7 +507,15 @@ function handleConnectionClick(node) {
         createConnection(firstConnectionNode, node);
         firstConnectionNode.style.border = '';
         firstConnectionNode = null;
+        
+        // Exit connection mode after creating connection
         connectionMode = false;
+        const btn = document.getElementById('connectTool');
+        if (btn) {
+            btn.classList.remove('active');
+            btn.innerHTML = '<i class="ph ph-flow-arrow"></i>';
+            btn.title = 'Connect Nodes';
+        }
     }
 }
 
@@ -636,10 +654,22 @@ function loadMapState(mapId) {
         const svg = document.getElementById('connectionsSvg');
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('class', 'connection-line');
-        line.setAttribute('stroke', '#3B82F6');
-        line.setAttribute('stroke-width', '2');
-        line.setAttribute('marker-end', 'url(#arrowhead)');
+        line.setAttribute('stroke', conn.color || '#3B82F6');
+        line.setAttribute('stroke-width', conn.width || '2');
+        
+        // Set arrow based on connection type
+        if (conn.arrowType !== 'none') {
+            line.setAttribute('marker-end', 'url(#arrowhead)');
+        }
+        
         line.setAttribute('data-connection-id', conn.id);
+        line.style.cursor = 'pointer';
+        
+        // Add click handler for connection selection
+        line.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectConnection(conn);
+        });
         
         conn.element = line;
         svg.appendChild(line);
@@ -755,6 +785,140 @@ function deleteSelectedNode() {
     console.log('Deleted node:', nodeId);
 }
 
+// Connection selection functions
+let selectedConnection = null;
+
+function selectConnection(connection) {
+    // Deselect nodes
+    document.querySelectorAll('.mind-node').forEach(n => n.classList.remove('selected'));
+    selectedNode = null;
+    
+    // Deselect other connections
+    connections.forEach(conn => {
+        if (conn.element) {
+            conn.element.classList.remove('selected');
+        }
+    });
+    
+    // Select this connection
+    selectedConnection = connection;
+    connection.element.classList.add('selected');
+    
+    updateConnectionPropertiesPanel(connection);
+    console.log('Selected connection:', connection.id);
+}
+
+function updateConnectionPropertiesPanel(connection) {
+    // Show connection properties in the panel
+    const propertiesPanel = document.getElementById('nodeProperties');
+    if (propertiesPanel) {
+        propertiesPanel.innerHTML = `
+            <div class="property-group">
+                <div class="property-label">Connection Properties</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Connection between nodes
+                </div>
+            </div>
+            
+            <div class="property-group">
+                <div class="property-label">Arrow Type</div>
+                <select class="property-input" id="connectionArrow" onchange="updateConnectionArrow()">
+                    <option value="arrow" ${connection.arrowType === 'arrow' ? 'selected' : ''}>Arrow</option>
+                    <option value="none" ${connection.arrowType === 'none' ? 'selected' : ''}>No Arrow</option>
+                </select>
+            </div>
+            
+            <div class="property-group">
+                <div class="property-label">Color</div>
+                <div class="color-options">
+                    <div class="color-option" style="background: #3B82F6;" onclick="changeConnectionColor('#3B82F6')" title="Blue"></div>
+                    <div class="color-option" style="background: #EF4444;" onclick="changeConnectionColor('#EF4444')" title="Red"></div>
+                    <div class="color-option" style="background: #10B981;" onclick="changeConnectionColor('#10B981')" title="Green"></div>
+                    <div class="color-option" style="background: #F59E0B;" onclick="changeConnectionColor('#F59E0B')" title="Orange"></div>
+                    <div class="color-option" style="background: #8B5CF6;" onclick="changeConnectionColor('#8B5CF6')" title="Purple"></div>
+                    <div class="color-option" style="background: #EC4899;" onclick="changeConnectionColor('#EC4899')" title="Pink"></div>
+                    <div class="color-option" style="background: #06B6D4;" onclick="changeConnectionColor('#06B6D4')" title="Cyan"></div>
+                    <div class="color-option" style="background: #84CC16;" onclick="changeConnectionColor('#84CC16')" title="Lime"></div>
+                </div>
+            </div>
+            
+            <div class="property-group">
+                <div class="property-label">Actions</div>
+                <button class="property-input" onclick="deleteSelectedConnection()" style="background: #EF4444; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer;">
+                    <i class="ph ph-trash"></i> Delete Connection
+                </button>
+            </div>
+        `;
+    }
+}
+
+function deleteSelectedConnection() {
+    if (!selectedConnection) return;
+    
+    const connectionId = selectedConnection.id;
+    
+    // Remove from connections array
+    connections = connections.filter(conn => conn.id !== connectionId);
+    
+    // Remove SVG element
+    if (selectedConnection.element) {
+        selectedConnection.element.remove();
+    }
+    
+    selectedConnection = null;
+    
+    // Clear properties panel
+    const propertiesPanel = document.getElementById('nodeProperties');
+    if (propertiesPanel) {
+        propertiesPanel.innerHTML = `
+            <div class="property-group">
+                <div class="property-label">Instructions</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    1. Click a node to select it<br>
+                    2. Use controls below to customize<br>
+                    3. Click + button to add nodes<br>
+                    4. Use connect tool to link nodes
+                </div>
+            </div>
+        `;
+    }
+    
+    console.log('Deleted connection:', connectionId);
+}
+
+function updateConnectionArrow() {
+    if (!selectedConnection) return;
+    
+    const arrowSelect = document.getElementById('connectionArrow');
+    if (arrowSelect) {
+        selectedConnection.arrowType = arrowSelect.value;
+        
+        if (arrowSelect.value === 'arrow') {
+            selectedConnection.element.setAttribute('marker-end', 'url(#arrowhead)');
+        } else {
+            selectedConnection.element.removeAttribute('marker-end');
+        }
+        
+        console.log('Updated connection arrow type to:', arrowSelect.value);
+    }
+}
+
+function changeConnectionColor(color) {
+    if (!selectedConnection) return;
+    
+    selectedConnection.color = color;
+    selectedConnection.element.setAttribute('stroke', color);
+    
+    // Update color selection
+    document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+    const colorElement = document.querySelector(`[onclick*="${color}"]`);
+    if (colorElement) {
+        colorElement.classList.add('selected');
+    }
+    
+    console.log('Changed connection color to:', color);
+}
+
 // Make functions and variables globally available
 window.addNewNode = addNewNode;
 window.updateConnections = updateConnections;
@@ -763,6 +927,10 @@ window.createNewMap = createNewMap;
 window.switchToMap = switchToMap;
 window.copySelectedNode = copySelectedNode;
 window.deleteSelectedNode = deleteSelectedNode;
+window.selectConnection = selectConnection;
+window.deleteSelectedConnection = deleteSelectedConnection;
+window.updateConnectionArrow = updateConnectionArrow;
+window.changeConnectionColor = changeConnectionColor;
 
 // Export variables to global scope with getters/setters
 Object.defineProperty(window, 'maps', {
@@ -788,4 +956,9 @@ Object.defineProperty(window, 'connections', {
 Object.defineProperty(window, 'connectionMode', {
     get: () => connectionMode,
     set: (value) => { connectionMode = value; }
+});
+
+Object.defineProperty(window, 'selectedConnection', {
+    get: () => selectedConnection,
+    set: (value) => { selectedConnection = value; }
 });
