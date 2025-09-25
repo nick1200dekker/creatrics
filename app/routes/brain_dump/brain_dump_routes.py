@@ -2,7 +2,7 @@ from flask import render_template, request, jsonify, g, redirect, url_for
 from . import bp
 from app.system.auth.middleware import auth_required
 from app.system.services.firebase_service import db
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 import json
 import uuid
@@ -71,7 +71,7 @@ def create_note():
         user_id = str(g.user.get('id'))
 
         # Create new note
-        now = datetime.utcnow().isoformat() + 'Z'
+        now = datetime.now(timezone.utc).isoformat()
 
         new_note = {
             'title': data.get('title', 'Untitled'),
@@ -168,7 +168,7 @@ def update_note(note_id):
         if 'is_favorite' in data:
             update_data['is_favorite'] = data['is_favorite']
 
-        update_data['updated_at'] = datetime.utcnow().isoformat() + 'Z'
+        update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
 
         # Update note in Firebase
         note_ref.update(update_data)
@@ -248,7 +248,7 @@ def toggle_favorite(note_id):
         # Update favorite status in Firebase
         update_data = {
             'is_favorite': data.get('is_favorite', False),
-            'updated_at': datetime.utcnow().isoformat() + 'Z'
+            'updated_at': datetime.now(timezone.utc).isoformat()
         }
         note_ref.update(update_data)
 
@@ -395,8 +395,8 @@ def share_note(note_id):
             'content': note_data.get('content', ''),
             'tags': note_data.get('tags', []),
             'permission': permission,  # Store permission level
-            'shared_at': datetime.utcnow().isoformat() + 'Z',
-            'expires_at': (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z',  # 30 days expiry
+            'shared_at': datetime.now(timezone.utc).isoformat(),
+            'expires_at': (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),  # 30 days expiry
             'views': 0
         }
 
@@ -409,7 +409,7 @@ def share_note(note_id):
             'is_shared': True,
             'share_id': share_id,
             'share_url': f'https://creatrics.com/shared/note/{share_id}',
-            'shared_at': datetime.utcnow().isoformat() + 'Z'
+            'shared_at': datetime.now(timezone.utc).isoformat()
         })
 
         return jsonify({
@@ -489,8 +489,14 @@ def view_shared_note(share_id):
         shared_data = shared_doc.to_dict()
 
         # Check if expired
-        expires_at = datetime.fromisoformat(shared_data['expires_at'].replace('Z', '+00:00'))
-        if datetime.utcnow() > expires_at:
+        expires_at_str = shared_data['expires_at'].replace('Z', '')
+        if expires_at_str.endswith('+00:00'):
+            expires_at = datetime.fromisoformat(expires_at_str)
+        else:
+            expires_at = datetime.fromisoformat(expires_at_str).replace(tzinfo=timezone.utc)
+
+        now = datetime.now(timezone.utc)
+        if now > expires_at:
             return render_template('brain_dump/expired.html'), 410
 
         # Increment view count
@@ -538,7 +544,7 @@ def update_shared_note(share_id):
             update_data['content'] = content
         if title is not None:
             update_data['title'] = title
-        update_data['last_edited'] = datetime.utcnow().isoformat() + 'Z'
+        update_data['last_edited'] = datetime.now(timezone.utc).isoformat()
 
         shared_ref.update(update_data)
 
@@ -739,7 +745,7 @@ def get_stats():
         
         # Get recent notes (last 7 days)
         from datetime import timedelta
-        week_ago = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
+        week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
         recent_notes = sum(1 for note in notes_list if note.get('updated_at', '') >= week_ago)
         
         return jsonify({
@@ -777,7 +783,7 @@ def import_notes():
         imported_count = 0
 
         for note_data in imported_notes:
-            now = datetime.utcnow().isoformat() + 'Z'
+            now = datetime.now(timezone.utc).isoformat()
 
             new_note = {
                 'title': note_data.get('title', 'Imported Note'),
