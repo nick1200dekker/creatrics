@@ -93,8 +93,8 @@ def index():
     """Main Post Editor view with pagination support"""
     try:
         user_id = g.user.get('id')
-        # Get first 20 drafts and total count for initial load
-        recent_drafts = get_user_drafts_safe(user_id, limit=20, offset=0)
+        # Get first 10 drafts and total count for initial load
+        recent_drafts = get_user_drafts_safe(user_id, limit=10, offset=0)
         total_count = get_total_drafts_count(user_id)
 
         # Determine if there are more drafts to load

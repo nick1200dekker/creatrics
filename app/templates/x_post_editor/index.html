@@ -983,6 +983,62 @@ input:checked + .toggle-slider:before {
     color: var(--text-tertiary);
 }
 
+/* Load More Button */
+.load-more-container {
+    padding: 1rem;
+    border-top: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+}
+
+.load-more-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.load-more-btn:hover {
+    background: var(--hover-bg);
+    border-color: #3B82F6;
+    color: #3B82F6;
+}
+
+.load-more-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.load-more-btn:disabled:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-primary);
+    color: var(--text-secondary);
+}
+
+.load-more-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.load-more-spinner .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-primary);
+    border-radius: 50%;
+    border-top-color: #3B82F6;
+    animation: spin 0.8s linear infinite;
+}
+
 /* Hidden elements */
 .hidden-file-input {
     display: none;
@@ -1192,6 +1248,17 @@ input:checked + .toggle-slider:before {
                 <div class="drafts-loading-spinner"></div>
                 <div>Loading drafts...</div>
             </div>
+        </div>
+        
+        <!-- Load More Button -->
+        <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+            <button class="load-more-btn" id="loadMoreBtn">
+                <i class="ph ph-arrow-down"></i>
+                <span class="load-more-text">Load More</span>
+                <div class="load-more-spinner" style="display: none;">
+                    <div class="spinner"></div>
+                </div>
+            </button>
         </div>
     </aside>
     
@@ -1409,19 +1476,26 @@ input:checked + .toggle-slider:before {
         if (!draftsList) return;
         
         try {
-            const response = await fetch('/x_post_editor/drafts');
+            const response = await fetch('/x_post_editor/drafts?limit=10');
             const data = await response.json();
             
             if (data.success) {
+                console.log('Drafts API response:', {
+                    loaded_count: data.loaded_count,
+                    total_count: data.total_count,
+                    has_more: data.has_more,
+                    drafts_length: data.drafts?.length || 0
+                });
+                
                 state.currentOffset = data.loaded_count;
                 state.loadedCount = data.loaded_count;
                 state.totalCount = data.total_count;
                 state.hasMore = data.has_more;
                 
                 renderDrafts(data.drafts || []);
-                
-                // No need to update button text here - it's already set correctly from backend
+                updateLoadMoreButton(); // Add this to show the button after initial load
             } else {
+                console.log('Drafts API failed:', data);
                 renderEmptyState();
             }
         } catch (error) {
@@ -1431,12 +1505,14 @@ input:checked + .toggle-slider:before {
     }
 
     // Render drafts
-    function renderDrafts(drafts) {
+    function renderDrafts(drafts, append = false) {
         const draftsList = document.getElementById('draftsList');
         if (!draftsList) return;
         
         if (!drafts || drafts.length === 0) {
-            renderEmptyState();
+            if (!append) {
+                renderEmptyState();
+            }
             return;
         }
 
@@ -1462,8 +1538,71 @@ input:checked + .toggle-slider:before {
             `;
         });
         
-        draftsList.innerHTML = draftsHTML;
+        if (append) {
+            draftsList.insertAdjacentHTML('beforeend', draftsHTML);
+        } else {
+            draftsList.innerHTML = draftsHTML;
+        }
+        
         attachDraftEventListeners();
+        updateLoadMoreButton();
+    }
+
+    // Load more drafts
+    async function loadMoreDrafts() {
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const loadMoreText = loadMoreBtn.querySelector('.load-more-text');
+        const loadMoreSpinner = loadMoreBtn.querySelector('.load-more-spinner');
+        
+        try {
+            // Show loading state
+            loadMoreBtn.disabled = true;
+            loadMoreText.style.display = 'none';
+            loadMoreSpinner.style.display = 'flex';
+            
+            const response = await fetch(`/x_post_editor/drafts?offset=${state.loadedCount}&limit=10`);
+            const data = await response.json();
+            
+            if (data.success && data.drafts && data.drafts.length > 0) {
+                // Update state
+                state.loadedCount = data.loaded_count;
+                state.hasMore = data.has_more;
+                
+                // Append new drafts
+                renderDrafts(data.drafts, true);
+            }
+        } catch (error) {
+            console.error('Error loading more drafts:', error);
+        } finally {
+            // Reset loading state
+            loadMoreBtn.disabled = false;
+            loadMoreText.style.display = 'inline';
+            loadMoreSpinner.style.display = 'none';
+        }
+    }
+    
+    // Update load more button visibility and text
+    function updateLoadMoreButton() {
+        const loadMoreContainer = document.getElementById('loadMoreContainer');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const loadMoreText = loadMoreBtn?.querySelector('.load-more-text');
+        
+        console.log('updateLoadMoreButton called - hasMore:', state.hasMore, 'loadedCount:', state.loadedCount, 'totalCount:', state.totalCount);
+        
+        if (!loadMoreContainer || !loadMoreBtn || !loadMoreText) {
+            console.log('Missing elements for load more button');
+            return;
+        }
+        
+        if (state.hasMore && state.loadedCount > 0) {
+            loadMoreContainer.style.display = 'block';
+            const remaining = state.totalCount - state.loadedCount;
+            loadMoreText.textContent = `Load More (${remaining} remaining)`;
+            console.log('Showing load more button with', remaining, 'remaining');
+        } else {
+            loadMoreContainer.style.display = 'none';
+            console.log('Hiding load more button');
+        }
     }
 
     // Render empty state
@@ -1478,6 +1617,12 @@ input:checked + .toggle-slider:before {
                 <div style="font-size: 0.875rem;">Your saved drafts will appear here</div>
             </div>
         `;
+        
+        // Hide load more button when empty
+        const loadMoreContainer = document.getElementById('loadMoreContainer');
+        if (loadMoreContainer) {
+            loadMoreContainer.style.display = 'none';
+        }
     }
 
     // Attach draft event listeners
@@ -1628,6 +1773,12 @@ input:checked + .toggle-slider:before {
             searchInput.addEventListener('input', function(e) {
                 filterDrafts(e.target.value);
             });
+        }
+        
+        // Load More button
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', loadMoreDrafts);
         }
         
         // Tool selection
@@ -2691,20 +2842,51 @@ input:checked + .toggle-slider:before {
     }
 
     // Filter drafts
-    function filterDrafts(query) {
-        const drafts = document.querySelectorAll('.draft-item');
-        const search = query.toLowerCase();
+    async function filterDrafts(query) {
+        const search = query.toLowerCase().trim();
         
-        drafts.forEach(draft => {
-            const title = draft.querySelector('.draft-title').textContent.toLowerCase();
-            const preview = draft.querySelector('.draft-preview')?.textContent.toLowerCase() || '';
+        if (!search) {
+            // If no search query, reload the initial 10 drafts
+            await loadDraftsWithSpinner();
+            return;
+        }
+        
+        // For search, load all drafts to search through them
+        try {
+            const response = await fetch(`/x_post_editor/drafts?limit=1000`); // Load all drafts for search
+            const data = await response.json();
             
-            if (title.includes(search) || preview.includes(search)) {
-                draft.style.display = '';
-            } else {
-                draft.style.display = 'none';
+            if (data.success && data.drafts) {
+                // Filter drafts based on search query
+                const filteredDrafts = data.drafts.filter(draft => {
+                    const title = (draft.title || '').toLowerCase();
+                    const preview = draft.posts && draft.posts[0] ? (draft.posts[0].text || '').toLowerCase() : '';
+                    return title.includes(search) || preview.includes(search);
+                });
+                
+                // Update state for search results
+                state.loadedCount = filteredDrafts.length;
+                state.totalCount = filteredDrafts.length;
+                state.hasMore = false; // No load more during search
+                
+                // Render filtered results
+                renderDrafts(filteredDrafts, false);
             }
-        });
+        } catch (error) {
+            console.error('Error searching drafts:', error);
+            // Fall back to local filtering if API fails
+            const drafts = document.querySelectorAll('.draft-item');
+            drafts.forEach(draft => {
+                const title = draft.querySelector('.draft-title').textContent.toLowerCase();
+                const preview = draft.querySelector('.draft-preview')?.textContent.toLowerCase() || '';
+                
+                if (title.includes(search) || preview.includes(search)) {
+                    draft.style.display = '';
+                } else {
+                    draft.style.display = 'none';
+                }
+            });
+        }
     }
 
     // Keyboard shortcuts
