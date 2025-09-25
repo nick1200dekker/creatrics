@@ -257,11 +257,11 @@ def auth_middleware():
         
     # Define public paths (no authentication required)
     public_paths = [
-        '/auth/login', 
-        '/auth/register', 
+        '/auth/login',
+        '/auth/register',
         '/auth/forgot-password',  # Allow access to forgot password page
         '/auth/reset-password',   # Allow access to reset password page
-        '/auth/callback', 
+        '/auth/callback',
         '/auth/session',
         '/api/check-auth',
         '/config/public-keys',
@@ -270,6 +270,7 @@ def auth_middleware():
         '/sitemap.xml',  # Allow access to sitemap.xml at root
         '/robots.txt',   # Also allow robots.txt
         '/favicon.ico',  # Allow access to favicon at root for browsers/crawlers
+        '/shared/note/',  # Allow public access to shared notes
     ]
     
     # Define guest-accessible paths and API endpoints

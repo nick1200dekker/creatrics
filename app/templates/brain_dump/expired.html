@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Expired | Creatrics</title>
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 4rem;
+            color: #EF4444;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #718096;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 2rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <i class="ph ph-clock-countdown icon"></i>
+        <h1>This Link Has Expired</h1>
+        <p>
+            The shared note you're trying to access has expired.
+            Shared notes are available for 30 days after being shared.
+        </p>
+        <p>
+            Please contact the person who shared this note with you for a new link.
+        </p>
+        <a href="https://creatrics.com/brain-dump" class="cta-button">
+            <i class="ph ph-brain"></i>
+            Try Brain Dump
+        </a>
+    </div>
+</body>
+</html>

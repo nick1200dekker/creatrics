@@ -393,7 +393,7 @@ def share_note(note_id):
             'views': 0
         }
 
-        # Store in shared_notes collection
+        # Store in global shared_notes collection for easy public access
         shared_ref = db.collection('shared_notes').document(share_id)
         shared_ref.set(shared_note)
 
@@ -441,9 +441,12 @@ def unshare_note(note_id):
         share_id = note_data.get('share_id')
 
         if share_id:
-            # Delete from shared_notes collection
+            # Delete from global shared_notes collection
             shared_ref = db.collection('shared_notes').document(share_id)
-            shared_ref.delete()
+            # Verify ownership before deleting
+            shared_doc = shared_ref.get()
+            if shared_doc.exists and shared_doc.to_dict().get('owner_id') == user_id:
+                shared_ref.delete()
 
         # Update the original note
         note_ref.update({
@@ -469,7 +472,7 @@ def unshare_note(note_id):
 def view_shared_note(share_id):
     """View a publicly shared note (no auth required)"""
     try:
-        # Get shared note from Firebase
+        # Get shared note from global collection
         shared_ref = db.collection('shared_notes').document(share_id)
         shared_doc = shared_ref.get()
 

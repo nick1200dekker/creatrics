@@ -153,10 +153,6 @@ html.dark .brain-dump-wrapper {
     border: 2px solid transparent;
     position: relative;
     min-height: 100px;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
     overflow: hidden;
 }
 
@@ -186,55 +182,75 @@ html.dark .brain-dump-wrapper {
     font-weight: 600;
     font-size: 0.9rem;
     color: var(--text-primary);
-    margin-bottom: 0.25rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex-shrink: 0;
+    flex: 1;
 }
 
 .note-item-preview {
     font-size: 0.75rem;
     color: var(--text-secondary);
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.4;
-    margin-bottom: 0.25rem;
     flex: 1;
 }
 
+.note-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.25rem;
+}
+
+.note-item-tags {
+    display: flex;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+    flex-shrink: 0;
+}
+
+.note-item-tag {
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
 .note-item-content {
-    flex: 1;
-    min-width: 0;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
+    padding-right: 2rem;
 }
 
 
 .note-delete-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 24px;
+    height: 24px;
+    padding: 0;
     background: transparent;
-    border: 1px solid var(--border-primary);
-    color: var(--text-secondary);
+    border: none;
+    color: var(--text-tertiary);
     cursor: pointer;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
     font-size: 0.875rem;
-    flex-shrink: 0;
+    opacity: 0;
+}
+
+.note-item:hover .note-delete-btn {
+    opacity: 1;
 }
 
 .note-delete-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: #EF4444;
     color: #EF4444;
 }
 
@@ -945,8 +961,8 @@ html.dark .brain-dump-wrapper {
                 New Note
             </button>
         </div>
-        
-        <div class="search-box">
+
+<div class="search-box">
             <div class="search-wrapper">
                 <input type="text" 
                        class="search-input" 
@@ -1157,6 +1173,22 @@ let autoSaveTimer = null;
 let currentNoteTags = [];
 let currentShareUrl = null;
 
+// Preset tags data
+const PRESET_TAGS_MAP = {
+    'video-idea': { emoji: '🎥', label: 'Video Idea' },
+    'content-idea': { emoji: '💡', label: 'Content Idea' },
+    'draft': { emoji: '📝', label: 'Draft' },
+    'important': { emoji: '⭐', label: 'Important' },
+    'research': { emoji: '🔍', label: 'Research' },
+    'script': { emoji: '📜', label: 'Script' },
+    'social-media': { emoji: '📱', label: 'Social Media' },
+    'tutorial': { emoji: '📚', label: 'Tutorial' }
+};
+
+function getPresetTag(tagName) {
+    return PRESET_TAGS_MAP[tagName] || null;
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     initializeEditor();
@@ -1351,12 +1383,28 @@ function displayNotes(notesToShow) {
     
     notesList.innerHTML = notesToShow.map(note => {
         const preview = stripHtml(note.content || '').substring(0, 100);
-        
+        const tags = note.tags || [];
+
+        // Create tags HTML - show only emojis for preset tags
+        const tagsHtml = tags.slice(0, 3).map(tag => {
+            const presetTag = getPresetTag(tag);
+            if (presetTag) {
+                return `<span class="note-item-tag">${presetTag.emoji}</span>`;
+            }
+            return '';
+        }).filter(t => t).join('');
+
+        const moreTags = tags.length > 3 ? `<span class="note-item-tag">+${tags.length - 3}</span>` : '';
+
         return `
             <div class="note-item ${note.id === currentNoteId ? 'active' : ''}"
-                 data-note-id="${note.id}">
-                <div class="note-item-content" onclick="selectNote('${note.id}')">
-                    <div class="note-item-title">${escapeHtml(note.title || 'Untitled')}</div>
+                 data-note-id="${note.id}"
+                 onclick="selectNote('${note.id}')">
+                <div class="note-item-content">
+                    <div class="note-item-header">
+                        <div class="note-item-title">${escapeHtml(note.title || 'Untitled')}</div>
+                        ${tags.length > 0 ? `<div class="note-item-tags">${tagsHtml}${moreTags}</div>` : ''}
+                    </div>
                     <div class="note-item-preview">${escapeHtml(preview || 'No content')}</div>
                 </div>
                 <button class="note-delete-btn" onclick="event.stopPropagation(); deleteNote('${note.id}')" title="Delete note">
@@ -1653,16 +1701,22 @@ async function toggleFavorite() {
     }
 }
 
-// Filter notes
+// Filter notes by search
 function filterNotes(query) {
-    const filtered = query ? notes.filter(note => {
+    let filtered = notes;
+
+    // Apply search filter
+    if (query) {
         const search = query.toLowerCase();
-        return (note.title || '').toLowerCase().includes(search) ||
-               stripHtml(note.content || '').toLowerCase().includes(search);
-    }) : notes;
-    
+        filtered = filtered.filter(note => {
+            return (note.title || '').toLowerCase().includes(search) ||
+                   stripHtml(note.content || '').toLowerCase().includes(search);
+        });
+    }
+
     displayNotes(filtered);
 }
+
 
 // Update save status
 function updateSaveStatus(status) {
