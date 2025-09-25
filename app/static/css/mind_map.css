@@ -217,6 +217,10 @@ html.dark .mind-map-wrapper {
     transform-origin: 0 0;
 }
 
+.canvas-svg .connection-line {
+    pointer-events: auto;
+}
+
 /* Nodes */
 .mind-node {
     position: absolute;

@@ -100,11 +100,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.querySelectorAll('.mind-node').forEach(n => n.classList.remove('selected'));
                     selectedNode = null;
                     
-                    // Clear properties panel
-                    const textArea = document.getElementById('nodeText');
-                    if (textArea) textArea.value = '';
+                    // Deselect all connections
+                    connections.forEach(conn => {
+                        if (conn.element) {
+                            conn.element.classList.remove('selected');
+                        }
+                    });
+                    selectedConnection = null;
                     
-                    console.log('Deselected all nodes');
+                    // Reset properties panel to default
+                    const propertiesPanel = document.getElementById('nodeProperties');
+                    if (propertiesPanel) {
+                        propertiesPanel.innerHTML = `
+                            <div class="property-group">
+                                <div class="property-label">Instructions</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                                    1. Click a node to select it<br>
+                                    2. Use controls below to customize<br>
+                                    3. Click + button to add nodes<br>
+                                    4. Use connect tool to link nodes<br>
+                                    5. Click connections to select them
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    console.log('Deselected all items');
                 }
             }
         });
@@ -361,7 +382,18 @@ function selectNode(node) {
         return;
     }
     
+    // Deselect all nodes
     document.querySelectorAll('.mind-node').forEach(n => n.classList.remove('selected'));
+    
+    // Deselect all connections
+    connections.forEach(conn => {
+        if (conn.element) {
+            conn.element.classList.remove('selected');
+        }
+    });
+    selectedConnection = null;
+    
+    // Select this node
     node.classList.add('selected');
     selectedNode = node;
     
@@ -394,20 +426,70 @@ function editNodeText(node) {
 }
 
 function updatePropertiesPanel(node) {
-    const textArea = document.getElementById('nodeText');
-    const shapeSelect = document.getElementById('nodeShape');
-    const fontSelect = document.getElementById('nodeFontSize');
-    
-    if (textArea) textArea.value = node.querySelector('.node-text').textContent;
-    if (shapeSelect) {
-        const shape = node.classList.contains('shape-circle') ? 'circle' :
-                     node.classList.contains('shape-square') ? 'square' :
-                     node.classList.contains('shape-diamond') ? 'diamond' : 'rectangle';
-        shapeSelect.value = shape;
-    }
-    if (fontSelect) {
-        const fontSize = node.querySelector('.node-text').style.fontSize || '14px';
-        fontSelect.value = fontSize;
+    // Reset properties panel to show node properties
+    const propertiesPanel = document.getElementById('nodeProperties');
+    if (propertiesPanel) {
+        propertiesPanel.innerHTML = `
+            <div class="property-group">
+                <div class="property-label">Instructions</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    1. Click a node to select it<br>
+                    2. Use controls below to customize<br>
+                    3. Click + button to add nodes<br>
+                    4. Use connect tool to link nodes<br>
+                    5. Click connections to select them
+                </div>
+            </div>
+
+            <div class="property-group">
+                <div class="property-label">Text</div>
+                <textarea class="property-input" id="nodeText" placeholder="Node text..." onchange="updateSelectedNode()">${node.querySelector('.node-text').textContent}</textarea>
+            </div>
+
+            <div class="property-group">
+                <div class="property-label">Shape</div>
+                <select class="property-input" id="nodeShape" onchange="updateSelectedNode()">
+                    <option value="rectangle" ${!node.classList.contains('shape-circle') && !node.classList.contains('shape-square') && !node.classList.contains('shape-diamond') ? 'selected' : ''}>Rectangle</option>
+                    <option value="circle" ${node.classList.contains('shape-circle') ? 'selected' : ''}>Circle</option>
+                    <option value="square" ${node.classList.contains('shape-square') ? 'selected' : ''}>Square</option>
+                    <option value="diamond" ${node.classList.contains('shape-diamond') ? 'selected' : ''}>Diamond</option>
+                </select>
+            </div>
+
+            <div class="property-group">
+                <div class="property-label">Color</div>
+                <div class="color-options">
+                    <div class="color-option" style="background: #3B82F6;" onclick="changeNodeColor('#3B82F6')" title="Blue"></div>
+                    <div class="color-option" style="background: #EF4444;" onclick="changeNodeColor('#EF4444')" title="Red"></div>
+                    <div class="color-option" style="background: #10B981;" onclick="changeNodeColor('#10B981')" title="Green"></div>
+                    <div class="color-option" style="background: #F59E0B;" onclick="changeNodeColor('#F59E0B')" title="Orange"></div>
+                    <div class="color-option" style="background: #8B5CF6;" onclick="changeNodeColor('#8B5CF6')" title="Purple"></div>
+                    <div class="color-option" style="background: #EC4899;" onclick="changeNodeColor('#EC4899')" title="Pink"></div>
+                    <div class="color-option" style="background: #06B6D4;" onclick="changeNodeColor('#06B6D4')" title="Cyan"></div>
+                    <div class="color-option" style="background: #84CC16;" onclick="changeNodeColor('#84CC16')" title="Lime"></div>
+                </div>
+            </div>
+
+            <div class="property-group">
+                <div class="property-label">Font Size</div>
+                <select class="property-input" id="nodeFontSize" onchange="updateSelectedNode()">
+                    <option value="12px" ${node.querySelector('.node-text').style.fontSize === '12px' ? 'selected' : ''}>Small</option>
+                    <option value="14px" ${!node.querySelector('.node-text').style.fontSize || node.querySelector('.node-text').style.fontSize === '14px' ? 'selected' : ''}>Normal</option>
+                    <option value="16px" ${node.querySelector('.node-text').style.fontSize === '16px' ? 'selected' : ''}>Large</option>
+                    <option value="18px" ${node.querySelector('.node-text').style.fontSize === '18px' ? 'selected' : ''}>Extra Large</option>
+                </select>
+            </div>
+
+            <div class="property-group">
+                <div class="property-label">Actions</div>
+                <button class="property-input" onclick="copySelectedNode()" style="background: #3B82F6; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer; margin-bottom: 0.5rem;">
+                    <i class="ph ph-copy"></i> Copy Node
+                </button>
+                <button class="property-input" id="deleteNodeBtn" onclick="deleteSelectedNode()" style="background: #3B82F6; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer;">
+                    <i class="ph ph-trash"></i> Delete Node
+                </button>
+            </div>
+        `;
     }
 }
 
