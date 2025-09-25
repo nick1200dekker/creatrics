@@ -306,6 +306,218 @@ html.dark .brain-dump-wrapper {
     color: #f59e0b;
 }
 
+.icon-btn.shared {
+    color: #3B82F6;
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3B82F6;
+}
+
+/* Tags Section */
+.tags-section {
+    padding: 1rem 2rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.tag-preset {
+    padding: 0.375rem 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.tag-preset:hover {
+    background: var(--hover-bg);
+    border-color: #3B82F6;
+    color: var(--text-primary);
+}
+
+.tag-preset.active {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3B82F6;
+    color: #3B82F6;
+}
+
+.tag-add {
+    padding: 0.375rem 0.75rem;
+    background: transparent;
+    border: 1px dashed var(--border-primary);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.tag-add:hover {
+    border-color: #3B82F6;
+    color: #3B82F6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.custom-tag {
+    padding: 0.375rem 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    position: relative;
+}
+
+.custom-tag .remove-tag {
+    margin-left: 0.25rem;
+    color: var(--text-tertiary);
+    cursor: pointer;
+}
+
+.custom-tag .remove-tag:hover {
+    color: #ef4444;
+}
+
+/* Share Modal */
+.share-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.share-modal.active {
+    display: flex;
+}
+
+.share-modal-content {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.share-modal-header {
+    margin-bottom: 1.5rem;
+}
+
+.share-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.share-link-container {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.share-link-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.share-link-input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.share-link-input {
+    flex: 1;
+    padding: 0.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.copy-link-btn {
+    padding: 0.5rem 1rem;
+    background: #3B82F6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.copy-link-btn:hover {
+    background: #2563EB;
+}
+
+.copy-link-btn.copied {
+    background: #10B981;
+}
+
+.share-info {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+}
+
+.share-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.share-modal-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.share-modal-btn.cancel {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+}
+
+.share-modal-btn.unshare {
+    background: #EF4444;
+    border: none;
+    color: white;
+}
+
 /* Editor Toolbar */
 .editor-toolbar {
     padding: 0.75rem 2rem;
@@ -777,10 +989,47 @@ html.dark .brain-dump-wrapper {
                         <button class="icon-btn" id="favoriteBtn" onclick="toggleFavorite()" title="Favorite">
                             <i class="ph ph-star"></i>
                         </button>
+                        <button class="icon-btn" id="shareBtn" onclick="toggleShare()" title="Share Note">
+                            <i class="ph ph-share-network"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Tags Section -->
+                <div class="tags-section">
+                    <div class="tags-container" id="tagsContainer">
+                        <!-- Preset tags -->
+                        <button class="tag-preset" data-tag="video-idea" onclick="toggleTag('video-idea')">
+                            🎥 Video Idea
+                        </button>
+                        <button class="tag-preset" data-tag="content-idea" onclick="toggleTag('content-idea')">
+                            💡 Content Idea
+                        </button>
+                        <button class="tag-preset" data-tag="draft" onclick="toggleTag('draft')">
+                            📝 Draft
+                        </button>
+                        <button class="tag-preset" data-tag="important" onclick="toggleTag('important')">
+                            ⭐ Important
+                        </button>
+                        <button class="tag-preset" data-tag="research" onclick="toggleTag('research')">
+                            🔍 Research
+                        </button>
+                        <button class="tag-preset" data-tag="script" onclick="toggleTag('script')">
+                            📜 Script
+                        </button>
+                        <button class="tag-preset" data-tag="social-media" onclick="toggleTag('social-media')">
+                            📱 Social Media
+                        </button>
+                        <button class="tag-preset" data-tag="tutorial" onclick="toggleTag('tutorial')">
+                            📚 Tutorial
+                        </button>
+                        <!-- Add custom tag button -->
+                        <button class="tag-add" onclick="addCustomTag()">
+                            <i class="ph ph-plus"></i> Add Tag
+                        </button>
                     </div>
                 </div>
             </div>
-            
+
             <div class="editor-toolbar">
                 <div class="toolbar-group">
                     <button class="toolbar-btn" onclick="formatText('bold')" title="Bold (Ctrl+B)">
@@ -867,11 +1116,46 @@ html.dark .brain-dump-wrapper {
     </div>
 </div>
 
+<!-- Share Modal -->
+<div class="share-modal" id="shareModal">
+    <div class="share-modal-content">
+        <div class="share-modal-header">
+            <h3 class="share-modal-title">
+                <i class="ph ph-share-network"></i>
+                Share Note
+            </h3>
+        </div>
+
+        <div class="share-link-container" id="shareLinkContainer" style="display: none;">
+            <div class="share-link-label">Share Link</div>
+            <div class="share-link-input-group">
+                <input type="text" class="share-link-input" id="shareLinkInput" readonly>
+                <button class="copy-link-btn" id="copyLinkBtn" onclick="copyShareLink()">
+                    Copy
+                </button>
+            </div>
+        </div>
+
+        <div class="share-info">
+            <p id="shareStatus">Click "Create Share Link" to generate a public URL for this note.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.7rem;">Links expire after 30 days</p>
+        </div>
+
+        <div class="share-modal-actions">
+            <button class="share-modal-btn cancel" onclick="closeShareModal()">Cancel</button>
+            <button class="share-modal-btn unshare" id="unshareBtn" onclick="unshareNote()" style="display: none;">Remove Share Link</button>
+            <button class="share-modal-btn" id="createShareBtn" onclick="createShareLink()" style="background: #3B82F6; color: white; border: none;">Create Share Link</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // State
 let currentNoteId = null;
 let notes = [];
 let autoSaveTimer = null;
+let currentNoteTags = [];
+let currentShareUrl = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -1245,7 +1529,7 @@ async function saveNote(silent = false) {
         const response = await fetch(`/api/brain-dump/notes/${currentNoteId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, content, tags: [] })
+            body: JSON.stringify({ title, content, tags: currentNoteTags || [] })
         });
         
         const data = await response.json();
@@ -1461,6 +1745,272 @@ function showToast(message, type = 'success') {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+// Tags functionality
+function toggleTag(tagName) {
+    const tagBtn = document.querySelector(`[data-tag="${tagName}"]`);
+    if (!tagBtn) return;
+
+    if (currentNoteTags.includes(tagName)) {
+        // Remove tag
+        currentNoteTags = currentNoteTags.filter(t => t !== tagName);
+        tagBtn.classList.remove('active');
+    } else {
+        // Add tag
+        currentNoteTags.push(tagName);
+        tagBtn.classList.add('active');
+    }
+
+    // Auto-save
+    if (currentNoteId) {
+        clearTimeout(autoSaveTimer);
+        updateSaveStatus('saving');
+        autoSaveTimer = setTimeout(() => saveNote(true), 500);
+    }
+}
+
+function addCustomTag() {
+    const tagName = prompt('Enter tag name:');
+    if (!tagName || !tagName.trim()) return;
+
+    const cleanTag = tagName.trim().toLowerCase().replace(/\s+/g, '-');
+
+    if (!currentNoteTags.includes(cleanTag)) {
+        currentNoteTags.push(cleanTag);
+
+        // Add custom tag button to UI
+        const tagsContainer = document.getElementById('tagsContainer');
+        const addBtn = tagsContainer.querySelector('.tag-add');
+
+        const customTag = document.createElement('button');
+        customTag.className = 'custom-tag active';
+        customTag.setAttribute('data-tag', cleanTag);
+        customTag.innerHTML = `
+            ${tagName}
+            <span class="remove-tag" onclick="removeCustomTag('${cleanTag}', event)">×</span>
+        `;
+        customTag.onclick = function(e) {
+            if (!e.target.classList.contains('remove-tag')) {
+                toggleTag(cleanTag);
+            }
+        };
+
+        tagsContainer.insertBefore(customTag, addBtn);
+
+        // Auto-save
+        if (currentNoteId) {
+            clearTimeout(autoSaveTimer);
+            updateSaveStatus('saving');
+            autoSaveTimer = setTimeout(() => saveNote(true), 500);
+        }
+    }
+}
+
+function removeCustomTag(tagName, event) {
+    event.stopPropagation();
+
+    currentNoteTags = currentNoteTags.filter(t => t !== tagName);
+
+    const tagBtn = document.querySelector(`[data-tag="${tagName}"]`);
+    if (tagBtn && tagBtn.classList.contains('custom-tag')) {
+        tagBtn.remove();
+    }
+
+    // Auto-save
+    if (currentNoteId) {
+        clearTimeout(autoSaveTimer);
+        updateSaveStatus('saving');
+        autoSaveTimer = setTimeout(() => saveNote(true), 500);
+    }
+}
+
+function updateTagsUI(tags) {
+    currentNoteTags = tags || [];
+
+    // Reset all preset tags
+    document.querySelectorAll('.tag-preset').forEach(btn => {
+        const tagName = btn.getAttribute('data-tag');
+        if (currentNoteTags.includes(tagName)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Remove existing custom tags
+    document.querySelectorAll('.custom-tag').forEach(btn => btn.remove());
+
+    // Add custom tags
+    const tagsContainer = document.getElementById('tagsContainer');
+    const addBtn = tagsContainer.querySelector('.tag-add');
+
+    currentNoteTags.forEach(tag => {
+        // Skip if it's a preset tag
+        if (document.querySelector(`.tag-preset[data-tag="${tag}"]`)) return;
+
+        const customTag = document.createElement('button');
+        customTag.className = 'custom-tag active';
+        customTag.setAttribute('data-tag', tag);
+        customTag.innerHTML = `
+            ${tag}
+            <span class="remove-tag" onclick="removeCustomTag('${tag}', event)">×</span>
+        `;
+        customTag.onclick = function(e) {
+            if (!e.target.classList.contains('remove-tag')) {
+                toggleTag(tag);
+            }
+        };
+
+        tagsContainer.insertBefore(customTag, addBtn);
+    });
+}
+
+// Share functionality
+function toggleShare() {
+    const modal = document.getElementById('shareModal');
+    modal.classList.add('active');
+
+    // Check if note is already shared
+    const note = notes.find(n => n.id === currentNoteId);
+    if (note && note.is_shared && note.share_url) {
+        currentShareUrl = note.share_url;
+        document.getElementById('shareLinkInput').value = currentShareUrl;
+        document.getElementById('shareLinkContainer').style.display = 'block';
+        document.getElementById('createShareBtn').style.display = 'none';
+        document.getElementById('unshareBtn').style.display = 'inline-block';
+        document.getElementById('shareStatus').textContent = 'Your note is publicly shared:';
+
+        // Update share button
+        const shareBtn = document.getElementById('shareBtn');
+        shareBtn.classList.add('shared');
+    } else {
+        document.getElementById('shareLinkContainer').style.display = 'none';
+        document.getElementById('createShareBtn').style.display = 'inline-block';
+        document.getElementById('unshareBtn').style.display = 'none';
+        document.getElementById('shareStatus').textContent = 'Click "Create Share Link" to generate a public URL for this note.';
+    }
+}
+
+async function createShareLink() {
+    if (!currentNoteId) return;
+
+    try {
+        const response = await fetch(`/api/brain-dump/notes/${currentNoteId}/share`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentShareUrl = data.share_url;
+            document.getElementById('shareLinkInput').value = currentShareUrl;
+            document.getElementById('shareLinkContainer').style.display = 'block';
+            document.getElementById('createShareBtn').style.display = 'none';
+            document.getElementById('unshareBtn').style.display = 'inline-block';
+            document.getElementById('shareStatus').textContent = 'Your note is publicly shared:';
+
+            // Update share button
+            const shareBtn = document.getElementById('shareBtn');
+            shareBtn.classList.add('shared');
+
+            // Update note in local state
+            const note = notes.find(n => n.id === currentNoteId);
+            if (note) {
+                note.is_shared = true;
+                note.share_url = currentShareUrl;
+            }
+
+            showToast('Share link created!', 'success');
+        }
+    } catch (error) {
+        console.error('Error creating share link:', error);
+        showToast('Failed to create share link', 'error');
+    }
+}
+
+async function unshareNote() {
+    if (!currentNoteId) return;
+
+    if (confirm('Are you sure you want to remove the public share link?')) {
+        try {
+            const response = await fetch(`/api/brain-dump/notes/${currentNoteId}/unshare`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                currentShareUrl = null;
+                document.getElementById('shareLinkContainer').style.display = 'none';
+                document.getElementById('createShareBtn').style.display = 'inline-block';
+                document.getElementById('unshareBtn').style.display = 'none';
+                document.getElementById('shareStatus').textContent = 'Click "Create Share Link" to generate a public URL for this note.';
+
+                // Update share button
+                const shareBtn = document.getElementById('shareBtn');
+                shareBtn.classList.remove('shared');
+
+                // Update note in local state
+                const note = notes.find(n => n.id === currentNoteId);
+                if (note) {
+                    note.is_shared = false;
+                    note.share_url = null;
+                }
+
+                showToast('Share link removed', 'success');
+            }
+        } catch (error) {
+            console.error('Error removing share link:', error);
+            showToast('Failed to remove share link', 'error');
+        }
+    }
+}
+
+function copyShareLink() {
+    const input = document.getElementById('shareLinkInput');
+    input.select();
+    document.execCommand('copy');
+
+    const btn = document.getElementById('copyLinkBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+
+    setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+    }, 2000);
+
+    showToast('Link copied to clipboard!', 'success');
+}
+
+function closeShareModal() {
+    const modal = document.getElementById('shareModal');
+    modal.classList.remove('active');
+}
+
+// Update selectNote to load tags and share status
+const originalSelectNote = selectNote;
+selectNote = function(noteId) {
+    originalSelectNote(noteId);
+
+    const note = notes.find(n => n.id === noteId);
+    if (note) {
+        // Update tags UI
+        updateTagsUI(note.tags || []);
+
+        // Update share button
+        const shareBtn = document.getElementById('shareBtn');
+        if (note.is_shared) {
+            shareBtn.classList.add('shared');
+            currentShareUrl = note.share_url;
+        } else {
+            shareBtn.classList.remove('shared');
+            currentShareUrl = null;
+        }
+    }
 }
 </script>
 {% endblock %}

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ note.title }} - Shared Note | Creatrics</title>
+    <meta name="description" content="{{ note.content[:160] }}">
+
+    <!-- Open Graph tags for social sharing -->
+    <meta property="og:title" content="{{ note.title }} - Shared Note">
+    <meta property="og:description" content="{{ note.content[:160] }}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://creatrics.com/shared/note/{{ share_id }}">
+    <meta property="og:site_name" content="Creatrics">
+
+    <!-- Twitter Card tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ note.title }}">
+    <meta name="twitter:description" content="{{ note.content[:160] }}">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+            color: white;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .share-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .note-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .note-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tag {
+            padding: 0.25rem 0.75rem;
+            background: #f0f4f8;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .note-content {
+            color: #2d3748;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .footer {
+            padding: 2rem;
+            background: #f7fafc;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .cta {
+            margin-bottom: 1.5rem;
+        }
+
+        .cta h3 {
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .cta p {
+            color: #718096;
+            margin-bottom: 1rem;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .view-count {
+            color: #a0aec0;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 0;
+            }
+
+            .container {
+                border-radius: 0;
+            }
+
+            .note-title {
+                font-size: 1.5rem;
+            }
+
+            .header, .content, .footer {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-top">
+                <div class="logo">
+                    <i class="ph ph-brain"></i>
+                    Creatrics
+                </div>
+                <div class="share-badge">
+                    <i class="ph ph-share-network"></i>
+                    Shared
+                </div>
+            </div>
+            <h1 class="note-title">{{ note.title }}</h1>
+            <div class="note-meta">
+                <div class="meta-item">
+                    <i class="ph ph-calendar"></i>
+                    {{ note.shared_at[:10] }}
+                </div>
+                <div class="meta-item">
+                    <i class="ph ph-eye"></i>
+                    {{ note.views }} views
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            {% if note.tags %}
+            <div class="tags">
+                {% for tag in note.tags %}
+                <span class="tag">
+                    {% if tag == 'video-idea' %}
+                        🎥 Video Idea
+                    {% elif tag == 'content-idea' %}
+                        💡 Content Idea
+                    {% elif tag == 'draft' %}
+                        📝 Draft
+                    {% elif tag == 'important' %}
+                        ⭐ Important
+                    {% elif tag == 'research' %}
+                        🔍 Research
+                    {% elif tag == 'script' %}
+                        📜 Script
+                    {% elif tag == 'social-media' %}
+                        📱 Social Media
+                    {% elif tag == 'tutorial' %}
+                        📚 Tutorial
+                    {% else %}
+                        {{ tag }}
+                    {% endif %}
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="note-content">{{ note.content }}</div>
+        </div>
+
+        <div class="footer">
+            <div class="cta">
+                <h3>Create Your Own Smart Notes</h3>
+                <p>Organize your ideas, share knowledge, and boost your content creation</p>
+                <a href="https://creatrics.com/brain-dump" class="cta-button">
+                    <i class="ph ph-rocket-launch"></i>
+                    Try Creatrics Free
+                </a>
+            </div>
+            <div class="view-count">
+                This note expires in {{ ((note.expires_at[:10] | replace('-', '')) | int - (note.shared_at[:10] | replace('-', '')) | int) // 1 }} days
+            </div>
+        </div>
+    </div>
+</body>
+</html>

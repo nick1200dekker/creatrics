@@ -2,12 +2,25 @@ from flask import render_template, request, jsonify, g, redirect, url_for
 from . import bp
 from app.system.auth.middleware import auth_required
 from app.system.services.firebase_service import db
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import json
 import uuid
+import secrets
 
 logger = logging.getLogger(__name__)
+
+# Preset tags configuration
+PRESET_TAGS = [
+    {'name': 'video-idea', 'label': '🎥 Video Idea', 'color': '#FF6B6B'},
+    {'name': 'content-idea', 'label': '💡 Content Idea', 'color': '#4ECDC4'},
+    {'name': 'draft', 'label': '📝 Draft', 'color': '#45B7D1'},
+    {'name': 'important', 'label': '⭐ Important', 'color': '#FFA500'},
+    {'name': 'research', 'label': '🔍 Research', 'color': '#9B59B6'},
+    {'name': 'script', 'label': '📜 Script', 'color': '#3498DB'},
+    {'name': 'social-media', 'label': '📱 Social Media', 'color': '#E91E63'},
+    {'name': 'tutorial', 'label': '📚 Tutorial', 'color': '#2ECC71'},
+]
 
 @bp.route('/brain-dump')
 @auth_required
@@ -335,6 +348,7 @@ def get_all_tags():
         return jsonify({
             'success': True,
             'tags': tags_list,
+            'preset_tags': PRESET_TAGS,
             'total': len(tags_list)
         })
 
@@ -344,6 +358,142 @@ def get_all_tags():
             'success': False,
             'error': 'Failed to fetch tags'
         }), 500
+
+@bp.route('/api/brain-dump/notes/<note_id>/share', methods=['POST'])
+@auth_required
+def share_note(note_id):
+    """Create a public share link for a note"""
+    try:
+        user_id = str(g.user.get('id'))
+
+        # Get the note from Firebase
+        note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
+        note_doc = note_ref.get()
+
+        if not note_doc.exists:
+            return jsonify({
+                'success': False,
+                'error': 'Note not found'
+            }), 404
+
+        note_data = note_doc.to_dict()
+
+        # Generate unique share ID
+        share_id = secrets.token_urlsafe(8)
+
+        # Create shared note document
+        shared_note = {
+            'note_id': note_id,
+            'owner_id': user_id,
+            'title': note_data.get('title', 'Untitled'),
+            'content': note_data.get('content', ''),
+            'tags': note_data.get('tags', []),
+            'shared_at': datetime.utcnow().isoformat() + 'Z',
+            'expires_at': (datetime.utcnow() + timedelta(days=30)).isoformat() + 'Z',  # 30 days expiry
+            'views': 0
+        }
+
+        # Store in shared_notes collection
+        shared_ref = db.collection('shared_notes').document(share_id)
+        shared_ref.set(shared_note)
+
+        # Update the original note with share info
+        note_ref.update({
+            'is_shared': True,
+            'share_id': share_id,
+            'share_url': f'https://creatrics.com/shared/note/{share_id}',
+            'shared_at': datetime.utcnow().isoformat() + 'Z'
+        })
+
+        return jsonify({
+            'success': True,
+            'share_url': f'https://creatrics.com/shared/note/{share_id}',
+            'share_id': share_id,
+            'expires_in_days': 30,
+            'message': 'Note shared successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error sharing note: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to share note'
+        }), 500
+
+@bp.route('/api/brain-dump/notes/<note_id>/unshare', methods=['POST'])
+@auth_required
+def unshare_note(note_id):
+    """Remove public share link for a note"""
+    try:
+        user_id = str(g.user.get('id'))
+
+        # Get the note
+        note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
+        note_doc = note_ref.get()
+
+        if not note_doc.exists:
+            return jsonify({
+                'success': False,
+                'error': 'Note not found'
+            }), 404
+
+        note_data = note_doc.to_dict()
+        share_id = note_data.get('share_id')
+
+        if share_id:
+            # Delete from shared_notes collection
+            shared_ref = db.collection('shared_notes').document(share_id)
+            shared_ref.delete()
+
+        # Update the original note
+        note_ref.update({
+            'is_shared': False,
+            'share_id': None,
+            'share_url': None,
+            'shared_at': None
+        })
+
+        return jsonify({
+            'success': True,
+            'message': 'Note unshared successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error unsharing note: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to unshare note'
+        }), 500
+
+@bp.route('/shared/note/<share_id>')
+def view_shared_note(share_id):
+    """View a publicly shared note (no auth required)"""
+    try:
+        # Get shared note from Firebase
+        shared_ref = db.collection('shared_notes').document(share_id)
+        shared_doc = shared_ref.get()
+
+        if not shared_doc.exists:
+            return render_template('errors/404.html'), 404
+
+        shared_data = shared_doc.to_dict()
+
+        # Check if expired
+        expires_at = datetime.fromisoformat(shared_data['expires_at'].replace('Z', '+00:00'))
+        if datetime.utcnow() > expires_at:
+            return render_template('brain_dump/expired.html'), 410
+
+        # Increment view count
+        shared_ref.update({'views': shared_data.get('views', 0) + 1})
+
+        # Render public view template
+        return render_template('brain_dump/public_note.html',
+                             note=shared_data,
+                             share_id=share_id)
+
+    except Exception as e:
+        logger.error(f"Error viewing shared note: {e}")
+        return render_template('errors/404.html'), 404
 
 @bp.route('/api/brain-dump/export', methods=['POST'])
 @auth_required
