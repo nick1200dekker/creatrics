@@ -31,19 +31,20 @@
             --gradient-opacity: 0.04;
         }
 
-        [data-theme="dark"] {
-            --bg-primary: #0F172A;
-            --bg-secondary: rgba(30, 41, 59, 0.95);
-            --text-primary: #F1F5F9;
-            --text-secondary: #94A3B8;
+        /* Dark mode - consistent with base.html */
+        html.dark {
+            --bg-primary: #18181b;
+            --bg-secondary: #27272a;
+            --text-primary: #fafafa;
+            --text-secondary: #d4d4d8;
             --border-color: rgba(239, 68, 68, 0.3);
 
             --soft-gradient: linear-gradient(135deg, rgba(254, 226, 226, 0.15) 0%, rgba(254, 215, 170, 0.15) 100%);
             --status-bg: linear-gradient(135deg, rgba(254, 226, 226, 0.1) 0%, rgba(254, 215, 170, 0.1) 100%);
 
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
             --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
 
             --gradient-opacity: 0.08;
@@ -501,29 +502,28 @@
     </div>
 
     <script>
+        // Apply dark mode immediately to prevent flash
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
         // Theme management
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            updateThemeIcon(savedTheme);
-        }
-
         function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark);
+            updateThemeIcon();
         }
 
-        function updateThemeIcon(theme) {
+        function updateThemeIcon() {
             const icon = document.getElementById('theme-icon');
-            icon.className = theme === 'dark' ? 'ph ph-moon' : 'ph ph-sun';
+            if (icon) {
+                const isDark = document.documentElement.classList.contains('dark');
+                icon.className = isDark ? 'ph ph-moon' : 'ph ph-sun';
+            }
         }
 
-        // Initialize theme
-        initTheme();
+        // Initialize theme icon
+        window.addEventListener('DOMContentLoaded', () => updateThemeIcon());
 
         // Page load animation
         document.addEventListener('DOMContentLoaded', function() {

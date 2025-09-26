@@ -6,7 +6,15 @@
     <title>Terms & Conditions - Creatrics</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
+
+    <!-- Apply dark mode class immediately if saved -->
+    <script>
+        // Apply dark mode immediately to prevent flash
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
     <style>
         :root {
             --brand-gradient: #3B82F6;
@@ -18,6 +26,34 @@
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+            /* Light mode colors - matching base.html */
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F1F5F9;
+            --text-primary: #1E293B;
+            --text-secondary: #475569;
+            --text-tertiary: #64748B;
+            --border-primary: #E2E8F0;
+            --border-secondary: #E2E8F0;
+            --hover-bg: #F1F5F9;
+        }
+
+        /* Dark mode colors - matching base.html */
+        html.dark {
+            --bg-primary: #18181b;
+            --bg-secondary: #27272a;
+            --bg-tertiary: #3f3f46;
+            --text-primary: #fafafa;
+            --text-secondary: #d4d4d8;
+            --text-tertiary: #a1a1aa;
+            --border-primary: #3f3f46;
+            --border-secondary: #52525b;
+            --hover-bg: #3f3f46;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
         }
         
         * {
@@ -28,12 +64,12 @@
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #F8FAFC;
-            color: #1E293B;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.5s ease, background-color 0.3s ease, color 0.3s ease;
         }
         
         body.loaded {
@@ -48,8 +84,9 @@
             top: 0;
             left: 0;
             z-index: -1;
-            background: #F8FAFC;
+            background: var(--bg-primary);
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
         
         .animated-bg::before {
@@ -57,12 +94,16 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
                 radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
             opacity: 0.6;
             animation: bgShift 20s ease-in-out infinite;
+        }
+
+        html.dark .animated-bg::before {
+            opacity: 0.3;
         }
         
         @keyframes bgShift {
@@ -73,14 +114,15 @@
         
         /* Header */
         .header {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--bg-secondary);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             box-shadow: var(--shadow-sm);
             position: sticky;
             top: 0;
             z-index: 100;
-            transition: all 0.3s ease;
+            transition: all 0.3s ease, background-color 0.3s ease;
+            border-bottom: 1px solid var(--border-primary);
         }
         
         .header-content {
@@ -108,7 +150,7 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            color: #64748B;
+            color: var(--text-tertiary);
             text-decoration: none;
             font-weight: 500;
             font-size: 0.95rem;
@@ -116,10 +158,10 @@
             padding: 0.5rem 1rem;
             border-radius: 8px;
         }
-        
+
         .back-link:hover {
             color: var(--accent-blue);
-            background: #F1F5F9;
+            background: var(--hover-bg);
         }
         
         /* Main content */
@@ -138,15 +180,20 @@
         }
         
         .policy-content {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--bg-secondary);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 20px;
             padding: 3rem;
             box-shadow: var(--shadow-xl);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-primary);
             position: relative;
             overflow: hidden;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        html.dark .policy-content {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
         }
         
         .policy-content::before {
@@ -247,11 +294,42 @@
             border-radius: 12px;
             padding: 1.5rem;
             margin-top: 2rem;
+            transition: background 0.3s ease;
         }
-        
+
+        html.dark .contact-section {
+            background: var(--bg-tertiary);
+        }
+
         .contact-section h3 {
             margin-top: 0;
-            color: #1E293B;
+            color: var(--text-primary);
+        }
+
+        /* Dark mode toggle button */
+        .dark-mode-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-md);
+        }
+
+        .dark-mode-toggle:hover {
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .dark-mode-toggle i {
+            font-size: 1.25rem;
+            color: var(--text-primary);
         }
         
         /* Responsive */
@@ -283,6 +361,11 @@
     </style>
 </head>
 <body>
+    <!-- Dark mode toggle button -->
+    <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
+        <i class="ph ph-sun" id="dark-mode-icon"></i>
+    </button>
+
     <!-- Animated background -->
     <div class="animated-bg"></div>
 
@@ -352,12 +435,37 @@
     </div>
 
     <script>
+        // Initialize dark mode toggle
+        function initDarkMode() {
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            const darkModeIcon = document.getElementById('dark-mode-icon');
+
+            // Update icon based on current mode
+            function updateIcon() {
+                const isDark = document.documentElement.classList.contains('dark');
+                darkModeIcon.className = isDark ? 'ph ph-moon' : 'ph ph-sun';
+            }
+
+            // Initial icon update
+            updateIcon();
+
+            // Toggle dark mode on button click
+            darkModeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage.setItem('darkMode', isDark);
+                updateIcon();
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize dark mode
+            initDarkMode();
+
             // Page load animation
             setTimeout(() => {
                 document.body.classList.add('loaded');
             }, 100);
-            
+
             // Animate content
             setTimeout(() => {
                 document.querySelector('.policy-container').classList.add('active');

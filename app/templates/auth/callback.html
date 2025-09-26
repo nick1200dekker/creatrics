@@ -8,7 +8,15 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
-    
+
+    <!-- Apply dark mode class immediately if saved -->
+    <script>
+        // Apply dark mode immediately to prevent flash
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
     <style>
         :root {
             --brand-gradient: #3B82F6;
@@ -20,6 +28,32 @@
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+            /* Light mode colors */
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F1F5F9;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-tertiary: #94A3B8;
+            --border-primary: #E2E8F0;
+            --border-secondary: #E2E8F0;
+        }
+
+        /* Dark mode colors */
+        html.dark {
+            --bg-primary: #18181b;
+            --bg-secondary: #27272a;
+            --bg-tertiary: #3f3f46;
+            --text-primary: #fafafa;
+            --text-secondary: #d4d4d8;
+            --text-tertiary: #a1a1aa;
+            --border-primary: #3f3f46;
+            --border-secondary: #52525b;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
         }
         
         * {
@@ -30,14 +64,15 @@
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #F8FAFC;
-            color: #1E293B;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 1rem;
             overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         
         /* Animated background */
@@ -48,8 +83,9 @@
             top: 0;
             left: 0;
             z-index: -1;
-            background: #F8FAFC;
+            background: var(--bg-primary);
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
         
         .animated-bg::before {
@@ -57,12 +93,16 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
                 radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.04) 0%, transparent 50%);
             opacity: 0.6;
             animation: bgShift 20s ease-in-out infinite;
+        }
+
+        html.dark .animated-bg::before {
+            opacity: 0.3;
         }
         
         @keyframes bgShift {
@@ -73,18 +113,23 @@
         
         /* Main container */
         .container {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--bg-secondary);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 20px;
             padding: 3rem;
             box-shadow: var(--shadow-xl);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-primary);
             position: relative;
             overflow: hidden;
             max-width: 480px;
             width: 100%;
             text-align: center;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        html.dark .container {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
         }
         
         .container::before {
@@ -121,12 +166,12 @@
         .status-text {
             font-size: 1.25rem;
             font-weight: 700;
-            color: #1E293B;
+            color: var(--text-primary);
             margin-bottom: 0.75rem;
         }
-        
+
         .status-description {
-            color: #64748B;
+            color: var(--text-secondary);
             font-size: 1rem;
             line-height: 1.5;
             margin-bottom: 2rem;
@@ -145,7 +190,7 @@
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            background-color: #E2E8F0;
+            background-color: var(--border-primary);
             transition: all 0.3s ease;
         }
         
@@ -210,6 +255,19 @@
             padding: 1.5rem;
             margin-bottom: 2rem;
             text-align: left;
+        }
+
+        html.dark .error-card {
+            background: linear-gradient(135deg, rgba(254, 242, 242, 0.1) 0%, rgba(254, 226, 226, 0.1) 100%);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        html.dark .error-title {
+            color: #EF4444;
+        }
+
+        html.dark .error-message {
+            color: #F87171;
         }
         
         .error-title {

@@ -363,12 +363,24 @@
             display: none;
             border-left: 4px solid #EF4444;
         }
-        
+
+        html.dark .error-message {
+            background: linear-gradient(135deg, rgba(254, 242, 242, 0.1) 0%, rgba(254, 226, 226, 0.1) 100%);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #EF4444;
+        }
+
         .error-message.session-expired {
             background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
             border-color: rgba(245, 158, 11, 0.3);
             color: #D97706;
             border-left-color: #F59E0B;
+        }
+
+        html.dark .error-message.session-expired {
+            background: linear-gradient(135deg, rgba(255, 251, 235, 0.1) 0%, rgba(254, 243, 199, 0.1) 100%);
+            border-color: rgba(245, 158, 11, 0.4);
+            color: #F59E0B;
         }
         
         /* Success badge */
@@ -384,6 +396,12 @@
             display: none;
             border-left: 4px solid #10B981;
             text-align: center;
+        }
+
+        html.dark .success-badge {
+            background: linear-gradient(135deg, rgba(236, 253, 245, 0.1) 0%, rgba(209, 250, 229, 0.1) 100%);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #10B981;
         }
         
         /* Register link */
@@ -417,13 +435,13 @@
         }
         
         .forgot-link {
-            color: #6B7280;
+            color: var(--text-tertiary);
             text-decoration: none;
             font-size: 0.875rem;
             font-weight: 500;
             transition: color 0.2s ease;
         }
-        
+
         .forgot-link:hover {
             color: var(--accent-blue);
         }
@@ -433,9 +451,9 @@
             text-align: center;
             margin-top: 2rem;
             padding-top: 1.5rem;
-            border-top: 1px solid #E5E7EB;
+            border-top: 1px solid var(--border-primary);
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.5s ease, border-color 0.3s ease;
         }
         
         .policy-links.active {
@@ -452,11 +470,11 @@
         }
         
         .policy-links a:hover {
-            color: #6B7280;
+            color: var(--text-secondary);
         }
-        
+
         .policy-links .separator {
-            color: #E5E7EB;
+            color: var(--border-primary);
             margin: 0 0.25rem;
         }
         
