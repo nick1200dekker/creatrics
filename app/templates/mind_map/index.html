@@ -366,23 +366,7 @@ function updateConnectionArrow() {
     }
 }
 
-function changeConnectionColor(color) {
-    // Use the global selectedConnection from the external script
-    const conn = window.selectedConnection;
-    if (!conn) return;
-    
-    conn.color = color;
-    conn.element.setAttribute('stroke', color);
-    
-    // Update color selection
-    document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
-    const colorElement = document.querySelector(`[onclick*="${color}"]`);
-    if (colorElement) {
-        colorElement.classList.add('selected');
-    }
-    
-    console.log('Changed connection color to:', color);
-}
+// Remove this function entirely - we'll use the external one
 
 function updateConnectionArrow() {
     const conn = window.selectedConnection;

@@ -904,33 +904,32 @@ function updateConnectionPropertiesPanel(connection) {
             
             <div class="property-group">
                 <div class="property-label">Arrow Type</div>
-                <select class="property-input" id="connectionArrow" onchange="updateConnectionArrow()">
+                <select class="property-input" id="connectionArrow">
                     <option value="arrow" ${connection.arrowType === 'arrow' ? 'selected' : ''}>Arrow</option>
                     <option value="none" ${connection.arrowType === 'none' ? 'selected' : ''}>No Arrow</option>
                 </select>
             </div>
             
-            <div class="property-group">
-                <div class="property-label">Color</div>
-                <div class="color-options">
-                    <div class="color-option" style="background: #3B82F6;" onclick="changeConnectionColor('#3B82F6')" title="Blue"></div>
-                    <div class="color-option" style="background: #EF4444;" onclick="changeConnectionColor('#EF4444')" title="Red"></div>
-                    <div class="color-option" style="background: #10B981;" onclick="changeConnectionColor('#10B981')" title="Green"></div>
-                    <div class="color-option" style="background: #F59E0B;" onclick="changeConnectionColor('#F59E0B')" title="Orange"></div>
-                    <div class="color-option" style="background: #8B5CF6;" onclick="changeConnectionColor('#8B5CF6')" title="Purple"></div>
-                    <div class="color-option" style="background: #EC4899;" onclick="changeConnectionColor('#EC4899')" title="Pink"></div>
-                    <div class="color-option" style="background: #06B6D4;" onclick="changeConnectionColor('#06B6D4')" title="Cyan"></div>
-                    <div class="color-option" style="background: #84CC16;" onclick="changeConnectionColor('#84CC16')" title="Lime"></div>
-                </div>
-            </div>
             
             <div class="property-group">
                 <div class="property-label">Actions</div>
-                <button class="property-input" onclick="deleteSelectedConnection()" style="background: #EF4444; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer;">
+                <button class="property-input" id="deleteConnectionBtn" style="background: #EF4444; color: white; border: none; padding: 0.5rem; border-radius: 6px; cursor: pointer;">
                     <i class="ph ph-trash"></i> Delete Connection
                 </button>
             </div>
         `;
+        
+        // Add event listeners after creating the HTML
+        const arrowSelect = document.getElementById('connectionArrow');
+        if (arrowSelect) {
+            arrowSelect.addEventListener('change', updateConnectionArrow);
+        }
+        
+        
+        const deleteBtn = document.getElementById('deleteConnectionBtn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', deleteSelectedConnection);
+        }
     }
 }
 
@@ -986,16 +985,42 @@ function updateConnectionArrow() {
 }
 
 function changeConnectionColor(color) {
-    if (!selectedConnection) return;
+    console.log('External changeConnectionColor called with:', color);
+    console.log('selectedConnection:', selectedConnection);
+    
+    if (!selectedConnection) {
+        console.log('No selectedConnection in external function');
+        return;
+    }
+    
+    console.log('Connection element:', selectedConnection.element);
+    console.log('Current stroke:', selectedConnection.element.getAttribute('stroke'));
     
     selectedConnection.color = color;
     selectedConnection.element.setAttribute('stroke', color);
     
-    // Update color selection
-    document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
-    const colorElement = document.querySelector(`[onclick*="${color}"]`);
+    console.log('New stroke after setting:', selectedConnection.element.getAttribute('stroke'));
+    
+    // Update color selection - look for data-color attribute instead of onclick
+    document.querySelectorAll('.color-option').forEach(opt => {
+        opt.classList.remove('selected');
+        console.log('Removed selected from:', opt);
+    });
+    const colorElement = document.querySelector(`[data-color="${color}"]`);
+    console.log('Looking for color element with selector:', `[data-color="${color}"]`);
+    console.log('Found color element:', colorElement);
     if (colorElement) {
         colorElement.classList.add('selected');
+        console.log('Added selected class to:', colorElement);
+        console.log('Element classes after adding selected:', colorElement.classList);
+    } else {
+        console.log('Could not find color element for:', color);
+        // Try to find any color options to debug
+        const allColorOptions = document.querySelectorAll('.color-option');
+        console.log('All color options found:', allColorOptions);
+        allColorOptions.forEach(opt => {
+            console.log('Color option:', opt, 'data-color:', opt.getAttribute('data-color'));
+        });
     }
     
     console.log('Changed connection color to:', color);
