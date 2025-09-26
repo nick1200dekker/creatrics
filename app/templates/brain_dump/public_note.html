@@ -791,7 +791,25 @@
             }
         }
 
+        // Handle link clicks in the note content
+        function initializeLinkHandling() {
+            const noteContent = document.getElementById('noteContent');
+            if (noteContent) {
+                noteContent.addEventListener('click', function(e) {
+                    if (e.target.tagName === 'A' && e.target.href) {
+                        // Prevent default editing behavior
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Open link in new tab/window
+                        window.open(e.target.href, e.target.target || '_blank');
+                    }
+                });
+            }
+        }
+
         // Initialize
+        initializeLinkHandling();
         setupAutoSave();
 
         // Start sync interval (every 3 seconds)
