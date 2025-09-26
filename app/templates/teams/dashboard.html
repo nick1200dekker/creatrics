@@ -3,12 +3,835 @@
 {% block title %}Teams - Creator Tools{% endblock %}
 
 {% block additional_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/teams.css') }}">
+<style>
+/* Reset default content-panel like dashboard */
+.content-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Teams wrapper - full height like dashboard */
+.teams-wrapper {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    overflow: hidden;
+    width: 100%;
+    min-height: calc(100vh - 60px);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    position: relative;
+}
+
+/* Subtle animated background gradient */
+.teams-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+html.dark .teams-wrapper {
+    border-color: transparent;
+}
+
+/* Teams container */
+.teams-container {
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* Header Section */
+.teams-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    flex-wrap: wrap;
+}
+
+.teams-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.teams-title i {
+    color: #3B82F6;
+}
+
+.workspace-switcher {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--bg-tertiary);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-secondary);
+    min-width: 250px;
+}
+
+html.dark .workspace-switcher {
+    border-color: transparent;
+}
+
+.workspace-switcher label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+#workspaceSelector {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+    transition: all 0.2s ease;
+}
+
+#workspaceSelector:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark #workspaceSelector {
+    border-color: transparent;
+}
+
+/* Alert Container */
+#alertContainer {
+    margin-bottom: 1.5rem;
+}
+
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+    color: var(--text-primary);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.alert-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+    color: var(--text-primary);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.alert-error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+    color: var(--text-primary);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Pending Invitations */
+#pendingInvitationsSection .alert h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#pendingInvitationsSection .alert h3 i {
+    color: #3B82F6;
+}
+
+/* Team Member Message */
+#teamMemberMessage {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+#teamMemberMessage i {
+    font-size: 3rem;
+    color: #3B82F6;
+    margin-bottom: 1rem;
+}
+
+#teamMemberMessage h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+#teamMemberMessage p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Section Containers */
+.invite-section, .team-members-section {
+    background: var(--bg-tertiary);
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-secondary);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+html.dark .invite-section,
+html.dark .team-members-section {
+    border-color: transparent;
+}
+
+.invite-section h2, .team-members-section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.01em;
+}
+
+.invite-section p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+/* Invite Form */
+.invite-form {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+#inviteEmail {
+    flex: 1;
+    min-width: 280px;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+#inviteEmail:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+#inviteEmail::placeholder {
+    color: var(--text-tertiary);
+}
+
+html.dark #inviteEmail {
+    border-color: transparent;
+}
+
+.btn-invite {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    white-space: nowrap;
+}
+
+.btn-invite:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.btn-invite:active {
+    transform: translateY(0);
+}
+
+/* Premium Permissions Grid */
+.permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.permission-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+html.dark .permission-item {
+    border-color: transparent;
+}
+
+.permission-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+html.dark .permission-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Custom checkbox styling */
+.permission-item input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.permission-item label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.4;
+    position: relative;
+    padding-left: 2.5rem;
+    margin: 0;
+}
+
+.permission-item label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid var(--border-primary);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    transition: all 0.2s ease;
+}
+
+.permission-item label::after {
+    content: '';
+    position: absolute;
+    left: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: 1rem;
+    height: 1rem;
+    background: #3B82F6;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.permission-item input[type="checkbox"]:checked + label::before {
+    border-color: #3B82F6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.permission-item input[type="checkbox"]:checked + label::after {
+    transform: translateY(-50%) scale(1);
+}
+
+.permission-item input[type="checkbox"]:checked + label {
+    color: #3B82F6;
+}
+
+/* Add checkmark icon */
+.permission-item input[type="checkbox"]:checked + label::after {
+    content: '✓';
+    background: none;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #3B82F6;
+    border-radius: 4px;
+}
+
+/* Team Members List */
+.team-members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-tertiary);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Member Cards */
+.member-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+html.dark .member-card {
+    border-color: transparent;
+}
+
+.member-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.member-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.member-email {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.member-role {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+    color: #3B82F6;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 0.5rem;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-pending {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-invited {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
+    color: #6366F1;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* Member Actions */
+.member-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-edit-permissions {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-edit-permissions:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
+}
+
+html.dark .btn-edit-permissions {
+    border-color: transparent;
+}
+
+.btn-remove {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.btn-remove:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%);
+    transform: translateY(-1px);
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 1rem;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    border: 1px solid var(--border-secondary);
+}
+
+html.dark .modal-content {
+    border-color: transparent;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.modal.active .modal-content {
+    transform: scale(1);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: color 0.2s ease;
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+}
+
+#editPermissionsContent {
+    padding: 2rem;
+}
+
+/* Invitation Cards */
+#pendingInvitationsList > div {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-secondary) !important;
+    border-radius: 12px !important;
+    padding: 1.25rem !important;
+    margin-top: 1rem !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    transition: all 0.2s ease !important;
+}
+
+html.dark #pendingInvitationsList > div {
+    border-color: transparent !important;
+}
+
+#pendingInvitationsList > div:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+#pendingInvitationsList strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+#pendingInvitationsList .btn-invite,
+#pendingInvitationsList .btn-remove {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+}
+
+/* Permissions List in Team Member Message */
+#permissionsList h3 {
+    font-size: 1rem !important;
+    margin-bottom: 1rem !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600 !important;
+}
+
+#permissionsList span {
+    display: inline-block !important;
+    padding: 0.5rem 1rem !important;
+    margin: 0.25rem !important;
+    background: var(--bg-primary) !important;
+    border: 1px solid var(--border-secondary) !important;
+    border-radius: 8px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: var(--text-primary) !important;
+}
+
+html.dark #permissionsList span {
+    border-color: transparent !important;
+    background: var(--bg-tertiary) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .teams-container {
+        padding: 1rem;
+    }
+    
+    .teams-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .workspace-switcher {
+        min-width: auto;
+    }
+    
+    .teams-title {
+        font-size: 1.375rem;
+    }
+    
+    .invite-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #inviteEmail {
+        min-width: auto;
+    }
+    
+    .permissions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .member-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .member-actions {
+        justify-content: center;
+    }
+    
+    .modal-content {
+        margin: 1rem;
+        max-height: calc(100vh - 2rem);
+    }
+    
+    .modal-header {
+        padding: 1rem 1.5rem;
+    }
+    
+    #editPermissionsContent {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .teams-container {
+        padding: 0.75rem;
+    }
+    
+    .invite-section, .team-members-section {
+        padding: 1.25rem;
+    }
+    
+    .member-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-edit-permissions,
+    .btn-remove {
+        justify-content: center;
+    }
+}
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.member-card,
+.permission-item,
+.invite-section,
+.team-members-section {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+/* Focus states for accessibility */
+.btn-invite:focus,
+.btn-edit-permissions:focus,
+.btn-remove:focus,
+#inviteEmail:focus,
+#workspaceSelector:focus {
+    outline: 2px solid #3B82F6;
+    outline-offset: 2px;
+}
+
+.permission-item:focus-within {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="content-panel">
-    <div class="teams-wrapper">
+<div class="teams-wrapper">
+    <div class="teams-container">
         <div class="teams-header">
             <h2 class="teams-title"><i class="ph ph-users-three"></i> Teams Management</h2>
             <div class="workspace-switcher">
@@ -19,112 +842,110 @@
             </div>
         </div>
 
-        <div class="teams-container">
-            <div id="alertContainer"></div>
+        <div id="alertContainer"></div>
 
-            <!-- Pending Invitations Section -->
-            <div id="pendingInvitationsSection" style="display: none;">
-                <div class="alert alert-info">
-                    <h3><i class="ph ph-envelope"></i> Pending Team Invitations</h3>
-                    <div id="pendingInvitationsList"></div>
-                </div>
+        <!-- Pending Invitations Section -->
+        <div id="pendingInvitationsSection" style="display: none;">
+            <div class="alert alert-info">
+                <h3><i class="ph ph-envelope"></i> Pending Team Invitations</h3>
+                <div id="pendingInvitationsList"></div>
             </div>
-
-            <!-- Team Member View Message -->
-            <div id="teamMemberMessage" style="display: none;">
-                <div>
-                    <i class="ph ph-users-three"></i>
-                    <h2>Team Workspace</h2>
-                    <p>
-                        You're currently viewing a team workspace. You have access to the features granted by the workspace owner.
-                        Switch back to your own workspace to manage your team.
-                    </p>
-                    <div id="permissionsList"></div>
-                </div>
-            </div>
-
-            <div class="invite-section" id="inviteSection" style="display: none;">
-        <h2>Invite Team Members</h2>
-        <p>Add team members by email. They'll receive an invitation to join your workspace.</p>
-
-        <div class="invite-form">
-            <input type="email" id="inviteEmail" placeholder="Enter email address" />
-            <button class="btn-invite" onclick="sendInvite()">
-                <i class="ph ph-paper-plane-tilt"></i> Send Invite
-            </button>
         </div>
 
-        <div class="permissions-grid">
-            <div class="permission-item">
-                <input type="checkbox" id="perm_video_script" checked>
-                <label for="perm_video_script">Video Script</label>
+        <!-- Team Member View Message -->
+        <div id="teamMemberMessage" style="display: none;">
+            <div>
+                <i class="ph ph-users-three"></i>
+                <h2>Team Workspace</h2>
+                <p>
+                    You're currently viewing a team workspace. You have access to the features granted by the workspace owner.
+                    Switch back to your own workspace to manage your team.
+                </p>
+                <div id="permissionsList"></div>
             </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_video_title" checked>
-                <label for="perm_video_title">Video Title</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_video_tags" checked>
-                <label for="perm_video_tags">Video Tags</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_video_description" checked>
-                <label for="perm_video_description">Video Description</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_thumbnail" checked>
-                <label for="perm_thumbnail">Thumbnail</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_analytics" checked>
-                <label for="perm_analytics">Analytics</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_competitors" checked>
-                <label for="perm_competitors">Competitors</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_x_post_editor" checked>
-                <label for="perm_x_post_editor">X Post Editor</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_reply_guy" checked>
-                <label for="perm_reply_guy">Reply Guy</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_clip_spaces" checked>
-                <label for="perm_clip_spaces">Clip Spaces</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_niche" checked>
-                <label for="perm_niche">Niche</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_brain_dump" checked>
-                <label for="perm_brain_dump">Brain Dump</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_mind_map" checked>
-                <label for="perm_mind_map">Mind Map</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_content_wiki" checked>
-                <label for="perm_content_wiki">Content Wiki</label>
-            </div>
-            <div class="permission-item">
-                <input type="checkbox" id="perm_content_calendar" checked>
-                <label for="perm_content_calendar">Content Calendar</label>
-            </div>
-            </div>
+        </div>
+
+        <div class="invite-section" id="inviteSection" style="display: none;">
+            <h2>Invite Team Members</h2>
+            <p>Add team members by email. They'll receive an invitation to join your workspace.</p>
+
+            <div class="invite-form">
+                <input type="email" id="inviteEmail" placeholder="Enter email address" />
+                <button class="btn-invite" onclick="sendInvite()">
+                    <i class="ph ph-paper-plane-tilt"></i> Send Invite
+                </button>
             </div>
 
-            <div class="team-members-section" id="teamMembersSection" style="display: none;">
-                <h2>Team Members</h2>
-                <div class="team-members-list" id="teamMembersList">
-                    <div class="empty-state">
-                        <i class="ph ph-users"></i>
-                        <p>No team members yet. Invite your first team member above.</p>
-                    </div>
+            <div class="permissions-grid">
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_video_script" checked>
+                    <label for="perm_video_script">Video Script</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_video_title" checked>
+                    <label for="perm_video_title">Video Title</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_video_tags" checked>
+                    <label for="perm_video_tags">Video Tags</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_video_description" checked>
+                    <label for="perm_video_description">Video Description</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_thumbnail" checked>
+                    <label for="perm_thumbnail">Thumbnail</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_analytics" checked>
+                    <label for="perm_analytics">Analytics</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_competitors" checked>
+                    <label for="perm_competitors">Competitors</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_x_post_editor" checked>
+                    <label for="perm_x_post_editor">X Post Editor</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_reply_guy" checked>
+                    <label for="perm_reply_guy">Reply Guy</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_clip_spaces" checked>
+                    <label for="perm_clip_spaces">Clip Spaces</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_niche" checked>
+                    <label for="perm_niche">Niche</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_brain_dump" checked>
+                    <label for="perm_brain_dump">Brain Dump</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_mind_map" checked>
+                    <label for="perm_mind_map">Mind Map</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_content_wiki" checked>
+                    <label for="perm_content_wiki">Content Wiki</label>
+                </div>
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_content_calendar" checked>
+                    <label for="perm_content_calendar">Content Calendar</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="team-members-section" id="teamMembersSection" style="display: none;">
+            <h2>Team Members</h2>
+            <div class="team-members-list" id="teamMembersList">
+                <div class="empty-state">
+                    <i class="ph ph-users"></i>
+                    <p>No team members yet. Invite your first team member above.</p>
                 </div>
             </div>
         </div>
@@ -141,7 +962,7 @@
         <div id="editPermissionsContent">
             <!-- Permissions will be loaded here -->
         </div>
-        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end;">
+        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end; padding: 0 2rem 2rem;">
             <button class="btn-edit-permissions" onclick="closeModal('editPermissionsModal')">Cancel</button>
             <button class="btn-invite" onclick="savePermissions()">Save Changes</button>
         </div>
