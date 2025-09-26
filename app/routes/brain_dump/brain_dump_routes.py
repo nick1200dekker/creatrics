@@ -906,7 +906,7 @@ def import_notes():
 @bp.route('/api/ai/modify-note', methods=['POST'])
 @auth_required
 def modify_note_with_ai():
-    """Modify note content using AI"""
+    """Modify note content using AI with proper credit management"""
     try:
         data = request.json or {}
         content = data.get('content', '').strip()
@@ -924,6 +924,36 @@ def modify_note_with_ai():
                 'status': 'error',
                 'error': 'No modification prompt provided'
             }), 400
+
+        # Initialize credits manager
+        from app.system.credits.credits_manager import CreditsManager
+        credits_manager = CreditsManager()
+        user_id = str(g.user.get('id'))
+
+        # Step 1: Check credits before generation
+        combined_text = f"{prompt}\n{content}"
+        cost_estimate = credits_manager.estimate_llm_cost_from_text(
+            text_content=combined_text,
+            model_name='gpt-4o-mini'
+        )
+
+        # Note modification typically requires moderate output
+        required_credits = cost_estimate['final_cost'] * 2  # Multiply by 2 for output
+        current_credits = credits_manager.get_user_credits(user_id)
+        credit_check = credits_manager.check_sufficient_credits(
+            user_id=user_id,
+            required_credits=required_credits
+        )
+
+        # Check for sufficient credits - strict enforcement
+        if not credit_check.get('sufficient', False):
+            return jsonify({
+                "status": "error",
+                "error": f"Insufficient credits. Required: {required_credits:.2f}, Available: {current_credits:.2f}",
+                "error_type": "insufficient_credits",
+                "current_credits": current_credits,
+                "required_credits": required_credits
+            }), 402
 
         # Import the AI provider
         from app.system.ai_provider.ai_provider import get_ai_provider
@@ -957,8 +987,11 @@ def modify_note_with_ai():
         # Get the content - handle both dict and string responses
         if isinstance(response, dict):
             modified_content = response.get('content', '')
+            # Try to get token usage if available
+            token_usage = response.get('usage', {})
         else:
             modified_content = str(response)
+            token_usage = {}
 
         if not modified_content:
             return jsonify({
@@ -966,13 +999,42 @@ def modify_note_with_ai():
                 'error': 'Failed to generate modified content'
             }), 500
 
+        # Step 2: Deduct credits after successful generation
+        try:
+            # Use actual token usage if available, otherwise estimate
+            input_tokens = token_usage.get('prompt_tokens', len(combined_text.split()) * 1.3)  # Rough estimate
+            output_tokens = token_usage.get('completion_tokens', len(modified_content.split()) * 1.3)  # Rough estimate
+            
+            deduction_result = credits_manager.deduct_llm_credits(
+                user_id=user_id,
+                model_name='gpt-4o-mini',
+                input_tokens=int(input_tokens),
+                output_tokens=int(output_tokens),
+                description=f"Brain Dump AI Modification: {prompt[:50]}{'...' if len(prompt) > 50 else ''}",
+                feature_id="brain_dump_ai_modify"
+            )
+
+            if not deduction_result['success']:
+                logger.error(f"Failed to deduct credits for user {user_id}: {deduction_result.get('message')}")
+                # Don't fail the request, just log the error
+            else:
+                logger.info(f"Credits deducted for Brain Dump AI modification: {deduction_result.get('credits_deducted', 0)} credits")
+
+        except Exception as credit_error:
+            logger.error(f"Error deducting credits: {credit_error}")
+            # Don't fail the request for credit errors
+
         # Clean up the response
         modified_content = modified_content.strip()
+
+        # Get the actual credits deducted for response
+        credits_deducted = deduction_result.get('credits_deducted', 0) if 'deduction_result' in locals() else 0
 
         return jsonify({
             'status': 'success',
             'modified_content': modified_content,
-            'original_prompt': prompt
+            'original_prompt': prompt,
+            'credits_used': credits_deducted
         })
 
     except Exception as e:

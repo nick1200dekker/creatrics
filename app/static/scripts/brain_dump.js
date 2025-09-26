@@ -1228,13 +1228,29 @@ async function modifyNoteWithAI() {
             // Show undo button
             showUndoButton();
 
-            // Trigger save
-            saveCurrentNote();
+            // Ensure note is created and saved
+            if (!currentNoteId) {
+                // Create note if it doesn't exist
+                await createNoteIfNeeded();
+            }
+            
+            // Save the note with AI-modified content
+            if (currentNoteId) {
+                await saveNote(false); // Don't save silently, show feedback
+            } else {
+                showToast('Warning: Could not save AI-modified note', 'error');
+            }
 
             // Clear the input
             promptInput.value = '';
 
+            // Show success message
             showToast('Note modified successfully! Press Ctrl+Z to undo', 'success');
+        } else if (data.error_type === 'insufficient_credits') {
+            // Handle insufficient credits specifically
+            const currentCredits = data.current_credits || 0;
+            const requiredCredits = data.required_credits || 0;
+            showToast(`Insufficient credits! You have ${currentCredits.toFixed(2)} credits but need ${requiredCredits.toFixed(2)} credits.`, 'error');
         } else {
             throw new Error(data.error || 'Failed to modify note');
         }
@@ -1277,19 +1293,23 @@ function showUndoButton() {
     let undoBtn = document.getElementById('undoAIBtn');
     if (!undoBtn) {
         // Create undo button if it doesn't exist
-        const aiAgentContent = document.getElementById('aiAgentContent');
-        const promptGroup = aiAgentContent.querySelector('.ai-prompt-group');
+        const aiAgentPanel = document.getElementById('aiAgentPanel');
+        const promptGroup = aiAgentPanel ? aiAgentPanel.querySelector('.ai-prompt-group') : null;
 
-        undoBtn = document.createElement('button');
-        undoBtn.id = 'undoAIBtn';
-        undoBtn.className = 'ai-undo-btn';
-        undoBtn.innerHTML = '<i class="ph ph-arrow-counter-clockwise"></i> Undo';
-        undoBtn.onclick = undoLastChange;
-        undoBtn.title = 'Undo last AI modification (Ctrl+Z)';
+        if (promptGroup) {
+            undoBtn = document.createElement('button');
+            undoBtn.id = 'undoAIBtn';
+            undoBtn.className = 'ai-undo-btn';
+            undoBtn.innerHTML = '<i class="ph ph-arrow-counter-clockwise"></i> Undo';
+            undoBtn.onclick = undoLastChange;
+            undoBtn.title = 'Undo last AI modification (Ctrl+Z)';
 
-        promptGroup.appendChild(undoBtn);
+            promptGroup.appendChild(undoBtn);
+        }
     }
-    undoBtn.style.display = 'flex';
+    if (undoBtn) {
+        undoBtn.style.display = 'flex';
+    }
 }
 
 function hideUndoButton() {
