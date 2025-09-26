@@ -388,18 +388,30 @@ def generate_reply():
         
         user_id = get_workspace_user_id()
         
-        # Check credits efficiently
+        # Check credits efficiently (following video_tags pattern)
         credits_manager = CreditsManager()
-        cost_result = credits_manager.estimate_and_check_llm_operation(
-            user_id=user_id,
-            text_content=[{'text': tweet_text}],
-            model_name='gpt-4.1'
+        
+        # Step 1: Estimate LLM cost from tweet text
+        cost_estimate = credits_manager.estimate_llm_cost_from_text(
+            text_content=tweet_text,
+            model_name='claude-3-haiku-20240307'  # Use Claude Haiku for replies
         )
         
-        if not cost_result['success'] or not cost_result['sufficient_credits']:
+        required_credits = cost_estimate['final_cost']
+        current_credits = credits_manager.get_user_credits(user_id)
+        credit_check = credits_manager.check_sufficient_credits(
+            user_id=user_id,
+            required_credits=required_credits
+        )
+        
+        # Check for sufficient credits - strict enforcement
+        if not credit_check.get('sufficient', False):
             return jsonify({
                 'success': False,
-                'error': 'Insufficient credits',
+                'error': f'Insufficient credits. Required: {required_credits:.2f}, Available: {current_credits:.2f}',
+                'error_type': 'insufficient_credits',
+                'current_credits': current_credits,
+                'required_credits': required_credits,
                 'credits_required': True
             }), 402
         
@@ -416,15 +428,24 @@ def generate_reply():
         if not reply_text:
             return jsonify({'success': False, 'error': 'Failed to generate reply'}), 500
         
-        # Deduct credits after successful generation
+        # Step 3: Deduct credits after successful generation (following video_tags pattern)
         try:
-            credits_manager.deduct_llm_credits(
+            # Estimate tokens more accurately (1 token ≈ 4 characters for Claude)
+            input_tokens = max(100, len(tweet_text) // 4)
+            output_tokens = max(50, len(reply_text) // 4)
+            
+            deduction_result = credits_manager.deduct_llm_credits(
                 user_id=user_id,
-                model_name='gpt-4.1',
-                input_tokens=len(tweet_text.split()) * 2,  # Rough estimate
-                output_tokens=len(reply_text.split()) * 2,
-                description=f"Reply Guy reply to @{author}"
+                model_name='claude-3-haiku-20240307',
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                description=f"Reply Guy reply to @{author}",
+                feature_id="reply_guy"
             )
+            
+            if not deduction_result['success']:
+                logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+                
         except Exception as credit_error:
             logger.error(f"Error deducting credits: {str(credit_error)}")
             # Don't fail the request if credit deduction fails

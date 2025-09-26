@@ -2058,11 +2058,16 @@ html.dark .modal-content {
         // Generate reply button
         if (e.target.closest('.generate-reply-btn')) {
             e.preventDefault();
+            console.log('Generate reply button clicked');
             const btn = e.target.closest('.generate-reply-btn');
-            if (btn.disabled) return;
+            if (btn.disabled) {
+                console.log('Button is disabled, ignoring click');
+                return;
+            }
             
             btn.disabled = true;
             const tweetElement = btn.closest('.tweet-opportunity');
+            console.log('Tweet element found:', tweetElement);
             generateReply(tweetElement).finally(() => {
                 btn.disabled = false;
             });
@@ -2437,18 +2442,26 @@ html.dark .modal-content {
 
     // Reply Functions
     function generateReply(tweetElement) {
-        if (!tweetElement) return Promise.resolve();
+        console.log('generateReply function called with:', tweetElement);
+        if (!tweetElement) {
+            console.log('No tweet element provided');
+            return Promise.resolve();
+        }
         
         const tweetId = tweetElement.getAttribute('data-tweet-id');
+        console.log('Tweet ID:', tweetId);
         const tweetTextElement = tweetElement.querySelector('.tweet-text');
         
         let tweetText = tweetTextElement ? tweetTextElement.innerHTML : '';
         tweetText = tweetText.replace(/<br\s*\/?>/gi, '\n').trim();
         tweetText = tweetText.replace(/<[^>]*>/g, '');
+        console.log('Tweet text:', tweetText);
         
         const authorElement = tweetElement.querySelector('.tweet-author-username');
         const author = authorElement ? authorElement.textContent.replace('@', '') : '';
+        const style = getSelectedStyle(tweetElement);
         const useBrandVoice = getBrandVoiceState(tweetElement);
+        console.log('Author:', author, 'Style:', style, 'Brand voice:', useBrandVoice);
         
         const textarea = tweetElement.querySelector('.reply-textarea');
         const generateBtn = tweetElement.querySelector('.generate-reply-btn');
@@ -2461,6 +2474,7 @@ html.dark .modal-content {
             textarea.value = 'Generating reply...';
         }
         
+        console.log('Making API request to generate reply...');
         return fetch('/reply-guy/generate-reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -3005,6 +3019,33 @@ html.dark .modal-content {
 
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', init);
+    
+    // Debug: Test if buttons are clickable after page load
+    setTimeout(() => {
+        const generateBtns = document.querySelectorAll('.generate-reply-btn');
+        const tweetOpportunities = document.querySelectorAll('.tweet-opportunity');
+        const repliesPanel = document.getElementById('replies-panel');
+        const emptyState = document.querySelector('.empty-state');
+        
+        console.log('=== DEBUG INFO ===');
+        console.log('Found generate buttons:', generateBtns.length);
+        console.log('Found tweet opportunities:', tweetOpportunities.length);
+        console.log('Replies panel visible:', repliesPanel ? !repliesPanel.classList.contains('hidden') : 'not found');
+        console.log('Empty state visible:', emptyState ? emptyState.style.display !== 'none' : 'not found');
+        console.log('Current selected list:', state.selectedList);
+        
+        generateBtns.forEach((btn, index) => {
+            console.log(`Button ${index}:`, btn, 'Disabled:', btn.disabled);
+            // Test if button is actually clickable
+            btn.addEventListener('click', () => {
+                console.log(`Direct click on button ${index} detected!`);
+            });
+        });
+        
+        if (generateBtns.length === 0) {
+            console.log('❌ No generate buttons found - you may need to select a list first');
+        }
+    }, 2000);
 
 })();
 </script>
