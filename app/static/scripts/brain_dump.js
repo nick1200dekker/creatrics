@@ -5,6 +5,8 @@ let autoSaveTimer = null;
 let currentNoteTags = [];
 let currentShareUrl = null;
 let syncInterval = null;
+let isSaving = false; // Prevent concurrent saves
+let saveAbortController = null; // Allow cancelling in-flight saves
 let lastSyncedContent = null;
 let lastSyncedTitle = null;
 
@@ -452,14 +454,14 @@ async function createNoteIfNeeded() {
             },
             body: JSON.stringify({
                 title: title || 'Untitled',
-                content: content || '',
-                tags: currentNoteTags
+                content: content,
+                tags: currentNoteTags || []
             })
         });
 
         const data = await response.json();
 
-        if (data.note) {
+        if (data.success && data.note) {
             currentNoteId = data.note.id;
             notes.unshift(data.note);
             displayNotes(notes);
@@ -486,35 +488,45 @@ async function createNewNote() {
 }
 
 // Select note
-function selectNote(noteId) {
-    currentNoteId = noteId;
+async function selectNote(noteId) {
     const note = notes.find(n => n.id === noteId);
     
     if (!note) return;
-    
-    // Store content for sync detection
-    lastSyncedTitle = note.title || '';
-    lastSyncedContent = note.content || '';
-    
-    // Hide empty state container and show editor area
-    document.getElementById('emptyStateContainer').style.display = 'none';
-    document.getElementById('editorArea').style.display = 'flex';
-    
-    // Update active state
+
+    // CRITICAL: Store the previous note ID before changing
+    const previousNoteId = currentNoteId;
+
+    // CRITICAL: Cancel any pending or in-progress saves
+    if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = null;
+    }
+
+    // Cancel any in-flight save requests
+    if (saveAbortController) {
+        saveAbortController.abort();
+        saveAbortController = null;
+    }
+
+    // Reset save state
+    isSaving = false;
+    updateSaveStatus('saved');
+
+    // Now set the new current note ID
+    currentNoteId = noteId;
+
+    // Update UI
+    document.getElementById('noteTitle').value = note.title || '';
+    document.getElementById('editor').innerHTML = note.content || '';
+
+    // Update tags
+    updateTagsUI(note.tags);
+
+    // Update sidebar selection
     document.querySelectorAll('.note-item').forEach(item => {
         item.classList.remove('active');
     });
-    const activeItem = document.querySelector(`[data-note-id="${noteId}"]`);
-    if (activeItem) activeItem.classList.add('active');
-    
-    // Load content
-    document.getElementById('noteTitle').value = note.title || '';
-    document.getElementById('editor').innerHTML = note.content || '';
-    
-    // Favorite functionality removed
-    
-    // Update tags UI
-    updateTagsUI(note.tags || []);
+    document.querySelector(`[data-note-id="${noteId}"]`)?.classList.add('active');
 
     // Update share button
     const shareBtn = document.getElementById('shareBtn');
@@ -527,14 +539,25 @@ function selectNote(noteId) {
     }
     
     updateSaveStatus('saved');
+
+    // Focus editor
+    document.getElementById('editor').focus();
 }
+
 
 // Save note
 async function saveNote(silent = false) {
-    if (!currentNoteId) return;
+    if (!currentNoteId || isSaving) return;
+    
+    // Prevent concurrent saves
+    isSaving = true;
+    
+    // Create abort controller for this save operation
+    saveAbortController = new AbortController();
     
     const title = document.getElementById('noteTitle').value || 'Untitled';
     const content = document.getElementById('editor').innerHTML;
+    const noteIdToSave = currentNoteId; // Capture the ID at save time
     
     // Update last synced values
     lastSyncedTitle = title;
@@ -543,10 +566,11 @@ async function saveNote(silent = false) {
     updateSaveStatus('saving');
     
     try {
-        const response = await fetch(`/api/brain-dump/notes/${currentNoteId}`, {
+        const response = await fetch(`/api/brain-dump/notes/${noteIdToSave}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, content, tags: currentNoteTags || [] })
+            body: JSON.stringify({ title, content, tags: currentNoteTags || [] }),
+            signal: saveAbortController.signal // Allow cancellation
         });
         
         const data = await response.json();
@@ -580,11 +604,21 @@ async function saveNote(silent = false) {
             }
         }
     } catch (error) {
+        // Handle abort errors silently (they're expected when switching notes)
+        if (error.name === 'AbortError') {
+            console.log('Save operation was cancelled');
+            return;
+        }
+        
         console.error('Error saving note:', error);
         updateSaveStatus('error');
         if (!silent) {
             showToast('Failed to save', 'error');
         }
+    } finally {
+        // Always reset save state
+        isSaving = false;
+        saveAbortController = null;
     }
 }
 
