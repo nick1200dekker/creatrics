@@ -468,6 +468,168 @@ html.dark .brain-dump-wrapper {
     color: #ef4444;
 }
 
+/* Link Modal */
+.link-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.link-modal.active {
+    display: flex;
+}
+
+.link-modal-content {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.link-modal-header {
+    margin-bottom: 1.5rem;
+}
+
+.link-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.link-modal-title i {
+    color: #3B82F6;
+}
+
+.link-modal-body {
+    margin-bottom: 1.5rem;
+}
+
+.link-field {
+    margin-bottom: 1rem;
+}
+
+.link-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.link-input {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.link-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: var(--bg-secondary);
+}
+
+.link-options {
+    margin-top: 1rem;
+}
+
+.link-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.link-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-primary);
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.link-checkbox input[type="checkbox"]:checked + .checkmark {
+    background: #3B82F6;
+    border-color: #3B82F6;
+}
+
+.link-checkbox input[type="checkbox"]:checked + .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0px;
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.link-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.link-modal-btn {
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.link-modal-btn.cancel {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+}
+
+.link-modal-btn.cancel:hover {
+    background: var(--hover-bg);
+}
+
+.link-modal-btn.primary {
+    background: #3B82F6;
+    border: none;
+    color: white;
+}
+
+.link-modal-btn.primary:hover {
+    background: #2563EB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
 /* Share Modal */
 .share-modal {
     display: none;
@@ -873,9 +1035,7 @@ html.dark .brain-dump-wrapper {
     padding: 0.75rem 2rem;
     border-top: 1px solid var(--border-primary);
     background: var(--bg-secondary);
-    display: grid;
-    grid-template-columns: 120px 1fr auto;
-    gap: 1rem;
+    display: flex;
     align-items: center;
 }
 
@@ -885,8 +1045,6 @@ html.dark .brain-dump-wrapper {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    grid-column: 1;
-    justify-self: start;
 }
 
 .save-status.typing {
@@ -1052,79 +1210,69 @@ html.dark .brain-dump-wrapper {
     to { transform: rotate(360deg); }
 }
 
-/* AI Agent Styles */
-.ai-agent-section {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    grid-column: 2 / -1;
-    justify-self: end;
-    max-width: 600px;
-    width: 100%;
+/* AI Agent Styles - Toolbar Integration */
+.ai-toolbar-section {
+    margin-left: auto;
 }
 
-html.dark .ai-agent-section {
-    border-color: var(--border-secondary);
-}
-
-.ai-agent-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border-primary);
-    background: var(--bg-tertiary);
-    border-radius: 12px 12px 0 0;
-}
-
-html.dark .ai-agent-header {
-    border-bottom-color: var(--border-secondary);
-}
-
-.ai-agent-title {
+.ai-toggle-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-}
-
-.ai-agent-title i {
-    color: #3B82F6;
-    font-size: 1.125rem;
-}
-
-.ai-agent-toggle {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
+    padding: 0.5rem 0.875rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
     cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 6px;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
 }
 
-.ai-agent-toggle:hover {
+.ai-toggle-btn:hover {
     background: var(--hover-bg);
-    color: var(--text-primary);
+    border-color: #3B82F6;
+    color: #3B82F6;
 }
 
-.ai-agent-content {
-    padding: 1rem;
-    max-height: 500px;
+.ai-toggle-btn.active {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3B82F6;
+    color: #3B82F6;
+}
+
+.ai-toggle-btn i.ph-robot {
+    color: #3B82F6;
+    font-size: 1rem;
+}
+
+.ai-caret {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.ai-toggle-btn.active .ai-caret {
+    transform: rotate(180deg);
+}
+
+/* AI Agent Panel - Below Toolbar */
+.ai-agent-panel {
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-primary);
     overflow: hidden;
-    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+    transition: all 0.3s ease;
+    max-height: 0;
+    opacity: 0;
+}
+
+.ai-agent-panel:not(.collapsed) {
+    max-height: 200px;
     opacity: 1;
 }
 
-.ai-agent-content.collapsed {
-    max-height: 0;
-    padding: 0 1rem;
-    opacity: 0;
-    overflow: hidden;
+.ai-agent-panel .ai-agent-content {
+    padding: 1rem 2rem;
 }
 
 .ai-prompt-group {
@@ -1136,23 +1284,30 @@ html.dark .ai-agent-header {
 .ai-modify-input {
     flex: 1;
     padding: 0.625rem 0.875rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
     border-radius: 8px;
     font-size: 0.875rem;
     color: var(--text-primary);
     transition: all 0.2s ease;
+    position: relative;
 }
 
 html.dark .ai-modify-input {
-    background: var(--bg-tertiary);
-    border-color: var(--border-secondary);
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
 .ai-modify-input:focus {
     outline: none;
     border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.ai-modify-input::placeholder {
+    color: rgba(59, 130, 246, 0.7);
+    font-style: italic;
 }
 
 .ai-modify-btn {
@@ -1268,16 +1423,17 @@ html.dark .ai-modify-input {
     }
 
     .editor-footer {
-        grid-template-columns: 1fr;
+        flex-direction: column;
         gap: 0.75rem;
+        align-items: flex-start;
     }
 
-    .save-status {
-        grid-column: 1;
+    .ai-toolbar-section {
+        margin-left: 0;
     }
 
-    .ai-agent-section {
-        grid-column: 1;
-        max-width: 100%;
+    .ai-toggle-btn {
+        width: 100%;
+        justify-content: center;
     }
 }

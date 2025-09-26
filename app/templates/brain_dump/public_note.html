@@ -447,16 +447,7 @@
                     <div class="meta-item">
                         <i class="ph ph-calendar"></i>
                         {{ note.shared_at[:10] }}
-                    <div class="toolbar-separator"></div>
-                
-                <div class="toolbar-group">
-                    <div class="color-picker-wrapper">
-                        <input type="color" id="colorPicker" onchange="changeTextColor(this.value)" style="position: absolute; opacity: 0; width: 34px; height: 34px; cursor: pointer;">
-                        <button class="toolbar-btn" onclick="document.getElementById('colorPicker').click()" title="Text Color">
-                            <i class="ph ph-palette"></i>
-                        </button>
                     </div>
-                </div>
                     <div class="meta-item">
                         <i class="ph ph-eye"></i>
                         <span id="viewCount">{{ note.views }}</span> views
@@ -543,6 +534,17 @@
                     <button class="toolbar-btn" onclick="insertLink()" title="Link">
                         <i class="ph ph-link"></i>
                     </button>
+                </div>
+                
+                <div class="toolbar-separator"></div>
+                
+                <div class="toolbar-group">
+                    <div class="color-picker-wrapper">
+                        <input type="color" id="colorPicker" onchange="changeTextColor(this.value)" style="position: absolute; opacity: 0; width: 34px; height: 34px; cursor: pointer;">
+                        <button class="toolbar-btn" onclick="document.getElementById('colorPicker').click()" title="Text Color">
+                            <i class="ph ph-palette"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             {% endif %}

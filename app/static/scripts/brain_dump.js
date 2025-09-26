@@ -249,25 +249,35 @@ function insertCode() {
     document.getElementById('editor').focus();
 }
 
-// Insert link with better UX
+// Insert link with modal
 function insertLink() {
     const selection = window.getSelection();
-    const selectedText = selection.toString();
+    const selectedText = selection.toString().trim();
     
-    const url = prompt('Enter URL:', 'https://');
-    if (url && url !== 'https://') {
-        if (selectedText) {
-            // Wrap selected text in link
-            document.execCommand('createLink', false, url);
-        } else {
-            // Insert link with text
-            const linkText = prompt('Enter link text:', 'Link');
-            if (linkText) {
-                document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${linkText}</a>&nbsp;`);
-            }
-        }
+    // Store selection for later use
+    window.linkSelection = {
+        selection: selection,
+        selectedText: selectedText,
+        range: selection.rangeCount > 0 ? selection.getRangeAt(0).cloneRange() : null
+    };
+    
+    // Open modal
+    const modal = document.getElementById('linkModal');
+    modal.classList.add('active');
+    
+    // Pre-fill with selected text if any
+    const linkTextInput = document.getElementById('linkTextInput');
+    const linkUrlInput = document.getElementById('linkUrlInput');
+    
+    if (selectedText) {
+        linkTextInput.value = selectedText;
+        linkUrlInput.focus();
+    } else {
+        linkTextInput.focus();
     }
-    document.getElementById('editor').focus();
+    
+    // Clear URL field
+    linkUrlInput.value = '';
 }
 
 // Load notes
@@ -1125,17 +1135,20 @@ if (!document.getElementById('toastStyles')) {
 let isAIAgentMinimized = true; // Start minimized by default
 
 function toggleAIAgent() {
-    const agentContent = document.getElementById('aiAgentContent');
-    const toggleBtn = document.querySelector('.ai-agent-toggle i');
+    const agentPanel = document.getElementById('aiAgentPanel');
+    const toggleBtn = document.querySelector('.ai-toggle-btn');
+    const caret = document.querySelector('.ai-caret');
 
     isAIAgentMinimized = !isAIAgentMinimized;
 
     if (isAIAgentMinimized) {
-        agentContent.classList.add('collapsed');
-        toggleBtn.className = 'ph ph-plus';
+        agentPanel.classList.add('collapsed');
+        toggleBtn.classList.remove('active');
+        caret.className = 'ph ph-caret-down ai-caret';
     } else {
-        agentContent.classList.remove('collapsed');
-        toggleBtn.className = 'ph ph-minus';
+        agentPanel.classList.remove('collapsed');
+        toggleBtn.classList.add('active');
+        caret.className = 'ph ph-caret-up ai-caret';
     }
 }
 
@@ -1292,3 +1305,126 @@ function saveCurrentNote() {
         saveNote();
     }
 }
+
+// Link Modal Functions
+function insertLinkFromModal() {
+    const linkText = document.getElementById('linkTextInput').value.trim();
+    const linkUrl = document.getElementById('linkUrlInput').value.trim();
+    const openInNewTab = document.getElementById('linkTargetBlank').checked;
+    
+    if (!linkUrl) {
+        showToast('Please enter a URL', 'error');
+        document.getElementById('linkUrlInput').focus();
+        return;
+    }
+    
+    if (!linkText) {
+        showToast('Please enter link text', 'error');
+        document.getElementById('linkTextInput').focus();
+        return;
+    }
+    
+    // Validate URL format
+    let finalUrl = linkUrl;
+    if (!linkUrl.startsWith('http://') && !linkUrl.startsWith('https://')) {
+        finalUrl = 'https://' + linkUrl;
+    }
+    
+    try {
+        new URL(finalUrl); // This will throw if URL is invalid
+    } catch (e) {
+        showToast('Please enter a valid URL', 'error');
+        document.getElementById('linkUrlInput').focus();
+        return;
+    }
+    
+    // Create the link HTML
+    const target = openInNewTab ? ' target="_blank"' : '';
+    const linkHTML = `<a href="${finalUrl}"${target}>${linkText}</a>&nbsp;`;
+    
+    // Restore selection and insert link
+    const editor = document.getElementById('editor');
+    editor.focus();
+    
+    if (window.linkSelection && window.linkSelection.range) {
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(window.linkSelection.range);
+        
+        if (window.linkSelection.selectedText) {
+            // Replace selected text with link
+            document.execCommand('insertHTML', false, linkHTML);
+        } else {
+            // Insert link at cursor position
+            document.execCommand('insertHTML', false, linkHTML);
+        }
+    } else {
+        // Fallback: insert at end
+        document.execCommand('insertHTML', false, linkHTML);
+    }
+    
+    // Close modal and clean up
+    closeLinkModal();
+    showToast('Link inserted successfully!', 'success');
+}
+
+function closeLinkModal() {
+    const modal = document.getElementById('linkModal');
+    modal.classList.remove('active');
+    
+    // Clear inputs
+    document.getElementById('linkTextInput').value = '';
+    document.getElementById('linkUrlInput').value = '';
+    document.getElementById('linkTargetBlank').checked = true;
+    
+    // Clean up stored selection
+    window.linkSelection = null;
+    
+    // Return focus to editor
+    document.getElementById('editor').focus();
+}
+
+// Add event listeners for link modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Close modal when clicking outside
+    const linkModal = document.getElementById('linkModal');
+    if (linkModal) {
+        linkModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLinkModal();
+            }
+        });
+    }
+    
+    // Handle Enter key in link inputs
+    const linkTextInput = document.getElementById('linkTextInput');
+    const linkUrlInput = document.getElementById('linkUrlInput');
+    
+    if (linkTextInput) {
+        linkTextInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                linkUrlInput.focus();
+            }
+        });
+    }
+    
+    if (linkUrlInput) {
+        linkUrlInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                insertLinkFromModal();
+            }
+        });
+    }
+    
+    // Handle Escape key to close modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const linkModal = document.getElementById('linkModal');
+            if (linkModal && linkModal.classList.contains('active')) {
+                closeLinkModal();
+            }
+        }
+    });
+});
