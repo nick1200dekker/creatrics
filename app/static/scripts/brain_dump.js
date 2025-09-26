@@ -300,7 +300,15 @@ function displayNotes(notesToShow) {
     }
     
     notesList.innerHTML = notesToShow.map(note => {
-        const preview = stripHtml(note.content || '').substring(0, 100);
+        // Better preview extraction that preserves structure
+        let preview = note.content || '';
+        // Remove HTML tags but preserve line breaks
+        preview = preview.replace(/<br\s*\/?>/gi, ' ');
+        preview = preview.replace(/<\/p>/gi, ' ');
+        preview = preview.replace(/<\/div>/gi, ' ');
+        preview = stripHtml(preview).trim();
+        // Normalize multiple spaces
+        preview = preview.replace(/\s+/g, ' ').substring(0, 100);
         const tags = note.tags || [];
         
         // Format date

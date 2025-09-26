@@ -447,7 +447,16 @@
                     <div class="meta-item">
                         <i class="ph ph-calendar"></i>
                         {{ note.shared_at[:10] }}
+                    <div class="toolbar-separator"></div>
+                
+                <div class="toolbar-group">
+                    <div class="color-picker-wrapper">
+                        <input type="color" id="colorPicker" onchange="changeTextColor(this.value)" style="position: absolute; opacity: 0; width: 34px; height: 34px; cursor: pointer;">
+                        <button class="toolbar-btn" onclick="document.getElementById('colorPicker').click()" title="Text Color">
+                            <i class="ph ph-palette"></i>
+                        </button>
                     </div>
+                </div>
                     <div class="meta-item">
                         <i class="ph ph-eye"></i>
                         <span id="viewCount">{{ note.views }}</span> views
@@ -547,7 +556,7 @@
             <div class="cta">
                 <h3>Create Your Own Smart Notes</h3>
                 <p>Organize your ideas, share knowledge, and boost your content creation</p>
-                <a href="https://creatrics.com/brain-dump" class="cta-button">
+                <a href="https://creatrics.com" class="cta-button">
                     <i class="ph ph-rocket-launch"></i>
                     Try Creatrics Free
                 </a>
@@ -582,6 +591,11 @@
             } else {
                 document.execCommand(command, false, null);
             }
+            document.getElementById('noteContent').focus();
+        }
+
+        function changeTextColor(color) {
+            document.execCommand('foreColor', false, color);
             document.getElementById('noteContent').focus();
         }
 
