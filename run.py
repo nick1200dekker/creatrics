@@ -104,6 +104,9 @@ from app.routes.accounts.youtube import bp as youtube_bp
 
 # Import X (Twitter) blueprints
 from app.routes.x_post_editor import bp as x_post_editor_bp
+from app.routes.reply_guy import bp as reply_guy_bp
+from app.routes.clip_spaces import bp as clip_spaces_bp
+from app.routes.niche import bp as niche_bp
 from app.routes.credits_history import bp as credits_history_bp
 
 # Import Cron blueprint
@@ -127,6 +130,9 @@ app.register_blueprint(analytics_bp)
 app.register_blueprint(accounts_bp)
 app.register_blueprint(youtube_bp)
 app.register_blueprint(x_post_editor_bp)
+app.register_blueprint(reply_guy_bp)
+app.register_blueprint(clip_spaces_bp)
+app.register_blueprint(niche_bp)
 app.register_blueprint(credits_history_bp)
 
 # Register Cron blueprint

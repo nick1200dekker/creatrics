@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% set check_auth = true %}
-{% block title %}Content Wiki - Coming Soon - Creatrics{% endblock %}
+{% block title %}Niche - Coming Soon - Creatrics{% endblock %}
 
 {% block seo_meta %}
-<meta name="description" content="Content Wiki - Build your content knowledge base. Store ideas, research, and references all in one place. Coming soon to Creatrics.">
-<meta name="keywords" content="content wiki, knowledge base, video research, content ideas, content planning">
+<meta name="description" content="Niche - AI tool to discover what's hot on your timeline and in your niche. Coming soon to Creatrics.">
+<meta name="keywords" content="X trends, Twitter trends, niche discovery, timeline analysis, trending topics">
 {% endblock %}
 
 {% block additional_styles %}
@@ -42,8 +42,8 @@
         left: -50%;
         width: 200%;
         height: 200%;
-        background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+        background: radial-gradient(circle at 20% 80%, rgba(236, 72, 153, 0.03) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.03) 0%, transparent 50%);
         pointer-events: none;
     }
 
@@ -275,8 +275,8 @@
     <!-- Header -->
     <div class="coming-soon-header">
         <h1 class="coming-soon-title">
-            <i class="ph ph-books"></i>
-            Content Wiki
+            <i class="ph ph-compass"></i>
+            Niche
         </h1>
     </div>
 
@@ -284,23 +284,23 @@
     <div class="coming-soon-content">
         <div class="coming-soon-hero">
             <div class="coming-soon-icon">
-                <i class="ph ph-books"></i>
+                <i class="ph ph-compass"></i>
             </div>
             
             <div class="coming-soon-badge">Coming Soon</div>
             
-            <h1>Build Your <span class="gradient-text">Knowledge Base</span></h1>
+            <h1>Discover What's <span class="gradient-text">Hot</span> in Your Niche</h1>
             
-            <p>Create a centralized hub for all your content research, ideas, and references. Build your own wiki to organize information and never lose a great idea again.</p>
+            <p>AI-powered timeline analysis to identify trending topics, viral content patterns, and opportunities in your specific niche and community.</p>
             
             <div class="coming-soon-cta">
                 <a href="{{ url_for('home.dashboard') }}" class="btn-primary">
                     <i class="ph ph-house"></i>
                     Back to Dashboard
                 </a>
-                <a href="{{ url_for('brain_dump.brain_dump') }}" class="btn-secondary">
-                    <i class="ph ph-brain"></i>
-                    Try Brain Dump
+                <a href="{{ url_for('analytics.index', platform='x') }}" class="btn-secondary">
+                    <i class="ph ph-chart-bar"></i>
+                    Try Analytics
                 </a>
             </div>
         </div>
@@ -308,18 +308,18 @@
         <!-- Features Preview -->
         <div class="features-preview">
             <div class="feature-preview-card">
-                <h3><i class="ph ph-note-pencil"></i>Smart Notes</h3>
-                <p>Organize research notes with tags, categories, and powerful search capabilities.</p>
+                <h3><i class="ph ph-trending-up"></i>Trend Detection</h3>
+                <p>Identify emerging trends and viral content patterns before they explode mainstream.</p>
             </div>
             
             <div class="feature-preview-card">
-                <h3><i class="ph ph-link"></i>Link References</h3>
-                <p>Connect related topics and build knowledge networks with cross-references.</p>
+                <h3><i class="ph ph-users-three"></i>Niche Analysis</h3>
+                <p>Deep dive into your specific community to understand what resonates with your audience.</p>
             </div>
             
             <div class="feature-preview-card">
-                <h3><i class="ph ph-database"></i>Content Library</h3>
-                <p>Store and organize all your content assets, research, and inspiration in one place.</p>
+                <h3><i class="ph ph-lightning"></i>Opportunity Alerts</h3>
+                <p>Get notified when there's a perfect moment to join conversations and gain visibility.</p>
             </div>
         </div>
     </div>

@@ -719,6 +719,30 @@ html.dark .coming-soon-card {
                     <p>Monitor growth metrics</p>
                 </div>
             </a>
+
+            <!-- Reply Guy -->
+            <a href="{{ url_for('reply_guy.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-chat-circle-text feature-icon-inline"></i>Reply Guy</h3>
+                    <p>Create engaging replies</p>
+                </div>
+            </a>
+
+            <!-- Clip Spaces -->
+            <a href="{{ url_for('clip_spaces.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-scissors feature-icon-inline"></i>Clip Spaces</h3>
+                    <p>Clip hot moments from Spaces</p>
+                </div>
+            </a>
+
+            <!-- Niche -->
+            <a href="{{ url_for('niche.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-compass feature-icon-inline"></i>Niche</h3>
+                    <p>Discover what's hot on timeline</p>
+                </div>
+            </a>
         </div>
     </div>
 

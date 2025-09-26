@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% set check_auth = true %}
-{% block title %}Content Wiki - Coming Soon - Creatrics{% endblock %}
+{% block title %}Reply Guy - Coming Soon - Creatrics{% endblock %}
 
 {% block seo_meta %}
-<meta name="description" content="Content Wiki - Build your content knowledge base. Store ideas, research, and references all in one place. Coming soon to Creatrics.">
-<meta name="keywords" content="content wiki, knowledge base, video research, content ideas, content planning">
+<meta name="description" content="Reply Guy - AI-powered tool to help you create engaging replies on X (Twitter). Coming soon to Creatrics.">
+<meta name="keywords" content="X replies, Twitter replies, AI reply generator, social media engagement, reply guy tool">
 {% endblock %}
 
 {% block additional_styles %}
@@ -124,7 +124,7 @@
     }
 
     .coming-soon-hero .gradient-text {
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -275,8 +275,8 @@
     <!-- Header -->
     <div class="coming-soon-header">
         <h1 class="coming-soon-title">
-            <i class="ph ph-books"></i>
-            Content Wiki
+            <i class="ph ph-chat-circle-text"></i>
+            Reply Guy
         </h1>
     </div>
 
@@ -284,23 +284,23 @@
     <div class="coming-soon-content">
         <div class="coming-soon-hero">
             <div class="coming-soon-icon">
-                <i class="ph ph-books"></i>
+                <i class="ph ph-chat-circle-text"></i>
             </div>
             
             <div class="coming-soon-badge">Coming Soon</div>
             
-            <h1>Build Your <span class="gradient-text">Knowledge Base</span></h1>
+            <h1>Master the Art of <span class="gradient-text">Engaging Replies</span></h1>
             
-            <p>Create a centralized hub for all your content research, ideas, and references. Build your own wiki to organize information and never lose a great idea again.</p>
+            <p>AI-powered tool to help you craft perfect replies that get noticed, build relationships, and grow your X following organically.</p>
             
             <div class="coming-soon-cta">
                 <a href="{{ url_for('home.dashboard') }}" class="btn-primary">
                     <i class="ph ph-house"></i>
                     Back to Dashboard
                 </a>
-                <a href="{{ url_for('brain_dump.brain_dump') }}" class="btn-secondary">
-                    <i class="ph ph-brain"></i>
-                    Try Brain Dump
+                <a href="{{ url_for('x_post_editor.x_post_editor') }}" class="btn-secondary">
+                    <i class="ph ph-pencil-simple"></i>
+                    Try Post Editor
                 </a>
             </div>
         </div>
@@ -308,18 +308,18 @@
         <!-- Features Preview -->
         <div class="features-preview">
             <div class="feature-preview-card">
-                <h3><i class="ph ph-note-pencil"></i>Smart Notes</h3>
-                <p>Organize research notes with tags, categories, and powerful search capabilities.</p>
+                <h3><i class="ph ph-magic-wand"></i>Smart Reply Generation</h3>
+                <p>Generate contextual replies that add value to conversations and showcase your expertise.</p>
             </div>
             
             <div class="feature-preview-card">
-                <h3><i class="ph ph-link"></i>Link References</h3>
-                <p>Connect related topics and build knowledge networks with cross-references.</p>
+                <h3><i class="ph ph-target"></i>Engagement Optimization</h3>
+                <p>Craft replies that encourage further discussion and help you build meaningful connections.</p>
             </div>
             
             <div class="feature-preview-card">
-                <h3><i class="ph ph-database"></i>Content Library</h3>
-                <p>Store and organize all your content assets, research, and inspiration in one place.</p>
+                <h3><i class="ph ph-trending-up"></i>Growth Focused</h3>
+                <p>Turn replies into opportunities to grow your following and establish thought leadership.</p>
             </div>
         </div>
     </div>

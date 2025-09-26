@@ -1056,6 +1056,27 @@
                     <i class="ph ph-chart-bar"></i>
                     <span>Analytics</span>
                 </a>
+
+                <a href="{{ url_for('reply_guy.index') }}"
+                   class="nav-subitem {% if request.endpoint and 'reply_guy' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-chat-circle-text"></i>
+                    <span>Reply Guy</span>
+                </a>
+
+                <a href="{{ url_for('clip_spaces.index') }}"
+                   class="nav-subitem {% if request.endpoint and 'clip_spaces' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-scissors"></i>
+                    <span>Clip Spaces</span>
+                </a>
+
+                <a href="{{ url_for('niche.index') }}"
+                   class="nav-subitem {% if request.endpoint and 'niche' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-compass"></i>
+                    <span>Niche</span>
+                </a>
             </div>
         </div>
 
