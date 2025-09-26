@@ -11,12 +11,13 @@ from datetime import datetime
 
 from . import bp
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.services.firebase_service import UserService
 from app.scripts.accounts.x_analytics import XAnalytics
 
 def get_user_posts_collection():
     """Get the user's posts collection reference"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     try:
         from firebase_admin import firestore
         db = firestore.client()
@@ -89,10 +90,11 @@ def update_media_urls_in_posts(user_id: str, posts: list):
 @bp.route('/')
 @bp.route('/x_post_editor')  # Add alias route for base template compatibility
 @auth_required
+@require_permission('x_post_editor')
 def index():
     """Main Post Editor view with pagination support"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         # Get first 10 drafts and total count for initial load
         recent_drafts = get_user_drafts_safe(user_id, limit=10, offset=0)
         total_count = get_total_drafts_count(user_id)
@@ -137,16 +139,18 @@ def index():
 # Add alias function for base template compatibility
 @bp.route('/editor')
 @auth_required
+@require_permission('x_post_editor')
 def x_post_editor():
     """Alias for the main post editor - for base template compatibility"""
     return index()
 
 @bp.route('/drafts', methods=['GET'])
 @auth_required
+@require_permission('x_post_editor')
 def get_drafts():
     """Get drafts for the current user with pagination support"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Get pagination parameters
         offset = int(request.args.get('offset', 0))
@@ -182,10 +186,11 @@ def get_drafts():
 
 @bp.route('/drafts/<draft_id>', methods=['GET'])
 @auth_required
+@require_permission('x_post_editor')
 def get_draft(draft_id):
     """Get a specific draft by ID"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         current_app.logger.info(f"Loading draft {draft_id} for user {user_id}")
         
         collection = get_user_posts_collection()
@@ -226,13 +231,14 @@ def get_draft(draft_id):
 
 @bp.route('/drafts/<draft_id>/pre-ai-version', methods=['GET'])
 @auth_required
+@require_permission('x_post_editor')
 def get_pre_ai_version(draft_id):
     """Get the pre-AI version of a draft for revert functionality"""
     try:
         from app.scripts.post_editor.post_editor import PostEditor
         
         editor = PostEditor()
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         pre_ai_posts = editor.get_pre_ai_version(user_id, draft_id)
         
@@ -254,6 +260,7 @@ def get_pre_ai_version(draft_id):
 
 @bp.route('/drafts/new', methods=['POST'])
 @auth_required
+@require_permission('x_post_editor')
 def create_new_draft():
     """Create a new empty draft"""
     try:
@@ -288,13 +295,14 @@ def create_new_draft():
 
 @bp.route('/drafts/<draft_id>', methods=['DELETE'])
 @auth_required
+@require_permission('x_post_editor')
 def delete_draft(draft_id):
     """Delete a specific draft and all its versions"""
     try:
         from firebase_admin import firestore
         from app.scripts.post_editor.post_editor import PostEditor
         
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         db = firestore.client()
         editor = PostEditor()
         
@@ -348,6 +356,7 @@ def delete_draft(draft_id):
 
 @bp.route('/upload-media', methods=['POST'])
 @auth_required
+@require_permission('x_post_editor')
 def upload_media():
     """Upload media files (images, videos, GIFs) using Firebase Storage"""
     try:
@@ -383,7 +392,7 @@ def upload_media():
         editor = PostEditor()
         
         media_url = editor.save_media_to_storage(
-            user_id=g.user.get('id'),
+            user_id=get_workspace_user_id(),
             media_data=media_data,
             filename=filename,
             media_type=media_type,
@@ -413,6 +422,7 @@ def upload_media():
 
 @bp.route('/delete-media', methods=['POST'])
 @auth_required
+@require_permission('x_post_editor')
 def delete_media():
     """Delete media files from Firebase Storage"""
     try:
@@ -428,7 +438,7 @@ def delete_media():
         from app.scripts.post_editor.post_editor import PostEditor
         editor = PostEditor()
         
-        success = editor.delete_media_from_storage(g.user.get('id'), filename)
+        success = editor.delete_media_from_storage(get_workspace_user_id(), filename)
         
         if success:
             return jsonify({
@@ -450,6 +460,7 @@ def delete_media():
 # Legacy endpoints for backward compatibility (redirect to new media endpoints)
 @bp.route('/upload-image', methods=['POST'])
 @auth_required
+@require_permission('x_post_editor')
 def upload_image():
     """Legacy image upload endpoint - redirects to media upload"""
     try:
@@ -503,12 +514,14 @@ def upload_image():
 
 @bp.route('/delete-image', methods=['POST'])
 @auth_required
+@require_permission('x_post_editor')
 def delete_image():
     """Legacy image delete endpoint - redirects to media delete"""
     return delete_media()  # Same logic, just different endpoint name
 
 @bp.route('/save', methods=['POST'])
 @auth_required
+@require_permission('x_post_editor')
 def save_draft():
     """Save a draft with complete post data including media and update timestamp for reordering"""
     try:
@@ -525,7 +538,7 @@ def save_draft():
             try:
                 from app.scripts.post_editor.post_editor import PostEditor
                 editor = PostEditor()
-                editor.store_pre_ai_version(g.user.get('id'), draft_id, posts)
+                editor.store_pre_ai_version(get_workspace_user_id(), draft_id, posts)
             except Exception as pre_ai_error:
                 current_app.logger.warning(f"Failed to store pre-AI version: {pre_ai_error}")
         
@@ -617,6 +630,7 @@ def save_draft():
 
 @bp.route('/save-fast', methods=['POST'])
 @auth_required
+@require_permission('x_post_editor')
 def save_draft_fast():
     """Fast save for simple content updates with timestamp update for reordering"""
     try:
@@ -685,6 +699,7 @@ def save_draft_fast():
 
 @bp.route('/estimate-cost', methods=['POST'])
 @auth_required
+@require_permission('x_post_editor')
 def estimate_cost():
     """
     CLEAN: Estimate the cost of content generation
@@ -730,9 +745,9 @@ def estimate_cost():
         )
 
         required_credits = cost_estimate['final_cost']
-        current_credits = credits_manager.get_user_credits(g.user.get('id'))
+        current_credits = credits_manager.get_user_credits(get_workspace_user_id())
         has_sufficient = credits_manager.check_sufficient_credits(
-            user_id=g.user.get('id'),
+            user_id=get_workspace_user_id(),
             required_credits=required_credits
         )
 
@@ -753,6 +768,7 @@ def estimate_cost():
 
 @bp.route('/generate', methods=['POST'])
 @auth_required
+@require_permission('x_post_editor')
 def generate_content():
     """
     CLEAN: Generate enhanced content using AI
@@ -787,7 +803,7 @@ def generate_content():
         credits_manager = CreditsManager()
         post_editor = PostEditor()
         
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Step 1: Check credits BEFORE generation
         # Combine all post text for estimation
@@ -861,6 +877,7 @@ def generate_content():
 
 @bp.route('/fetch-x-posts', methods=['POST'])
 @auth_required
+@require_permission('x_post_editor')
 def fetch_x_posts():
     """Fetch X posts for a given username for voice mimicking"""
     try:
@@ -874,7 +891,7 @@ def fetch_x_posts():
             }), 400
 
         # Initialize X Analytics
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         analytics = XAnalytics(user_id=user_id)
 
         # Override the handle temporarily
@@ -961,10 +978,11 @@ def fetch_x_posts():
 
 @bp.route('/custom-voices', methods=['GET'])
 @auth_required
+@require_permission('x_post_editor')
 def get_custom_voices():
     """Get all custom voices for the current user"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         from firebase_admin import firestore
         db = firestore.client()
         
@@ -993,10 +1011,11 @@ def get_custom_voices():
 
 @bp.route('/custom-voices/<username>', methods=['DELETE'])
 @auth_required
+@require_permission('x_post_editor')
 def delete_custom_voice(username):
     """Delete a custom voice"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         from firebase_admin import firestore
         db = firestore.client()
         

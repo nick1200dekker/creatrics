@@ -53,11 +53,14 @@ def inject_supabase_credentials():
 @app.context_processor
 def inject_user_data():
     from flask import g
+    from app.system.auth.permissions import get_active_workspace_data, check_workspace_permission
     context = {}
-    
+
     # Default plan
     context['subscription_plan'] = 'Free Plan'
-    
+    context['workspace_info'] = None
+    context['can_access_teams'] = False
+
     # If authenticated, get actual plan
     if hasattr(g, 'user') and g.user:
         try:
@@ -69,9 +72,21 @@ def inject_user_data():
                 if user_data and 'subscription_plan' in user_data:
                     context['subscription_plan'] = user_data['subscription_plan']
                     app_logger.info(f"Context processor: using plan '{context['subscription_plan']}' from Firebase")
+
+                # Get workspace information
+                workspace_data = get_active_workspace_data()
+                if workspace_data:
+                    context['workspace_info'] = workspace_data
+                    # Use workspace's subscription plan if not owner
+                    if not workspace_data.get('is_owner'):
+                        context['subscription_plan'] = workspace_data.get('subscription_plan', 'Free Plan')
+
+                # Add permission checking function to context
+                context['check_permission'] = check_workspace_permission
+                context['can_access_teams'] = True  # All authenticated users can access teams
         except Exception as e:
             app_logger.warning(f"Error in user_data context processor: {e}")
-    
+
     return context
 
 # Import auth middleware
@@ -109,6 +124,9 @@ from app.routes.clip_spaces import bp as clip_spaces_bp
 from app.routes.niche import bp as niche_bp
 from app.routes.credits_history import bp as credits_history_bp
 
+# Import Teams blueprint
+from app.routes.teams import teams_bp
+
 # Import Cron blueprint
 from app.routes.cron import bp as cron_bp
 
@@ -134,6 +152,7 @@ app.register_blueprint(reply_guy_bp)
 app.register_blueprint(clip_spaces_bp)
 app.register_blueprint(niche_bp)
 app.register_blueprint(credits_history_bp)
+app.register_blueprint(teams_bp)
 
 # Register Cron blueprint
 app.register_blueprint(cron_bp)

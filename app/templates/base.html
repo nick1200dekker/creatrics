@@ -964,6 +964,17 @@
     <div class="logo-section">
         <img src="{{ url_for('static', filename='img/templates/logo.png') }}" alt="Creatrics Logo" class="logo-img">
     </div>
+
+    <!-- Workspace Indicator (if in team workspace) -->
+    {% if workspace_info and not workspace_info.is_owner %}
+    <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-primary); margin-bottom: 0.5rem; background: var(--bg-tertiary);">
+        <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 500; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="ph ph-users-three" style="font-size: 1rem; color: #3B82F6;"></i>
+            <span>Team Workspace</span>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; margin-left: 1.5rem;">{{ workspace_info.owner_email | default('') }}</div>
+    </div>
+    {% endif %}
     
     <!-- Navigation -->
     <nav class="nav-section">
@@ -983,54 +994,68 @@
                 <i class="ph ph-caret-right chevron"></i>
             </div>
             <div class="nav-group-items">
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_script %}
                 <a href="{{ url_for('video_script.video_script') }}"
                    class="nav-subitem {% if request.endpoint and 'video_script' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-scroll"></i>
                     <span>Video Script</span>
                 </a>
+                {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_title %}
                 <a href="{{ url_for('video_title.video_title') }}"
                    class="nav-subitem {% if request.endpoint and 'video_title' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-sparkle"></i>
                     <span>Video Title</span>
                 </a>
+                {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_tags %}
                 <a href="{{ url_for('video_tags.video_tags') }}"
                    class="nav-subitem {% if request.endpoint and 'video_tags' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-hash"></i>
                     <span>Video Tags</span>
                 </a>
+                {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_description %}
                 <a href="{{ url_for('video_description.video_description') }}"
                    class="nav-subitem {% if request.endpoint and 'video_description' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-file-text"></i>
                     <span>Video Description</span>
                 </a>
+                {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.thumbnail %}
                 <a href="{{ url_for('thumbnail.index') }}"
                    class="nav-subitem {% if request.endpoint and 'thumbnail' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-image"></i>
                     <span>Thumbnail</span>
                 </a>
+                {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
                 <a href="{{ url_for('analytics.index', platform='youtube') }}"
                    class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and (request.args.get('platform') == 'youtube' or (not request.args.get('platform') and current_platform == 'youtube')) %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-chart-line"></i>
                     <span>Analytics</span>
                 </a>
+                {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.competitors %}
                 <a href="{{ url_for('competitors.competitors') }}"
                    class="nav-subitem {% if request.endpoint and 'competitors' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-users-three"></i>
                     <span>Competitors</span>
                 </a>
+                {% endif %}
             </div>
         </div>
 
@@ -1043,76 +1068,97 @@
                 <i class="ph ph-caret-right chevron"></i>
             </div>
             <div class="nav-group-items">
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.x_post_editor %}
                 <a href="{{ url_for('x_post_editor.x_post_editor') }}"
                    class="nav-subitem {% if request.endpoint and 'x_post_editor' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-pencil-simple"></i>
                     <span>Post Editor</span>
                 </a>
+                {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
                 <a href="{{ url_for('analytics.index', platform='x') }}"
                    class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and (request.args.get('platform') == 'x' or (not request.args.get('platform') and current_platform == 'x')) %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-chart-bar"></i>
                     <span>Analytics</span>
                 </a>
+                {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.reply_guy %}
                 <a href="{{ url_for('reply_guy.index') }}"
                    class="nav-subitem {% if request.endpoint and 'reply_guy' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-chat-circle-text"></i>
                     <span>Reply Guy</span>
                 </a>
+                {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.clip_spaces %}
                 <a href="{{ url_for('clip_spaces.index') }}"
                    class="nav-subitem {% if request.endpoint and 'clip_spaces' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-scissors"></i>
                     <span>Clip Spaces</span>
                 </a>
+                {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.niche %}
                 <a href="{{ url_for('niche.index') }}"
                    class="nav-subitem {% if request.endpoint and 'niche' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-compass"></i>
                     <span>Niche</span>
                 </a>
+                {% endif %}
             </div>
         </div>
 
+        {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.brain_dump %}
         <a href="{{ url_for('brain_dump.brain_dump') }}"
            class="nav-item {% if request.endpoint and 'brain_dump' in request.endpoint %}active{% endif %}"
            onclick="return BaseApp.checkGuestAccess(event, this)">
             <i class="ph ph-brain"></i>
             <span>Brain Dump</span>
         </a>
+        {% endif %}
+
+        {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.mind_map %}
         <a href="{{ url_for('mind_map.mind_map') }}"
            class="nav-item {% if request.endpoint and 'mind_map' in request.endpoint %}active{% endif %}"
            onclick="return BaseApp.checkGuestAccess(event, this)">
             <i class="ph ph-graph"></i>
             <span>Mind Map</span>
         </a>
+        {% endif %}
 
+        {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.content_wiki %}
         <a href="{{ url_for('content_wiki.content_wiki') }}"
            class="nav-item {% if request.endpoint and 'content_wiki' in request.endpoint %}active{% endif %}"
            onclick="return BaseApp.checkGuestAccess(event, this)">
             <i class="ph ph-books"></i>
             <span>Content Wiki</span>
         </a>
+        {% endif %}
 
+        {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.content_calendar %}
         <a href="{{ url_for('content_calendar.content_calendar') }}"
            class="nav-item {% if request.endpoint and 'content_calendar' in request.endpoint %}active{% endif %}"
            onclick="return BaseApp.checkGuestAccess(event, this)">
             <i class="ph ph-calendar"></i>
             <span>Content Calendar</span>
         </a>
+        {% endif %}
 
+        {% if not workspace_info or workspace_info.is_owner %}
         <a href="{{ url_for('payment.index') }}"
            class="nav-item {% if request.endpoint == 'payment.index' %}active{% endif %}"
            onclick="return BaseApp.checkGuestAccess(event, this)">
             <i class="ph ph-crown"></i>
             <span>Upgrade</span>
         </a>
+        {% endif %}
     </nav>
     
     <!-- Admin Section -->

@@ -362,10 +362,10 @@ def auth_middleware():
     
     # Store user info in g for the request
     g.user_id = payload.get('sub')
-    
+
     # Initialize basic user data from JWT
     g.user = {
-        'id': payload.get('sub'), 
+        'id': payload.get('sub'),
         'data': {
             'email': payload.get('email'),
             'username': payload.get('user_metadata', {}).get('username'),
@@ -374,41 +374,87 @@ def auth_middleware():
         'jwt_claims': payload,
         'is_guest': False
     }
-    
+
     # IMPORTANT - Load user data from Firebase immediately to ensure correct subscription plan
     try:
         # Import here to avoid circular imports
-        from app.system.services.firebase_service import UserService
-        
+        from app.system.services.firebase_service import UserService, db
+
         # Get user data directly from Firebase
         user_data = UserService.get_user(g.user_id)
-        
+
         if user_data and isinstance(user_data, dict):
             # Create data dict if not exists
             if 'data' not in g.user:
                 g.user['data'] = {}
-                
+
             # Update all user data in g.user
             if 'subscription_plan' in user_data:
                 # CRITICAL: Set both in the nested dict and directly to ensure template access
                 g.user['data']['subscription_plan'] = user_data['subscription_plan']
                 g.user['subscription_plan'] = user_data['subscription_plan']
                 logger.info(f"Loaded subscription plan from Firebase for {request.path}: {user_data['subscription_plan']}")
-                
+
             if 'credits' in user_data:
                 g.user['data']['credits'] = user_data['credits']
                 g.user['credits'] = user_data['credits']
-                
+
             if 'name' in user_data and not g.user['data'].get('name'):
                 g.user['data']['name'] = user_data['name']
                 g.user['name'] = user_data['name']
-                
+
             if 'username' in user_data and not g.user['data'].get('username'):
                 g.user['data']['username'] = user_data['username']
                 g.user['username'] = user_data['username']
+
+        # Check for active workspace from cookie/session
+        workspace_id = request.cookies.get('active_workspace_id', g.user_id)
+
+        # Verify access to workspace if not own workspace
+        if workspace_id and workspace_id != g.user_id:
+            # Check if user is a team member with active status
+            if db:
+                membership_query = db.collection('team_members') \
+                    .where('member_id', '==', g.user_id) \
+                    .where('owner_id', '==', workspace_id) \
+                    .where('status', '==', 'active') \
+                    .limit(1).get()
+
+                membership_list = list(membership_query)
+                if membership_list:
+                    membership = membership_list[0].to_dict()
+                    g.active_workspace_id = workspace_id
+                    g.workspace_permissions = membership.get('permissions', {})
+                    g.workspace_role = membership.get('role', 'member')
+
+                    # Load workspace owner data for credits and subscription
+                    workspace_user_data = UserService.get_user(workspace_id)
+                    if workspace_user_data:
+                        g.workspace_data = {
+                            'credits': workspace_user_data.get('credits'),
+                            'subscription_plan': workspace_user_data.get('subscription_plan'),
+                            'email': workspace_user_data.get('email', '')
+                        }
+                else:
+                    # No access, use own workspace
+                    g.active_workspace_id = g.user_id
+                    g.workspace_permissions = {}
+                    g.workspace_role = 'owner'
+            else:
+                g.active_workspace_id = g.user_id
+                g.workspace_permissions = {}
+                g.workspace_role = 'owner'
+        else:
+            g.active_workspace_id = g.user_id
+            g.workspace_permissions = {}
+            g.workspace_role = 'owner'
+
     except Exception as e:
         logger.warning(f"Failed to fetch additional user data from Firebase: {str(e)}")
         # Continue without additional data - we already have basic info from JWT
+        g.active_workspace_id = g.user_id
+        g.workspace_permissions = {}
+        g.workspace_role = 'owner'
     
     logger.debug(f"Auth middleware successful for user {g.user_id} on path: {request.path}")
     return None

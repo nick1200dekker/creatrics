@@ -1,6 +1,7 @@
 from flask import render_template, request, jsonify, g
 from . import bp
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_description.video_description import VideoDescriptionGenerator
 from firebase_admin import firestore
@@ -10,12 +11,14 @@ logger = logging.getLogger(__name__)
 
 @bp.route('/video-description')
 @auth_required
+@require_permission('video_description')
 def video_description():
     """Video description generator page"""
     return render_template('video_description/index.html')
 
 @bp.route('/api/generate-video-description', methods=['POST'])
 @auth_required
+@require_permission('video_description')
 def generate_video_description():
     """Generate video description using AI with proper credit management"""
     try:
@@ -31,7 +34,7 @@ def generate_video_description():
         credits_manager = CreditsManager()
         description_generator = VideoDescriptionGenerator()
 
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Step 1: Check credits before generation
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
@@ -103,6 +106,7 @@ def generate_video_description():
 # Save reference description
 @bp.route('/api/save-reference-description', methods=['POST'])
 @auth_required
+@require_permission('video_description')
 def save_reference_description():
     """Save user's reference description to Firestore"""
     try:
@@ -117,7 +121,7 @@ def save_reference_description():
         if not reference_description:
             return jsonify({'success': False, 'error': 'No reference description provided'}), 400
 
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Save to Firestore
         doc_ref = db.collection('users').document(user_id)
@@ -138,6 +142,7 @@ def save_reference_description():
 # Get reference description
 @bp.route('/api/get-reference-description', methods=['GET'])
 @auth_required
+@require_permission('video_description')
 def get_reference_description():
     """Get user's saved reference description from Firestore"""
     try:
@@ -146,7 +151,7 @@ def get_reference_description():
         if not db:
             return jsonify({'success': False, 'error': 'Database not available'}), 500
 
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Get from Firestore
         doc_ref = db.collection('users').document(user_id)
@@ -173,6 +178,7 @@ def get_reference_description():
 # Clear/Delete reference description
 @bp.route('/api/clear-reference-description', methods=['POST', 'DELETE'])
 @auth_required
+@require_permission('video_description')
 def clear_reference_description():
     """Clear user's reference description from Firestore"""
     try:
@@ -181,7 +187,7 @@ def clear_reference_description():
         if not db:
             return jsonify({'success': False, 'error': 'Database not available'}), 500
 
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Clear from Firestore
         doc_ref = db.collection('users').document(user_id)
@@ -202,6 +208,7 @@ def clear_reference_description():
 # Legacy endpoint compatibility
 @bp.route('/api/video-description/generate', methods=['POST'])
 @auth_required
+@require_permission('video_description')
 def generate_video_description_legacy():
     """Legacy endpoint - redirects to new endpoint"""
     return generate_video_description()

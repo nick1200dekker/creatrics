@@ -1,6 +1,7 @@
 from flask import render_template, request, jsonify, g
 from . import bp
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_title.video_title import VideoTitleGenerator
 import logging
@@ -9,12 +10,14 @@ logger = logging.getLogger(__name__)
 
 @bp.route('/video-title')
 @auth_required
+@require_permission('video_title')
 def video_title():
     """Video title generator page"""
     return render_template('video_title/index.html')
 
 @bp.route('/api/generate-video-titles', methods=['POST'])
 @auth_required
+@require_permission('video_title')
 def generate_video_titles():
     """Generate video titles using AI with proper credit management"""
     try:
@@ -37,7 +40,7 @@ def generate_video_titles():
         credits_manager = CreditsManager()
         title_generator = VideoTitleGenerator()
 
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Step 1: Check credits before generation
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
@@ -105,6 +108,7 @@ def generate_video_titles():
 
 @bp.route('/api/video-title/analyze', methods=['POST'])
 @auth_required
+@require_permission('video_title')
 def analyze_title():
     """Analyze a video title for SEO and engagement potential"""
     try:

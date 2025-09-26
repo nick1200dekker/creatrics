@@ -1,6 +1,7 @@
 from flask import render_template, request, jsonify, g
 from . import bp
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_script.video_script import VideoScriptGenerator
 from app.system.services.firebase_service import db
@@ -12,12 +13,14 @@ logger = logging.getLogger(__name__)
 
 @bp.route('/video-script')
 @auth_required
+@require_permission('video_script')
 def video_script():
     """Video script generator page"""
     return render_template('video_script/index.html')
 
 @bp.route('/api/generate-video-script', methods=['POST'])
 @auth_required
+@require_permission('video_script')
 def generate_video_script():
     """Generate video script using AI with proper credit management"""
     try:
@@ -34,7 +37,7 @@ def generate_video_script():
         credits_manager = CreditsManager()
         script_generator = VideoScriptGenerator()
 
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Step 1: Check credits before generation
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
@@ -106,17 +109,19 @@ def generate_video_script():
 # Legacy endpoint compatibility
 @bp.route('/api/video-script/generate', methods=['POST'])
 @auth_required
+@require_permission('video_script')
 def generate_video_script_legacy():
     """Legacy endpoint - redirects to new endpoint"""
     return generate_video_script()
 
 @bp.route('/api/video-script/save', methods=['POST'])
 @auth_required
+@require_permission('video_script')
 def save_video_script():
     """Save video script to Firebase"""
     try:
         data = request.json
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Get required fields
         title = data.get('title', '').strip()
@@ -168,10 +173,11 @@ def save_video_script():
 
 @bp.route('/api/video-script/list', methods=['GET'])
 @auth_required
+@require_permission('video_script')
 def list_video_scripts():
     """Get all saved video scripts for the user"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Get all scripts from Firebase
         scripts_ref = db.collection('users').document(user_id).collection('yt_scripts')
@@ -201,10 +207,11 @@ def list_video_scripts():
 
 @bp.route('/api/video-script/<script_id>', methods=['GET'])
 @auth_required
+@require_permission('video_script')
 def get_video_script(script_id):
     """Get a specific video script"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Get script from Firebase
         script_ref = db.collection('users').document(user_id).collection('yt_scripts').document(script_id)
@@ -233,10 +240,11 @@ def get_video_script(script_id):
 
 @bp.route('/api/video-script/<script_id>', methods=['DELETE'])
 @auth_required
+@require_permission('video_script')
 def delete_video_script(script_id):
     """Delete a video script"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Delete script from Firebase
         script_ref = db.collection('users').document(user_id).collection('yt_scripts').document(script_id)
@@ -253,11 +261,12 @@ def delete_video_script(script_id):
 
 @bp.route('/api/video-script/<script_id>', methods=['PUT'])
 @auth_required
+@require_permission('video_script')
 def update_video_script(script_id):
     """Update a video script"""
     try:
         data = request.json
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Get script reference
         script_ref = db.collection('users').document(user_id).collection('yt_scripts').document(script_id)

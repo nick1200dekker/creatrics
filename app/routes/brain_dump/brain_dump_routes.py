@@ -1,6 +1,7 @@
 from flask import render_template, request, jsonify, g, redirect, url_for
 from . import bp
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.services.firebase_service import db
 from datetime import datetime, timedelta, timezone
 import logging
@@ -24,16 +25,19 @@ PRESET_TAGS = [
 
 @bp.route('/brain-dump')
 @auth_required
+@require_permission('brain_dump')
 def brain_dump():
     """Brain Dump main page"""
     return render_template('brain_dump/index.html')
 
 @bp.route('/api/brain-dump/notes', methods=['GET'])
 @auth_required
+@require_permission('brain_dump')
 def get_notes():
-    """Get all notes for the current user"""
+    """Get all notes for the current workspace"""
     try:
-        user_id = str(g.user.get('id'))
+        # Use workspace user ID instead of current user's ID
+        user_id = get_workspace_user_id()
 
         # Get user's notes from Firebase
         notes_ref = db.collection('users').document(user_id).collection('brain_dump')
@@ -64,11 +68,13 @@ def get_notes():
 
 @bp.route('/api/brain-dump/notes', methods=['POST'])
 @auth_required
+@require_permission('brain_dump')
 def create_note():
-    """Create a new note"""
+    """Create a new note in the workspace"""
     try:
         data = request.json or {}
-        user_id = str(g.user.get('id'))
+        # Use workspace user ID
+        user_id = get_workspace_user_id()
 
         # Create new note
         now = datetime.now(timezone.utc).isoformat()
@@ -110,7 +116,7 @@ def create_note():
 def get_note(note_id):
     """Get a specific note"""
     try:
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Get note from Firebase
         note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
@@ -143,7 +149,7 @@ def update_note(note_id):
     """Update an existing note"""
     try:
         data = request.json or {}
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Check if note exists in Firebase
         note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
@@ -208,10 +214,11 @@ def update_note(note_id):
 
 @bp.route('/api/brain-dump/notes/<note_id>', methods=['DELETE'])
 @auth_required
+@require_permission('brain_dump')
 def delete_note(note_id):
     """Delete a note"""
     try:
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Check if note exists in Firebase
         note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
@@ -254,7 +261,7 @@ def toggle_favorite(note_id):
     """Toggle favorite status of a note"""
     try:
         data = request.json or {}
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Check if note exists in Firebase
         note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
@@ -297,7 +304,7 @@ def search_notes():
     """Search notes with query parameter"""
     try:
         query = request.args.get('q', '').lower().strip()
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Get all user's notes from Firebase
         notes_ref = db.collection('users').document(user_id).collection('brain_dump')
@@ -349,7 +356,7 @@ def search_notes():
 def get_all_tags():
     """Get all unique tags used by the user"""
     try:
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Get all user's notes from Firebase
         notes_ref = db.collection('users').document(user_id).collection('brain_dump')
@@ -385,7 +392,7 @@ def get_all_tags():
 def share_note(note_id):
     """Create a public share link for a note with expiry options"""
     try:
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
         data = request.get_json() or {}
         permission = data.get('permission', 'view')  # Default to view-only
         expiry_days = data.get('expiry_days', 30)  # Default 30 days
@@ -460,7 +467,7 @@ def share_note(note_id):
 def unshare_note(note_id):
     """Remove public share link for a note"""
     try:
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Get the note
         note_ref = db.collection('users').document(user_id).collection('brain_dump').document(note_id)
@@ -664,7 +671,7 @@ def export_notes():
         data = request.json or {}
         format_type = data.get('format', 'json').lower()
         note_ids = data.get('note_ids', [])
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Get notes from Firebase
         notes_ref = db.collection('users').document(user_id).collection('brain_dump')
@@ -797,7 +804,7 @@ def export_notes():
 def get_stats():
     """Get user's notes statistics"""
     try:
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Get all user's notes from Firebase
         notes_ref = db.collection('users').document(user_id).collection('brain_dump')
@@ -865,7 +872,7 @@ def import_notes():
     try:
         data = request.json or {}
         imported_notes = data.get('notes', [])
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Get Firebase reference
         notes_ref = db.collection('users').document(user_id).collection('brain_dump')
@@ -928,7 +935,7 @@ def modify_note_with_ai():
         # Initialize credits manager
         from app.system.credits.credits_manager import CreditsManager
         credits_manager = CreditsManager()
-        user_id = str(g.user.get('id'))
+        user_id = get_workspace_user_id()
 
         # Step 1: Check credits before generation
         combined_text = f"{prompt}\n{content}"

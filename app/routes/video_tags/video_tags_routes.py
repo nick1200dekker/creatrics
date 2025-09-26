@@ -1,6 +1,7 @@
 from flask import render_template, request, jsonify, g
 from . import bp
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_tags.video_tags import VideoTagsGenerator
 import logging
@@ -9,12 +10,14 @@ logger = logging.getLogger(__name__)
 
 @bp.route('/video-tags')
 @auth_required
+@require_permission('video_tags')
 def video_tags():
     """Video tags generator page"""
     return render_template('video_tags/index.html')
 
 @bp.route('/api/generate-video-tags', methods=['POST'])
 @auth_required
+@require_permission('video_tags')
 def generate_video_tags():
     """Generate video tags using AI with proper credit management"""
     try:
@@ -28,7 +31,7 @@ def generate_video_tags():
         credits_manager = CreditsManager()
         tags_generator = VideoTagsGenerator()
 
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Step 1: Check credits before generation
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
@@ -98,6 +101,7 @@ def generate_video_tags():
 # Legacy endpoint compatibility
 @bp.route('/api/video-tags/generate', methods=['POST'])
 @auth_required
+@require_permission('video_tags')
 def generate_video_tags_legacy():
     """Legacy endpoint - redirects to new endpoint"""
     return generate_video_tags()

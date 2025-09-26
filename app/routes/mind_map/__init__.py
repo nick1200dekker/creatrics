@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, jsonify, request, g
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 import json
 import uuid
 from datetime import datetime
@@ -10,15 +11,17 @@ mind_map_bp = Blueprint('mind_map', __name__)
 
 @mind_map_bp.route('/mind-map')
 @auth_required
+@require_permission('mind_map')
 def mind_map():
     return render_template('mind_map/index.html')
 
 @mind_map_bp.route('/api/mind-map/save', methods=['POST'])
 @auth_required
+@require_permission('mind_map')
 def save_mind_map():
     try:
         data = request.json
-        user_id = getattr(g, 'user_id', None)
+        user_id = get_workspace_user_id()
         
         print(f"Save mind map - user_id: {user_id}")
         print(f"Save mind map - g object: {dir(g)}")
@@ -59,9 +62,10 @@ def save_mind_map():
 
 @mind_map_bp.route('/api/mind-map/load')
 @auth_required
+@require_permission('mind_map')
 def load_mind_map():
     try:
-        user_id = getattr(g, 'user_id', None)
+        user_id = get_workspace_user_id()
         
         print(f"Load mind map - user_id: {user_id}")
         print(f"Load mind map - g object: {dir(g)}")
@@ -118,6 +122,7 @@ def load_mind_map():
 
 @mind_map_bp.route('/api/mind-map/list')
 @auth_required
+@require_permission('mind_map')
 def list_mind_maps():
     try:
         # Here you would fetch user's mind maps from database

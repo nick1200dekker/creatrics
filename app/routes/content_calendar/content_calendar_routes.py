@@ -5,20 +5,23 @@ import uuid
 
 from app.routes.content_calendar import bp
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
 
 @bp.route('/content-calendar')
 @auth_required
+@require_permission('content_calendar')
 def content_calendar():
     """Render the Content Calendar page"""
     return render_template('content_calendar/index.html')
 
 @bp.route('/content-calendar/api/events', methods=['GET'])
 @auth_required
+@require_permission('content_calendar')
 def get_events():
     """API endpoint to get all calendar events"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
@@ -33,10 +36,11 @@ def get_events():
 
 @bp.route('/content-calendar/api/event', methods=['POST'])
 @auth_required
+@require_permission('content_calendar')
 def create_event():
     """API endpoint to create a new calendar event"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Get form data
         data = request.json
@@ -77,10 +81,11 @@ def create_event():
 
 @bp.route('/content-calendar/api/event/<event_id>', methods=['PUT'])
 @auth_required
+@require_permission('content_calendar')
 def update_event(event_id):
     """API endpoint to update an existing calendar event"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Get form data
         data = request.json
@@ -147,10 +152,11 @@ def update_event(event_id):
 
 @bp.route('/content-calendar/api/event/<event_id>', methods=['DELETE'])
 @auth_required
+@require_permission('content_calendar')
 def delete_event(event_id):
     """API endpoint to delete a calendar event"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
@@ -168,10 +174,11 @@ def delete_event(event_id):
 
 @bp.route('/content-calendar/api/event/<event_id>', methods=['GET'])
 @auth_required
+@require_permission('content_calendar')
 def get_event(event_id):
     """API endpoint to get a specific event"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
@@ -189,10 +196,11 @@ def get_event(event_id):
 
 @bp.route('/content-calendar/api/event/<event_id>/comment', methods=['POST'])
 @auth_required
+@require_permission('content_calendar')
 def add_comment(event_id):
     """API endpoint to add a comment to an event"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Get form data
         data = request.json
@@ -217,10 +225,11 @@ def add_comment(event_id):
 
 @bp.route('/content-calendar/api/event/<event_id>/status', methods=['PUT'])
 @auth_required
+@require_permission('content_calendar')
 def update_event_status(event_id):
     """API endpoint to update event status"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Get form data
         data = request.json
@@ -250,10 +259,11 @@ def update_event_status(event_id):
 
 @bp.route('/content-calendar/api/event/<event_id>/notes', methods=['PUT'])
 @auth_required
+@require_permission('content_calendar')
 def update_event_notes(event_id):
     """API endpoint to update event notes"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Get form data
         data = request.json
@@ -274,10 +284,11 @@ def update_event_notes(event_id):
 
 @bp.route('/content-calendar/api/events/status/<status>', methods=['GET'])
 @auth_required
+@require_permission('content_calendar')
 def get_events_by_status(status):
     """API endpoint to get events by status"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Validate status value
         valid_statuses = ['draft', 'in-progress', 'review', 'ready']
@@ -297,10 +308,11 @@ def get_events_by_status(status):
 
 @bp.route('/content-calendar/api/events/date-range', methods=['GET'])
 @auth_required
+@require_permission('content_calendar')
 def get_events_by_date_range():
     """API endpoint to get events within a date range"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Get query parameters
         start_date = request.args.get('start_date')
@@ -323,10 +335,11 @@ def get_events_by_date_range():
 
 @bp.route('/content-calendar/api/analytics/<period>', methods=['GET'])
 @auth_required
+@require_permission('content_calendar')
 def get_analytics(period):
     """API endpoint to get analytics for a specific period"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         
         # Get query parameters for month/year if needed
         month = request.args.get('month', type=int)

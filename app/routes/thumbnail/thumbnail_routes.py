@@ -6,6 +6,7 @@ Supports Nano Banana and SeedDream V4 for image editing
 from flask import render_template, request, jsonify, g
 from app.routes.thumbnail import bp
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.credits.credits_manager import CreditsManager
 from app.system.services.firebase_service import db
 from datetime import datetime
@@ -99,6 +100,7 @@ def preprocess_image_for_thumbnail(image_data):
 
 @bp.route('/thumbnail')
 @auth_required
+@require_permission('thumbnail')
 def index():
     """Render the thumbnail editor page"""
     return render_template('thumbnail/index.html',
@@ -107,10 +109,11 @@ def index():
 
 @bp.route('/thumbnail/generate', methods=['POST'])
 @auth_required
+@require_permission('thumbnail')
 def generate_thumbnail():
     """Generate thumbnail using Fal AI models"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Get form data
         prompt = request.form.get('prompt', '').strip()
@@ -296,10 +299,11 @@ def generate_thumbnail():
 
 @bp.route('/thumbnail/improve-prompt', methods=['POST'])
 @auth_required
+@require_permission('thumbnail')
 def improve_prompt():
     """Improve a thumbnail generation prompt using AI"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         data = request.get_json()
         prompt = data.get('prompt', '').strip()
         model = data.get('model', 'nano-banana')  # Get selected model
@@ -417,10 +421,11 @@ def improve_prompt():
 
 @bp.route('/thumbnail/upscale', methods=['POST'])
 @auth_required
+@require_permission('thumbnail')
 def upscale_image():
     """Upscale an image using Topaz AI model"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Get the image from request
         if 'image' not in request.files:
@@ -551,10 +556,11 @@ def upscale_image():
 
 @bp.route('/thumbnail/history', methods=['GET'])
 @auth_required
+@require_permission('thumbnail')
 def get_thumbnail_history():
     """Get thumbnail generation history for the current user"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Get user's thumbnails from Firebase
         thumbnails_ref = db.collection('users').document(user_id).collection('thumbnails')
@@ -600,10 +606,11 @@ def get_thumbnail_history():
 
 @bp.route('/thumbnail/history/<thumbnail_id>', methods=['DELETE'])
 @auth_required
+@require_permission('thumbnail')
 def delete_thumbnail(thumbnail_id):
     """Delete a specific thumbnail from user's history"""
     try:
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
 
         # Get thumbnail reference
         thumbnail_ref = db.collection('users').document(user_id).collection('thumbnails').document(thumbnail_id)
@@ -635,6 +642,7 @@ def delete_thumbnail(thumbnail_id):
 
 @bp.route('/thumbnail/estimate_cost', methods=['POST'])
 @auth_required
+@require_permission('thumbnail')
 def estimate_cost():
     """Estimate cost for thumbnail generation"""
     try:
@@ -650,7 +658,7 @@ def estimate_cost():
             cost = get_seeddream_cost()
 
         # Get user's current credits
-        user_id = g.user.get('id')
+        user_id = get_workspace_user_id()
         credits_manager = CreditsManager()
         current_credits = credits_manager.get_user_credits(user_id)
 

@@ -1,6 +1,7 @@
 from flask import render_template, g, jsonify, request
 from app.routes.analytics import bp
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.services.firebase_service import UserService
 import firebase_admin
 from firebase_admin import firestore
@@ -12,9 +13,10 @@ logger = logging.getLogger('analytics_routes')
 
 @bp.route('/analytics')
 @auth_required
+@require_permission('analytics')
 def index():
     """Render the Analytics page"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
 
     # Fetch user data to check connected accounts
     user_data = UserService.get_user(user_id)
@@ -39,9 +41,10 @@ def index():
 
 @bp.route('/analytics/x/overview')
 @auth_required
+@require_permission('analytics')
 def x_overview():
     """Get X analytics overview data with timeframe support"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     timeframe = request.args.get('timeframe', '6months')  # Default to 6 months
     
     try:
@@ -144,9 +147,10 @@ def x_overview():
 
 @bp.route('/analytics/x/impressions')
 @auth_required
+@require_permission('analytics')
 def x_impressions():
     """Get X impressions data with daily values and 10-post rolling average"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     timeframe = request.args.get('timeframe', '6months')
     
     try:
@@ -309,9 +313,10 @@ def x_impressions():
 
 @bp.route('/analytics/x/engagement')
 @auth_required
+@require_permission('analytics')
 def x_engagement():
     """Get X engagement data with daily values and 10-post rolling average"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     timeframe = request.args.get('timeframe', '6months')
     
     try:
@@ -493,9 +498,10 @@ def x_engagement():
 
 @bp.route('/analytics/x/posts-count')
 @auth_required
+@require_permission('analytics')
 def x_posts_count():
     """Get daily posts count from posts (weekly for 6 months)"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     timeframe = request.args.get('timeframe', '6months')
     
     try:
@@ -584,9 +590,10 @@ def x_posts_count():
 
 @bp.route('/analytics/x/followers-history')
 @auth_required
+@require_permission('analytics')
 def x_followers_history():
     """Get followers history (simplified to just followers count)"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     timeframe = request.args.get('timeframe', '6months')
     
     try:
@@ -725,9 +732,10 @@ def x_followers_history():
 
 @bp.route('/analytics/x/posts-paginated')
 @auth_required
+@require_permission('analytics')
 def x_posts_paginated():
     """Get X posts data with pagination"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     
     # Get pagination parameters
     page = int(request.args.get('page', 1))
@@ -798,9 +806,10 @@ def x_posts_paginated():
 
 @bp.route('/analytics/youtube/overview')
 @auth_required
+@require_permission('analytics')
 def youtube_overview():
     """Get YouTube analytics overview data"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     
     try:
         if not firebase_admin._apps:
@@ -853,9 +862,10 @@ def youtube_overview():
 
 @bp.route('/analytics/youtube/daily-views')
 @auth_required
+@require_permission('analytics')
 def youtube_daily_views():
     """Get YouTube daily views data with timeframe support"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     timeframe = request.args.get('timeframe', '30days')
     
     try:
@@ -944,9 +954,10 @@ def youtube_daily_views():
 
 @bp.route('/analytics/x/refresh', methods=['POST'])
 @auth_required
+@require_permission('analytics')
 def refresh_x_data():
     """Manually refresh X analytics data"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     
     try:
         # Import the X analytics function
@@ -980,9 +991,10 @@ def refresh_x_data():
 
 @bp.route('/analytics/youtube/refresh', methods=['POST'])
 @auth_required
+@require_permission('analytics')
 def refresh_youtube_data():
     """Manually refresh YouTube analytics data"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     
     try:
         # Import the YouTube analytics function
@@ -1016,9 +1028,10 @@ def refresh_youtube_data():
 
 @bp.route('/analytics/youtube/top-videos')
 @auth_required
+@require_permission('analytics')
 def youtube_top_videos():
     """Get YouTube top videos for specific timeframe"""
-    user_id = g.user.get('id')
+    user_id = get_workspace_user_id()
     timeframe = request.args.get('timeframe', '30days')
     
     try:

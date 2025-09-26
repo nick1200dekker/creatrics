@@ -640,59 +640,73 @@ html.dark .coming-soon-card {
 
         <div class="features-grid">
             <!-- Video Script -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_script %}
             <a href="{{ url_for('video_script.video_script') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-file-doc feature-icon-inline"></i>Scripts</h3>
                     <p>Write and manage video scripts</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Video Title -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_title %}
             <a href="{{ url_for('video_title.video_title') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-text-t feature-icon-inline"></i>Titles</h3>
                     <p>Generate viral video titles</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Video Tags -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_tags %}
             <a href="{{ url_for('video_tags.video_tags') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-hash feature-icon-inline"></i>Tags</h3>
                     <p>Find trending tags for reach</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Video Description -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_description %}
             <a href="{{ url_for('video_description.video_description') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-file-text feature-icon-inline"></i>Descriptions</h3>
                     <p>Write SEO-optimized descriptions</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Thumbnail -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.thumbnail %}
             <a href="{{ url_for('thumbnail.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-image feature-icon-inline"></i>Thumbnails</h3>
                     <p>Design thumbnails that get clicks</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Analytics -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
             <a href="{{ url_for('analytics.index', platform='youtube') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-chart-line feature-icon-inline"></i>Analytics</h3>
                     <p>Track performance metrics</p>
                 </div>
             </a>
+            {% endif %}
             <!-- Competitors -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.competitors %}
             <a href="{{ url_for('competitors.competitors') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-users-three feature-icon-inline"></i>Competitors</h3>
                     <p>Analyze competitor strategies</p>
                 </div>
             </a>
+            {% endif %}
         </div>
     </div>
 
@@ -705,44 +719,54 @@ html.dark .coming-soon-card {
 
         <div class="features-grid">
             <!-- X Post Editor -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.x_post_editor %}
             <a href="{{ url_for('x_post_editor.x_post_editor') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-pencil-simple feature-icon-inline"></i>Post Editor</h3>
                     <p>Create posts and threads</p>
                 </div>
             </a>
+            {% endif %}
             
             <!-- X Analytics -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
             <a href="{{ url_for('analytics.index', platform='x') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-chart-bar feature-icon-inline"></i>Analytics</h3>
                     <p>Monitor growth metrics</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Reply Guy -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.reply_guy %}
             <a href="{{ url_for('reply_guy.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-chat-circle-text feature-icon-inline"></i>Reply Guy</h3>
                     <p>Create engaging replies</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Clip Spaces -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.clip_spaces %}
             <a href="{{ url_for('clip_spaces.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-scissors feature-icon-inline"></i>Clip Spaces</h3>
                     <p>Clip hot moments from Spaces</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Niche -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.niche %}
             <a href="{{ url_for('niche.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-compass feature-icon-inline"></i>Niche</h3>
                     <p>Discover what's hot on timeline</p>
                 </div>
             </a>
+            {% endif %}
         </div>
     </div>
 
@@ -755,36 +779,44 @@ html.dark .coming-soon-card {
 
         <div class="features-grid">
             <!-- Brain Dump -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.brain_dump %}
             <a href="{{ url_for('brain_dump.brain_dump') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-brain feature-icon-inline"></i>Brain Dump</h3>
                     <p>Capture and organize ideas</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Mind Map -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.mind_map %}
             <a href="{{ url_for('mind_map.mind_map') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-graph feature-icon-inline"></i>Mind Map</h3>
                     <p>Visual brainstorming & connections</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Content Wiki -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.content_wiki %}
             <a href="{{ url_for('content_wiki.content_wiki') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-books feature-icon-inline"></i>Content Wiki</h3>
                     <p>Build your knowledge base</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Content Calendar -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.content_calendar %}
             <a href="{{ url_for('content_calendar.content_calendar') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-calendar feature-icon-inline"></i>Content Calendar</h3>
                     <p>Plan and schedule content</p>
                 </div>
             </a>
+            {% endif %}
 
         </div>
     </div>
@@ -798,29 +830,32 @@ html.dark .coming-soon-card {
 
         <div class="features-grid">
             <!-- Social Accounts -->
+            {% if not workspace_info or workspace_info.is_owner %}
             <a href="{{ url_for('accounts.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-user-gear feature-icon-inline"></i>Social Accounts</h3>
                     <p>Connect your social platforms</p>
                 </div>
             </a>
+            {% endif %}
 
             <!-- Subscription -->
+            {% if not workspace_info or workspace_info.is_owner %}
             <a href="{{ url_for('payment.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-crown feature-icon-inline"></i>Subscription</h3>
                     <p>Manage your plan & billing</p>
                 </div>
             </a>
+            {% endif %}
 
-            <!-- Teams (Placeholder) -->
-            <div class="feature-card coming-soon-card">
+            <!-- Teams - Always visible for workspace switching -->
+            <a href="/teams" class="feature-card">
                 <div class="feature-content">
                     <h3><i class="ph ph-users-three feature-icon-inline"></i>Teams</h3>
-                    <p>Collaborate with your team</p>
-                    <span class="coming-soon-badge">Coming Soon</span>
+                    <p>{% if workspace_info and not workspace_info.is_owner %}Switch workspaces{% else %}Collaborate with your team{% endif %}</p>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
