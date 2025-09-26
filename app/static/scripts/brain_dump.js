@@ -4,6 +4,9 @@ let notes = [];
 let autoSaveTimer = null;
 let currentNoteTags = [];
 let currentShareUrl = null;
+let syncInterval = null;
+let lastSyncedContent = null;
+let lastSyncedTitle = null;
 
 // Preset tags data
 const PRESET_TAGS_MAP = {
@@ -29,17 +32,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Start with empty editor ready (like Post Editor)
     showEmptyEditor();
+    
+    // Start sync interval for shared notes
+    startSyncInterval();
 });
 
 function initializeEditor() {
     const editor = document.getElementById('editor');
     if (!editor) return;
     
-    // Handle paste to strip formatting
+    // Handle paste to strip formatting but keep basic structure
     editor.addEventListener('paste', function(e) {
         e.preventDefault();
+        const html = (e.clipboardData || window.clipboardData).getData('text/html');
         const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-        document.execCommand('insertText', false, text);
+        
+        // If there's HTML, clean it but keep basic formatting
+        if (html) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            // Remove scripts and styles
+            tempDiv.querySelectorAll('script, style').forEach(el => el.remove());
+            
+            // Clean attributes except href for links
+            tempDiv.querySelectorAll('*').forEach(el => {
+                const attrs = el.attributes;
+                for (let i = attrs.length - 1; i >= 0; i--) {
+                    if (attrs[i].name !== 'href') {
+                        el.removeAttribute(attrs[i].name);
+                    }
+                }
+            });
+            
+            document.execCommand('insertHTML', false, tempDiv.innerHTML);
+        } else {
+            document.execCommand('insertText', false, text);
+        }
     });
     
     // Auto-save on content change
@@ -56,6 +85,48 @@ function initializeEditor() {
                 saveNote(true); // Silent auto-save
             }
         }, 800); // Faster auto-save after 0.8 seconds
+    });
+    
+    // Handle special keys
+    editor.addEventListener('keydown', function(e) {
+        const selection = window.getSelection();
+        const parentElement = selection.anchorNode?.parentElement;
+        
+        // Handle blockquote exit on Enter
+        if (e.key === 'Enter' && parentElement && parentElement.tagName === 'BLOCKQUOTE') {
+            if (!e.shiftKey) {
+                const range = selection.getRangeAt(0);
+                const text = range.toString();
+                
+                // If at the end of blockquote and text is empty, exit blockquote
+                if (!text && range.collapsed) {
+                    e.preventDefault();
+                    // Insert a paragraph after the blockquote
+                    const p = document.createElement('p');
+                    p.innerHTML = '<br>';
+                    parentElement.parentNode.insertBefore(p, parentElement.nextSibling);
+                    
+                    // Move cursor to new paragraph
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(p);
+                    newRange.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                }
+            }
+        }
+        
+        // Handle code exit on Enter
+        if (e.key === 'Enter' && parentElement && parentElement.tagName === 'CODE') {
+            e.preventDefault();
+            // Insert a space after the code block to exit it
+            const range = selection.getRangeAt(0);
+            range.setStartAfter(parentElement);
+            range.setEndAfter(parentElement);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            document.execCommand('insertHTML', false, '&nbsp;');
+        }
     });
 }
 
@@ -113,25 +184,10 @@ function setupEventListeners() {
             formatText('underline');
         }
         
-        // Handle special keys in editor
-        const editor = document.getElementById('editor');
-        if (document.activeElement === editor) {
-            // If we're in a code block and user presses Enter, exit the code block
-            if (e.key === 'Enter') {
-                const selection = window.getSelection();
-                const parentElement = selection.anchorNode.parentElement;
-                
-                if (parentElement && parentElement.tagName === 'CODE') {
-                    e.preventDefault();
-                    // Insert a space after the code block to exit it
-                    const range = selection.getRangeAt(0);
-                    range.setStartAfter(parentElement);
-                    range.setEndAfter(parentElement);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    document.execCommand('insertHTML', false, '<br>');
-                }
-            }
+        // Ctrl/Cmd + K for link
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            insertLink();
         }
     });
 }
@@ -141,6 +197,24 @@ function formatText(command, value = null) {
     // Handle lists specially - they toggle on/off
     if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
         document.execCommand(command, false, null);
+    } else if (command === 'formatBlock') {
+        // For block formatting, ensure we exit special blocks first
+        const selection = window.getSelection();
+        const parentElement = selection.anchorNode?.parentElement;
+        
+        if (parentElement && (parentElement.tagName === 'BLOCKQUOTE' || parentElement.tagName === 'CODE')) {
+            // First, move content out of special block
+            const range = selection.getRangeAt(0);
+            const content = range.extractContents();
+            parentElement.parentNode.insertBefore(content, parentElement.nextSibling);
+            
+            // Remove empty special block
+            if (parentElement.innerHTML.trim() === '') {
+                parentElement.remove();
+            }
+        }
+        
+        document.execCommand(command, false, value);
     } else {
         document.execCommand(command, false, value);
     }
@@ -167,11 +241,23 @@ function insertCode() {
     document.getElementById('editor').focus();
 }
 
-// Insert link
+// Insert link with better UX
 function insertLink() {
-    const url = prompt('Enter URL:');
-    if (url) {
-        document.execCommand('createLink', false, url);
+    const selection = window.getSelection();
+    const selectedText = selection.toString();
+    
+    const url = prompt('Enter URL:', 'https://');
+    if (url && url !== 'https://') {
+        if (selectedText) {
+            // Wrap selected text in link
+            document.execCommand('createLink', false, url);
+        } else {
+            // Insert link with text
+            const linkText = prompt('Enter link text:', 'Link');
+            if (linkText) {
+                document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${linkText}</a>&nbsp;`);
+            }
+        }
     }
     document.getElementById('editor').focus();
 }
@@ -198,7 +284,7 @@ async function loadNotes() {
     }
 }
 
-// Display notes
+// Display notes with better card design
 function displayNotes(notesToShow) {
     const notesList = document.getElementById('notesList');
     if (!notesList) return;
@@ -216,38 +302,50 @@ function displayNotes(notesToShow) {
     notesList.innerHTML = notesToShow.map(note => {
         const preview = stripHtml(note.content || '').substring(0, 100);
         const tags = note.tags || [];
+        
+        // Format date
+        const date = note.updated_at ? formatDate(new Date(note.updated_at)) : '';
 
-        // Create tags HTML - show only emojis for preset tags
-        const tagsHtml = tags.slice(0, 3).map(tag => {
-            const presetTag = getPresetTag(tag);
-            if (presetTag) {
-                return `<span class="note-item-tag">${presetTag.emoji}</span>`;
+        // Create tag pills HTML - show first 2 tags with emojis
+        let tagsHtml = '';
+        if (tags.length > 0) {
+            const visibleTags = tags.slice(0, 2);
+            tagsHtml = visibleTags.map(tag => {
+                const presetTag = getPresetTag(tag);
+                if (presetTag) {
+                    return `<span class="note-tag-pill">${presetTag.emoji}</span>`;
+                } else {
+                    // For custom tags, show the first 3 letters
+                    return `<span class="note-tag-pill custom">${tag.substring(0, 3)}</span>`;
+                }
+            }).join('');
+            
+            // Add +N indicator if there are more tags
+            if (tags.length > 2) {
+                tagsHtml += `<span class="note-tag-more">+${tags.length - 2}</span>`;
             }
-            return '';
-        }).filter(t => t).join('');
-
-        const moreTags = tags.length > 3 ? `<span class="note-item-tag">+${tags.length - 3}</span>` : '';
-
-        // Add share indicator if note is shared
-        const shareIndicator = note.is_shared ? '<span class="note-item-shared" title="Shared"><i class="ph ph-share-network"></i></span>' : '';
+        }
 
         return `
             <div class="note-item ${note.id === currentNoteId ? 'active' : ''}"
                  data-note-id="${note.id}"
                  onclick="selectNote('${note.id}')">
-                <div class="note-item-content">
+                <div class="note-item-main">
                     <div class="note-item-header">
                         <div class="note-item-title">${escapeHtml(note.title || 'Untitled')}</div>
-                        <div class="note-item-badges">
-                            ${shareIndicator}
-                            ${tags.length > 0 ? `<div class="note-item-tags">${tagsHtml}${moreTags}</div>` : ''}
-                        </div>
                     </div>
                     <div class="note-item-preview">${escapeHtml(preview || 'No content')}</div>
+                    <div class="note-item-footer">
+                        <span class="note-item-meta">${date}</span>
+                    </div>
                 </div>
-                <button class="note-delete-btn" onclick="event.stopPropagation(); deleteNote('${note.id}')" title="Delete note">
-                    <i class="ph ph-trash"></i>
-                </button>
+                <div class="note-item-icons">
+                    ${tags.length > 0 ? `<div class="note-item-tags-display">${tagsHtml}</div>` : ''}
+                    ${note.is_shared ? '<span class="note-status-icon shared"><i class="ph ph-share-network"></i></span>' : ''}
+                    <button class="note-icon-btn delete-icon" onclick="event.stopPropagation(); deleteNote('${note.id}')" title="Delete">
+                        <i class="ph ph-trash"></i>
+                    </button>
+                </div>
             </div>
         `;
     }).join('');
@@ -274,6 +372,10 @@ function showEmptyEditor() {
         item.classList.remove('active');
     });
 
+    // Clear tags
+    currentNoteTags = [];
+    updateTagsUI([]);
+
     // Update save status
     updateSaveStatus('saved');
 }
@@ -297,7 +399,8 @@ async function createNoteIfNeeded() {
             },
             body: JSON.stringify({
                 title: title || 'Untitled',
-                content: content || ''
+                content: content || '',
+                tags: currentNoteTags
             })
         });
 
@@ -329,49 +432,16 @@ async function createNewNote() {
     showEmptyEditor();
 }
 
-// Old create function that posts immediately (if needed)
-async function createNewNoteOld() {
-    try {
-        const response = await fetch('/api/brain-dump/notes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title: '',
-                content: '',
-                tags: []
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success && data.note) {
-            notes.unshift(data.note);
-            displayNotes(notes);
-            selectNote(data.note.id);
-            
-            // Focus title
-            setTimeout(() => {
-                const titleInput = document.getElementById('noteTitle');
-                if (titleInput) {
-                    titleInput.focus();
-                    titleInput.select();
-                }
-            }, 100);
-            
-            showToast('Note created', 'success');
-        }
-    } catch (error) {
-        console.error('Error creating note:', error);
-        showToast('Failed to create note', 'error');
-    }
-}
-
 // Select note
 function selectNote(noteId) {
     currentNoteId = noteId;
     const note = notes.find(n => n.id === noteId);
     
     if (!note) return;
+    
+    // Store content for sync detection
+    lastSyncedTitle = note.title || '';
+    lastSyncedContent = note.content || '';
     
     // Hide empty state container and show editor area
     document.getElementById('emptyStateContainer').style.display = 'none';
@@ -422,6 +492,10 @@ async function saveNote(silent = false) {
     const title = document.getElementById('noteTitle').value || 'Untitled';
     const content = document.getElementById('editor').innerHTML;
     
+    // Update last synced values
+    lastSyncedTitle = title;
+    lastSyncedContent = content;
+    
     updateSaveStatus('saving');
     
     try {
@@ -468,6 +542,53 @@ async function saveNote(silent = false) {
             showToast('Failed to save', 'error');
         }
     }
+}
+
+// Sync shared notes
+async function syncSharedNote() {
+    if (!currentNoteId) return;
+    
+    const note = notes.find(n => n.id === currentNoteId);
+    if (!note || !note.is_shared) return;
+    
+    // Check if content has changed locally
+    const currentTitle = document.getElementById('noteTitle').value;
+    const currentContent = document.getElementById('editor').innerHTML;
+    
+    const hasLocalChanges = currentTitle !== lastSyncedTitle || currentContent !== lastSyncedContent;
+    
+    if (!hasLocalChanges) {
+        // Pull changes from server
+        try {
+            const response = await fetch(`/api/brain-dump/notes/${currentNoteId}`);
+            const data = await response.json();
+            
+            if (data.success && data.note) {
+                // Check if server content is different
+                if (data.note.title !== lastSyncedTitle || data.note.content !== lastSyncedContent) {
+                    // Update local content
+                    document.getElementById('noteTitle').value = data.note.title || '';
+                    document.getElementById('editor').innerHTML = data.note.content || '';
+                    
+                    lastSyncedTitle = data.note.title || '';
+                    lastSyncedContent = data.note.content || '';
+                    
+                    updateSaveStatus('syncing');
+                    setTimeout(() => updateSaveStatus('saved'), 1000);
+                }
+            }
+        } catch (error) {
+            console.error('Error syncing note:', error);
+        }
+    }
+}
+
+// Start sync interval
+function startSyncInterval() {
+    // Sync every 3 seconds for shared notes
+    syncInterval = setInterval(() => {
+        syncSharedNote();
+    }, 3000);
 }
 
 // Delete note
@@ -561,7 +682,8 @@ function filterNotes(query) {
         const search = query.toLowerCase();
         filtered = filtered.filter(note => {
             return (note.title || '').toLowerCase().includes(search) ||
-                   stripHtml(note.content || '').toLowerCase().includes(search);
+                   stripHtml(note.content || '').toLowerCase().includes(search) ||
+                   (note.tags || []).some(tag => tag.toLowerCase().includes(search));
         });
     }
 
@@ -590,6 +712,10 @@ function updateSaveStatus(status) {
         case 'saved':
             statusIcon.className = 'ph ph-check-circle';
             statusText.textContent = 'Saved';
+            break;
+        case 'syncing':
+            statusIcon.className = 'ph ph-arrows-clockwise';
+            statusText.textContent = 'Syncing...';
             break;
         case 'error':
             statusIcon.className = 'ph ph-warning-circle';
@@ -771,6 +897,8 @@ function updateTagsUI(tags) {
 }
 
 // Share functionality
+let selectedExpiry = 30; // Default 30 days
+
 function toggleShare() {
     const modal = document.getElementById('shareModal');
     modal.classList.add('active');
@@ -781,6 +909,8 @@ function toggleShare() {
         currentShareUrl = note.share_url;
         document.getElementById('shareLinkInput').value = currentShareUrl;
         document.getElementById('shareLinkContainer').style.display = 'block';
+        document.getElementById('sharePermissionContainer').style.display = 'none';
+        document.getElementById('expiryContainer').style.display = 'none';
         document.getElementById('createShareBtn').style.display = 'none';
         document.getElementById('unshareBtn').style.display = 'inline-block';
         document.getElementById('shareStatus').textContent = 'Your note is publicly shared:';
@@ -790,10 +920,22 @@ function toggleShare() {
         shareBtn.classList.add('shared');
     } else {
         document.getElementById('shareLinkContainer').style.display = 'none';
+        document.getElementById('sharePermissionContainer').style.display = 'block';
+        document.getElementById('expiryContainer').style.display = 'block';
         document.getElementById('createShareBtn').style.display = 'inline-block';
         document.getElementById('unshareBtn').style.display = 'none';
-        document.getElementById('shareStatus').textContent = 'Click "Create Share Link" to generate a public URL for this note.';
+        document.getElementById('shareStatus').textContent = 'Choose your share settings:';
     }
+}
+
+function selectExpiry(days) {
+    selectedExpiry = days;
+    
+    // Update UI
+    document.querySelectorAll('.expiry-option').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
 }
 
 async function createShareLink() {
@@ -806,7 +948,10 @@ async function createShareLink() {
         const response = await fetch(`/api/brain-dump/notes/${currentNoteId}/share`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ permission })
+            body: JSON.stringify({ 
+                permission,
+                expiry_days: selectedExpiry 
+            })
         });
 
         const data = await response.json();
@@ -815,6 +960,8 @@ async function createShareLink() {
             currentShareUrl = data.share_url;
             document.getElementById('shareLinkInput').value = currentShareUrl;
             document.getElementById('shareLinkContainer').style.display = 'block';
+            document.getElementById('sharePermissionContainer').style.display = 'none';
+            document.getElementById('expiryContainer').style.display = 'none';
             document.getElementById('createShareBtn').style.display = 'none';
             document.getElementById('unshareBtn').style.display = 'inline-block';
             document.getElementById('shareStatus').textContent = 'Your note is publicly shared:';
@@ -828,6 +975,7 @@ async function createShareLink() {
             if (note) {
                 note.is_shared = true;
                 note.share_url = currentShareUrl;
+                displayNotes(notes);
             }
 
             showToast('Share link created!', 'success');
@@ -853,9 +1001,11 @@ async function unshareNote() {
             if (data.success) {
                 currentShareUrl = null;
                 document.getElementById('shareLinkContainer').style.display = 'none';
+                document.getElementById('sharePermissionContainer').style.display = 'block';
+                document.getElementById('expiryContainer').style.display = 'block';
                 document.getElementById('createShareBtn').style.display = 'inline-block';
                 document.getElementById('unshareBtn').style.display = 'none';
-                document.getElementById('shareStatus').textContent = 'Click "Create Share Link" to generate a public URL for this note.';
+                document.getElementById('shareStatus').textContent = 'Choose your share settings:';
 
                 // Update share button
                 const shareBtn = document.getElementById('shareBtn');
@@ -866,6 +1016,7 @@ async function unshareNote() {
                 if (note) {
                     note.is_shared = false;
                     note.share_url = null;
+                    displayNotes(notes);
                 }
 
                 showToast('Share link removed', 'success');
@@ -897,4 +1048,52 @@ function copyShareLink() {
 function closeShareModal() {
     const modal = document.getElementById('shareModal');
     modal.classList.remove('active');
+    
+    // Reset expiry selection
+    selectedExpiry = 30;
+    document.querySelectorAll('.expiry-option').forEach(btn => {
+        btn.classList.remove('active');
+    });
+}
+
+// Toast notification CSS
+const toastStyles = `
+.toast-notification {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10000;
+    max-width: 320px;
+}
+
+.toast-notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-notification.success {
+    border-left: 4px solid #10b981;
+}
+
+.toast-notification.error {
+    border-left: 4px solid #dc2626;
+}
+`;
+
+// Add toast styles if not already added
+if (!document.getElementById('toastStyles')) {
+    const styleSheet = document.createElement('style');
+    styleSheet.id = 'toastStyles';
+    styleSheet.textContent = toastStyles;
+    document.head.appendChild(styleSheet);
 }

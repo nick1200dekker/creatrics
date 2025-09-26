@@ -22,6 +22,23 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <style>
+        :root {
+            --primary: #3B82F6;
+            --primary-dark: #2563EB;
+            --primary-light: rgba(59, 130, 246, 0.1);
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --border-primary: #e5e7eb;
+            --border-secondary: #d1d5db;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -30,121 +47,277 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-secondary);
             min-height: 100vh;
-            padding: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .container {
-            max-width: 800px;
-            width: 100%;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
+            color: var(--text-primary);
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 2rem;
-            color: white;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-primary);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
-        .header-top {
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo i {
+            color: var(--primary);
         }
 
         .share-badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0.25rem 0.75rem;
+            background: var(--primary-light);
+            padding: 0.375rem 0.875rem;
             border-radius: 20px;
             font-size: 0.875rem;
             display: flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.375rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .note-card {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .note-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-primary);
         }
 
         .note-title {
             font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .note-title[contenteditable="true"]:hover {
+            background: var(--bg-tertiary);
+            padding: 0.5rem;
+            margin: -0.5rem;
+            border-radius: 8px;
+        }
+
+        .note-title[contenteditable="true"]:focus {
+            background: var(--bg-secondary);
+            padding: 0.5rem;
+            margin: -0.5rem;
+            border-radius: 8px;
         }
 
         .note-meta {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             font-size: 0.875rem;
-            opacity: 0.9;
+            color: var(--text-secondary);
         }
 
         .meta-item {
             display: flex;
             align-items: center;
-            gap: 0.25rem;
-        }
-
-        .content {
-            padding: 2rem;
+            gap: 0.375rem;
         }
 
         .tags {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
-            margin-bottom: 1.5rem;
+            margin-top: 1rem;
         }
 
         .tag {
-            padding: 0.25rem 0.75rem;
-            background: #f0f4f8;
+            padding: 0.375rem 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
             border-radius: 20px;
             font-size: 0.875rem;
-            color: #4a5568;
+            color: var(--text-secondary);
             display: flex;
             align-items: center;
             gap: 0.25rem;
         }
 
+        {% if note.permission == 'edit' %}
+        .editor-toolbar {
+            padding: 0.75rem 2rem;
+            border-bottom: 1px solid var(--border-primary);
+            display: flex;
+            gap: 0.375rem;
+            align-items: center;
+            background: var(--bg-secondary);
+            flex-wrap: wrap;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .toolbar-btn {
+            padding: 0.375rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .toolbar-separator {
+            width: 1px;
+            height: 20px;
+            background: var(--border-primary);
+            margin: 0 0.375rem;
+        }
+        {% endif %}
+
+        .note-content-wrapper {
+            padding: 2rem;
+        }
+
         .note-content {
-            color: #2d3748;
+            color: var(--text-primary);
             line-height: 1.8;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            font-size: 1.05rem;
+            outline: none;
+            min-height: 200px;
+        }
+
+        .note-content[contenteditable="true"]:hover {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            margin: -1rem;
+            border-radius: 8px;
+        }
+
+        .note-content[contenteditable="true"]:focus {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            margin: -1rem;
+            border-radius: 8px;
+        }
+
+        /* Content styles */
+        .note-content h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .note-content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 1.25rem 0 0.75rem;
+        }
+
+        .note-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .note-content p {
+            margin: 0.875rem 0;
+        }
+
+        .note-content ul, .note-content ol {
+            margin: 0.875rem 0;
+            padding-left: 1.75rem;
+        }
+
+        .note-content li {
+            margin: 0.375rem 0;
+        }
+
+        .note-content blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .note-content code {
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, Inconsolata, monospace;
+            font-size: 0.875em;
+            color: #dc2626;
+        }
+
+        .note-content a {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        .note-content a:hover {
+            color: var(--primary-dark);
         }
 
         .footer {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            margin-top: 2rem;
             padding: 2rem;
-            background: #f7fafc;
-            border-top: 1px solid #e2e8f0;
             text-align: center;
-        }
-
-        .cta {
-            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .cta h3 {
-            color: #2d3748;
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
         }
 
         .cta p {
-            color: #718096;
-            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
         }
 
         .cta-button {
@@ -152,47 +325,31 @@
             align-items: center;
             gap: 0.5rem;
             padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary);
             color: white;
             text-decoration: none;
             border-radius: 10px;
             font-weight: 600;
-            transition: transform 0.2s;
+            transition: all 0.2s;
         }
 
         .cta-button:hover {
-            transform: translateY(-2px);
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
-        .view-count {
-            color: #a0aec0;
+        .view-info {
+            margin-top: 1.5rem;
+            color: var(--text-tertiary);
             font-size: 0.875rem;
-        }
-
-        [contenteditable="true"] {
-            outline: none;
-            transition: background 0.2s;
-        }
-
-        [contenteditable="true"]:hover {
-            background: rgba(59, 130, 246, 0.03);
-            border-radius: 8px;
-            padding: 0.5rem;
-            margin: -0.5rem;
-        }
-
-        [contenteditable="true"]:focus {
-            background: rgba(59, 130, 246, 0.05);
-            border-radius: 8px;
-            padding: 0.5rem;
-            margin: -0.5rem;
         }
 
         .edit-indicator {
             position: fixed;
             bottom: 2rem;
             right: 2rem;
-            background: #10B981;
+            background: var(--success);
             color: white;
             padding: 0.75rem 1.25rem;
             border-radius: 50px;
@@ -203,98 +360,187 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             opacity: 0;
             transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .edit-indicator.typing {
+            opacity: 1;
+            background: var(--text-secondary);
         }
 
         .edit-indicator.saving {
             opacity: 1;
-            background: #3B82F6;
+            background: var(--primary);
         }
 
         .edit-indicator.saved {
             opacity: 1;
-            background: #10B981;
+            background: var(--success);
+        }
+
+        .edit-indicator.syncing {
+            opacity: 1;
+            background: var(--warning);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .edit-indicator.saving i {
+            animation: spin 1s linear infinite;
         }
 
         @media (max-width: 640px) {
-            body {
-                padding: 0;
-            }
-
             .container {
-                border-radius: 0;
+                padding: 0 1rem;
+                margin: 1rem auto;
             }
 
             .note-title {
                 font-size: 1.5rem;
             }
 
-            .header, .content, .footer {
+            .note-header, .note-content-wrapper {
                 padding: 1.5rem;
+            }
+
+            .editor-toolbar {
+                padding: 0.75rem 1rem;
+                overflow-x: auto;
+            }
+
+            .edit-indicator {
+                bottom: 1rem;
+                right: 1rem;
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-top">
-                <div class="logo">
-                    <i class="ph ph-brain"></i>
-                    Creatrics
-                </div>
-                <div class="share-badge">
-                    {% if note.permission == 'edit' %}
-                        <i class="ph ph-pencil"></i>
-                        Editable
-                    {% else %}
-                        <i class="ph ph-eye"></i>
-                        View Only
-                    {% endif %}
-                </div>
-            </div>
-            <h1 class="note-title" id="noteTitle" {% if note.permission == 'edit' %}contenteditable="true"{% endif %}>{{ note.title }}</h1>
-            <div class="note-meta">
-                <div class="meta-item">
-                    <i class="ph ph-calendar"></i>
-                    {{ note.shared_at[:10] }}
-                </div>
-                <div class="meta-item">
+    <header class="header">
+        <div class="header-container">
+            <a href="https://creatrics.com" class="logo">
+                <i class="ph ph-brain"></i>
+                Creatrics
+            </a>
+            <div class="share-badge">
+                {% if note.permission == 'edit' %}
+                    <i class="ph ph-pencil"></i>
+                    Editable
+                {% else %}
                     <i class="ph ph-eye"></i>
-                    {{ note.views }} views
-                </div>
+                    View Only
+                {% endif %}
             </div>
         </div>
+    </header>
 
-        <div class="content">
-            {% if note.tags %}
-            <div class="tags">
-                {% for tag in note.tags %}
-                <span class="tag">
-                    {% if tag == 'video-idea' %}
-                        🎥 Video Idea
-                    {% elif tag == 'content-idea' %}
-                        💡 Content Idea
-                    {% elif tag == 'draft' %}
-                        📝 Draft
-                    {% elif tag == 'important' %}
-                        ⭐ Important
-                    {% elif tag == 'research' %}
-                        🔍 Research
-                    {% elif tag == 'script' %}
-                        📜 Script
-                    {% elif tag == 'social-media' %}
-                        📱 Social Media
-                    {% elif tag == 'tutorial' %}
-                        📚 Tutorial
-                    {% else %}
-                        {{ tag }}
-                    {% endif %}
-                </span>
-                {% endfor %}
+    <div class="container">
+        <div class="note-card">
+            <div class="note-header">
+                <h1 class="note-title" id="noteTitle" {% if note.permission == 'edit' %}contenteditable="true"{% endif %}>{{ note.title }}</h1>
+                
+                <div class="note-meta">
+                    <div class="meta-item">
+                        <i class="ph ph-calendar"></i>
+                        {{ note.shared_at[:10] }}
+                    </div>
+                    <div class="meta-item">
+                        <i class="ph ph-eye"></i>
+                        <span id="viewCount">{{ note.views }}</span> views
+                    </div>
+                </div>
+
+                {% if note.tags %}
+                <div class="tags">
+                    {% for tag in note.tags %}
+                    <span class="tag">
+                        {% if tag == 'video-idea' %}
+                            🎥 Video Idea
+                        {% elif tag == 'content-idea' %}
+                            💡 Content Idea
+                        {% elif tag == 'draft' %}
+                            📝 Draft
+                        {% elif tag == 'important' %}
+                            ⭐ Important
+                        {% elif tag == 'research' %}
+                            🔍 Research
+                        {% elif tag == 'script' %}
+                            📜 Script
+                        {% elif tag == 'social-media' %}
+                            📱 Social Media
+                        {% elif tag == 'tutorial' %}
+                            📚 Tutorial
+                        {% else %}
+                            {{ tag }}
+                        {% endif %}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            {% if note.permission == 'edit' %}
+            <div class="editor-toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="formatText('bold')" title="Bold">
+                        <i class="ph ph-text-b"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="formatText('italic')" title="Italic">
+                        <i class="ph ph-text-italic"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="formatText('underline')" title="Underline">
+                        <i class="ph ph-text-underline"></i>
+                    </button>
+                </div>
+                
+                <div class="toolbar-separator"></div>
+                
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="formatText('formatBlock', 'h1')" title="Heading 1">
+                        H1
+                    </button>
+                    <button class="toolbar-btn" onclick="formatText('formatBlock', 'h2')" title="Heading 2">
+                        H2
+                    </button>
+                    <button class="toolbar-btn" onclick="formatText('formatBlock', 'h3')" title="Heading 3">
+                        H3
+                    </button>
+                </div>
+                
+                <div class="toolbar-separator"></div>
+                
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="formatText('insertUnorderedList')" title="Bullet List">
+                        <i class="ph ph-list-bullets"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="formatText('insertOrderedList')" title="Numbered List">
+                        <i class="ph ph-list-numbers"></i>
+                    </button>
+                </div>
+                
+                <div class="toolbar-separator"></div>
+                
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="formatText('formatBlock', 'blockquote')" title="Quote">
+                        <i class="ph ph-quotes"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="insertCode()" title="Code">
+                        <i class="ph ph-code"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="insertLink()" title="Link">
+                        <i class="ph ph-link"></i>
+                    </button>
+                </div>
             </div>
             {% endif %}
 
-            <div class="note-content" id="noteContent" {% if note.permission == 'edit' %}contenteditable="true"{% endif %}>{{ note.content }}</div>
+            <div class="note-content-wrapper">
+                <div class="note-content" id="noteContent" {% if note.permission == 'edit' %}contenteditable="true"{% endif %}>{{ note.content|safe }}</div>
+            </div>
         </div>
 
         <div class="footer">
@@ -306,20 +552,107 @@
                     Try Creatrics Free
                 </a>
             </div>
-            <div class="view-count">
-                This note expires in {{ ((note.expires_at[:10] | replace('-', '')) | int - (note.shared_at[:10] | replace('-', '')) | int) // 1 }} days
+            <div class="view-info">
+                {% if note.expires_at %}
+                This link expires {{ note.expires_at[:10] }}
+                {% else %}
+                This is a permanent share link
+                {% endif %}
             </div>
         </div>
     </div>
+
 {% if note.permission == 'edit' %}
     <div class="edit-indicator" id="editIndicator">
-        <i class="ph ph-circle"></i>
+        <i class="ph ph-check-circle"></i>
         <span id="editStatus">Ready</span>
     </div>
 
     <script>
         let saveTimer = null;
+        let syncTimer = null;
         const shareId = '{{ share_id }}';
+        let lastContent = document.getElementById('noteContent').innerHTML;
+        let lastTitle = document.getElementById('noteTitle').innerText;
+
+        // Format commands
+        function formatText(command, value = null) {
+            if (command === 'formatBlock') {
+                document.execCommand(command, false, value);
+            } else {
+                document.execCommand(command, false, null);
+            }
+            document.getElementById('noteContent').focus();
+        }
+
+        function insertCode() {
+            const selection = window.getSelection();
+            const text = selection.toString();
+            
+            if (text) {
+                document.execCommand('insertHTML', false, `<code>${text}</code>`);
+            } else {
+                document.execCommand('insertHTML', false, '<code>code</code>&nbsp;');
+            }
+            
+            document.getElementById('noteContent').focus();
+        }
+
+        function insertLink() {
+            const selection = window.getSelection();
+            const selectedText = selection.toString();
+            
+            const url = prompt('Enter URL:', 'https://');
+            if (url && url !== 'https://') {
+                if (selectedText) {
+                    document.execCommand('createLink', false, url);
+                } else {
+                    const linkText = prompt('Enter link text:', 'Link');
+                    if (linkText) {
+                        document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${linkText}</a>&nbsp;`);
+                    }
+                }
+            }
+            document.getElementById('noteContent').focus();
+        }
+
+        // Handle special key events
+        document.getElementById('noteContent').addEventListener('keydown', function(e) {
+            const selection = window.getSelection();
+            const parentElement = selection.anchorNode?.parentElement;
+            
+            // Handle blockquote exit
+            if (e.key === 'Enter' && parentElement && parentElement.tagName === 'BLOCKQUOTE') {
+                if (!e.shiftKey) {
+                    const range = selection.getRangeAt(0);
+                    const text = range.toString();
+                    
+                    if (!text && range.collapsed) {
+                        e.preventDefault();
+                        const p = document.createElement('p');
+                        p.innerHTML = '<br>';
+                        parentElement.parentNode.insertBefore(p, parentElement.nextSibling);
+                        
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(p);
+                        newRange.collapse(true);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                    }
+                }
+            }
+            
+            // Handle code exit
+            if (e.key === 'Enter' && parentElement && parentElement.tagName === 'CODE') {
+                e.preventDefault();
+                const range = selection.getRangeAt(0);
+                range.setStartAfter(parentElement);
+                range.setEndAfter(parentElement);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                document.execCommand('insertHTML', false, '&nbsp;');
+            }
+        });
 
         // Auto-save on content change
         function setupAutoSave() {
@@ -332,7 +665,7 @@
 
         function handleChange() {
             clearTimeout(saveTimer);
-            showStatus('saving');
+            showStatus('typing');
 
             saveTimer = setTimeout(() => {
                 saveNote();
@@ -341,7 +674,13 @@
 
         async function saveNote() {
             const title = document.getElementById('noteTitle').innerText;
-            const content = document.getElementById('noteContent').innerText;
+            const content = document.getElementById('noteContent').innerHTML;
+
+            // Update last saved values
+            lastTitle = title;
+            lastContent = content;
+
+            showStatus('saving');
 
             try {
                 const response = await fetch(`/api/shared/note/${shareId}`, {
@@ -363,6 +702,37 @@
             }
         }
 
+        // Sync changes from server
+        async function syncFromServer() {
+            const currentTitle = document.getElementById('noteTitle').innerText;
+            const currentContent = document.getElementById('noteContent').innerHTML;
+
+            // Don't sync if there are local unsaved changes
+            if (currentTitle !== lastTitle || currentContent !== lastContent) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/shared/note/${shareId}/sync`);
+                const data = await response.json();
+
+                if (data.success && data.note) {
+                    // Check if content changed on server
+                    if (data.note.title !== lastTitle || data.note.content !== lastContent) {
+                        document.getElementById('noteTitle').innerText = data.note.title;
+                        document.getElementById('noteContent').innerHTML = data.note.content;
+                        
+                        lastTitle = data.note.title;
+                        lastContent = data.note.content;
+                        
+                        showStatus('syncing');
+                    }
+                }
+            } catch (error) {
+                console.error('Sync error:', error);
+            }
+        }
+
         function showStatus(status) {
             const indicator = document.getElementById('editIndicator');
             const statusText = document.getElementById('editStatus');
@@ -371,6 +741,10 @@
             indicator.className = 'edit-indicator ' + status;
 
             switch(status) {
+                case 'typing':
+                    icon.className = 'ph ph-circle';
+                    statusText.textContent = 'Typing...';
+                    break;
                 case 'saving':
                     icon.className = 'ph ph-circle-notch';
                     statusText.textContent = 'Saving...';
@@ -382,6 +756,13 @@
                         indicator.className = 'edit-indicator';
                     }, 2000);
                     break;
+                case 'syncing':
+                    icon.className = 'ph ph-arrows-clockwise';
+                    statusText.textContent = 'Syncing...';
+                    setTimeout(() => {
+                        indicator.className = 'edit-indicator';
+                    }, 1000);
+                    break;
                 case 'error':
                     icon.className = 'ph ph-x-circle';
                     statusText.textContent = 'Error';
@@ -391,6 +772,14 @@
 
         // Initialize
         setupAutoSave();
+
+        // Start sync interval (every 3 seconds)
+        syncTimer = setInterval(syncFromServer, 3000);
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(syncTimer);
+        });
     </script>
 {% endif %}
 </body>

@@ -173,6 +173,19 @@ def update_note(note_id):
         # Update note in Firebase
         note_ref.update(update_data)
 
+        # Check if note is shared and update shared version
+        existing_note = note_doc.to_dict()
+        if existing_note.get('is_shared') and existing_note.get('share_id'):
+            # Update the shared note as well
+            shared_ref = db.collection('shared_notes').document(existing_note['share_id'])
+            shared_update = {
+                'title': update_data.get('title', existing_note.get('title')),
+                'content': update_data.get('content', existing_note.get('content')),
+                'tags': update_data.get('tags', existing_note.get('tags')),
+                'last_synced': datetime.now(timezone.utc).isoformat()
+            }
+            shared_ref.update(shared_update)
+
         # Get updated note
         updated_doc = note_ref.get()
         note = updated_doc.to_dict()
@@ -209,6 +222,14 @@ def delete_note(note_id):
                 'success': False,
                 'error': 'Note not found'
             }), 404
+
+        # If note is shared, remove the shared version
+        note_data = note_doc.to_dict()
+        if note_data.get('is_shared') and note_data.get('share_id'):
+            shared_ref = db.collection('shared_notes').document(note_data['share_id'])
+            shared_doc = shared_ref.get()
+            if shared_doc.exists and shared_doc.to_dict().get('owner_id') == user_id:
+                shared_ref.delete()
 
         # Delete note from Firebase
         note_ref.delete()
@@ -362,11 +383,12 @@ def get_all_tags():
 @bp.route('/api/brain-dump/notes/<note_id>/share', methods=['POST'])
 @auth_required
 def share_note(note_id):
-    """Create a public share link for a note"""
+    """Create a public share link for a note with expiry options"""
     try:
         user_id = str(g.user.get('id'))
         data = request.get_json() or {}
         permission = data.get('permission', 'view')  # Default to view-only
+        expiry_days = data.get('expiry_days', 30)  # Default 30 days
 
         # Validate permission
         if permission not in ['view', 'edit']:
@@ -387,6 +409,10 @@ def share_note(note_id):
         # Generate unique share ID
         share_id = secrets.token_urlsafe(8)
 
+        # Calculate expiry
+        shared_at = datetime.now(timezone.utc)
+        expires_at = None if expiry_days == 0 else (shared_at + timedelta(days=expiry_days))
+
         # Create shared note document
         shared_note = {
             'note_id': note_id,
@@ -395,9 +421,11 @@ def share_note(note_id):
             'content': note_data.get('content', ''),
             'tags': note_data.get('tags', []),
             'permission': permission,  # Store permission level
-            'shared_at': datetime.now(timezone.utc).isoformat(),
-            'expires_at': (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),  # 30 days expiry
-            'views': 0
+            'shared_at': shared_at.isoformat(),
+            'expires_at': expires_at.isoformat() if expires_at else None,
+            'expiry_days': expiry_days,
+            'views': 0,
+            'last_synced': shared_at.isoformat()
         }
 
         # Store in global shared_notes collection for easy public access
@@ -409,14 +437,14 @@ def share_note(note_id):
             'is_shared': True,
             'share_id': share_id,
             'share_url': f'https://creatrics.com/shared/note/{share_id}',
-            'shared_at': datetime.now(timezone.utc).isoformat()
+            'shared_at': shared_at.isoformat()
         })
 
         return jsonify({
             'success': True,
             'share_url': f'https://creatrics.com/shared/note/{share_id}',
             'share_id': share_id,
-            'expires_in_days': 30,
+            'expires_in_days': expiry_days if expiry_days > 0 else 'never',
             'message': 'Note shared successfully'
         })
 
@@ -477,7 +505,7 @@ def unshare_note(note_id):
 
 @bp.route('/shared/note/<share_id>')
 def view_shared_note(share_id):
-    """View a publicly shared note (no auth required)"""
+    """View a publicly shared note (no auth required) with better formatting"""
     try:
         # Get shared note from global collection
         shared_ref = db.collection('shared_notes').document(share_id)
@@ -489,15 +517,16 @@ def view_shared_note(share_id):
         shared_data = shared_doc.to_dict()
 
         # Check if expired
-        expires_at_str = shared_data['expires_at'].replace('Z', '')
-        if expires_at_str.endswith('+00:00'):
-            expires_at = datetime.fromisoformat(expires_at_str)
-        else:
-            expires_at = datetime.fromisoformat(expires_at_str).replace(tzinfo=timezone.utc)
+        if shared_data.get('expires_at'):
+            expires_at_str = shared_data['expires_at'].replace('Z', '')
+            if expires_at_str.endswith('+00:00'):
+                expires_at = datetime.fromisoformat(expires_at_str)
+            else:
+                expires_at = datetime.fromisoformat(expires_at_str).replace(tzinfo=timezone.utc)
 
-        now = datetime.now(timezone.utc)
-        if now > expires_at:
-            return render_template('brain_dump/expired.html'), 410
+            now = datetime.now(timezone.utc)
+            if now > expires_at:
+                return render_template('brain_dump/expired.html'), 410
 
         # Increment view count
         shared_ref.update({'views': shared_data.get('views', 0) + 1})
@@ -513,7 +542,7 @@ def view_shared_note(share_id):
 
 @bp.route('/api/shared/note/<share_id>', methods=['PUT'])
 def update_shared_note(share_id):
-    """Update a shared note if user has edit permission"""
+    """Update a shared note if user has edit permission with sync"""
     try:
         data = request.get_json() or {}
         content = data.get('content')
@@ -539,21 +568,28 @@ def update_shared_note(share_id):
             }), 403
 
         # Update the shared note
-        update_data = {}
+        update_data = {
+            'last_edited': datetime.now(timezone.utc).isoformat(),
+            'last_synced': datetime.now(timezone.utc).isoformat()
+        }
         if content is not None:
             update_data['content'] = content
         if title is not None:
             update_data['title'] = title
-        update_data['last_edited'] = datetime.now(timezone.utc).isoformat()
 
         shared_ref.update(update_data)
 
-        # Also update the original note
+        # Also update the original note for real-time sync
         owner_id = shared_data.get('owner_id')
         note_id = shared_data.get('note_id')
         if owner_id and note_id:
+            original_update = {
+                'content': content,
+                'title': title,
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
             original_ref = db.collection('users').document(owner_id).collection('brain_dump').document(note_id)
-            original_ref.update(update_data)
+            original_ref.update(original_update)
 
         return jsonify({
             'success': True,
@@ -565,6 +601,59 @@ def update_shared_note(share_id):
         return jsonify({
             'success': False,
             'error': 'Failed to update note'
+        }), 500
+
+@bp.route('/api/shared/note/<share_id>/sync', methods=['GET'])
+def sync_shared_note(share_id):
+    """Get latest version of shared note for sync"""
+    try:
+        # Get shared note from Firebase
+        shared_ref = db.collection('shared_notes').document(share_id)
+        shared_doc = shared_ref.get()
+
+        if not shared_doc.exists:
+            return jsonify({
+                'success': False,
+                'error': 'Shared note not found'
+            }), 404
+
+        shared_data = shared_doc.to_dict()
+
+        # Get the latest content from original note if it exists
+        owner_id = shared_data.get('owner_id')
+        note_id = shared_data.get('note_id')
+        
+        if owner_id and note_id:
+            original_ref = db.collection('users').document(owner_id).collection('brain_dump').document(note_id)
+            original_doc = original_ref.get()
+            
+            if original_doc.exists:
+                original_data = original_doc.to_dict()
+                # Use original note as source of truth
+                shared_data['title'] = original_data.get('title', shared_data.get('title'))
+                shared_data['content'] = original_data.get('content', shared_data.get('content'))
+                
+                # Update shared note cache
+                shared_ref.update({
+                    'title': shared_data['title'],
+                    'content': shared_data['content'],
+                    'last_synced': datetime.now(timezone.utc).isoformat()
+                })
+
+        return jsonify({
+            'success': True,
+            'note': {
+                'title': shared_data.get('title'),
+                'content': shared_data.get('content'),
+                'last_synced': shared_data.get('last_synced')
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error syncing shared note: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to sync note'
         }), 500
 
 @bp.route('/api/brain-dump/export', methods=['POST'])
@@ -722,6 +811,7 @@ def get_stats():
         # Calculate stats
         total_notes = len(notes_list)
         favorite_count = sum(1 for note in notes_list if note.get('is_favorite', False))
+        shared_count = sum(1 for note in notes_list if note.get('is_shared', False))
         
         # Get all tags
         all_tags = []
@@ -744,7 +834,6 @@ def get_stats():
         avg_length = total_length // total_notes if total_notes > 0 else 0
         
         # Get recent notes (last 7 days)
-        from datetime import timedelta
         week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
         recent_notes = sum(1 for note in notes_list if note.get('updated_at', '') >= week_ago)
         
@@ -753,6 +842,7 @@ def get_stats():
             'stats': {
                 'total_notes': total_notes,
                 'favorites': favorite_count,
+                'shared': shared_count,
                 'unique_tags': unique_tags,
                 'average_note_length': avg_length,
                 'recent_notes': recent_notes,
