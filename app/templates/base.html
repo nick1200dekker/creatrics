@@ -965,16 +965,6 @@
         <img src="{{ url_for('static', filename='img/templates/logo.png') }}" alt="Creatrics Logo" class="logo-img">
     </div>
 
-    <!-- Workspace Indicator (if in team workspace) -->
-    {% if workspace_info and not workspace_info.is_owner %}
-    <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-primary); margin-bottom: 0.5rem; background: var(--bg-tertiary);">
-        <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 500; display: flex; align-items: center; gap: 0.5rem;">
-            <i class="ph ph-users-three" style="font-size: 1rem; color: #3B82F6;"></i>
-            <span>Team Workspace</span>
-        </div>
-        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; margin-left: 1.5rem;">{{ workspace_info.owner_email | default('') }}</div>
-    </div>
-    {% endif %}
     
     <!-- Navigation -->
     <nav class="nav-section">
@@ -1188,6 +1178,17 @@
     
     <!-- User Section -->
     <div class="user-section" id="user-section">
+        <!-- Workspace Indicator (if in team workspace) -->
+        {% if workspace_info and not workspace_info.is_owner %}
+        <div style="padding: 0.75rem 1rem; margin-bottom: 0.75rem; background: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-primary); text-align: center;">
+            <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <i class="ph ph-users-three" style="font-size: 1rem; color: #3B82F6;"></i>
+                <span>Team Workspace</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">{{ workspace_info.owner_email | default('') }}</div>
+        </div>
+        {% endif %}
+
         {% if g.user and not g.user.get('is_guest') %}
         <button id="dark-mode-toggle" class="dark-mode-toggle-btn" title="Toggle Dark Mode">
             <i class="ph ph-moon text-lg dark:hidden"></i>
