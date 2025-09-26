@@ -984,7 +984,17 @@
             <span>Home</span>
         </a>
 
-        <!-- YouTube Group - Always starts collapsed -->
+        <!-- YouTube Group - Only show if user has permissions for any YouTube feature -->
+        {% set has_youtube_permissions = not workspace_info or workspace_info.is_owner or
+           workspace_info.permissions.video_script or
+           workspace_info.permissions.video_title or
+           workspace_info.permissions.video_tags or
+           workspace_info.permissions.video_description or
+           workspace_info.permissions.thumbnail or
+           workspace_info.permissions.analytics or
+           workspace_info.permissions.competitors %}
+
+        {% if has_youtube_permissions %}
         <div class="nav-group">
             <div class="nav-group-header" onclick="toggleNavGroup(this)">
                 <div class="left-content">
@@ -1058,8 +1068,17 @@
                 {% endif %}
             </div>
         </div>
+        {% endif %}
 
-        <!-- X Group - Always starts collapsed -->
+        <!-- X Group - Only show if user has permissions for any X feature -->
+        {% set has_x_permissions = not workspace_info or workspace_info.is_owner or
+           workspace_info.permissions.x_post_editor or
+           workspace_info.permissions.analytics or
+           workspace_info.permissions.reply_guy or
+           workspace_info.permissions.clip_spaces or
+           workspace_info.permissions.niche %}
+
+        {% if has_x_permissions %}
         <div class="nav-group" data-group="X">
             <div class="nav-group-header" onclick="toggleNavGroup(this)">
                 <div class="left-content">
@@ -1114,6 +1133,7 @@
                 {% endif %}
             </div>
         </div>
+        {% endif %}
 
         {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.brain_dump %}
         <a href="{{ url_for('brain_dump.brain_dump') }}"

@@ -632,6 +632,16 @@ html.dark .coming-soon-card {
     </div>
 
     <!-- YouTube Tools Section -->
+    {% set has_youtube_permissions = not workspace_info or workspace_info.is_owner or
+       workspace_info.permissions.video_script or
+       workspace_info.permissions.video_title or
+       workspace_info.permissions.video_tags or
+       workspace_info.permissions.video_description or
+       workspace_info.permissions.thumbnail or
+       workspace_info.permissions.analytics or
+       workspace_info.permissions.competitors %}
+
+    {% if has_youtube_permissions %}
     <div class="platform-section">
         <div class="platform-header">
             <i class="ph ph-youtube-logo"></i>
@@ -709,8 +719,17 @@ html.dark .coming-soon-card {
             {% endif %}
         </div>
     </div>
+    {% endif %}
 
     <!-- X Tools Section -->
+    {% set has_x_permissions = not workspace_info or workspace_info.is_owner or
+       workspace_info.permissions.x_post_editor or
+       workspace_info.permissions.analytics or
+       workspace_info.permissions.reply_guy or
+       workspace_info.permissions.clip_spaces or
+       workspace_info.permissions.niche %}
+
+    {% if has_x_permissions %}
     <div class="platform-section">
         <div class="platform-header">
             <i class="ph ph-x-logo"></i>
@@ -769,8 +788,16 @@ html.dark .coming-soon-card {
             {% endif %}
         </div>
     </div>
+    {% endif %}
 
     <!-- Content Management Section -->
+    {% set has_content_permissions = not workspace_info or workspace_info.is_owner or
+       workspace_info.permissions.brain_dump or
+       workspace_info.permissions.mind_map or
+       workspace_info.permissions.content_wiki or
+       workspace_info.permissions.content_calendar %}
+
+    {% if has_content_permissions %}
     <div class="platform-section">
         <div class="platform-header">
             <i class="ph ph-folder"></i>
@@ -820,8 +847,9 @@ html.dark .coming-soon-card {
 
         </div>
     </div>
+    {% endif %}
 
-    <!-- Settings Section -->
+    <!-- Settings Section - Always show since Teams is always visible -->
     <div class="platform-section">
         <div class="platform-header">
             <i class="ph ph-gear"></i>
