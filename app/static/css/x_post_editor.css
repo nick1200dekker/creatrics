@@ -300,19 +300,25 @@ html.dark .post-editor-wrapper {
     width: 100%;
     padding: 0.5rem 0.75rem;
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 6px;
-    color: #D1D5DB;
+    color: var(--text-primary);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
     appearance: none;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23D1D5DB' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
     background-position: right 0.5rem center;
     background-repeat: no-repeat;
     background-size: 1.2em 1.2em;
     padding-right: 2rem;
+    box-sizing: border-box;
+}
+
+/* Light mode - darker arrow */
+html:not(.dark) .voice-tone-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
 }
 
 .voice-tone-select:hover {
