@@ -9,6 +9,7 @@ let isSaving = false; // Prevent concurrent saves
 let saveAbortController = null; // Allow cancelling in-flight saves
 let lastSyncedContent = null;
 let lastSyncedTitle = null;
+let globalCustomTags = []; // Store user's custom tags globally
 
 // Preset tags data
 const PRESET_TAGS_MAP = {
@@ -28,6 +29,7 @@ function getPresetTag(tagName) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
+    loadGlobalCustomTags(); // Load global custom tags first
     initializeEditor();
     loadNotes();
     setupEventListeners();
@@ -62,14 +64,23 @@ function initializeEditor() {
                 const attrs = el.attributes;
                 for (let i = attrs.length - 1; i >= 0; i--) {
                     if (attrs[i].name !== 'href') {
-                        el.removeAttribute(attrs[i].name);
                     }
                 }
             });
             
             document.execCommand('insertHTML', false, tempDiv.innerHTML);
-        } else {
-            document.execCommand('insertText', false, text);
+        }
+    });
+    
+    // Handle link clicks - open links when clicked
+    editor.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A' && e.target.href) {
+            // Prevent default editing behavior
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Open link in new tab/window
+            window.open(e.target.href, e.target.target || '_blank');
         }
     });
     
@@ -83,8 +94,9 @@ function initializeEditor() {
             if (!currentNoteId) {
                 await createNoteIfNeeded();
             }
+            
             if (currentNoteId) {
-                saveNote(true); // Silent auto-save
+                saveNote(true);
             }
         }, 800); // Faster auto-save after 0.8 seconds
     });
@@ -883,21 +895,45 @@ function addCustomTag() {
     updateTagPreview();
 }
 
-function removeCustomTag(tagName, event) {
+function removeCustomTag(fullTagName, event) {
     event.stopPropagation();
 
-    currentNoteTags = currentNoteTags.filter(t => t !== tagName);
+    // Remove from current note tags
+    currentNoteTags = currentNoteTags.filter(t => t !== fullTagName);
 
-    const tagBtn = document.querySelector(`[data-tag="${tagName}"]`);
+    // Remove from global custom tags
+    globalCustomTags = globalCustomTags.filter(t => t !== fullTagName);
+
+    // Remove the UI element
+    const cleanTagName = fullTagName.includes(':') ? fullTagName.split(':')[1] : fullTagName;
+    const tagBtn = document.querySelector(`[data-tag="${cleanTagName}"]`);
     if (tagBtn && tagBtn.classList.contains('custom-tag')) {
         tagBtn.remove();
     }
 
-    // Auto-save
+    // Save global custom tags to localStorage
+    localStorage.setItem('brainDumpCustomTags', JSON.stringify(globalCustomTags));
+
+    // Auto-save the note
     if (currentNoteId) {
         clearTimeout(autoSaveTimer);
         updateSaveStatus('saving');
         autoSaveTimer = setTimeout(() => saveNote(true), 500);
+    }
+
+    showToast('Custom tag removed', 'success');
+}
+
+// Load global custom tags from localStorage
+function loadGlobalCustomTags() {
+    try {
+        const saved = localStorage.getItem('brainDumpCustomTags');
+        if (saved) {
+            globalCustomTags = JSON.parse(saved);
+        }
+    } catch (error) {
+        console.error('Error loading global custom tags:', error);
+        globalCustomTags = [];
     }
 }
 
@@ -917,11 +953,14 @@ function updateTagsUI(tags) {
     // Remove existing custom tags
     document.querySelectorAll('.custom-tag').forEach(btn => btn.remove());
 
-    // Add custom tags
+    // Load global custom tags from localStorage
+    loadGlobalCustomTags();
+
+    // Add all global custom tags to UI (both active and inactive)
     const tagsContainer = document.getElementById('tagsContainer');
     const addBtn = tagsContainer.querySelector('.tag-add');
 
-    currentNoteTags.forEach(tag => {
+    globalCustomTags.forEach(tag => {
         // Skip if it's a preset tag
         const cleanTagName = tag.includes(':') ? tag.split(':')[1] : tag;
         if (document.querySelector(`.tag-preset[data-tag="${cleanTagName}"]`)) return;
@@ -933,8 +972,11 @@ function updateTagsUI(tags) {
             displayText = `${emoji} ${tagName}`;
         }
 
+        // Check if this tag is active for current note
+        const isActive = currentNoteTags.includes(tag);
+
         const customTag = document.createElement('button');
-        customTag.className = 'custom-tag active';
+        customTag.className = `custom-tag ${isActive ? 'active' : ''}`;
         customTag.setAttribute('data-tag', cleanTagName);
         customTag.innerHTML = `
             ${displayText}
@@ -1464,6 +1506,13 @@ function createCustomTagFromModal() {
     // Add to current tags with emoji
     currentNoteTags.push(tagWithEmoji);
     
+    // Add to global custom tags if not already there
+    if (!globalCustomTags.includes(tagWithEmoji)) {
+        globalCustomTags.push(tagWithEmoji);
+        // Save to localStorage
+        localStorage.setItem('brainDumpCustomTags', JSON.stringify(globalCustomTags));
+    }
+    
     // Add custom tag button to UI
     const tagsContainer = document.getElementById('tagsContainer');
     const addBtn = tagsContainer.querySelector('.tag-add');
@@ -1473,11 +1522,11 @@ function createCustomTagFromModal() {
     customTag.setAttribute('data-tag', cleanTag);
     customTag.innerHTML = `
         ${emoji} ${tagName}
-        <span class="remove-tag" onclick="removeCustomTag('${cleanTag}', event)">×</span>
+        <span class="remove-tag" onclick="removeCustomTag('${tagWithEmoji}', event)">×</span>
     `;
     customTag.onclick = function(e) {
         if (!e.target.classList.contains('remove-tag')) {
-            toggleTag(cleanTag);
+            toggleTag(tagWithEmoji);
         }
     };
     
