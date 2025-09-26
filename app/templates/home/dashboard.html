@@ -762,13 +762,41 @@ html.dark .coming-soon-card {
                 </div>
             </a>
 
-            <!-- Account Settings -->
+        </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="platform-section">
+        <div class="platform-header">
+            <i class="ph ph-gear"></i>
+            <h2>Settings</h2>
+        </div>
+
+        <div class="features-grid">
+            <!-- Social Accounts -->
             <a href="{{ url_for('accounts.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
-                    <h3><i class="ph ph-user-gear feature-icon-inline"></i>Account Settings</h3>
-                    <p>Connect your social accounts</p>
+                    <h3><i class="ph ph-user-gear feature-icon-inline"></i>Social Accounts</h3>
+                    <p>Connect your social platforms</p>
                 </div>
             </a>
+
+            <!-- Subscription -->
+            <a href="{{ url_for('payment.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-crown feature-icon-inline"></i>Subscription</h3>
+                    <p>Manage your plan & billing</p>
+                </div>
+            </a>
+
+            <!-- Teams (Placeholder) -->
+            <div class="feature-card coming-soon-card">
+                <div class="feature-content">
+                    <h3><i class="ph ph-users-three feature-icon-inline"></i>Teams</h3>
+                    <p>Collaborate with your team</p>
+                    <span class="coming-soon-badge">Coming Soon</span>
+                </div>
+            </div>
         </div>
     </div>
 

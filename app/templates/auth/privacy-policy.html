@@ -242,13 +242,13 @@
         h1 {
             font-size: 2.25rem;
             font-weight: 800;
-            color: #1E293B;
+            color: var(--text-primary);
             margin-bottom: 0.75rem;
             letter-spacing: -0.02em;
         }
         
         .update-date {
-            color: #64748B;
+            color: var(--text-tertiary);
             font-size: 0.95rem;
             margin-bottom: 2rem;
             font-weight: 500;
@@ -257,7 +257,7 @@
         h2 {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1E293B;
+            color: var(--text-primary);
             margin-top: 2.5rem;
             margin-bottom: 1rem;
             letter-spacing: -0.01em;
@@ -266,14 +266,14 @@
         h3 {
             font-size: 1.125rem;
             font-weight: 600;
-            color: #374151;
+            color: var(--text-primary);
             margin-top: 1.75rem;
             margin-bottom: 0.75rem;
         }
         
         p, li {
             line-height: 1.7;
-            color: #475569;
+            color: var(--text-secondary);
             margin-bottom: 1rem;
         }
         
@@ -287,7 +287,7 @@
         }
         
         strong {
-            color: #1E293B;
+            color: var(--text-primary);
             font-weight: 600;
         }
         
@@ -314,7 +314,7 @@
         
         .contact-section h3 {
             margin-top: 0;
-            color: #1E293B;
+            color: var(--text-primary);
         }
         
         /* Responsive */
@@ -433,32 +433,7 @@
     </div>
 
     <script>
-        // Initialize dark mode toggle
-        function initDarkMode() {
-            const darkModeToggle = document.getElementById('dark-mode-toggle');
-            const darkModeIcon = document.getElementById('dark-mode-icon');
-
-            // Update icon based on current mode
-            function updateIcon() {
-                const isDark = document.documentElement.classList.contains('dark');
-                darkModeIcon.className = isDark ? 'ph ph-moon' : 'ph ph-sun';
-            }
-
-            // Initial icon update
-            updateIcon();
-
-            // Toggle dark mode on button click
-            darkModeToggle.addEventListener('click', () => {
-                const isDark = document.documentElement.classList.toggle('dark');
-                localStorage.setItem('darkMode', isDark);
-                updateIcon();
-            });
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize dark mode
-            initDarkMode();
-
             // Page load animation
             setTimeout(() => {
                 document.body.classList.add('loaded');

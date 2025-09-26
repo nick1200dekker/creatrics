@@ -216,23 +216,44 @@
             margin: 1.5rem 0;
             border-radius: 12px;
             border-left: 4px solid #EF4444;
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
-        
+
+        html.dark .important-box {
+            background: linear-gradient(135deg, rgba(254, 242, 242, 0.1) 0%, rgba(254, 226, 226, 0.1) 100%);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #F87171;
+            border-left-color: #EF4444;
+        }
+
         .important-box strong {
             color: #991B1B;
+        }
+
+        html.dark .important-box strong {
+            color: #FCA5A5;
+        }
+
+        .important-box p {
+            color: inherit;
+            margin-bottom: 0.5rem;
+        }
+
+        .important-box p:last-child {
+            margin-bottom: 0;
         }
         
         /* Typography */
         h1 {
             font-size: 2.25rem;
             font-weight: 800;
-            color: #1E293B;
+            color: var(--text-primary);
             margin-bottom: 0.75rem;
             letter-spacing: -0.02em;
         }
         
         .update-date {
-            color: #64748B;
+            color: var(--text-tertiary);
             font-size: 0.95rem;
             margin-bottom: 2rem;
             font-weight: 500;
@@ -241,7 +262,7 @@
         h2 {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1E293B;
+            color: var(--text-primary);
             margin-top: 2.5rem;
             margin-bottom: 1rem;
             letter-spacing: -0.01em;
@@ -250,14 +271,14 @@
         h3 {
             font-size: 1.125rem;
             font-weight: 600;
-            color: #374151;
+            color: var(--text-primary);
             margin-top: 1.75rem;
             margin-bottom: 0.75rem;
         }
         
         p, li {
             line-height: 1.7;
-            color: #475569;
+            color: var(--text-secondary);
             margin-bottom: 1rem;
         }
         
@@ -271,7 +292,7 @@
         }
         
         strong {
-            color: #1E293B;
+            color: var(--text-primary);
             font-weight: 600;
         }
         
@@ -306,31 +327,6 @@
             color: var(--text-primary);
         }
 
-        /* Dark mode toggle button */
-        .dark-mode-toggle {
-            position: fixed;
-            top: 2rem;
-            right: 2rem;
-            z-index: 1000;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-primary);
-            border-radius: 12px;
-            padding: 0.75rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-md);
-        }
-
-        .dark-mode-toggle:hover {
-            background: var(--bg-tertiary);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .dark-mode-toggle i {
-            font-size: 1.25rem;
-            color: var(--text-primary);
-        }
         
         /* Responsive */
         @media (max-width: 768px) {
@@ -361,11 +357,6 @@
     </style>
 </head>
 <body>
-    <!-- Dark mode toggle button -->
-    <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
-        <i class="ph ph-sun" id="dark-mode-icon"></i>
-    </button>
-
     <!-- Animated background -->
     <div class="animated-bg"></div>
 
@@ -435,32 +426,7 @@
     </div>
 
     <script>
-        // Initialize dark mode toggle
-        function initDarkMode() {
-            const darkModeToggle = document.getElementById('dark-mode-toggle');
-            const darkModeIcon = document.getElementById('dark-mode-icon');
-
-            // Update icon based on current mode
-            function updateIcon() {
-                const isDark = document.documentElement.classList.contains('dark');
-                darkModeIcon.className = isDark ? 'ph ph-moon' : 'ph ph-sun';
-            }
-
-            // Initial icon update
-            updateIcon();
-
-            // Toggle dark mode on button click
-            darkModeToggle.addEventListener('click', () => {
-                const isDark = document.documentElement.classList.toggle('dark');
-                localStorage.setItem('darkMode', isDark);
-                updateIcon();
-            });
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize dark mode
-            initDarkMode();
-
             // Page load animation
             setTimeout(() => {
                 document.body.classList.add('loaded');
