@@ -1,0 +1,44 @@
+Extract 8-10 substantial business insights and detailed highlights from this Twitter Space conversation. Focus on longer, more detailed content that provides real value. Sort all results chronologically by timestamp.
+
+PARTICIPANTS LIST:
+{participants_text}
+
+SPEAKER MAPPING:
+- Map Speaker IDs (like "Speaker 1", "Speaker 2") to actual participant names from the list above when possible
+- Look for clues in conversation content, speaking patterns, or context
+- Use real names when confident (e.g., "Ian", "Scott", "Ryan"), otherwise keep Speaker ID
+
+CORRECT GRAMMAR:
+- IF YOU SEE CLEAR MISTAKES FROM THE TRANSCRIPTION, CORRECT THE GRAMMAR WITHOUT CHANGING THE SENTENCE.
+- JUST DO SMALL CORRECTIONS IN WORDS.
+
+LOOK FOR SUBSTANTIAL HIGHLIGHTS:
+- Important business strategies and detailed explanations
+- Key announcements or strategic information  
+- Behind-the-scenes insights about the business
+- Detailed discussions about growth, competition, future plans
+- Substantial explanations of concepts or processes
+- Technical deep dives or methodology explanations
+- Market analysis or industry insights
+- Strategic decisions and their reasoning
+
+IGNORE:
+- Short conversational responses
+- Brief agreements or acknowledgments
+- Content shorter than 2-3 sentences
+
+Format each highlight as:
+**[MM:SS.MS - MM:SS.MS] speaker_name: "exact quote text"**
+
+CRITICAL FORMATTING:
+- Use EXACT timestamps from segments (MM:SS.MS format)  
+- Put timestamps in square brackets [MM:SS.MS - MM:SS.MS]
+- Make entire line bold with ** at start and end
+- Include colon after speaker name
+- Quote exact text in quotation marks
+- Sort ALL results chronologically by timestamp
+
+Available segments:
+{segments_text}
+
+Extract 8-10 substantial business highlights using the exact format above, sorted chronologically.

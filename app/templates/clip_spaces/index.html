@@ -1,327 +1,2730 @@
 {% extends "base.html" %}
-{% set check_auth = true %}
-{% block title %}Clip Spaces - Coming Soon - Creatrics{% endblock %}
+
+{% block title %}AI Twitter Spaces Processor - Transcribe & Analyze | Creatrics{% endblock %}
 
 {% block seo_meta %}
-<meta name="description" content="Clip Spaces - AI tool to identify and clip hot moments from X Spaces. Coming soon to Creatrics.">
-<meta name="keywords" content="X Spaces, Twitter Spaces, audio clips, viral moments, space clipping tool">
+<meta name="description" content="Process Twitter Spaces with AI. Get transcriptions, summaries, key highlights, and downloadable audio clips. Professional Spaces analysis made simple with Creatrics AI.">
+<meta name="keywords" content="AI Twitter Spaces processor, Spaces transcription, audio analysis, social media analytics, X Spaces">
 {% endblock %}
 
 {% block additional_styles %}
 <style>
-    /* Override base template padding */
-    .content-panel {
-        padding: 0 !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
+/* Reset the default content-panel padding */
+.content-panel {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
 
-    /* Main wrapper */
-    .coming-soon-wrapper {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border-secondary);
-        overflow: hidden;
-        width: 100%;
-        min-height: calc(100vh - 60px);
-        transition: background-color 0.3s ease, border-color 0.3s ease;
-        position: relative;
-    }
+/* Main wrapper - matching other pages style */
+.generator-wrapper {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-secondary);
+    overflow: hidden;
+    width: 100%;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
 
-    html.dark .coming-soon-wrapper {
-        border-color: transparent;
-    }
+html.dark .generator-wrapper {
+    border-color: transparent;
+}
 
-    /* Animated background gradient */
-    .coming-soon-wrapper::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.03) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.03) 0%, transparent 50%);
-        pointer-events: none;
-    }
+/* Header - matching other pages style */
+.generator-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-    /* Header */
-    .coming-soon-header {
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid var(--border-primary);
-        background: var(--bg-secondary);
-        transition: background-color 0.3s ease, border-color 0.3s ease;
-        position: relative;
-        z-index: 1;
-    }
+.generator-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+}
 
-    .coming-soon-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
+.generator-title i {
+    color: #3B82F6;
+}
 
-    .coming-soon-title i {
-        color: #3B82F6;
-    }
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+}
 
-    /* Content */
-    .coming-soon-content {
-        padding: 4rem 2rem;
-        text-align: center;
-        position: relative;
-        z-index: 1;
-    }
+.header-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
 
-    .coming-soon-hero {
-        max-width: 600px;
-        margin: 0 auto;
-    }
+.header-btn:hover {
+    background: var(--hover-bg);
+    border-color: #3B82F6;
+    color: #3B82F6;
+    transform: translateY(-1px);
+}
 
-    .coming-soon-icon {
-        width: 120px;
-        height: 120px;
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-        border-radius: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 2rem;
-        box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.3);
-        position: relative;
-        overflow: hidden;
-    }
+/* Content Area */
+.generator-content {
+    padding: 2rem;
+}
 
-    .coming-soon-icon::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 100px;
-        height: 100px;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
-        pointer-events: none;
-    }
+/* Input Section */
+.input-section {
+    margin-bottom: 2rem;
+}
 
-    .coming-soon-icon i {
-        font-size: 3rem;
-        color: white;
-        position: relative;
-        z-index: 1;
-    }
+.input-panel {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
 
-    .coming-soon-hero h1 {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-        line-height: 1.2;
-    }
+html.dark .input-panel {
+    background: var(--bg-tertiary);
+}
 
-    .coming-soon-hero .gradient-text {
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
+.form-group {
+    margin-bottom: 1.5rem;
+}
 
-    .coming-soon-hero p {
-        font-size: 1.25rem;
-        color: var(--text-secondary);
-        margin-bottom: 2rem;
-        line-height: 1.6;
-    }
+.form-label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.02em;
+}
 
-    .coming-soon-badge {
-        display: inline-block;
-        background: rgba(59, 130, 246, 0.1);
-        color: #3B82F6;
-        padding: 0.5rem 1.5rem;
-        border-radius: 50px;
-        font-size: 0.875rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 2rem;
-        border: 1px solid rgba(59, 130, 246, 0.2);
-    }
+.input-helper {
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(59, 130, 246, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid #3B82F6;
+    line-height: 1.4;
+}
 
-    html.dark .coming-soon-badge {
-        background: rgba(59, 130, 246, 0.2);
-        color: #60A5FA;
-        border-color: rgba(59, 130, 246, 0.3);
-    }
+html.dark .input-helper {
+    background: rgba(59, 130, 246, 0.1);
+}
 
-    /* Features preview */
-    .features-preview {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
+.input-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+}
+
+.form-input {
+    flex: 1;
+    padding: 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+}
+
+html.dark .form-input {
+    background: var(--bg-secondary);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .form-input:focus {
+    background: var(--bg-primary);
+}
+
+.form-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* Button Styles */
+.secondary-button {
+    padding: 1rem 1.25rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.secondary-button:hover {
+    background: var(--hover-bg);
+    border-color: #3B82F6;
+    color: #3B82F6;
+    transform: translateY(-1px);
+}
+
+.process-button {
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    white-space: nowrap;
+}
+
+.process-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+}
+
+.process-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.process-button.processing {
+    background: rgba(59, 130, 246, 0.7) !important;
+    pointer-events: none !important;
+}
+
+/* How It Works Section */
+.how-it-works-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: none;
+}
+
+html.dark .how-it-works-section {
+    background: var(--bg-tertiary);
+}
+
+.how-it-works-section.show {
+    display: block;
+}
+
+.how-it-works-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.how-it-works-step {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.how-it-works-step:last-child {
+    margin-bottom: 0;
+}
+
+.step-number {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #3B82F6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.step-content {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    flex: 1;
+}
+
+/* History Panel */
+.history-panel {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: none;
+}
+
+html.dark .history-panel {
+    background: var(--bg-tertiary);
+}
+
+.history-panel.show {
+    display: block;
+}
+
+.history-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+html.dark .history-item {
+    background: var(--bg-secondary);
+}
+
+.history-item:hover {
+    border-color: #3B82F6;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.history-item-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.history-item-icon i {
+    color: #3B82F6;
+    font-size: 1.25rem;
+}
+
+.history-item-content {
+    flex: 1;
+}
+
+.history-item-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+
+.history-item-meta {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.history-item-date {
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+    margin-left: auto;
+    flex-shrink: 0;
+    padding-left: 12px;
+}
+
+/* Loading State */
+.loading-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    display: none;
+}
+
+html.dark .loading-section {
+    background: var(--bg-tertiary);
+}
+
+.loading-section.show {
+    display: block;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-primary);
+    border-top-color: #3B82F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.loading-status {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.loading-progress-container {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    height: 8px;
+    overflow: hidden;
+    margin: 0 auto;
+    max-width: 300px;
+}
+
+.loading-progress {
+    height: 100%;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    transition: width 0.3s ease;
+    border-radius: 8px;
+}
+
+/* Results Section */
+.results-section {
+    display: none;
+}
+
+.results-section.show {
+    display: block;
+}
+
+.space-info-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+html.dark .space-info-card {
+    background: var(--bg-tertiary);
+}
+
+.space-info-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.space-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 768px) {
+    .space-info-grid {
+        grid-template-columns: 1fr;
         gap: 1.5rem;
-        margin-top: 3rem;
-        max-width: 900px;
-        margin-left: auto;
-        margin-right: auto;
+    }
+}
+
+.space-details h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.space-detail-item {
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.participants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.participant-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.participant-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #3B82F6;
+    flex-shrink: 0;
+}
+
+.participant-name {
+    color: var(--text-secondary);
+}
+
+/* Audio Editor Components */
+.audio-player-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+html.dark .audio-player-card {
+    background: var(--bg-tertiary);
+}
+
+.audio-player-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.audio-editor-container {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-primary);
+}
+
+html.dark .audio-editor-container {
+    background: var(--bg-secondary);
+}
+
+.current-time-display {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.waveform-container {
+    height: 80px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    position: relative;
+    min-height: 80px;
+}
+
+html.dark .waveform-container {
+    background: var(--bg-primary);
+}
+
+/* Loading indicator styles */
+.audio-loading-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.audio-loading-indicator .audio-spinner {
+    font-size: 2rem;
+    color: #3B82F6;
+    line-height: 1;
+}
+
+.audio-loading-indicator .audio-loading-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1;
+}
+
+/* Spinning animation */
+.ph-spin {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+/* Audio visualizer fallback styles */
+.audio-progress-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+.audio-visualizer {
+    width: 100%;
+    height: 60px;
+    position: relative;
+}
+
+.audio-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 100%;
+    gap: 2px;
+    margin-bottom: -30px;
+    opacity: 0.3;
+}
+
+.audio-bar {
+    width: 2px;
+    background: #3B82F6;
+    min-height: 20%;
+    border-radius: 1px;
+    transition: height 0.15s ease;
+}
+
+.audio-progress-track {
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.audio-progress-fill {
+    height: 100%;
+    background: #3B82F6;
+    border-radius: 3px;
+    transition: width 0.1s linear;
+    position: relative;
+}
+
+.audio-progress-handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    z-index: 3;
+}
+
+.timeline-container {
+    height: 30px;
+    margin-bottom: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    font-size: 0.75rem;
+}
+
+.editor-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.editor-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-height: 32px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+}
+
+.editor-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.editor-button:not(.premium-button):hover:not(:disabled) {
+    background: var(--hover-bg);
+    transform: translateY(-1px);
+}
+
+.navigation-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.parts-counter {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    min-width: 80px;
+    text-align: center;
+}
+
+.prev-region-button, 
+.next-region-button {
+    padding: 0.375rem 0.75rem;
+    min-width: 40px;
+}
+
+.selected-region {
+    border: 2px solid #3B82F6;
+}
+
+/* Summary Card */
+.summary-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+html.dark .summary-card {
+    background: var(--bg-tertiary);
+}
+
+.summary-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+}
+
+html.dark .summary-header {
+    background: var(--bg-secondary);
+}
+
+.summary-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.summary-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+}
+
+.summary-tab {
+    padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.summary-tab.active {
+    color: #3B82F6;
+    border-bottom-color: #3B82F6;
+}
+
+.summary-tab:hover:not(.active) {
+    color: var(--text-primary);
+    background: var(--hover-bg);
+}
+
+.summary-content {
+    padding: 1.5rem;
+    min-height: 200px;
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.summary-text {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+/* Key Quotes */
+.quotes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.quote-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+html.dark .quote-item {
+    background: var(--bg-secondary);
+}
+
+.quote-speaker {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.quote-timestamp {
+    color: #3B82F6;
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.quote-text {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 0.75rem;
+}
+
+.quote-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.quote-btn {
+    padding: 0.25rem 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.quote-btn:hover {
+    background: #3B82F6;
+    border-color: #3B82F6;
+    color: white;
+}
+
+/* Transcript Card */
+.transcript-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+html.dark .transcript-card {
+    background: var(--bg-tertiary);
+}
+
+.transcript-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+html.dark .transcript-header {
+    background: var(--bg-secondary);
+}
+
+.transcript-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.transcript-info {
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+}
+
+.toggle-transcript-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toggle-transcript-btn:hover {
+    background: var(--hover-bg);
+    border-color: #3B82F6;
+    color: #3B82F6;
+}
+
+.transcript-content {
+    padding: 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+    background: var(--bg-primary);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-primary) transparent;
+}
+
+html.dark .transcript-content {
+    background: var(--bg-tertiary);
+}
+
+.transcript-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.transcript-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.transcript-content::-webkit-scrollbar-thumb {
+    background: var(--border-primary);
+    border-radius: 3px;
+}
+
+.transcript-content::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+
+.transcript-content.show {
+    display: block;
+}
+
+.transcript-segment {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.transcript-segment:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.transcript-timestamp {
+    color: #3B82F6;
+    font-weight: 600;
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.transcript-speaker {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.transcript-text {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 0.875rem;
+}
+
+/* Error State */
+.error-section {
+    background: var(--bg-primary);
+    border: 1px solid #EF4444;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    display: none;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%);
+}
+
+.error-section.show {
+    display: block;
+}
+
+.error-icon {
+    font-size: 3rem;
+    color: #EF4444;
+    margin-bottom: 1rem;
+}
+
+.error-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #EF4444;
+    margin-bottom: 0.75rem;
+}
+
+.error-text {
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Insufficient Credits */
+.insufficient-credits-section {
+    background: var(--bg-primary);
+    border: 2px solid rgba(245, 158, 11, 0.2);
+    border-radius: 12px;
+    padding: 2.5rem;
+    text-align: center;
+    display: none;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(245, 158, 11, 0.02) 100%);
+}
+
+.insufficient-credits-section.show {
+    display: block;
+}
+
+.credit-icon {
+    font-size: 3.5rem;
+    color: #F59E0B;
+    margin-bottom: 1.5rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.credits-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.credits-description {
+    color: var(--text-secondary);
+    margin-bottom: 1.75rem;
+    line-height: 1.5;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.upgrade-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 2rem;
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.upgrade-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    max-width: 320px;
+    border-left: 4px solid #10B981;
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast.error {
+    border-left-color: #EF4444;
+}
+
+.toast.info {
+    border-left-color: #3B82F6;
+}
+
+.toast i {
+    font-size: 1.25rem;
+    color: #10B981;
+}
+
+.toast.error i {
+    color: #EF4444;
+}
+
+.toast.info i {
+    color: #3B82F6;
+}
+
+.toast-text {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .generator-content {
+        padding: 1rem;
     }
 
-    .feature-preview-card {
-        background: var(--bg-tertiary);
-        border-radius: 16px;
-        padding: 1.5rem;
-        border: 1px solid var(--border-secondary);
-        transition: all 0.3s ease;
-        opacity: 0.7;
-    }
-
-    html.dark .feature-preview-card {
-        border-color: transparent;
-    }
-
-    .feature-preview-card h3 {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .feature-preview-card h3 i {
-        color: #3B82F6;
-        font-size: 1rem;
-    }
-
-    .feature-preview-card p {
-        font-size: 0.875rem;
-        color: var(--text-tertiary);
-        line-height: 1.5;
-        margin: 0;
-    }
-
-    /* CTA buttons */
-    .coming-soon-cta {
-        display: flex;
+    .generator-header {
+        padding: 1rem 1.5rem;
+        flex-direction: column;
         gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-        margin-top: 2rem;
+        align-items: stretch;
     }
 
-    .btn-primary, .btn-secondary {
-        padding: 0.875rem 2rem;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
+    .generator-title {
+        font-size: 1.375rem;
+    }
+
+    .header-actions {
+        justify-content: center;
+    }
+
+    .input-group {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .space-info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .summary-tabs {
+        flex-direction: column;
+    }
+
+    .summary-tab {
+        text-align: left;
+        border-bottom: 1px solid var(--border-primary);
+        border-right: none;
+    }
+
+    .summary-tab.active {
+        border-bottom-color: var(--border-primary);
+        border-left: 3px solid #3B82F6;
+    }
+
+    .transcript-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .toast {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: calc(100% - 2rem);
+    }
+
+    .editor-controls {
         gap: 0.5rem;
     }
 
-    .btn-primary {
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    .navigation-group {
+        margin-left: 0;
+        margin-top: 0.5rem;
     }
+}
 
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
-    }
+/* Accessibility improvements */
+.process-button:focus,
+.secondary-button:focus,
+.header-btn:focus,
+.summary-tab:focus,
+.toggle-transcript-btn:focus,
+.editor-button:focus {
+    outline: 2px solid #3B82F6;
+    outline-offset: 2px;
+}
 
-    .btn-secondary {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-primary);
-        box-shadow: var(--shadow-sm);
-    }
+.form-input:focus {
+    outline: none;
+}
 
-    .btn-secondary:hover {
-        background: var(--bg-primary);
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
-    }
+/* Dark mode improvements */
+html.dark .history-item:hover {
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
 
-    /* Responsive */
-    @media (max-width: 768px) {
-        .coming-soon-content {
-            padding: 2rem 1rem;
-        }
-        
-        .coming-soon-hero h1 {
-            font-size: 2rem;
-        }
-        
-        .coming-soon-hero p {
-            font-size: 1.125rem;
-        }
-        
-        .features-preview {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-    }
+html.dark .quote-btn:hover {
+    background: #3B82F6;
+    border-color: #3B82F6;
+    color: white;
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="coming-soon-wrapper">
-    <!-- Header -->
-    <div class="coming-soon-header">
-        <h1 class="coming-soon-title">
-            <i class="ph ph-scissors"></i>
-            Clip Spaces
-        </h1>
-    </div>
-
-    <!-- Content -->
-    <div class="coming-soon-content">
-        <div class="coming-soon-hero">
-            <div class="coming-soon-icon">
-                <i class="ph ph-scissors"></i>
-            </div>
-            
-            <div class="coming-soon-badge">Coming Soon</div>
-            
-            <h1>Capture <span class="gradient-text">Viral Moments</span> from Spaces</h1>
-            
-            <p>AI-powered tool to automatically identify and clip the hottest moments from X Spaces, turning conversations into shareable content.</p>
-            
-            <div class="coming-soon-cta">
-                <a href="{{ url_for('home.dashboard') }}" class="btn-primary">
+<div class="content-panel">
+    <div class="generator-wrapper">
+        <!-- Header -->
+        <div class="generator-header">
+            <h1 class="generator-title">
+                <i class="ph ph-broadcast"></i>
+                Spaces
+            </h1>
+            <div class="header-actions">
+                <button class="header-btn" onclick="toggleHowItWorks()">
+                    <i class="ph ph-question"></i>
+                    How It Works
+                </button>
+                <a href="{{ url_for('home.dashboard') }}" class="header-btn">
                     <i class="ph ph-house"></i>
-                    Back to Dashboard
-                </a>
-                <a href="{{ url_for('x_post_editor.x_post_editor') }}" class="btn-secondary">
-                    <i class="ph ph-pencil-simple"></i>
-                    Try Post Editor
+                    Dashboard
                 </a>
             </div>
         </div>
 
-        <!-- Features Preview -->
-        <div class="features-preview">
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-waveform"></i>Smart Audio Analysis</h3>
-                <p>AI identifies engaging moments, emotional peaks, and viral-worthy segments automatically.</p>
+        <!-- Content Area -->
+        <div class="generator-content">
+            <!-- How It Works Section -->
+            <div class="how-it-works-section" id="howItWorksSection">
+                <div class="how-it-works-title">
+                    <i class="ph ph-lightbulb"></i>
+                    How to Use Spaces
+                </div>
+                <div class="how-it-works-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">Go to Twitter (X) and find a Space you want to analyze. The Space ID is the string at the end of the URL (e.g., for https://twitter.com/i/spaces/1lPJqMZNDNAJb, the ID is "1lPJqMZNDNAJb").</div>
+                </div>
+                <div class="how-it-works-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">Enter the Space ID in the input field and click "Process Space". The tool will download the Space audio, transcribe it using ElevenLabs Scribe AI, and generate a comprehensive summary. Processing costs credits based on audio duration.</div>
+                </div>
+                <div class="how-it-works-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">Listen to the Space audio, read the AI-generated summary, and browse the full transcript with precise timestamps to gain insights from the conversation. Previous analyses are saved in your History.</div>
+                </div>
+                <div class="how-it-works-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">Use the audio editing tools to select and export specific segments of the Space. Create clips of the best moments to share or save for later.</div>
+                </div>
             </div>
-            
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-video"></i>Instant Clip Creation</h3>
-                <p>Generate shareable video clips with captions and highlights ready for social media.</p>
+
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="input-panel">
+                    <div class="form-group">
+                        <label class="form-label">Process Twitter Space</label>
+                        <div class="input-helper">
+                            <i class="ph ph-info"></i>
+                            Enter the Space ID from a Twitter/X Spaces URL to get AI transcription, summary, and downloadable clips.
+                        </div>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-input" 
+                                   id="spaceId" 
+                                   placeholder="e.g., 1lPJqMZNDNAJb"
+                                   maxlength="100">
+                            <button class="secondary-button" onclick="toggleHistory()">
+                                <i class="ph ph-clock-clockwise"></i>
+                                History
+                            </button>
+                            <button class="process-button" onclick="processSpace()" id="processBtn">
+                                <i class="ph ph-sparkle"></i>
+                                Process Space
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-fire"></i>Viral Moment Detection</h3>
-                <p>Spot trending topics, quotable moments, and engagement spikes in real-time.</p>
+
+            <!-- History Panel -->
+            <div class="history-panel" id="historyPanel">
+                <div class="history-title">
+                    <i class="ph ph-clock-clockwise"></i>
+                    Previously Processed Spaces
+                </div>
+                <div id="historyContent">
+                    {% if processed_spaces %}
+                        {% for space in processed_spaces %}
+                        <div class="history-item" onclick="loadSpace('{{ space.space_id }}')">
+                            <div class="history-item-icon">
+                                <i class="ph ph-broadcast"></i>
+                            </div>
+                            <div class="history-item-content">
+                                <div class="history-item-title">{{ space.title or 'Twitter Space' }}</div>
+                                <div class="history-item-meta">Space ID: {{ space.space_id }}</div>
+                            </div>
+                            <div class="history-item-date">
+                                {{ space.formatted_date or 'Recently' }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            No previously processed spaces found.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Loading Section -->
+            <div class="loading-section" id="loadingSection">
+                <div class="loading-spinner"></div>
+                <div class="loading-title">Processing Space</div>
+                <div class="loading-status" id="loadingStatus">Initializing...</div>
+                <div class="loading-progress-container">
+                    <div class="loading-progress" id="loadingProgress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Insufficient Credits Section -->
+            <div class="insufficient-credits-section" id="insufficientCreditsSection">
+                <div class="credit-icon">
+                    <i class="ph ph-coins"></i>
+                </div>
+                <div class="credits-title">Insufficient Credits</div>
+                <div class="credits-description" id="creditsDescription">
+                    You don't have enough credits to process this Space.
+                </div>
+                <a href="/payment" class="upgrade-btn">
+                    <i class="ph ph-crown"></i>
+                    Upgrade Plan
+                </a>
+            </div>
+
+            <!-- Error Section -->
+            <div class="error-section" id="errorSection">
+                <div class="error-icon">
+                    <i class="ph ph-warning-circle"></i>
+                </div>
+                <div class="error-title">Error Processing Space</div>
+                <div class="error-text" id="errorText">
+                    An error occurred while processing the Space. Please try again.
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection">
+                <!-- Space Info Card -->
+                <div class="space-info-card">
+                    <div class="space-info-title">
+                        <i class="ph ph-info"></i>
+                        Space Information
+                    </div>
+                    <div class="space-info-grid">
+                        <div class="space-details">
+                            <h4 id="spaceTitle">Space Title</h4>
+                            <div class="space-detail-item" id="spaceCreator">Creator: </div>
+                            <div class="space-detail-item" id="spaceDate">Date: </div>
+                            <div class="space-detail-item" id="spaceListeners">Listeners: </div>
+                        </div>
+                        <div class="participants-section">
+                            <h4>Participants</h4>
+                            <div class="participants-list" id="participantsList">
+                                <!-- Participants will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Player Card -->
+                <div class="audio-player-card">
+                    <div class="audio-player-title">
+                        <i class="ph ph-play"></i>
+                        Listen & Edit Space
+                    </div>
+                    <div class="w-full">
+                        <div id="audioEditorContainer" data-space-id=""></div>
+                    </div>
+                </div>
+
+                <!-- Summary Card -->
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <div class="summary-title">
+                            <i class="ph ph-sparkle"></i>
+                            Space Summary & Highlights
+                        </div>
+                        <div class="summary-tabs">
+                            <button class="summary-tab active" onclick="switchTab('overview')" id="overviewTab">
+                                Overview
+                            </button>
+                            <button class="summary-tab" onclick="switchTab('quotes')" id="quotesTab">
+                                Key Quotes & Highlights
+                            </button>
+                        </div>
+                    </div>
+                    <div class="summary-content">
+                        <div class="tab-panel active" id="overviewPanel">
+                            <div class="summary-text" id="overviewContent">
+                                <!-- Overview content will be populated here -->
+                            </div>
+                        </div>
+                        <div class="tab-panel" id="quotesPanel">
+                            <div class="quotes-list" id="quotesContent">
+                                <!-- Key quotes content will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transcript Card -->
+                <div class="transcript-card">
+                    <div class="transcript-header">
+                        <div class="transcript-title">
+                            <i class="ph ph-text-align-left"></i>
+                            Full Transcript
+                        </div>
+                        <div>
+                            <div class="transcript-info" id="transcriptInfo">0 characters</div>
+                            <button class="toggle-transcript-btn" onclick="toggleTranscript()" id="toggleTranscriptBtn">
+                                <i class="ph ph-eye"></i>
+                                Show Transcript
+                            </button>
+                        </div>
+                    </div>
+                    <div class="transcript-content" id="transcriptContent">
+                        <!-- Transcript will be populated here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- WaveSurfer.js from CDN -->
+<script src="https://unpkg.com/wavesurfer.js@6.6.4/dist/wavesurfer.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@6.6.4/dist/plugin/wavesurfer.timeline.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@6.6.4/dist/plugin/wavesurfer.regions.js"></script>
+
+<!-- Markdown renderer -->
+<script src="https://unpkg.com/marked@4.0.0/marked.min.js"></script>
+
+<script>
+// State management
+let currentSpaceId = null;
+let statusPollInterval = null;
+let isProcessing = false;
+let audioEditor = null;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    checkForActiveProcess();
+});
+
+// Toggle sections
+function toggleHowItWorks() {
+    const section = document.getElementById('howItWorksSection');
+    section.classList.toggle('show');
+}
+
+function toggleHistory() {
+    const panel = document.getElementById('historyPanel');
+    panel.classList.toggle('show');
+}
+
+function toggleTranscript() {
+    const content = document.getElementById('transcriptContent');
+    const btn = document.getElementById('toggleTranscriptBtn');
+    
+    if (content.classList.contains('show')) {
+        content.classList.remove('show');
+        btn.innerHTML = '<i class="ph ph-eye"></i> Show Transcript';
+    } else {
+        content.classList.add('show');
+        btn.innerHTML = '<i class="ph ph-eye-slash"></i> Hide Transcript';
+    }
+}
+
+// Switch summary tabs
+function switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.summary-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    
+    // Update tab panels
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove('active');
+    });
+    document.getElementById(tabName + 'Panel').classList.add('active');
+}
+
+// Audio Editor Class - Simplified version from original
+class AudioEditor {
+    constructor(audioUrl, containerId) {
+        this.audioUrl = audioUrl;
+        this.container = document.getElementById(containerId);
+        this.regions = [];
+        this.currentRegion = null;
+        this.isPlaying = false;
+        this.currentTime = 0;
+        this.duration = 0;
+        
+        this.initializeUI();
+        this.initializeWaveSurfer();
+        this.initializeEventListeners();
+    }
+    
+    initializeUI() {
+        // Create the editor container
+        this.editorContainer = document.createElement('div');
+        this.editorContainer.className = 'audio-editor-container';
+        
+        // Create current time display
+        this.currentTimeDisplay = document.createElement('div');
+        this.currentTimeDisplay.className = 'current-time-display';
+        this.currentTimeDisplay.innerHTML = '00:00.00 / 00:00.00';
+        
+        // Create waveform container
+        this.waveformContainer = document.createElement('div');
+        this.waveformContainer.className = 'waveform-container';
+        this.waveformContainer.style.position = 'relative';
+        
+        // Create loading indicator
+        this.loadingIndicator = document.createElement('div');
+        this.loadingIndicator.className = 'audio-loading-indicator';
+        this.loadingIndicator.innerHTML = `
+            <div class="audio-spinner">
+                <i class="ph ph-circle-notch ph-spin"></i>
+            </div>
+            <div class="audio-loading-text">Loading audio...</div>
+        `;
+        this.waveformContainer.appendChild(this.loadingIndicator);
+        
+        // Create timeline container
+        this.timelineContainer = document.createElement('div');
+        this.timelineContainer.className = 'timeline-container';
+        
+        // Create controls container
+        this.controlsContainer = document.createElement('div');
+        this.controlsContainer.className = 'editor-controls';
+        
+        // Play/Pause button
+        this.playButton = document.createElement('button');
+        this.playButton.className = 'editor-button play-button';
+        this.playButton.innerHTML = '<i class="ph ph-play"></i> Play';
+        
+        // Add region button
+        this.addRegionButton = document.createElement('button');
+        this.addRegionButton.className = 'editor-button add-region-button';
+        this.addRegionButton.innerHTML = '<i class="ph ph-scissors"></i> Select Part';
+        
+        // Delete region button
+        this.deleteRegionButton = document.createElement('button');
+        this.deleteRegionButton.className = 'editor-button delete-region-button';
+        this.deleteRegionButton.innerHTML = '<i class="ph ph-trash"></i> Delete Part';
+        this.deleteRegionButton.disabled = true;
+        
+        // Export button
+        this.exportButton = document.createElement('button');
+        this.exportButton.className = 'editor-button secondary-button';
+        this.exportButton.innerHTML = '<i class="ph ph-download"></i> Export';
+        
+        // Create navigation group
+        this.navigationGroup = document.createElement('div');
+        this.navigationGroup.className = 'navigation-group';
+        
+        // Navigation buttons
+        this.prevRegionButton = document.createElement('button');
+        this.prevRegionButton.className = 'editor-button prev-region-button';
+        this.prevRegionButton.innerHTML = '<i class="ph ph-caret-left"></i>';
+        this.prevRegionButton.disabled = true;
+        this.prevRegionButton.title = 'Previous part';
+        
+        this.partsCounter = document.createElement('span');
+        this.partsCounter.className = 'parts-counter';
+        this.partsCounter.innerHTML = 'Part 0/0';
+        
+        this.nextRegionButton = document.createElement('button');
+        this.nextRegionButton.className = 'editor-button next-region-button';
+        this.nextRegionButton.innerHTML = '<i class="ph ph-caret-right"></i>';
+        this.nextRegionButton.disabled = true;
+        this.nextRegionButton.title = 'Next part';
+        
+        this.navigationGroup.appendChild(this.prevRegionButton);
+        this.navigationGroup.appendChild(this.partsCounter);
+        this.navigationGroup.appendChild(this.nextRegionButton);
+        
+        // Add controls to container
+        this.controlsContainer.appendChild(this.playButton);
+        this.controlsContainer.appendChild(this.addRegionButton);
+        this.controlsContainer.appendChild(this.deleteRegionButton);
+        this.controlsContainer.appendChild(this.exportButton);
+        this.controlsContainer.appendChild(this.navigationGroup);
+        
+        // Add all elements to editor container
+        this.editorContainer.appendChild(this.currentTimeDisplay);
+        this.editorContainer.appendChild(this.waveformContainer);
+        this.editorContainer.appendChild(this.timelineContainer);
+        this.editorContainer.appendChild(this.controlsContainer);
+        
+        // Add editor to main container
+        this.container.appendChild(this.editorContainer);
+    }
+    
+    initializeWaveSurfer() {
+        // Create unique IDs to prevent conflicts
+        this.waveformId = 'waveform-' + Math.random().toString(36).substring(2, 9);
+        this.timelineId = 'timeline-' + Math.random().toString(36).substring(2, 9);
+        
+        // Set unique IDs for the containers
+        this.waveformContainer.id = this.waveformId;
+        this.timelineContainer.id = this.timelineId;
+        
+        // Create a hidden audio element for better streaming support
+        this.audioElement = document.createElement('audio');
+        this.audioElement.crossOrigin = 'anonymous';
+        this.audioElement.preload = 'metadata';
+        this.audioElement.style.display = 'none';
+        document.body.appendChild(this.audioElement);
+        
+        // Create WaveSurfer instance
+        this.wavesurfer = WaveSurfer.create({
+            container: '#' + this.waveformId,
+            waveColor: '#4ad7d7',
+            progressColor: '#20D7D7',
+            cursorColor: '#ffffff',
+            barWidth: 2,
+            barRadius: 3,
+            cursorWidth: 1,
+            height: 80,
+            barGap: 2,
+            responsive: true,
+            normalize: true,
+            backend: 'MediaElement',
+            mediaElement: this.audioElement,
+            plugins: [
+                WaveSurfer.timeline.create({
+                    container: '#' + this.timelineId,
+                    primaryColor: '#20D7D7',
+                    secondaryColor: '#128c8c',
+                    primaryFontColor: '#ffffff',
+                    secondaryFontColor: '#e2e8f0',
+                    fontSize: 12,
+                }),
+                WaveSurfer.regions.create({
+                    regions: [],
+                    dragSelection: true,
+                    color: 'rgba(32, 215, 215, 0.3)',
+                    slop: 5
+                })
+            ]
+        });
+        
+        // Initialize regions array
+        this.regions = [];
+        
+        // Show loading indicator
+        this.showLoading();
+        
+        // Load audio
+        this.wavesurfer.load(this.audioUrl);
+        
+        // Set up WaveSurfer events
+        this.wavesurfer.on('ready', () => {
+            console.log('WaveSurfer is ready');
+            this.duration = this.wavesurfer.getDuration();
+            
+            // Hide loading indicator
+            this.hideLoading();
+            
+            // Configure timeline intervals based on duration
+            this.configureTimelineIntervals();
+            
+            // Update time display
+            this.updateTimeDisplay();
+            
+            this.wavesurfer.enableDragSelection({
+                color: 'rgba(32, 215, 215, 0.3)'
+            });
+            
+            // Show toast when ready
+            showToast('Audio loaded. Click and drag to select parts.', 'success', 5000);
+        });
+        
+        // Update time display during playback
+        this.wavesurfer.on('audioprocess', () => {
+            this.currentTime = this.wavesurfer.getCurrentTime();
+            this.updateTimeDisplay();
+        });
+        
+        this.wavesurfer.on('seek', () => {
+            this.currentTime = this.wavesurfer.getCurrentTime();
+            this.updateTimeDisplay();
+        });
+        
+        // Handle region creation
+        this.wavesurfer.on('region-created', (region) => {
+            console.log('Region created:', region);
+            
+            // Make sure the region isn't already in our array
+            const exists = this.regions.some(r => r.id === region.id);
+            if (!exists) {
+                this.regions.push(region);
+                console.log(`Added region ${region.id}, total regions: ${this.regions.length}`);
+            }
+            
+            this.selectRegion(region);
+            this.updateNavigationButtons();
+        });
+        
+        this.wavesurfer.on('region-clicked', (region, e) => {
+            e.stopPropagation();
+            this.selectRegion(region);
+            this.wavesurfer.seekTo(region.start / this.duration);
+        });
+        
+        this.wavesurfer.on('play', () => {
+            this.isPlaying = true;
+            this.playButton.innerHTML = '<i class="ph ph-pause"></i> Pause';
+        });
+        
+        this.wavesurfer.on('pause', () => {
+            this.isPlaying = false;
+            this.playButton.innerHTML = '<i class="ph ph-play"></i> Play';
+        });
+        
+        this.wavesurfer.on('error', (error) => {
+            console.error('WaveSurfer error:', error);
+            this.hideLoading();
+            showToast('Error loading audio. Please try again.', 'error');
+        });
+    }
+    
+    configureTimelineIntervals() {
+        // Configure timeline intervals based on duration
+        const durationMinutes = this.duration / 60;
+        let timeInterval;
+        
+        if (durationMinutes <= 5) {
+            timeInterval = 30;
+        } else if (durationMinutes <= 15) {
+            timeInterval = 60;
+        } else if (durationMinutes <= 30) {
+            timeInterval = 120;
+        } else if (durationMinutes <= 60) {
+            timeInterval = 300;
+        } else if (durationMinutes <= 120) {
+            timeInterval = 600;
+        } else {
+            timeInterval = 900;
+        }
+        
+        // Update the timeline plugin with the calculated interval
+        if (this.wavesurfer.timeline) {
+            this.wavesurfer.timeline.params.timeInterval = timeInterval;
+            this.wavesurfer.timeline.render();
+        }
+    }
+    
+    updateTimeDisplay() {
+        const current = this.formatTime(this.currentTime);
+        const total = this.formatTime(this.duration);
+        this.currentTimeDisplay.innerHTML = `${current} / ${total}`;
+    }
+    
+    initializeEventListeners() {
+        // Play/Pause button
+        this.playButton.addEventListener('click', () => {
+            this.wavesurfer.playPause();
+        });
+        
+        // Add region button
+        this.addRegionButton.addEventListener('click', () => {
+            const region = this.wavesurfer.addRegion({
+                start: this.wavesurfer.getCurrentTime(),
+                end: Math.min(this.wavesurfer.getCurrentTime() + 30, this.duration),
+                color: 'rgba(32, 215, 215, 0.3)',
+                drag: true,
+                resize: true
+            });
+            
+            this.wavesurfer.seekTo(region.start / this.duration);
+        });
+        
+        // Previous region button
+        this.prevRegionButton.addEventListener('click', () => {
+            if (this.regions.length <= 1) return;
+            
+            const currentIndex = this.regions.findIndex(r => r.id === this.currentRegion?.id);
+            
+            if (currentIndex > 0) {
+                const prevRegion = this.regions[currentIndex - 1];
+                this.selectRegion(prevRegion);
+            }
+        });
+        
+        // Next region button
+        this.nextRegionButton.addEventListener('click', () => {
+            if (this.regions.length <= 1) return;
+            
+            const currentIndex = this.regions.findIndex(r => r.id === this.currentRegion?.id);
+            
+            if (currentIndex < this.regions.length - 1) {
+                const nextRegion = this.regions[currentIndex + 1];
+                this.selectRegion(nextRegion);
+            }
+        });
+        
+        // Delete region button
+        this.deleteRegionButton.addEventListener('click', () => {
+            if (this.currentRegion) {
+                const currentIndex = this.regions.findIndex(r => r.id === this.currentRegion.id);
+                this.currentRegion.remove();
+                this.regions = this.regions.filter(r => r.id !== this.currentRegion.id);
+                
+                if (this.regions.length > 0) {
+                    const nextIndex = Math.min(currentIndex, this.regions.length - 1);
+                    this.selectRegion(this.regions[nextIndex]);
+                } else {
+                    this.currentRegion = null;
+                    this.deleteRegionButton.disabled = true;
+                    this.updatePartsCounter();
+                    this.updateNavigationButtons();
+                }
+            }
+        });
+        
+        // Export button
+        this.exportButton.addEventListener('click', () => {
+            if (this.regions.length === 0) {
+                showToast('Please select at least one part to export', 'error');
+                return;
+            }
+            
+            if (this.currentRegion) {
+                this.exportRegion(this.currentRegion);
+            } else {
+                showToast('Please select a region to export', 'error');
+            }
+        });
+    }
+    
+    selectRegion(region) {
+        // Deselect previous region
+        if (this.currentRegion) {
+            this.currentRegion.element.classList.remove('selected-region');
+        }
+        
+        // Select new region
+        this.currentRegion = region;
+        region.element.classList.add('selected-region');
+        this.deleteRegionButton.disabled = false;
+        
+        // Position cursor at start of region
+        this.wavesurfer.seekTo(region.start / this.duration);
+        
+        // Update the parts counter
+        this.updatePartsCounter();
+        
+        // Enable/disable navigation buttons
+        this.updateNavigationButtons();
+    }
+    
+    updatePartsCounter() {
+        if (!this.regions || this.regions.length === 0) {
+            this.partsCounter.innerHTML = `Part 0/0`;
+            return;
+        }
+        
+        if (!this.currentRegion) {
+            this.partsCounter.innerHTML = `Part -/${this.regions.length}`;
+            return;
+        }
+        
+        // Find the current region's index
+        const currentIndex = this.regions.findIndex(r => r.id === this.currentRegion.id);
+        
+        if (currentIndex !== -1) {
+            this.partsCounter.innerHTML = `Part ${currentIndex + 1}/${this.regions.length}`;
+        } else {
+            this.partsCounter.innerHTML = `Part ?/${this.regions.length}`;
+        }
+    }
+    
+    updateNavigationButtons() {
+        // Disable both buttons if there are no regions or only one region
+        if (!this.regions || this.regions.length <= 1) {
+            this.prevRegionButton.disabled = true;
+            this.nextRegionButton.disabled = true;
+            return;
+        }
+        
+        // If no region is selected, disable both
+        if (!this.currentRegion) {
+            this.prevRegionButton.disabled = true;
+            this.nextRegionButton.disabled = true;
+            return;
+        }
+        
+        // Get the current index
+        const currentIndex = this.regions.findIndex(r => r.id === this.currentRegion.id);
+        
+        // If region not found in array, disable both
+        if (currentIndex === -1) {
+            this.prevRegionButton.disabled = true;
+            this.nextRegionButton.disabled = true;
+            return;
+        }
+        
+        // Enable/disable based on position
+        this.prevRegionButton.disabled = currentIndex === 0;
+        this.nextRegionButton.disabled = currentIndex >= this.regions.length - 1;
+    }
+    
+    formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '00:00.00';
+        
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        
+        return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(2).padStart(5, '0')}`;
+    }
+    
+    exportRegion(region) {
+        // Show processing indicator
+        showToast('Processing your request...', 'info');
+        
+        // Get the space ID from the URL or container
+        const spaceId = this.getSpaceIdFromUrl();
+        if (!spaceId) {
+            showToast('Could not determine Space ID', 'error');
+            return;
+        }
+        
+        // Prepare request data
+        const requestData = {
+            space_id: spaceId,
+            start: region.start,
+            end: region.end,
+            filename: `twitter_space_${spaceId}_trim_${Math.floor(region.start)}_${Math.floor(region.end)}.mp3`
+        };
+        
+        // Send request to backend
+        fetch('/clip-spaces/trim', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Failed to trim audio');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Create a temporary link to ensure cookies are sent
+                const link = document.createElement('a');
+                link.href = data.download_url;
+                link.download = data.filename || 'download';
+                link.target = '_blank';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast('Audio trimmed and download started!', 'success');
+            } else {
+                throw new Error(data.error || 'Failed to trim audio');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast(error.message || 'Error trimming audio', 'error');
+        });
+    }
+    
+    getSpaceIdFromUrl() {
+        // Try to get from the audio editor container data attribute
+        const container = document.getElementById('audioEditorContainer');
+        if (container) {
+            const spaceId = container.getAttribute('data-space-id');
+            if (spaceId) return spaceId;
+        }
+        
+        // Try to get from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const spaceId = urlParams.get('space_id');
+        if (spaceId) return spaceId;
+        
+        // Try to get from the audio URL path
+        const match = this.audioUrl.match(/\/clip-spaces\/audio\/([^\/\?]+)/);
+        if (match && match[1]) return match[1];
+        
+        // Check if it's in the current path
+        const pathMatch = window.location.pathname.match(/\/clip-spaces\/info\/([^\/]+)/);
+        if (pathMatch && pathMatch[1]) return pathMatch[1];
+        
+        // If all else fails, try to find it in the page content
+        const spaceIdElement = document.querySelector('[data-space-id]');
+        if (spaceIdElement) return spaceIdElement.getAttribute('data-space-id');
+        
+        return null;
+    }
+    
+    showLoading() {
+        if (this.loadingIndicator) {
+            this.loadingIndicator.style.display = 'flex';
+            // Disable controls while loading
+            this.playButton.disabled = true;
+            this.addRegionButton.disabled = true;
+            this.exportButton.disabled = true;
+        }
+    }
+    
+    hideLoading() {
+        if (this.loadingIndicator) {
+            this.loadingIndicator.style.display = 'none';
+            // Enable controls
+            this.playButton.disabled = false;
+            this.addRegionButton.disabled = false;
+            this.exportButton.disabled = false;
+        }
+    }
+    
+    destroy() {
+        // Clean up WaveSurfer instance
+        if (this.wavesurfer) {
+            this.wavesurfer.destroy();
+        }
+        
+        // Remove the audio element
+        if (this.audioElement && this.audioElement.parentNode) {
+            this.audioElement.parentNode.removeChild(this.audioElement);
+        }
+        
+        // Remove the editor container
+        if (this.editorContainer && this.editorContainer.parentNode) {
+            this.editorContainer.parentNode.removeChild(this.editorContainer);
+        }
+    }
+}
+
+// Process space
+async function processSpace() {
+    const spaceId = document.getElementById('spaceId').value.trim();
+    
+    if (!spaceId) {
+        showToast('Please enter a Space ID', 'error');
+        return;
+    }
+    
+    if (isProcessing) return;
+    
+    // Check for active process first
+    try {
+        const checkResponse = await fetch('/clip-spaces/check_processing');
+        const checkData = await checkResponse.json();
+        
+        if (checkData.has_active_process && checkData.space_id !== spaceId) {
+            showToast('Another space is already being processed. Please wait for it to complete.', 'error');
+            return;
+        }
+    } catch (error) {
+        console.warn('Could not check for active processes:', error);
+    }
+    
+    isProcessing = true;
+    currentSpaceId = spaceId;
+    
+    // Update UI to processing state
+    hideAllSections();
+    showSection('loadingSection');
+    updateProcessButton(true);
+    updateLoadingStatus('Starting processing...', 5);
+    
+    try {
+        const formData = new FormData();
+        formData.append('space_id', spaceId);
+        
+        const response = await fetch('/clip-spaces/process', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            startStatusPolling(spaceId);
+        } else {
+            // Check if it's an insufficient credits error
+            if (data.error_type === 'insufficient_credits') {
+                hideAllSections();
+                showSection('insufficientCreditsSection');
+                document.getElementById('creditsDescription').innerHTML = `
+                    You need <strong>${data.required_credits?.toFixed(2) || '0.00'}</strong> credits but only have
+                    <strong>${data.current_credits?.toFixed(2) || '0.00'}</strong> credits.
+                `;
+            } else {
+                throw new Error(data.error || 'Failed to start processing');
+            }
+        }
+    } catch (error) {
+        console.error('Error processing space:', error);
+        isProcessing = false;
+        updateProcessButton(false);
+        hideAllSections();
+        showSection('errorSection');
+        document.getElementById('errorText').textContent = error.message;
+        showToast('Failed to start processing', 'error');
+    }
+}
+
+// Check for active process on page load
+async function checkForActiveProcess() {
+    try {
+        const response = await fetch('/clip-spaces/check_processing');
+        const data = await response.json();
+        
+        if (data.has_active_process) {
+            const spaceId = data.space_id;
+            currentSpaceId = spaceId;
+            isProcessing = true;
+            
+            // Set space ID in input
+            document.getElementById('spaceId').value = spaceId;
+            
+            // Show loading state
+            hideAllSections();
+            showSection('loadingSection');
+            updateProcessButton(true);
+            updateLoadingStatus(data.status.message || 'Processing in progress...', data.status.progress || 10);
+            
+            // Start polling
+            startStatusPolling(spaceId);
+        }
+    } catch (error) {
+        console.log('No active processes found');
+    }
+}
+
+// Start status polling
+function startStatusPolling(spaceId) {
+    if (statusPollInterval) {
+        clearInterval(statusPollInterval);
+    }
+    
+    statusPollInterval = setInterval(async function() {
+        try {
+            const response = await fetch('/clip-spaces/status/' + spaceId);
+            const status = await response.json();
+            
+            updateLoadingStatus(status.message, status.progress);
+            
+            if (status.status === 'completed') {
+                clearInterval(statusPollInterval);
+                statusPollInterval = null;
+                isProcessing = false;
+                updateProcessButton(false);
+                loadSpaceData(spaceId);
+            } else if (status.status === 'error') {
+                clearInterval(statusPollInterval);
+                statusPollInterval = null;
+                isProcessing = false;
+                updateProcessButton(false);
+                hideAllSections();
+                showSection('errorSection');
+                document.getElementById('errorText').textContent = status.error || 'Processing failed';
+                showToast('Processing failed', 'error');
+            }
+        } catch (error) {
+            console.error('Status polling error:', error);
+        }
+    }, 2000);
+}
+
+// Load space data
+async function loadSpaceData(spaceId) {
+    try {
+        updateLoadingStatus('Loading space data...', 95);
+        
+        const response = await fetch('/clip-spaces/info/' + spaceId);
+        const data = await response.json();
+        
+        if (data.success) {
+            populateSpaceData(data);
+            hideAllSections();
+            showSection('resultsSection');
+            showToast('Space processed successfully!', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to load space data');
+        }
+    } catch (error) {
+        console.error('Error loading space data:', error);
+        hideAllSections();
+        showSection('errorSection');
+        document.getElementById('errorText').textContent = error.message;
+        showToast('Failed to load space data', 'error');
+    }
+}
+
+// Load existing space from history
+window.loadSpace = function(spaceId) {
+    // Hide history panel
+    document.getElementById('historyPanel').classList.remove('show');
+    
+    // Set space ID and load
+    document.getElementById('spaceId').value = spaceId;
+    currentSpaceId = spaceId;
+    
+    // Show loading
+    hideAllSections();
+    showSection('loadingSection');
+    updateLoadingStatus('Loading space data...', 50);
+    
+    loadSpaceData(spaceId);
+};
+
+// Populate space data
+function populateSpaceData(data) {
+    const spaceInfo = data.space_info;
+    
+    // Format date
+    function formatDate(timestamp) {
+        const date = new Date(parseInt(timestamp));
+        return date.toLocaleString();
+    }
+    
+    // Update space details
+    document.getElementById('spaceTitle').textContent = spaceInfo.creator?.display_name || 'Twitter Space';
+    document.getElementById('spaceCreator').textContent = 'Creator: ' + (spaceInfo.creator?.display_name || 'Unknown') + ' (@' + (spaceInfo.creator?.screenname || 'unknown') + ')';
+    document.getElementById('spaceDate').textContent = 'Started: ' + formatDate(spaceInfo.started);
+    document.getElementById('spaceListeners').textContent = 'Listeners: ' + (spaceInfo.total_live_listeners || 0) + ' live, ' + (spaceInfo.total_replay_watched || 0) + ' replay';
+    
+    // Populate participants
+    const participantsList = document.getElementById('participantsList');
+    participantsList.innerHTML = '';
+    
+    function addParticipants(role, participants) {
+        if (participants && participants.length > 0) {
+            participants.forEach(participant => {
+                const item = document.createElement('div');
+                item.className = 'participant-item';
+                item.innerHTML = `
+                    <img src="${participant.avatar || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'}" 
+                         alt="${participant.display_name || 'User'}" 
+                         class="participant-avatar">
+                    <span class="participant-name">${(participant.display_name || 'User')} (@${participant.screenname || 'unknown'}) - ${role}</span>
+                `;
+                participantsList.appendChild(item);
+            });
+        }
+    }
+    
+    if (spaceInfo.participants) {
+        addParticipants('Host', spaceInfo.participants.admins);
+        addParticipants('Speaker', spaceInfo.participants.speakers);
+    }
+    
+    // Initialize audio editor
+    if (data.audio_url) {
+        initializeAudioEditor(data.audio_url, data.space_id);
+    } else {
+        document.getElementById('audioEditorContainer').innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 2rem;">No audio available for this space</div>';
+    }
+    
+    // Handle summary
+    if (data.summary) {
+        handleSummaryContent(data.summary);
+    } else {
+        document.getElementById('overviewContent').innerHTML = '<p style="color: var(--text-secondary);">No summary was generated for this space.</p>';
+        document.getElementById('quotesContent').innerHTML = '<p style="color: var(--text-secondary);">No highlights were generated for this space.</p>';
+    }
+    
+    // Handle transcript
+    if (data.transcript) {
+        formatTranscript(data.transcript);
+        document.getElementById('transcriptInfo').textContent = data.transcript.length.toLocaleString() + ' characters';
+        document.getElementById('toggleTranscriptBtn').disabled = false;
+    } else {
+        document.getElementById('transcriptContent').innerHTML = '<p style="color: var(--text-secondary); padding: 1rem;">No transcript was generated for this space.</p>';
+        document.getElementById('transcriptInfo').textContent = '0 characters';
+        document.getElementById('toggleTranscriptBtn').disabled = true;
+    }
+}
+
+// Initialize audio editor
+function initializeAudioEditor(audioUrl, spaceId) {
+    const container = document.getElementById('audioEditorContainer');
+    container.setAttribute('data-space-id', spaceId);
+    
+    // Clear previous editor if exists
+    container.innerHTML = '';
+    
+    // Destroy previous editor instance
+    if (audioEditor) {
+        try {
+            audioEditor.destroy();
+        } catch (e) {
+            console.error("Error destroying previous audio editor:", e);
+        }
+        audioEditor = null;
+    }
+    
+    // Wait a bit for the container to be ready, then create new editor
+    setTimeout(function() {
+        try {
+            audioEditor = new AudioEditor(audioUrl, 'audioEditorContainer');
+            console.log("Audio editor created successfully");
+        } catch (error) {
+            console.error("Error creating audio editor:", error);
+            container.innerHTML = `
+                <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                    <div style="margin-bottom: 1rem;">Audio editor failed to load</div>
+                    <audio controls style="width: 100%; max-width: 400px;">
+                        <source src="${audioUrl}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+            `;
+            showToast('Audio editor failed to load, using fallback player', 'error');
+        }
+    }, 500);
+}
+
+// Handle summary content
+function handleSummaryContent(summary) {
+    if (summary.includes("## Overview") && summary.includes("## Key Highlights and Quotes")) {
+        const overviewSection = summary.split("## Key Highlights and Quotes")[0]
+            .replace("# Twitter Space Summary", "")
+            .replace("## Overview", "")
+            .trim();
+        const quotesSection = summary.split("## Key Highlights and Quotes")[1].trim();
+        
+        // Use marked.js if available, otherwise simple formatting
+        if (typeof marked !== 'undefined') {
+            document.getElementById('overviewContent').innerHTML = marked.parse(overviewSection);
+        } else {
+            document.getElementById('overviewContent').innerHTML = formatMarkdown(overviewSection);
+        }
+        formatKeyQuotes(quotesSection);
+    } else {
+        // If different format, put everything in overview
+        if (typeof marked !== 'undefined') {
+            document.getElementById('overviewContent').innerHTML = marked.parse(summary);
+        } else {
+            document.getElementById('overviewContent').innerHTML = formatMarkdown(summary);
+        }
+        document.getElementById('quotesContent').innerHTML = '<p style="color: var(--text-secondary);">No detailed highlights available for this Space.</p>';
+    }
+}
+
+// Simple markdown formatter
+function formatMarkdown(text) {
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+        .replace(/^/, '<p>')
+        .replace(/$/, '</p>');
+}
+
+// Format key quotes
+function formatKeyQuotes(quotesText) {
+    const container = document.getElementById('quotesContent');
+    container.innerHTML = '';
+    
+    // Parse quotes format: **[MM:SS.MS - MM:SS.MS] speaker_name: "quote text"**
+    const quotePattern = /\*\*\[(\d{2}:\d{2}\.\d{2})\s*-\s*(\d{2}:\d{2}\.\d{2})\]\s+([^:]+):\s*"([^"]+)"\*\*/g;
+    let matches = [];
+    let match;
+    
+    while ((match = quotePattern.exec(quotesText)) !== null) {
+        matches.push({
+            startTime: match[1].trim(),
+            endTime: match[2].trim(),
+            speaker: match[3].trim(),
+            text: match[4].trim()
+        });
+    }
+    
+    if (matches.length > 0) {
+        matches.forEach(quote => {
+            const quoteEl = document.createElement('div');
+            quoteEl.className = 'quote-item';
+            quoteEl.innerHTML = `
+                <div class="quote-speaker">${escapeHtml(quote.speaker)}</div>
+                <div class="quote-timestamp">${quote.startTime} - ${quote.endTime}</div>
+                <div class="quote-text">"${escapeHtml(quote.text)}"</div>
+                <div class="quote-actions">
+                    <button class="quote-btn" onclick="playQuote('${quote.startTime}')">
+                        <i class="ph ph-play"></i> Play
+                    </button>
+                    <button class="quote-btn" onclick="downloadQuote('${quote.startTime}', '${quote.endTime}', '${escapeHtml(quote.speaker)}')">
+                        <i class="ph ph-download"></i> Download
+                    </button>
+                </div>
+            `;
+            container.appendChild(quoteEl);
+        });
+    } else {
+        container.innerHTML = '<p style="color: var(--text-secondary);">No detailed highlights could be parsed from this Space.</p>';
+    }
+}
+
+// Format transcript
+function formatTranscript(transcript) {
+    const container = document.getElementById('transcriptContent');
+    container.innerHTML = '';
+    
+    // Parse transcript format
+    const segmentPattern = /(\d{2}:\d{2}\.\d{2})\s*-\s*(\d{2}:\d{2}\.\d{2})\s*\n\*\*([^*:]+):\*\*\s*\n([\s\S]*?)(?=\n\d{2}:\d{2}\.\d{2}|\n\n\d{2}:\d{2}\.\d{2}|$)/g;
+    let matches = [];
+    let match;
+    
+    while ((match = segmentPattern.exec(transcript)) !== null) {
+        matches.push({
+            startTime: match[1],
+            endTime: match[2],
+            speaker: match[3].trim(),
+            text: match[4].trim()
+        });
+    }
+    
+    // Try alternative parsing if first method fails
+    if (matches.length === 0) {
+        const segments = transcript.split('\n\n');
+        
+        segments.forEach(function(segment) {
+            if (!segment.trim()) return;
+            
+            const lines = segment.split('\n');
+            if (lines.length >= 3) {
+                const timestampMatch = lines[0].match(/(\d{2}:\d{2}\.\d{2})\s*-\s*(\d{2}:\d{2}\.\d{2})/);
+                if (timestampMatch) {
+                    const speakerMatch = lines[1].match(/\*\*([^*:]+):\*\*/);
+                    if (speakerMatch) {
+                        matches.push({
+                            startTime: timestampMatch[1],
+                            endTime: timestampMatch[2],
+                            speaker: speakerMatch[1].trim(),
+                            text: lines.slice(2).join('\n').trim()
+                        });
+                    }
+                }
+            }
+        });
+    }
+    
+    if (matches.length > 0) {
+        matches.forEach(segment => {
+            if (segment.text && segment.text.trim()) {
+                const segmentEl = document.createElement('div');
+                segmentEl.className = 'transcript-segment';
+                segmentEl.innerHTML = `
+                    <div class="transcript-timestamp">${segment.startTime} - ${segment.endTime}</div>
+                    <div class="transcript-speaker">${escapeHtml(segment.speaker)}:</div>
+                    <div class="transcript-text">${escapeHtml(segment.text)}</div>
+                `;
+                container.appendChild(segmentEl);
+            }
+        });
+    } else {
+        container.innerHTML = '<p style="color: var(--text-secondary);">Could not parse transcript format.</p>';
+    }
+}
+
+// Play quote function
+function playQuote(startTime) {
+    if (audioEditor && audioEditor.wavesurfer) {
+        // Convert time string to seconds
+        const timeInSeconds = convertTimeToSeconds(startTime);
+        const seekPosition = timeInSeconds / audioEditor.duration;
+        audioEditor.wavesurfer.seekTo(seekPosition);
+        audioEditor.wavesurfer.play();
+    } else {
+        showToast('Audio player not ready', 'error');
+    }
+}
+
+// Download quote function  
+function downloadQuote(startTime, endTime, speaker) {
+    // Get space ID from the audio editor container
+    const spaceId = getSpaceIdFromContainer();
+    if (!spaceId) {
+        showToast('Could not determine Space ID', 'error');
+        return;
+    }
+    
+    showToast('Processing quote download...', 'info');
+    
+    // Sanitize speaker name for filename
+    const sanitizedSpeaker = speaker.replace(/[^a-zA-Z0-9_]/g, '');
+    
+    // Convert time strings to seconds
+    const startTimeSeconds = convertTimeToSeconds(startTime);
+    const endTimeSeconds = convertTimeToSeconds(endTime);
+    
+    // Prepare request data
+    const requestData = {
+        space_id: spaceId,
+        start: startTimeSeconds,
+        end: endTimeSeconds,
+        filename: 'quote_' + sanitizedSpeaker + '_' + Math.floor(startTimeSeconds) + '_' + Math.floor(endTimeSeconds) + '.mp3'
+    };
+    
+    // Send request to backend
+    fetch('/clip-spaces/trim', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Failed to download quote');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            const link = document.createElement('a');
+            link.href = data.download_url;
+            link.download = data.filename || 'quote.mp3';
+            link.target = '_blank';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('Quote download started!', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to download quote');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast(error.message || 'Error downloading quote', 'error');
+    });
+}
+
+// Helper function to convert MM:SS.MS to seconds
+function convertTimeToSeconds(timeStr) {
+    if (!timeStr) return 0;
+    
+    const parts = timeStr.split(':');
+    if (parts.length !== 2) return 0;
+    
+    const minutes = parseInt(parts[0]) || 0;
+    const secondsPart = parseFloat(parts[1]) || 0;
+    
+    return minutes * 60 + secondsPart;
+}
+
+// Helper function to get space ID from container
+function getSpaceIdFromContainer() {
+    const container = document.getElementById('audioEditorContainer');
+    if (container) {
+        const spaceId = container.getAttribute('data-space-id');
+        if (spaceId) return spaceId;
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const spaceId = urlParams.get('space_id');
+    if (spaceId) return spaceId;
+    
+    const pathMatch = window.location.pathname.match(/\/spaces\/info\/([^\/]+)/);
+    if (pathMatch && pathMatch[1]) return pathMatch[1];
+    
+    return null;
+}
+
+// Utility functions
+function hideAllSections() {
+    document.querySelectorAll('.loading-section, .error-section, .insufficient-credits-section, .results-section').forEach(section => {
+        section.classList.remove('show');
+    });
+}
+
+function showSection(sectionId) {
+    document.getElementById(sectionId).classList.add('show');
+}
+
+function updateProcessButton(processing) {
+    const btn = document.getElementById('processBtn');
+    if (processing) {
+        btn.disabled = true;
+        btn.classList.add('processing');
+        btn.innerHTML = '<i class="ph ph-spinner"></i> Processing...';
+    } else {
+        btn.disabled = false;
+        btn.classList.remove('processing');
+        btn.innerHTML = '<i class="ph ph-sparkle"></i> Process Space';
+    }
+}
+
+function updateLoadingStatus(message, progress) {
+    document.getElementById('loadingStatus').textContent = message;
+    document.getElementById('loadingProgress').style.width = progress + '%';
+}
+
+function showToast(message, type = 'success', duration = 3000) {
+    // Remove existing toast
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = 'ph-check-circle';
+    if (type === 'error') icon = 'ph-x-circle';
+    else if (type === 'info') icon = 'ph-info';
+    
+    toast.innerHTML = `
+        <i class="ph ${icon}"></i>
+        <span class="toast-text">${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Show toast
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // Hide toast
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (statusPollInterval) {
+        clearInterval(statusPollInterval);
+    }
+    
+    if (audioEditor) {
+        try {
+            audioEditor.destroy();
+        } catch (e) {
+            console.error('Error destroying audio editor:', e);
+        }
+    }
+});
+</script>
 {% endblock %}

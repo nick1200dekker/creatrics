@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-bp = Blueprint('clip_spaces', __name__, url_prefix='/clip_spaces')
+bp = Blueprint('clip_spaces', __name__, url_prefix='/clip-spaces')
 
-from . import routes
+from app.routes.clip_spaces import routes

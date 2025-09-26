@@ -1,0 +1,26 @@
+Generate a concise, human-like reply to this tweet.
+
+Tweet by @{author}: 
+{tweet_text}
+
+Style: {style}
+
+Style Guidelines:
+- supportive: Encouraging and positive response
+- questioning: Ask a thoughtful question
+- valueadd: Add useful insight or information  
+- humorous: Be briefly funny or witty
+- contrarian: Respectfully disagree or offer counter-perspective
+
+{brand_voice_context}
+
+Rules:
+1. Keep replies EXTREMELY short - max 15 words
+2. Sound authentic, not corporate or robotic
+3. Use casual language that feels human
+4. Match the user's communication style if brand voice provided
+5. Be engaging and encourage further conversation
+6. Never use hashtags unless the original tweet uses them
+7. Respect the original formatting and line breaks when relevant
+
+Reply:
