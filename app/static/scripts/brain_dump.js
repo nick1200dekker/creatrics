@@ -160,12 +160,20 @@ function setupEventListeners() {
     
     // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + Z to undo AI modifications
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+            if (noteHistory.length > 0) {
+                e.preventDefault();
+                undoLastChange();
+            }
+        }
+
         // Ctrl/Cmd + S to save
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             e.preventDefault();
             if (currentNoteId) saveNote();
         }
-        
+
         // Ctrl/Cmd + B for bold
         if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
             e.preventDefault();
@@ -302,13 +310,40 @@ function displayNotes(notesToShow) {
     notesList.innerHTML = notesToShow.map(note => {
         // Better preview extraction that preserves structure
         let preview = note.content || '';
-        // Remove HTML tags but preserve line breaks
-        preview = preview.replace(/<br\s*\/?>/gi, ' ');
-        preview = preview.replace(/<\/p>/gi, ' ');
-        preview = preview.replace(/<\/div>/gi, ' ');
-        preview = stripHtml(preview).trim();
-        // Normalize multiple spaces
-        preview = preview.replace(/\s+/g, ' ').substring(0, 100);
+
+        // Create a temporary div to extract text content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = preview;
+
+        // Replace block elements with line breaks before extracting text
+        tempDiv.innerHTML = tempDiv.innerHTML.replace(/<br\s*\/?>/gi, '|||BR|||');
+        tempDiv.innerHTML = tempDiv.innerHTML.replace(/<\/p>/gi, '|||BR|||</p>');
+        tempDiv.innerHTML = tempDiv.innerHTML.replace(/<\/div>/gi, '|||BR|||</div>');
+        tempDiv.innerHTML = tempDiv.innerHTML.replace(/<\/h[1-6]>/gi, '|||BR|||</h>');
+
+        // Get text content
+        preview = tempDiv.textContent || tempDiv.innerText || '';
+
+        // Convert our markers back to line breaks
+        preview = preview.replace(/\|\|\|BR\|\|\|/g, '\n');
+
+        // Clean up: remove excessive line breaks but keep singles and doubles
+        preview = preview.replace(/\n{3,}/g, '\n\n').trim();
+
+        // Remove extra spaces
+        preview = preview.replace(/  +/g, ' ');
+
+        // Limit length but preserve structure
+        if (preview.length > 150) {
+            preview = preview.substring(0, 150).trim();
+            // If we cut off mid-word, go back to last space
+            const lastSpace = preview.lastIndexOf(' ');
+            if (lastSpace > 100) {
+                preview = preview.substring(0, lastSpace) + '...';
+            } else {
+                preview += '...';
+            }
+        }
         const tags = note.tags || [];
         
         // Format date
@@ -342,7 +377,7 @@ function displayNotes(notesToShow) {
                     <div class="note-item-header">
                         <div class="note-item-title">${escapeHtml(note.title || 'Untitled')}</div>
                     </div>
-                    <div class="note-item-preview">${escapeHtml(preview || 'No content')}</div>
+                    <div class="note-item-preview">${escapeHtmlPreserveBreaks(preview || 'No content')}</div>
                     <div class="note-item-footer">
                         <span class="note-item-meta">${date}</span>
                     </div>
@@ -466,16 +501,7 @@ function selectNote(noteId) {
     document.getElementById('noteTitle').value = note.title || '';
     document.getElementById('editor').innerHTML = note.content || '';
     
-    // Update favorite button
-    const favoriteBtn = document.getElementById('favoriteBtn');
-    const favoriteIcon = favoriteBtn.querySelector('i');
-    if (note.is_favorite) {
-        favoriteIcon.className = 'ph ph-star-fill';
-        favoriteBtn.classList.add('active');
-    } else {
-        favoriteIcon.className = 'ph ph-star';
-        favoriteBtn.classList.remove('active');
-    }
+    // Favorite functionality removed
     
     // Update tags UI
     updateTagsUI(note.tags || []);
@@ -644,42 +670,7 @@ function changeTextColor(color) {
     document.getElementById('editor').focus();
 }
 
-// Toggle favorite
-async function toggleFavorite() {
-    if (!currentNoteId) return;
-    
-    const note = notes.find(n => n.id === currentNoteId);
-    if (!note) return;
-    
-    try {
-        const response = await fetch(`/api/brain-dump/notes/${currentNoteId}/favorite`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ is_favorite: !note.is_favorite })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            note.is_favorite = !note.is_favorite;
-            
-            const favoriteBtn = document.getElementById('favoriteBtn');
-            const favoriteIcon = favoriteBtn.querySelector('i');
-            
-            if (note.is_favorite) {
-                favoriteIcon.className = 'ph ph-star-fill';
-                favoriteBtn.classList.add('active');
-            } else {
-                favoriteIcon.className = 'ph ph-star';
-                favoriteBtn.classList.remove('active');
-            }
-            
-            displayNotes(notes);
-        }
-    } catch (error) {
-        console.error('Error toggling favorite:', error);
-    }
-}
+// Toggle favorite - removed (not needed)
 
 // Filter notes by search
 function filterNotes(query) {
@@ -702,12 +693,19 @@ function filterNotes(query) {
 function updateSaveStatus(status) {
     const statusEl = document.getElementById('saveStatus');
     if (!statusEl) return;
-    
+
     const statusText = statusEl.querySelector('span');
     const statusIcon = statusEl.querySelector('i');
-    
+
+    // Always show the status element
+    statusEl.style.display = 'flex';
     statusEl.className = 'save-status ' + status;
-    
+
+    // Clear any existing timeout
+    if (window.saveStatusTimeout) {
+        clearTimeout(window.saveStatusTimeout);
+    }
+
     switch(status) {
         case 'typing':
             statusIcon.className = 'ph ph-circle';
@@ -720,6 +718,7 @@ function updateSaveStatus(status) {
         case 'saved':
             statusIcon.className = 'ph ph-check-circle';
             statusText.textContent = 'Saved';
+            // Don't hide, just keep showing saved status
             break;
         case 'syncing':
             statusIcon.className = 'ph ph-arrows-clockwise';
@@ -728,6 +727,10 @@ function updateSaveStatus(status) {
         case 'error':
             statusIcon.className = 'ph ph-warning-circle';
             statusText.textContent = 'Error';
+            // Keep error visible for longer but still show it
+            window.saveStatusTimeout = setTimeout(() => {
+                updateSaveStatus('saved'); // Go back to saved state
+            }, 5000);
             break;
     }
 }
@@ -737,6 +740,18 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text || '';
     return div.innerHTML;
+}
+
+function escapeHtmlPreserveBreaks(text) {
+    // First escape HTML
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    let escaped = div.innerHTML;
+
+    // Then convert line breaks to <br> tags
+    escaped = escaped.replace(/\n/g, '<br>');
+
+    return escaped;
 }
 
 function stripHtml(html) {
@@ -1104,4 +1119,176 @@ if (!document.getElementById('toastStyles')) {
     styleSheet.id = 'toastStyles';
     styleSheet.textContent = toastStyles;
     document.head.appendChild(styleSheet);
+}
+
+// AI Agent Functions
+let isAIAgentMinimized = true; // Start minimized by default
+
+function toggleAIAgent() {
+    const agentContent = document.getElementById('aiAgentContent');
+    const toggleBtn = document.querySelector('.ai-agent-toggle i');
+
+    isAIAgentMinimized = !isAIAgentMinimized;
+
+    if (isAIAgentMinimized) {
+        agentContent.classList.add('collapsed');
+        toggleBtn.className = 'ph ph-plus';
+    } else {
+        agentContent.classList.remove('collapsed');
+        toggleBtn.className = 'ph ph-minus';
+    }
+}
+
+function setAIPrompt(prompt) {
+    const input = document.getElementById('aiModifyInput');
+    input.value = prompt;
+    input.focus();
+}
+
+// Store history for undo functionality
+let noteHistory = [];
+let maxHistorySize = 10;
+
+async function modifyNoteWithAI() {
+    const promptInput = document.getElementById('aiModifyInput');
+    const modifyBtn = document.getElementById('aiModifyBtn');
+    const editor = document.getElementById('editor');
+
+    const prompt = promptInput.value.trim();
+    // Use innerHTML to preserve formatting instead of innerText
+    const noteContent = editor.innerHTML.trim();
+
+    if (!prompt) {
+        showToast('Please enter a modification prompt', 'error');
+        return;
+    }
+
+    if (!noteContent || noteContent === '<br>') {
+        showToast('Please add some content to your note first', 'error');
+        return;
+    }
+
+    // Save current state to history before modifying
+    saveToHistory(noteContent);
+
+    // Disable button and show loading state
+    modifyBtn.disabled = true;
+    const originalBtnContent = modifyBtn.innerHTML;
+    modifyBtn.innerHTML = '<i class="ph ph-spinner"></i> <span>Processing...</span>';
+
+    try {
+        const response = await fetch('/api/ai/modify-note', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                content: noteContent,
+                prompt: prompt,
+                model: 'gpt-4o-mini' // Using the same model as script generator
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to modify note');
+        }
+
+        const data = await response.json();
+
+        if (data.status === 'success' && data.modified_content) {
+            // Update the editor with modified content, preserving HTML
+            // Convert plain text response to HTML with proper formatting
+            let formattedContent = data.modified_content;
+
+            // Check if the content looks like plain text (no HTML tags)
+            if (!formattedContent.includes('<') || !formattedContent.includes('>')) {
+                // Convert line breaks to <br> tags
+                formattedContent = formattedContent
+                    .split('\n\n')
+                    .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+                    .join('');
+            }
+
+            editor.innerHTML = formattedContent;
+
+            // Show undo button
+            showUndoButton();
+
+            // Trigger save
+            saveCurrentNote();
+
+            // Clear the input
+            promptInput.value = '';
+
+            showToast('Note modified successfully! Press Ctrl+Z to undo', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to modify note');
+        }
+    } catch (error) {
+        console.error('Error modifying note:', error);
+        showToast(error.message || 'Failed to modify note', 'error');
+    } finally {
+        // Re-enable button and restore original content
+        modifyBtn.disabled = false;
+        modifyBtn.innerHTML = originalBtnContent;
+    }
+}
+
+// Save current state to history
+function saveToHistory(content) {
+    noteHistory.push(content);
+    if (noteHistory.length > maxHistorySize) {
+        noteHistory.shift(); // Remove oldest entry
+    }
+}
+
+// Undo last AI modification
+function undoLastChange() {
+    if (noteHistory.length > 0) {
+        const editor = document.getElementById('editor');
+        const previousContent = noteHistory.pop();
+        editor.innerHTML = previousContent;
+        saveCurrentNote();
+        showToast('Change reverted', 'success');
+
+        // Hide undo button if no more history
+        if (noteHistory.length === 0) {
+            hideUndoButton();
+        }
+    }
+}
+
+// Show/hide undo button
+function showUndoButton() {
+    let undoBtn = document.getElementById('undoAIBtn');
+    if (!undoBtn) {
+        // Create undo button if it doesn't exist
+        const aiAgentContent = document.getElementById('aiAgentContent');
+        const promptGroup = aiAgentContent.querySelector('.ai-prompt-group');
+
+        undoBtn = document.createElement('button');
+        undoBtn.id = 'undoAIBtn';
+        undoBtn.className = 'ai-undo-btn';
+        undoBtn.innerHTML = '<i class="ph ph-arrow-counter-clockwise"></i> Undo';
+        undoBtn.onclick = undoLastChange;
+        undoBtn.title = 'Undo last AI modification (Ctrl+Z)';
+
+        promptGroup.appendChild(undoBtn);
+    }
+    undoBtn.style.display = 'flex';
+}
+
+function hideUndoButton() {
+    const undoBtn = document.getElementById('undoAIBtn');
+    if (undoBtn) {
+        undoBtn.style.display = 'none';
+    }
+}
+
+// Helper function for saving (if not already exists)
+function saveCurrentNote() {
+    if (currentNoteId) {
+        saveNote();
+    }
 }

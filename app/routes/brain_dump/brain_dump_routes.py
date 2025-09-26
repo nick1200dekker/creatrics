@@ -902,3 +902,82 @@ def import_notes():
             'success': False,
             'error': 'Failed to import notes'
         }), 500
+
+@bp.route('/api/ai/modify-note', methods=['POST'])
+@auth_required
+def modify_note_with_ai():
+    """Modify note content using AI"""
+    try:
+        data = request.json or {}
+        content = data.get('content', '').strip()
+        prompt = data.get('prompt', '').strip()
+        model = data.get('model', 'gpt-4o-mini')
+
+        if not content:
+            return jsonify({
+                'status': 'error',
+                'error': 'No content provided'
+            }), 400
+
+        if not prompt:
+            return jsonify({
+                'status': 'error',
+                'error': 'No modification prompt provided'
+            }), 400
+
+        # Import the AI provider
+        from app.system.ai_provider.ai_provider import get_ai_provider
+
+        # Create the AI prompt
+        system_prompt = """You are an AI assistant helping to modify and improve notes.
+        Follow the user's modification request exactly.
+        Return only the modified content without any explanations or metadata.
+        Preserve the overall structure and meaning unless explicitly asked to change it.
+        If the content contains HTML formatting (links, bold, code blocks, etc.), preserve them.
+        Maintain any existing HTML tags like <a>, <strong>, <code>, <pre>, <br>, <p>, etc."""
+
+        user_prompt = f"""Please modify the following note according to this request: "{prompt}"
+
+        Original Note Content:
+        {content}
+
+        Modified Note Content:"""
+
+        # Get AI provider and generate the modified content
+        ai_provider = get_ai_provider()
+        response = ai_provider.create_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=2000
+        )
+
+        # Get the content - handle both dict and string responses
+        if isinstance(response, dict):
+            modified_content = response.get('content', '')
+        else:
+            modified_content = str(response)
+
+        if not modified_content:
+            return jsonify({
+                'status': 'error',
+                'error': 'Failed to generate modified content'
+            }), 500
+
+        # Clean up the response
+        modified_content = modified_content.strip()
+
+        return jsonify({
+            'status': 'success',
+            'modified_content': modified_content,
+            'original_prompt': prompt
+        })
+
+    except Exception as e:
+        logger.error(f"Error modifying note with AI: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500

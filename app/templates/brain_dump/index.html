@@ -67,9 +67,6 @@
                            placeholder="Untitled Note"
                            autocomplete="off">
                     <div class="title-actions">
-                        <button class="icon-btn" id="favoriteBtn" onclick="toggleFavorite()" title="Favorite">
-                            <i class="ph ph-star"></i>
-                        </button>
                         <button class="icon-btn" id="shareBtn" onclick="toggleShare()" title="Share Note">
                             <i class="ph ph-share-network"></i>
                         </button>
@@ -175,9 +172,6 @@
                             <i class="ph ph-palette"></i>
                         </button>
                     </div>
-                    <button class="toolbar-btn" onclick="formatText('removeFormat')" title="Clear Formatting">
-                        <i class="ph ph-eraser"></i>
-                    </button>
                 </div>
             </div>
             
@@ -189,6 +183,50 @@
                 <div class="save-status saved" id="saveStatus">
                     <i class="ph ph-check-circle"></i>
                     <span>Saved</span>
+                </div>
+
+                <!-- AI Agent Section -->
+                <div class="ai-agent-section" id="aiAgentSection">
+                    <div class="ai-agent-header">
+                        <h4 class="ai-agent-title">
+                            <i class="ph ph-robot"></i>
+                            AI Assistant
+                        </h4>
+                        <button class="ai-agent-toggle" onclick="toggleAIAgent()" title="Expand">
+                            <i class="ph ph-plus"></i>
+                        </button>
+                    </div>
+                    <div class="ai-agent-content collapsed" id="aiAgentContent">
+                        <div class="ai-prompt-group">
+                            <input type="text"
+                                   id="aiModifyInput"
+                                   class="ai-modify-input"
+                                   placeholder="e.g., 'summarize this', 'fix grammar', 'make it more formal', 'extract key points'"
+                                   onkeypress="if(event.key === 'Enter') modifyNoteWithAI()"/>
+                            <button class="ai-modify-btn" onclick="modifyNoteWithAI()" id="aiModifyBtn">
+                                <i class="ph ph-magic-wand"></i>
+                                <span>Apply</span>
+                            </button>
+                        </div>
+                        <div class="ai-suggestions">
+                            <span class="suggestion-label">Quick actions:</span>
+                            <button class="suggestion-chip" onclick="setAIPrompt('Summarize the main points')">
+                                <i class="ph ph-list-bullets"></i> Summarize
+                            </button>
+                            <button class="suggestion-chip" onclick="setAIPrompt('Fix grammar and spelling')">
+                                <i class="ph ph-text-aa"></i> Fix Grammar
+                            </button>
+                            <button class="suggestion-chip" onclick="setAIPrompt('Make it more professional')">
+                                <i class="ph ph-briefcase"></i> Professional
+                            </button>
+                            <button class="suggestion-chip" onclick="setAIPrompt('Extract action items')">
+                                <i class="ph ph-check-square"></i> Action Items
+                            </button>
+                            <button class="suggestion-chip" onclick="setAIPrompt('Organize into sections')">
+                                <i class="ph ph-folders"></i> Organize
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <!-- Delete button moved to note cards -->
             </div>
