@@ -834,40 +834,19 @@ function toggleTag(tagName) {
 }
 
 function addCustomTag() {
-    const tagName = prompt('Enter tag name:');
-    if (!tagName || !tagName.trim()) return;
-
-    const cleanTag = tagName.trim().toLowerCase().replace(/\s+/g, '-');
-
-    if (!currentNoteTags.includes(cleanTag)) {
-        currentNoteTags.push(cleanTag);
-
-        // Add custom tag button to UI
-        const tagsContainer = document.getElementById('tagsContainer');
-        const addBtn = tagsContainer.querySelector('.tag-add');
-
-        const customTag = document.createElement('button');
-        customTag.className = 'custom-tag active';
-        customTag.setAttribute('data-tag', cleanTag);
-        customTag.innerHTML = `
-            ${tagName}
-            <span class="remove-tag" onclick="removeCustomTag('${cleanTag}', event)">×</span>
-        `;
-        customTag.onclick = function(e) {
-            if (!e.target.classList.contains('remove-tag')) {
-                toggleTag(cleanTag);
-            }
-        };
-
-        tagsContainer.insertBefore(customTag, addBtn);
-
-        // Auto-save
-        if (currentNoteId) {
-            clearTimeout(autoSaveTimer);
-            updateSaveStatus('saving');
-            autoSaveTimer = setTimeout(() => saveNote(true), 500);
-        }
-    }
+    // Open the custom tag modal instead of using prompt
+    const modal = document.getElementById('customTagModal');
+    modal.classList.add('active');
+    
+    // Focus on the tag name input
+    setTimeout(() => {
+        document.getElementById('customTagNameInput').focus();
+    }, 100);
+    
+    // Reset the form
+    document.getElementById('customTagNameInput').value = '';
+    document.getElementById('customTagEmojiInput').value = '🏷️';
+    updateTagPreview();
 }
 
 function removeCustomTag(tagName, event) {
@@ -910,13 +889,21 @@ function updateTagsUI(tags) {
 
     currentNoteTags.forEach(tag => {
         // Skip if it's a preset tag
-        if (document.querySelector(`.tag-preset[data-tag="${tag}"]`)) return;
+        const cleanTagName = tag.includes(':') ? tag.split(':')[1] : tag;
+        if (document.querySelector(`.tag-preset[data-tag="${cleanTagName}"]`)) return;
+
+        // Parse emoji and tag name for custom tags
+        let displayText = tag;
+        if (tag.includes(':')) {
+            const [emoji, tagName] = tag.split(':');
+            displayText = `${emoji} ${tagName}`;
+        }
 
         const customTag = document.createElement('button');
         customTag.className = 'custom-tag active';
-        customTag.setAttribute('data-tag', tag);
+        customTag.setAttribute('data-tag', cleanTagName);
         customTag.innerHTML = `
-            ${tag}
+            ${displayText}
             <span class="remove-tag" onclick="removeCustomTag('${tag}', event)">×</span>
         `;
         customTag.onclick = function(e) {
@@ -1404,8 +1391,131 @@ function closeLinkModal() {
     document.getElementById('editor').focus();
 }
 
-// Add event listeners for link modal
+// Custom Tag Modal Functions
+function setTagEmoji(emoji) {
+    document.getElementById('customTagEmojiInput').value = emoji;
+    updateTagPreview();
+}
+
+function updateTagPreview() {
+    const tagName = document.getElementById('customTagNameInput').value.trim() || 'custom-tag';
+    const emoji = document.getElementById('customTagEmojiInput').value.trim() || '🏷️';
+    
+    document.getElementById('previewEmoji').textContent = emoji;
+    document.getElementById('previewText').textContent = tagName.toLowerCase().replace(/\s+/g, '-');
+}
+
+function createCustomTagFromModal() {
+    const tagName = document.getElementById('customTagNameInput').value.trim();
+    const emoji = document.getElementById('customTagEmojiInput').value.trim() || '🏷️';
+    
+    if (!tagName) {
+        showToast('Please enter a tag name', 'error');
+        document.getElementById('customTagNameInput').focus();
+        return;
+    }
+    
+    // Clean the tag name
+    const cleanTag = tagName.toLowerCase().replace(/\s+/g, '-');
+    
+    // Create tag with emoji (format: "emoji:tagname")
+    const tagWithEmoji = `${emoji}:${cleanTag}`;
+    
+    // Check if tag already exists (check both formats for compatibility)
+    if (currentNoteTags.includes(cleanTag) || currentNoteTags.includes(tagWithEmoji)) {
+        showToast('Tag already exists', 'error');
+        return;
+    }
+    
+    // Add to current tags with emoji
+    currentNoteTags.push(tagWithEmoji);
+    
+    // Add custom tag button to UI
+    const tagsContainer = document.getElementById('tagsContainer');
+    const addBtn = tagsContainer.querySelector('.tag-add');
+    
+    const customTag = document.createElement('button');
+    customTag.className = 'custom-tag active';
+    customTag.setAttribute('data-tag', cleanTag);
+    customTag.innerHTML = `
+        ${emoji} ${tagName}
+        <span class="remove-tag" onclick="removeCustomTag('${cleanTag}', event)">×</span>
+    `;
+    customTag.onclick = function(e) {
+        if (!e.target.classList.contains('remove-tag')) {
+            toggleTag(cleanTag);
+        }
+    };
+    
+    tagsContainer.insertBefore(customTag, addBtn);
+    
+    // Auto-save
+    if (currentNoteId) {
+        clearTimeout(autoSaveTimer);
+        updateSaveStatus('saving');
+        autoSaveTimer = setTimeout(() => saveNote(true), 500);
+    }
+    
+    // Close modal and show success
+    closeCustomTagModal();
+    showToast(`Tag "${emoji} ${tagName}" added successfully!`, 'success');
+}
+
+function closeCustomTagModal() {
+    const modal = document.getElementById('customTagModal');
+    modal.classList.remove('active');
+    
+    // Clear inputs
+    document.getElementById('customTagNameInput').value = '';
+    document.getElementById('customTagEmojiInput').value = '🏷️';
+    updateTagPreview();
+}
+
+// Add event listeners for custom tag modal and link modal
 document.addEventListener('DOMContentLoaded', function() {
+    // Custom tag modal event listeners
+    const customTagModal = document.getElementById('customTagModal');
+    if (customTagModal) {
+        customTagModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCustomTagModal();
+            }
+        });
+    }
+    
+    // Update preview when typing
+    const tagNameInput = document.getElementById('customTagNameInput');
+    const tagEmojiInput = document.getElementById('customTagEmojiInput');
+    
+    if (tagNameInput) {
+        tagNameInput.addEventListener('input', updateTagPreview);
+        tagNameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                tagEmojiInput.focus();
+            }
+        });
+    }
+    
+    if (tagEmojiInput) {
+        tagEmojiInput.addEventListener('input', updateTagPreview);
+        tagEmojiInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                createCustomTagFromModal();
+            }
+        });
+    }
+    
+    // Handle Escape key for custom tag modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const customTagModal = document.getElementById('customTagModal');
+            if (customTagModal && customTagModal.classList.contains('active')) {
+                closeCustomTagModal();
+            }
+        }
+    });
     // Close modal when clicking outside
     const linkModal = document.getElementById('linkModal');
     if (linkModal) {

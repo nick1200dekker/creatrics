@@ -236,6 +236,70 @@
     </div>
 </div>
 
+<!-- Custom Tag Modal -->
+<div class="custom-tag-modal" id="customTagModal">
+    <div class="custom-tag-modal-content">
+        <div class="custom-tag-modal-header">
+            <h3 class="custom-tag-modal-title">
+                <i class="ph ph-tag"></i>
+                Add Custom Tag
+            </h3>
+        </div>
+        
+        <div class="custom-tag-modal-body">
+            <div class="tag-field">
+                <label class="tag-label">Tag Name</label>
+                <input type="text" 
+                       id="customTagNameInput" 
+                       class="tag-input" 
+                       placeholder="Enter tag name (e.g., 'project-ideas')"
+                       autocomplete="off"
+                       maxlength="30">
+            </div>
+            
+            <div class="tag-field">
+                <label class="tag-label">Emoji (Optional)</label>
+                <div class="emoji-input-group">
+                    <input type="text" 
+                           id="customTagEmojiInput" 
+                           class="tag-input emoji-input" 
+                           placeholder="🏷️"
+                           maxlength="2"
+                           autocomplete="off">
+                    <div class="emoji-suggestions">
+                        <button type="button" class="emoji-btn" onclick="setTagEmoji('🏷️')">🏷️</button>
+                        <button type="button" class="emoji-btn" onclick="setTagEmoji('📌')">📌</button>
+                        <button type="button" class="emoji-btn" onclick="setTagEmoji('⭐')">⭐</button>
+                        <button type="button" class="emoji-btn" onclick="setTagEmoji('🎯')">🎯</button>
+                        <button type="button" class="emoji-btn" onclick="setTagEmoji('💡')">💡</button>
+                        <button type="button" class="emoji-btn" onclick="setTagEmoji('🚀')">🚀</button>
+                        <button type="button" class="emoji-btn" onclick="setTagEmoji('📝')">📝</button>
+                        <button type="button" class="emoji-btn" onclick="setTagEmoji('🔥')">🔥</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tag-preview">
+                <label class="tag-label">Preview</label>
+                <div class="tag-preview-display" id="tagPreview">
+                    <span class="tag-preview-chip">
+                        <span id="previewEmoji">🏷️</span>
+                        <span id="previewText">custom-tag</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="custom-tag-modal-actions">
+            <button class="custom-tag-modal-btn cancel" onclick="closeCustomTagModal()">Cancel</button>
+            <button class="custom-tag-modal-btn primary" onclick="createCustomTagFromModal()" id="createTagBtn">
+                <i class="ph ph-plus"></i>
+                Add Tag
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Link Modal -->
 <div class="link-modal" id="linkModal">
     <div class="link-modal-content">

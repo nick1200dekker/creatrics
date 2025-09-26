@@ -475,7 +475,12 @@
                         {% elif tag == 'tutorial' %}
                             📚 Tutorial
                         {% else %}
-                            {{ tag }}
+                            {% if ':' in tag %}
+                                {% set emoji, tag_name = tag.split(':', 1) %}
+                                {{ emoji }} {{ tag_name }}
+                            {% else %}
+                                {{ tag }}
+                            {% endif %}
                         {% endif %}
                     </span>
                     {% endfor %}
