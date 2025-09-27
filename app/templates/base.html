@@ -256,22 +256,23 @@
         object-fit: contain;
         margin-left: -4px;
         transition: all 0.2s ease;
-        filter: drop-shadow(0 1px 3px rgba(59, 130, 246, 0.1));
+        filter: brightness(0) saturate(100%) invert(27%) sepia(91%) saturate(2182%) hue-rotate(208deg) brightness(102%) contrast(95%);
         position: relative;
         z-index: 2;
     }
 
     html.dark .logo-section img {
-        filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.2));
+        filter: brightness(0) saturate(100%) invert(100%);
     }
-    
+
     .logo-section img:hover {
         transform: scale(1.05);
-        filter: drop-shadow(0 2px 6px rgba(59, 130, 246, 0.2));
+        filter: brightness(0) saturate(100%) invert(27%) sepia(91%) saturate(2182%) hue-rotate(208deg) brightness(120%) contrast(95%);
     }
 
     html.dark .logo-section img:hover {
-        filter: drop-shadow(0 3px 8px rgba(59, 130, 246, 0.3));
+        transform: scale(1.05);
+        filter: brightness(0) saturate(100%) invert(100%) brightness(120%);
     }
     
     .nav-section {

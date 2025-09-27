@@ -1,5 +1,3 @@
-from flask import Blueprint
-
-bp = Blueprint('niche', __name__, url_prefix='/niche')
-
-from . import routes
+# /app/routes/niche/__init__.py
+# Make niche a proper package
+from app.routes.niche.routes import bp

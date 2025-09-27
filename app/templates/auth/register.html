@@ -203,13 +203,21 @@
         }
         
         /* Logo */
-        .logo-text {
+        .logo-container {
             text-align: center;
-            font-size: 2.5rem;
-            font-weight: 900;
-            color: var(--accent-blue);
-            letter-spacing: -0.02em;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
+            position: relative;
+            left: -10px;
+        }
+
+        .logo-img {
+            height: 60px;
+            width: auto;
+            filter: brightness(0) saturate(100%) invert(27%) sepia(91%) saturate(2182%) hue-rotate(208deg) brightness(102%) contrast(95%);
+        }
+
+        html.dark .logo-img {
+            filter: brightness(0) saturate(100%) invert(100%);
         }
         
         /* Form elements */
@@ -594,8 +602,8 @@
                 padding: 2rem;
             }
             
-            .logo-text {
-                font-size: 2.25rem;
+            .logo-img {
+                height: 50px;
             }
             
             .policy-links a {
@@ -621,8 +629,10 @@
         <div style="width: 100%; max-width: 480px;">
             <!-- Register Container -->
             <div id="register-container" class="register-container">
-                <!-- Logo text -->
-                <div class="logo-text">CREATRICS</div>
+                <!-- Logo -->
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='img/templates/logo.png') }}" alt="Logo" class="logo-img">
+                </div>
                 
                 <!-- Form Header -->
                 <div class="form-header">

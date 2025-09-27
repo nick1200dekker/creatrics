@@ -1,0 +1,86 @@
+Analyze creator tweets and generate timeline insights for content creators.
+
+TWEET DATA:
+{tweets_data}
+
+STEP 1: ANALYZE THE TIMELINE
+
+Read through ALL tweets above and identify:
+- What themes and topics are getting high engagement
+- What types of content are resonating
+- What problems/pain points creators are discussing
+- What questions people are asking
+- What emotions/reactions are driving engagement
+
+RULES FOR STEP 1:
+✓ IGNORE all giveaways, ads, promotional content
+✓ Focus on genuine content that sparked real engagement
+✓ Identify patterns in what's working
+✓ Note the underlying themes, not just surface topics
+✓ Look for emotional triggers and pain points
+
+#Hot on Timeline#
+[Write 2-3 paragraphs analyzing what themes and topics are resonating. Explain WHY these topics are hot without listing engagement numbers in the narrative.]
+
+STEP 2: EXTRACT TRENDING THEMES
+
+#Top Trending Topics#
+[List 3-5 trending themes/conversations, formatted as:]
+- [Theme/Topic]: @username1 shared [specific content/insight], while @username2 discussed [their angle on same theme]. @username3's post about [specific detail] shows how [what this reveals about the trend]. This is resonating because [underlying reason].
+
+RULES FOR STEP 2:
+✓ Show WHO is talking about WHAT with real usernames
+✓ Reference specific content from actual tweets
+✓ Identify the deeper need/desire behind each trend
+✓ Explain WHY each topic is resonating emotionally
+✓ Focus on extractable insights, not just descriptions
+
+STEP 3: CREATE ORIGINAL CONTENT IDEAS
+
+#Content Suggestions#
+Create 5 original social media posts inspired by the trending themes above.
+
+RULES FOR STEP 3:
+✓ Each post should tap into a trending theme but be completely original
+✓ Maximum 2-3 sentences per post
+✓ Provide genuine value
+✓ Match the emotional tone that's working on the timeline
+✓ Write posts the user could publish RIGHT NOW on their timeline
+✓ No direct references to other creators' posts
+✓ Each post should stand alone and make sense without context
+
+CONTENT TYPES TO CREATE:
+- Actionable tips related to trending themes
+- Contrarian takes on popular topics
+- Personal insights about trending challenges
+- Solutions to problems being discussed
+- Fresh perspectives on hot topics
+
+FORMAT FOR EACH SUGGESTION:
+**"[Attention-grabbing opener]"**
+[Original insight/tip/perspective that taps into the trending theme but stands alone as valuable content]
+
+QUALITY CHECK FOR EACH POST:
+□ Is it inspired by timeline trends but completely original?
+□ Could someone share this without needing context?
+□ Does it provide real value?
+□ Would it fit naturally in today's conversation?
+□ Is it something the user could post immediately?
+
+STEP 4: FINAL REVIEW
+
+BEFORE SUBMITTING:
+✓ All 5 posts address different trending themes
+✓ Each post is self-contained and valuable
+✓ No mentions of other creators or their specific posts
+✓ All content feels fresh and original
+✓ Posts match the energy/tone of what's working
+
+EXAMPLE:
+If the timeline showed creators discussing productivity struggles:
+
+**"I was today years old when I learned this..."**
+Your productivity system is failing because you're optimizing for output instead of outcomes - switch to measuring results, not hours worked.
+
+**"90% of creators are making this simple mistake"**
+Batching content creation sounds efficient until you realize fresh ideas come from daily life - sometimes the best content strategy is no strategy.

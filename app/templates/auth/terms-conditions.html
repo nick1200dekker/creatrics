@@ -131,19 +131,33 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-direction: row-reverse;
         }
         
-        .logo-text {
-            font-size: 1.75rem;
-            font-weight: 900;
-            color: var(--accent-blue);
-            letter-spacing: -0.02em;
+        .logo-container {
+            display: flex;
+            align-items: center;
             text-decoration: none;
-            transition: color 0.3s ease;
         }
-        
-        .logo-text:hover {
-            color: var(--accent-purple);
+
+        .logo-img {
+            height: 45px;
+            width: auto;
+            margin-right: -5px;
+            filter: brightness(0) saturate(100%) invert(27%) sepia(91%) saturate(2182%) hue-rotate(208deg) brightness(102%) contrast(95%);
+            transition: filter 0.3s ease;
+        }
+
+        html.dark .logo-img {
+            filter: brightness(0) saturate(100%) invert(100%);
+        }
+
+        .logo-container:hover .logo-img {
+            filter: brightness(0) saturate(100%) invert(27%) sepia(91%) saturate(2182%) hue-rotate(208deg) brightness(120%) contrast(95%);
+        }
+
+        html.dark .logo-container:hover .logo-img {
+            filter: brightness(0) saturate(100%) invert(100%) brightness(120%);
         }
         
         .back-link {
@@ -364,7 +378,9 @@
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <a href="/" class="logo-text">Creatrics</a>
+            <a href="/" class="logo-container">
+                <img src="{{ url_for('static', filename='img/templates/logo.png') }}" alt="Logo" class="logo-img">
+            </a>
             <a href="/" class="back-link">
                 <i class="ph ph-arrow-left"></i>
                 Back to Home
