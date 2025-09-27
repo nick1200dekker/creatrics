@@ -1,0 +1,1078 @@
+/* Niche Radar styles - FIXED VERSION WITH CONSISTENT SPACING */
+/* Remove duplicate variable definitions - use base.html variables */
+
+/* Utility classes */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Premium card styling */
+.tracker-premium-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+/* Button styles - tracker specific */
+.tracker-secondary-button {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 0 12px;
+    height: var(--button-height);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.875rem;
+    gap: 8px;
+}
+
+.tracker-secondary-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+    color: white;
+    text-decoration: none;
+}
+
+.tracker-premium-button {
+    background: var(--teal-gradient);
+    color: #1a1a1a;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 4px 12px rgba(32, 215, 215, 0.3);
+    padding: 0 16px;
+    height: var(--button-height);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.tracker-premium-button:hover {
+    background: linear-gradient(135deg, #19c6c6 0%, #107878 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(32, 215, 215, 0.4);
+}
+
+.tracker-premium-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 4px 12px rgba(32, 215, 215, 0.2);
+}
+
+/* Analyzing state */
+.tracker-premium-button.analyzing {
+    background: #4a5568 !important;
+    color: #a0aec0 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.tracker-premium-button.analyzing:hover {
+    background: #4a5568 !important;
+    color: #a0aec0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Tooltip System */
+.tracker-tooltip {
+    position: absolute;
+    bottom: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    border: 1px solid var(--border-color);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 10;
+    pointer-events: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: var(--text-primary);
+}
+
+.tracker-tooltip-container {
+    position: relative;
+}
+
+.tracker-tooltip-container:hover .tracker-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* View toggle buttons */
+.tracker-view-toggle {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    height: var(--button-height);
+}
+
+.tracker-view-toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 0 16px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 100%;
+    min-width: 100px;
+    justify-content: center;
+}
+
+.tracker-view-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.tracker-view-toggle-btn.active {
+    background: var(--teal-gradient);
+    color: #1a1a1a;
+}
+
+/* Section headers - FIXED spacing and consistency */
+.tracker-section-header-with-controls {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.tracker-section-title-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.tracker-section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.tracker-section-title i {
+    color: var(--teal-primary);
+    font-size: 1rem;
+}
+
+/* FIXED: Consistent spacing between form controls */
+.tracker-section-controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+/* FIXED: Form styling with consistent sizing matching reply-guy */
+.tracker-form-input, .tracker-form-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    padding: 0 16px; /* Changed from 0 12px */
+    font-size: 0.875rem;
+    font-weight: 500;
+    height: var(--button-height);
+    transition: all 0.2s ease;
+    min-width: 200px; /* Matching reply-guy */
+    cursor: pointer;
+    appearance: none;
+    font-family: inherit;
+}
+
+.tracker-form-input:focus, .tracker-form-select:focus {
+    outline: none;
+    border-color: var(--teal-primary);
+    box-shadow: 0 0 0 3px rgba(32, 215, 215, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.tracker-form-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Form Labels with consistent spacing */
+.tracker-form-label-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tracker-form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    height: 1rem;
+    line-height: 1rem;
+}
+
+.tracker-analyze-button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tracker-analyze-button-group .tracker-form-label {
+    opacity: 0;
+    pointer-events: none;
+    height: 1rem;
+}
+
+/* Hot Timeline Styling - FIXED SPACING */
+.hot-timeline-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.hot-timeline {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    padding: 1rem;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+/* Timeline headers - AGGRESSIVE FIX FOR SPACING */
+.hot-timeline h1,
+.hot-timeline h2,
+.hot-timeline h3,
+.hot-timeline h4,
+.hot-timeline h5,
+.hot-timeline h6 {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
+    margin: 1.5rem 0 0 0 !important; /* Space before headers, no space after */
+    padding: 0 0 2px 0 !important; /* Minimal padding bottom for border */
+    border-bottom: 1px solid rgba(32, 215, 215, 0.3) !important;
+    line-height: 1.2 !important;
+}
+
+.hot-timeline h1:first-child,
+.hot-timeline h2:first-child,
+.hot-timeline h3:first-child,
+.hot-timeline h4:first-child,
+.hot-timeline h5:first-child,
+.hot-timeline h6:first-child {
+    margin-top: 0 !important;
+}
+
+/* AGGRESSIVE FIX: Tight spacing for all paragraphs in hot timeline */
+.hot-timeline p {
+    margin: 0.25rem 0 0.75rem 0 !important; /* Very small top margin */
+    padding: 0 !important;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+/* Paragraphs immediately after headers get even tighter spacing */
+.hot-timeline h1 + p,
+.hot-timeline h2 + p,
+.hot-timeline h3 + p,
+.hot-timeline h4 + p,
+.hot-timeline h5 + p,
+.hot-timeline h6 + p {
+    margin-top: 0.25rem !important; /* Minimal gap after headers */
+}
+
+/* Last paragraph needs no bottom margin */
+.hot-timeline p:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Also target any potential default styles from content */
+.hot-timeline > :first-child {
+    margin-top: 0 !important;
+}
+
+.hot-timeline > :last-child {
+    margin-bottom: 0 !important;
+}
+
+.hot-timeline strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Blue @mentions styling */
+.hot-timeline .mention,
+.mention {
+    color: #1DA1F2;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.hot-timeline .mention:hover,
+.mention:hover {
+    color: #1a91da;
+    text-decoration: underline;
+}
+
+/* Charts Grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.chart-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+
+.chart-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--teal-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #1a1a1a;
+    box-shadow: 0 4px 12px rgba(32, 215, 215, 0.3);
+}
+
+.chart-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.chart-container {
+    height: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Lists creation form - FIXED with consistent spacing */
+.tracker-creation-form {
+    margin-bottom: 0;
+}
+
+.tracker-form-inputs-row,
+html body .tracker-form-inputs-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.tracker-form-inputs-row > div,
+html body .tracker-form-inputs-row > div {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Make X List ID input take more space */
+#x-list-id-container,
+html body #x-list-id-container {
+    min-width: 260px;
+    flex: 1.5;
+}
+
+.tracker-form-inputs-row .tracker-form-input,
+html body .tracker-form-inputs-row .tracker-form-input {
+    width: 100%;
+}
+
+.x-list-id-container,
+html body .x-list-id-container {
+    display: none !important;
+    width: 100%;
+}
+
+.x-list-id-container.show,
+html body .x-list-id-container.show {
+    display: block !important;
+}
+
+.x-list-help-container,
+html body .x-list-help-container {
+    margin-top: 12px;
+    display: none !important;
+}
+
+.x-list-help-container.show,
+html body .x-list-help-container.show {
+    display: block !important;
+}
+
+.x-list-help,
+html body .x-list-help {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.x-list-help i,
+html body .x-list-help i {
+    color: #3b82f6;
+    font-size: 20px;
+}
+
+.x-list-help-content,
+html body .x-list-help-content {
+    flex: 1;
+}
+
+.x-list-help-title,
+html body .x-list-help-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.x-list-help-text,
+html body .x-list-help-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Create button alignment */
+.tracker-create-btn {
+    background: var(--teal-gradient);
+    color: #1a1a1a;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 4px 12px rgba(32, 215, 215, 0.3);
+    padding: 0 20px;
+    height: 40px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+    justify-content: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tracker-create-btn:hover {
+    background: linear-gradient(135deg, #19c6c6 0%, #107878 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(32, 215, 215, 0.4);
+}
+
+.tracker-create-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(32, 215, 215, 0.3);
+}
+
+.x-list-help {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.x-list-help i {
+    color: #3b82f6;
+    font-size: 1rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.x-list-help-content {
+    flex: 1;
+}
+
+.x-list-help-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.x-list-help-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* List Items */
+.tracker-list-item {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin: 1.5rem 0;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.tracker-list-item:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-color: rgba(32, 215, 215, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.tracker-list-item-content {
+    padding: 1rem 1.25rem;
+}
+
+.tracker-list-item-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 0;
+}
+
+.tracker-list-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tracker-list-name-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.tracker-list-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.tracker-list-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.tracker-list-type-badge.x_list,
+.tracker-list-type-badge.x-list {
+    background: rgba(29, 161, 242, 0.15);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(29, 161, 242, 0.3);
+}
+
+.tracker-list-type-badge.manual {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.tracker-list-metadata {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.tracker-metadata-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tracker-metadata-item i {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.tracker-list-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* List action buttons */
+.tracker-list-action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    position: relative;
+}
+
+.tracker-list-action-btn:hover {
+    background: var(--teal-primary);
+    color: #1a1a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(32, 215, 215, 0.3);
+}
+
+.tracker-list-action-btn.delete:hover {
+    background: #ef4444;
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.tracker-list-action-btn.refresh:hover {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Panel visibility */
+.analytics-panel {
+    display: block;
+}
+
+.lists-panel {
+    display: none;
+}
+
+.lists-panel.active {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.analytics-panel.hidden {
+    display: none;
+}
+
+/* Empty States */
+.tracker-empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.005) 100%);
+}
+
+.tracker-empty-state-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, rgba(32, 215, 215, 0.1) 0%, rgba(32, 215, 215, 0.05) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed rgba(32, 215, 215, 0.3);
+}
+
+.tracker-empty-state-icon i {
+    font-size: 2rem;
+    color: var(--teal-primary);
+}
+
+.tracker-empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.tracker-empty-state p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+.tracker-empty-state-cta {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.tracker-empty-state-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: rgba(32, 215, 215, 0.1);
+    color: var(--teal-primary);
+    border: 1px solid rgba(32, 215, 215, 0.3);
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.tracker-empty-state-btn:hover {
+    background: rgba(32, 215, 215, 0.2);
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: var(--teal-primary);
+}
+
+/* Modals */
+.tracker-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.tracker-modal-content {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.tracker-modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.tracker-modal-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tracker-modal-body {
+    padding: 1.5rem;
+}
+
+.tracker-modal-footer {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background-color: rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Creator Grid */
+.creator-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+    margin-top: 1rem;
+}
+
+.creator-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.creator-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.creator-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.creator-handle {
+    color: var(--teal-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Loading States */
+.tracker-loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--teal-primary);
+    animation: spin 1s linear infinite;
+}
+
+.tracker-premium-button .tracker-loading-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: currentColor;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Toast Notifications */
+.tracker-toast-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tracker-toast {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 300px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    transform: translateX(400px);
+    transition: all 0.3s ease;
+}
+
+.tracker-toast.show {
+    transform: translateX(0);
+}
+
+.tracker-toast.success {
+    border-left: 4px solid #4ade80;
+}
+
+.tracker-toast.error {
+    border-left: 4px solid #f87171;
+}
+
+.tracker-toast.info {
+    border-left: 4px solid #60a5fa;
+}
+
+.tracker-toast.warning {
+    border-left: 4px solid #fbbf24;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .tracker-section-header-with-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .tracker-section-controls {
+        width: 100%;
+        justify-content: flex-start;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .tracker-form-label-group {
+        width: 100%;
+    }
+
+    .tracker-form-input, .tracker-form-select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .tracker-analyze-button-group {
+        align-self: stretch;
+        width: 100%;
+    }
+
+    .tracker-analyze-button-group .tracker-form-label {
+        opacity: 1;
+    }
+
+    .tracker-premium-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tracker-view-toggle {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .tracker-form-inputs-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .tracker-form-inputs-row > div {
+        width: 100%;
+        min-width: 0;
+    }
+
+    #x-list-id-container {
+        min-width: 0;
+    }
+
+    .tracker-create-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tracker-list-item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .tracker-list-actions {
+        align-self: flex-end;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-card {
+        padding: 1rem;
+    }
+
+    .tracker-modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+
+    .creator-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tracker-empty-state {
+        padding: 3rem 1.5rem;
+    }
+
+    .tracker-empty-state-cta {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .hot-timeline h1,
+    .hot-timeline h2,
+    .hot-timeline h3,
+    .hot-timeline h4,
+    .hot-timeline h5,
+    .hot-timeline h6 {
+        font-size: 1.05rem;
+    }
+}
