@@ -45,11 +45,17 @@ class ReplyGenerator:
             prompt = prompt.replace("{brand_voice_context}", brand_voice_context)
             
             logger.debug(f"Generated prompt for reply to @{author}")
-            
+
+            # Use different system message based on brand voice
+            if use_brand_voice and brand_voice_context:
+                system_message = "You are a style mimic specialist for Twitter replies. You must EXACTLY mimic the reference examples provided. Study their patterns and reproduce their exact style - same length, same tone, same emoji usage, same energy. Do not be generic - write EXACTLY like the examples show."
+            else:
+                system_message = "You are a helpful assistant that generates authentic, human-like replies to tweets. Focus on being concise, engaging, and natural."
+
             # Call AI provider
             response = self.ai_provider.create_completion(
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant that generates authentic, human-like replies to tweets. Focus on being concise, engaging, and matching the user's brand voice when provided."},
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
@@ -122,26 +128,26 @@ Rules:
 Reply:"""
     
     def get_brand_voice_context(self, user_id: str) -> str:
-        """Get brand voice context from user's X replies data"""
+        """Get brand voice context from user's X replies data - Enhanced version"""
         try:
             # Get user's X replies from Firestore
             doc_ref = self.db.collection('users').document(str(user_id)).collection('x_replies').limit(1)
             docs = list(doc_ref.stream())
-            
+
             if not docs:
                 logger.info(f"No X replies data found for user {user_id}")
                 return ""
-            
+
             # Get the first document (there should only be one)
             replies_data = docs[0].to_dict()
-            
+
             if not replies_data:
                 return ""
-            
+
             # Extract reply examples from the replies array
             reply_examples = []
             screen_name = "User"
-            
+
             # Check if we have the replies array structure
             if 'replies' in replies_data and isinstance(replies_data['replies'], list):
                 for reply_item in replies_data['replies']:
@@ -152,14 +158,18 @@ Reply:"""
                             if reply_text and len(reply_text.strip()) > 5:  # Only meaningful replies
                                 # Simple conversion: _new_line_ to actual newlines for AI context
                                 clean_text = reply_text.replace('_new_line_', '\n').strip()
-                                reply_examples.append(clean_text)
-                            
+                                # Remove URLs to focus on writing style
+                                import re
+                                clean_text = re.sub(r'https?://\S+', '', clean_text).strip()
+                                if clean_text:
+                                    reply_examples.append(clean_text)
+
                             # Get screen name from the first reply if available
                             if screen_name == "User" and 'author' in reply_info:
                                 author_info = reply_info['author']
                                 if isinstance(author_info, dict) and 'screen_name' in author_info:
                                     screen_name = author_info['screen_name']
-            
+
             # Fallback: look for other structures (legacy support)
             if not reply_examples:
                 for key, value in replies_data.items():
@@ -169,7 +179,10 @@ Reply:"""
                             reply_text = reply_info['text']
                             if reply_text and len(reply_text.strip()) > 5:
                                 clean_text = reply_text.replace('_new_line_', '\n').strip()
-                                reply_examples.append(clean_text)
+                                import re
+                                clean_text = re.sub(r'https?://\S+', '', clean_text).strip()
+                                if clean_text:
+                                    reply_examples.append(clean_text)
                     elif isinstance(value, list):
                         for item in value:
                             if isinstance(item, dict) and 'reply' in item:
@@ -178,25 +191,36 @@ Reply:"""
                                     reply_text = reply_info['text']
                                     if reply_text and len(reply_text.strip()) > 5:
                                         clean_text = reply_text.replace('_new_line_', '\n').strip()
-                                        reply_examples.append(clean_text)
-            
+                                        import re
+                                        clean_text = re.sub(r'https?://\S+', '', clean_text).strip()
+                                        if clean_text:
+                                            reply_examples.append(clean_text)
+
             if not reply_examples:
                 logger.info(f"No meaningful reply examples found for user {user_id}")
                 return ""
-            
-            # Limit to most recent 20 examples to save tokens
-            reply_examples = reply_examples[:20]
-            
-            # Format brand voice context
-            brand_voice_context = f"\nBrand Voice Context for @{screen_name}:\n\n"
-            brand_voice_context += "Examples of this user's reply style. Match their tone, length, and communication patterns:\n\n"
-            
+
+            # Limit to most recent 15 high-quality examples to save tokens
+            reply_examples = reply_examples[:15]
+
+            # Format brand voice context with stronger instructions (similar to post_editor)
+            brand_voice_context = f"\n\nVOICE REFERENCE - @{screen_name}:\n\n"
+            brand_voice_context += "CRITICAL: You must EXACTLY mimic this user's reply style.\n"
+            brand_voice_context += "Study these patterns and match EXACTLY:\n"
+            brand_voice_context += "• Their sentence structure and length\n"
+            brand_voice_context += "• Their emoji usage (amount and placement)\n"
+            brand_voice_context += "• Their punctuation style\n"
+            brand_voice_context += "• Their energy level and tone\n"
+            brand_voice_context += "• Their typical reply length\n"
+            brand_voice_context += "• Their slang, abbreviations, and casual language\n\n"
+            brand_voice_context += "REFERENCE REPLIES TO MIMIC:\n\n"
+
             for i, reply in enumerate(reply_examples, 1):
-                brand_voice_context += f"Example {i}: {reply}\n"
-            
-            brand_voice_context += "\nMatch this user's style exactly - same tone, length, and communication patterns.\n"
-            
-            logger.info(f"Generated brand voice context for user {user_id} with {len(reply_examples)} examples")
+                brand_voice_context += f"━━━ Example {i} ━━━\n{reply}\n\n"
+
+            brand_voice_context += "WRITE EXACTLY IN THIS STYLE - OUTPUT ONLY THE REPLY\n"
+
+            logger.info(f"Generated enhanced brand voice context for user {user_id} with {len(reply_examples)} examples")
             return brand_voice_context
             
         except Exception as e:
