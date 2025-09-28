@@ -239,7 +239,7 @@
                                 
                                 <!-- Reply Panel -->
                                 <div class="reply-panel">
-                                    <div class="reply-controls">
+                                    <div class="reply-panel-header">
                                         <div class="style-selector">
                                             <div class="dropdown">
                                                 <div class="dropdown-trigger reply-style-trigger">
@@ -255,10 +255,11 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <label for="brand-voice-tweet-{{ tweet.tweet_id }}" class="brand-voice-toggle">
                                             <input type="checkbox" id="brand-voice-tweet-{{ tweet.tweet_id }}" class="brand-voice-checkbox">
-                                            Brand Voice
+                                            <span class="toggle-slider"></span>
+                                            <span class="toggle-label">Brand Voice</span>
                                         </label>
                                     </div>
                                     

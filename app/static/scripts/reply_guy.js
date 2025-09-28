@@ -187,10 +187,22 @@
     function setBrandVoiceState(hasData) {
         state.hasBrandVoiceData = hasData;
 
+        // Load user preference from localStorage
+        const userPrefersBrandVoice = localStorage.getItem('preferBrandVoice');
+        const shouldEnableBrandVoice = userPrefersBrandVoice === null ? true : userPrefersBrandVoice === 'true';
+
         document.querySelectorAll('.brand-voice-checkbox').forEach(checkbox => {
             checkbox.disabled = !hasData;
-            // Don't auto-check - let users control this
-            if (!hasData) {
+            // Auto-check if brand voice is available based on user preference
+            if (hasData && !checkbox.hasAttribute('data-initialized')) {
+                checkbox.checked = shouldEnableBrandVoice;
+                checkbox.setAttribute('data-initialized', 'true');
+
+                // Add change listener to save preference
+                checkbox.addEventListener('change', function() {
+                    localStorage.setItem('preferBrandVoice', this.checked);
+                });
+            } else if (!hasData) {
                 checkbox.checked = false;
             }
         });

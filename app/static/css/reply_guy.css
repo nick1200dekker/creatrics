@@ -760,6 +760,14 @@ html.dark .reply-panel {
     background: #3f3f46;
 }
 
+.reply-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
 .reply-controls {
     display: flex;
     align-items: center;
@@ -768,6 +776,12 @@ html.dark .reply-panel {
 }
 
 @media (max-width: 768px) {
+    .reply-panel-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
     .reply-controls {
         flex-direction: column;
         align-items: stretch;
@@ -789,7 +803,7 @@ html.dark .reply-panel {
 .brand-voice-toggle {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     font-size: 0.875rem;
     color: #6b7280;
     user-select: none;
@@ -797,8 +811,7 @@ html.dark .reply-panel {
     transition: all 0.2s ease;
     font-weight: 500;
     white-space: nowrap;
-    padding: 0.25rem;
-    border-radius: 6px;
+    position: relative;
 }
 
 html.dark .brand-voice-toggle {
@@ -811,35 +824,69 @@ html.dark .brand-voice-toggle {
     pointer-events: none;
 }
 
-.brand-voice-checkbox:checked + span {
+.brand-voice-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background: #e5e7eb;
+    border-radius: 12px;
+    transition: background-color 0.3s ease;
+}
+
+html.dark .toggle-slider {
+    background: #4b5563;
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.brand-voice-checkbox:checked + .toggle-slider {
+    background: #3B82F6;
+}
+
+.brand-voice-checkbox:checked + .toggle-slider::after {
+    transform: translateX(20px);
+}
+
+.toggle-label {
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.brand-voice-checkbox:checked ~ .toggle-label {
     color: #3B82F6;
     font-weight: 600;
 }
 
-html.dark .brand-voice-checkbox:checked + span {
+html.dark .brand-voice-checkbox:checked ~ .toggle-label {
     color: #60A5FA;
 }
 
-.brand-voice-toggle:hover:not(.disabled) {
-    background: rgba(59, 130, 246, 0.05);
+.brand-voice-toggle:hover:not(.disabled) .toggle-label {
     color: #3B82F6;
 }
 
-.brand-voice-checkbox {
-    position: relative;
-    width: 36px;
-    height: 20px;
-    appearance: none;
-    background: #e5e7eb;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 1px solid #d1d5db;
-}
 
 html.dark .brand-voice-checkbox {
-    background: #52525b;
-    border: 1px solid #71717a;
+    /* Hidden checkbox doesn't need styling */
 }
 
 .brand-voice-checkbox:disabled {
