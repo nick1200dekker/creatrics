@@ -989,12 +989,14 @@ html.dark .action-btn:hover {
 
 /* Loading Spinner */
 .loading-spinner {
+    display: inline-block;
     width: 16px;
     height: 16px;
-    border: 2px solid var(--border-primary);
-    border-top-color: #3B82F6;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
     border-radius: 50%;
     animation: spin 1s linear infinite;
+    margin-right: 8px;
 }
 
 @keyframes spin {

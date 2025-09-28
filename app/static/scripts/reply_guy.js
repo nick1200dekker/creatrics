@@ -38,15 +38,45 @@
 
     // Load initial data from server
     function loadInitialData() {
+        // First, load from sessionStorage to persist across page navigation
+        try {
+            const storedUpdates = sessionStorage.getItem('reply_guy_ongoing_updates');
+            if (storedUpdates) {
+                const parsed = JSON.parse(storedUpdates);
+                // Clean up old updates (older than 5 minutes)
+                const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+                state.ongoingUpdates = {};
+                for (const [listId, updateInfo] of Object.entries(parsed)) {
+                    if (updateInfo.timestamp && updateInfo.timestamp > fiveMinutesAgo) {
+                        state.ongoingUpdates[listId] = updateInfo;
+                    }
+                }
+                console.log('Loaded ongoing updates from session:', state.ongoingUpdates);
+            }
+        } catch (error) {
+            console.error('Error loading from sessionStorage:', error);
+            state.ongoingUpdates = {};
+        }
+
+        // Then load server data
         const initialDataElement = document.getElementById('initial-data');
         if (initialDataElement) {
             try {
                 const initialData = JSON.parse(initialDataElement.textContent);
-                state.ongoingUpdates = initialData.ongoing_updates || {};
+                // Merge with server data (server data takes precedence)
+                state.ongoingUpdates = { ...state.ongoingUpdates, ...(initialData.ongoing_updates || {}) };
             } catch (error) {
                 console.error('Error parsing initial data:', error);
-                state.ongoingUpdates = {};
             }
+        }
+    }
+
+    // Save ongoing updates to sessionStorage
+    function saveOngoingUpdates() {
+        try {
+            sessionStorage.setItem('reply_guy_ongoing_updates', JSON.stringify(state.ongoingUpdates));
+        } catch (error) {
+            console.error('Error saving to sessionStorage:', error);
         }
     }
 
@@ -65,15 +95,79 @@
                 const selectedOption = document.querySelector(`[data-value="${state.selectedList}"]`);
                 if (selectedOption) {
                     const selectedListText = document.getElementById('selected-list-text');
+                    const selectedListTextEmpty = document.getElementById('selected-list-text-empty');
                     if (selectedListText) {
                         selectedListText.textContent = selectedOption.querySelector('span').textContent;
+                    }
+                    if (selectedListTextEmpty) {
+                        selectedListTextEmpty.textContent = selectedOption.querySelector('span').textContent;
                     }
                     selectedOption.classList.add('selected');
                 }
             }
         }
 
+        // If no list is selected, auto-select the first default list
+        if (!state.selectedList) {
+            const firstDefaultList = document.querySelector('.dropdown-option[data-type="default"]');
+            if (firstDefaultList) {
+                console.log('Auto-selecting first default list on page load');
+                selectListOption(firstDefaultList);
+            } else {
+                // If no default lists, try custom lists
+                const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
+                if (firstCustomList) {
+                    console.log('Auto-selecting first custom list on page load');
+                    selectListOption(firstCustomList);
+                }
+            }
+        }
+
+        // Check if there are ongoing updates and refresh button state
+        if (Object.keys(state.ongoingUpdates).length > 0) {
+            console.log('Found ongoing updates, checking their status...');
+            checkOngoingUpdatesStatus();
+        }
+
         updateButtonVisibility();
+    }
+
+    // Check status of ongoing updates
+    function checkOngoingUpdatesStatus() {
+        const listIds = Object.keys(state.ongoingUpdates);
+        if (listIds.length === 0) return;
+
+        // Check each ongoing update
+        listIds.forEach(listId => {
+            fetch('/reply-guy/check-update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ list_id: listId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && !data.is_updating) {
+                    // Update completed, remove from ongoing updates
+                    delete state.ongoingUpdates[listId];
+                    saveOngoingUpdates();
+
+                    // If this is the currently selected list, refresh the page
+                    if (listId === state.selectedList) {
+                        showToast('Update completed! Refreshing...', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    }
+                }
+                updateButtonVisibility();
+            })
+            .catch(error => {
+                console.error('Error checking update status:', error);
+            });
+        });
+
+        // Continue checking every 5 seconds if there are still ongoing updates
+        if (Object.keys(state.ongoingUpdates).length > 0) {
+            setTimeout(checkOngoingUpdatesStatus, 5000);
+        }
     }
 
     // Check brand voice availability
@@ -150,10 +244,14 @@
             listsViewBtn.onclick = () => switchView('lists');
         }
 
-        // Update button
+        // Update buttons (both regular and empty state)
         const updateBtn = document.getElementById('update-btn');
+        const updateBtnEmpty = document.getElementById('update-btn-empty');
         if (updateBtn) {
             updateBtn.onclick = handleUpdate;
+        }
+        if (updateBtnEmpty) {
+            updateBtnEmpty.onclick = handleUpdate;
         }
 
         // Create list button
@@ -367,6 +465,12 @@
         state.selectedList = option.getAttribute('data-value');
         state.selectedListType = option.getAttribute('data-type');
 
+        console.log('List selected:', {
+            listId: state.selectedList,
+            listType: state.selectedListType,
+            optionElement: option
+        });
+
         // Update both dropdown texts
         const selectedListText = document.getElementById('selected-list-text');
         const selectedListTextEmpty = document.getElementById('selected-list-text-empty');
@@ -442,27 +546,58 @@
 
     // API Functions
     function updateButtonVisibility() {
+        // Handle both regular and empty state update buttons
         const updateButtonContainer = document.getElementById('update-button-container');
         const updateBtn = document.getElementById('update-btn');
+        const updateButtonContainerEmpty = document.getElementById('update-button-container-empty');
+        const updateBtnEmpty = document.getElementById('update-btn-empty');
+
+        console.log('Update button visibility check:', {
+            selectedListType: state.selectedListType,
+            selectedList: state.selectedList,
+            regularContainerExists: !!updateButtonContainer,
+            regularButtonExists: !!updateBtn,
+            emptyContainerExists: !!updateButtonContainerEmpty,
+            emptyButtonExists: !!updateBtnEmpty
+        });
 
         if (state.selectedListType === 'custom' && state.selectedList) {
-            if (updateButtonContainer) updateButtonContainer.style.display = 'block';
+            // Show the appropriate update button
+            if (updateButtonContainer) {
+                updateButtonContainer.style.display = 'block';
+                console.log('Showing regular update button for custom list');
+            }
+            if (updateButtonContainerEmpty) {
+                updateButtonContainerEmpty.style.display = 'block';
+                console.log('Showing empty state update button for custom list');
+            }
 
             const isUpdating = state.selectedList in state.ongoingUpdates;
 
-            if (updateBtn) {
-                if (isUpdating) {
-                    updateBtn.disabled = true;
-                    updateBtn.classList.add('processing');
-                    updateBtn.innerHTML = '<div class="loading-spinner"></div>Updating...';
-                } else {
-                    updateBtn.disabled = false;
-                    updateBtn.classList.remove('processing');
-                    updateBtn.innerHTML = '<i class="ph ph-arrows-clockwise"></i>Update';
+            // Update both buttons if they exist
+            [updateBtn, updateBtnEmpty].forEach(btn => {
+                if (btn) {
+                    if (isUpdating) {
+                        btn.disabled = true;
+                        btn.classList.add('processing');
+                        btn.innerHTML = '<span class="loading-spinner"></span>Updating...';
+                    } else {
+                        btn.disabled = false;
+                        btn.classList.remove('processing');
+                        btn.innerHTML = '<i class="ph ph-arrows-clockwise"></i>Update';
+                    }
                 }
-            }
+            });
         } else {
-            if (updateButtonContainer) updateButtonContainer.style.display = 'none';
+            // Hide both update buttons
+            if (updateButtonContainer) {
+                updateButtonContainer.style.display = 'none';
+                console.log('Hiding regular update button - not a custom list');
+            }
+            if (updateButtonContainerEmpty) {
+                updateButtonContainerEmpty.style.display = 'none';
+                console.log('Hiding empty state update button - not a custom list');
+            }
         }
     }
 
@@ -481,9 +616,14 @@
         .then(data => {
             if (data.success) {
                 if (data.is_updating) {
-                    state.ongoingUpdates[state.selectedList] = data.update_info;
+                    state.ongoingUpdates[state.selectedList] = {
+                        ...data.update_info,
+                        timestamp: Date.now()
+                    };
+                    saveOngoingUpdates();
                 } else {
                     delete state.ongoingUpdates[state.selectedList];
+                    saveOngoingUpdates();
                 }
 
                 updateButtonVisibility();
@@ -523,8 +663,10 @@
 
         state.ongoingUpdates[state.selectedList] = {
             status: 'running',
-            started_at: new Date().toISOString()
+            started_at: new Date().toISOString(),
+            timestamp: Date.now()
         };
+        saveOngoingUpdates();
         updateButtonVisibility();
 
         fetch('/reply-guy/analyze', {
@@ -539,13 +681,18 @@
         .then(response => response.json())
         .then(data => {
             delete state.ongoingUpdates[state.selectedList];
+            saveOngoingUpdates();
 
             if (data.success) {
                 showToast('Analysis completed! Refreshing page...', 'success');
                 setTimeout(() => window.location.reload(), 1500);
             } else {
                 if (data.is_updating) {
-                    state.ongoingUpdates[state.selectedList] = { status: 'running' };
+                    state.ongoingUpdates[state.selectedList] = {
+                        status: 'running',
+                        timestamp: Date.now()
+                    };
+                    saveOngoingUpdates();
                     showToast('Update already in progress for this list', 'warning');
                 } else {
                     showToast('Analysis failed: ' + data.error, 'error');
@@ -555,6 +702,7 @@
         })
         .catch(error => {
             delete state.ongoingUpdates[state.selectedList];
+            saveOngoingUpdates();
             showToast('Network error during analysis', 'error');
             updateButtonVisibility();
         });
