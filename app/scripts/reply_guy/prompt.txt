@@ -1,27 +1,19 @@
-Generate a concise, human-like reply to this tweet.
+{brand_voice_context}
 
 Tweet by @{author}:
 {tweet_text}
 
-Style: {style}
+Reply tone: {style}
 
-Style Guidelines:
-- supportive: Encouraging and positive response
-- questioning: Ask a thoughtful question
-- valueadd: Add useful insight or information
-- humorous: Be briefly funny or witty
-- contrarian: Respectfully disagree or offer counter-perspective
+CRITICAL INSTRUCTIONS:
+- Study the examples above CAREFULLY
+- Write EXACTLY like those examples - same vibe, same style, same patterns
+- DO NOT write generic AI responses
+- DO NOT be overly helpful or polite unless the examples are
+- Match their actual speaking patterns, not what an AI thinks is good
+- If they're casual and brief, be casual and brief
+- If they use fragments or incomplete sentences, do the same
+- Copy their punctuation habits exactly
+- This is about MIMICKING, not improving
 
-{brand_voice_context}
-
-Rules:
-1. If brand voice examples are provided above, IGNORE the 15-word limit and match the typical length of the examples instead
-2. Sound authentic, not corporate or robotic
-3. Use casual language that feels human
-4. When brand voice is provided, EXACTLY match the user's communication patterns from the examples
-5. Be engaging and encourage further conversation
-6. Never use hashtags unless the original tweet uses them OR the examples frequently use them
-7. Match emoji usage from examples - if they use emojis, you use them; if they don't, you don't
-8. Mimic the energy level - if examples are high energy with exclamations, match that; if calm, be calm
-
-Reply:
+Just write the reply. Nothing else:

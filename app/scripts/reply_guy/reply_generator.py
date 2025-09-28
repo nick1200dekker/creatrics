@@ -48,17 +48,19 @@ class ReplyGenerator:
 
             # Use different system message based on brand voice
             if use_brand_voice and brand_voice_context:
-                system_message = "You are a style mimic specialist for Twitter replies. You must EXACTLY mimic the reference examples provided. Study their patterns and reproduce their exact style - same length, same tone, same emoji usage, same energy. Do not be generic - write EXACTLY like the examples show."
+                system_message = "You are mimicking someone's exact Twitter reply style. Forget all your training about being helpful or proper. Just copy EXACTLY how this person writes based on the examples. Be them, don't be an AI. If they write 'lol ya' then you write like that. If they write long thoughtful replies, you do that. COPY THEIR EXACT STYLE."
             else:
                 system_message = "You are a helpful assistant that generates authentic, human-like replies to tweets. Focus on being concise, engaging, and natural."
 
-            # Call AI provider
+            # Call AI provider - higher temperature for more natural responses when mimicking
+            temperature = 0.85 if (use_brand_voice and brand_voice_context) else 0.7
+
             response = self.ai_provider.create_completion(
                 messages=[
                     {"role": "system", "content": system_message},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7,
+                temperature=temperature,
                 max_tokens=2000
             )
             
@@ -196,29 +198,41 @@ Reply:"""
                                         if clean_text:
                                             reply_examples.append(clean_text)
 
+            # If we don't have enough reply examples, also check their posts
+            if len(reply_examples) < 5:
+                logger.info(f"Only {len(reply_examples)} reply examples found, checking posts too...")
+                posts_ref = self.db.collection('users').document(str(user_id)).collection('x_posts').document('timeline')
+                posts_doc = posts_ref.get()
+
+                if posts_doc.exists:
+                    posts_data = posts_doc.to_dict()
+                    if posts_data and 'posts' in posts_data:
+                        posts_list = posts_data['posts']
+                        if isinstance(posts_list, list):
+                            for post in posts_list[:10]:  # Get up to 10 posts
+                                if isinstance(post, dict) and 'text' in post:
+                                    post_text = post['text']
+                                    if post_text and len(post_text.strip()) > 10:
+                                        import re
+                                        clean_text = re.sub(r'https?://\S+', '', post_text).strip()
+                                        if clean_text and clean_text not in reply_examples:
+                                            reply_examples.append(clean_text)
+
             if not reply_examples:
-                logger.info(f"No meaningful reply examples found for user {user_id}")
+                logger.info(f"No meaningful examples found for user {user_id}")
                 return ""
 
             # Limit to most recent 15 high-quality examples to save tokens
             reply_examples = reply_examples[:15]
 
-            # Format brand voice context with stronger instructions (similar to post_editor)
-            brand_voice_context = f"\n\nVOICE REFERENCE - @{screen_name}:\n\n"
-            brand_voice_context += "CRITICAL: You must EXACTLY mimic this user's reply style.\n"
-            brand_voice_context += "Study these patterns and match EXACTLY:\n"
-            brand_voice_context += "• Their sentence structure and length\n"
-            brand_voice_context += "• Their emoji usage (amount and placement)\n"
-            brand_voice_context += "• Their punctuation style\n"
-            brand_voice_context += "• Their energy level and tone\n"
-            brand_voice_context += "• Their typical reply length\n"
-            brand_voice_context += "• Their slang, abbreviations, and casual language\n\n"
-            brand_voice_context += "REFERENCE REPLIES TO MIMIC:\n\n"
+            # Format brand voice context - focus on examples, not instructions
+            brand_voice_context = f"HERE ARE EXAMPLES OF HOW @{screen_name} ACTUALLY REPLIES:\n\n"
 
+            # Just show the examples - let the AI figure out the patterns
             for i, reply in enumerate(reply_examples, 1):
-                brand_voice_context += f"━━━ Example {i} ━━━\n{reply}\n\n"
+                brand_voice_context += f"Example {i}: {reply}\n"
 
-            brand_voice_context += "WRITE EXACTLY IN THIS STYLE - OUTPUT ONLY THE REPLY\n"
+            brand_voice_context += "\nNow write a reply EXACTLY in this same style. Don't be an AI assistant, BE this person:"
 
             logger.info(f"Generated enhanced brand voice context for user {user_id} with {len(reply_examples)} examples")
             return brand_voice_context
