@@ -63,20 +63,18 @@
             <div class="editor-toolbar">
                 <!-- Voice Tone Section -->
                 <div class="voice-tone-section">
-                    <label for="voice-tone-select" class="voice-tone-label">
+                    <label class="voice-tone-label">
                         <i class="ph ph-microphone"></i>
                         Voice Tone:
                     </label>
-                    <div class="voice-tone-dropdown-wrapper">
-                        <select id="voice-tone-select" class="voice-tone-select">
-                            <option value="creatrics" selected>Creatrics</option>
-                            <option value="professional">Professional</option>
-                            <option value="casual">Casual</option>
-                            <option value="friendly">Friendly</option>
-                            <option value="authoritative">Authoritative</option>
-                            <option value="humorous">Humorous</option>
-                            <option value="inspirational">Inspirational</option>
-                        </select>
+                    <div class="voice-tone-dropdown">
+                        <div class="dropdown-trigger" id="voice-tone-trigger">
+                            <span id="selected-voice-tone">Creatrics</span>
+                            <i class="ph ph-caret-down dropdown-arrow"></i>
+                        </div>
+                        <div class="dropdown-menu" id="voice-tone-menu">
+                            <!-- Options will be dynamically populated by JavaScript -->
+                        </div>
                     </div>
                 </div>
 

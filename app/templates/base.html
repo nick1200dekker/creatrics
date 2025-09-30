@@ -1129,6 +1129,49 @@
         </div>
         {% endif %}
 
+        <!-- TikTok Group -->
+        <div class="nav-group" data-group="TikTok">
+            <div class="nav-group-header" onclick="toggleNavGroup(this)">
+                <div class="left-content">
+                    <i class="ph ph-tiktok-logo"></i>
+                    <span>TikTok</span>
+                </div>
+                <i class="ph ph-caret-right chevron"></i>
+            </div>
+            <div class="nav-group-items">
+                <a href="{{ url_for('tiktok.hook_generator') }}"
+                   class="nav-subitem {% if request.endpoint and 'tiktok.hook_generator' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-megaphone-simple"></i>
+                    <span>Hook Generator</span>
+                </a>
+                <a href="{{ url_for('tiktok.titles_hashtags') }}"
+                   class="nav-subitem {% if request.endpoint and 'tiktok.titles_hashtags' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-hash"></i>
+                    <span>Titles & Hashtags</span>
+                </a>
+                <a href="{{ url_for('tiktok.trending_sounds') }}"
+                   class="nav-subitem {% if request.endpoint and 'tiktok.trending_sounds' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-music-notes"></i>
+                    <span>Trending Sounds</span>
+                </a>
+                <a href="{{ url_for('tiktok.trend_finder') }}"
+                   class="nav-subitem {% if request.endpoint and 'tiktok.trend_finder' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-trend-up"></i>
+                    <span>Trend Finder</span>
+                </a>
+                <a href="{{ url_for('tiktok.analytics') }}"
+                   class="nav-subitem {% if request.endpoint and 'tiktok.analytics' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+            </div>
+        </div>
+
         {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.brain_dump %}
         <a href="{{ url_for('brain_dump.brain_dump') }}"
            class="nav-item {% if request.endpoint and 'brain_dump' in request.endpoint %}active{% endif %}"

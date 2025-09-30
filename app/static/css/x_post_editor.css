@@ -291,12 +291,13 @@ html.dark .post-editor-wrapper {
     color: #3B82F6;
 }
 
-.voice-tone-dropdown-wrapper {
-    display: flex;
-    align-items: center;
+/* Custom Dropdown for Voice Tone */
+.voice-tone-dropdown {
+    position: relative;
+    width: 100%;
 }
 
-.voice-tone-select {
+.dropdown-trigger {
     width: 100%;
     padding: 0.5rem 0.75rem;
     background: transparent;
@@ -306,41 +307,92 @@ html.dark .post-editor-wrapper {
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23D1D5DB' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 0.5rem center;
-    background-repeat: no-repeat;
-    background-size: 1.2em 1.2em;
-    padding-right: 2rem;
-    box-sizing: border-box;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-/* Light mode - darker arrow */
-html:not(.dark) .voice-tone-select {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-}
-
-.voice-tone-select:hover {
+.dropdown-trigger:hover {
     border-color: #3B82F6;
     background: var(--hover-bg);
 }
 
-.voice-tone-select:focus {
-    outline: none;
+.dropdown-trigger.active {
     border-color: #3B82F6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-/* Style for special options */
-.voice-tone-select option[value="add_custom"] {
-    color: #3B82F6;
-    font-weight: 600;
+.dropdown-arrow {
+    color: var(--text-tertiary);
+    transition: transform 0.2s ease;
+    font-size: 0.75rem;
 }
 
-.voice-tone-select option[value^="remove_"] {
+.dropdown-trigger.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    margin-top: 4px;
+}
+
+html.dark .dropdown-menu {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-menu.active {
+    display: block;
+}
+
+.dropdown-option {
+    padding: 10px 16px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dropdown-option:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.dropdown-option.selected {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+}
+
+.dropdown-option.add-custom {
+    color: #3B82F6;
+    font-weight: 600;
+    border-top: 1px solid var(--border-primary);
+    margin-top: 4px;
+    padding-top: 12px;
+}
+
+.dropdown-option.remove-voice {
     color: #EF4444;
-    font-weight: 500;
+}
+
+.dropdown-divider {
+    border-top: 1px solid var(--border-primary);
+    margin: 4px 0;
 }
 
 /* Section Labels */

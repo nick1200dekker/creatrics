@@ -68,10 +68,11 @@
         setupKeyboardShortcuts();
         updatePostToXButtonVisibility();
         loadDraftsWithSpinner();
-        
-        // Initialize voice tone dropdown
+
+        // Initialize voice tone dropdown and its event listeners
         initializeVoiceTone().catch(console.error);
-        
+        setupVoiceToneEventListener();
+
         updateStatusMessage('Ready to create content');
         
         window.CreatorPal.PostEditor.initialized = true;
@@ -491,10 +492,7 @@
             newDraftButton.onclick = createNewDraft;
         }
         
-        
-        // Setup voice tone event listener
-        setupVoiceToneEventListener();
-        
+
         // Close modal on background click
         if (contextModal) {
             contextModal.onclick = (e) => {
@@ -520,7 +518,7 @@
                 const draft = data.draft;
 
                 // Store current voice tone before clearing
-                const currentVoiceTone = voiceToneSelect ? voiceToneSelect.value : null;
+                const savedVoiceTone = currentVoiceTone;
 
                 // Clear and load posts
                 clearEditor();
@@ -536,8 +534,8 @@
                 updateUIFromState();
 
                 // Restore voice tone after UI update
-                if (currentVoiceTone && voiceToneSelect) {
-                    voiceToneSelect.value = currentVoiceTone;
+                if (savedVoiceTone) {
+                    selectVoiceTone(savedVoiceTone);
                 }
 
                 updateStatusMessage(`Loaded: "${draft.title || 'Untitled'}"`);
@@ -712,11 +710,15 @@
         }
     }
 
-    // Voice Tone Management
-    const voiceToneSelect = document.getElementById('voice-tone-select');
+    // Voice Tone Management - Custom Dropdown
+    let voiceToneTrigger = null;
+    let voiceToneMenu = null;
+    let selectedVoiceTone = null;
     let customVoices = [];
     let connectedUsername = (window.userXAccount || '').replace('@', '') || null;
-    
+    let currentVoiceTone = 'standard';
+    let voiceEventListenersSetup = false;
+
     console.log('Connected username:', connectedUsername); // Debug log
 
     // Load custom voices from Firebase
@@ -738,8 +740,14 @@
     // Initialize voice tone dropdown
     async function initializeVoiceTone() {
         console.log('Initializing voice tone dropdown...'); // Debug log
-        if (!voiceToneSelect) {
-            console.error('Voice tone select element not found!'); // Debug log
+
+        // Get DOM elements
+        voiceToneTrigger = document.getElementById('voice-tone-trigger');
+        voiceToneMenu = document.getElementById('voice-tone-menu');
+        selectedVoiceTone = document.getElementById('selected-voice-tone');
+
+        if (!voiceToneMenu || !voiceToneTrigger || !selectedVoiceTone) {
+            console.error('Voice tone dropdown elements not found!'); // Debug log
             return;
         }
 
@@ -748,61 +756,93 @@
         console.log('Loaded custom voices:', customVoices); // Debug log
 
         // Clear existing options
-        voiceToneSelect.innerHTML = '<option value="standard">Creatrics</option>';
+        voiceToneMenu.innerHTML = '';
+
+        // Add standard option
+        const standardOption = createDropdownOption('standard', 'Creatrics');
+        voiceToneMenu.appendChild(standardOption);
 
         // Add connected account option if available
         if (connectedUsername) {
             console.log('Adding connected username:', connectedUsername); // Debug log
-            const option = document.createElement('option');
-            option.value = 'connected';
-            option.textContent = `${connectedUsername}`;
-            voiceToneSelect.appendChild(option);
-        } else {
-            console.log('No connected username found'); // Debug log
+            const connectedOption = createDropdownOption('connected', connectedUsername);
+            voiceToneMenu.appendChild(connectedOption);
         }
 
         // Add custom voice options
         customVoices.forEach(voice => {
             console.log('Adding custom voice:', voice.username); // Debug log
-            const option = document.createElement('option');
-            option.value = `custom:${voice.username}`;
-            option.textContent = `${voice.username}`;
-            voiceToneSelect.appendChild(option);
+            const customOption = createDropdownOption(`custom:${voice.username}`, voice.username);
+            voiceToneMenu.appendChild(customOption);
         });
 
-        // Add separator and action options
-        const separator = document.createElement('option');
-        separator.disabled = true;
-        separator.textContent = '──────────────';
-        voiceToneSelect.appendChild(separator);
+        // Add divider if there are custom options
+        if (customVoices.length > 0 || connectedUsername) {
+            const divider = document.createElement('div');
+            divider.className = 'dropdown-divider';
+            voiceToneMenu.appendChild(divider);
+        }
 
         // Add "Add Custom Voice" option
-        const addOption = document.createElement('option');
-        addOption.value = 'add_custom';
-        addOption.textContent = '+ Add Custom Voice';
-        voiceToneSelect.appendChild(addOption);
+        const addOption = createDropdownOption('add_custom', '+ Add Custom Voice');
+        addOption.classList.add('add-custom');
+        voiceToneMenu.appendChild(addOption);
 
         // Add remove options for each custom voice
         customVoices.forEach(voice => {
-            const removeOption = document.createElement('option');
-            removeOption.value = `remove:${voice.username}`;
-            removeOption.textContent = `🗑️ Remove ${voice.username}`;
-            voiceToneSelect.appendChild(removeOption);
+            const removeOption = createDropdownOption(`remove:${voice.username}`, `🗑️ Remove ${voice.username}`);
+            removeOption.classList.add('remove-voice');
+            voiceToneMenu.appendChild(removeOption);
         });
 
         // Restore selected value (but not if it's an action)
-        const savedTone = localStorage.getItem('selectedVoiceTone') || 'creatrics';
+        const savedTone = localStorage.getItem('selectedVoiceTone') || 'standard';
         if (!savedTone.startsWith('add_custom') && !savedTone.startsWith('remove:')) {
-            voiceToneSelect.value = savedTone;
+            selectVoiceTone(savedTone);
             // Initialize Mimic button visibility
             toggleMimicButton(savedTone);
         }
-        
-        console.log('Voice tone dropdown initialized with', voiceToneSelect.options.length, 'options'); // Debug log
+
+        console.log('Voice tone dropdown initialized'); // Debug log
+    }
+
+    // Helper function to create dropdown option
+    function createDropdownOption(value, text) {
+        const option = document.createElement('div');
+        option.className = 'dropdown-option';
+        option.dataset.value = value;
+        option.textContent = text;
+        return option;
+    }
+
+    // Helper function to select a voice tone
+    function selectVoiceTone(value) {
+        currentVoiceTone = value;
+
+        // Update selected text
+        const allOptions = voiceToneMenu.querySelectorAll('.dropdown-option');
+        allOptions.forEach(opt => {
+            if (opt.dataset.value === value) {
+                opt.classList.add('selected');
+                selectedVoiceTone.textContent = opt.textContent.replace('🗑️ Remove ', '');
+            } else {
+                opt.classList.remove('selected');
+            }
+        });
+
+        // Close dropdown
+        voiceToneTrigger.classList.remove('active');
+        voiceToneMenu.classList.remove('active');
     }
 
     // Show custom voice modal
     function showCustomVoiceModal() {
+        // Remove any existing modal first to prevent duplicates
+        const existingModal = document.querySelector('.custom-voice-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
         const modal = document.createElement('div');
         modal.className = 'custom-voice-modal show';
         modal.innerHTML = `
@@ -819,8 +859,8 @@
                            value="">
                 </div>
                 <div class="custom-voice-footer">
-                    <button class="modal-btn cancel" onclick="this.closest('.custom-voice-modal').remove()">Cancel</button>
-                    <button class="modal-btn save" onclick="saveCustomVoice()">Save Voice</button>
+                    <button class="modal-btn cancel" id="cancel-voice-modal">Cancel</button>
+                    <button class="modal-btn save" id="save-voice-modal">Save Voice</button>
                 </div>
             </div>
         `;
@@ -828,7 +868,27 @@
         
         const input = document.getElementById('custom-voice-username');
         input.focus();
-        
+
+        // Add cancel button click handler
+        const cancelBtn = document.getElementById('cancel-voice-modal');
+        if (cancelBtn) {
+            cancelBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                modal.remove();
+            };
+        }
+
+        // Add save button click handler
+        const saveBtn = document.getElementById('save-voice-modal');
+        if (saveBtn) {
+            saveBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                saveCustomVoice();
+            };
+        }
+
         // Add Enter key support
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -836,17 +896,26 @@
                 saveCustomVoice();
             }
         });
-        
+
         // Add Escape key support
         modal.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                modal.remove();
+            }
+        });
+
+        // Add click outside to close
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
                 modal.remove();
             }
         });
     }
 
     // Save custom voice
-    window.saveCustomVoice = async function() {
+    async function saveCustomVoice() {
         const modal = document.querySelector('.custom-voice-modal');
         const input = document.getElementById('custom-voice-username');
         
@@ -937,68 +1006,82 @@
 
     // Get selected voice tone
     function getSelectedVoiceTone() {
-        const voiceToneSelect = document.getElementById('voice-tone-select');
-        if (!voiceToneSelect) return 'creatrics';
-        
-        const selectedValue = voiceToneSelect.value;
-        
         // Handle different voice tone formats
-        if (selectedValue.startsWith('custom:')) {
+        if (currentVoiceTone.startsWith('custom:')) {
             return 'custom';
-        } else if (selectedValue === 'connected') {
+        } else if (currentVoiceTone === 'connected') {
             return 'connected';
         } else {
-            return 'standard';
+            return currentVoiceTone || 'standard';
         }
     }
 
     // Get custom voice data
     function getCustomVoiceData() {
-        const voiceToneSelect = document.getElementById('voice-tone-select');
-        if (!voiceToneSelect) return null;
-        
-        const selectedValue = voiceToneSelect.value;
-        
         // If custom voice is selected, return the username
-        if (selectedValue.startsWith('custom:')) {
-            return selectedValue.replace('custom:', '');
+        if (currentVoiceTone.startsWith('custom:')) {
+            return currentVoiceTone.replace('custom:', '');
         }
-        
+
         return null;
     }
 
-    // Setup voice tone event listener
+    // Setup voice tone event listeners
     function setupVoiceToneEventListener() {
-        const voiceToneSelect = document.getElementById('voice-tone-select');
-        if (voiceToneSelect) {
-            voiceToneSelect.addEventListener('change', async (e) => {
-                const selectedValue = e.target.value;
-                
+        // Prevent duplicate listener setup
+        if (voiceEventListenersSetup) return;
+        voiceEventListenersSetup = true;
+
+        // Dropdown toggle
+        if (voiceToneTrigger) {
+            voiceToneTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                voiceToneTrigger.classList.toggle('active');
+                voiceToneMenu.classList.toggle('active');
+            });
+        }
+
+        // Option click handler
+        if (voiceToneMenu) {
+            voiceToneMenu.addEventListener('click', async (e) => {
+                const option = e.target.closest('.dropdown-option');
+                if (!option) return;
+
+                const selectedValue = option.dataset.value;
+
                 if (selectedValue === 'add_custom') {
                     // Show modal to add custom voice
                     showCustomVoiceModal();
-                    // Reset to previous selection
-                    const savedTone = localStorage.getItem('selectedVoiceTone') || 'creatrics';
-                    voiceToneSelect.value = savedTone;
+                    // Close dropdown
+                    voiceToneTrigger.classList.remove('active');
+                    voiceToneMenu.classList.remove('active');
                 } else if (selectedValue.startsWith('remove:')) {
                     // Remove custom voice with confirmation
                     const username = selectedValue.replace('remove:', '');
                     if (confirm(`Remove ${username} from voice options?`)) {
                         await deleteCustomVoice(username);
-                    } else {
-                        // Reset to previous selection
-                        const savedTone = localStorage.getItem('selectedVoiceTone') || 'creatrics';
-                        voiceToneSelect.value = savedTone;
                     }
+                    // Close dropdown
+                    voiceToneTrigger.classList.remove('active');
+                    voiceToneMenu.classList.remove('active');
                 } else {
                     // Save valid selection
                     localStorage.setItem('selectedVoiceTone', selectedValue);
+                    selectVoiceTone(selectedValue);
                     markAsChanged();
                     // Toggle Mimic button visibility
                     toggleMimicButton(selectedValue);
                 }
             });
         }
+
+        // Close dropdown when clicking outside - only add once
+        document.addEventListener('click', (e) => {
+            if (!voiceToneTrigger?.contains(e.target) && !voiceToneMenu?.contains(e.target)) {
+                voiceToneTrigger?.classList.remove('active');
+                voiceToneMenu?.classList.remove('active');
+            }
+        });
     }
 
     // Toggle Mimic button visibility based on voice selection
