@@ -27,18 +27,47 @@ class ReplyGuyService:
     def get_default_lists(self) -> List[Dict]:
         """Get the single default list - Content Creators"""
         try:
-            # Return a single hardcoded default list
+            # Get accounts for the default list
+            accounts = self.get_default_list_accounts('content_creators')
+
             return [{
                 'id': 'content_creators',
-                'name': 'Content Creators',
+                'name': 'Reply List',
                 'industry': 'Content Creation',
-                'account_count': 50,  # Approximate count
+                'account_count': len(accounts),
                 'last_updated': datetime.now()
             }]
-            
+
         except Exception as e:
             logger.error(f"Error getting default lists: {str(e)}")
             return []
+
+    def get_default_list_accounts(self, list_id: str) -> List[str]:
+        """Get accounts for a default list"""
+        if list_id == 'content_creators':
+            # Big creator accounts across different niches
+            return [
+                # Tech/Business
+                'elonmusk', 'sundarpichai', 'tim_cook', 'satyanadella', 'jeffweiner', 'reidhoffman',
+                'naval', 'balajis', 'pmarca', 'bgurley', 'chamath', 'jason', 'garyvee', 'dan_schulman',
+
+                # Content Creators
+                'MrBeast', 'PewDiePie', 'KSI', 'LoganPaul', 'jakepaul', 'EmmaChamberlain', 'jamescharles',
+                'nikocadoavocado', 'mrbeastyt', 'dualipa', 'justinbieber', 'taylorswift13', 'selenagomez',
+
+                # News/Media
+                'cnn', 'nytimes', 'washingtonpost', 'bbcnews', 'reuters', 'ap', 'nbcnews', 'abcnews',
+                'foxnews', 'wsj', 'usatoday', 'latimes', 'guardianUS', 'politico',
+
+                # Finance/Crypto
+                'michael_saylor', 'cz_binance', 'SBF_FTX', 'cathiedwood', 'novogratz', 'APompliano',
+                'VitalikButerin', 'justinsuntron', 'brian_armstrong',
+
+                # Sports
+                'stephencurry30', 'KingJames', 'Cristiano', 'TeamMessi', 'usainbolt', 'Ronaldinho',
+                'neymarjr', 'SerenaWilliams', 'tombrady', 'TheRealMikeT', 'FloydMayweather', 'espn'
+            ]
+        return []
     
     def get_user_custom_lists(self, user_id: str) -> List[Dict]:
         """Get user's custom lists"""
@@ -331,23 +360,26 @@ class ReplyGuyService:
             return None
     
     def run_analysis(self, user_id: str, list_id: str, list_type: str, time_range: str = '24h') -> Optional[str]:
-        """Run analysis on a list - only for custom lists now"""
+        """Run analysis on a list"""
         try:
-            # For default lists, we should not run analysis as it's handled by Cloud Function
-            if list_type == 'default':
-                logger.info(f"Skipping analysis for default list {list_id} - handled by Cloud Function")
-                return list_id
-            
-            # Get list accounts for custom lists
+            # Get list accounts and name
             accounts = []
             list_name = ""
-            
-            doc_ref = self.db.collection('users').document(str(user_id)).collection('reply_guy').document('lists').collection('custom').document(list_id)
-            doc = doc_ref.get()
-            if doc.exists:
-                data = doc.to_dict()
-                accounts = data.get('accounts', [])
-                list_name = data.get('name', '')
+
+            if list_type == 'default':
+                # Get accounts from the default list
+                accounts = self.get_default_list_accounts(list_id)
+                if list_id == 'content_creators':
+                    list_name = 'Reply List'
+                logger.info(f"Running analysis for default list {list_id} with {len(accounts)} accounts")
+            else:
+                # Get accounts for custom lists
+                doc_ref = self.db.collection('users').document(str(user_id)).collection('reply_guy').document('lists').collection('custom').document(list_id)
+                doc = doc_ref.get()
+                if doc.exists:
+                    data = doc.to_dict()
+                    accounts = data.get('accounts', [])
+                    list_name = data.get('name', '')
             
             if not accounts:
                 return None
@@ -356,20 +388,37 @@ class ReplyGuyService:
             analysis_data = self.analyzer.analyze_accounts(accounts, time_range, list_name)
             
             if analysis_data:
-                # Save analysis (overwrite any existing analysis for this list)
-                analysis_ref = self.db.collection('users').document(str(user_id)).collection('reply_guy').document('current_analysis').collection('analyses').document(list_id)
-                analysis_ref.set({
-                    'list_id': list_id,
-                    'list_type': list_type,
-                    'list_name': list_name,
-                    'tweet_opportunities': analysis_data['tweet_opportunities'],
-                    'timestamp': datetime.now(),
-                    'parameters': {
-                        'time_range': time_range,
-                        'account_count': len(accounts)
-                    }
-                })
-                
+                # Save analysis
+                if list_type == 'default':
+                    # Save default list analysis to global collection for all users to access
+                    analysis_ref = self.db.collection('default_list_analyses').document(list_id)
+                    analysis_ref.set({
+                        'list_id': list_id,
+                        'list_name': list_name,
+                        'tweet_opportunities': analysis_data['tweet_opportunities'],
+                        'last_updated': datetime.now(),
+                        'analyzed_accounts': len(accounts),
+                        'parameters': {
+                            'time_range': time_range,
+                            'account_count': len(accounts)
+                        }
+                    })
+                    logger.info(f"Saved default list analysis for {list_id} with {len(analysis_data['tweet_opportunities'])} opportunities")
+                else:
+                    # Save custom list analysis to user's collection
+                    analysis_ref = self.db.collection('users').document(str(user_id)).collection('reply_guy').document('current_analysis').collection('analyses').document(list_id)
+                    analysis_ref.set({
+                        'list_id': list_id,
+                        'list_type': list_type,
+                        'list_name': list_name,
+                        'tweet_opportunities': analysis_data['tweet_opportunities'],
+                        'timestamp': datetime.now(),
+                        'parameters': {
+                            'time_range': time_range,
+                            'account_count': len(accounts)
+                        }
+                    })
+
                 return list_id
             
             return None

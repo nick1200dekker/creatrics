@@ -1,4 +1,4 @@
-Extract 8-10 substantial business insights and detailed highlights from this Twitter Space conversation. Focus on longer, more detailed content that provides real value. Sort all results chronologically by timestamp.
+Extract 6-8 substantial insights and detailed highlights from this Twitter Space conversation. Focus on longer, more detailed content that provides real value and learning. Sort all results chronologically by timestamp.
 
 PARTICIPANTS LIST:
 {participants_text}
@@ -13,19 +13,31 @@ CORRECT GRAMMAR:
 - JUST DO SMALL CORRECTIONS IN WORDS.
 
 LOOK FOR SUBSTANTIAL HIGHLIGHTS:
-- Important business strategies and detailed explanations
-- Key announcements or strategic information  
-- Behind-the-scenes insights about the business
+- Important strategies and detailed explanations with context
+- Key announcements or significant information
+- Behind-the-scenes insights with depth
 - Detailed discussions about growth, competition, future plans
-- Substantial explanations of concepts or processes
+- Substantial explanations of concepts or processes (2-4 sentences)
 - Technical deep dives or methodology explanations
-- Market analysis or industry insights
+- Market analysis or industry insights with reasoning
 - Strategic decisions and their reasoning
+- Educational content that teaches something valuable
+- Expert advice backed by experience or data
+- Trend analysis with supporting evidence
+
+REQUIREMENTS:
+- Each highlight should be 2-4 sentences (minimum 20-30 words, aim for 40-60 words)
+- Must provide substantial value and insight, not just surface-level observations
+- Should contain complete thoughts with enough context to be valuable
+- Must be educational or actionable
 
 IGNORE:
 - Short conversational responses
 - Brief agreements or acknowledgments
-- Content shorter than 2-3 sentences
+- Shallow statements without depth or context
+- Generic observations like "They are a French duo who was the sound of EDM"
+- Content shorter than 2 sentences
+- Surface-level facts without insight
 
 Format each highlight as:
 **[MM:SS.MS - MM:SS.MS] speaker_name: "exact quote text"**
@@ -41,4 +53,4 @@ CRITICAL FORMATTING:
 Available segments:
 {segments_text}
 
-Extract 8-10 substantial business highlights using the exact format above, sorted chronologically.
+Extract 6-8 substantial, valuable highlights using the exact format above, sorted chronologically. Each highlight should be 2-4 sentences and provide real insight or learning value.

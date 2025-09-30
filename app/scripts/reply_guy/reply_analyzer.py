@@ -27,39 +27,57 @@ class ReplyAnalyzer:
         """Analyze accounts and find reply opportunities"""
         try:
             logger.info(f"Starting analysis for {len(accounts)} accounts, time range: {time_range}")
-            
+
             # Fetch tweets for each account
             all_tweets = []
             account_stats = {}
-            
+            # Store profile pictures by account to ensure consistency
+            account_profiles = {}
+
             for account in accounts:
                 logger.info(f"Fetching tweets for @{account}")
                 tweets = self.get_tweets(account)
-                
+
                 if tweets:
                     # Filter out RTs and limit to 20 most recent tweets
                     filtered_tweets = [
-                        tweet for tweet in tweets 
+                        tweet for tweet in tweets
                         if tweet.get('text') and not tweet.get('text', '').startswith('RT @')
                     ][:20]
-                    
+
                     if filtered_tweets:
+                        # Extract profile info from first tweet for consistency
+                        first_tweet = filtered_tweets[0]
+                        if 'author' in first_tweet and isinstance(first_tweet['author'], dict):
+                            author_info = first_tweet['author']
+                            account_profiles[account] = {
+                                'screen_name': author_info.get('screen_name', account),
+                                'name': author_info.get('name', account),
+                                'avatar': author_info.get('avatar', author_info.get('profile_image_url', ''))
+                            }
+                        else:
+                            account_profiles[account] = {
+                                'screen_name': account,
+                                'name': account,
+                                'avatar': ''
+                            }
+
                         # Filter by time range
                         time_filtered_tweets = self.filter_tweets_by_time_range(filtered_tweets, time_range)
-                        
+
                         # Process tweets to extract necessary data
-                        processed_tweets = [self.process_tweet(tweet) for tweet in time_filtered_tweets]
-                        
+                        processed_tweets = [self.process_tweet(tweet, account_profiles[account]) for tweet in time_filtered_tweets]
+
                         # Add account name to each tweet
                         for tweet in processed_tweets:
                             tweet['account'] = account
-                        
+
                         # Calculate account stats
                         account_stats[account] = self.calculate_account_performance(time_filtered_tweets)
-                        
+
                         logger.info(f"Found {len(processed_tweets)} tweets for @{account}")
                         all_tweets.extend(processed_tweets)
-                
+
                 # Rate limiting
                 time.sleep(1)
             
@@ -144,7 +162,7 @@ class ReplyAnalyzer:
         logger.warning(f"All attempts to fetch tweets for @{screen_name} failed")
         return []
     
-    def process_tweet(self, tweet: Dict) -> Dict:
+    def process_tweet(self, tweet: Dict, account_profile: Dict = None) -> Dict:
         """Process a tweet to extract and format necessary data with proper newline handling"""
         # Extract tweet ID
         tweet_id = self._extract_tweet_id(tweet)
@@ -168,12 +186,16 @@ class ReplyAnalyzer:
             }
         }
         
-        # Extract author info
-        if 'author' in tweet and isinstance(tweet['author'], dict):
+        # Extract author info - use consistent account profile if provided
+        if account_profile:
+            processed["author"] = account_profile['screen_name']
+            processed["name"] = account_profile['name']
+            processed["profile_image_url"] = account_profile['avatar']
+        elif 'author' in tweet and isinstance(tweet['author'], dict):
             author = tweet['author']
             processed["author"] = author.get('screen_name', '')
             processed["name"] = author.get('name', author.get('screen_name', ''))
-            processed["profile_image_url"] = author.get('avatar', '')
+            processed["profile_image_url"] = author.get('avatar', author.get('profile_image_url', ''))
         else:
             # Fallback to account name if author info is missing
             processed["author"] = tweet.get('account', '')

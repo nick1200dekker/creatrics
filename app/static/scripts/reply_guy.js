@@ -279,12 +279,51 @@
             handleListTypeChange(); // Initialize visibility
         }
 
+        // Simple form buttons
+        const simpleCreateBtn = document.getElementById('simple-create-btn');
+        if (simpleCreateBtn) {
+            simpleCreateBtn.onclick = handleSimpleCreateList;
+        }
+        const cancelCreateBtn = document.getElementById('cancel-create-btn');
+        if (cancelCreateBtn) {
+            cancelCreateBtn.onclick = hideCreatePanel;
+        }
+        const closeCreateModal = document.getElementById('close-create-modal');
+        if (closeCreateModal) {
+            closeCreateModal.onclick = hideCreatePanel;
+        }
+
+        // Direct event listeners for create new list buttons
+        const createNewListBtn = document.getElementById('create-new-list');
+        const createNewListEmptyBtn = document.getElementById('create-new-list-empty');
+
+        if (createNewListBtn) {
+            console.log('Found create-new-list button, adding listener');
+            createNewListBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log('Direct click on create-new-list');
+                showCreatePanel();
+            };
+        }
+
+        if (createNewListEmptyBtn) {
+            console.log('Found create-new-list-empty button, adding listener');
+            createNewListEmptyBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log('Direct click on create-new-list-empty');
+                showCreatePanel();
+            };
+        }
+
         // Delegated event listeners for dynamic content
         document.addEventListener('click', handleDelegatedClicks);
         document.addEventListener('input', handleDelegatedInputs);
     }
 
     function handleDelegatedClicks(e) {
+        console.log('Click detected on:', e.target);
+        console.log('Closest create-new:', e.target.closest('.create-new'));
+
         // Generate reply button
         if (e.target.closest('.generate-reply-btn')) {
             e.preventDefault();
@@ -332,7 +371,7 @@
         } else if (e.target.closest('.create-new')) {
             e.preventDefault();
             closeDropdowns();
-            switchView('lists');
+            showCreatePanel();
         }
     }
 
@@ -1297,8 +1336,154 @@
         }, 3000);
     }
 
+    // Functions for managing create list panel
+    function showCreatePanel() {
+        const modal = document.getElementById('create-list-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+    }
+
+    function hideCreatePanel() {
+        const modal = document.getElementById('create-list-modal');
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+        // Clear form
+        const nameInput = document.getElementById('simple-list-name');
+        const idInput = document.getElementById('simple-x-list-id');
+        if (nameInput) nameInput.value = '';
+        if (idInput) idInput.value = '';
+    }
+
+    function handleSimpleCreateList() {
+        const nameInput = document.getElementById('simple-list-name');
+        const idInput = document.getElementById('simple-x-list-id');
+
+        if (!nameInput || !idInput) return;
+
+        const name = nameInput.value.trim();
+        const xListId = idInput.value.trim();
+
+        if (!name) {
+            showToast('Please enter a list name', 'error');
+            return;
+        }
+
+        if (!xListId) {
+            showToast('Please enter an X List ID', 'error');
+            return;
+        }
+
+        showLoading('Creating your custom list...', 'Please wait while we fetch the list accounts...');
+
+        fetch('/reply-guy/create-custom-list', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                type: 'x_list',
+                x_list_id: xListId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Don't hide loading yet - we're going to run analysis
+                showLoading('Running analysis...', 'Finding reply opportunities in your new list...');
+                hideCreatePanel();
+
+                // Auto-run analysis on the newly created list
+                const listId = data.list.id;
+                fetch('/reply-guy/run-analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        list_id: listId,
+                        list_type: 'custom',
+                        time_range: '24h'
+                    })
+                })
+                .then(response => response.json())
+                .then(analysisData => {
+                    hideLoading();
+                    if (analysisData.success) {
+                        showToast('List created and analyzed successfully!', 'success');
+                        // Reload to show the new list and its opportunities
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        showToast('List created but analysis failed: ' + analysisData.error, 'warning');
+                        setTimeout(() => window.location.reload(), 1000);
+                    }
+                })
+                .catch(analysisError => {
+                    hideLoading();
+                    showToast('List created but analysis failed', 'warning');
+                    console.error('Analysis error:', analysisError);
+                    setTimeout(() => window.location.reload(), 1000);
+                });
+            } else {
+                hideLoading();
+                showToast('Error creating list: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showToast('Network error creating list', 'error');
+            console.error('Error:', error);
+        });
+    }
+
+    // Profile picture consistency handler
+    function fixProfilePictureConsistency() {
+        const profileMap = new Map();
+
+        // Collect all profile pictures by author
+        document.querySelectorAll('.tweet-avatar img').forEach(img => {
+            const authorName = img.alt;
+            const profileUrl = img.src;
+
+            if (authorName && profileUrl && !profileMap.has(authorName)) {
+                profileMap.set(authorName, profileUrl);
+            }
+        });
+
+        // Apply consistent profile pictures
+        document.querySelectorAll('.tweet-avatar').forEach(avatar => {
+            const img = avatar.querySelector('img');
+            const fallback = avatar.querySelector('.fallback-avatar');
+
+            if (img) {
+                const authorName = img.alt;
+                const consistentUrl = profileMap.get(authorName);
+
+                if (consistentUrl && img.src !== consistentUrl) {
+                    img.src = consistentUrl;
+                }
+
+                // Handle image loading errors
+                img.onload = function() {
+                    this.style.display = 'block';
+                    if (fallback) fallback.style.display = 'none';
+                };
+
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    if (fallback) fallback.style.display = 'flex';
+                };
+            }
+        });
+    }
+
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', init);
+
+    // Fix profile pictures after content loads
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(fixProfilePictureConsistency, 1000);
+    });
 
     // Debug: Test if buttons are clickable after page load
     setTimeout(() => {

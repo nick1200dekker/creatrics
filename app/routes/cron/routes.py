@@ -159,3 +159,52 @@ def usage_statistics():
             "error": str(e),
             "timestamp": datetime.utcnow().isoformat()
         }), 500
+
+@bp.route('/update-default-reply-lists')
+@verify_cron_request
+def update_default_reply_lists():
+    """Daily cron job to update default reply lists with fresh opportunities"""
+    try:
+        logger.info("Starting default reply lists update job")
+
+        # Import the reply guy service
+        from app.scripts.reply_guy.reply_guy_service import ReplyGuyService
+
+        reply_service = ReplyGuyService()
+
+        # Run analysis for the content_creators default list
+        # We use a dummy user_id since this is a global operation
+        analysis_result = reply_service.run_analysis(
+            user_id='system',
+            list_id='content_creators',
+            list_type='default',
+            time_range='24h'
+        )
+
+        if analysis_result:
+            logger.info(f"Successfully updated default list: {analysis_result}")
+
+            return jsonify({
+                "status": "success",
+                "job": "update_default_reply_lists",
+                "timestamp": datetime.utcnow().isoformat(),
+                "updated_lists": [analysis_result],
+                "message": "Default reply lists updated successfully"
+            }), 200
+        else:
+            logger.warning("Default list update returned no result")
+            return jsonify({
+                "status": "warning",
+                "job": "update_default_reply_lists",
+                "timestamp": datetime.utcnow().isoformat(),
+                "message": "Default list update completed but no result returned"
+            }), 200
+
+    except Exception as e:
+        logger.error(f"Default reply lists update failed: {e}")
+        return jsonify({
+            "status": "error",
+            "job": "update_default_reply_lists",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }), 500

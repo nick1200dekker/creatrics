@@ -216,9 +216,9 @@ class AudioEditor {
         // Show loading indicator
         this.showLoading();
         
-        // Load audio
+        // Load audio immediately
         this.wavesurfer.load(this.audioUrl);
-        
+
         // Set up WaveSurfer events
         this.wavesurfer.on('ready', () => {
             console.log('WaveSurfer is ready');
@@ -838,11 +838,9 @@ function populateSpaceData(data) {
     // Handle transcript
     if (data.transcript) {
         formatTranscript(data.transcript);
-        document.getElementById('transcriptInfo').textContent = data.transcript.length.toLocaleString() + ' characters';
         document.getElementById('toggleTranscriptBtn').disabled = false;
     } else {
         document.getElementById('transcriptContent').innerHTML = '<p style="color: var(--text-secondary); padding: 1rem;">No transcript was generated for this space.</p>';
-        document.getElementById('transcriptInfo').textContent = '0 characters';
         document.getElementById('toggleTranscriptBtn').disabled = true;
     }
 }
@@ -895,11 +893,11 @@ function handleSummaryContent(summary) {
             .trim();
         const quotesSection = summary.split("## Key Highlights and Quotes")[1].trim();
         
-        // Use marked.js if available, otherwise simple formatting
+        // Always use marked.js for proper markdown formatting
         if (typeof marked !== 'undefined') {
             document.getElementById('overviewContent').innerHTML = marked.parse(overviewSection);
         } else {
-            document.getElementById('overviewContent').innerHTML = formatMarkdown(overviewSection);
+            document.getElementById('overviewContent').innerHTML = formatMarkdownAdvanced(overviewSection);
         }
         formatKeyQuotes(quotesSection);
     } else {
@@ -913,15 +911,32 @@ function handleSummaryContent(summary) {
     }
 }
 
-// Simple markdown formatter
+// Advanced markdown formatter with better formatting
+function formatMarkdownAdvanced(text) {
+    // Handle headers
+    text = text.replace(/^### (.*$)/gim, '<h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin: 1.5rem 0 0.75rem 0;">$1</h3>');
+    text = text.replace(/^## (.*$)/gim, '<h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 1.75rem 0 1rem 0;">$1</h2>');
+    text = text.replace(/^# (.*$)/gim, '<h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 2rem 0 1rem 0;">$1</h1>');
+
+    // Handle bold and italic
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 600; color: var(--text-primary);">$1</strong>');
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Handle lists
+    text = text.replace(/^\- (.*$)/gim, '<li style="margin-left: 1.5rem; margin-bottom: 0.5rem; color: var(--text-secondary);">$1</li>');
+    text = text.replace(/(<li.*<\/li>)/s, '<ul style="list-style-type: disc; padding-left: 1rem; margin: 0.75rem 0;">$1</ul>');
+
+    // Handle paragraphs
+    text = text.replace(/\n\n/g, '</p><p style="margin-bottom: 1rem; line-height: 1.6; color: var(--text-secondary);">');
+    text = text.replace(/\n/g, '<br>');
+    text = '<p style="margin-bottom: 1rem; line-height: 1.6; color: var(--text-secondary);">' + text + '</p>';
+
+    return text;
+}
+
+// Simple markdown formatter (fallback)
 function formatMarkdown(text) {
-    return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/\n/g, '<br>')
-        .replace(/^/, '<p>')
-        .replace(/$/, '</p>');
+    return formatMarkdownAdvanced(text);
 }
 
 // Format key quotes

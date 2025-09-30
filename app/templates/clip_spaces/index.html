@@ -20,43 +20,10 @@
                 <i class="ph ph-broadcast"></i>
                 Spaces
             </h1>
-            <div class="header-actions">
-                <button class="header-btn" onclick="toggleHowItWorks()">
-                    <i class="ph ph-question"></i>
-                    How It Works
-                </button>
-                <a href="{{ url_for('home.dashboard') }}" class="header-btn">
-                    <i class="ph ph-house"></i>
-                    Dashboard
-                </a>
-            </div>
         </div>
 
         <!-- Content Area -->
         <div class="generator-content">
-            <!-- How It Works Section -->
-            <div class="how-it-works-section" id="howItWorksSection">
-                <div class="how-it-works-title">
-                    <i class="ph ph-lightbulb"></i>
-                    How to Use Spaces
-                </div>
-                <div class="how-it-works-step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">Go to Twitter (X) and find a Space you want to analyze. The Space ID is the string at the end of the URL (e.g., for https://twitter.com/i/spaces/1lPJqMZNDNAJb, the ID is "1lPJqMZNDNAJb").</div>
-                </div>
-                <div class="how-it-works-step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">Enter the Space ID in the input field and click "Process Space". The tool will download the Space audio, transcribe it using ElevenLabs Scribe AI, and generate a comprehensive summary. Processing costs credits based on audio duration.</div>
-                </div>
-                <div class="how-it-works-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">Listen to the Space audio, read the AI-generated summary, and browse the full transcript with precise timestamps to gain insights from the conversation. Previous analyses are saved in your History.</div>
-                </div>
-                <div class="how-it-works-step">
-                    <div class="step-number">4</div>
-                    <div class="step-content">Use the audio editing tools to select and export specific segments of the Space. Create clips of the best moments to share or save for later.</div>
-                </div>
-            </div>
 
             <!-- Input Section -->
             <div class="input-section">
@@ -225,7 +192,6 @@
                             Full Transcript
                         </div>
                         <div>
-                            <div class="transcript-info" id="transcriptInfo">0 characters</div>
                             <button class="toggle-transcript-btn" onclick="toggleTranscript()" id="toggleTranscriptBtn">
                                 <i class="ph ph-eye"></i>
                                 Show Transcript

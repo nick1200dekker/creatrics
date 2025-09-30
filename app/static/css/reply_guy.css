@@ -143,19 +143,95 @@ html.dark .secondary-btn:hover {
     padding: 2rem;
 }
 
-/* Progress Card */
-.progress-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
+/* Create List Modal */
+.modal#create-list-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
     transition: all 0.3s ease;
 }
 
+.modal#create-list-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal#create-list-modal .modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 90%;
+    max-width: 500px;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal#create-list-modal.show .modal-content {
+    transform: scale(1);
+}
+
+.simple-form {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.form-help {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+    }
+}
+
+/* Progress Card - Blue gradient like dashboard */
+.progress-card {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border: 1px solid var(--border-secondary);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
 html.dark .progress-card {
-    background: #27272a;
-    border: 1px solid #3f3f46;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.1) 100%);
+    border-color: transparent;
 }
 
 .progress-header {
@@ -285,7 +361,7 @@ html.dark .progress-label {
     color: #9ca3af;
 }
 
-/* Main Panel */
+/* Main Panel - Remove border emphasis */
 .main-panel {
     background: #ffffff;
     border: 1px solid #e5e7eb;
@@ -615,7 +691,6 @@ html.dark .tweet-opportunity {
 .tweet-opportunity:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    border-color: rgba(59, 130, 246, 0.3);
 }
 
 html.dark .tweet-opportunity:hover {
@@ -1194,7 +1269,6 @@ html.dark .list-item {
 .list-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: rgba(59, 130, 246, 0.3);
 }
 
 html.dark .list-item:hover {
@@ -1260,32 +1334,32 @@ html.dark .list-item:hover {
     border-color: #3B82F6;
 }
 
-/* Toast Notifications */
+/* Toast Notifications - Small and Top-Right */
 .toast {
     position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    padding: 1rem 1.5rem;
+    top: 1.5rem;
+    right: 1.5rem;
+    padding: 0.5rem 0.75rem;
     background: var(--bg-secondary);
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    transform: translateY(100px);
+    gap: 0.5rem;
+    transform: translateX(100%);
     opacity: 0;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease-out;
     z-index: 1000;
-    max-width: 320px;
-    border-left: 4px solid #10B981;
+    max-width: 280px;
+    border-left: 3px solid #10B981;
 }
 
 html.dark .toast {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .toast.show {
-    transform: translateY(0);
+    transform: translateX(0);
     opacity: 1;
 }
 
@@ -1298,8 +1372,9 @@ html.dark .toast {
 }
 
 .toast i {
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: #10B981;
+    flex-shrink: 0;
 }
 
 .toast.error i {
@@ -1313,7 +1388,8 @@ html.dark .toast {
 .toast-text {
     color: var(--text-primary);
     font-weight: 500;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
+    line-height: 1.3;
 }
 
 /* Modal Styles */
@@ -1461,4 +1537,42 @@ html.dark .modal-content {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+/* Fix dark mode toggle icon visibility - Override Tailwind classes */
+#dark-mode-toggle i.ph-moon,
+#dark-mode-toggle .ph-moon {
+    display: block !important;
+}
+
+#dark-mode-toggle i.ph-sun,
+#dark-mode-toggle .ph-sun {
+    display: none !important;
+}
+
+html.dark #dark-mode-toggle i.ph-moon,
+html.dark #dark-mode-toggle .ph-moon {
+    display: none !important;
+}
+
+html.dark #dark-mode-toggle i.ph-sun,
+html.dark #dark-mode-toggle .ph-sun {
+    display: block !important;
+}
+
+/* Override any Tailwind hidden classes */
+#dark-mode-toggle .dark\:hidden {
+    display: block !important;
+}
+
+#dark-mode-toggle .hidden {
+    display: none !important;
+}
+
+html.dark #dark-mode-toggle .dark\:hidden {
+    display: none !important;
+}
+
+html.dark #dark-mode-toggle .hidden.dark\:block {
+    display: block !important;
 }

@@ -1,4 +1,4 @@
-Extract 6-8 powerful, quotable moments from this Twitter Space conversation. Focus on short, punchy statements that could be headlines or tweets. Sort all results chronologically by timestamp.
+Extract 6-8 powerful, substantive quotes from this Twitter Space conversation. Focus on meaningful insights, valuable information, and impactful statements that provide real value to the reader. Sort all results chronologically by timestamp.
 
 PARTICIPANTS LIST:
 {participants_text}
@@ -12,25 +12,31 @@ CORRECT GRAMMAR:
 - IF YOU SEE CLEAR MISTAKES FROM THE TRANSCRIPTION, CORRECT THE GRAMMAR WITHOUT CHANGING THE SENTENCE.
 - JUST DO SMALL CORRECTIONS IN WORDS.
 
-LOOK FOR POWER QUOTES:
+LOOK FOR HIGH-VALUE QUOTES:
 - Bold predictions with specific metrics or numbers
-- Strong opinions or controversial takes
-- Memorable one-liners or catchphrases
-- Statements that challenge conventional wisdom
-- Visionary or aspirational statements
-- Specific claims with concrete numbers
-- "Tweetable" moments that stand alone
-- Statements that would make great headlines
+- Strong insights backed by reasoning or evidence
+- Memorable statements with substance
+- Statements that challenge conventional wisdom with explanation
+- Expert advice or actionable recommendations
+- Industry insights or insider knowledge
+- Specific claims with concrete numbers and context
+- Educational moments that teach something valuable
+- Strategic perspectives or frameworks
+- Technical explanations made accessible
+- Historical context or trend analysis
 
 REQUIREMENTS:
-- Each quote should be 1-2 sentences maximum
-- Must be impactful and memorable on its own
-- Should work as a standalone tweet or headline
+- Each quote should be 2-4 sentences (minimum 15-20 words, aim for 30-50 words)
+- Must provide value and insight, not just be catchy
+- Should contain complete thoughts with context
+- Must be substantial enough to learn from
 
 IGNORE:
-- Long explanations or detailed discussions
-- Generic statements without impact
-- Quotes that need context to understand
+- One-liners without substance or context
+- Shallow statements like "They are a French duo who pretty much was the sound of, like, when EDM started to become mainstream"
+- Generic observations without depth
+- Quotes that are just names or basic facts
+- Statements that don't provide actionable insight or learning
 
 Format each quote as:
 **[MM:SS.MS - MM:SS.MS] speaker_name: "exact quote text"**
@@ -46,4 +52,4 @@ CRITICAL FORMATTING:
 Available segments:
 {segments_text}
 
-Extract 6-8 powerful quotes using the exact format above, sorted chronologically.
+Extract 6-8 substantive, valuable quotes using the exact format above, sorted chronologically. Each quote should be 2-4 sentences and provide real insight or learning value.
