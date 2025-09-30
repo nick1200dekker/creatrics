@@ -24,7 +24,7 @@ class ReplyGenerator:
         """Generate AI reply to a tweet"""
         try:
             # Get the prompt template
-            prompt_template = self.get_prompt_template()
+            prompt_template = self.get_prompt_template(use_brand_voice)
             
             # Add brand voice context if requested
             brand_voice_context = ""
@@ -77,55 +77,68 @@ class ReplyGenerator:
             logger.error(f"Error generating reply: {str(e)}")
             raise Exception(f"Error generating reply: {str(e)}")
     
-    def get_prompt_template(self) -> str:
+    def get_prompt_template(self, use_brand_voice: bool = False) -> str:
         """Get the prompt template for reply generation"""
         try:
             # First, try to get prompt from same directory as this file
             current_dir = Path(__file__).parent
             prompt_file = current_dir / 'prompt.txt'
-            
+
             if prompt_file.exists():
                 with open(prompt_file, 'r', encoding='utf-8') as f:
                     logger.info("Using prompt from prompt.txt in same directory")
                     return f.read()
-            
+
             # Second, try to get custom prompt from defaults directory
             current_dir = Path(__file__).parent.parent.parent
             prompt_file = current_dir / 'defaults' / 'prompts' / 'reply_generator.txt'
-            
+
             if prompt_file.exists():
                 with open(prompt_file, 'r', encoding='utf-8') as f:
                     logger.info("Using prompt from defaults/prompts/reply_generator.txt")
                     return f.read()
         except Exception as e:
             logger.error(f"Error reading prompt file: {str(e)}")
-        
-        # Fallback to built-in prompt
+
+        # Fallback to built-in prompt - different for brand voice vs no brand voice
         logger.info("Using built-in fallback prompt")
-        return """Generate a concise, human-like reply to this tweet.
 
-Tweet by @{author}: 
-{tweet_text}
+        # Check if brand voice will be used
+        if use_brand_voice:
+            # Brand voice version - minimal instructions
+            return """{brand_voice_context}
 
-Style: {style}
+NOW RESPOND TO THIS TWEET:
+Tweet by @{author}: {tweet_text}
+
+Write a {style} reply EXACTLY in the style shown in the examples above.
+
+COPY THEIR EXACT PATTERNS:
+- If examples are 3 words, write 3 words
+- If examples use "lol" or "lmao", you use them
+- If examples have no punctuation, don't use any
+- If examples are full sentences, write full sentences
+- Match their emoji usage exactly
+- Match their energy level exactly
+
+OUTPUT ONLY THE REPLY TEXT:"""
+        else:
+            # No brand voice version - standard instructions
+            return """Tweet by @{author}: {tweet_text}
+
+Generate a {style} reply.
 
 Style Guidelines:
 - supportive: Encouraging and positive response
 - questioning: Ask a thoughtful question
-- valueadd: Add useful insight or information  
+- valueadd: Add useful insight or information
 - humorous: Be briefly funny or witty
 - contrarian: Respectfully disagree or offer counter-perspective
 
-{brand_voice_context}
-
 Rules:
-1. Keep replies EXTREMELY short - max 15 words
-2. Sound authentic, not corporate or robotic
-3. Use casual language that feels human
-4. Match the user's communication style if brand voice provided
-5. Be engaging and encourage further conversation
-6. Never use hashtags unless the original tweet uses them
-7. Respect the original formatting and line breaks when relevant
+1. Keep it VERY short (under 15 words)
+2. Sound human and casual
+3. Be engaging
 
 Reply:"""
     

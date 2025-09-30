@@ -1,19 +1,16 @@
 {brand_voice_context}
 
-Tweet by @{author}:
-{tweet_text}
+NOW RESPOND TO THIS TWEET:
+Tweet by @{author}: {tweet_text}
 
-Reply tone: {style}
+Write a {style} reply EXACTLY in the style shown in the examples above.
 
-CRITICAL INSTRUCTIONS:
-- Study the examples above CAREFULLY
-- Write EXACTLY like those examples - same vibe, same style, same patterns
-- DO NOT write generic AI responses
-- DO NOT be overly helpful or polite unless the examples are
-- Match their actual speaking patterns, not what an AI thinks is good
-- If they're casual and brief, be casual and brief
-- If they use fragments or incomplete sentences, do the same
-- Copy their punctuation habits exactly
-- This is about MIMICKING, not improving
+COPY THEIR EXACT PATTERNS:
+- If examples are 3 words, write 3 words
+- If examples use "lol" or "lmao", you use them
+- If examples have no punctuation, don't use any
+- If examples are full sentences, write full sentences
+- Match their emoji usage exactly
+- Match their energy level exactly
 
-Just write the reply. Nothing else:
+OUTPUT ONLY THE REPLY TEXT:
