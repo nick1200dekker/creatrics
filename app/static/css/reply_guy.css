@@ -1123,6 +1123,29 @@ html.dark .action-btn:hover {
     margin-right: 8px;
 }
 
+/* Loading spinner in buttons (centered when alone) */
+.action-btn .loading-spinner,
+.generate-reply-btn .loading-spinner {
+    margin: 0;
+    vertical-align: middle;
+}
+
+/* When button only contains spinner, center it */
+.action-btn.loading,
+.generate-reply-btn.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Fallback for browsers that support :has() */
+.action-btn:has(.loading-spinner:only-child),
+.generate-reply-btn:has(.loading-spinner:only-child) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 @keyframes spin {
     to { transform: rotate(360deg); }
 }

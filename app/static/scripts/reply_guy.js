@@ -788,6 +788,7 @@
         if (generateBtn) {
             generateBtn.innerHTML = '<div class="loading-spinner"></div>';
             generateBtn.disabled = true;
+            generateBtn.classList.add('loading');
         }
         if (textarea) {
             textarea.value = 'Generating reply...';
@@ -833,6 +834,7 @@
             if (generateBtn) {
                 generateBtn.innerHTML = '<i class="ph ph-sparkle"></i>';
                 generateBtn.disabled = false;
+                generateBtn.classList.remove('loading');
             }
         });
     }
