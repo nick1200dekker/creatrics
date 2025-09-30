@@ -1129,7 +1129,15 @@
         </div>
         {% endif %}
 
-        <!-- TikTok Group -->
+        <!-- TikTok Group - Only show if user has permissions for any TikTok feature -->
+        {% set has_tiktok_permissions = not workspace_info or workspace_info.is_owner or
+           workspace_info.permissions.hook_generator or
+           workspace_info.permissions.titles_hashtags or
+           workspace_info.permissions.trending_sounds or
+           workspace_info.permissions.trend_finder or
+           workspace_info.permissions.tiktok_analytics %}
+
+        {% if has_tiktok_permissions %}
         <div class="nav-group" data-group="TikTok">
             <div class="nav-group-header" onclick="toggleNavGroup(this)">
                 <div class="left-content">
@@ -1139,73 +1147,108 @@
                 <i class="ph ph-caret-right chevron"></i>
             </div>
             <div class="nav-group-items">
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.hook_generator %}
                 <a href="{{ url_for('hook_generator.hook_generator') }}"
                    class="nav-subitem {% if request.endpoint and 'hook_generator.' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-megaphone-simple"></i>
                     <span>Hook Generator</span>
                 </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.titles_hashtags %}
                 <a href="{{ url_for('titles_hashtags.titles_hashtags') }}"
                    class="nav-subitem {% if request.endpoint and 'titles_hashtags.' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-hash"></i>
                     <span>Titles & Hashtags</span>
                 </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.trending_sounds %}
                 <a href="{{ url_for('trending_sounds.trending_sounds') }}"
                    class="nav-subitem {% if request.endpoint and 'trending_sounds.' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-music-notes"></i>
                     <span>Trending Sounds</span>
                 </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.trend_finder %}
                 <a href="{{ url_for('trend_finder.trend_finder') }}"
                    class="nav-subitem {% if request.endpoint and 'trend_finder.' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-trend-up"></i>
                     <span>Trend Finder</span>
                 </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.tiktok_analytics %}
                 <a href="{{ url_for('tiktok_analytics.analytics') }}"
                    class="nav-subitem {% if request.endpoint and 'tiktok_analytics.' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-chart-line"></i>
                     <span>Analytics</span>
                 </a>
+                {% endif %}
             </div>
         </div>
-
-        {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.brain_dump %}
-        <a href="{{ url_for('brain_dump.brain_dump') }}"
-           class="nav-item {% if request.endpoint and 'brain_dump' in request.endpoint %}active{% endif %}"
-           onclick="return BaseApp.checkGuestAccess(event, this)">
-            <i class="ph ph-brain"></i>
-            <span>Brain Dump</span>
-        </a>
         {% endif %}
 
-        {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.mind_map %}
-        <a href="{{ url_for('mind_map.mind_map') }}"
-           class="nav-item {% if request.endpoint and 'mind_map' in request.endpoint %}active{% endif %}"
-           onclick="return BaseApp.checkGuestAccess(event, this)">
-            <i class="ph ph-graph"></i>
-            <span>Mind Map</span>
-        </a>
-        {% endif %}
+        <!-- Content Hub Group - Only show if user has permissions for any content feature -->
+        {% set has_content_permissions = not workspace_info or workspace_info.is_owner or
+           workspace_info.permissions.brain_dump or
+           workspace_info.permissions.mind_map or
+           workspace_info.permissions.content_wiki or
+           workspace_info.permissions.content_calendar %}
 
-        {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.content_wiki %}
-        <a href="{{ url_for('content_wiki.content_wiki') }}"
-           class="nav-item {% if request.endpoint and 'content_wiki' in request.endpoint %}active{% endif %}"
-           onclick="return BaseApp.checkGuestAccess(event, this)">
-            <i class="ph ph-books"></i>
-            <span>Content Wiki</span>
-        </a>
-        {% endif %}
+        {% if has_content_permissions %}
+        <div class="nav-group" data-group="Content Hub">
+            <div class="nav-group-header" onclick="toggleNavGroup(this)">
+                <div class="left-content">
+                    <i class="ph ph-folder-open"></i>
+                    <span>Content Hub</span>
+                </div>
+                <i class="ph ph-caret-right chevron"></i>
+            </div>
+            <div class="nav-group-items">
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.brain_dump %}
+                <a href="{{ url_for('brain_dump.brain_dump') }}"
+                   class="nav-subitem {% if request.endpoint and 'brain_dump' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-brain"></i>
+                    <span>Brain Dump</span>
+                </a>
+                {% endif %}
 
-        {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.content_calendar %}
-        <a href="{{ url_for('content_calendar.content_calendar') }}"
-           class="nav-item {% if request.endpoint and 'content_calendar' in request.endpoint %}active{% endif %}"
-           onclick="return BaseApp.checkGuestAccess(event, this)">
-            <i class="ph ph-calendar"></i>
-            <span>Content Calendar</span>
-        </a>
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.mind_map %}
+                <a href="{{ url_for('mind_map.mind_map') }}"
+                   class="nav-subitem {% if request.endpoint and 'mind_map' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-graph"></i>
+                    <span>Mind Map</span>
+                </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.content_wiki %}
+                <a href="{{ url_for('content_wiki.content_wiki') }}"
+                   class="nav-subitem {% if request.endpoint and 'content_wiki' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-books"></i>
+                    <span>Content Wiki</span>
+                </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.content_calendar %}
+                <a href="{{ url_for('content_calendar.content_calendar') }}"
+                   class="nav-subitem {% if request.endpoint and 'content_calendar' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-calendar"></i>
+                    <span>Content Calendar</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
         {% endif %}
 
         {% if not workspace_info or workspace_info.is_owner %}
