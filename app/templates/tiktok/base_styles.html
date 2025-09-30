@@ -1,13 +1,4 @@
-{% extends "base.html" %}
-{% set check_auth = true %}
-{% block title %}Hook Generator - TikTok Tools - Creatrics{% endblock %}
-
-{% block seo_meta %}
-<meta name="description" content="Hook Generator - Write viral hooks to grab attention in the first 3 seconds. Coming soon to Creatrics.">
-<meta name="keywords" content="tiktok hooks, viral hooks, video hooks, tiktok engagement, content creation">
-{% endblock %}
-
-{% block additional_styles %}
+<!-- Shared styles for TikTok coming soon pages -->
 <style>
     /* Override base template padding */
     .content-panel {
@@ -256,60 +247,3 @@
         }
     }
 </style>
-{% endblock %}
-
-{% block content %}
-<div class="coming-soon-wrapper">
-    <!-- Header -->
-    <div class="coming-soon-header">
-        <h1 class="coming-soon-title">
-            <i class="ph ph-megaphone-simple"></i>
-            Hook Generator
-        </h1>
-    </div>
-
-    <!-- Content -->
-    <div class="coming-soon-content">
-        <div class="coming-soon-hero">
-            <div class="coming-soon-icon">
-                <i class="ph ph-megaphone-simple"></i>
-            </div>
-
-            <div class="coming-soon-badge">Coming Soon</div>
-
-            <h1>Write <span class="gradient-text">Viral Hooks</span></h1>
-
-            <p>Master the art of grabbing attention in the first 3 seconds. Generate compelling hooks that make viewers stop scrolling and watch your entire video.</p>
-
-            <div class="coming-soon-cta">
-                <a href="{{ url_for('home.dashboard') }}" class="btn-primary">
-                    <i class="ph ph-house"></i>
-                    Back to Dashboard
-                </a>
-                <a href="{{ url_for('tiktok.titles_hashtags') }}" class="btn-secondary">
-                    <i class="ph ph-hash"></i>
-                    Try Titles & Hashtags
-                </a>
-            </div>
-        </div>
-
-        <!-- Features Preview -->
-        <div class="features-preview">
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-lightning"></i>Instant Hooks</h3>
-                <p>Generate attention-grabbing openings that stop the scroll and keep viewers engaged.</p>
-            </div>
-
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-target"></i>Niche Specific</h3>
-                <p>Hooks tailored to your content niche and target audience for maximum impact.</p>
-            </div>
-
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-trending-up"></i>Viral Patterns</h3>
-                <p>Based on proven psychological triggers and viral content frameworks.</p>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
