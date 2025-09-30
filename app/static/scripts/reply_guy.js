@@ -1346,8 +1346,7 @@
     function showCreatePanel() {
         const modal = document.getElementById('create-list-modal');
         if (modal) {
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('show'), 10);
+            modal.classList.add('show');
         }
     }
 
@@ -1355,7 +1354,6 @@
         const modal = document.getElementById('create-list-modal');
         if (modal) {
             modal.classList.remove('show');
-            setTimeout(() => modal.style.display = 'none', 300);
         }
         // Clear form
         const nameInput = document.getElementById('simple-list-name');

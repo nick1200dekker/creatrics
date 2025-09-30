@@ -86,10 +86,21 @@
         function init() {
             console.log('Niche Radar: Initializing');
             restoreProcessingState();
-            setupEventListeners();
+            defineEventHandlers(); // Define handlers FIRST
+            setupEventListeners();  // Then attach them
             setupViewToggle();
             setupDropdowns();
             setupListTypeToggle();
+
+            // Initialize selected list from default
+            const defaultListOption = document.querySelector('.dropdown-option.selected');
+            if (defaultListOption) {
+                const value = defaultListOption.dataset.value;
+                if (value) {
+                    window.NicheRadarState.selectedList = value;
+                    console.log('Initialized with default list:', value);
+                }
+            }
 
             // Wait for ApexCharts before setting up charts
             waitForApexCharts(() => {
@@ -183,13 +194,19 @@
             console.log('Button state updated:', analyzing ? 'analyzing' : 'normal');
         }
 
-        // Event handlers
-        eventHandlers.delegatedClick = function(e) {
+        // Define all event handlers
+        function defineEventHandlers() {
+            console.log('Defining event handlers...');
+
+            eventHandlers.delegatedClick = function(e) {
+            console.log('Click event:', e.target);
+
             // Handle list action buttons
             const listActionBtn = e.target.closest('.list-action-btn');
             if (listActionBtn) {
+                console.log('List action button clicked');
                 const listName = listActionBtn.dataset.listName;
-                
+
                 if (listActionBtn.classList.contains('edit')) {
                     editList(listName);
                 } else if (listActionBtn.classList.contains('refresh')) {
@@ -201,14 +218,36 @@
             }
 
             // Handle analyze buttons
-            if (e.target.closest('[id^="analyze-button"]')) {
+            const analyzeBtn = e.target.closest('[id^="analyze-button"]');
+            if (analyzeBtn) {
+                console.log('Analyze button clicked:', analyzeBtn.id, 'disabled:', analyzeBtn.disabled);
+                if (analyzeBtn.disabled) {
+                    console.log('Button is disabled, ignoring');
+                    showToast('Please add an X List first', 'warning');
+                    return;
+                }
                 handleAnalyze();
                 return;
             }
 
-            // Handle create list button
-            if (e.target.closest('#create-list-btn')) {
-                createList();
+            // Handle create list button (modal)
+            if (e.target.closest('#simple-create-btn')) {
+                console.log('Create button clicked');
+                handleSimpleCreateList();
+                return;
+            }
+
+            // Handle cancel create button
+            if (e.target.closest('#cancel-create-btn')) {
+                console.log('Cancel button clicked');
+                hideModal('create-list-modal');
+                return;
+            }
+
+            // Handle close create modal
+            if (e.target.closest('#close-create-modal')) {
+                console.log('Close modal clicked');
+                hideModal('create-list-modal');
                 return;
             }
 
@@ -249,11 +288,14 @@
             if (e.key === 'Enter') {
                 if (e.target.id === 'new-creator-handle-input') {
                     addCreator();
-                } else if (e.target.closest('.form-section')) {
-                    createList();
+                } else if (e.target.id === 'simple-list-name' || e.target.id === 'simple-x-list-id') {
+                    handleSimpleCreateList();
                 }
             }
         };
+
+            console.log('Event handlers defined successfully');
+        }
 
         function setupEventListeners() {
             console.log('Setting up event listeners');
@@ -269,6 +311,13 @@
             document.addEventListener('keydown', eventHandlers.formKey);
 
             console.log('Event listeners setup complete');
+            console.log('Delegated click handler:', eventHandlers.delegatedClick);
+            console.log('Testing click detection...');
+
+            // Test if clicks are being captured
+            setTimeout(() => {
+                console.log('Please click anywhere on the page now to test event capture');
+            }, 1000);
         }
 
         function setupViewToggle() {
@@ -331,27 +380,38 @@
                 options.forEach(option => {
                     option.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        
+
+                        // Handle "Add X List" option
+                        if (option.classList.contains('create-new')) {
+                            console.log('Create new list clicked');
+                            menu.classList.remove('active');
+                            trigger.classList.remove('active');
+                            scrollToCreateForm();
+                            return;
+                        }
+
                         const value = option.dataset.value;
                         const text = option.textContent.trim();
-                        
+
                         // Update trigger text
                         const textElement = trigger.querySelector('span');
                         if (textElement) {
                             textElement.textContent = text;
                         }
-                        
+
                         // Update selected state
                         options.forEach(opt => opt.classList.remove('selected'));
                         option.classList.add('selected');
-                        
+
                         // Store selection based on dropdown type
                         if (dropdown.querySelector('#list-dropdown-trigger, #list-dropdown-trigger-empty, #list-dropdown-trigger-default')) {
                             window.NicheRadarState.selectedList = value;
+                            console.log('Selected list:', value);
                         } else if (dropdown.querySelector('#time-range-dropdown-trigger, #time-range-dropdown-trigger-empty, #time-range-dropdown-trigger-default')) {
                             window.NicheRadarState.selectedTimeRange = value;
+                            console.log('Selected time range:', value);
                         }
-                        
+
                         // Close dropdown
                         menu.classList.remove('active');
                         trigger.classList.remove('active');
@@ -369,30 +429,7 @@
         }
 
         function setupListTypeToggle() {
-            const newListType = document.getElementById('new-list-type-select');
-            const xListIdContainer = document.getElementById('x-list-id-container');
-            const xListHelpContainer = document.getElementById('x-list-help-container');
-
-            if (newListType && xListIdContainer && xListHelpContainer) {
-                newListType.addEventListener('change', function() {
-                    if (this.value === 'x_list') {
-                        xListIdContainer.style.display = 'flex';
-                        xListHelpContainer.classList.add('show');
-                    } else {
-                        xListIdContainer.style.display = 'none';
-                        xListHelpContainer.classList.remove('show');
-                    }
-                });
-                
-                // Initialize state
-                if (newListType.value === 'x_list') {
-                    xListIdContainer.style.display = 'flex';
-                    xListHelpContainer.classList.add('show');
-                } else {
-                    xListIdContainer.style.display = 'none';
-                    xListHelpContainer.classList.remove('show');
-                }
-            }
+            // No longer needed - always X List
         }
 
         function setupCharts() {
@@ -752,29 +789,29 @@
         }
 
         // API Functions
-        async function createList() {
-            const listType = document.getElementById('new-list-type-select')?.value;
-            const listName = document.getElementById('new-list-name-input')?.value?.trim();
-            const xListId = document.getElementById('x-list-id-input')?.value?.trim();
+        async function handleSimpleCreateList() {
+            const listName = document.getElementById('simple-list-name')?.value?.trim();
+            const xListId = document.getElementById('simple-x-list-id')?.value?.trim();
 
             if (!listName) {
                 showToast('Please enter a list name', 'error');
                 return;
             }
 
-            if (listType === 'x_list' && !xListId) {
+            if (!xListId) {
                 showToast('Please enter an X List ID', 'error');
                 return;
             }
 
-            const createBtn = document.getElementById('create-list-btn');
+            const createBtn = document.getElementById('simple-create-btn');
             setButtonLoading(createBtn, true);
 
             try {
-                const data = { list_name: listName, list_type: listType };
-                if (listType === 'x_list') {
-                    data.x_list_id = xListId;
-                }
+                const data = {
+                    list_name: listName,
+                    list_type: 'x_list',
+                    x_list_id: xListId
+                };
 
                 const response = await fetch('/niche/create-list', {
                     method: 'POST',
@@ -785,16 +822,64 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    showToast('List created successfully!', 'success');
-                    clearCreateForm();
-                    setTimeout(() => window.location.reload(), 1000);
+                    showToast('X List created! Starting analysis...', 'success');
+                    hideModal('create-list-modal');
+
+                    // Clear form
+                    document.getElementById('simple-list-name').value = '';
+                    document.getElementById('simple-x-list-id').value = '';
+
+                    // Update dropdown text to show the new list
+                    updateDropdownText(listName);
+
+                    // Auto-start analysis
+                    setTimeout(() => {
+                        autoStartAnalysis(listName);
+                    }, 500);
                 } else {
-                    showToast(result.message || 'Error creating list', 'error');
+                    showToast(result.message || 'Error adding X List', 'error');
                 }
             } catch (error) {
                 showToast('Network error: ' + error.message, 'error');
             } finally {
                 setButtonLoading(createBtn, false);
+            }
+        }
+
+        // Auto-start analysis after creating list
+        async function autoStartAnalysis(listName) {
+            console.log('Auto-starting analysis for list:', listName);
+
+            window.NicheRadarState.selectedList = listName;
+            window.CreatorPal.NicheRadar.StateManager.setProcessingState(listName, true, 'Starting analysis...', 5);
+            setAnalyzingState(true);
+
+            try {
+                const response = await fetch('/niche/analyze-creators', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        list_name: listName,
+                        time_range: '24h'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Analysis started! This will take a few minutes.', 'success');
+                    startStatusPolling();
+                } else {
+                    console.log('Analysis failed to start:', data.error);
+                    setAnalyzingState(false);
+                    window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
+                    showToast(data.error || 'Error starting analysis', 'error');
+                }
+            } catch (error) {
+                console.error('Analysis start error:', error);
+                setAnalyzingState(false);
+                window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
+                showToast('Network error: ' + error.message, 'error');
             }
         }
 
@@ -966,6 +1051,35 @@
             }
         }
 
+        // Show create list modal
+        function scrollToCreateForm() {
+            showModal('create-list-modal');
+
+            // Focus on the list name input
+            setTimeout(() => {
+                const nameInput = document.getElementById('simple-list-name');
+                if (nameInput) {
+                    nameInput.focus();
+                }
+            }, 100);
+        }
+
+        // Update dropdown text after creating list
+        function updateDropdownText(listName) {
+            const dropdownTexts = [
+                'selected-list-text',
+                'selected-list-text-empty',
+                'selected-list-text-default'
+            ];
+
+            dropdownTexts.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = listName;
+                }
+            });
+        }
+
         // Helper Functions
         function displayCreatorsInModal(creators) {
             const creatorsList = document.getElementById('creators-list');
@@ -988,13 +1102,6 @@
             });
         }
 
-        function clearCreateForm() {
-            const inputs = ['new-list-name-input', 'x-list-id-input'];
-            inputs.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) element.value = '';
-            });
-        }
 
         function showModal(modalId) {
             const modal = document.getElementById(modalId);

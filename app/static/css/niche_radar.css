@@ -287,6 +287,38 @@ html.dark .dropdown-option:hover {
     color: #3B82F6;
 }
 
+/* Create new list option */
+.dropdown-option.create-new {
+    color: #3B82F6;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dropdown-option.create-new:hover {
+    background: #eff6ff;
+}
+
+html.dark .dropdown-option.create-new:hover {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.dropdown-option.create-new i {
+    font-size: 1rem;
+}
+
+/* Dropdown divider */
+.dropdown-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 0.25rem 0;
+}
+
+html.dark .dropdown-divider {
+    background: #52525b;
+}
+
 /* Primary Button */
 .primary-btn {
     padding: 0.6rem 1.25rem;
@@ -934,9 +966,10 @@ html.dark .toast {
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    z-index: 9999;
+    padding-top: 2rem;
+    z-index: 99999;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -965,6 +998,90 @@ html.dark .toast {
 
 html.dark .modal-content {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Create List Modal - Specific Styling (matches Reply Guy) */
+#create-list-modal .modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+html.dark #create-list-modal .modal-content {
+    background: var(--bg-tertiary);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+#create-list-modal .form-section {
+    background: transparent;
+    border: none;
+    padding: 1.5rem;
+}
+
+.form-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-title i {
+    color: #3B82F6;
+    font-size: 1.5rem;
+}
+
+/* Form styling for create modal */
+#create-list-modal .form-group {
+    margin-bottom: 1.5rem;
+}
+
+#create-list-modal .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+#create-list-modal .form-input {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: 0.6rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    height: 40px;
+    transition: all 0.2s ease;
+    width: 100%;
+    font-family: inherit;
+}
+
+html.dark #create-list-modal .form-input {
+    background: var(--bg-secondary);
+}
+
+#create-list-modal .form-input:focus {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+    background: var(--bg-secondary);
+}
+
+html.dark #create-list-modal .form-input:focus {
+    background: var(--bg-primary);
+}
+
+#create-list-modal .form-input::placeholder {
+    color: var(--text-tertiary);
 }
 
 .modal-header {

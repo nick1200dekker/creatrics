@@ -20,24 +20,12 @@
                 <i class="ph ph-radar"></i>
                 Niche Radar
             </h1>
-            <div class="header-actions">
-                <div class="view-toggle">
-                    <button id="analytics-view-btn" class="view-btn active">
-                        <i class="ph ph-chart-line"></i>
-                        Analytics
-                    </button>
-                    <button id="lists-view-btn" class="view-btn">
-                        <i class="ph ph-list-plus"></i>
-                        Lists
-                    </button>
-                </div>
-            </div>
         </div>
 
         <!-- Content Area -->
         <div class="niche-radar-content">
-            <!-- Analytics Panel -->
-            <div id="analytics-panel" class="analytics-panel">
+            <!-- Analytics Panel - Always Visible -->
+            <div id="analytics-panel" class="analytics-panel" style="display: block !important;">
                 {% if latest_analysis %}
                 <!-- Hot on Timeline -->
                 {% if hot_on_timeline %}
@@ -64,8 +52,16 @@
                                             {{ list.name }}
                                         </div>
                                         {% endfor %}
+                                        <div class="dropdown-divider"></div>
+                                        <div class="dropdown-option create-new" data-value="">
+                                            <i class="ph ph-plus-circle"></i>
+                                            <span>Add X List</span>
+                                        </div>
                                     {% else %}
-                                        <div class="dropdown-option" data-value="">No lists available</div>
+                                        <div class="dropdown-option create-new" data-value="">
+                                            <i class="ph ph-plus-circle"></i>
+                                            <span>Add X List</span>
+                                        </div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -120,8 +116,16 @@
                                             {{ list.name }}
                                         </div>
                                         {% endfor %}
+                                        <div class="dropdown-divider"></div>
+                                        <div class="dropdown-option create-new" data-value="">
+                                            <i class="ph ph-plus-circle"></i>
+                                            <span>Add X List</span>
+                                        </div>
                                     {% else %}
-                                        <div class="dropdown-option" data-value="">No lists available</div>
+                                        <div class="dropdown-option create-new" data-value="">
+                                            <i class="ph ph-plus-circle"></i>
+                                            <span>Add X List</span>
+                                        </div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -233,8 +237,16 @@
                                             {{ list.name }}
                                         </div>
                                         {% endfor %}
+                                        <div class="dropdown-divider"></div>
+                                        <div class="dropdown-option create-new" data-value="">
+                                            <i class="ph ph-plus-circle"></i>
+                                            <span>Add X List</span>
+                                        </div>
                                     {% else %}
-                                        <div class="dropdown-option" data-value="">No lists available</div>
+                                        <div class="dropdown-option create-new" data-value="">
+                                            <i class="ph ph-plus-circle"></i>
+                                            <span>Add X List</span>
+                                        </div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -274,133 +286,49 @@
                 {% endif %}
             </div>
 
-            <!-- Lists Management Panel -->
-            <div id="lists-panel" class="lists-panel">
-                <!-- Create New List Panel -->
-                <div class="main-panel">
-                    <div class="panel-header">
-                        <div class="panel-title-section">
-                            <h3 class="panel-title">
-                                <i class="ph ph-plus-circle"></i>
-                                Create New List
-                            </h3>
-                        </div>
-                    </div>
-                    
-                    <div class="panel-content">
-                        <div class="form-section">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="new-list-type-select">List Type</label>
-                                    <select id="new-list-type-select" name="new-list-type" class="form-select">
-                                        <option value="x_list">X List</option>
-                                        <option value="manual">Manual List</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="new-list-name-input">List Name</label>
-                                    <input type="text" id="new-list-name-input" name="new-list-name" placeholder="Enter list name..." class="form-input">
-                                </div>
-                                
-                                <div class="form-group" id="x-list-id-container">
-                                    <label for="x-list-id-input">X List ID</label>
-                                    <input type="text" id="x-list-id-input" name="x-list-id" placeholder="Enter X List ID..." class="form-input">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label>&nbsp;</label> <!-- Spacer for alignment -->
-                                    <button id="create-list-btn" type="button" class="primary-btn">
-                                        <i class="ph ph-plus"></i>
-                                        Create List
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div id="x-list-help-container" class="x-list-help-container">
-                                <div class="info-box">
-                                    <i class="ph ph-info"></i>
-                                    <div class="info-content">
-                                        <div class="info-title">How to find your List ID</div>
-                                        <div class="info-text">Go to your list on X and copy the last part from the URL.<br>For example: x.com/i/lists/<strong>1234567890</strong></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Your Lists Panel -->
-                <div class="main-panel">
-                    <div class="panel-header">
-                        <div class="panel-title-section">
-                            <h3 class="panel-title">
-                                <i class="ph ph-list-bullets"></i>
-                                Your Creator Lists
-                            </h3>
-                        </div>
-                    </div>
-                    
-                    <div class="panel-content">
-                        {% if creator_lists %}
-                        <div class="lists-grid">
-                            {% for list in creator_lists %}
-                            <div class="list-item" data-list-name="{{ list.name }}">
-                                <div class="list-info">
-                                    <div class="list-name-container">
-                                        <h5 class="list-name">{{ list.name }}</h5>
-                                        <span class="list-type-badge {{ 'x-list' if list.is_x_list else 'manual' }}">
-                                            {% if list.is_x_list %}
-                                            <i class="ph ph-link"></i>
-                                            X List
-                                            {% else %}
-                                            <i class="ph ph-pencil"></i>
-                                            Manual
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                    <div class="list-meta">
-                                        <span><i class="ph ph-users"></i> {{ list.creators|length }} creators</span>
-                                    </div>
-                                </div>
-                                <div class="list-actions">
-                                    {% if list.is_x_list %}
-                                    <button class="list-action-btn refresh" data-list-name="{{ list.name }}" title="Update from X">
-                                        <i class="ph ph-arrows-clockwise"></i>
-                                    </button>
-                                    {% else %}
-                                    <button class="list-action-btn edit" data-list-name="{{ list.name }}" title="Edit Creators">
-                                        <i class="ph ph-pencil"></i>
-                                    </button>
-                                    {% endif %}
-                                    {% if default_list != list.name %}
-                                    <button class="list-action-btn" data-list-name="{{ list.name }}" title="Set as Default" onclick="setDefaultList('{{ list.name }}')">
-                                        <i class="ph ph-star"></i>
-                                    </button>
-                                    {% endif %}
-                                    <button class="list-action-btn delete" data-list-name="{{ list.name }}" title="Delete">
-                                        <i class="ph ph-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% else %}
-                        <div class="empty-state">
-                            <i class="ph ph-list-plus empty-icon"></i>
-                            <div class="empty-title">No Lists Yet</div>
-                            <div class="empty-text">Create your first creator list to start tracking and analyzing performance. You can either import an existing X list or build a manual list from scratch.</div>
-                        </div>
-                        {% endif %}
-                    </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create X List Modal -->
+<div id="create-list-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="ph ph-plus-circle"></i>
+                Add X List
+            </h3>
+            <button class="modal-close" id="close-create-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="simple-list-name">List Name</label>
+                <input type="text" id="simple-list-name" class="form-input" placeholder="Enter list name...">
+            </div>
+            <div class="form-group">
+                <label for="simple-x-list-id">X List ID</label>
+                <input type="text" id="simple-x-list-id" class="form-input" placeholder="Enter X List ID...">
+            </div>
+            <div class="info-box" style="margin-top: 1rem;">
+                <i class="ph ph-info"></i>
+                <div class="info-content">
+                    <div class="info-title">How to find your X List ID</div>
+                    <div class="info-text">Go to your list on X and copy the last part from the URL.<br>For example: x.com/i/lists/<strong>1234567890</strong></div>
                 </div>
             </div>
+        </div>
+        <div class="modal-footer">
+            <button id="cancel-create-btn" class="secondary-btn">Cancel</button>
+            <button id="simple-create-btn" class="primary-btn">
+                <i class="ph ph-plus"></i>
+                Add X List
+            </button>
         </div>
     </div>
 </div>
 
 <!-- Edit List Modal -->
-<div id="edit-list-modal" class="modal" style="display: none;">
+<div id="edit-list-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title">
@@ -431,7 +359,7 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div id="delete-modal" class="modal" style="display: none;">
+<div id="delete-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title" style="color: #EF4444;">

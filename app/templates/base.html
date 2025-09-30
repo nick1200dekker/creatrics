@@ -483,10 +483,10 @@
 
     .dark-mode-toggle-btn {
         width: 100%;
-        padding: 0.625rem;
-        background: var(--bg-secondary);
-        color: var(--text-secondary);
-        border: 1px solid transparent;
+        padding: 0.875rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-primary);
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s ease;
@@ -494,16 +494,52 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
+        min-height: 44px;
+    }
+
+    .dark-mode-toggle-btn i {
+        color: var(--text-primary);
+        font-size: 1.25rem;
+    }
+
+    /* Light mode - show moon icon */
+    .dark-mode-toggle-btn .ph-moon {
+        display: block;
+    }
+
+    .dark-mode-toggle-btn .ph-sun {
+        display: none;
     }
 
     html.dark .dark-mode-toggle-btn {
-        border-color: transparent;
-        background: var(--bg-tertiary);
+        border-color: #52525b;
+        background: #3f3f46;
+        color: #fafafa;
+    }
+
+    html.dark .dark-mode-toggle-btn i {
+        color: #fafafa;
+    }
+
+    /* Dark mode - show sun icon */
+    html.dark .dark-mode-toggle-btn .ph-moon {
+        display: none;
+    }
+
+    html.dark .dark-mode-toggle-btn .ph-sun {
+        display: block;
     }
 
     .dark-mode-toggle-btn:hover {
-        background: var(--hover-bg);
+        background: #e5e7eb;
         color: var(--text-primary);
+        border-color: #d1d5db;
+    }
+
+    html.dark .dark-mode-toggle-btn:hover {
+        background: #52525b;
+        border-color: #71717a;
+        color: #fafafa;
     }
     
     .user-card {
@@ -1159,8 +1195,8 @@
 
         {% if g.user and not g.user.get('is_guest') %}
         <button id="dark-mode-toggle" class="dark-mode-toggle-btn" title="Toggle Dark Mode">
-            <i class="ph ph-moon text-lg dark:hidden"></i>
-            <i class="ph ph-sun text-lg hidden dark:block"></i>
+            <i class="ph ph-moon"></i>
+            <i class="ph ph-sun"></i>
         </button>
         <div class="user-card">
             <div class="user-avatar">
