@@ -1436,54 +1436,127 @@
         });
     }
 
-    // Profile picture consistency handler
+    // Enhanced profile picture consistency handler
     function fixProfilePictureConsistency() {
         const profileMap = new Map();
+        const authorNameMap = new Map(); // Track author screen names
 
-        // Collect all profile pictures by author
-        document.querySelectorAll('.tweet-avatar img').forEach(img => {
-            const authorName = img.alt;
-            const profileUrl = img.src;
+        console.log('Starting profile picture consistency fix...');
 
-            if (authorName && profileUrl && !profileMap.has(authorName)) {
-                profileMap.set(authorName, profileUrl);
+        // First pass: collect all profile pictures and author data
+        document.querySelectorAll('.tweet-opportunity').forEach(tweet => {
+            const authorNameEl = tweet.querySelector('.tweet-author-name');
+            const authorUsernameEl = tweet.querySelector('.tweet-author-username');
+            const img = tweet.querySelector('.tweet-avatar img');
+
+            if (authorNameEl && authorUsernameEl) {
+                const displayName = authorNameEl.textContent.trim();
+                const username = authorUsernameEl.textContent.replace('@', '').trim();
+
+                // Store mapping between username and display name
+                authorNameMap.set(username, displayName);
+
+                if (img && img.src && !img.src.includes('data:') && img.src !== window.location.href) {
+                    const profileUrl = img.src;
+                    if (!profileMap.has(username) && profileUrl) {
+                        profileMap.set(username, profileUrl);
+                        console.log(`Stored profile for @${username}:`, profileUrl);
+                    }
+                }
             }
         });
 
-        // Apply consistent profile pictures
+        console.log(`Found ${profileMap.size} unique profiles`);
+
+        // Second pass: apply consistent profiles and fix missing ones
         document.querySelectorAll('.tweet-avatar').forEach(avatar => {
             const img = avatar.querySelector('img');
             const fallback = avatar.querySelector('.fallback-avatar');
+            const tweet = avatar.closest('.tweet-opportunity');
 
-            if (img) {
-                const authorName = img.alt;
-                const consistentUrl = profileMap.get(authorName);
+            if (tweet) {
+                const authorUsernameEl = tweet.querySelector('.tweet-author-username');
 
-                if (consistentUrl && img.src !== consistentUrl) {
-                    img.src = consistentUrl;
+                if (authorUsernameEl) {
+                    const username = authorUsernameEl.textContent.replace('@', '').trim();
+                    const storedProfileUrl = profileMap.get(username);
+
+                    if (img) {
+                        // If we have a stored profile URL and the current image is missing/broken
+                        if (storedProfileUrl && (!img.src || img.src === window.location.href || img.src.includes('data:'))) {
+                            console.log(`Fixing profile for @${username}`);
+                            img.src = storedProfileUrl;
+                        }
+
+                        // Enhanced image loading handlers
+                        img.onload = function() {
+                            this.style.display = 'block';
+                            this.classList.remove('error');
+                            if (fallback) fallback.style.display = 'none';
+                        };
+
+                        img.onerror = function() {
+                            console.log(`Image failed for @${username}, showing fallback`);
+                            this.style.display = 'none';
+                            this.classList.add('error');
+                            if (fallback) {
+                                fallback.style.display = 'flex';
+                                // Try to generate a better fallback
+                                const firstLetter = username.charAt(0).toUpperCase();
+                                const icon = fallback.querySelector('i');
+                                if (icon) {
+                                    icon.textContent = firstLetter;
+                                    icon.style.fontSize = '1.2rem';
+                                    icon.style.fontWeight = 'bold';
+                                    icon.style.fontFamily = 'system-ui, sans-serif';
+                                }
+                            }
+                        };
+
+                        // Trigger a recheck if the image seems broken
+                        if (img.naturalWidth === 0 && img.complete) {
+                            img.onerror();
+                        }
+                    } else if (!img && fallback) {
+                        // No image element at all, just show fallback
+                        fallback.style.display = 'flex';
+                        const firstLetter = username.charAt(0).toUpperCase();
+                        const icon = fallback.querySelector('i');
+                        if (icon) {
+                            icon.textContent = firstLetter;
+                            icon.style.fontSize = '1.2rem';
+                            icon.style.fontWeight = 'bold';
+                            icon.style.fontFamily = 'system-ui, sans-serif';
+                        }
+                    }
                 }
-
-                // Handle image loading errors
-                img.onload = function() {
-                    this.style.display = 'block';
-                    if (fallback) fallback.style.display = 'none';
-                };
-
-                img.onerror = function() {
-                    this.style.display = 'none';
-                    if (fallback) fallback.style.display = 'flex';
-                };
             }
         });
+
+        console.log('Profile picture consistency fix completed');
     }
 
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', init);
 
-    // Fix profile pictures after content loads
+    // Fix profile pictures after content loads and periodically
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(fixProfilePictureConsistency, 1000);
+        setTimeout(fixProfilePictureConsistency, 500);
+        setTimeout(fixProfilePictureConsistency, 2000);
+        setTimeout(fixProfilePictureConsistency, 5000);
     });
+
+    // Also run when new content might be loaded
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        return originalFetch.apply(this, args).then(response => {
+            // Run profile fix after any fetch that might load new content
+            if (args[0] && (args[0].includes('reply-guy') || args[0].includes('analysis'))) {
+                setTimeout(fixProfilePictureConsistency, 1000);
+            }
+            return response;
+        });
+    };
 
     // Debug: Test if buttons are clickable after page load
     setTimeout(() => {

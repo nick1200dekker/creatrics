@@ -751,12 +751,14 @@ html.dark .tweet-opportunity:hover {
     display: none;
     width: 100%;
     height: 100%;
-    background: var(--bg-tertiary);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     border-radius: 50%;
     justify-content: center;
     align-items: center;
-    color: var(--text-tertiary);
+    color: white;
     font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .tweet-avatar img.error {

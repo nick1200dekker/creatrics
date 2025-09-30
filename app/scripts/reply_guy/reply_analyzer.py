@@ -39,11 +39,11 @@ class ReplyAnalyzer:
                 tweets = self.get_tweets(account)
 
                 if tweets:
-                    # Filter out RTs and limit to 20 most recent tweets
+                    # Filter out RTs and limit to 10 most recent tweets for faster processing
                     filtered_tweets = [
                         tweet for tweet in tweets
                         if tweet.get('text') and not tweet.get('text', '').startswith('RT @')
-                    ][:20]
+                    ][:10]
 
                     if filtered_tweets:
                         # Extract profile info from first tweet for consistency
@@ -78,8 +78,8 @@ class ReplyAnalyzer:
                         logger.info(f"Found {len(processed_tweets)} tweets for @{account}")
                         all_tweets.extend(processed_tweets)
 
-                # Rate limiting
-                time.sleep(1)
+                # Rate limiting - reduced for faster processing
+                time.sleep(0.2)
             
             logger.info(f"Total tweets collected: {len(all_tweets)}")
             
@@ -150,14 +150,14 @@ class ReplyAnalyzer:
                 # If no tweets but we have attempts left, wait and retry
                 if attempt < max_attempts - 1:
                     logger.debug(f"No tweets found for @{screen_name}, retrying...")
-                    time.sleep(2)
+                    time.sleep(0.5)
                 
             except Exception as e:
                 logger.error(f"Error fetching tweets for @{screen_name} (attempt {attempt+1}): {str(e)}")
                 
                 # If we have attempts left, wait and retry
                 if attempt < max_attempts - 1:
-                    time.sleep(2)
+                    time.sleep(0.5)
         
         logger.warning(f"All attempts to fetch tweets for @{screen_name} failed")
         return []
