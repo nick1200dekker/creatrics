@@ -799,7 +799,7 @@ html.dark .coming-soon-card {
 
         <div class="features-grid">
             <!-- Hook Generator -->
-            <a href="{{ url_for('tiktok.hook_generator') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+            <a href="{{ url_for('hook_generator.hook_generator') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-megaphone-simple feature-icon-inline"></i>Hook Generator</h3>
                     <p>Write viral hooks for first 3 seconds</p>
@@ -807,7 +807,7 @@ html.dark .coming-soon-card {
             </a>
 
             <!-- Titles & Hashtags -->
-            <a href="{{ url_for('tiktok.titles_hashtags') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+            <a href="{{ url_for('titles_hashtags.titles_hashtags') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-hash feature-icon-inline"></i>Titles & Hashtags</h3>
                     <p>Create captions with trending keywords</p>
@@ -815,7 +815,7 @@ html.dark .coming-soon-card {
             </a>
 
             <!-- Trending Sounds -->
-            <a href="{{ url_for('tiktok.trending_sounds') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+            <a href="{{ url_for('trending_sounds.trending_sounds') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-music-notes feature-icon-inline"></i>Trending Sounds</h3>
                     <p>Discover hot sounds in your niche</p>
@@ -823,7 +823,7 @@ html.dark .coming-soon-card {
             </a>
 
             <!-- Trend Finder -->
-            <a href="{{ url_for('tiktok.trend_finder') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+            <a href="{{ url_for('trend_finder.trend_finder') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-trend-up feature-icon-inline"></i>Trend Finder</h3>
                     <p>Spot challenges & content styles</p>
@@ -831,7 +831,7 @@ html.dark .coming-soon-card {
             </a>
 
             <!-- Analytics -->
-            <a href="{{ url_for('tiktok.analytics') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+            <a href="{{ url_for('tiktok_analytics.analytics') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-chart-line feature-icon-inline"></i>Analytics</h3>
                     <p>Track performance & growth</p>
