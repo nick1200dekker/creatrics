@@ -124,6 +124,9 @@ from app.routes.clip_spaces import bp as clip_spaces_bp
 from app.routes.niche import bp as niche_bp
 from app.routes.credits_history import bp as credits_history_bp
 
+# Import TikTok blueprints
+from app.routes.tiktok import tiktok_bp
+
 # Import Teams blueprint
 from app.routes.teams import teams_bp
 
@@ -152,6 +155,7 @@ app.register_blueprint(reply_guy_bp)
 app.register_blueprint(clip_spaces_bp)
 app.register_blueprint(niche_bp)
 app.register_blueprint(credits_history_bp)
+app.register_blueprint(tiktok_bp)
 app.register_blueprint(teams_bp)
 
 # Register Cron blueprint

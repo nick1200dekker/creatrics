@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% set check_auth = true %}
+{% block title %}Hook Generator - TikTok Tools - Creatrics{% endblock %}
+
+{% block seo_meta %}
+<meta name="description" content="Hook Generator - Write viral hooks to grab attention in the first 3 seconds. Coming soon to Creatrics.">
+<meta name="keywords" content="tiktok hooks, viral hooks, video hooks, tiktok engagement, content creation">
+{% endblock %}
+
+{% block additional_styles %}
+<style>
+    /* Override base template padding */
+    .content-panel {
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Main wrapper */
+    .coming-soon-wrapper {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-secondary);
+        overflow: hidden;
+        width: 100%;
+        min-height: calc(100vh - 60px);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+        position: relative;
+    }
+
+    html.dark .coming-soon-wrapper {
+        border-color: transparent;
+    }
+
+    /* Animated background gradient */
+    .coming-soon-wrapper::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    /* Header */
+    .coming-soon-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-primary);
+        background: var(--bg-secondary);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .coming-soon-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .coming-soon-title i {
+        color: #3B82F6;
+    }
+
+    /* Content */
+    .coming-soon-content {
+        padding: 4rem 2rem;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .coming-soon-hero {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .coming-soon-icon {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .coming-soon-icon i {
+        color: white;
+        font-size: 3rem;
+        z-index: 1;
+        position: relative;
+    }
+
+    .coming-soon-hero h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .coming-soon-hero .subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        font-weight: 400;
+    }
+
+    .coming-soon-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 3rem auto;
+        max-width: 700px;
+    }
+
+    .coming-soon-feature {
+        text-align: left;
+        padding: 1.5rem;
+        background: var(--bg-primary);
+        border-radius: 12px;
+        border: 1px solid var(--border-primary);
+        transition: all 0.3s ease;
+    }
+
+    .coming-soon-feature:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: #3B82F6;
+    }
+
+    .coming-soon-feature i {
+        color: #3B82F6;
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+
+    .coming-soon-feature h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .coming-soon-feature p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .progress-info {
+        margin: 3rem auto;
+        max-width: 500px;
+        padding: 1.5rem;
+        background: var(--bg-primary);
+        border-radius: 12px;
+        border: 1px solid var(--border-primary);
+    }
+
+    .progress-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: var(--bg-tertiary);
+        border-radius: 100px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
+        border-radius: 100px;
+        width: 75%;
+        position: relative;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.8; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="coming-soon-wrapper">
+    <div class="coming-soon-header">
+        <h1 class="coming-soon-title">
+            <i class="ph ph-megaphone-simple"></i>
+            Hook Generator
+        </h1>
+    </div>
+
+    <div class="coming-soon-content">
+        <div class="coming-soon-hero">
+            <div class="coming-soon-icon">
+                <i class="ph ph-megaphone-simple"></i>
+            </div>
+            <h1>🚧 Under Construction</h1>
+            <p class="subtitle">Write viral hooks to grab attention in the first 3 seconds</p>
+
+            <div class="coming-soon-features">
+                <div class="coming-soon-feature">
+                    <i class="ph ph-lightning"></i>
+                    <h3>Instant Hooks</h3>
+                    <p>Generate attention-grabbing hooks that stop scrollers</p>
+                </div>
+                <div class="coming-soon-feature">
+                    <i class="ph ph-target"></i>
+                    <h3>Niche Specific</h3>
+                    <p>Hooks tailored to your content niche and audience</p>
+                </div>
+                <div class="coming-soon-feature">
+                    <i class="ph ph-trending-up"></i>
+                    <h3>Viral Patterns</h3>
+                    <p>Based on proven viral hook frameworks</p>
+                </div>
+            </div>
+
+            <div class="progress-info">
+                <div class="progress-label">Development Progress</div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
