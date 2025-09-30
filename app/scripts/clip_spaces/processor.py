@@ -146,9 +146,11 @@ class SpaceProcessor:
                 
                 # Log the command being run
                 logger.info(f"[SPACES] Running ffmpeg command: {' '.join(cmd[:6])}... (truncated)")
-                
-                # Use shorter timeout with retries (10 minutes per attempt)
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+
+                # Use longer timeout for Cloud Run (30 minutes per attempt)
+                # Configurable via environment variable, default 1800 seconds (30 min)
+                download_timeout = int(os.environ.get('SPACES_DOWNLOAD_TIMEOUT', '1800'))
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=download_timeout)
                 
                 if result.returncode == 0 and self._verify_audio_file():
                     file_size = os.path.getsize(self.audio_path) / (1024 * 1024)

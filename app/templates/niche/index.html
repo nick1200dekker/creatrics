@@ -12,374 +12,387 @@
 {% endblock %}
 
 {% block content %}
-<div class="flex-1 space-y-4 w-full">
-    <!-- Header -->
-    <div class="tracker-premium-card">
-        <div class="p-4 flex items-center justify-between">
-            <h2 class="text-xl font-bold text-white flex items-center">
-                <i class="ph ph-radar text-teal-primary mr-3"></i>
+<div class="content-panel">
+    <div class="niche-radar-wrapper">
+        <!-- Header -->
+        <div class="niche-radar-header">
+            <h1 class="niche-radar-title">
+                <i class="ph ph-radar"></i>
                 Niche Radar
-            </h2>
-            <div class="flex space-x-3">
-                <div class="tracker-view-toggle">
-                    <button id="analytics-view-btn" class="tracker-view-toggle-btn active">
+            </h1>
+            <div class="header-actions">
+                <div class="view-toggle">
+                    <button id="analytics-view-btn" class="view-btn active">
                         <i class="ph ph-chart-line"></i>
                         Analytics
                     </button>
-                    <button id="lists-view-btn" class="tracker-view-toggle-btn">
+                    <button id="lists-view-btn" class="view-btn">
                         <i class="ph ph-list-plus"></i>
                         Lists
                     </button>
                 </div>
-                <a href="{{ url_for('teams.teams_dashboard') }}" class="tracker-secondary-button">
-                    <i class="ph ph-house"></i>
-                    Dashboard
-                </a>
             </div>
         </div>
-    </div>
 
-    <!-- Analytics Panel -->
-    <div id="analytics-panel" class="analytics-panel">
-        {% if latest_analysis %}
-        <!-- Hot on Timeline -->
-        {% if hot_on_timeline %}
-        <div class="hot-timeline-container">
-            <div class="tracker-section-header-with-controls">
-                <div class="tracker-section-title-info">
-                    <h3 class="tracker-section-title">
-                        <i class="ph ph-trend-up"></i>
-                        What's Hot in Your Niche Right Now
-                    </h3>
-                </div>
-                <div class="tracker-section-controls">
-                    <div class="tracker-form-label-group">
-                        <label for="list-select" class="tracker-form-label">List Name</label>
-                        <select id="list-select" class="tracker-form-select">
-                            {% if creator_lists %}
-                                {% for list in creator_lists %}
-                                    <option value="{{ list.name }}" {% if default_list == list.name %}selected{% endif %}>
-                                        {{ list.name }}
-                                    </option>
-                                {% endfor %}
-                            {% else %}
-                                <option value="">No lists available</option>
-                            {% endif %}
-                        </select>
-                    </div>
-                    
-                    <div class="tracker-form-label-group">
-                        <label for="time-range-select" class="tracker-form-label">Time Range</label>
-                        <select id="time-range-select" class="tracker-form-select">
-                            <option value="24h">Last 24 Hours</option>
-                            <option value="48h">Last 48 Hours</option>
-                            <option value="72h">Last 72 Hours</option>
-                            <option value="1w">Last Week</option>
-                        </select>
-                    </div>
-                    
-                    <div class="tracker-analyze-button-group">
-                        <label for="analyze-button" class="tracker-form-label">Action</label>
-                        <button id="analyze-button" class="tracker-premium-button" {% if not creator_lists %}disabled{% endif %}>
-                            <i class="ph ph-arrows-clockwise"></i>
-                            <span>Analyze</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="hot-timeline">
-                {{ hot_on_timeline|safe }}
-            </div>
-        </div>
-        {% else %}
-        <div class="hot-timeline-container">
-            <div class="tracker-section-header-with-controls">
-                <div class="tracker-section-title-info">
-                    <h3 class="tracker-section-title">
-                        <i class="ph ph-trend-up"></i>
-                        What's Hot in Your Niche Right Now
-                    </h3>
-                </div>
-                <div class="tracker-section-controls">
-                    <div class="tracker-form-label-group">
-                        <label for="list-select-2" class="tracker-form-label">List Name</label>
-                        <select id="list-select-2" class="tracker-form-select">
-                            {% if creator_lists %}
-                                {% for list in creator_lists %}
-                                    <option value="{{ list.name }}" {% if default_list == list.name %}selected{% endif %}>
-                                        {{ list.name }}
-                                    </option>
-                                {% endfor %}
-                            {% else %}
-                                <option value="">No lists available</option>
-                            {% endif %}
-                        </select>
-                    </div>
-                    
-                    <div class="tracker-form-label-group">
-                        <label for="time-range-select-2" class="tracker-form-label">Time Range</label>
-                        <select id="time-range-select-2" class="tracker-form-select">
-                            <option value="24h">Last 24 Hours</option>
-                            <option value="48h">Last 48 Hours</option>
-                            <option value="72h">Last 72 Hours</option>
-                            <option value="1w">Last Week</option>
-                        </select>
-                    </div>
-                    
-                    <div class="tracker-analyze-button-group">
-                        <label for="analyze-button-2" class="tracker-form-label">Action</label>
-                        <button id="analyze-button-2" class="tracker-premium-button" {% if not creator_lists %}disabled{% endif %}>
-                            <i class="ph ph-arrows-clockwise"></i>
-                            <span>Analyze</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="hot-timeline">
-                <p>Click "Analyze" to generate insights from your creator lists.</p>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Charts -->
-        {% if performance_chart_data %}
-        <div class="charts-grid">
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div class="chart-icon">
-                        <i class="ph ph-chat-circle-text"></i>
-                    </div>
-                    <h3 class="chart-title">Tweets Count</h3>
-                </div>
-                <div class="chart-container">
-                    <div id="tweets-chart" style="height: 100%;"></div>
-                </div>
-            </div>
-            
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div class="chart-icon">
-                        <i class="ph ph-heart"></i>
-                    </div>
-                    <h3 class="chart-title">Total Likes</h3>
-                </div>
-                <div class="chart-container">
-                    <div id="likes-chart" style="height: 100%;"></div>
-                </div>
-            </div>
-            
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div class="chart-icon">
-                        <i class="ph ph-eye"></i>
-                    </div>
-                    <h3 class="chart-title">Total Views</h3>
-                </div>
-                <div class="chart-container">
-                    <div id="views-chart" style="height: 100%;"></div>
-                </div>
-            </div>
-            
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div class="chart-icon">
-                        <i class="ph ph-percent"></i>
-                    </div>
-                    <h3 class="chart-title">Engagement Rate</h3>
-                </div>
-                <div class="chart-container">
-                    <div id="engagement-chart" style="height: 100%;"></div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-        {% else %}
-        <!-- Empty Analytics State -->
-        <div class="hot-timeline-container">
-            <div class="tracker-section-header-with-controls">
-                <div class="tracker-section-title-info">
-                    <h3 class="tracker-section-title">
-                        <i class="ph ph-trend-up"></i>
-                        What's Hot in Your Niche Right Now
-                    </h3>
-                </div>
-                <div class="tracker-section-controls">
-                    <div class="tracker-form-label-group">
-                        <label for="list-select-3" class="tracker-form-label">List Name</label>
-                        <select id="list-select-3" class="tracker-form-select">
-                            {% if creator_lists %}
-                                {% for list in creator_lists %}
-                                    <option value="{{ list.name }}" {% if default_list == list.name %}selected{% endif %}>
-                                        {{ list.name }}
-                                    </option>
-                                {% endfor %}
-                            {% else %}
-                                <option value="">No lists available</option>
-                            {% endif %}
-                        </select>
-                    </div>
-                    
-                    <div class="tracker-form-label-group">
-                        <label for="time-range-select-3" class="tracker-form-label">Time Range</label>
-                        <select id="time-range-select-3" class="tracker-form-select">
-                            <option value="24h">Last 24 Hours</option>
-                            <option value="48h">Last 48 Hours</option>
-                            <option value="72h">Last 72 Hours</option>
-                            <option value="1w">Last Week</option>
-                        </select>
-                    </div>
-                    
-                    <div class="tracker-analyze-button-group">
-                        <label for="analyze-button-3" class="tracker-form-label">Action</label>
-                        <button id="analyze-button-3" class="tracker-premium-button" {% if not creator_lists %}disabled{% endif %}>
-                            <i class="ph ph-arrows-clockwise"></i>
-                            <span>Analyze</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="tracker-empty-state">
-                <div class="tracker-empty-state-icon">
-                    <i class="ph ph-chart-line"></i>
-                </div>
-                <h3>No Analytics Data</h3>
-                <p>{% if not creator_lists %}Create a list first to start analyzing creators.{% else %}Select a list and click "Analyze" to generate comprehensive insights from your tracked creators.{% endif %}</p>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Lists Management Panel -->
-    <div id="lists-panel" class="lists-panel">
-        <!-- Create New List Panel -->
-        <div class="tracker-premium-card">
-            <div class="p-4">
-                <div class="tracker-section-header-with-controls">
-                    <div class="tracker-section-title-info">
-                        <h3 class="tracker-section-title">
-                            <i class="ph ph-plus-circle"></i>
-                            Create New List
-                        </h3>
-                    </div>
-                </div>
-                
-                <div class="tracker-creation-form">
-                    <div class="tracker-form-inputs-row">
-                        <div>
-                            <label for="new-list-type-select" class="sr-only">List type</label>
-                            <select id="new-list-type-select" name="new-list-type" class="tracker-form-input">
-                                <option value="x_list">X List</option>
-                                <option value="manual">Manual List</option>
-                            </select>
+        <!-- Content Area -->
+        <div class="niche-radar-content">
+            <!-- Analytics Panel -->
+            <div id="analytics-panel" class="analytics-panel">
+                {% if latest_analysis %}
+                <!-- Hot on Timeline -->
+                {% if hot_on_timeline %}
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-section">
+                            <h3 class="panel-title">
+                                <i class="ph ph-trend-up"></i>
+                                What's Hot in Your Niche Right Now
+                            </h3>
                         </div>
-                        <div>
-                            <label for="new-list-name-input" class="sr-only">List name</label>
-                            <input type="text" id="new-list-name-input" name="new-list-name" placeholder="Enter list name..." class="tracker-form-input">
-                        </div>
-                        <div id="x-list-id-container" class="x-list-id-container show">
-                            <label for="x-list-id-input" class="sr-only">X List ID</label>
-                            <input type="text" id="x-list-id-input" name="x-list-id" placeholder="Enter X List ID..." class="tracker-form-input">
-                        </div>
-                        <div>
-                            <button id="create-list-btn" type="button" class="tracker-create-btn">
-                                <i class="ph ph-plus"></i>
-                                Create List
+                        <div class="panel-controls">
+                            <div class="dropdown">
+                                <div class="dropdown-trigger" id="list-dropdown-trigger">
+                                    <span id="selected-list-text">
+                                        {% if default_list %}{{ default_list }}{% else %}Choose a list...{% endif %}
+                                    </span>
+                                    <i class="ph ph-caret-down dropdown-arrow"></i>
+                                </div>
+                                <div class="dropdown-menu" id="list-dropdown-menu">
+                                    {% if creator_lists %}
+                                        {% for list in creator_lists %}
+                                        <div class="dropdown-option {% if default_list == list.name %}selected{% endif %}" data-value="{{ list.name }}">
+                                            {{ list.name }}
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="dropdown-option" data-value="">No lists available</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="dropdown">
+                                <div class="dropdown-trigger" id="time-range-dropdown-trigger">
+                                    <span id="selected-time-range-text">Last 24 Hours</span>
+                                    <i class="ph ph-caret-down dropdown-arrow"></i>
+                                </div>
+                                <div class="dropdown-menu" id="time-range-dropdown-menu">
+                                    <div class="dropdown-option selected" data-value="24h">Last 24 Hours</div>
+                                    <div class="dropdown-option" data-value="48h">Last 48 Hours</div>
+                                    <div class="dropdown-option" data-value="72h">Last 72 Hours</div>
+                                    <div class="dropdown-option" data-value="1w">Last Week</div>
+                                </div>
+                            </div>
+                            
+                            <button id="analyze-button" class="primary-btn" {% if not creator_lists %}disabled{% endif %}>
+                                <i class="ph ph-arrows-clockwise"></i>
+                                Analyze
                             </button>
                         </div>
                     </div>
-                    <div id="x-list-help-container" class="x-list-help-container show">
-                        <div class="x-list-help">
-                            <i class="ph ph-info"></i>
-                            <div class="x-list-help-content">
-                                <div class="x-list-help-title">How to find your List ID</div>
-                                <div class="x-list-help-text">Go to your list on X and copy the last part from the URL.<br>For example: x.com/i/lists/<strong>1234567890</strong></div>
+                    
+                    <div class="panel-content">
+                        <div class="hot-timeline">
+                            {{ hot_on_timeline|safe }}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-section">
+                            <h3 class="panel-title">
+                                <i class="ph ph-trend-up"></i>
+                                What's Hot in Your Niche Right Now
+                            </h3>
+                        </div>
+                        <div class="panel-controls">
+                            <div class="dropdown">
+                                <div class="dropdown-trigger" id="list-dropdown-trigger-empty">
+                                    <span id="selected-list-text-empty">
+                                        {% if default_list %}{{ default_list }}{% else %}Choose a list...{% endif %}
+                                    </span>
+                                    <i class="ph ph-caret-down dropdown-arrow"></i>
+                                </div>
+                                <div class="dropdown-menu" id="list-dropdown-menu-empty">
+                                    {% if creator_lists %}
+                                        {% for list in creator_lists %}
+                                        <div class="dropdown-option {% if default_list == list.name %}selected{% endif %}" data-value="{{ list.name }}">
+                                            {{ list.name }}
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="dropdown-option" data-value="">No lists available</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="dropdown">
+                                <div class="dropdown-trigger" id="time-range-dropdown-trigger-empty">
+                                    <span id="selected-time-range-text-empty">Last 24 Hours</span>
+                                    <i class="ph ph-caret-down dropdown-arrow"></i>
+                                </div>
+                                <div class="dropdown-menu" id="time-range-dropdown-menu-empty">
+                                    <div class="dropdown-option selected" data-value="24h">Last 24 Hours</div>
+                                    <div class="dropdown-option" data-value="48h">Last 48 Hours</div>
+                                    <div class="dropdown-option" data-value="72h">Last 72 Hours</div>
+                                    <div class="dropdown-option" data-value="1w">Last Week</div>
+                                </div>
+                            </div>
+                            
+                            <button id="analyze-button-empty" class="primary-btn" {% if not creator_lists %}disabled{% endif %}>
+                                <i class="ph ph-arrows-clockwise"></i>
+                                Analyze
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="panel-content">
+                        <div class="hot-timeline">
+                            <p>Click "Analyze" to generate insights from your creator lists.</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Charts -->
+                {% if performance_chart_data %}
+                <div class="charts-section">
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <div class="chart-icon">
+                                    <i class="ph ph-chat-circle-text"></i>
+                                </div>
+                                <h3 class="chart-title">Tweets Count</h3>
+                            </div>
+                            <div class="chart-container">
+                                <div id="tweets-chart" style="height: 100%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <div class="chart-icon">
+                                    <i class="ph ph-heart"></i>
+                                </div>
+                                <h3 class="chart-title">Total Likes</h3>
+                            </div>
+                            <div class="chart-container">
+                                <div id="likes-chart" style="height: 100%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <div class="chart-icon">
+                                    <i class="ph ph-eye"></i>
+                                </div>
+                                <h3 class="chart-title">Total Views</h3>
+                            </div>
+                            <div class="chart-container">
+                                <div id="views-chart" style="height: 100%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <div class="chart-icon">
+                                    <i class="ph ph-percent"></i>
+                                </div>
+                                <h3 class="chart-title">Engagement Rate</h3>
+                            </div>
+                            <div class="chart-container">
+                                <div id="engagement-chart" style="height: 100%;"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Your Custom Lists Panel -->
-        <div class="tracker-premium-card">
-            <div class="p-4">
-                <div class="tracker-section-header-with-controls">
-                    <div class="tracker-section-title-info">
-                        <h3 class="tracker-section-title">
-                            <i class="ph ph-list-bullets"></i>
-                            Your Creator Lists
-                        </h3>
+                {% endif %}
+                {% else %}
+                <!-- Empty Analytics State -->
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-section">
+                            <h3 class="panel-title">
+                                <i class="ph ph-trend-up"></i>
+                                What's Hot in Your Niche Right Now
+                            </h3>
+                        </div>
+                        <div class="panel-controls">
+                            <div class="dropdown">
+                                <div class="dropdown-trigger" id="list-dropdown-trigger-default">
+                                    <span id="selected-list-text-default">
+                                        {% if default_list %}{{ default_list }}{% else %}Choose a list...{% endif %}
+                                    </span>
+                                    <i class="ph ph-caret-down dropdown-arrow"></i>
+                                </div>
+                                <div class="dropdown-menu" id="list-dropdown-menu-default">
+                                    {% if creator_lists %}
+                                        {% for list in creator_lists %}
+                                        <div class="dropdown-option {% if default_list == list.name %}selected{% endif %}" data-value="{{ list.name }}">
+                                            {{ list.name }}
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="dropdown-option" data-value="">No lists available</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="dropdown">
+                                <div class="dropdown-trigger" id="time-range-dropdown-trigger-default">
+                                    <span id="selected-time-range-text-default">Last 24 Hours</span>
+                                    <i class="ph ph-caret-down dropdown-arrow"></i>
+                                </div>
+                                <div class="dropdown-menu" id="time-range-dropdown-menu-default">
+                                    <div class="dropdown-option selected" data-value="24h">Last 24 Hours</div>
+                                    <div class="dropdown-option" data-value="48h">Last 48 Hours</div>
+                                    <div class="dropdown-option" data-value="72h">Last 72 Hours</div>
+                                    <div class="dropdown-option" data-value="1w">Last Week</div>
+                                </div>
+                            </div>
+                            
+                            <button id="analyze-button-default" class="primary-btn" {% if not creator_lists %}disabled{% endif %}>
+                                <i class="ph ph-arrows-clockwise"></i>
+                                Analyze
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="empty-state">
+                        <i class="ph ph-chart-line empty-icon"></i>
+                        <div class="empty-title">No Analytics Data</div>
+                        <div class="empty-text">
+                            {% if not creator_lists %}
+                                Create a list first to start analyzing creators.
+                            {% else %}
+                                Select a list and click "Analyze" to generate comprehensive insights from your tracked creators.
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-                
-                <div id="custom-lists-container">
-                    {% if creator_lists %}
-                        {% for list in creator_lists %}
-                        <div class="tracker-list-item" data-list-name="{{ list.name }}">
-                            <div class="tracker-list-item-content">
-                                <div class="tracker-list-item-header">
-                                    <div class="tracker-list-info">
-                                        <div class="tracker-list-name-container">
-                                            <h5 class="tracker-list-name">{{ list.name }}</h5>
-                                            <span class="tracker-list-type-badge {{ 'x_list' if list.is_x_list else 'manual' }}">
-                                                {% if list.is_x_list %}
-                                                <i class="ph ph-link"></i>
-                                                X List
-                                                {% else %}
-                                                <i class="ph ph-pencil"></i>
-                                                Manual
-                                                {% endif %}
-                                            </span>
-                                        </div>
-                                        <div class="tracker-list-metadata">
-                                            <div class="tracker-metadata-item">
-                                                <i class="ph ph-users"></i>
-                                                <span>{{ list.creators|length }} creators</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="tracker-list-actions">
-                                        {% if list.is_x_list %}
-                                        <div class="tracker-tooltip-container tracker-list-action-btn update-x-list-btn" data-list-name="{{ list.name }}">
-                                            <i class="ph ph-arrows-clockwise"></i>
-                                            <div class="tracker-tooltip">Update from X</div>
-                                        </div>
-                                        {% else %}
-                                        <div class="tracker-tooltip-container tracker-list-action-btn edit-list-btn" data-list-name="{{ list.name }}">
-                                            <i class="ph ph-pencil"></i>
-                                            <div class="tracker-tooltip">Edit Creators</div>
-                                        </div>
-                                        {% endif %}
-                                        {% if default_list != list.name %}
-                                        <div class="tracker-tooltip-container tracker-list-action-btn set-default-btn" data-list-name="{{ list.name }}">
-                                            <i class="ph ph-star"></i>
-                                            <div class="tracker-tooltip">Set as Default</div>
-                                        </div>
-                                        {% endif %}
-                                        <div class="tracker-tooltip-container tracker-list-action-btn delete delete-list-btn" data-list-name="{{ list.name }}">
-                                            <i class="ph ph-trash"></i>
-                                            <div class="tracker-tooltip">Delete</div>
-                                        </div>
+                {% endif %}
+            </div>
+
+            <!-- Lists Management Panel -->
+            <div id="lists-panel" class="lists-panel">
+                <!-- Create New List Panel -->
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-section">
+                            <h3 class="panel-title">
+                                <i class="ph ph-plus-circle"></i>
+                                Create New List
+                            </h3>
+                        </div>
+                    </div>
+                    
+                    <div class="panel-content">
+                        <div class="form-section">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="new-list-type-select">List Type</label>
+                                    <select id="new-list-type-select" name="new-list-type" class="form-select">
+                                        <option value="x_list">X List</option>
+                                        <option value="manual">Manual List</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="new-list-name-input">List Name</label>
+                                    <input type="text" id="new-list-name-input" name="new-list-name" placeholder="Enter list name..." class="form-input">
+                                </div>
+                                
+                                <div class="form-group" id="x-list-id-container">
+                                    <label for="x-list-id-input">X List ID</label>
+                                    <input type="text" id="x-list-id-input" name="x-list-id" placeholder="Enter X List ID..." class="form-input">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>&nbsp;</label> <!-- Spacer for alignment -->
+                                    <button id="create-list-btn" type="button" class="primary-btn">
+                                        <i class="ph ph-plus"></i>
+                                        Create List
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="x-list-help-container" class="x-list-help-container">
+                                <div class="info-box">
+                                    <i class="ph ph-info"></i>
+                                    <div class="info-content">
+                                        <div class="info-title">How to find your List ID</div>
+                                        <div class="info-text">Go to your list on X and copy the last part from the URL.<br>For example: x.com/i/lists/<strong>1234567890</strong></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                    <div class="tracker-empty-state">
-                        <div class="tracker-empty-state-icon">
-                            <i class="ph ph-list-plus"></i>
-                        </div>
-                        <h3>No Lists Yet</h3>
-                        <p>Create your first creator list to start tracking and analyzing performance. You can either import an existing X list or build a manual list from scratch.</p>
-                        <div class="tracker-empty-state-cta">
-                            <button class="tracker-empty-state-btn" onclick="document.getElementById('new-list-name-input').focus()">
-                                <i class="ph ph-plus"></i>
-                                Create Your First List
-                            </button>
+                    </div>
+                </div>
+                
+                <!-- Your Lists Panel -->
+                <div class="main-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-section">
+                            <h3 class="panel-title">
+                                <i class="ph ph-list-bullets"></i>
+                                Your Creator Lists
+                            </h3>
                         </div>
                     </div>
-                    {% endif %}
+                    
+                    <div class="panel-content">
+                        {% if creator_lists %}
+                        <div class="lists-grid">
+                            {% for list in creator_lists %}
+                            <div class="list-item" data-list-name="{{ list.name }}">
+                                <div class="list-info">
+                                    <div class="list-name-container">
+                                        <h5 class="list-name">{{ list.name }}</h5>
+                                        <span class="list-type-badge {{ 'x-list' if list.is_x_list else 'manual' }}">
+                                            {% if list.is_x_list %}
+                                            <i class="ph ph-link"></i>
+                                            X List
+                                            {% else %}
+                                            <i class="ph ph-pencil"></i>
+                                            Manual
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="list-meta">
+                                        <span><i class="ph ph-users"></i> {{ list.creators|length }} creators</span>
+                                    </div>
+                                </div>
+                                <div class="list-actions">
+                                    {% if list.is_x_list %}
+                                    <button class="list-action-btn refresh" data-list-name="{{ list.name }}" title="Update from X">
+                                        <i class="ph ph-arrows-clockwise"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="list-action-btn edit" data-list-name="{{ list.name }}" title="Edit Creators">
+                                        <i class="ph ph-pencil"></i>
+                                    </button>
+                                    {% endif %}
+                                    {% if default_list != list.name %}
+                                    <button class="list-action-btn" data-list-name="{{ list.name }}" title="Set as Default" onclick="setDefaultList('{{ list.name }}')">
+                                        <i class="ph ph-star"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="list-action-btn delete" data-list-name="{{ list.name }}" title="Delete">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="ph ph-list-plus empty-icon"></i>
+                            <div class="empty-title">No Lists Yet</div>
+                            <div class="empty-text">Create your first creator list to start tracking and analyzing performance. You can either import an existing X list or build a manual list from scratch.</div>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -387,20 +400,21 @@
 </div>
 
 <!-- Edit List Modal -->
-<div id="edit-list-modal" class="tracker-modal" style="display: none;">
-    <div class="tracker-modal-content">
-        <div class="tracker-modal-header">
-            <h3 class="tracker-modal-title">
+<div id="edit-list-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
                 <i class="ph ph-pencil"></i>
                 Edit Creator List
             </h3>
+            <button class="modal-close" id="close-edit-modal">&times;</button>
         </div>
-        <div class="tracker-modal-body">
+        <div class="modal-body">
             <div class="form-group">
-                <label for="new-creator-handle-input" class="tracker-form-label">Add Creator</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="new-creator-handle-input" class="tracker-form-input" placeholder="@username" style="flex: 1;">
-                    <button id="add-creator-btn" class="tracker-secondary-button">
+                <label for="new-creator-handle-input">Add Creator</label>
+                <div style="display: flex; gap: 0.75rem;">
+                    <input type="text" id="new-creator-handle-input" class="form-input" placeholder="@username" style="flex: 1;">
+                    <button id="add-creator-btn" class="primary-btn">
                         <i class="ph ph-plus"></i>
                         Add
                     </button>
@@ -410,28 +424,29 @@
                 <!-- Will be populated dynamically -->
             </div>
         </div>
-        <div class="tracker-modal-footer">
-            <button id="close-edit-modal" class="tracker-secondary-button">Close</button>
+        <div class="modal-footer">
+            <button id="close-edit-modal-btn" class="secondary-btn">Close</button>
         </div>
     </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div id="delete-modal" class="tracker-modal" style="display: none;">
-    <div class="tracker-modal-content">
-        <div class="tracker-modal-header">
-            <h3 class="tracker-modal-title">
-                <i class="ph ph-warning" style="color: #f87171;"></i>
+<div id="delete-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" style="color: #EF4444;">
+                <i class="ph ph-warning"></i>
                 Delete List
             </h3>
+            <button class="modal-close" id="close-delete-modal">&times;</button>
         </div>
-        <div class="tracker-modal-body">
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Are you sure you want to delete this list? This action cannot be undone.</p>
-            <p id="delete-list-name" style="color: var(--text-muted); font-weight: 600;"></p>
+        <div class="modal-body">
+            <p style="color: var(--text-primary); margin-bottom: 1rem;">Are you sure you want to delete this list? This action cannot be undone.</p>
+            <p id="delete-list-name" style="color: var(--text-secondary); font-weight: 600;"></p>
         </div>
-        <div class="tracker-modal-footer">
-            <button id="cancel-delete" class="tracker-secondary-button">Cancel</button>
-            <button id="confirm-delete" class="tracker-premium-button" style="background: #ef4444;">
+        <div class="modal-footer">
+            <button id="cancel-delete" class="secondary-btn">Cancel</button>
+            <button id="confirm-delete" class="primary-btn" style="background: #EF4444;">
                 <i class="ph ph-trash"></i>
                 Delete
             </button>
@@ -448,17 +463,4 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="{{ url_for('static', filename='scripts/niche_radar.js') }}"></script>
-<script>
-// Initialize with data from backend
-(function() {
-    'use strict';
-
-    // Wait for the external script to load and initialize
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof initializeNicheRadar === 'function') {
-            initializeNicheRadar();
-        }
-    });
-})();
-</script>
 {% endblock %}

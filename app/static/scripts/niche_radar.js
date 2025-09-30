@@ -1,8 +1,8 @@
-// FIXED Creator Tracker JavaScript - Proper scope management and ApexCharts handling
+// Niche Radar JavaScript - Consistent with reply guy style
 (function() {
     'use strict';
 
-    // Store references to event handlers at module level for cleanup
+    // Store references to event handlers for cleanup
     let eventHandlers = {
         delegatedClick: null,
         modalClick: null,
@@ -19,28 +19,30 @@
         }
     }
 
-    // Initialize tracker functionality
-    function initializeTracker() {
-        console.log('Creator Tracker: Starting initialization');
+    // Initialize niche radar functionality
+    function initializeNicheRadar() {
+        console.log('Niche Radar: Starting initialization');
 
-        // Global state - reset on each initialization
-        window.TrackerState = {
+        // Global state
+        window.NicheRadarState = {
             isAnalyzing: false,
             statusCheckInterval: null,
             charts: {},
             currentEditingList: null,
-            currentDeletingList: null
+            currentDeletingList: null,
+            selectedList: null,
+            selectedTimeRange: '24h'
         };
 
         // State manager
         if (!window.CreatorPal) window.CreatorPal = {};
-        if (!window.CreatorPal.Tracker) window.CreatorPal.Tracker = {};
+        if (!window.CreatorPal.NicheRadar) window.CreatorPal.NicheRadar = {};
 
-        if (!window.CreatorPal.Tracker.StateManager) {
-            window.CreatorPal.Tracker.StateManager = {
+        if (!window.CreatorPal.NicheRadar.StateManager) {
+            window.CreatorPal.NicheRadar.StateManager = {
                 getProcessingState: function() {
                     try {
-                        const state = sessionStorage.getItem('tracker_processing_state');
+                        const state = sessionStorage.getItem('niche_radar_processing_state');
                         return state ? JSON.parse(state) : null;
                     } catch (e) {
                         return null;
@@ -56,7 +58,7 @@
                         timestamp: Date.now()
                     };
                     try {
-                        sessionStorage.setItem('tracker_processing_state', JSON.stringify(state));
+                        sessionStorage.setItem('niche_radar_processing_state', JSON.stringify(state));
                     } catch (e) {
                         console.error('Failed to save processing state:', e);
                     }
@@ -64,7 +66,7 @@
 
                 clearProcessingState: function() {
                     try {
-                        sessionStorage.removeItem('tracker_processing_state');
+                        sessionStorage.removeItem('niche_radar_processing_state');
                     } catch (e) {
                         console.error('Failed to clear processing state:', e);
                     }
@@ -82,10 +84,11 @@
         init();
 
         function init() {
-            console.log('Creator Tracker: Initializing');
+            console.log('Niche Radar: Initializing');
             restoreProcessingState();
             setupEventListeners();
             setupViewToggle();
+            setupDropdowns();
             setupListTypeToggle();
 
             // Wait for ApexCharts before setting up charts
@@ -94,24 +97,13 @@
                 setupCharts();
             });
 
-            console.log('Creator Tracker: Initialization complete');
+            console.log('Niche Radar: Initialization complete');
         }
 
         function restoreProcessingState() {
-            const savedState = window.CreatorPal.Tracker.StateManager.getProcessingState();
-            if (savedState && savedState.isProcessing && !window.CreatorPal.Tracker.StateManager.isStateExpired(savedState)) {
+            const savedState = window.CreatorPal.NicheRadar.StateManager.getProcessingState();
+            if (savedState && savedState.isProcessing && !window.CreatorPal.NicheRadar.StateManager.isStateExpired(savedState)) {
                 console.log('Restoring processing state for list:', savedState.listName);
-
-                // Update all list selects
-                document.querySelectorAll('[id^="list-select"]').forEach(select => {
-                    for (let i = 0; i < select.options.length; i++) {
-                        if (select.options[i].value === savedState.listName) {
-                            select.selectedIndex = i;
-                            break;
-                        }
-                    }
-                });
-
                 setAnalyzingState(true, savedState.statusMessage);
                 validateSavedProcessingState(savedState.listName);
             } else {
@@ -130,13 +122,13 @@
                         startStatusPolling();
                     } else {
                         console.log('Server says no active process - clearing stale saved state');
-                        window.CreatorPal.Tracker.StateManager.clearProcessingState();
+                        window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
                         setAnalyzingState(false);
 
                         if (data.running) {
                             console.log('Found different active process');
                             const cleanMessage = data.step || 'Processing in progress...';
-                            window.CreatorPal.Tracker.StateManager.setProcessingState('unknown', true, cleanMessage, data.progress || 10);
+                            window.CreatorPal.NicheRadar.StateManager.setProcessingState('unknown', true, cleanMessage, data.progress || 10);
                             setAnalyzingState(true, cleanMessage);
                             startStatusPolling();
                             showToast('Found active analysis process, monitoring it', 'info');
@@ -148,7 +140,7 @@
                 .catch(error => {
                     console.error('Error validating saved state:', error);
                     console.log('Clearing saved state due to validation error');
-                    window.CreatorPal.Tracker.StateManager.clearProcessingState();
+                    window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
                     setAnalyzingState(false);
                 });
         }
@@ -160,7 +152,7 @@
                     if (data.running && data.status === 'processing') {
                         console.log('Found active process on load');
                         const cleanStatusMessage = data.step || 'Processing in progress...';
-                        window.CreatorPal.Tracker.StateManager.setProcessingState('unknown', true, cleanStatusMessage, data.progress || 10);
+                        window.CreatorPal.NicheRadar.StateManager.setProcessingState('unknown', true, cleanStatusMessage, data.progress || 10);
                         setAnalyzingState(true, cleanStatusMessage);
                         startStatusPolling();
                         console.log('Resumed monitoring active process silently');
@@ -176,14 +168,14 @@
         function setAnalyzingState(analyzing, statusMessage = '') {
             // Update all analyze buttons
             document.querySelectorAll('[id^="analyze-button"]').forEach(button => {
-                window.TrackerState.isAnalyzing = analyzing;
+                window.NicheRadarState.isAnalyzing = analyzing;
 
                 if (analyzing) {
-                    button.classList.add('analyzing');
+                    button.classList.add('processing');
                     button.disabled = true;
-                    button.innerHTML = '<div class="tracker-loading-spinner"></div><span>Analyzing...</span>';
+                    button.innerHTML = '<div class="loading-spinner"></div><span>Analyzing...</span>';
                 } else {
-                    button.classList.remove('analyzing');
+                    button.classList.remove('processing');
                     button.disabled = false;
                     button.innerHTML = '<i class="ph ph-arrows-clockwise"></i><span>Analyze</span>';
                 }
@@ -191,26 +183,64 @@
             console.log('Button state updated:', analyzing ? 'analyzing' : 'normal');
         }
 
-        // Define event handlers at module level
+        // Event handlers
         eventHandlers.delegatedClick = function(e) {
-            const target = e.target.closest('[data-list-name]');
-            if (!target) return;
+            // Handle list action buttons
+            const listActionBtn = e.target.closest('.list-action-btn');
+            if (listActionBtn) {
+                const listName = listActionBtn.dataset.listName;
+                
+                if (listActionBtn.classList.contains('edit')) {
+                    editList(listName);
+                } else if (listActionBtn.classList.contains('refresh')) {
+                    updateXList(listName);
+                } else if (listActionBtn.classList.contains('delete')) {
+                    confirmDeleteList(listName);
+                }
+                return;
+            }
 
-            const listName = target.dataset.listName;
+            // Handle analyze buttons
+            if (e.target.closest('[id^="analyze-button"]')) {
+                handleAnalyze();
+                return;
+            }
 
-            if (target.classList.contains('set-default-btn')) {
-                setDefaultList(listName);
-            } else if (target.classList.contains('edit-list-btn')) {
-                editList(listName);
-            } else if (target.classList.contains('update-x-list-btn')) {
-                updateXList(listName);
-            } else if (target.classList.contains('delete-list-btn')) {
-                confirmDeleteList(listName);
+            // Handle create list button
+            if (e.target.closest('#create-list-btn')) {
+                createList();
+                return;
+            }
+
+            // Handle modal close buttons
+            if (e.target.closest('#close-edit-modal, #close-edit-modal-btn')) {
+                hideModal('edit-list-modal');
+                return;
+            }
+
+            if (e.target.closest('#close-delete-modal')) {
+                hideModal('delete-modal');
+                return;
+            }
+
+            if (e.target.closest('#cancel-delete')) {
+                hideModal('delete-modal');
+                return;
+            }
+
+            if (e.target.closest('#confirm-delete')) {
+                deleteList();
+                return;
+            }
+
+            if (e.target.closest('#add-creator-btn')) {
+                addCreator();
+                return;
             }
         };
 
         eventHandlers.modalClick = function(e) {
-            if (e.target.classList.contains('tracker-modal')) {
+            if (e.target.classList.contains('modal')) {
                 hideModal(e.target.id);
             }
         };
@@ -219,7 +249,7 @@
             if (e.key === 'Enter') {
                 if (e.target.id === 'new-creator-handle-input') {
                     addCreator();
-                } else if (e.target.closest('.tracker-creation-form')) {
+                } else if (e.target.closest('.form-section')) {
                     createList();
                 }
             }
@@ -233,42 +263,6 @@
             document.removeEventListener('click', eventHandlers.modalClick);
             document.removeEventListener('keydown', eventHandlers.formKey);
 
-            // Handle all analyze buttons
-            document.querySelectorAll('[id^="analyze-button"]').forEach(button => {
-                button.removeEventListener('click', handleAnalyze);
-                button.addEventListener('click', handleAnalyze);
-            });
-
-            const createListBtn = document.getElementById('create-list-btn');
-            if (createListBtn) {
-                createListBtn.removeEventListener('click', createList);
-                createListBtn.addEventListener('click', createList);
-            }
-
-            const closeEditModal = document.getElementById('close-edit-modal');
-            if (closeEditModal) {
-                closeEditModal.removeEventListener('click', closeEditModalHandler);
-                closeEditModal.addEventListener('click', closeEditModalHandler);
-            }
-
-            const addCreatorBtn = document.getElementById('add-creator-btn');
-            if (addCreatorBtn) {
-                addCreatorBtn.removeEventListener('click', addCreator);
-                addCreatorBtn.addEventListener('click', addCreator);
-            }
-
-            const cancelDelete = document.getElementById('cancel-delete');
-            if (cancelDelete) {
-                cancelDelete.removeEventListener('click', cancelDeleteHandler);
-                cancelDelete.addEventListener('click', cancelDeleteHandler);
-            }
-
-            const confirmDelete = document.getElementById('confirm-delete');
-            if (confirmDelete) {
-                confirmDelete.removeEventListener('click', deleteList);
-                confirmDelete.addEventListener('click', deleteList);
-            }
-
             // Add new event listeners
             document.addEventListener('click', eventHandlers.delegatedClick);
             document.addEventListener('click', eventHandlers.modalClick);
@@ -277,168 +271,17 @@
             console.log('Event listeners setup complete');
         }
 
-        // Event handler functions
-        function closeEditModalHandler() {
-            hideModal('edit-list-modal');
-        }
-
-        function cancelDeleteHandler() {
-            hideModal('delete-modal');
-        }
-
-        function handleAnalyze() {
-            console.log('Analyze button clicked');
-
-            if (window.TrackerState.isAnalyzing) {
-                console.log('Already analyzing, ignoring click');
-                return;
-            }
-
-            // Get the first available select values (they should all be synced)
-            const listSelect = document.querySelector('[id^="list-select"]');
-            const timeRange = document.querySelector('[id^="time-range-select"]');
-
-            const selectedList = listSelect?.value;
-            const selectedTimeRange = timeRange?.value || '24h';
-
-            if (!selectedList) {
-                showToast('Please select a list to analyze', 'error');
-                return;
-            }
-
-            console.log('Starting analysis for list:', selectedList, 'time range:', selectedTimeRange);
-
-            window.CreatorPal.Tracker.StateManager.setProcessingState(selectedList, true, 'Starting analysis...', 5);
-            setAnalyzingState(true);
-
-            fetch('/niche/analyze-creators', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    list_name: selectedList,
-                    time_range: selectedTimeRange
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Analysis response:', data);
-
-                if (data.success) {
-                    showToast('Analysis started! This will take a few minutes.', 'success');
-                    startStatusPolling();
-                } else {
-                    console.log('Analysis failed to start:', data.error);
-                    setAnalyzingState(false);
-                    window.CreatorPal.Tracker.StateManager.clearProcessingState();
-                    showToast(data.error || 'Error starting analysis', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Analysis start error:', error);
-                setAnalyzingState(false);
-                window.CreatorPal.Tracker.StateManager.clearProcessingState();
-                showToast('Network error: ' + error.message, 'error');
-            });
-        }
-
-        function startStatusPolling() {
-            console.log('Starting status polling');
-
-            if (window.TrackerState.statusCheckInterval) {
-                clearInterval(window.TrackerState.statusCheckInterval);
-            }
-
-            let pollCount = 0;
-            const maxPolls = 150;
-
-            window.TrackerState.statusCheckInterval = setInterval(function() {
-                pollCount++;
-
-                fetch('/niche/get-status')
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Status poll:', data.status, 'running:', data.running);
-
-                    const currentState = window.CreatorPal.Tracker.StateManager.getProcessingState();
-                    if (currentState && currentState.isProcessing) {
-                        window.CreatorPal.Tracker.StateManager.setProcessingState(
-                            currentState.listName,
-                            true,
-                            data.step || 'Processing...',
-                            data.progress || 10
-                        );
-                    }
-
-                    if (data.status === 'completed') {
-                        console.log('Analysis completed!');
-                        stopStatusPolling();
-                        window.CreatorPal.Tracker.StateManager.clearProcessingState();
-                        setAnalyzingState(false);
-                        showToast('Analysis completed! Refreshing page...', 'success');
-                        setTimeout(() => window.location.reload(), 1000);
-                    } else if (data.status === 'error') {
-                        console.log('Analysis error:', data.error);
-                        stopStatusPolling();
-                        window.CreatorPal.Tracker.StateManager.clearProcessingState();
-                        setAnalyzingState(false);
-                        showToast('Analysis failed: ' + (data.error || 'Unknown error'), 'error');
-                    } else if (!data.running && data.status !== 'processing') {
-                        console.log('Analysis stopped unexpectedly');
-                        stopStatusPolling();
-                        window.CreatorPal.Tracker.StateManager.clearProcessingState();
-                        setAnalyzingState(false);
-                        showToast('Analysis stopped. Please try again.', 'warning');
-                    }
-
-                    if (pollCount >= maxPolls) {
-                        console.log('Max polling duration reached');
-                        stopStatusPolling();
-                        window.CreatorPal.Tracker.StateManager.clearProcessingState();
-                        setAnalyzingState(false);
-                        showToast('Analysis taking longer than expected. Please check back later.', 'warning');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking status:', error);
-                    if (pollCount >= maxPolls) {
-                        stopStatusPolling();
-                        window.CreatorPal.Tracker.StateManager.clearProcessingState();
-                        setAnalyzingState(false);
-                        showToast('Connection lost. Please refresh the page.', 'error');
-                    }
-                });
-            }, 2000);
-        }
-
-        function stopStatusPolling() {
-            console.log('Stopping status polling');
-            if (window.TrackerState.statusCheckInterval) {
-                clearInterval(window.TrackerState.statusCheckInterval);
-                window.TrackerState.statusCheckInterval = null;
-            }
-        }
-
         function setupViewToggle() {
             const analyticsBtn = document.getElementById('analytics-view-btn');
             const listsBtn = document.getElementById('lists-view-btn');
 
             if (analyticsBtn) {
-                analyticsBtn.removeEventListener('click', analyticsClickHandler);
-                analyticsBtn.addEventListener('click', analyticsClickHandler);
+                analyticsBtn.addEventListener('click', () => switchView('analytics'));
             }
 
             if (listsBtn) {
-                listsBtn.removeEventListener('click', listsClickHandler);
-                listsBtn.addEventListener('click', listsClickHandler);
+                listsBtn.addEventListener('click', () => switchView('lists'));
             }
-        }
-
-        function analyticsClickHandler() {
-            switchView('analytics');
-        }
-
-        function listsClickHandler() {
-            switchView('lists');
         }
 
         function switchView(view) {
@@ -460,28 +303,95 @@
             }
         }
 
+        function setupDropdowns() {
+            // Setup all dropdown functionality
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                const trigger = dropdown.querySelector('.dropdown-trigger');
+                const menu = dropdown.querySelector('.dropdown-menu');
+                const options = dropdown.querySelectorAll('.dropdown-option');
+
+                if (!trigger || !menu) return;
+
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    
+                    // Close other dropdowns
+                    document.querySelectorAll('.dropdown-menu.active').forEach(otherMenu => {
+                        if (otherMenu !== menu) {
+                            otherMenu.classList.remove('active');
+                            otherMenu.parentElement.querySelector('.dropdown-trigger').classList.remove('active');
+                        }
+                    });
+                    
+                    // Toggle this dropdown
+                    menu.classList.toggle('active');
+                    trigger.classList.toggle('active');
+                });
+
+                options.forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        
+                        const value = option.dataset.value;
+                        const text = option.textContent.trim();
+                        
+                        // Update trigger text
+                        const textElement = trigger.querySelector('span');
+                        if (textElement) {
+                            textElement.textContent = text;
+                        }
+                        
+                        // Update selected state
+                        options.forEach(opt => opt.classList.remove('selected'));
+                        option.classList.add('selected');
+                        
+                        // Store selection based on dropdown type
+                        if (dropdown.querySelector('#list-dropdown-trigger, #list-dropdown-trigger-empty, #list-dropdown-trigger-default')) {
+                            window.NicheRadarState.selectedList = value;
+                        } else if (dropdown.querySelector('#time-range-dropdown-trigger, #time-range-dropdown-trigger-empty, #time-range-dropdown-trigger-default')) {
+                            window.NicheRadarState.selectedTimeRange = value;
+                        }
+                        
+                        // Close dropdown
+                        menu.classList.remove('active');
+                        trigger.classList.remove('active');
+                    });
+                });
+            });
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
+                    menu.classList.remove('active');
+                    menu.parentElement.querySelector('.dropdown-trigger').classList.remove('active');
+                });
+            });
+        }
+
         function setupListTypeToggle() {
             const newListType = document.getElementById('new-list-type-select');
             const xListIdContainer = document.getElementById('x-list-id-container');
             const xListHelpContainer = document.getElementById('x-list-help-container');
 
             if (newListType && xListIdContainer && xListHelpContainer) {
-                newListType.removeEventListener('change', listTypeChangeHandler);
-                newListType.addEventListener('change', listTypeChangeHandler);
-                listTypeChangeHandler.call(newListType);
-            }
-        }
-
-        function listTypeChangeHandler() {
-            const xListIdContainer = document.getElementById('x-list-id-container');
-            const xListHelpContainer = document.getElementById('x-list-help-container');
-
-            if (this.value === 'x_list') {
-                if (xListIdContainer) xListIdContainer.classList.add('show');
-                if (xListHelpContainer) xListHelpContainer.classList.add('show');
-            } else {
-                if (xListIdContainer) xListIdContainer.classList.remove('show');
-                if (xListHelpContainer) xListHelpContainer.classList.remove('show');
+                newListType.addEventListener('change', function() {
+                    if (this.value === 'x_list') {
+                        xListIdContainer.style.display = 'flex';
+                        xListHelpContainer.classList.add('show');
+                    } else {
+                        xListIdContainer.style.display = 'none';
+                        xListHelpContainer.classList.remove('show');
+                    }
+                });
+                
+                // Initialize state
+                if (newListType.value === 'x_list') {
+                    xListIdContainer.style.display = 'flex';
+                    xListHelpContainer.classList.add('show');
+                } else {
+                    xListIdContainer.style.display = 'none';
+                    xListHelpContainer.classList.remove('show');
+                }
             }
         }
 
@@ -503,12 +413,12 @@
             console.log('Setting up charts with data:', chartData);
 
             // Destroy existing charts first
-            Object.values(window.TrackerState.charts).forEach(chart => {
+            Object.values(window.NicheRadarState.charts).forEach(chart => {
                 if (chart && chart.destroy) {
                     chart.destroy();
                 }
             });
-            window.TrackerState.charts = {};
+            window.NicheRadarState.charts = {};
 
             const chartOptions = {
                 chart: {
@@ -531,7 +441,7 @@
                     xaxis: { lines: { show: false } },
                     yaxis: { lines: { show: true } }
                 },
-                colors: ['#20D7D7'],
+                colors: ['#3B82F6'],
                 plotOptions: {
                     bar: {
                         borderRadius: 8,
@@ -615,7 +525,6 @@
                     labels: {
                         ...baseOptions.xaxis.labels,
                         formatter: function(value) {
-                            // Ensure the value is treated as a string
                             return String(value);
                         }
                     }
@@ -624,7 +533,7 @@
 
             try {
                 const chart = new ApexCharts(element, config);
-                window.TrackerState.charts[elementId] = chart;
+                window.NicheRadarState.charts[elementId] = chart;
                 chart.render();
             } catch (error) {
                 console.error('Error creating chart:', elementId, error);
@@ -659,7 +568,7 @@
                     xaxis: { lines: { show: false } },
                     yaxis: { lines: { show: true } }
                 },
-                colors: ['#20D7D7'],
+                colors: ['#3B82F6'],
                 plotOptions: {
                     bar: {
                         borderRadius: 8,
@@ -680,7 +589,6 @@
                         trim: true,
                         maxHeight: 100,
                         formatter: function(value) {
-                            // Ensure the value is treated as a string
                             return String(value);
                         }
                     },
@@ -708,10 +616,138 @@
 
             try {
                 const chart = new ApexCharts(element, config);
-                window.TrackerState.charts['engagement-chart'] = chart;
+                window.NicheRadarState.charts['engagement-chart'] = chart;
                 chart.render();
             } catch (error) {
                 console.error('Error creating engagement chart:', error);
+            }
+        }
+
+        function handleAnalyze() {
+            console.log('Analyze button clicked');
+
+            if (window.NicheRadarState.isAnalyzing) {
+                console.log('Already analyzing, ignoring click');
+                return;
+            }
+
+            const selectedList = window.NicheRadarState.selectedList;
+            const selectedTimeRange = window.NicheRadarState.selectedTimeRange || '24h';
+
+            if (!selectedList) {
+                showToast('Please select a list to analyze', 'error');
+                return;
+            }
+
+            console.log('Starting analysis for list:', selectedList, 'time range:', selectedTimeRange);
+
+            window.CreatorPal.NicheRadar.StateManager.setProcessingState(selectedList, true, 'Starting analysis...', 5);
+            setAnalyzingState(true);
+
+            fetch('/niche/analyze-creators', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    list_name: selectedList,
+                    time_range: selectedTimeRange
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Analysis response:', data);
+
+                if (data.success) {
+                    showToast('Analysis started! This will take a few minutes.', 'success');
+                    startStatusPolling();
+                } else {
+                    console.log('Analysis failed to start:', data.error);
+                    setAnalyzingState(false);
+                    window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
+                    showToast(data.error || 'Error starting analysis', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Analysis start error:', error);
+                setAnalyzingState(false);
+                window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
+                showToast('Network error: ' + error.message, 'error');
+            });
+        }
+
+        function startStatusPolling() {
+            console.log('Starting status polling');
+
+            if (window.NicheRadarState.statusCheckInterval) {
+                clearInterval(window.NicheRadarState.statusCheckInterval);
+            }
+
+            let pollCount = 0;
+            const maxPolls = 150;
+
+            window.NicheRadarState.statusCheckInterval = setInterval(function() {
+                pollCount++;
+
+                fetch('/niche/get-status')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Status poll:', data.status, 'running:', data.running);
+
+                    const currentState = window.CreatorPal.NicheRadar.StateManager.getProcessingState();
+                    if (currentState && currentState.isProcessing) {
+                        window.CreatorPal.NicheRadar.StateManager.setProcessingState(
+                            currentState.listName,
+                            true,
+                            data.step || 'Processing...',
+                            data.progress || 10
+                        );
+                    }
+
+                    if (data.status === 'completed') {
+                        console.log('Analysis completed!');
+                        stopStatusPolling();
+                        window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
+                        setAnalyzingState(false);
+                        showToast('Analysis completed! Refreshing page...', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else if (data.status === 'error') {
+                        console.log('Analysis error:', data.error);
+                        stopStatusPolling();
+                        window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
+                        setAnalyzingState(false);
+                        showToast('Analysis failed: ' + (data.error || 'Unknown error'), 'error');
+                    } else if (!data.running && data.status !== 'processing') {
+                        console.log('Analysis stopped unexpectedly');
+                        stopStatusPolling();
+                        window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
+                        setAnalyzingState(false);
+                        showToast('Analysis stopped. Please try again.', 'warning');
+                    }
+
+                    if (pollCount >= maxPolls) {
+                        console.log('Max polling duration reached');
+                        stopStatusPolling();
+                        window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
+                        setAnalyzingState(false);
+                        showToast('Analysis taking longer than expected. Please check back later.', 'warning');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
+                    if (pollCount >= maxPolls) {
+                        stopStatusPolling();
+                        window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
+                        setAnalyzingState(false);
+                        showToast('Connection lost. Please refresh the page.', 'error');
+                    }
+                });
+            }, 2000);
+        }
+
+        function stopStatusPolling() {
+            console.log('Stopping status polling');
+            if (window.NicheRadarState.statusCheckInterval) {
+                clearInterval(window.NicheRadarState.statusCheckInterval);
+                window.NicheRadarState.statusCheckInterval = null;
             }
         }
 
@@ -762,29 +798,8 @@
             }
         }
 
-        async function setDefaultList(listName) {
-            try {
-                const response = await fetch('/niche/set-default-list', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ list_name: listName })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showToast('Default list updated!', 'success');
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    showToast(data.message || 'Error setting default list', 'error');
-                }
-            } catch (error) {
-                showToast('Network error', 'error');
-            }
-        }
-
         async function editList(listName) {
-            window.TrackerState.currentEditingList = listName;
+            window.NicheRadarState.currentEditingList = listName;
 
             try {
                 const response = await fetch(`/niche/get-creators?list_name=${encodeURIComponent(listName)}`);
@@ -809,7 +824,7 @@
                 return;
             }
 
-            if (!window.TrackerState.currentEditingList) {
+            if (!window.NicheRadarState.currentEditingList) {
                 showToast('No list selected', 'error');
                 return;
             }
@@ -822,7 +837,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        list_name: window.TrackerState.currentEditingList,
+                        list_name: window.NicheRadarState.currentEditingList,
                         creator_handle: creatorHandle
                     })
                 });
@@ -844,14 +859,14 @@
         }
 
         async function removeCreator(creatorHandle) {
-            if (!window.TrackerState.currentEditingList) return;
+            if (!window.NicheRadarState.currentEditingList) return;
 
             try {
                 const response = await fetch('/niche/remove-creator', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        list_name: window.TrackerState.currentEditingList,
+                        list_name: window.NicheRadarState.currentEditingList,
                         creator_handle: creatorHandle
                     })
                 });
@@ -870,7 +885,7 @@
         }
 
         async function updateXList(listName) {
-            const button = document.querySelector(`[data-list-name="${listName}"].update-x-list-btn`);
+            const button = document.querySelector(`[data-list-name="${listName}"].refresh`);
             if (button) setButtonLoading(button, true);
 
             try {
@@ -896,13 +911,13 @@
         }
 
         function confirmDeleteList(listName) {
-            window.TrackerState.currentDeletingList = listName;
+            window.NicheRadarState.currentDeletingList = listName;
             document.getElementById('delete-list-name').textContent = `List: ${listName}`;
             showModal('delete-modal');
         }
 
         async function deleteList() {
-            if (!window.TrackerState.currentDeletingList) return;
+            if (!window.NicheRadarState.currentDeletingList) return;
 
             const confirmBtn = document.getElementById('confirm-delete');
             setButtonLoading(confirmBtn, true);
@@ -911,7 +926,7 @@
                 const response = await fetch('/niche/delete-list', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ list_name: window.TrackerState.currentDeletingList })
+                    body: JSON.stringify({ list_name: window.NicheRadarState.currentDeletingList })
                 });
 
                 const data = await response.json();
@@ -930,6 +945,27 @@
             }
         }
 
+        async function setDefaultList(listName) {
+            try {
+                const response = await fetch('/niche/set-default-list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ list_name: listName })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Default list updated!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(data.message || 'Error setting default list', 'error');
+                }
+            } catch (error) {
+                showToast('Network error', 'error');
+            }
+        }
+
         // Helper Functions
         function displayCreatorsInModal(creators) {
             const creatorsList = document.getElementById('creators-list');
@@ -944,7 +980,7 @@
                     <div class="creator-info">
                         <div class="creator-handle">@${creator}</div>
                     </div>
-                    <button class="tracker-list-action-btn delete" onclick="removeCreator('${creator}')">
+                    <button class="list-action-btn delete" onclick="removeCreator('${creator}')">
                         <i class="ph ph-trash"></i>
                     </button>
                 `;
@@ -962,12 +998,20 @@
 
         function showModal(modalId) {
             const modal = document.getElementById(modalId);
-            if (modal) modal.style.display = 'flex';
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.add('show');
+            }
         }
 
         function hideModal(modalId) {
             const modal = document.getElementById(modalId);
-            if (modal) modal.style.display = 'none';
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
+            }
         }
 
         function setButtonLoading(button, loading) {
@@ -975,7 +1019,7 @@
 
             if (loading) {
                 button.setAttribute('data-original-content', button.innerHTML);
-                button.innerHTML = '<div class="tracker-loading-spinner"></div> Loading...';
+                button.innerHTML = '<div class="loading-spinner"></div> Loading...';
                 button.disabled = true;
             } else {
                 const originalContent = button.getAttribute('data-original-content');
@@ -988,14 +1032,6 @@
         }
 
         function showToast(message, type = 'info') {
-            let toastContainer = document.getElementById('tracker-toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.className = 'tracker-toast-container';
-                toastContainer.id = 'tracker-toast-container';
-                document.body.appendChild(toastContainer);
-            }
-
             const toast = document.createElement('div');
             let icon = 'info';
 
@@ -1003,13 +1039,13 @@
             else if (type === 'error') icon = 'warning-circle';
             else if (type === 'warning') icon = 'warning';
 
-            toast.className = `tracker-toast ${type}`;
+            toast.className = `toast ${type}`;
             toast.innerHTML = `
-                <i class="ph ph-${icon}" style="font-size: 1.25rem;"></i>
-                <span>${message}</span>
+                <i class="ph ph-${icon}"></i>
+                <span class="toast-text">${message}</span>
             `;
 
-            toastContainer.appendChild(toast);
+            document.body.appendChild(toast);
 
             setTimeout(() => toast.classList.add('show'), 100);
 
@@ -1019,24 +1055,25 @@
             }, 4000);
         }
 
-        // Expose removeCreator function globally for onclick handlers
+        // Expose functions globally for onclick handlers
         window.removeCreator = removeCreator;
+        window.setDefaultList = setDefaultList;
 
         // Store cleanup function
         eventHandlers.cleanup = function() {
-            console.log('Cleaning up tracker event listeners and state');
+            console.log('Cleaning up niche radar event listeners and state');
 
             // Stop polling
             stopStatusPolling();
 
             // Destroy charts
-            if (window.TrackerState && window.TrackerState.charts) {
-                Object.values(window.TrackerState.charts).forEach(chart => {
+            if (window.NicheRadarState && window.NicheRadarState.charts) {
+                Object.values(window.NicheRadarState.charts).forEach(chart => {
                     if (chart && chart.destroy) {
                         chart.destroy();
                     }
                 });
-                window.TrackerState.charts = {};
+                window.NicheRadarState.charts = {};
             }
 
             // Remove event listeners
@@ -1048,16 +1085,11 @@
 
     // Initialize on DOMContentLoaded
     document.addEventListener('DOMContentLoaded', function() {
-        if (document.getElementById('analytics-panel')) {
-            initializeTracker();
+        if (document.getElementById('analytics-panel') || document.getElementById('lists-panel')) {
+            initializeNicheRadar();
         }
     });
 
-    // Initialize on DOM ready
-    document.addEventListener('DOMContentLoaded', function() {
-        if (document.getElementById('analytics-panel')) {
-            console.log('DOM ready, initializing tracker');
-            initializeTracker();
-        }
-    });
+    // Expose for external initialization
+    window.initializeNicheRadar = initializeNicheRadar;
 })();

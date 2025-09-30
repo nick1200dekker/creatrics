@@ -6,8 +6,68 @@ let audioEditor = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
+    loadProcessingState();
     checkForActiveProcess();
 });
+
+// Load processing state from sessionStorage
+function loadProcessingState() {
+    try {
+        const storedState = sessionStorage.getItem('clip_spaces_processing');
+        if (storedState) {
+            const parsed = JSON.parse(storedState);
+            // Clean up old states (older than 1 hour)
+            const oneHourAgo = Date.now() - (60 * 60 * 1000);
+            if (parsed.timestamp && parsed.timestamp > oneHourAgo && parsed.spaceId) {
+                currentSpaceId = parsed.spaceId;
+                isProcessing = true;
+                console.log('Restored processing state:', parsed);
+
+                // Set space ID in input
+                document.getElementById('spaceId').value = parsed.spaceId;
+
+                // Show loading state
+                hideAllSections();
+                showSection('loadingSection');
+                updateProcessButton(true);
+                updateLoadingStatus(parsed.message || 'Processing in progress...', parsed.progress || 10);
+
+                // Start polling immediately
+                startStatusPolling(parsed.spaceId);
+            } else {
+                // Clean up old/expired state
+                sessionStorage.removeItem('clip_spaces_processing');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading processing state:', error);
+        sessionStorage.removeItem('clip_spaces_processing');
+    }
+}
+
+// Save processing state to sessionStorage
+function saveProcessingState(spaceId, message, progress) {
+    try {
+        const state = {
+            spaceId: spaceId,
+            message: message,
+            progress: progress,
+            timestamp: Date.now()
+        };
+        sessionStorage.setItem('clip_spaces_processing', JSON.stringify(state));
+    } catch (error) {
+        console.error('Error saving processing state:', error);
+    }
+}
+
+// Clear processing state from sessionStorage
+function clearProcessingState() {
+    try {
+        sessionStorage.removeItem('clip_spaces_processing');
+    } catch (error) {
+        console.error('Error clearing processing state:', error);
+    }
+}
 
 // Toggle sections
 function toggleHowItWorks() {
@@ -607,19 +667,22 @@ class AudioEditor {
 // Process space
 async function processSpace() {
     const spaceId = document.getElementById('spaceId').value.trim();
-    
+
     if (!spaceId) {
         showToast('Please enter a Space ID', 'error');
         return;
     }
-    
-    if (isProcessing) return;
-    
+
+    if (isProcessing) {
+        showToast('A space is already being processed. Please wait for it to complete.', 'error');
+        return;
+    }
+
     // Check for active process first
     try {
         const checkResponse = await fetch('/clip-spaces/check_processing');
         const checkData = await checkResponse.json();
-        
+
         if (checkData.has_active_process && checkData.space_id !== spaceId) {
             showToast('Another space is already being processed. Please wait for it to complete.', 'error');
             return;
@@ -627,30 +690,38 @@ async function processSpace() {
     } catch (error) {
         console.warn('Could not check for active processes:', error);
     }
-    
+
     isProcessing = true;
     currentSpaceId = spaceId;
-    
+
     // Update UI to processing state
     hideAllSections();
     showSection('loadingSection');
     updateProcessButton(true);
     updateLoadingStatus('Starting processing...', 5);
-    
+
+    // Save processing state to sessionStorage
+    saveProcessingState(spaceId, 'Starting processing...', 5);
+
     try {
         const formData = new FormData();
         formData.append('space_id', spaceId);
-        
+
         const response = await fetch('/clip-spaces/process', {
             method: 'POST',
             body: formData
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
+            saveProcessingState(spaceId, 'Processing started...', 10);
             startStatusPolling(spaceId);
         } else {
+            // Clear processing state on error
+            clearProcessingState();
+            isProcessing = false;
+
             // Check if it's an insufficient credits error
             if (data.error_type === 'insufficient_credits') {
                 hideAllSections();
@@ -665,6 +736,7 @@ async function processSpace() {
         }
     } catch (error) {
         console.error('Error processing space:', error);
+        clearProcessingState();
         isProcessing = false;
         updateProcessButton(false);
         hideAllSections();
@@ -707,25 +779,30 @@ function startStatusPolling(spaceId) {
     if (statusPollInterval) {
         clearInterval(statusPollInterval);
     }
-    
+
     statusPollInterval = setInterval(async function() {
         try {
             const response = await fetch('/clip-spaces/status/' + spaceId);
             const status = await response.json();
-            
+
             updateLoadingStatus(status.message, status.progress);
-            
+
+            // Update sessionStorage with current status
+            saveProcessingState(spaceId, status.message, status.progress);
+
             if (status.status === 'completed') {
                 clearInterval(statusPollInterval);
                 statusPollInterval = null;
                 isProcessing = false;
                 updateProcessButton(false);
+                clearProcessingState(); // Clear from sessionStorage
                 loadSpaceData(spaceId);
             } else if (status.status === 'error') {
                 clearInterval(statusPollInterval);
                 statusPollInterval = null;
                 isProcessing = false;
                 updateProcessButton(false);
+                clearProcessingState(); // Clear from sessionStorage
                 hideAllSections();
                 showSection('errorSection');
                 document.getElementById('errorText').textContent = status.error || 'Processing failed';
@@ -1228,7 +1305,7 @@ window.addEventListener('beforeunload', function() {
     if (statusPollInterval) {
         clearInterval(statusPollInterval);
     }
-    
+
     if (audioEditor) {
         try {
             audioEditor.destroy();
@@ -1236,4 +1313,7 @@ window.addEventListener('beforeunload', function() {
             console.error('Error destroying audio editor:', e);
         }
     }
+
+    // Note: We keep the processing state in sessionStorage so it persists across page navigation
+    // It will be restored when the user comes back to the page
 });

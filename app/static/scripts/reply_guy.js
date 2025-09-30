@@ -25,12 +25,16 @@
         // Load initial data
         loadInitialData();
 
-        // Initialize components
+        // Initialize components immediately (no blocking calls)
         initializeView();
-        checkBrandVoice();
         setupEventListeners();
         setupDropdowns();
         setupModals();
+
+        // Defer non-critical operations
+        setTimeout(() => {
+            checkBrandVoice();
+        }, 100);
 
         state.isInitialized = true;
         console.log('Reply Guy initialized');
@@ -123,10 +127,10 @@
             }
         }
 
-        // Check if there are ongoing updates and refresh button state
+        // Check if there are ongoing updates and refresh button state (deferred)
         if (Object.keys(state.ongoingUpdates).length > 0) {
             console.log('Found ongoing updates, checking their status...');
-            checkOngoingUpdatesStatus();
+            setTimeout(() => checkOngoingUpdatesStatus(), 500);
         }
 
         updateButtonVisibility();
@@ -1541,11 +1545,9 @@
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', init);
 
-    // Fix profile pictures after content loads and periodically
+    // Fix profile pictures after content loads - single deferred call
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(fixProfilePictureConsistency, 500);
-        setTimeout(fixProfilePictureConsistency, 2000);
-        setTimeout(fixProfilePictureConsistency, 5000);
+        setTimeout(fixProfilePictureConsistency, 1000);
     });
 
     // Also run when new content might be loaded
