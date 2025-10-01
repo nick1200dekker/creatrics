@@ -699,21 +699,22 @@ html.dark .coming-soon-card {
             </a>
             {% endif %}
 
-            <!-- Analytics -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
-            <a href="{{ url_for('analytics.index', platform='youtube') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-chart-line feature-icon-inline"></i>Analytics</h3>
-                    <p>Track performance metrics</p>
-                </div>
-            </a>
-            {% endif %}
             <!-- Competitors -->
             {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.competitors %}
             <a href="{{ url_for('competitors.competitors') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-users-three feature-icon-inline"></i>Competitors</h3>
                     <p>Analyze competitor strategies</p>
+                </div>
+            </a>
+            {% endif %}
+
+            <!-- Analytics -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
+            <a href="{{ url_for('analytics.index', platform='youtube') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-chart-line feature-icon-inline"></i>Analytics</h3>
+                    <p>Track performance metrics</p>
                 </div>
             </a>
             {% endif %}
@@ -746,16 +747,6 @@ html.dark .coming-soon-card {
                 </div>
             </a>
             {% endif %}
-            
-            <!-- X Analytics -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
-            <a href="{{ url_for('analytics.index', platform='x') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-chart-bar feature-icon-inline"></i>Analytics</h3>
-                    <p>Monitor growth metrics</p>
-                </div>
-            </a>
-            {% endif %}
 
             <!-- Reply Guy -->
             {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.reply_guy %}
@@ -783,6 +774,16 @@ html.dark .coming-soon-card {
                 <div class="feature-content">
                     <h3><i class="ph ph-compass feature-icon-inline"></i>Niche</h3>
                     <p>Discover what's hot on timeline</p>
+                </div>
+            </a>
+            {% endif %}
+
+            <!-- X Analytics -->
+            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
+            <a href="{{ url_for('analytics.index', platform='x') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+                <div class="feature-content">
+                    <h3><i class="ph ph-chart-bar feature-icon-inline"></i>Analytics</h3>
+                    <p>Monitor growth metrics</p>
                 </div>
             </a>
             {% endif %}
@@ -840,7 +841,7 @@ html.dark .coming-soon-card {
         </div>
     </div>
 
-    <!-- Content Management Section -->
+    <!-- Content Hub Section -->
     {% set has_content_permissions = not workspace_info or workspace_info.is_owner or
        workspace_info.permissions.brain_dump or
        workspace_info.permissions.mind_map or
@@ -851,7 +852,7 @@ html.dark .coming-soon-card {
     <div class="platform-section">
         <div class="platform-header">
             <i class="ph ph-folder"></i>
-            <h2>Content Management</h2>
+            <h2>Content Hub</h2>
         </div>
 
         <div class="features-grid">

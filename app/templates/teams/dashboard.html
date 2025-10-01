@@ -966,10 +966,10 @@ html.dark #permissionsList span {
                 </div>
             </div>
 
-            <!-- Content Management Permissions -->
+            <!-- Content Hub Permissions -->
             <div class="permission-category" style="margin-top: 1.5rem;">
                 <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ph ph-folder-open"></i> Content Management
+                    <i class="ph ph-folder-open"></i> Content Hub
                 </h3>
                 <div class="permissions-grid">
                     <div class="permission-item">
@@ -1107,7 +1107,7 @@ function updateUIForWorkspace() {
                     'YouTube': ['video_script', 'video_title', 'video_tags', 'video_description', 'thumbnail', 'analytics', 'competitors'],
                     'X (Twitter)': ['x_post_editor', 'reply_guy', 'clip_spaces', 'niche'],
                     'TikTok': ['hook_generator', 'titles_hashtags', 'trending_sounds', 'trend_finder', 'tiktok_analytics'],
-                    'Content Management': ['brain_dump', 'mind_map', 'content_wiki', 'content_calendar']
+                    'Content Hub': ['brain_dump', 'mind_map', 'content_wiki', 'content_calendar']
                 };
 
                 let permissionHTML = '<h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-secondary);">Your Permissions:</h3>';
@@ -1120,7 +1120,7 @@ function updateUIForWorkspace() {
                             'YouTube': 'ph-youtube-logo',
                             'X (Twitter)': 'ph-x-logo',
                             'TikTok': 'ph-tiktok-logo',
-                            'Content Management': 'ph-folder-open'
+                            'Content Hub': 'ph-folder-open'
                         }[category];
 
                         permissionHTML += `
@@ -1259,7 +1259,7 @@ async function sendInvite() {
         trending_sounds: document.getElementById('perm_trending_sounds').checked,
         trend_finder: document.getElementById('perm_trend_finder').checked,
         tiktok_analytics: document.getElementById('perm_tiktok_analytics').checked,
-        // Content Management
+        // Content Hub
         brain_dump: document.getElementById('perm_brain_dump').checked,
         mind_map: document.getElementById('perm_mind_map').checked,
         content_wiki: document.getElementById('perm_content_wiki').checked,
@@ -1328,7 +1328,7 @@ function editPermissions(memberId, permissions) {
             ]
         },
         {
-            name: 'Content Management',
+            name: 'Content Hub',
             icon: 'ph-folder-open',
             features: [
                 { id: 'brain_dump', label: 'Brain Dump' },
@@ -1381,7 +1381,7 @@ async function savePermissions() {
         trending_sounds: document.getElementById('modal_perm_trending_sounds').checked,
         trend_finder: document.getElementById('modal_perm_trend_finder').checked,
         tiktok_analytics: document.getElementById('modal_perm_tiktok_analytics').checked,
-        // Content Management
+        // Content Hub
         brain_dump: document.getElementById('modal_perm_brain_dump').checked,
         mind_map: document.getElementById('modal_perm_mind_map').checked,
         content_wiki: document.getElementById('modal_perm_content_wiki').checked,
