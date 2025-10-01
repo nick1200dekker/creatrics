@@ -277,6 +277,103 @@ def check_auth():
         }), 401
 
 
+@bp.route('/auth/setup-profile')
+@auth_required
+def setup_profile():
+    """Show the profile setup page for users without a username"""
+    # Check if user already has a username
+    if g.user and g.user.get('data', {}).get('username'):
+        # User already has a username, redirect to dashboard
+        return redirect(url_for('home.dashboard'))
+
+    # Get Supabase credentials for the page
+    config = get_config()
+    supabase_url = config.get('supabase_url', '')
+    supabase_key = config.get('supabase_anon_key', '')
+
+    return render_template(
+        'auth/setup_profile.html',
+        supabase_url=supabase_url,
+        supabase_key=supabase_key
+    )
+
+
+@bp.route('/auth/setup-profile', methods=['POST'])
+@auth_required
+def setup_profile_post():
+    """Handle profile setup form submission"""
+    import requests
+    import json
+
+    try:
+        # Get the JSON data from the request
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+
+        username = data.get('username', '').strip()
+        display_name = data.get('display_name', '').strip() or username
+
+        # Validate username
+        if not username:
+            return jsonify({"success": False, "error": "Username is required"}), 400
+
+        if len(username) < 2 or len(username) > 20:
+            return jsonify({"success": False, "error": "Username must be between 2-20 characters"}), 400
+
+        import re
+        if not re.match(r'^[a-zA-Z0-9]+$', username):
+            return jsonify({"success": False, "error": "Username can only contain letters and numbers"}), 400
+
+        # Update the user's metadata in Supabase
+        config = get_config()
+        user_id = g.user.get('id')
+
+        # Use Supabase Admin API to update user metadata
+        update_url = f"{config['supabase_url']}/auth/v1/admin/users/{user_id}"
+        headers = {
+            'Authorization': f"Bearer {config['supabase_service_key']}",
+            'apikey': config['supabase_service_key'],
+            'Content-Type': 'application/json'
+        }
+
+        update_data = {
+            'user_metadata': {
+                'username': username,
+                'display_name': display_name
+            }
+        }
+
+        response = requests.put(update_url, headers=headers, json=update_data)
+
+        if response.status_code != 200:
+            logger.error(f"Failed to update user metadata: {response.text}")
+            return jsonify({"success": False, "error": "Failed to update profile"}), 500
+
+        # Also update in Firebase for consistency
+        try:
+            user_data = UserService.get_user(user_id)
+            if user_data:
+                user_data['username'] = username
+                user_data['display_name'] = display_name
+                UserService.update_user(user_id, user_data)
+        except Exception as e:
+            logger.warning(f"Failed to update Firebase user data: {str(e)}")
+            # Continue anyway as Supabase is the source of truth
+
+        # Return success with redirect URL
+        return jsonify({
+            "success": True,
+            "message": "Profile updated successfully!",
+            "redirect": url_for('home.dashboard')
+        })
+
+    except Exception as e:
+        logger.error(f"Error setting up profile: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 # Configuration endpoint
 @bp.route('/config/public-keys')
 def public_keys():

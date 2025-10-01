@@ -457,4 +457,20 @@ def auth_middleware():
         g.workspace_role = 'owner'
     
     logger.debug(f"Auth middleware successful for user {g.user_id} on path: {request.path}")
+
+    # Check if user needs to set up their profile (no username)
+    # Skip this check for auth routes, API routes, and the setup-profile route itself
+    if (not request.path.startswith('/auth/') and
+        not request.path.startswith('/api/') and
+        not request.path.startswith('/static/') and
+        not request.path.startswith('/config/') and
+        not request.path.startswith('/payment/webhook')):
+
+        # Check if user has a username
+        username = g.user.get('data', {}).get('username')
+        if not username:
+            logger.info(f"User {g.user_id} needs to set up username, redirecting to setup-profile")
+            # Redirect to profile setup page
+            return redirect(url_for('core.setup_profile'))
+
     return None
