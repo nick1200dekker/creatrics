@@ -1038,16 +1038,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     loadPendingInvitations();
 });
 
-function showAlert(message, type = 'success') {
+function showAlert(message, type = 'success', duration = 5000) {
     const alertContainer = document.getElementById('alertContainer');
     const alert = document.createElement('div');
     alert.className = `alert alert-${type}`;
-    alert.textContent = message;
+    alert.innerHTML = message; // Use innerHTML to support formatted messages
     alertContainer.appendChild(alert);
 
     setTimeout(() => {
         alert.remove();
-    }, 5000);
+    }, duration);
 }
 
 async function loadWorkspaces() {
@@ -1276,8 +1276,13 @@ async function sendInvite() {
         const data = await response.json();
 
         if (data.success) {
-            showAlert(data.message);
+            // Show success message
+            showAlert(data.message, 'success');
+
+            // Clear the form
             document.getElementById('inviteEmail').value = '';
+
+            // Reload team members list
             loadTeamMembers();
         } else {
             showAlert(data.error || 'Failed to send invitation', 'error');

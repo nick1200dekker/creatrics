@@ -20,6 +20,7 @@ def teams_dashboard():
     pending_invitations = get_pending_invitations()
     return render_template('teams/dashboard.html', pending_invitations=pending_invitations)
 
+
 @teams_bp.route('/api/workspace')
 @auth_required
 def get_workspace():
@@ -221,46 +222,74 @@ def invite_team_member():
         config = get_supabase_config()
         user_exists = False
         user_id = None
+        invite_sent = False  # Initialize here to avoid the error
 
         if config['url'] and config['service_key']:
             # Check if user exists in Supabase
             url = f"{config['url']}/auth/v1/admin/users"
-            response = requests.get(
-                url,
-                headers={
-                    'Authorization': f"Bearer {config['service_key']}",
-                    'apikey': config['service_key']
-                },
-                params={'email': email}
-            )
 
-            users = response.json().get('users', [])
+            try:
+                response = requests.get(
+                    url,
+                    headers={
+                        'Authorization': f"Bearer {config['service_key']}",
+                        'apikey': config['service_key']
+                    }
+                )
 
-            if users:
-                # User exists - store their ID for notification
-                user_exists = True
-                user_id = users[0].get('id')
-                logger.info(f"User {email} already exists with ID {user_id}")
+                logger.debug(f"User check response status: {response.status_code}")
 
-                # Update the invitation with the user_id for easier acceptance
-                db.collection('team_members').document(invite_id).update({
-                    'member_id': user_id,
-                    'user_exists': True
-                })
+                if response.status_code == 200:
+                    all_users = response.json().get('users', [])
 
-                # Create a notification for the existing user
-                db.collection('users').document(user_id).collection('notifications').add({
-                    'type': 'team_invitation',
-                    'from_user': g.user.get('data', {}).get('email', 'A workspace owner'),
-                    'workspace_id': workspace_id,
-                    'invite_id': invite_id,
-                    'message': f"You've been invited to join a team workspace",
-                    'created_at': datetime.now().isoformat(),
-                    'read': False
-                })
-            else:
-                # User doesn't exist - send Supabase invitation
-                invite_url = f"{config['url']}/auth/v1/admin/invite"
+                    # Filter users by email manually since the API might not filter correctly
+                    matching_users = [u for u in all_users if u.get('email', '').lower() == email.lower()]
+
+                    if matching_users:
+                        # User exists - store their ID for notification
+                        user_exists = True
+                        user_id = matching_users[0].get('id')
+                        logger.info(f"User {email} already exists with ID {user_id}")
+
+                        # Update the invitation with the user_id for easier acceptance
+                        db.collection('team_members').document(invite_id).update({
+                            'member_id': user_id,
+                            'user_exists': True
+                        })
+
+                        # Create a notification for the existing user
+                        db.collection('users').document(user_id).collection('notifications').add({
+                            'type': 'team_invitation',
+                            'from_user': g.user.get('data', {}).get('email', 'A workspace owner'),
+                            'workspace_id': workspace_id,
+                            'invite_id': invite_id,
+                            'message': f"You've been invited to join a team workspace",
+                            'created_at': datetime.now().isoformat(),
+                            'read': False
+                        })
+
+                        # For existing users, we'll just notify them in-app
+                        logger.info(f"User {email} already exists - created in-app notification")
+                    else:
+                        logger.info(f"User {email} does not exist in Supabase")
+                else:
+                    logger.error(f"Failed to check user existence: {response.status_code} - {response.text}")
+            except Exception as e:
+                logger.error(f"Error checking user existence: {str(e)}")
+
+        # Handle non-existing users
+        if not user_exists:
+            # User doesn't exist - send proper Supabase invitation
+            invite_error = None
+
+            logger.info(f"User {email} doesn't exist. Attempting to send Supabase invitation...")
+
+            try:
+                # Use the /auth/v1/invite endpoint
+                invite_url = f"{config['url']}/auth/v1/invite"
+                logger.debug(f"Sending invite request to: {invite_url}")
+
+                # Send the invitation
                 invite_response = requests.post(
                     invite_url,
                     headers={
@@ -270,27 +299,64 @@ def invite_team_member():
                     },
                     json={
                         'email': email,
-                        'data': {
+                        'data': {  # This data will be included in the user's raw_user_meta_data
                             'invite_token': invite_id,
-                            'workspace_id': workspace_id
+                            'workspace_id': workspace_id,
+                            'invited_by': g.user.get('data', {}).get('email', 'workspace owner')
                         }
                     }
                 )
 
-                if invite_response.status_code != 200:
-                    logger.error(f"Failed to send Supabase invite: {invite_response.text}")
+                logger.debug(f"Supabase invite response status: {invite_response.status_code}")
 
-        # Determine message based on whether user exists
+                if invite_response.status_code in [200, 201]:
+                    response_data = invite_response.json()
+                    logger.info(f"Created Supabase user for {email}. User ID: {response_data.get('id')}")
+
+                    # Update our stored invitation with the Supabase user ID
+                    db.collection('team_members').document(invite_id).update({
+                        'supabase_user_id': response_data.get('id')
+                    })
+
+                    # Supabase should send the email automatically
+                    invite_sent = bool(response_data.get('confirmation_sent_at'))
+                    if invite_sent:
+                        logger.info(f"Supabase sent invitation email to {email}")
+                    else:
+                        logger.warning(f"Supabase user created but email may be delayed for {email}")
+                else:
+                    invite_error = invite_response.text
+                    logger.error(f"Failed to send Supabase invite to {email}. Status: {invite_response.status_code}. Error: {invite_response.text}")
+
+                    # Try to parse error for more details
+                    try:
+                        error_data = invite_response.json()
+                        if 'message' in error_data:
+                            logger.error(f"Error message: {error_data['message']}")
+                    except:
+                        pass
+            except Exception as e:
+                invite_error = str(e)
+                logger.error(f"Exception sending Supabase invite to {email}: {str(e)}", exc_info=True)
+
+        # Set email_sent based on whether Supabase handled it
+        email_sent = invite_sent if not user_exists else False
+
+        # Simple message
         if user_exists:
-            message = f'Invitation sent to {email}. They can view it in their Teams dashboard.'
+            message = f'User {email} already exists - they have been notified in-app'
         else:
-            message = f'Invitation email sent to {email}. They will need to create an account first.'
+            if invite_sent:
+                message = f'Invitation sent to {email}. They will receive an email to set their password.'
+            else:
+                message = f'User created for {email} but email may be delayed. They can use password reset to access their account.'
 
         return jsonify({
             'success': True,
             'message': message,
             'invite_id': invite_id,
-            'user_exists': user_exists
+            'user_exists': user_exists,
+            'email_sent': email_sent
         })
     except Exception as e:
         logger.error(f"Error inviting team member: {str(e)}")
