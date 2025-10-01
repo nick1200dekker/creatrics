@@ -33,3 +33,5 @@ HASHTAG RULES:
 OUTPUT FORMAT:
 Return a JSON array with exactly 10 title strings, each ending with 3 hashtags.
 Example: ["Quick Title #shorts #viral #funny", "Another Title #shorts #howto #diy", ...]
+
+OUTPUT ONLY THE JSON ARRAY - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE JSON ARRAY:

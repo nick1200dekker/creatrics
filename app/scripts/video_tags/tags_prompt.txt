@@ -29,3 +29,5 @@ Return only the comma-separated tags, no numbering or explanations.
 
 Example format:
 youtube monetization, how to monetize youtube, youtube money guide, make money on youtube, youtube ad revenue, youtube partner program, monetization requirements, 1000 subscribers, 4000 watch hours, youtube tips for beginners, youtube growth strategy, content creator income, youtube earnings, passive income youtube, youtube channel monetization, youtube shorts monetization, youtube ads, creator economy, online income, youtube success tips
+
+OUTPUT ONLY THE COMMA-SEPARATED TAGS - NO EXPLANATIONS, NO COMMENTARY, NO NUMBERING. JUST THE TAGS:

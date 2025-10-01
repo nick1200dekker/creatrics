@@ -24,4 +24,6 @@ Original text:
 Reference Examples
 {VOICE_EXAMPLES}
 
-COMPLETELY REWRITE THE ENTIRE POST FROM SCRATCH. Do not keep any original phrasing - TRANSFORM EVERY SENTENCE to match the reference examples exactly. Make it sound like the reference author wrote it:
+COMPLETELY REWRITE THE ENTIRE POST FROM SCRATCH. Do not keep any original phrasing - TRANSFORM EVERY SENTENCE to match the reference examples exactly. Make it sound like the reference author wrote it.
+
+OUTPUT ONLY THE REWRITTEN POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST CONTENT:

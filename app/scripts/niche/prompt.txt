@@ -84,3 +84,5 @@ Your productivity system is failing because you're optimizing for output instead
 
 **"90% of creators are making this simple mistake"**
 Batching content creation sounds efficient until you realize fresh ideas come from daily life - sometimes the best content strategy is no strategy.
+
+OUTPUT ONLY THE ANALYSIS AND CONTENT SUGGESTIONS IN THE EXACT FORMAT ABOVE - NO ADDITIONAL EXPLANATIONS, NO COMMENTARY. JUST THE STRUCTURED OUTPUT:

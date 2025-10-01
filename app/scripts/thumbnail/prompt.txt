@@ -28,4 +28,4 @@ HOW IMAGE REFERENCING WORKS:
 - Additional uploads = "image 2", "image 3", "image 4" (source material)
 - The AI edits the FIRST image using elements from the others
 
-Only output the improved prompt with no formatting or additional text.
+OUTPUT ONLY THE IMPROVED PROMPT - NO EXPLANATIONS, NO COMMENTARY, NO FORMATTING. JUST THE PROMPT:

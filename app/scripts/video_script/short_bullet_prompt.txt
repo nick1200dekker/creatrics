@@ -8,4 +8,4 @@ CRITICAL REQUIREMENTS:
 - NO bullet symbols or formatting.
 - Instead of full sentences, provide short, high-level TOPICS or SUBJECTS to talk about. These should be concise cues for a YouTuber to expand on while recording.
 
-Write ONLY the talking points now:
+OUTPUT ONLY THE TALKING POINTS - NO EXPLANATIONS, NO COMMENTARY, NO FORMATTING. JUST THE TALKING POINTS:

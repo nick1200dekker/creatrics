@@ -8,4 +8,4 @@ CRITICAL REQUIREMENTS:
 - Write ONLY the words to be spoken - no formatting, no headers, no timestamps.
 - Just pure flowing text for the video.
 
-Write ONLY the spoken script text now:
+OUTPUT ONLY THE SPOKEN SCRIPT TEXT - NO EXPLANATIONS, NO COMMENTARY, NO HEADERS, NO FORMATTING. JUST THE SCRIPT:

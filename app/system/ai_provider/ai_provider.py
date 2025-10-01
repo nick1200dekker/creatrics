@@ -45,8 +45,8 @@ class AIProviderManager:
             'supports_functions': True
         },
         AIProvider.CLAUDE: {
-            'model_name': 'claude-sonnet-4-20250514', 
-            'display_name': 'claude-4-sonnet',
+            'model_name': 'claude-sonnet-4-5-20250929',
+            'display_name': 'claude-sonnet-4.5',
             'input_cost_per_token': 0.0003,    # $3.00 / 1M tokens
             'output_cost_per_token': 0.0015,   # $15.00 / 1M tokens
             'context_window': 200000,  # 200K tokens

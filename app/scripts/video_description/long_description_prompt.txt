@@ -73,3 +73,5 @@ CRITICAL:
 - No bold formatting anywhere
 - If a reference is provided, MATCH its writing style exactly
 - Write as if you ARE the creator, not describing what they should write
+
+OUTPUT ONLY THE DESCRIPTION CONTENT - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS, NO SECTION HEADERS. JUST THE DESCRIPTION:

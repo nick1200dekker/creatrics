@@ -28,3 +28,5 @@ BEST PRACTICES TO FOLLOW:
 OUTPUT FORMAT:
 Return a JSON array with exactly 10 title strings.
 Example: ["Title 1", "Title 2", ..., "Title 10"]
+
+OUTPUT ONLY THE JSON ARRAY - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE JSON ARRAY:

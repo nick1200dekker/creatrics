@@ -54,3 +54,5 @@ Available segments:
 {segments_text}
 
 Extract 6-8 substantial, valuable highlights using the exact format above, sorted chronologically. Each highlight should be 2-4 sentences and provide real insight or learning value.
+
+OUTPUT ONLY THE FORMATTED HIGHLIGHTS - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE HIGHLIGHTS IN THE EXACT FORMAT SPECIFIED:

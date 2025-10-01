@@ -52,3 +52,5 @@ CRITICAL:
 - Maximum 3 hashtags total
 - If reference provided, MATCH its exact style and energy
 - Write AS the creator, not about what to write
+
+OUTPUT ONLY THE DESCRIPTION CONTENT - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS, NO HEADERS. JUST THE DESCRIPTION:
