@@ -510,8 +510,10 @@
             // Check URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const recoveryType = urlParams.get('type') === 'recovery';
-            const emailConfirmed = urlParams.get('type') === 'signup' || 
-                                urlParams.get('confirmed') === 'true';
+            const inviteType = urlParams.get('type') === 'invite';
+            const emailConfirmed = urlParams.get('type') === 'signup' ||
+                                urlParams.get('confirmed') === 'true' ||
+                                inviteType;
             
             // Handle password recovery - redirect to reset password page
             if (recoveryType) {
@@ -525,13 +527,40 @@
             
             // Handle email confirmation (registration)
             if (emailConfirmed) {
-                updateProgressStep(3);
-                showState('success');
-                
-                // Auto-redirect after delay
-                setTimeout(() => {
-                    window.location.href = "/auth/login?registration_success=true";
-                }, 2000);
+                console.log("Email confirmation detected");
+                updateProgressStep(2);
+
+                // Process the auth tokens from the hash
+                if (window.location.hash) {
+                    try {
+                        // Extract and process the access token
+                        await Auth.handleAuthCallback(window.location.hash);
+                        updateProgressStep(3);
+
+                        showState('success');
+                        document.getElementById('status-title').textContent = "Email Confirmed!";
+                        document.getElementById('status-description').textContent = "Logging you in...";
+
+                        // Redirect to dashboard after successful login
+                        setTimeout(() => {
+                            window.location.href = "/";
+                        }, 1500);
+                    } catch (error) {
+                        console.error("Failed to process confirmation:", error);
+                        showState('success');
+                        // Fallback to login page if session creation fails
+                        setTimeout(() => {
+                            window.location.href = "/auth/login?registration_success=true";
+                        }, 2000);
+                    }
+                } else {
+                    // No hash, just show success and redirect to login
+                    updateProgressStep(3);
+                    showState('success');
+                    setTimeout(() => {
+                        window.location.href = "/auth/login?registration_success=true";
+                    }, 2000);
+                }
                 return;
             }
             
