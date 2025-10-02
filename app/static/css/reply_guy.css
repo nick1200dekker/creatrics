@@ -66,23 +66,23 @@ html.dark .reply-guy-title i {
 /* View Toggle Buttons */
 .view-toggle {
     display: flex;
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
     border-radius: 10px;
-    padding: 4px;
+    padding: 3px;
     overflow: hidden;
 }
 
 html.dark .view-toggle {
-    background: #3f3f46;
-    border-color: #52525b;
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 .view-btn {
     padding: 0.6rem 1rem;
     border: none;
     background: transparent;
-    color: #6b7280;
+    color: var(--text-secondary);
     font-weight: 600;
     font-size: 0.875rem;
     border-radius: 8px;
@@ -95,19 +95,19 @@ html.dark .view-toggle {
 }
 
 .view-btn.active {
-    background: #3B82F6;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .view-btn:hover:not(.active) {
-    color: #1f2937;
-    background: #ffffff;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
 }
 
 html.dark .view-btn:hover:not(.active) {
-    color: #fafafa;
-    background: #52525b;
+    color: var(--text-primary);
+    background: rgba(82, 82, 91, 0.5);
 }
 
 .view-btn i {
@@ -117,9 +117,9 @@ html.dark .view-btn:hover:not(.active) {
 /* Secondary Button */
 .secondary-btn {
     padding: 0.6rem 1rem;
-    background: #f3f4f6;
-    color: #1f2937;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
     font-size: 0.875rem;
     font-weight: 500;
@@ -132,21 +132,22 @@ html.dark .view-btn:hover:not(.active) {
 }
 
 html.dark .secondary-btn {
-    background: #3f3f46;
-    color: #fafafa;
-    border: 1px solid #52525b;
+    background: rgba(63, 63, 70, 0.5);
+    backdrop-filter: blur(10px);
+    color: var(--text-primary);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 .secondary-btn:hover {
-    background: #e5e7eb;
+    background: var(--bg-secondary);
     transform: translateY(-1px);
-    color: #1f2937;
+    color: var(--text-primary);
     text-decoration: none;
 }
 
 html.dark .secondary-btn:hover {
-    background: #52525b;
-    color: #fafafa;
+    background: rgba(82, 82, 91, 0.6);
+    color: var(--text-primary);
 }
 
 /* Content Area */
@@ -251,11 +252,11 @@ html.dark #create-list-modal .modal-content {
     }
 }
 
-/* Progress Card - Blue gradient like dashboard */
+/* Progress Card - Enhanced with glassmorphism */
 .progress-card {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.05) 100%);
-    border: 1px solid var(--border-secondary);
-    border-radius: 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
     padding: 2rem;
     margin-bottom: 2rem;
     box-shadow: var(--shadow-sm);
@@ -265,8 +266,10 @@ html.dark #create-list-modal .modal-content {
 }
 
 html.dark .progress-card {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.1) 100%);
-    border-color: transparent;
+    background: rgba(39, 39, 42, 0.6);
+    backdrop-filter: blur(10px);
+    border-color: rgba(63, 63, 70, 0.5);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
 .progress-header {
@@ -282,11 +285,7 @@ html.dark .progress-card {
     gap: 0.75rem;
     font-size: 1.125rem;
     font-weight: 600;
-    color: #1f2937;
-}
-
-html.dark .progress-title {
-    color: #fafafa;
+    color: var(--text-primary);
 }
 
 .progress-title i {
@@ -294,14 +293,14 @@ html.dark .progress-title {
     font-size: 1.25rem;
 }
 
-.progress-stats {
-    color: #6b7280;
-    font-size: 0.875rem;
-    font-weight: 500;
+html.dark .progress-title i {
+    color: #60A5FA;
 }
 
-html.dark .progress-stats {
-    color: #9ca3af;
+.progress-stats {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
 }
 
 .progress-content {
@@ -326,17 +325,13 @@ html.dark .progress-stats {
 }
 
 .progress-text {
-    color: #6b7280;
+    color: var(--text-secondary);
     font-size: 0.875rem;
     line-height: 1.4;
 }
 
-html.dark .progress-text {
-    color: #9ca3af;
-}
-
 .progress-bar {
-    background: #f3f4f6;
+    background: var(--bg-tertiary);
     border-radius: 8px;
     height: 12px;
     overflow: hidden;
@@ -346,7 +341,7 @@ html.dark .progress-text {
 }
 
 html.dark .progress-bar {
-    background: #3f3f46;
+    background: rgba(63, 63, 70, 0.8);
 }
 
 .progress-fill {
@@ -365,41 +360,47 @@ html.dark .progress-bar {
     align-items: center;
     text-align: center;
     padding: 1rem;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
     min-width: 120px;
 }
 
 html.dark .progress-numbers {
-    background: #3f3f46;
-    border: 1px solid #52525b;
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 .progress-percentage {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #3B82F6;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     line-height: 1;
     margin-bottom: 0.25rem;
 }
 
+html.dark .progress-percentage {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 .progress-label {
     font-size: 0.7rem;
-    color: #6b7280;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
 }
 
-html.dark .progress-label {
-    color: #9ca3af;
-}
-
-/* Main Panel - Remove border emphasis */
+/* Main Panel - Enhanced with glassmorphism */
 .main-panel {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
     border-radius: 12px;
     overflow: hidden;
     min-height: 600px;
@@ -407,14 +408,15 @@ html.dark .progress-label {
 }
 
 html.dark .main-panel {
-    background: #27272a;
-    border: 1px solid #3f3f46;
+    background: rgba(39, 39, 42, 0.6);
+    backdrop-filter: blur(10px);
+    border-color: rgba(63, 63, 70, 0.5);
 }
 
 .panel-header {
     padding: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-tertiary);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -422,8 +424,8 @@ html.dark .main-panel {
 }
 
 html.dark .panel-header {
-    background: #3f3f46;
-    border-bottom: 1px solid #52525b;
+    background: rgba(63, 63, 70, 0.4);
+    border-bottom-color: rgba(82, 82, 91, 0.5);
 }
 
 .panel-title-section {
@@ -436,19 +438,19 @@ html.dark .panel-header {
 .panel-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin: 0;
 }
 
-html.dark .panel-title {
-    color: #fafafa;
-}
-
 .panel-title i {
     color: #3B82F6;
+}
+
+html.dark .panel-title i {
+    color: #60A5FA;
 }
 
 .panel-controls {
@@ -670,7 +672,7 @@ html.dark .dropdown-option.create-new {
     background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-weight: 600;
     font-size: 0.875rem;
     cursor: pointer;
@@ -678,13 +680,21 @@ html.dark .dropdown-option.create-new {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+html.dark .primary-btn {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
 }
 
 .primary-btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
     background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+}
+
+html.dark .primary-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
 }
 
 .primary-btn:disabled {
@@ -719,7 +729,9 @@ html.dark .dropdown-option.create-new {
 }
 
 html.dark .tweet-opportunity {
-    background: var(--bg-secondary);
+    background: rgba(39, 39, 42, 0.6);
+    backdrop-filter: blur(10px);
+    border-color: rgba(63, 63, 70, 0.5);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -862,14 +874,14 @@ html.dark .tweet-opportunity:hover {
 /* Reply Panel */
 .reply-panel {
     padding: 1.25rem;
-    background: #f9fafb;
+    background: var(--bg-tertiary);
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
 html.dark .reply-panel {
-    background: #3f3f46;
+    background: rgba(63, 63, 70, 0.4);
 }
 
 .reply-panel-header {
@@ -1039,11 +1051,11 @@ html.dark .brand-voice-checkbox {
 }
 
 .reply-textarea {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    color: #1f2937;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
     padding: 1rem;
-    border-radius: 8px;
+    border-radius: 10px;
     transition: all 0.2s ease;
     resize: none;
     min-height: 100px;
@@ -1054,20 +1066,19 @@ html.dark .brand-voice-checkbox {
 }
 
 html.dark .reply-textarea {
-    background: #27272a;
-    border: 1px solid #52525b;
-    color: #fafafa;
+    background: rgba(39, 39, 42, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 .reply-textarea:focus {
-    background: #ffffff;
+    background: var(--bg-primary);
     border-color: #3B82F6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     outline: none;
 }
 
 html.dark .reply-textarea:focus {
-    background: #18181b;
+    background: rgba(24, 24, 27, 0.6);
     border-color: #3B82F6;
 }
 
@@ -1102,15 +1113,15 @@ html.dark .character-count {
 }
 
 .action-btn {
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
     width: 36px;
     height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6b7280;
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
@@ -1118,20 +1129,19 @@ html.dark .character-count {
 }
 
 html.dark .action-btn {
-    background: #52525b;
-    border: 1px solid #71717a;
-    color: #9ca3af;
+    background: rgba(82, 82, 91, 0.5);
+    border-color: rgba(113, 113, 122, 0.5);
 }
 
 .action-btn:hover {
-    background: #e5e7eb;
-    color: #1f2937;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     transform: scale(1.05);
 }
 
 html.dark .action-btn:hover {
-    background: #71717a;
-    color: #fafafa;
+    background: rgba(113, 113, 122, 0.6);
+    color: var(--text-primary);
 }
 
 .action-btn.generate:hover {

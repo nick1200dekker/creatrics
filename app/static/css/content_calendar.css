@@ -217,7 +217,7 @@ html.dark .calendar-controls {
     background: var(--bg-tertiary);
     color: var(--text-secondary);
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
@@ -227,27 +227,54 @@ html.dark .calendar-controls {
     gap: 0.5rem;
 }
 
+html.dark .btn {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
 .btn:hover {
     background: var(--hover-bg);
-    border-color: #3B82F6;
+    border-color: rgba(59, 130, 246, 0.4);
     color: #3B82F6;
 }
 
+html.dark .btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60A5FA;
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
 .btn.active {
-    background: #3B82F6;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
-    border-color: #3B82F6;
+    border: none;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+html.dark .btn.active {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);
 }
 
 .btn-primary {
-    background: #3B82F6;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
-    border-color: #3B82F6;
+    border: none;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+html.dark .btn-primary {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
 }
 
 .btn-primary:hover {
-    background: #2563EB;
-    border-color: #2563EB;
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+html.dark .btn-primary:hover {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
 }
 
 .btn-icon {
@@ -277,16 +304,32 @@ html.dark .calendar-controls {
     transition: all 0.2s;
 }
 
+html.dark .week-toggle-btn {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
 .week-toggle-btn:hover {
     background: var(--hover-bg);
-    border-color: #3B82F6;
+    border-color: rgba(59, 130, 246, 0.4);
     color: #3B82F6;
 }
 
+html.dark .week-toggle-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60A5FA;
+}
+
 .week-toggle-btn.active {
-    background: #3B82F6;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
-    border-color: #3B82F6;
+    border: none;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+html.dark .week-toggle-btn.active {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);
 }
 
 /* Toggle button */
@@ -299,9 +342,15 @@ html.dark .calendar-controls {
 .view-toggle {
     display: flex;
     background: var(--bg-tertiary);
-    padding: 2px;
+    padding: 3px;
     border-radius: 8px;
+    border: 1px solid var(--border-primary);
     transition: background-color 0.3s ease;
+}
+
+html.dark .view-toggle {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 .view-btn {
@@ -314,16 +363,30 @@ html.dark .calendar-controls {
     cursor: pointer;
     border-radius: 6px;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .view-btn:hover {
-    background: var(--bg-secondary);
+    background: var(--hover-bg);
     color: var(--text-primary);
 }
 
+html.dark .view-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60A5FA;
+}
+
 .view-btn.active {
-    background: #3B82F6;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+html.dark .view-btn.active {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);
 }
 
 /* Calendar container */
