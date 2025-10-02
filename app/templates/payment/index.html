@@ -31,8 +31,15 @@
     .payment-header {
         padding: 1.5rem 2rem;
         border-bottom: 1px solid var(--border-primary);
-        background: var(--bg-secondary);
+        background: linear-gradient(135deg,
+            rgba(59, 130, 246, 0.03) 0%,
+            rgba(139, 92, 246, 0.03) 100%);
         transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .payment-header {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+        border-bottom-color: rgba(63, 63, 70, 0.5);
     }
 
     .payment-title {
@@ -42,10 +49,15 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
+        margin: 0;
     }
 
     .payment-title i {
         color: #3B82F6;
+    }
+
+    html.dark .payment-title i {
+        color: #60A5FA;
     }
     
     @media (max-width: 768px) {
@@ -61,15 +73,21 @@
     /* Status section - Enhanced */
     .status-section {
         background: var(--bg-tertiary);
-        border-radius: 12px;
+        border-radius: 16px;
         padding: 2rem;
         margin: 1.5rem;
         border: 1px solid var(--border-primary);
         position: relative;
         overflow: hidden;
-        transition: background-color 0.3s ease, border-color 0.3s ease;
+        transition: all 0.3s ease;
     }
-    
+
+    html.dark .status-section {
+        background: rgba(39, 39, 42, 0.6);
+        border-color: rgba(63, 63, 70, 0.6);
+        backdrop-filter: blur(10px);
+    }
+
     .status-section::before {
         content: '';
         position: absolute;
@@ -77,10 +95,10 @@
         right: -10%;
         width: 300px;
         height: 300px;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
         border-radius: 50%;
     }
-    
+
     .status-header {
         display: flex;
         align-items: center;
@@ -89,11 +107,11 @@
         position: relative;
         z-index: 1;
     }
-    
+
     .status-icon {
         width: 48px;
         height: 48px;
-        background: var(--brand-gradient);
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
         border-radius: 14px;
         display: flex;
         align-items: center;
@@ -101,16 +119,28 @@
         color: white;
         font-size: 1.5rem;
         flex-shrink: 0;
-        box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
     }
-    
+
+    html.dark .status-icon {
+        background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    }
+
     .status-title {
         font-size: 1.25rem;
         font-weight: 700;
         color: var(--text-primary);
         margin: 0;
     }
-    
+
+    .status-title span {
+        color: #3B82F6;
+    }
+
+    html.dark .status-title span {
+        color: #60A5FA;
+    }
+
     .status-subtitle {
         color: var(--text-secondary);
         font-size: 0.875rem;
@@ -175,7 +205,7 @@
     }
     
     .manage-button {
-        background: var(--brand-gradient);
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
         color: white;
         padding: 0.875rem 2rem;
         border-radius: 12px;
@@ -190,10 +220,19 @@
         cursor: pointer;
         font-size: 0.95rem;
     }
-    
+
     .manage-button:hover {
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    html.dark .manage-button {
+        background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    }
+
+    html.dark .manage-button:hover {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     }
 
     /* Plan cards grid */
@@ -209,11 +248,11 @@
 
     /* Plan card styling - Improved */
     .plan-card {
-        background: var(--bg-secondary);
+        background: var(--bg-primary);
         border-radius: 16px;
         padding: 1.75rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        border: 1px solid var(--border-secondary);
+        border: 1px solid var(--border-primary);
         transition: all 0.2s ease;
         cursor: pointer;
         position: relative;
@@ -222,16 +261,32 @@
         display: flex;
         flex-direction: column;
     }
-    
+
+    html.dark .plan-card {
+        background: rgba(39, 39, 42, 0.6);
+        border-color: rgba(63, 63, 70, 0.6);
+        backdrop-filter: blur(10px);
+    }
+
     .plan-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        border-color: #CBD5E1;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        border-color: rgba(59, 130, 246, 0.3);
     }
-    
+
+    html.dark .plan-card:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        border-color: rgba(96, 165, 250, 0.4);
+    }
+
     .plan-card.current {
-        border: 2px solid var(--accent-blue);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+        border: 2px solid #3B82F6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    html.dark .plan-card.current {
+        border-color: #60A5FA;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
     }
     
     .plan-badge {
@@ -354,16 +409,21 @@
     }
     
     .feature-icon {
-        color: #10B981;
+        color: #3B82F6;
         font-size: 1rem;
         flex-shrink: 0;
-        background: rgba(16, 185, 129, 0.1);
+        background: rgba(59, 130, 246, 0.1);
         width: 24px;
         height: 24px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    html.dark .feature-icon {
+        color: #60A5FA;
+        background: rgba(96, 165, 250, 0.15);
     }
     
     .plan-button {
@@ -387,14 +447,23 @@
     }
     
     .plan-button.primary {
-        background: var(--brand-gradient);
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
         color: white;
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
     }
-    
+
     .plan-button.primary:hover {
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
         transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    html.dark .plan-button.primary {
+        background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    }
+
+    html.dark .plan-button.primary:hover {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     }
     
     .current-plan-badge {
@@ -454,16 +523,22 @@
     }
     
     .flex-card {
-        background: var(--bg-tertiary);
+        background: var(--bg-primary);
         border-radius: 16px;
         padding: 1.75rem;
-        border: 1px solid var(--border-secondary);
+        border: 1px solid var(--border-primary);
         text-align: center;
         transition: all 0.2s ease;
         position: relative;
         overflow: hidden;
     }
-    
+
+    html.dark .flex-card {
+        background: rgba(39, 39, 42, 0.6);
+        border-color: rgba(63, 63, 70, 0.6);
+        backdrop-filter: blur(10px);
+    }
+
     .flex-card::before {
         content: '⚡';
         position: absolute;
@@ -472,11 +547,16 @@
         font-size: 1.25rem;
         opacity: 0.1;
     }
-    
+
     .flex-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-        border-color: #CBD5E1;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    html.dark .flex-card:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        border-color: rgba(96, 165, 250, 0.4);
     }
     
     .flex-amount {
@@ -496,32 +576,40 @@
     .flex-button {
         width: 100%;
         padding: 0.75rem 1.25rem;
-        font-size: 0.8rem;
+        font-size: 0.875rem;
         font-weight: 600;
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-primary);
-        border-radius: 8px;
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
         cursor: pointer;
         transition: all 0.2s ease;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
     }
-    
+
+    html.dark .flex-button {
+        background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    }
+
     .flex-button:hover:not(:disabled) {
-        background: var(--bg-tertiary);
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        border-color: #3B82F6;
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
     }
-    
+
+    html.dark .flex-button:hover:not(:disabled) {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    }
+
     .flex-button:disabled {
         background: var(--bg-tertiary);
-        color: #9CA3AF;
+        color: var(--text-tertiary);
         cursor: not-allowed;
         transform: none;
         box-shadow: none;
-        border: 1px solid var(--border-secondary);
+        opacity: 0.5;
     }
     
     .locked-message {

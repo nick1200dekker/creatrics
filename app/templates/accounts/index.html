@@ -35,8 +35,15 @@
 .accounts-header {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
-    background: var(--bg-secondary);
+    background: linear-gradient(135deg,
+        rgba(59, 130, 246, 0.03) 0%,
+        rgba(139, 92, 246, 0.03) 100%);
     transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .accounts-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+    border-bottom-color: rgba(63, 63, 70, 0.5);
 }
 
 .header-content {
@@ -52,10 +59,15 @@
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
+    margin: 0;
 }
 
 .page-title i {
     color: #3B82F6;
+}
+
+html.dark .page-title i {
+    color: #60A5FA;
 }
 
 /* Content Section */
@@ -125,26 +137,34 @@ html.dark .flash-message.success {
 
 /* Account Card */
 .account-card {
-    background: var(--bg-tertiary);
+    background: var(--bg-primary);
     border: 1px solid var(--border-primary);
     border-radius: 12px;
     padding: 1.5rem;
     transition: all 0.3s ease;
 }
 
+html.dark .account-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+    backdrop-filter: blur(10px);
+}
+
 .account-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+html.dark .account-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    border-color: rgba(96, 165, 250, 0.4);
 }
 
 .account-card.disabled {
     opacity: 0.6;
     pointer-events: none;
     position: relative;
-}
-
-html.dark .account-card:hover {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
 /* Card Header */
@@ -231,36 +251,56 @@ html.dark .account-card:hover {
 
 /* Form Elements */
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.75rem;
 }
 
 .form-label {
     display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
     color: var(--text-secondary);
-    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.02em;
+}
+
+html.dark .form-label {
+    color: #d4d4d8;
 }
 
 .form-input {
     width: 100%;
-    padding: 0.625rem 0.875rem;
-    background: var(--bg-secondary);
+    padding: 0.875rem;
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    font-size: 0.875rem;
+    border-radius: 10px;
+    background: var(--bg-tertiary);
     color: var(--text-primary);
+    font-size: 0.9rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     transition: all 0.2s ease;
+    line-height: 1.6;
+}
+
+html.dark .form-input {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 .form-input:focus {
     outline: none;
     border-color: #3B82F6;
+    background: var(--bg-primary);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 html.dark .form-input:focus {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    background: rgba(39, 39, 42, 0.8);
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+.form-input::placeholder {
+    color: var(--text-tertiary);
 }
 
 .form-input:disabled {
@@ -287,14 +327,23 @@ html.dark .form-input:focus {
 }
 
 .action-button.primary {
-    background: #3B82F6;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .action-button.primary:hover {
-    background: #2563EB;
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+html.dark .action-button.primary {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+}
+
+html.dark .action-button.primary:hover {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
 }
 
 .action-button.secondary {
@@ -311,23 +360,34 @@ html.dark .form-input:focus {
 
 /* Info Section */
 .info-section {
-    background: var(--bg-tertiary);
+    background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    padding: 1.25rem;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+html.dark .info-section {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+    backdrop-filter: blur(10px);
 }
 
 .info-title {
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .info-text {
-    font-size: 0.825rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
     line-height: 1.6;
+}
+
+html.dark .info-text {
+    color: #d4d4d8;
 }
 
 /* Super Powers Modal */
