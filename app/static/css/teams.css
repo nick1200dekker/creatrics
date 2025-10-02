@@ -22,7 +22,8 @@
 }
 
 html.dark .teams-wrapper {
-    border-color: transparent;
+    border-color: rgba(63, 63, 70, 0.5);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
 /* Subtle animated background gradient */
@@ -45,10 +46,17 @@ html.dark .teams-wrapper {
     justify-content: space-between;
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
-    background: var(--bg-secondary);
+    background: linear-gradient(135deg,
+        rgba(59, 130, 246, 0.03) 0%,
+        rgba(139, 92, 246, 0.03) 100%);
     transition: background-color 0.3s ease, border-color 0.3s ease;
     position: relative;
     z-index: 1;
+}
+
+html.dark .teams-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+    border-bottom-color: rgba(63, 63, 70, 0.5);
 }
 
 .teams-title {
@@ -65,41 +73,85 @@ html.dark .teams-wrapper {
     color: #3B82F6;
 }
 
-/* Workspace Switcher */
+html.dark .teams-title i {
+    color: #60A5FA;
+}
+
+/* Workspace Switcher - Enhanced */
 .workspace-switcher {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.5rem 1rem;
-    background: var(--bg-tertiary);
-    border-radius: 10px;
+    padding: 0.625rem 1.25rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
     border: 1px solid var(--border-primary);
     transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
+
+html.dark .workspace-switcher {
+    background: rgba(39, 39, 42, 0.8);
+    border-color: rgba(82, 82, 91, 0.6);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 
 .workspace-switcher label {
     font-size: 0.875rem;
     color: var(--text-secondary);
-    font-weight: 500;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
-.workspace-switcher select {
-    padding: 0.375rem 0.75rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
-    border-radius: 6px;
+html.dark .workspace-switcher label {
+    color: #d4d4d8;
+}
+
+#workspaceSelector {
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 8px;
     color: var(--text-primary);
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     min-width: 200px;
     outline: none;
     transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%233B82F6' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px;
 }
 
-.workspace-switcher select:focus {
+html.dark #workspaceSelector {
+    background-color: rgba(39, 39, 42, 0.8);
+    border-color: rgba(82, 82, 91, 0.6);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2360A5FA' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+#workspaceSelector:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+    background-color: var(--bg-tertiary);
+}
+
+html.dark #workspaceSelector:hover {
+    border-color: rgba(96, 165, 250, 0.5);
+    background-color: rgba(63, 63, 70, 0.8);
+}
+
+#workspaceSelector:focus {
     border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+html.dark #workspaceSelector:focus {
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
 }
 
 /* Content container */
@@ -161,7 +213,7 @@ html.dark .teams-wrapper {
 #teamMemberMessage > div {
     background: var(--bg-tertiary);
     padding: 2rem;
-    border-radius: 12px;
+    border-radius: 10px;
     border: 1px solid var(--border-primary);
     margin-bottom: 1.5rem;
     transition: all 0.3s ease;
@@ -172,8 +224,10 @@ html.dark .invite-section,
 html.dark .team-members-section,
 html.dark #pendingInvitationsSection > div,
 html.dark #teamMemberMessage > div {
-    background: #27272a;
-    border-color: #3f3f46;
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Section headings */
@@ -211,22 +265,34 @@ html.dark #teamMemberMessage > div {
     outline: none;
 }
 
+html.dark .invite-form input {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
 .invite-form input:focus {
     border-color: #3B82F6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+html.dark .invite-form input:focus {
+    background: rgba(39, 39, 42, 0.8);
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
 .invite-form input::placeholder {
     color: var(--text-tertiary);
+    font-style: normal;
 }
 
 /* Primary button style */
 .btn-invite {
     padding: 0.75rem 1.5rem;
-    background: #3B82F6;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.875rem;
@@ -234,13 +300,23 @@ html.dark #teamMemberMessage > div {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+html.dark .btn-invite {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.3);
 }
 
 .btn-invite:hover {
-    background: #2563EB;
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
     transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+html.dark .btn-invite:hover {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
 }
 
 .btn-invite:active {
@@ -256,6 +332,11 @@ html.dark #teamMemberMessage > div {
     background: var(--bg-primary);
     border-radius: 10px;
     border: 1px solid var(--border-primary);
+}
+
+html.dark .permissions-grid {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 .permission-item {
@@ -302,10 +383,20 @@ html.dark #teamMemberMessage > div {
     transition: all 0.2s ease;
 }
 
+html.dark .member-card {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
 .member-card:hover {
-    border-color: var(--border-secondary);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-color: #3B82F6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
     transform: translateX(2px);
+}
+
+html.dark .member-card:hover {
+    border-color: #60A5FA;
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.2);
 }
 
 .member-info {
@@ -358,18 +449,38 @@ html.dark #teamMemberMessage > div {
     gap: 0.375rem;
 }
 
+html.dark .btn-edit-permissions,
+html.dark .btn-remove {
+    background: rgba(63, 63, 70, 0.6);
+    border-color: rgba(82, 82, 91, 0.6);
+}
+
 .btn-edit-permissions:hover {
-    background: #3B82F6;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
     border-color: #3B82F6;
     transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+html.dark .btn-edit-permissions:hover {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    border-color: #60A5FA;
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);
 }
 
 .btn-remove:hover {
-    background: #ef4444;
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
     color: white;
-    border-color: #ef4444;
+    border-color: #EF4444;
     transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+html.dark .btn-remove:hover {
+    background: linear-gradient(135deg, #F87171 0%, #EF4444 100%);
+    border-color: #F87171;
+    box-shadow: 0 2px 8px rgba(248, 113, 113, 0.4);
 }
 
 /* Status badges */
@@ -450,6 +561,12 @@ html.dark #teamMemberMessage > div {
     overflow-y: auto;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     animation: slideUp 0.3s ease;
+}
+
+html.dark .modal-content {
+    background: rgba(39, 39, 42, 0.98);
+    border: 1px solid rgba(63, 63, 70, 0.8);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
 @keyframes slideUp {

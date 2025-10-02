@@ -25,11 +25,18 @@ html.dark .calendar-wrapper {
 .calendar-header {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
-    background: var(--bg-secondary);
+    background: linear-gradient(135deg,
+        rgba(59, 130, 246, 0.03) 0%,
+        rgba(139, 92, 246, 0.03) 100%);
     transition: background-color 0.3s ease, border-color 0.3s ease;
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+html.dark .calendar-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+    border-bottom-color: rgba(63, 63, 70, 0.5);
 }
 
 .calendar-title {
@@ -39,10 +46,15 @@ html.dark .calendar-wrapper {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    margin: 0;
 }
 
 .calendar-title i {
     color: #3B82F6;
+}
+
+html.dark .calendar-title i {
+    color: #60A5FA;
 }
 
 /* Analytics Panel */

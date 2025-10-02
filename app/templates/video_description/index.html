@@ -8,7 +8,8 @@
 {% block title %}AI Video Description Generator - SEO-Optimized YouTube Descriptions | Creatrics{% endblock %}
 
 {% block additional_styles %}
-<style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/video_description.css') }}">
+<!--<style>
 /* Reset the default content-panel padding */
 .content-panel {
     padding: 0 !important;
@@ -871,7 +872,7 @@ html.dark .char-counter.warning {
 html.dark .char-counter.danger {
     background: rgba(239, 68, 68, 0.15);
 }
-</style>
+</style>-->
 {% endblock %}
 
 {% block content %}

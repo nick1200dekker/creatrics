@@ -26,11 +26,18 @@ html.dark .niche-radar-wrapper {
 .niche-radar-header {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
-    background: var(--bg-secondary);
+    background: linear-gradient(135deg,
+        rgba(59, 130, 246, 0.03) 0%,
+        rgba(139, 92, 246, 0.03) 100%);
     transition: background-color 0.3s ease, border-color 0.3s ease;
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+html.dark .niche-radar-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+    border-bottom-color: rgba(63, 63, 70, 0.5);
 }
 
 .niche-radar-title {
@@ -45,6 +52,10 @@ html.dark .niche-radar-wrapper {
 
 .niche-radar-title i {
     color: #3B82F6;
+}
+
+html.dark .niche-radar-title i {
+    color: #60A5FA;
 }
 
 .header-actions {
