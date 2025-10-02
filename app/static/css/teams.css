@@ -656,6 +656,27 @@ html.dark .modal-content {
     margin-bottom: 1rem;
 }
 
+/* Permission Badge */
+.permission-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    margin: 0.25rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+html.dark .permission-badge {
+    background: rgba(39, 39, 42, 0.6);
+    backdrop-filter: blur(10px);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .teams-header {

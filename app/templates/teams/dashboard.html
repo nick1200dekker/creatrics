@@ -325,8 +325,8 @@ function updateUIForWorkspace() {
                                             .replace(/\b\w/g, l => l.toUpperCase())
                                             .replace('X Post Editor', 'Post Editor')
                                             .replace('Tiktok Analytics', 'Analytics');
-                                        return `<span style="display: inline-block; padding: 0.5rem 1rem; margin: 0.25rem; background: var(--bg-primary); border: 1px solid var(--border-secondary); border-radius: 6px;">
-                                            ✅ ${name}
+                                        return `<span class="permission-badge">
+                                            <i class="ph-fill ph-check-circle" style="color: #10B981;"></i> ${name}
                                         </span>`;
                                     }).join('')}
                                 </div>
