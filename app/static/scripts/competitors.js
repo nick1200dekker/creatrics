@@ -70,13 +70,11 @@ async function addCompetitor() {
         const data = await response.json();
         
         if (data.success) {
-            // Add competitor to list immediately
             competitors.push(data.channel);
             renderCompetitorsList();
             input.value = '';
             showToast('Channel added successfully!', 'success');
             
-            // Show analysis options
             document.getElementById('analysisOptions').style.display = 'block';
         } else {
             showToast(data.error || 'Failed to add channel', 'error');
@@ -111,9 +109,8 @@ function renderCompetitorsList() {
         </div>
         <div class="competitors-grid">
             ${competitors.map(comp => {
-                // Create avatar HTML with error handling
                 const avatarHTML = comp.avatar ? 
-                    `<img src="${comp.avatar}" alt="${comp.title || 'Channel'}" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\\'avatar-placeholder\\'>${(comp.title || '?')[0].toUpperCase()}</div>';">` : 
+                    `<img src="${comp.avatar}" alt="${escapeHtml(comp.title || 'Channel')}" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\\'avatar-placeholder\\'>${(comp.title || '?')[0].toUpperCase()}</div>';">` : 
                     `<div class="avatar-placeholder">${(comp.title || '?')[0].toUpperCase()}</div>`;
                 
                 return `
@@ -122,7 +119,7 @@ function renderCompetitorsList() {
                             ${avatarHTML}
                         </div>
                         <div class="competitor-info">
-                            <div class="competitor-title">${comp.title || 'Unknown Channel'}</div>
+                            <div class="competitor-title">${escapeHtml(comp.title || 'Unknown Channel')}</div>
                             <div class="competitor-stats">
                                 <span class="stat">
                                     <i class="ph ph-users"></i>
@@ -162,7 +159,6 @@ async function removeCompetitor(docId) {
             renderCompetitorsList();
             showToast('Competitor removed', 'success');
             
-            // Hide analysis options if no competitors left
             if (competitors.length === 0) {
                 document.getElementById('analysisOptions').style.display = 'none';
             }
@@ -179,7 +175,6 @@ async function removeCompetitor(docId) {
 function setTimeframe(days) {
     selectedTimeframe = days;
     
-    // Update active button
     document.querySelectorAll('.timeframe-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.getAttribute('data-days') === days) {
@@ -188,7 +183,7 @@ function setTimeframe(days) {
     });
 }
 
-// Analyze competitors
+// Analyze competitors with new flow
 async function analyzeCompetitors() {
     if (isAnalyzing) return;
     
@@ -198,12 +193,19 @@ async function analyzeCompetitors() {
     }
     
     isAnalyzing = true;
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const originalText = analyzeBtn.innerHTML;
-    analyzeBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Analyzing...';
-    analyzeBtn.disabled = true;
+    
+    // Hide setup section and show progress
+    document.getElementById('setupSection').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'block';
+    document.getElementById('resultsSection').style.display = 'none';
+    
+    // Reset progress
+    updateProgress(0, 'Starting analysis...');
     
     try {
+        // Simulate progress updates
+        updateProgress(20, 'Fetching videos from competitors...');
+        
         const response = await fetch('/api/competitors/analyze', {
             method: 'POST',
             headers: {
@@ -214,12 +216,33 @@ async function analyzeCompetitors() {
             })
         });
         
+        updateProgress(60, 'Analyzing content patterns...');
+        
         const data = await response.json();
         
+        updateProgress(80, 'Generating insights...');
+        
         if (data.success) {
-            displayResults(data.data);
-            showToast('Analysis complete!', 'success');
+            updateProgress(100, 'Analysis complete!');
+            
+            // Show results after a brief delay
+            setTimeout(() => {
+                displayResults(data.data);
+                document.getElementById('progressSection').style.display = 'none';
+                document.getElementById('resultsSection').style.display = 'block';
+                
+                // Scroll to results
+                setTimeout(() => {
+                    document.getElementById('resultsSection').scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 100);
+            }, 500);
         } else {
+            document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('setupSection').style.display = 'block';
+            
             if (data.error_type === 'insufficient_credits') {
                 showToast(`Insufficient credits. Need ${data.required_credits.toFixed(2)}, have ${data.current_credits.toFixed(2)}`, 'error');
             } else {
@@ -228,12 +251,37 @@ async function analyzeCompetitors() {
         }
     } catch (error) {
         console.error('Error analyzing competitors:', error);
+        document.getElementById('progressSection').style.display = 'none';
+        document.getElementById('setupSection').style.display = 'block';
         showToast('Analysis failed. Please try again.', 'error');
     } finally {
         isAnalyzing = false;
-        analyzeBtn.innerHTML = originalText;
-        analyzeBtn.disabled = false;
     }
+}
+
+// Update progress bar
+function updateProgress(percent, message) {
+    const progressBar = document.querySelector('.progress-fill');
+    const progressText = document.querySelector('.progress-text');
+    const progressPercent = document.querySelector('.progress-percent');
+    
+    if (progressBar) progressBar.style.width = `${percent}%`;
+    if (progressText) progressText.textContent = message;
+    if (progressPercent) progressPercent.textContent = `${percent}%`;
+}
+
+// Back to setup
+function backToSetup() {
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('setupSection').style.display = 'block';
+    
+    // Scroll to top
+    setTimeout(() => {
+        document.getElementById('setupSection').scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+    }, 100);
 }
 
 // Format markdown-style text
@@ -249,7 +297,7 @@ function formatMarkdown(text) {
     return text;
 }
 
-// Display results with proper formatting
+// Display results with improved formatting
 function displayResults(data) {
     const resultsSection = document.getElementById('resultsSection');
     const { videos, patterns, insights, timeframe_days } = data;
@@ -258,81 +306,17 @@ function displayResults(data) {
                          timeframe_days === 2 ? '48 hours' : 
                          `${timeframe_days} days`;
     
+    // Build HTML with back button and stats grid first
     let html = `
-        <div class="results-header">
-            <h2 class="results-title">
-                <i class="ph ph-chart-line"></i>
-                Analysis Results
-            </h2>
-            <span class="timeframe-badge">Last ${timeframeText}</span>
+        <!-- Back Button -->
+        <div class="back-button-container">
+            <button class="back-btn" onclick="backToSetup()">
+                <i class="ph ph-arrow-left"></i>
+                Back to Setup
+            </button>
         </div>
-    `;
-    
-    // Key Insights with proper formatting
-    if (insights && insights.summary) {
-        html += `
-            <div class="insights-card">
-                <h3 class="section-title">
-                    <i class="ph ph-lightbulb"></i>
-                    Key Insights
-                </h3>
-                <div class="insights-content">
-        `;
         
-        // Split by newlines and format each paragraph
-        const paragraphs = insights.summary.split('\n').filter(line => line.trim());
-        let inList = false;
-        
-        paragraphs.forEach(para => {
-            const trimmed = para.trim();
-            
-            // Check if it's a header (starts with # or ##)
-            if (trimmed.startsWith('##')) {
-                if (inList) {
-                    html += '</ul>';
-                    inList = false;
-                }
-                const headerText = trimmed.replace(/^##\s*/, '');
-                html += `<h4 style="font-weight: 600; color: var(--text-primary); margin: 1rem 0 0.5rem 0;">${formatMarkdown(escapeHtml(headerText))}</h4>`;
-            } else if (trimmed.startsWith('#')) {
-                if (inList) {
-                    html += '</ul>';
-                    inList = false;
-                }
-                const headerText = trimmed.replace(/^#\s*/, '');
-                html += `<h3 style="font-weight: 700; color: var(--text-primary); margin: 1.25rem 0 0.75rem 0; font-size: 1.125rem;">${formatMarkdown(escapeHtml(headerText))}</h3>`;
-            } else if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
-                // Bullet point
-                const bulletText = trimmed.replace(/^[-•]\s*/, '');
-                if (!inList) {
-                    html += '<ul style="list-style: disc; margin-left: 1.5rem; margin-bottom: 0.75rem;">';
-                    inList = true;
-                }
-                html += `<li style="margin-bottom: 0.375rem;">${formatMarkdown(escapeHtml(bulletText))}</li>`;
-            } else if (trimmed) {
-                // Close any open ul
-                if (inList) {
-                    html += '</ul>';
-                    inList = false;
-                }
-                // Regular paragraph
-                html += `<p>${formatMarkdown(escapeHtml(trimmed))}</p>`;
-            }
-        });
-        
-        // Close any unclosed ul
-        if (inList) {
-            html += '</ul>';
-        }
-        
-        html += `
-                </div>
-            </div>
-        `;
-    }
-    
-    // Quick Stats
-    html += `
+        <!-- Quick Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ph ph-video-camera"></i></div>
@@ -355,54 +339,73 @@ function displayResults(data) {
                 <div class="stat-label">Channels</div>
             </div>
         </div>
+        
+        <!-- Results Header -->
+        <div class="results-header">
+            <h2 class="results-title">
+                <i class="ph ph-chart-line"></i>
+                Analysis Results
+            </h2>
+            <span class="timeframe-badge">Last ${timeframeText}</span>
+        </div>
     `;
     
-    // Trending Topics
-    if (insights.trending_topics && insights.trending_topics.length > 0) {
+    // Key Insights with clean formatting
+    if (insights && insights.summary) {
         html += `
-            <div class="trends-card">
+            <div class="insights-card">
                 <h3 class="section-title">
-                    <i class="ph ph-trend-up"></i>
-                    Trending Topics
+                    <i class="ph ph-lightbulb"></i>
+                    Key Insights
                 </h3>
-                <div class="trends-grid">
-                    ${insights.trending_topics.map(topic => `
-                        <div class="trend-tag">
-                            <span class="trend-name">${escapeHtml(topic.topic)}</span>
-                            <span class="trend-badge">${topic.frequency}</span>
-                        </div>
-                    `).join('')}
+                <div class="insights-content">
+        `;
+        
+        // Parse and format the markdown content
+        const sections = insights.summary.split(/(?=##\s)/);
+        
+        sections.forEach(section => {
+            const lines = section.split('\n').filter(line => line.trim());
+            
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                
+                if (trimmed.startsWith('##')) {
+                    const headerText = trimmed.replace(/^##\s*/, '');
+                    html += `<h4 class="insight-section-header">${formatMarkdown(escapeHtml(headerText))}</h4>`;
+                } else if (trimmed.startsWith('**') && trimmed.includes(':')) {
+                    // Bold label with content
+                    html += `<p class="insight-item">${formatMarkdown(escapeHtml(trimmed))}</p>`;
+                } else if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
+                    const bulletText = trimmed.replace(/^[-•]\s*/, '');
+                    html += `<p class="insight-bullet">• ${formatMarkdown(escapeHtml(bulletText))}</p>`;
+                } else if (trimmed) {
+                    html += `<p class="insight-text">${formatMarkdown(escapeHtml(trimmed))}</p>`;
+                }
+            });
+        });
+        
+        html += `
                 </div>
             </div>
         `;
     }
     
-    // Quick Wins - Only show if they have meaningful opportunities
+    // Quick Wins
     if (insights.quick_wins && insights.quick_wins.length > 0) {
-        // Filter out generic opportunities
-        const meaningfulWins = insights.quick_wins.filter(win => {
-            const opportunity = win.opportunity?.toLowerCase() || '';
-            // Filter out generic "make your version" type suggestions
-            return !opportunity.includes('consider creating your version') &&
-                   !opportunity.includes('high-performing content') &&
-                   opportunity.length > 50; // Ensure it has substantial content
-        });
+        const meaningfulWins = insights.quick_wins.filter(win => win.opportunity && win.opportunity.length > 30);
         
         if (meaningfulWins.length > 0) {
             html += `
                 <div class="quick-wins-card">
                     <h3 class="section-title">
                         <i class="ph ph-rocket-launch"></i>
-                        Quick Win Opportunities
+                        Content Opportunities
                     </h3>
                     <div class="quick-wins-list">
                         ${meaningfulWins.map(win => `
                             <div class="quick-win-item">
-                                <div class="win-header">
-                                    <span class="win-channel">${escapeHtml(win.channel)}</span>
-                                    <span class="win-views">${formatNumber(win.views)} views</span>
-                                </div>
-                                <div class="win-title">${formatMarkdown(escapeHtml(win.title))}</div>
+                                <div class="win-title">"${formatMarkdown(escapeHtml(win.title))}"</div>
                                 <div class="win-opportunity">${formatMarkdown(escapeHtml(win.opportunity))}</div>
                             </div>
                         `).join('')}
@@ -412,7 +415,7 @@ function displayResults(data) {
         }
     }
     
-    // Top Videos
+    // Top Videos as Table
     if (videos && videos.length > 0) {
         html += `
             <div class="videos-card">
@@ -420,38 +423,43 @@ function displayResults(data) {
                     <i class="ph ph-play-circle"></i>
                     Top Performing Videos
                 </h3>
-                <div class="videos-grid">
-                    ${videos.slice(0, 12).map(video => `
-                        <div class="video-card">
-                            <div class="video-thumbnail">
-                                ${video.thumbnail ? 
-                                    `<img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">` : 
-                                    '<div class="thumbnail-placeholder"><i class="ph ph-video-camera"></i></div>'
-                                }
-                                ${video.length ? `<span class="video-duration">${video.length}</span>` : ''}
-                            </div>
-                            <div class="video-info">
-                                <div class="video-title">${escapeHtml(video.title)}</div>
-                                <div class="video-meta">
-                                    <span class="video-channel">${escapeHtml(video.channel_title)}</span>
-                                    <span class="video-views">${formatNumber(video.view_count)} views</span>
-                                </div>
-                                <div class="video-published">${video.published_time || 'Recently'}</div>
-                            </div>
-                        </div>
-                    `).join('')}
+                <div class="videos-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Video</th>
+                                <th>Channel</th>
+                                <th>Views</th>
+                                <th>Published</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${videos.slice(0, 20).map(video => `
+                                <tr onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">
+                                    <td class="video-cell">
+                                        <div class="video-thumbnail-small">
+                                            ${video.thumbnail ? 
+                                                `<img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">` : 
+                                                '<div class="thumbnail-placeholder-small"><i class="ph ph-video-camera"></i></div>'
+                                            }
+                                        </div>
+                                        <div class="video-title-cell">
+                                            ${escapeHtml(video.title)}
+                                        </div>
+                                    </td>
+                                    <td class="channel-cell">${escapeHtml(video.channel_title)}</td>
+                                    <td class="views-cell">${formatNumber(video.view_count)}</td>
+                                    <td class="published-cell">${video.published_time || 'Recently'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         `;
     }
     
     resultsSection.innerHTML = html;
-    resultsSection.style.display = 'block';
-    
-    // Scroll to results smoothly
-    setTimeout(() => {
-        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
 }
 
 // Format number with commas
@@ -475,7 +483,6 @@ function escapeHtml(text) {
 
 // Show toast notification
 function showToast(message, type = 'info') {
-    // Remove existing toasts
     document.querySelectorAll('.toast').forEach(toast => toast.remove());
     
     const toast = document.createElement('div');
@@ -492,9 +499,7 @@ function showToast(message, type = 'info') {
     
     document.body.appendChild(toast);
     
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 10);
+    setTimeout(() => toast.classList.add('show'), 10);
     
     setTimeout(() => {
         toast.classList.remove('show');

@@ -1,5 +1,5 @@
 /* =============================================
-   COMPETITORS PAGE - COMPLETE STYLES (UPDATED)
+   COMPETITORS PAGE - UPDATED WITH PROGRESS
    ============================================= */
 
 /* Reset default content-panel */
@@ -26,7 +26,7 @@ html.dark .competitors-wrapper {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
-/* Header - Matching other pages */
+/* Header */
 .competitors-header {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
@@ -74,9 +74,217 @@ html.dark .competitors-content {
 }
 
 /* =============================================
-   SETUP SECTION
+   PROGRESS SECTION
    ============================================= */
 
+.progress-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+.progress-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+html.dark .progress-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+    backdrop-filter: blur(10px);
+}
+
+.progress-header {
+    margin-bottom: 2rem;
+}
+
+.progress-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    border-radius: 50%;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+html.dark .progress-icon {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 4px 16px rgba(96, 165, 250, 0.4);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 24px rgba(59, 130, 246, 0.5);
+    }
+}
+
+html.dark @keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 4px 16px rgba(96, 165, 250, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 24px rgba(96, 165, 250, 0.6);
+    }
+}
+
+.progress-icon i {
+    font-size: 2.5rem;
+    color: white;
+}
+
+.progress-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+}
+
+.progress-subtitle {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.progress-body {
+    margin-top: 2rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+html.dark .progress-bar {
+    background: rgba(63, 63, 70, 0.5);
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+html.dark .progress-fill {
+    background: linear-gradient(90deg, #60A5FA 0%, #3B82F6 100%);
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 100%
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.progress-percent {
+    font-size: 0.875rem;
+    color: #3B82F6;
+    font-weight: 600;
+}
+
+html.dark .progress-percent {
+    color: #60A5FA;
+}
+
+/* =============================================
+   BACK BUTTON
+   ============================================= */
+
+.back-button-container {
+    margin-bottom: 1.5rem;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+html.dark .back-btn {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
+.back-btn:hover {
+    background: var(--bg-primary);
+    border-color: #3B82F6;
+    color: #3B82F6;
+    transform: translateX(-2px);
+}
+
+html.dark .back-btn:hover {
+    background: rgba(63, 63, 70, 0.8);
+    border-color: #60A5FA;
+    color: #60A5FA;
+}
+
+.back-btn i {
+    font-size: 1rem;
+}
+
+/* Setup Section */
 .setup-section {
     margin-bottom: 2rem;
 }
@@ -224,7 +432,6 @@ html.dark .add-btn:hover:not(:disabled) {
     font-size: 1rem;
 }
 
-/* Spin animation */
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -234,10 +441,7 @@ html.dark .add-btn:hover:not(:disabled) {
     animation: spin 1s linear infinite;
 }
 
-/* =============================================
-   COMPETITORS LIST
-   ============================================= */
-
+/* Competitors List */
 .competitors-list {
     min-height: 200px;
 }
@@ -446,10 +650,7 @@ html.dark .remove-btn:hover {
     color: #F87171;
 }
 
-/* =============================================
-   ANALYSIS OPTIONS
-   ============================================= */
-
+/* Analysis Options */
 .analysis-options {
     margin-top: 1.5rem;
     padding-top: 1.5rem;
@@ -569,108 +770,10 @@ html.dark .analyze-btn:hover:not(:disabled) {
    ============================================= */
 
 .results-section {
-    margin-top: 2rem;
+    margin-top: 0;
 }
 
-.results-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.results-title {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-}
-
-.results-title i {
-    color: #3B82F6;
-    font-size: 1.75rem;
-}
-
-html.dark .results-title i {
-    color: #60A5FA;
-}
-
-.timeframe-badge {
-    padding: 0.375rem 0.75rem;
-    background: rgba(59, 130, 246, 0.1);
-    color: #3B82F6;
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 6px;
-    font-size: 0.8125rem;
-    font-weight: 600;
-}
-
-html.dark .timeframe-badge {
-    background: rgba(59, 130, 246, 0.15);
-    color: #60A5FA;
-    border-color: rgba(96, 165, 250, 0.3);
-}
-
-/* Result Cards */
-.insights-card,
-.trends-card,
-.quick-wins-card,
-.videos-card {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    transition: all 0.2s ease;
-}
-
-html.dark .insights-card,
-html.dark .trends-card,
-html.dark .quick-wins-card,
-html.dark .videos-card {
-    background: rgba(39, 39, 42, 0.6);
-    border-color: rgba(63, 63, 70, 0.6);
-    backdrop-filter: blur(10px);
-}
-
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 1rem 0;
-}
-
-.section-title i {
-    color: #3B82F6;
-    font-size: 1.25rem;
-}
-
-html.dark .section-title i {
-    color: #60A5FA;
-}
-
-.insights-content p {
-    color: var(--text-secondary);
-    line-height: 1.7;
-    margin-bottom: 0.75rem;
-}
-
-.insights-content p:last-child {
-    margin-bottom: 0;
-}
-
-/* =============================================
-   STATS GRID
-   ============================================= */
-
+/* Stats Grid */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -750,65 +853,142 @@ html.dark .stat-icon {
     font-weight: 500;
 }
 
-/* =============================================
-   TRENDING TOPICS
-   ============================================= */
-
-.trends-grid {
+/* Results Header */
+.results-header {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.trend-tag {
-    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.875rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: 20px;
-    transition: all 0.2s ease;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
-html.dark .trend-tag {
-    background: rgba(63, 63, 70, 0.5);
-    border-color: rgba(82, 82, 91, 0.5);
-}
-
-.trend-tag:hover {
-    background: rgba(59, 130, 246, 0.05);
-    border-color: #3B82F6;
-}
-
-html.dark .trend-tag:hover {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: #60A5FA;
-}
-
-.trend-name {
-    font-size: 0.875rem;
-    font-weight: 500;
+.results-title {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 1.5rem;
+    font-weight: 700;
     color: var(--text-primary);
+    margin: 0;
 }
 
-.trend-badge {
-    padding: 0.125rem 0.5rem;
-    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-    color: white;
-    border-radius: 10px;
-    font-size: 0.6875rem;
+.results-title i {
+    color: #3B82F6;
+    font-size: 1.75rem;
+}
+
+html.dark .results-title i {
+    color: #60A5FA;
+}
+
+.timeframe-badge {
+    padding: 0.375rem 0.75rem;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 6px;
+    font-size: 0.8125rem;
     font-weight: 600;
 }
 
-html.dark .trend-badge {
-    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+html.dark .timeframe-badge {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60A5FA;
+    border-color: rgba(96, 165, 250, 0.3);
 }
 
-/* =============================================
-   QUICK WINS
-   ============================================= */
+/* Result Cards */
+.insights-card,
+.quick-wins-card,
+.videos-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+}
 
+html.dark .insights-card,
+html.dark .quick-wins-card,
+html.dark .videos-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+    backdrop-filter: blur(10px);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1.25rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+html.dark .section-title {
+    border-bottom-color: rgba(82, 82, 91, 0.5);
+}
+
+.section-title i {
+    color: #3B82F6;
+    font-size: 1.25rem;
+}
+
+html.dark .section-title i {
+    color: #60A5FA;
+}
+
+/* Insights Content */
+.insights-content {
+    line-height: 1.7;
+}
+
+.insight-section-header {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 1.25rem 0 0.75rem 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-secondary);
+}
+
+html.dark .insight-section-header {
+    border-top-color: rgba(82, 82, 91, 0.3);
+}
+
+.insight-section-header:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.insight-text {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    margin: 0.75rem 0;
+    line-height: 1.6;
+}
+
+.insight-item {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    margin: 0.625rem 0;
+    line-height: 1.6;
+}
+
+.insight-bullet {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    margin: 0.5rem 0 0.5rem 1rem;
+    line-height: 1.6;
+}
+
+/* Quick Wins */
 .quick-wins-list {
     display: flex;
     flex-direction: column;
@@ -816,7 +996,7 @@ html.dark .trend-badge {
 }
 
 .quick-win-item {
-    padding: 1rem;
+    padding: 1.25rem;
     background: var(--bg-secondary);
     border-left: 3px solid #3B82F6;
     border-radius: 8px;
@@ -839,111 +1019,98 @@ html.dark .quick-win-item:hover {
     box-shadow: 0 2px 8px rgba(96, 165, 250, 0.2);
 }
 
-.win-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.win-channel {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #3B82F6;
-}
-
-html.dark .win-channel {
-    color: #60A5FA;
-}
-
-.win-views {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
 .win-title {
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 0.375rem;
+    margin-bottom: 0.625rem;
     line-height: 1.4;
 }
 
 .win-opportunity {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
-/* =============================================
-   VIDEOS GRID
-   ============================================= */
-
-.videos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.25rem;
+/* Videos Table */
+.videos-table {
+    overflow-x: auto;
 }
 
-@media (max-width: 768px) {
-    .videos-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.video-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: 10px;
-    overflow: hidden;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-html.dark .video-card {
-    background: rgba(63, 63, 70, 0.5);
-    border-color: rgba(82, 82, 91, 0.3);
-}
-
-.video-card:hover {
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-    transform: translateY(-2px);
-    border-color: rgba(59, 130, 246, 0.3);
-}
-
-html.dark .video-card:hover {
-    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
-    border-color: rgba(96, 165, 250, 0.4);
-}
-
-.video-thumbnail {
-    position: relative;
+.videos-table table {
     width: 100%;
-    padding-top: 56.25%; /* 16:9 aspect ratio */
-    background: var(--bg-tertiary);
-    overflow: hidden;
+    border-collapse: collapse;
 }
 
-html.dark .video-thumbnail {
+.videos-table thead {
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-primary);
+}
+
+html.dark .videos-table thead {
+    background: rgba(63, 63, 70, 0.5);
+    border-bottom-color: rgba(82, 82, 91, 0.5);
+}
+
+.videos-table th {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.videos-table tbody tr {
+    border-bottom: 1px solid var(--border-secondary);
+    transition: all 0.2s ease;
+}
+
+html.dark .videos-table tbody tr {
+    border-bottom-color: rgba(82, 82, 91, 0.3);
+}
+
+.videos-table tbody tr:hover {
+    background: var(--bg-secondary);
+}
+
+html.dark .videos-table tbody tr:hover {
+    background: rgba(63, 63, 70, 0.5);
+}
+
+.videos-table td {
+    padding: 1rem;
+    font-size: 0.875rem;
+}
+
+.video-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.video-thumbnail-small {
+    flex-shrink: 0;
+    width: 80px;
+    height: 45px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-tertiary);
+}
+
+html.dark .video-thumbnail-small {
     background: rgba(63, 63, 70, 0.6);
 }
 
-.video-thumbnail img {
-    position: absolute;
-    top: 0;
-    left: 0;
+.video-thumbnail-small img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.thumbnail-placeholder {
-    position: absolute;
-    top: 0;
-    left: 0;
+.thumbnail-placeholder-small {
     width: 100%;
     height: 100%;
     display: flex;
@@ -952,76 +1119,49 @@ html.dark .video-thumbnail {
     background: var(--bg-tertiary);
 }
 
-html.dark .thumbnail-placeholder {
+html.dark .thumbnail-placeholder-small {
     background: rgba(63, 63, 70, 0.6);
 }
 
-.thumbnail-placeholder i {
-    font-size: 3rem;
+.thumbnail-placeholder-small i {
+    font-size: 1.5rem;
     color: var(--text-tertiary);
     opacity: 0.5;
 }
 
-.video-duration {
-    position: absolute;
-    bottom: 0.5rem;
-    right: 0.5rem;
-    padding: 0.125rem 0.375rem;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    border-radius: 4px;
-    font-size: 0.6875rem;
-    font-weight: 600;
-}
-
-.video-info {
-    padding: 0.75rem;
-}
-
-.video-title {
-    font-size: 0.875rem;
-    font-weight: 600;
+.video-title-cell {
+    flex: 1;
+    font-weight: 500;
     color: var(--text-primary);
     line-height: 1.4;
-    margin-bottom: 0.5rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-.video-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.375rem;
-}
-
-.video-channel {
-    font-size: 0.75rem;
+.channel-cell {
     color: var(--text-secondary);
     font-weight: 500;
 }
 
-.video-views {
-    font-size: 0.75rem;
+.views-cell {
     color: #3B82F6;
     font-weight: 600;
+    white-space: nowrap;
 }
 
-html.dark .video-views {
+html.dark .views-cell {
     color: #60A5FA;
 }
 
-.video-published {
-    font-size: 0.6875rem;
+.published-cell {
     color: var(--text-tertiary);
+    font-size: 0.8125rem;
+    white-space: nowrap;
 }
 
-/* =============================================
-   TOAST NOTIFICATIONS
-   ============================================= */
-
+/* Toast Notifications */
 .toast {
     position: fixed;
     bottom: 2rem;
@@ -1106,6 +1246,18 @@ html.dark .toast-info i {
    RESPONSIVE DESIGN
    ============================================= */
 
+@media (max-width: 1024px) {
+    .videos-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .videos-table table {
+        min-width: 800px;
+    }
+}
+
 @media (max-width: 768px) {
     .competitors-content {
         padding: 1rem;
@@ -1124,6 +1276,23 @@ html.dark .toast-info i {
         padding: 1rem;
     }
     
+    .progress-card {
+        padding: 2rem 1.5rem;
+    }
+    
+    .progress-icon {
+        width: 64px;
+        height: 64px;
+    }
+    
+    .progress-icon i {
+        font-size: 2rem;
+    }
+    
+    .progress-title {
+        font-size: 1.25rem;
+    }
+    
     .results-header {
         flex-direction: column;
         align-items: flex-start;
@@ -1133,10 +1302,21 @@ html.dark .toast-info i {
         font-size: 1.25rem;
     }
     
+    .insights-card,
+    .quick-wins-card,
+    .videos-card {
+        padding: 1rem;
+    }
+    
     .toast {
         right: 1rem;
         left: 1rem;
         bottom: 1rem;
         max-width: none;
+    }
+    
+    .video-thumbnail-small {
+        width: 60px;
+        height: 34px;
     }
 }
