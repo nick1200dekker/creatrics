@@ -664,7 +664,13 @@
         const grid = document.getElementById('savedScriptsGrid');
 
         if (scripts.length === 0) {
-            grid.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No saved scripts yet</p>';
+            grid.innerHTML = `
+                <div class="empty-results" style="padding: 3rem 2rem;">
+                    <i class="ph ph-folder-open empty-icon"></i>
+                    <div class="empty-title">No saved scripts yet</div>
+                    <div class="empty-text">Your saved scripts will appear here for easy access</div>
+                </div>
+            `;
             return;
         }
 

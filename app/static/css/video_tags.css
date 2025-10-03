@@ -101,7 +101,9 @@ html.dark .input-panel {
 }
 
 .form-label {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     color: var(--text-secondary);
     font-size: 0.875rem;
     font-weight: 600;
@@ -112,6 +114,14 @@ html.dark .input-panel {
 
 html.dark .form-label {
     color: #d4d4d8;
+}
+
+.form-label i {
+    color: #3B82F6;
+}
+
+html.dark .form-label i {
+    color: #60A5FA;
 }
 
 .input-helper {
