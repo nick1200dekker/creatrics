@@ -3,6 +3,7 @@ Competitor Analyzer
 Analyzes competitor channels and generates insights
 """
 import logging
+import re
 from typing import List, Dict, Optional
 from datetime import datetime
 from app.scripts.competitors.youtube_api import YouTubeAPI
@@ -149,7 +150,6 @@ class CompetitorAnalyzer:
         for video in videos:
             title = video.get('title', '').lower()
             # Remove punctuation and split
-            import re
             words = re.findall(r'\b[a-z]+\b', title)
             words = [w for w in words if len(w) > 3 and w not in stop_words]
             for word in words:
@@ -205,28 +205,114 @@ class CompetitorAnalyzer:
             most_active = sorted(channel_freq.items(), key=lambda x: x[1], reverse=True)[:5]
             active_channels = ', '.join([f"{c[0]} ({c[1]} videos)" for c in most_active])
             
-            prompt = f"""Analyze these YouTube competitor insights from the last {days} days:
+            # IMPROVED PROMPT - Teaches methodology instead of giving examples
+            prompt = f"""Analyze YouTube competitor data from the last {days} days and provide actionable insights.
 
-TOP PERFORMING VIDEOS:
+**DATA:**
+Channels Analyzed: {patterns.get('total_channels', 0)}
+Total Videos: {patterns.get('total_videos_analyzed', 0)}
+Average Views: {patterns.get('avg_views', 0):,}
+Total Views: {patterns.get('total_views', 0):,}
+
+**TOP PERFORMING VIDEOS:**
 {chr(10).join(video_summaries)}
 
-KEY PATTERNS:
-- Most common words in titles: {top_words}
-- Average views per video: {patterns.get('avg_views', 0):,}
-- Total videos analyzed: {patterns.get('total_videos_analyzed', 0)} from {patterns.get('total_channels', 0)} channels
-- Most active channels: {active_channels}
+**TITLE PATTERNS:**
+Most frequent words: {top_words}
 
-Provide a brief analysis with:
-1. What content types/topics are performing best right now
-2. Key patterns in successful video titles (what hooks are working)
-3. Upload frequency insights (who's posting most, does it correlate with views)
-4. 4-6 specific, actionable content ideas based on these trends
+**UPLOAD ACTIVITY:**
+{active_channels}
 
-Keep it concise (300-400 words), practical, and focused on what the user should DO."""
+Provide analysis using this structure with proper markdown formatting:
 
-            system_prompt = f"""You are a YouTube strategy expert analyzing competitor data.
-Current date: {datetime.now().strftime('%B %d, %Y')}.
-Provide practical, data-driven insights that a content creator can act on immediately."""
+## 1. Top Performing Content Types
+
+Analyze the video data to identify 2-3 content formats with highest engagement. For each:
+- State the format clearly using **bold** for format names
+- Provide specific metrics (average views, video count)
+- Give concrete examples from actual data (channel names, view counts)
+- Explain WHY this format works (viewer psychology, algorithmic benefits)
+
+## 2. Title Hook Patterns That Work
+
+Extract 5-6 patterns from top-performing titles. For each pattern:
+- **Name the pattern** in bold
+- Provide 2-3 specific examples from the actual video titles above
+- Explain the psychological trigger (urgency, FOMO, curiosity, authority)
+- Include exact hook words/phrases as they appear
+
+Categorize by type: Urgency hooks (CAPS, superlatives), Constraint hooks, Exclusivity hooks (FIRST, ONLY), Authority hooks (rankings, credentials), Curiosity hooks.
+
+## 3. Upload Frequency Insights
+
+Compare channels' quality vs. quantity strategies:
+- Name specific channels with their upload frequency
+- Provide their average view counts
+- Calculate engagement ratio (views per video)
+- Draw conclusion with **bold** emphasis on winning strategy
+- Identify timing gaps or posting opportunities
+
+## 4. Actionable Content Ideas
+
+CRITICAL: Create 6 SPECIFIC, UNIQUE content ideas analyzing the data.
+
+**Required for Each Idea:**
+1. **Exact Title** in quotes using proven hooks from Section 2
+2. **Data-Driven Reasoning** - Cite metrics (avg views, percentages, gaps)
+3. **Gap Analysis** - What competitors haven't done
+4. **Pattern Combination** - Merge 2+ successful elements
+
+**Creation Process:**
+- Identify trending topics and formats from the data
+- Find what's working (high views, engagement)
+- Spot what's MISSING (unfilled gaps)
+- Combine proven patterns in new ways
+- Explain: "[Format] averages [X] views, [topic] appears in [Y%] of content, but no competitor has [gap]. This combines [pattern 1] with [pattern 2]."
+
+**Format:**
+1. **"[Title Using Proven Hooks]"** - [Format] videos average [X] views. [Topic] appears in [Y%] of top content. However, [specific gap analysis]. This combines [pattern 1] with [pattern 2] to [unique value].
+
+**Quality Checklist:**
+✅ Uses actual data points (view counts, percentages)
+✅ References specific competitor gaps
+✅ Combines 2+ successful patterns
+✅ Clear reasoning why it works
+✅ Title uses Section 2 hooks
+✅ Explains viewer/algorithmic benefit
+
+**NEVER Use:**
+❌ "High-performing content - make your version"
+❌ "Create content about [topic] because trending"
+❌ Generic suggestions without data
+❌ Suggestions without gap analysis
+
+## 5. Key Takeaways
+
+Provide specific, actionable recommendations:
+- **Upload Strategy:** [Specific recommendation based on data]
+- **Content Focus:** [Specific topics to prioritize]
+- **Title Strategy:** [Specific patterns to use]
+- **Timing Opportunity:** [When to publish based on gaps]
+
+**FORMATTING RULES:**
+- Use **bold** for emphasis on key terms and statistics
+- Use *italic* for secondary emphasis
+- Use ## for section headers
+- Use - for bullet points
+- Use numbered lists for content ideas
+- Be specific with numbers and percentages
+- Reference actual video titles and channels
+- Everything must be data-driven from the analysis above"""
+
+            system_prompt = f"""You are an expert YouTube strategy analyst. Current date: {datetime.now().strftime('%B %d, %Y')}.
+
+Analyze the provided competitor data and follow the instructions precisely. Create unique, data-driven insights by:
+1. Extracting patterns from the actual video data provided
+2. Identifying real gaps in competitor coverage
+3. Combining successful patterns in novel ways
+4. Supporting every claim with specific metrics
+
+Use proper markdown formatting (**bold**, *italic*, ## headers, - bullets) throughout your response."""
 
             response = ai_provider.create_completion(
                 messages=[
@@ -234,51 +320,129 @@ Provide practical, data-driven insights that a content creator can act on immedi
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=600
+                max_tokens=2000  # Increased for comprehensive response
             )
             
             insights_text = response.get('content', '') if isinstance(response, dict) else str(response)
             
-            return {
-                'summary': insights_text,
-                'quick_wins': self._extract_quick_wins(videos),
-                'trending_topics': self._extract_trending_topics(patterns)
-            }
+            # Parse the insights
+            parsed_insights = self._parse_ai_insights(insights_text)
+            
+            return parsed_insights
             
         except Exception as e:
             logger.error(f"Error generating insights: {e}")
             return self._generate_fallback_insights(videos, patterns, days)
     
+    def _parse_ai_insights(self, insights_text: str) -> Dict:
+        """Parse AI-generated insights into structured format"""
+        try:
+            # Full summary is the entire text
+            summary = insights_text
+            
+            # Extract content ideas from Section 4
+            quick_wins = self._parse_content_ideas(insights_text)
+            
+            # Extract trending topics from Section 5 or patterns
+            trending_topics = self._parse_trending_from_text(insights_text)
+            
+            return {
+                'summary': summary,
+                'quick_wins': quick_wins if quick_wins else [],
+                'trending_topics': trending_topics if trending_topics else []
+            }
+        except Exception as e:
+            logger.error(f"Error parsing insights: {e}")
+            return {
+                'summary': insights_text,
+                'quick_wins': [],
+                'trending_topics': []
+            }
+    
+    def _parse_content_ideas(self, text: str) -> List[Dict]:
+        """Extract content ideas from Section 4"""
+        ideas = []
+        
+        try:
+            # Find Section 4
+            section_match = re.search(r'##\s*4\.\s*Actionable Content Ideas(.+?)(?=##|$)', text, re.DOTALL)
+            if not section_match:
+                return ideas
+            
+            section_text = section_match.group(1)
+            
+            # Pattern: 1. **"Title"** - Explanation
+            pattern = r'\d+\.\s+\*\*["\']([^"\']+)["\']?\*\*\s*[-–—]\s*(.+?)(?=\n\d+\.|\n\n|\Z)'
+            
+            for match in re.finditer(pattern, section_text, re.DOTALL):
+                title = match.group(1).strip()
+                opportunity = match.group(2).strip()
+                
+                # Clean up opportunity text
+                opportunity = re.sub(r'\n+', ' ', opportunity)
+                opportunity = opportunity.strip()
+                
+                # Only include if substantial (not generic)
+                if len(opportunity) > 50:
+                    ideas.append({
+                        'title': title,
+                        'opportunity': opportunity,
+                        'channel': 'Content Opportunity',
+                        'views': 0
+                    })
+            
+            return ideas[:6]  # Max 6 ideas
+            
+        except Exception as e:
+            logger.error(f"Error parsing content ideas: {e}")
+            return ideas
+    
+    def _parse_trending_from_text(self, text: str) -> List[Dict]:
+        """Extract trending topics from the text"""
+        topics = []
+        
+        try:
+            # Try to find a Trending Topics or Key Takeaways section
+            section_match = re.search(r'(?:Trending|Key|Common).{0,20}Topics?(.+?)(?=##|$)', text, re.DOTALL | re.IGNORECASE)
+            
+            if section_match:
+                section_text = section_match.group(1)
+                
+                # Pattern: - Topic (XX%) or - Topic: XX
+                pattern = r'[-•]\s+([^(:]+?)(?:\((\d+)%\)|:\s*(\d+))'
+                
+                for match in re.finditer(pattern, section_text):
+                    topic = match.group(1).strip()
+                    freq = int(match.group(2) or match.group(3) or 0)
+                    
+                    topics.append({
+                        'topic': topic,
+                        'frequency': freq
+                    })
+            
+            return topics[:10]
+            
+        except Exception as e:
+            logger.error(f"Error parsing trending topics: {e}")
+            return topics
+    
     def _generate_fallback_insights(self, videos: List[Dict], patterns: Dict, days: int) -> Dict:
         """Generate basic insights without AI"""
         summary = f"""Analyzed {len(videos)} videos from {patterns.get('total_channels', 0)} competitor channels over the last {days} days.
 
-Key Findings:
+**Key Findings:**
 - Average views per video: {patterns.get('avg_views', 0):,}
 - Total views across all videos: {patterns.get('total_views', 0):,}
-- Most common title words indicate trending topics
+- Most active channels show consistent upload schedules
 
-Top performing videos show strong engagement. Consider creating similar content with your unique perspective."""
+**Top Performing Content:**
+The highest-performing videos demonstrate strong audience engagement. Review the top videos list for successful content patterns and consider creating similar content with your unique perspective."""
         
         return {
             'summary': summary,
-            'quick_wins': self._extract_quick_wins(videos),
+            'quick_wins': [],
             'trending_topics': self._extract_trending_topics(patterns)
         }
-    
-    def _extract_quick_wins(self, videos: List[Dict]) -> List[Dict]:
-        """Extract quick win opportunities from recent high-performing videos"""
-        quick_wins = []
-        for video in videos[:8]:
-            quick_wins.append({
-                'title': video.get('title'),
-                'views': video.get('view_count'),
-                'channel': video.get('channel_title'),
-                'published': video.get('published_time', 'Recently'),
-                'opportunity': "High-performing content - consider creating your version of this topic"
-            })
-        
-        return quick_wins
     
     def _extract_trending_topics(self, patterns: Dict) -> List[Dict]:
         """Extract trending topics from title patterns"""
@@ -286,8 +450,7 @@ Top performing videos show strong engagement. Consider creating similar content 
         for word_data in patterns.get('top_title_words', [])[:10]:
             trending.append({
                 'topic': word_data['word'].title(),
-                'frequency': word_data['count'],
-                'trend': 'Hot' if word_data['count'] > 5 else 'Rising'
+                'frequency': word_data['count']
             })
         
         return trending
