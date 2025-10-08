@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Analyze Video - AI-Powered YouTube Analysis | Creatrics{% endblock %}
+
+{% block seo_meta %}
+<meta name="description" content="Analyze any YouTube video with AI. Get detailed insights on hooks, content strategy, SEO, and more. Deep dive into video performance and creator strategies.">
+<meta name="keywords" content="YouTube video analysis, video insights, content strategy, YouTube AI analysis, video analytics">
+{% endblock %}
+
+{% block additional_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analyze_video.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="content-panel">
+    <div class="analyze-video-wrapper">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1 class="page-title">
+                    <i class="ph ph-video"></i>
+                    <span>Analyze Video</span>
+                </h1>
+                <p class="page-subtitle">Deep dive into any YouTube video with AI-powered analysis</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Input Methods -->
+            <div class="input-section">
+                <div class="input-card">
+                    <div class="input-header">
+                        <h2 class="input-title">
+                            <i class="ph ph-link"></i>
+                            Paste YouTube URL
+                        </h2>
+                    </div>
+                    <div class="input-body">
+                        <div class="url-input-group">
+                            <input
+                                type="text"
+                                id="videoUrl"
+                                placeholder="https://www.youtube.com/watch?v=..."
+                                class="url-input"
+                            >
+                            <button onclick="analyzeFromUrl()" class="analyze-btn">
+                                <i class="ph ph-magnifying-glass-plus"></i>
+                                Analyze
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+                <div class="input-card">
+                    <div class="input-header">
+                        <h2 class="input-title">
+                            <i class="ph ph-magnifying-glass"></i>
+                            Search for Videos
+                        </h2>
+                    </div>
+                    <div class="input-body">
+                        <div class="search-input-group">
+                            <input
+                                type="text"
+                                id="searchQuery"
+                                placeholder="Search for videos..."
+                                class="search-input"
+                                onkeypress="if(event.key==='Enter') searchVideos()"
+                            >
+                            <button onclick="searchVideos()" class="search-btn">
+                                <i class="ph ph-magnifying-glass"></i>
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Results -->
+            <div id="searchResults" class="search-results" style="display: none;">
+                <h3 class="section-title">
+                    <i class="ph ph-video"></i>
+                    Search Results
+                </h3>
+                <div id="searchResultsGrid" class="results-grid">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="history-section">
+                <h3 class="section-title">
+                    <i class="ph ph-clock-counter-clockwise"></i>
+                    Recent Analyses
+                </h3>
+                <div id="historyGrid" class="history-grid">
+                    <!-- History will be populated here -->
+                </div>
+                <div id="emptyHistory" class="empty-state" style="display: none;">
+                    <i class="ph ph-video"></i>
+                    <p>No video analyses yet</p>
+                    <span>Start by analyzing a video above</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="loadingModal" class="modal" style="display: none;">
+    <div class="modal-content loading-content">
+        <div class="loading-spinner">
+            <i class="ph ph-spinner spin"></i>
+        </div>
+        <p>Analyzing video...</p>
+        <span>This may take a moment</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='scripts/analyze_video.js') }}"></script>
+{% endblock %}

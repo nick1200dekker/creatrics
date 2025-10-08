@@ -980,6 +980,7 @@
            workspace_info.permissions.video_description or
            workspace_info.permissions.thumbnail or
            workspace_info.permissions.analytics or
+           workspace_info.permissions.analyze_video or
            workspace_info.permissions.competitors %}
 
         {% if has_youtube_permissions %}
@@ -1034,6 +1035,15 @@
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-image"></i>
                     <span>Thumbnail</span>
+                </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analyze_video %}
+                <a href="{{ url_for('analyze_video.analyze_video') }}"
+                   class="nav-subitem {% if request.endpoint and 'analyze_video' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-video"></i>
+                    <span>Analyze Video</span>
                 </a>
                 {% endif %}
 
