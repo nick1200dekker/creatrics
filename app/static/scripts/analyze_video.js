@@ -1,7 +1,7 @@
 // Analyze Video Page JavaScript
 
 // State
-let currentInputView = 'url';
+let currentInputView = 'search';
 let currentContentType = 'videos';
 let currentSortBy = 'relevance';
 

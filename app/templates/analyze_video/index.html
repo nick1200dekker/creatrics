@@ -34,11 +34,11 @@
                             Analyze Content
                         </h2>
                         <div class="view-toggle">
-                            <button class="toggle-btn active" onclick="switchInputView('url')" id="urlToggleBtn">
+                            <button class="toggle-btn" onclick="switchInputView('url')" id="urlToggleBtn">
                                 <i class="ph ph-link"></i>
                                 YouTube URL
                             </button>
-                            <button class="toggle-btn" onclick="switchInputView('search')" id="searchToggleBtn">
+                            <button class="toggle-btn active" onclick="switchInputView('search')" id="searchToggleBtn">
                                 <i class="ph ph-magnifying-glass"></i>
                                 Search Videos
                             </button>
@@ -47,7 +47,7 @@
                 </div>
 
                 <!-- Content Type Toggle (Videos/Shorts) - Only for Search -->
-                <div id="contentTypeToggle" style="margin-bottom: 1rem; display: none;">
+                <div id="contentTypeToggle" style="margin-bottom: 1rem;">
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
                         <div class="view-toggle">
                             <button class="toggle-btn active" onclick="switchContentType('videos')" id="videosToggleBtn">
@@ -73,7 +73,7 @@
                 </div>
 
                 <!-- URL Input View -->
-                <div class="input-view" id="urlInputView">
+                <div class="input-view" id="urlInputView" style="display: none;">
                     <div class="url-input-group">
                         <input
                             type="text"
@@ -89,7 +89,7 @@
                 </div>
 
                 <!-- Search Input View -->
-                <div class="input-view" id="searchInputView" style="display: none;">
+                <div class="input-view" id="searchInputView">
                     <div class="search-input-group">
                         <input
                             type="text"
