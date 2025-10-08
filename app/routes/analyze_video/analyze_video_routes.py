@@ -69,10 +69,41 @@ def video_analysis(video_id):
             """, 400
 
         user_id = get_workspace_user_id()
+        is_short = request.args.get('is_short', 'false').lower() == 'true'
+
+        # Check if analysis already exists in Firebase
+        history_ref = db.collection('users').document(user_id).collection('video_analyses').document(video_id)
+        existing_doc = history_ref.get()
+
+        if existing_doc.exists:
+            # Load existing analysis from Firebase
+            logger.info(f"Loading existing analysis from Firebase for user {user_id}: {video_id}")
+            stored_data = existing_doc.to_dict()
+
+            video_data = {
+                'video_id': video_id,
+                'title': stored_data.get('title', ''),
+                'channel_title': stored_data.get('channel_title', ''),
+                'thumbnail': stored_data.get('thumbnail', ''),
+                'view_count': stored_data.get('view_count', '0'),
+                'like_count': stored_data.get('like_count', '0'),
+                'comment_count': stored_data.get('comment_count', '0'),
+                'description': stored_data.get('description', ''),
+                'summary': stored_data.get('summary', ''),
+                'transcript_preview': stored_data.get('transcript_preview', ''),
+                'analysis': stored_data.get('analysis', ''),
+                'is_short': stored_data.get('is_short', False)
+            }
+
+            # Reuse the competitors deep dive template with a back_url parameter
+            return render_template('competitors/deep_dive.html',
+                                 video_data=video_data,
+                                 video_id=video_id,
+                                 back_url=url_for('analyze_video.analyze_video'))
 
         # Use the analyzer to perform deep dive
         analyzer = VideoDeepDiveAnalyzer()
-        result = analyzer.analyze_video(video_id, user_id)
+        result = analyzer.analyze_video(video_id, user_id, is_short=is_short)
 
         if not result.get('success'):
             error_msg = result.get('error', 'Analysis failed')
@@ -131,7 +162,7 @@ def video_analysis(video_id):
         video_data['transcript_preview'] = result.get('data', {}).get('transcript_preview', '')
         video_data['analysis'] = result.get('data', {}).get('analysis', '')
 
-        # Save to history
+        # Save to Firebase with full analysis data
         try:
             history_data = {
                 'video_id': video_id,
@@ -139,11 +170,17 @@ def video_analysis(video_id):
                 'channel_title': video_data.get('channel_title', ''),
                 'thumbnail': video_data.get('thumbnail', ''),
                 'view_count': video_data.get('view_count', '0'),
+                'like_count': video_data.get('like_count', '0'),
+                'comment_count': video_data.get('comment_count', '0'),
+                'description': video_data.get('description', ''),
+                'summary': video_data.get('summary', ''),
+                'transcript_preview': video_data.get('transcript_preview', ''),
+                'analysis': video_data.get('analysis', ''),
+                'is_short': is_short,
                 'analyzed_at': datetime.now(timezone.utc)
             }
 
             # Save to user's video history
-            history_ref = db.collection('users').document(user_id).collection('video_analyses').document(video_id)
             history_ref.set(history_data)
 
             logger.info(f"Saved video analysis to history for user {user_id}: {video_id}")
@@ -214,43 +251,75 @@ def video_analysis(video_id):
 @auth_required
 @require_permission('analyze_video')
 def search_videos():
-    """Search for videos"""
+    """Search for videos or shorts with pagination"""
     try:
         from app.scripts.competitors.youtube_api import YouTubeAPI
         import requests
 
         query = request.args.get('query', '').strip()
+        content_type = request.args.get('type', 'videos').strip()  # 'videos' or 'shorts'
+        sort_by = request.args.get('sort_by', 'relevance').strip()  # 'relevance' or 'date'
 
         if not query:
             return jsonify({'success': False, 'error': 'Query is required'}), 400
 
         youtube_api = YouTubeAPI()
 
-        # Search for videos with relevance sorting
+        # Search for videos or shorts with user-selected sorting
         url = f"https://yt-api.p.rapidapi.com/search"
-        querystring = {"query": query, "type": "video", "sort_by": "relevance"}
+        search_type = "shorts" if content_type == "shorts" else "video"
+        querystring = {"query": query, "type": search_type, "sort_by": sort_by}
 
-        response = requests.get(url, headers=youtube_api.headers, params=querystring)
-        response.raise_for_status()
-
-        data = response.json()
         videos = []
+        is_short = content_type == "shorts"
+        continuation_token = None
+        max_requests = 3  # Make 3 requests to get ~50 results
 
-        if 'data' in data:
-            for item in data['data'][:20]:  # Return top 20 videos
-                if item.get('type') == 'video':
-                    videos.append({
-                        'video_id': item.get('videoId'),
-                        'title': item.get('title'),
-                        'channel_title': item.get('channelTitle'),
-                        'thumbnail': item.get('thumbnail', [{}])[0].get('url') if item.get('thumbnail') else '',
-                        'view_count_text': item.get('viewCount', 'N/A'),
-                        'published_time': item.get('publishedTimeText', '')
-                    })
+        # Make multiple requests using continuation tokens
+        for request_count in range(max_requests):
+            if request_count > 0 and continuation_token:
+                querystring['continuation'] = continuation_token
+
+            response = requests.get(url, headers=youtube_api.headers, params=querystring)
+            response.raise_for_status()
+
+            data = response.json()
+
+            if 'data' in data:
+                for item in data['data']:
+                    item_type = item.get('type')
+                    # ONLY include items that match the requested type
+                    if is_short and item_type == 'shorts':
+                        videos.append({
+                            'video_id': item.get('videoId'),
+                            'title': item.get('title'),
+                            'channel_title': item.get('channelTitle'),
+                            'thumbnail': item.get('thumbnail', [{}])[0].get('url') if item.get('thumbnail') else '',
+                            'view_count_text': item.get('viewCount', 'N/A'),
+                            'published_time': item.get('publishedTimeText', ''),
+                            'is_short': True
+                        })
+                    elif not is_short and item_type == 'video':
+                        videos.append({
+                            'video_id': item.get('videoId'),
+                            'title': item.get('title'),
+                            'channel_title': item.get('channelTitle'),
+                            'thumbnail': item.get('thumbnail', [{}])[0].get('url') if item.get('thumbnail') else '',
+                            'view_count_text': item.get('viewCount', 'N/A'),
+                            'published_time': item.get('publishedTimeText', ''),
+                            'is_short': False
+                        })
+
+            # Get continuation token for next request
+            continuation_token = data.get('continuation')
+
+            # Stop if we have enough results or no more continuation
+            if len(videos) >= 50 or not continuation_token:
+                break
 
         return jsonify({
             'success': True,
-            'videos': videos
+            'videos': videos[:50]  # Return max 50 results
         })
 
     except Exception as e:
@@ -265,15 +334,21 @@ def extract_video_id():
     try:
         data = request.json
         url = data.get('url', '').strip()
+        is_short = data.get('is_short', False)
 
         if not url:
             return jsonify({'success': False, 'error': 'URL is required'}), 400
+
+        # Auto-detect if URL is a short
+        if '/shorts/' in url:
+            is_short = True
 
         # Extract video ID from various YouTube URL formats
         patterns = [
             r'(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)',
             r'youtube\.com\/embed\/([^&\n?#]+)',
             r'youtube\.com\/v\/([^&\n?#]+)',
+            r'youtube\.com\/shorts\/([^&\n?#]+)',
         ]
 
         video_id = None
@@ -288,7 +363,8 @@ def extract_video_id():
 
         return jsonify({
             'success': True,
-            'video_id': video_id
+            'video_id': video_id,
+            'is_short': is_short
         })
 
     except Exception as e:

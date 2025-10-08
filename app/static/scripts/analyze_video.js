@@ -1,9 +1,98 @@
 // Analyze Video Page JavaScript
 
+// State
+let currentInputView = 'url';
+let currentContentType = 'videos';
+let currentSortBy = 'relevance';
+
+// Function to reset all cards
+function resetAllCards() {
+    const allCards = document.querySelectorAll('.video-card');
+    allCards.forEach(card => {
+        card.style.opacity = '1';
+        card.style.pointerEvents = 'auto';
+
+        const loadingDiv = card.querySelector('.video-card-loading');
+        const contentDiv = card.querySelector('.video-card-content');
+
+        if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+        }
+        if (contentDiv) {
+            contentDiv.style.display = 'block';
+        }
+    });
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     loadHistory();
+    // Hide loading modal on page load (in case user navigated back)
+    hideLoading();
+    // Reset all video cards
+    resetAllCards();
 });
+
+// Handle back button navigation - this fires when page is shown from cache
+window.addEventListener('pageshow', function(event) {
+    // If page is loaded from cache (back/forward button)
+    if (event.persisted) {
+        hideLoading();
+        resetAllCards();
+    }
+});
+
+// Switch input view (URL or Search)
+function switchInputView(view) {
+    currentInputView = view;
+
+    // Update toggle buttons
+    document.getElementById('urlToggleBtn').classList.toggle('active', view === 'url');
+    document.getElementById('searchToggleBtn').classList.toggle('active', view === 'search');
+
+    // Update views
+    document.getElementById('urlInputView').style.display = view === 'url' ? 'block' : 'none';
+    document.getElementById('searchInputView').style.display = view === 'search' ? 'block' : 'none';
+
+    // Show/hide content type toggle (Videos/Shorts) - only for search mode
+    const contentTypeToggle = document.getElementById('contentTypeToggle');
+    if (view === 'search') {
+        contentTypeToggle.style.display = 'block';
+    } else {
+        contentTypeToggle.style.display = 'none';
+    }
+}
+
+// Switch content type (Videos or Shorts)
+function switchContentType(type) {
+    currentContentType = type;
+
+    // Update toggle buttons
+    document.getElementById('videosToggleBtn').classList.toggle('active', type === 'videos');
+    document.getElementById('shortsToggleBtn').classList.toggle('active', type === 'shorts');
+
+    // Update placeholder in search
+    const searchInput = document.getElementById('searchQuery');
+    if (type === 'shorts') {
+        searchInput.placeholder = 'Search for shorts...';
+    } else {
+        searchInput.placeholder = 'Search for videos...';
+    }
+}
+
+// Switch sort by (Relevance or Upload Date)
+function switchSortBy(sortBy) {
+    currentSortBy = sortBy;
+
+    // Update toggle buttons
+    document.getElementById('relevanceSortBtn').classList.toggle('active', sortBy === 'relevance');
+    document.getElementById('dateSortBtn').classList.toggle('active', sortBy === 'date');
+}
+
+// Detect if URL is a short
+function isShortUrl(url) {
+    return url.includes('/shorts/') || url.includes('youtube.com/shorts');
+}
 
 // Analyze from URL
 async function analyzeFromUrl() {
@@ -19,20 +108,24 @@ async function analyzeFromUrl() {
         // Show loading
         showLoading();
 
+        // Detect if it's a short
+        const isShort = isShortUrl(url);
+
         // Extract video ID from URL
         const response = await fetch('/api/analyze-video/extract-id', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ url })
+            body: JSON.stringify({ url, is_short: isShort })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            // Navigate to analysis page
-            window.location.href = `/analyze-video/video/${data.video_id}`;
+            // Navigate to analysis page with is_short parameter
+            const queryParam = data.is_short ? '?is_short=true' : '';
+            window.location.href = `/analyze-video/video/${data.video_id}${queryParam}`;
         } else {
             hideLoading();
             alert(data.error || 'Invalid YouTube URL');
@@ -60,7 +153,8 @@ async function searchVideos() {
         searchBtn.disabled = true;
         searchBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Searching...';
 
-        const response = await fetch(`/api/analyze-video/search?query=${encodeURIComponent(query)}`);
+        // Pass content type (videos or shorts) and sort order
+        const response = await fetch(`/api/analyze-video/search?query=${encodeURIComponent(query)}&type=${currentContentType}&sort_by=${currentSortBy}`);
         const data = await response.json();
 
         if (data.success) {
@@ -90,12 +184,16 @@ function displaySearchResults(videos) {
     }
 
     resultsGrid.innerHTML = videos.map(video => `
-        <div class="video-card" onclick="analyzeVideo('${video.video_id}')">
+        <div class="video-card" onclick="analyzeVideoWithLoader(this, '${video.video_id}', ${video.is_short || false})" data-video-id="${video.video_id}">
             <div class="video-card-thumbnail">
                 ${video.thumbnail ?
                     `<img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">` :
                     '<div style="width: 100%; height: 100%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center;"><i class="ph ph-video" style="font-size: 3rem; color: var(--text-tertiary);"></i></div>'
                 }
+            </div>
+            <div class="video-card-loading" style="display: none;">
+                <i class="ph ph-spinner spin"></i>
+                <span>Analyzing...</span>
             </div>
             <div class="video-card-content">
                 <h4 class="video-card-title">${escapeHtml(video.title)}</h4>
@@ -114,10 +212,35 @@ function displaySearchResults(videos) {
     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Analyze video
-function analyzeVideo(videoId) {
+// Analyze video with card-specific loader
+function analyzeVideoWithLoader(cardElement, videoId, isShort = false) {
+    // Grey out all other cards
+    const allCards = document.querySelectorAll('.video-card');
+    allCards.forEach(card => {
+        if (card !== cardElement) {
+            card.style.opacity = '0.4';
+            card.style.pointerEvents = 'none';
+        }
+    });
+
+    // Show loading spinner on the clicked card
+    const loadingDiv = cardElement.querySelector('.video-card-loading');
+    const contentDiv = cardElement.querySelector('.video-card-content');
+    if (loadingDiv && contentDiv) {
+        loadingDiv.style.display = 'flex';
+        contentDiv.style.display = 'none';
+    }
+
+    // Navigate to analysis
+    const queryParam = isShort ? '?is_short=true' : '';
+    window.location.href = `/analyze-video/video/${videoId}${queryParam}`;
+}
+
+// Analyze video (fallback for direct calls)
+function analyzeVideo(videoId, isShort = false) {
     showLoading();
-    window.location.href = `/analyze-video/video/${videoId}`;
+    const queryParam = isShort ? '?is_short=true' : '';
+    window.location.href = `/analyze-video/video/${videoId}${queryParam}`;
 }
 
 // Load history
@@ -171,12 +294,16 @@ function displayHistory(history) {
         }
 
         return `
-            <div class="video-card" onclick="analyzeVideo('${item.video_id}')">
+            <div class="video-card" onclick="analyzeVideoWithLoader(this, '${item.video_id}', ${item.is_short || false})" data-video-id="${item.video_id}">
                 <div class="video-card-thumbnail">
                     ${item.thumbnail ?
                         `<img src="${item.thumbnail}" alt="${escapeHtml(item.title)}" loading="lazy">` :
                         '<div style="width: 100%; height: 100%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center;"><i class="ph ph-video" style="font-size: 3rem; color: var(--text-tertiary);"></i></div>'
                     }
+                </div>
+                <div class="video-card-loading" style="display: none;">
+                    <i class="ph ph-spinner spin"></i>
+                    <span>Analyzing...</span>
                 </div>
                 <div class="video-card-content">
                     <h4 class="video-card-title">${escapeHtml(item.title)}</h4>

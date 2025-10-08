@@ -12,7 +12,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="analyze-video-wrapper">
+<div class="content-panel">
+    <div class="analyze-video-wrapper">
     <!-- Header -->
     <div class="analyze-header">
         <h1 class="analyze-title">
@@ -27,48 +28,81 @@
         <div class="input-section">
             <div class="input-card">
                 <div class="input-header">
-                    <h2 class="input-title">
-                        <i class="ph ph-link"></i>
-                        Paste YouTube URL
-                    </h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <h2 class="input-title">
+                            <i class="ph ph-video"></i>
+                            Analyze Content
+                        </h2>
+                        <div class="view-toggle">
+                            <button class="toggle-btn active" onclick="switchInputView('url')" id="urlToggleBtn">
+                                <i class="ph ph-link"></i>
+                                YouTube URL
+                            </button>
+                            <button class="toggle-btn" onclick="switchInputView('search')" id="searchToggleBtn">
+                                <i class="ph ph-magnifying-glass"></i>
+                                Search Videos
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="url-input-group">
-                    <input
-                        type="text"
-                        id="videoUrl"
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        class="url-input"
-                    >
-                    <button onclick="analyzeFromUrl()" class="analyze-btn">
-                        <i class="ph ph-magnifying-glass-plus"></i>
-                        Analyze
-                    </button>
-                </div>
-            </div>
 
-            <div class="divider">
-                <span>OR</span>
-            </div>
-
-            <div class="input-card">
-                <div class="input-header">
-                    <h2 class="input-title">
-                        <i class="ph ph-magnifying-glass"></i>
-                        Search for Videos
-                    </h2>
+                <!-- Content Type Toggle (Videos/Shorts) - Only for Search -->
+                <div id="contentTypeToggle" style="margin-bottom: 1rem; display: none;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <div class="view-toggle">
+                            <button class="toggle-btn active" onclick="switchContentType('videos')" id="videosToggleBtn">
+                                <i class="ph ph-video"></i>
+                                Videos
+                            </button>
+                            <button class="toggle-btn" onclick="switchContentType('shorts')" id="shortsToggleBtn">
+                                <i class="ph ph-device-mobile"></i>
+                                Shorts
+                            </button>
+                        </div>
+                        <div class="view-toggle">
+                            <button class="toggle-btn active" onclick="switchSortBy('relevance')" id="relevanceSortBtn">
+                                <i class="ph ph-star"></i>
+                                Relevance
+                            </button>
+                            <button class="toggle-btn" onclick="switchSortBy('date')" id="dateSortBtn">
+                                <i class="ph ph-calendar"></i>
+                                Latest
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="search-input-group">
-                    <input
-                        type="text"
-                        id="searchQuery"
-                        placeholder="Search for videos..."
-                        class="search-input"
-                        onkeypress="if(event.key==='Enter') searchVideos()"
-                    >
-                    <button onclick="searchVideos()" class="search-btn">
-                        <i class="ph ph-magnifying-glass"></i>
-                        Search
-                    </button>
+
+                <!-- URL Input View -->
+                <div class="input-view" id="urlInputView">
+                    <div class="url-input-group">
+                        <input
+                            type="text"
+                            id="videoUrl"
+                            placeholder="https://www.youtube.com/watch?v=... or https://youtube.com/shorts/..."
+                            class="url-input"
+                        >
+                        <button onclick="analyzeFromUrl()" class="analyze-btn">
+                            <i class="ph ph-magnifying-glass-plus"></i>
+                            Analyze
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Input View -->
+                <div class="input-view" id="searchInputView" style="display: none;">
+                    <div class="search-input-group">
+                        <input
+                            type="text"
+                            id="searchQuery"
+                            placeholder="Search for videos or shorts..."
+                            class="search-input"
+                            onkeypress="if(event.key==='Enter') searchVideos()"
+                        >
+                        <button onclick="searchVideos()" class="search-btn">
+                            <i class="ph ph-magnifying-glass"></i>
+                            Search
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -100,6 +134,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <!-- Loading Modal -->

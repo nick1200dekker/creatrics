@@ -35,6 +35,12 @@
                             <i class="ph ph-thumbs-up"></i>
                             {{ video_data.like_count }} likes
                         </span>
+                        {% if video_data.comment_count %}
+                        <span class="stat">
+                            <i class="ph ph-chat-circle"></i>
+                            {{ video_data.comment_count }} comments
+                        </span>
+                        {% endif %}
                         <span class="stat">
                             <i class="ph ph-calendar"></i>
                             {{ video_data.publish_date }}
@@ -77,9 +83,7 @@
                 <i class="ph ph-align-left"></i>
                 Description
             </h3>
-            <div class="description-content">
-                {{ video_data.description }}
-            </div>
+            <div class="description-content">{{ video_data.description | trim }}</div>
         </div>
         {% endif %}
 
@@ -101,9 +105,7 @@
                 <i class="ph ph-quotes"></i>
                 Full Video Transcript
             </h3>
-            <div class="transcript-content">
-                {{ video_data.transcript_preview }}
-            </div>
+            <div class="transcript-content">{{ video_data.transcript_preview | trim }}</div>
         </div>
         {% endif %}
     </div>

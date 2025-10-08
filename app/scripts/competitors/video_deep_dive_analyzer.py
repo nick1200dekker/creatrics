@@ -57,6 +57,7 @@ class VideoDeepDiveAnalyzer:
             # Format the data
             view_count = int(video_info.get('viewCount', 0)) if video_info.get('viewCount') else 0
             like_count = int(video_info.get('likeCount', 0)) if video_info.get('likeCount') else 0
+            comment_count = int(video_info.get('commentCount', 0)) if video_info.get('commentCount') else 0
             length_seconds = int(video_info.get('lengthSeconds', 0)) if video_info.get('lengthSeconds') else 0
 
             # Format duration
@@ -68,16 +69,28 @@ class VideoDeepDiveAnalyzer:
             # Clean analysis markdown
             analysis_html = self._format_analysis(analysis_result.get('analysis', ''))
 
+            # Get description and clean whitespace
+            description = video_info.get('description', '')
+            if description:
+                # Strip leading/trailing whitespace and normalize line breaks
+                description = description.strip()
+                # Remove excessive leading newlines
+                while description.startswith('\n'):
+                    description = description[1:]
+
+            logger.info(f"Video {video_id} - Description length: {len(description)} chars")
+
             # Prepare response
             return {
                 'success': True,
                 'data': {
                     'video_info': {
                         'title': video_info.get('title', ''),
-                        'description': video_info.get('description', '').strip(),  # Strip whitespace
+                        'description': description,
                         'keywords': video_info.get('keywords', [])[:15],
                         'view_count': f"{view_count:,}",
                         'like_count': f"{like_count:,}",
+                        'comment_count': f"{comment_count:,}",
                         'duration': duration,
                         'publish_date': publish_date,
                         'channel_title': video_info.get('channelTitle', ''),
@@ -94,7 +107,7 @@ class VideoDeepDiveAnalyzer:
             return {'success': False, 'error': str(e)}
 
     def _fetch_short_info(self, video_id: str) -> Dict:
-        """Fetch short information from RapidAPI"""
+        """Fetch short information from RapidAPI with extended data"""
         try:
             url = f"https://{self.rapidapi_host}/shorts/info"
             headers = {
@@ -102,7 +115,8 @@ class VideoDeepDiveAnalyzer:
                 "x-rapidapi-host": self.rapidapi_host
             }
 
-            response = requests.get(url, headers=headers, params={"id": video_id})
+            # Use extend=2 to get engagement metrics
+            response = requests.get(url, headers=headers, params={"id": video_id, "extend": "2"})
             response.raise_for_status()
 
             data = response.json()
@@ -114,7 +128,7 @@ class VideoDeepDiveAnalyzer:
             return None
 
     def _fetch_video_info(self, video_id: str) -> Dict:
-        """Fetch video information from RapidAPI"""
+        """Fetch video information from RapidAPI with extended data"""
         try:
             url = f"https://{self.rapidapi_host}/video/info"
             headers = {
@@ -122,7 +136,8 @@ class VideoDeepDiveAnalyzer:
                 "x-rapidapi-host": self.rapidapi_host
             }
 
-            response = requests.get(url, headers=headers, params={"id": video_id})
+            # Use extend=2 to get engagement metrics (comments, etc.)
+            response = requests.get(url, headers=headers, params={"id": video_id, "extend": "2"})
             response.raise_for_status()
 
             return response.json()
@@ -189,6 +204,11 @@ class VideoDeepDiveAnalyzer:
 
                     if text_segments:
                         transcript_text = " ".join(text_segments)
+                        # Clean up whitespace
+                        transcript_text = transcript_text.strip()
+                        # Remove excessive leading newlines
+                        while transcript_text.startswith('\n'):
+                            transcript_text = transcript_text[1:]
                         logger.info(f"Successfully extracted FULL transcript: {len(transcript_text)} characters from {len(text_segments)} segments")
                         return transcript_text
 

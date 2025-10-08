@@ -1,4 +1,4 @@
-/* Reset the default content-panel padding */
+/* Reset default content-panel to show background */
 .content-panel {
     padding: 0 !important;
     background: transparent !important;
@@ -99,6 +99,72 @@ html.dark .input-card {
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
+}
+
+/* View Toggle */
+.view-toggle {
+    display: flex;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 0.25rem;
+    gap: 0.25rem;
+}
+
+html.dark .view-toggle {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.toggle-btn:hover {
+    color: var(--text-primary);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.toggle-btn.active {
+    color: white;
+    background: #3B82F6;
+}
+
+html.dark .toggle-btn.active {
+    color: #18181B;
+    background: #60A5FA;
+}
+
+.toggle-btn i {
+    font-size: 1rem;
+}
+
+/* Input Views */
+.input-view {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .input-title i {
@@ -277,6 +343,7 @@ html.dark .section-title i {
     overflow: hidden;
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
 }
 
 html.dark .video-card {
@@ -310,6 +377,43 @@ html.dark .video-card:hover {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* Video Card Loading State */
+.video-card-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(24, 24, 27, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+    border-radius: 10px;
+}
+
+html.dark .video-card-loading {
+    background: rgba(24, 24, 27, 0.98);
+}
+
+.video-card-loading i {
+    font-size: 2.5rem;
+    color: #3B82F6;
+}
+
+html.dark .video-card-loading i {
+    color: #60A5FA;
+}
+
+.video-card-loading span {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white;
 }
 
 .video-card-content {
