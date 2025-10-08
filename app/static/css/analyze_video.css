@@ -1,23 +1,12 @@
-/* =============================================
-   ANALYZE VIDEO PAGE
-   ============================================= */
-
-/* Force override base.html styles for this page */
-.content-wrapper {
-    padding: 0 !important;
-}
-
+/* Reset the default content-panel padding */
 .content-panel {
+    padding: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
-    padding: 0 !important;
 }
 
-.page-content {
-    padding: 0 !important;
-}
-
+/* Main wrapper - matching other pages style */
 .analyze-video-wrapper {
     background: var(--bg-secondary);
     border-radius: 12px;
@@ -33,8 +22,8 @@ html.dark .analyze-video-wrapper {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
-/* Header */
-.page-header {
+/* Header - matching other pages style */
+.analyze-header {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
     background: linear-gradient(135deg,
@@ -43,42 +32,35 @@ html.dark .analyze-video-wrapper {
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-html.dark .page-header {
+html.dark .analyze-header {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
     border-bottom-color: rgba(63, 63, 70, 0.5);
 }
 
-.page-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+.analyze-title {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
-}
-
-.page-title i {
-    font-size: 1.75rem;
-    color: #3B82F6;
-}
-
-html.dark .page-title i {
-    color: #60A5FA;
-}
-
-.page-subtitle {
-    font-size: 0.9375rem;
-    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     margin: 0;
 }
 
-/* Main Content */
-.main-content {
+.analyze-title i {
+    color: #3B82F6;
+}
+
+html.dark .analyze-title i {
+    color: #60A5FA;
+}
+
+/* Content Area */
+.analyze-content {
     padding: 2rem;
 }
 
-html.dark .main-content {
+html.dark .analyze-content {
     background: linear-gradient(180deg, rgba(59, 130, 246, 0.02) 0%, transparent 100%);
 }
 
@@ -90,11 +72,12 @@ html.dark .main-content {
     margin-bottom: 2rem;
 }
 
+/* Clean Input Panel */
 .input-card {
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    padding: 1.5rem;
+    border-radius: 10px;
+    padding: 1.25rem;
     transition: all 0.2s ease;
 }
 
@@ -250,7 +233,8 @@ html.dark .divider::after {
 }
 
 /* Results */
-.search-results {
+.search-results,
+.history-section {
     margin-bottom: 2rem;
 }
 
@@ -420,6 +404,7 @@ html.dark .empty-state i {
     align-items: center;
     justify-content: center;
     z-index: 10000;
+    backdrop-filter: blur(4px);
 }
 
 html.dark .modal {
@@ -480,19 +465,19 @@ html.dark .loading-spinner i {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .page-header {
+    .analyze-header {
         padding: 1rem 1.5rem;
     }
 
-    .page-title {
+    .analyze-title {
         font-size: 1.375rem;
     }
 
-    .page-title i {
+    .analyze-title i {
         font-size: 1.5rem;
     }
 
-    .main-content {
+    .analyze-content {
         padding: 1rem;
     }
 
@@ -515,4 +500,12 @@ html.dark .loading-spinner i {
     .history-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Focus states for accessibility */
+.url-input:focus,
+.search-input:focus,
+.analyze-btn:focus,
+.search-btn:focus {
+    outline: none;
 }

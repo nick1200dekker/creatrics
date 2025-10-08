@@ -8,6 +8,8 @@ let searchResults = [];
 let isSearching = false;
 let allVideos = [];
 let videosDisplayed = 25;
+let currentContentType = 'videos'; // 'videos' or 'shorts'
+let currentTimeframeDays = 30; // Store the timeframe used in analysis
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -465,14 +467,12 @@ function updateProgress(percent, message) {
 function backToSetup() {
     document.getElementById('resultsSection').style.display = 'none';
     document.getElementById('setupSection').style.display = 'block';
-    
-    // Scroll to top
-    setTimeout(() => {
-        document.getElementById('setupSection').scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-        });
-    }, 100);
+
+    // Scroll to the top of the page
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
 }
 
 // Format markdown-style text
@@ -493,9 +493,10 @@ function displayResults(data) {
     const resultsSection = document.getElementById('resultsSection');
     const { videos, patterns, insights, timeframe_days } = data;
 
-    // Store all videos globally
+    // Store all videos globally and timeframe
     allVideos = videos || [];
     videosDisplayed = 25;
+    currentTimeframeDays = timeframe_days || 30;
 
     const timeframeText = timeframe_days === 1 ? '24 hours' :
                          timeframe_days === 2 ? '48 hours' :
@@ -610,19 +611,31 @@ function displayResults(data) {
         }
     }
     
-    // Top Videos as Table
+    // Top Videos/Shorts as Table
     if (videos && videos.length > 0) {
         html += `
             <div class="videos-card" id="videosCard">
-                <h3 class="section-title">
-                    <i class="ph ph-play-circle"></i>
-                    Top Performing Videos (${videos.length} total)
-                </h3>
+                <div class="section-header-with-toggle">
+                    <h3 class="section-title">
+                        <i class="ph ph-play-circle"></i>
+                        <span id="contentTypeLabel">Top Performing Videos</span> (<span id="contentCount">${videos.length}</span> total)
+                    </h3>
+                    <div class="content-toggle">
+                        <button class="toggle-btn active" onclick="switchContentType('videos')" id="videosToggleBtn">
+                            <i class="ph ph-video-camera"></i>
+                            Videos
+                        </button>
+                        <button class="toggle-btn" onclick="switchContentType('shorts')" id="shortsToggleBtn">
+                            <i class="ph ph-device-mobile"></i>
+                            Shorts
+                        </button>
+                    </div>
+                </div>
                 <div class="videos-table">
                     <table>
                         <thead>
                             <tr>
-                                <th>Video</th>
+                                <th><span id="contentTypeTableLabel">Video</span></th>
                                 <th>Channel</th>
                                 <th>Views</th>
                                 <th>Published</th>
@@ -636,7 +649,7 @@ function displayResults(data) {
                 <div class="load-more-container" id="loadMoreContainer" style="display: none;">
                     <button class="load-more-btn" onclick="loadMoreVideos()">
                         <i class="ph ph-arrow-down"></i>
-                        Load More Videos
+                        <span id="loadMoreLabel">Load More Videos</span>
                     </button>
                 </div>
             </div>
@@ -662,10 +675,14 @@ function renderVideos() {
 
     tbody.innerHTML = videosToShow.map(video => {
         const views = video.view_count || 0;
+        const isShort = video.is_short || false;
+        const youtubeUrl = isShort
+            ? `https://youtube.com/shorts/${video.video_id}`
+            : `https://youtube.com/watch?v=${video.video_id}`;
 
         return `
             <tr>
-                <td class="video-cell" onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">
+                <td class="video-cell" onclick="window.open('${youtubeUrl}', '_blank')" style="cursor: pointer;">
                     <div class="video-thumbnail-small">
                         ${video.thumbnail ?
                             `<img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">` :
@@ -676,11 +693,11 @@ function renderVideos() {
                         ${escapeHtml(video.title)}
                     </div>
                 </td>
-                <td class="channel-cell" onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">${escapeHtml(video.channel_title)}</td>
-                <td class="views-cell" onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">${formatNumber(views)}</td>
-                <td class="published-cell" onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">${video.published_time || 'Recently'}</td>
+                <td class="channel-cell" onclick="window.open('${youtubeUrl}', '_blank')" style="cursor: pointer;">${escapeHtml(video.channel_title)}</td>
+                <td class="views-cell" onclick="window.open('${youtubeUrl}', '_blank')" style="cursor: pointer;">${formatNumber(views)}</td>
+                <td class="published-cell" onclick="window.open('${youtubeUrl}', '_blank')" style="cursor: pointer;">${video.published_time || 'Recently'}</td>
                 <td class="actions-cell">
-                    <button class="deep-dive-btn" data-video-id="${video.video_id}" data-video-title="${escapeHtml(video.title).replace(/"/g, '&quot;')}">
+                    <button class="deep-dive-btn" data-video-id="${video.video_id}" data-video-title="${escapeHtml(video.title).replace(/"/g, '&quot;')}" data-is-short="${isShort}">
                         <i class="ph ph-magnifying-glass-plus"></i>
                         Deep Dive
                     </button>
@@ -953,8 +970,15 @@ function openDeepDive(videoId, videoTitle) {
         }
     });
 
-    // Navigate to the deep dive page
-    window.location.href = `/competitors/video/${videoId}/deep-dive`;
+    // Check if it's a short
+    const isShort = button.getAttribute('data-is-short') === 'true';
+
+    // Navigate to the deep dive page with is_short parameter if needed
+    const url = isShort
+        ? `/competitors/video/${videoId}/deep-dive?is_short=true`
+        : `/competitors/video/${videoId}/deep-dive`;
+
+    window.location.href = url;
 }
 
 
@@ -1044,6 +1068,182 @@ async function loadLatestAnalysis() {
     } catch (error) {
         console.error('Error loading latest analysis:', error);
         alert('Failed to load analysis: ' + error.message);
+    }
+}
+
+// Filter content by timeframe
+function filterByTimeframe(content, days) {
+    if (!content || content.length === 0) return [];
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    return content.filter(item => {
+        // Try multiple date fields
+        const pubDateStr = item.published_at || item.publishedAt || item.publish_date;
+
+        if (!pubDateStr) {
+            // No date available - exclude it
+            console.debug('No date found for item:', item.title || item.video_id);
+            return false;
+        }
+
+        try {
+            let pubDate;
+
+            // Parse ISO format date
+            if (pubDateStr.includes('T')) {
+                pubDate = new Date(pubDateStr.replace('Z', '+00:00'));
+            } else {
+                // Try YYYY-MM-DD format
+                pubDate = new Date(pubDateStr);
+            }
+
+            // Check if date is valid and within timeframe
+            if (!isNaN(pubDate.getTime())) {
+                const isWithinTimeframe = pubDate >= cutoffDate;
+                if (!isWithinTimeframe) {
+                    console.debug('Filtering out (too old):', item.title || item.video_id, pubDateStr);
+                }
+                return isWithinTimeframe;
+            } else {
+                console.debug('Invalid date for item:', item.title || item.video_id, pubDateStr);
+                return false;
+            }
+        } catch (e) {
+            console.debug('Could not parse date:', pubDateStr, e);
+            return false;
+        }
+    });
+}
+
+// Switch between videos and shorts
+async function switchContentType(type) {
+    if (type === currentContentType) return;
+
+    currentContentType = type;
+
+    // Update toggle buttons
+    const videosBtn = document.getElementById('videosToggleBtn');
+    const shortsBtn = document.getElementById('shortsToggleBtn');
+
+    if (type === 'videos') {
+        videosBtn.classList.add('active');
+        shortsBtn.classList.remove('active');
+    } else {
+        videosBtn.classList.remove('active');
+        shortsBtn.classList.add('active');
+    }
+
+    // Update labels
+    const contentTypeLabel = document.getElementById('contentTypeLabel');
+    const contentTypeTableLabel = document.getElementById('contentTypeTableLabel');
+    const loadMoreLabel = document.getElementById('loadMoreLabel');
+
+    if (type === 'videos') {
+        contentTypeLabel.textContent = 'Top Performing Videos';
+        contentTypeTableLabel.textContent = 'Video';
+        loadMoreLabel.textContent = 'Load More Videos';
+    } else {
+        contentTypeLabel.textContent = 'Top Performing Shorts';
+        contentTypeTableLabel.textContent = 'Short';
+        loadMoreLabel.textContent = 'Load More Shorts';
+    }
+
+    // Fetch and display content
+    await fetchAndDisplayContent(type);
+}
+
+// Fetch and display videos or shorts
+async function fetchAndDisplayContent(type) {
+    const tbody = document.getElementById('videosTableBody');
+    if (!tbody) return;
+
+    // Show loading state
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="5" style="text-align: center; padding: 2rem;">
+                <i class="ph ph-spinner spin" style="font-size: 2rem; color: #3B82F6;"></i>
+                <p style="margin-top: 1rem; color: #71717a;">Loading ${type}...</p>
+            </td>
+        </tr>
+    `;
+
+    try {
+        // Fetch content from all competitor channels IN PARALLEL
+        const fetchPromises = competitors.map(async (competitor) => {
+            const channelId = competitor.channel_id;
+            const channelHandle = competitor.channel_handle || channelId;
+
+            try {
+                const endpoint = type === 'videos'
+                    ? `/api/competitors/videos/${channelId}?timeframe_days=${currentTimeframeDays}`
+                    : `/api/competitors/shorts/${channelId}?timeframe_days=${currentTimeframeDays}`;
+
+                const response = await fetch(endpoint);
+                const data = await response.json();
+
+                if (data.success) {
+                    const items = type === 'videos' ? data.videos : data.shorts;
+
+                    // Add channel info to each item and mark if short
+                    return items.map(item => ({
+                        ...item,
+                        channel_title: competitor.title,
+                        channel_id: channelId,
+                        channel_handle: channelHandle,
+                        is_short: type === 'shorts'
+                    }));
+                }
+            } catch (error) {
+                console.error(`Error fetching ${type} for channel ${channelId}:`, error);
+            }
+            return [];
+        });
+
+        // Wait for all fetches to complete
+        const results = await Promise.all(fetchPromises);
+        const allContent = results.flat();
+
+        if (allContent.length === 0) {
+            const timeframeText = currentTimeframeDays === 1 ? '24 hours' :
+                                 currentTimeframeDays === 2 ? '48 hours' :
+                                 `${currentTimeframeDays} days`;
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem;">
+                        <i class="ph ph-video-camera-slash" style="font-size: 2rem; color: #71717a;"></i>
+                        <p style="margin-top: 1rem; color: #71717a;">No ${type} found in the last ${timeframeText}.</p>
+                    </td>
+                </tr>
+            `;
+            document.getElementById('contentCount').textContent = '0';
+            return;
+        }
+
+        // Sort by view count (backend already filtered by timeframe)
+        allContent.sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
+
+        // Take top 50
+        allVideos = allContent.slice(0, 50);
+        videosDisplayed = 25;
+
+        // Update count
+        document.getElementById('contentCount').textContent = allVideos.length;
+
+        // Render the content
+        renderVideos();
+
+    } catch (error) {
+        console.error(`Error fetching ${type}:`, error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 2rem;">
+                    <i class="ph ph-warning" style="font-size: 2rem; color: #EF4444;"></i>
+                    <p style="margin-top: 1rem; color: #EF4444;">Error loading ${type}. Please try again.</p>
+                </td>
+            </tr>
+        `;
     }
 }
 

@@ -12,100 +12,91 @@
 {% endblock %}
 
 {% block content %}
-<div class="content-panel">
-    <div class="analyze-video-wrapper">
-        <!-- Header -->
-        <div class="page-header">
-            <div class="header-content">
-                <h1 class="page-title">
-                    <i class="ph ph-video"></i>
-                    <span>Analyze Video</span>
-                </h1>
-                <p class="page-subtitle">Deep dive into any YouTube video with AI-powered analysis</p>
+<div class="analyze-video-wrapper">
+    <!-- Header -->
+    <div class="analyze-header">
+        <h1 class="analyze-title">
+            <i class="ph ph-video"></i>
+            Analyze Video
+        </h1>
+    </div>
+
+    <!-- Content Area -->
+    <div class="analyze-content">
+        <!-- Input Section -->
+        <div class="input-section">
+            <div class="input-card">
+                <div class="input-header">
+                    <h2 class="input-title">
+                        <i class="ph ph-link"></i>
+                        Paste YouTube URL
+                    </h2>
+                </div>
+                <div class="url-input-group">
+                    <input
+                        type="text"
+                        id="videoUrl"
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        class="url-input"
+                    >
+                    <button onclick="analyzeFromUrl()" class="analyze-btn">
+                        <i class="ph ph-magnifying-glass-plus"></i>
+                        Analyze
+                    </button>
+                </div>
+            </div>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
+            <div class="input-card">
+                <div class="input-header">
+                    <h2 class="input-title">
+                        <i class="ph ph-magnifying-glass"></i>
+                        Search for Videos
+                    </h2>
+                </div>
+                <div class="search-input-group">
+                    <input
+                        type="text"
+                        id="searchQuery"
+                        placeholder="Search for videos..."
+                        class="search-input"
+                        onkeypress="if(event.key==='Enter') searchVideos()"
+                    >
+                    <button onclick="searchVideos()" class="search-btn">
+                        <i class="ph ph-magnifying-glass"></i>
+                        Search
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Input Methods -->
-            <div class="input-section">
-                <div class="input-card">
-                    <div class="input-header">
-                        <h2 class="input-title">
-                            <i class="ph ph-link"></i>
-                            Paste YouTube URL
-                        </h2>
-                    </div>
-                    <div class="input-body">
-                        <div class="url-input-group">
-                            <input
-                                type="text"
-                                id="videoUrl"
-                                placeholder="https://www.youtube.com/watch?v=..."
-                                class="url-input"
-                            >
-                            <button onclick="analyzeFromUrl()" class="analyze-btn">
-                                <i class="ph ph-magnifying-glass-plus"></i>
-                                Analyze
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="divider">
-                    <span>OR</span>
-                </div>
-
-                <div class="input-card">
-                    <div class="input-header">
-                        <h2 class="input-title">
-                            <i class="ph ph-magnifying-glass"></i>
-                            Search for Videos
-                        </h2>
-                    </div>
-                    <div class="input-body">
-                        <div class="search-input-group">
-                            <input
-                                type="text"
-                                id="searchQuery"
-                                placeholder="Search for videos..."
-                                class="search-input"
-                                onkeypress="if(event.key==='Enter') searchVideos()"
-                            >
-                            <button onclick="searchVideos()" class="search-btn">
-                                <i class="ph ph-magnifying-glass"></i>
-                                Search
-                            </button>
-                        </div>
-                    </div>
-                </div>
+        <!-- Search Results -->
+        <div id="searchResults" class="search-results" style="display: none;">
+            <h3 class="section-title">
+                <i class="ph ph-video"></i>
+                Search Results
+            </h3>
+            <div id="searchResultsGrid" class="results-grid">
+                <!-- Results will be populated here -->
             </div>
+        </div>
 
-            <!-- Search Results -->
-            <div id="searchResults" class="search-results" style="display: none;">
-                <h3 class="section-title">
-                    <i class="ph ph-video"></i>
-                    Search Results
-                </h3>
-                <div id="searchResultsGrid" class="results-grid">
-                    <!-- Results will be populated here -->
-                </div>
+        <!-- History -->
+        <div class="history-section">
+            <h3 class="section-title">
+                <i class="ph ph-clock-counter-clockwise"></i>
+                Recent Analyses
+            </h3>
+            <div id="historyGrid" class="history-grid">
+                <!-- History will be populated here -->
             </div>
-
-            <!-- History -->
-            <div class="history-section">
-                <h3 class="section-title">
-                    <i class="ph ph-clock-counter-clockwise"></i>
-                    Recent Analyses
-                </h3>
-                <div id="historyGrid" class="history-grid">
-                    <!-- History will be populated here -->
-                </div>
-                <div id="emptyHistory" class="empty-state" style="display: none;">
-                    <i class="ph ph-video"></i>
-                    <p>No video analyses yet</p>
-                    <span>Start by analyzing a video above</span>
-                </div>
+            <div id="emptyHistory" class="empty-state" style="display: none;">
+                <i class="ph ph-video"></i>
+                <p>No video analyses yet</p>
+                <span>Start by analyzing a video above</span>
             </div>
         </div>
     </div>

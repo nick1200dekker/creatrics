@@ -200,15 +200,101 @@ class YouTubeAPI:
             logger.error(f"Error fetching video info: {e}")
             return None
     
+    def get_channel_shorts(self, channel_identifier: str, continuation_token: Optional[str] = None) -> Optional[Dict]:
+        """
+        Get shorts from a channel using either @username or channel ID
+
+        Args:
+            channel_identifier: Either @username or channel ID
+            continuation_token: Token for pagination
+
+        Returns:
+            Dict with shorts and continuation token
+        """
+        try:
+            url = f"{self.base_url}/channel/shorts"
+
+            # Use forUsername if it's a handle, otherwise use id
+            if channel_identifier.startswith('@'):
+                querystring = {"forUsername": channel_identifier}
+            else:
+                querystring = {"id": channel_identifier}
+
+            if continuation_token:
+                querystring['token'] = continuation_token
+
+            response = requests.get(url, headers=self.headers, params=querystring, timeout=15)
+            response.raise_for_status()
+
+            data = response.json()
+
+            shorts = []
+            for short in data.get('data', []):
+                if short.get('type') == 'shorts':
+                    shorts.append({
+                        'video_id': short.get('videoId'),
+                        'title': short.get('title'),
+                        'description': short.get('description', ''),
+                        'view_count': self._parse_view_count(short.get('viewCountText', '0')),
+                        'view_count_text': short.get('viewCountText', '0'),
+                        'published_time': short.get('publishedTimeText'),
+                        'published_at': short.get('publishedAt'),
+                        'publish_date': short.get('publishDate'),
+                        'length': short.get('lengthText'),
+                        'thumbnail': short.get('thumbnail', [{}])[-1].get('url') if short.get('thumbnail') else None,
+                        'is_short': True
+                    })
+
+            return {
+                'shorts': shorts,
+                'continuation_token': data.get('continuation')
+            }
+
+        except Exception as e:
+            logger.error(f"Error fetching channel shorts for {channel_identifier}: {e}")
+            return None
+
+    def get_short_info(self, short_id: str) -> Optional[Dict]:
+        """Get detailed short information"""
+        try:
+            url = f"{self.base_url}/shorts/info"
+            querystring = {"id": short_id}
+
+            response = requests.get(url, headers=self.headers, params=querystring, timeout=10)
+            response.raise_for_status()
+
+            data = response.json()
+
+            return {
+                'video_id': data.get('id'),
+                'title': data.get('title'),
+                'description': data.get('description'),
+                'keywords': data.get('keywords', []),
+                'channel_id': data.get('channelId'),
+                'channel_title': data.get('channelTitle'),
+                'view_count': data.get('viewCount'),
+                'like_count': data.get('likeCount'),
+                'comment_count': data.get('commentCount', 0),
+                'publish_date': data.get('publishDate'),
+                'length_seconds': data.get('lengthSeconds'),
+                'thumbnails': data.get('thumbnail', []),
+                'subtitles': data.get('subtitles', {}),
+                'is_short': True
+            }
+
+        except Exception as e:
+            logger.error(f"Error fetching short info: {e}")
+            return None
+
     def filter_videos_by_timeframe(self, videos: List[Dict], days: int) -> List[Dict]:
         """Filter videos by timeframe"""
         cutoff_date = datetime.now() - timedelta(days=days)
         filtered = []
-        
+
         for video in videos:
             # Try multiple date fields
             pub_date_str = video.get('published_at') or video.get('publishedAt') or video.get('publish_date')
-            
+
             if pub_date_str:
                 try:
                     # Parse ISO format date
@@ -217,12 +303,12 @@ class YouTubeAPI:
                     else:
                         # Try YYYY-MM-DD format
                         pub_date = datetime.strptime(pub_date_str, '%Y-%m-%d')
-                    
+
                     # Make cutoff_date timezone-aware if pub_date is
                     if pub_date.tzinfo is not None and cutoff_date.tzinfo is None:
                         from datetime import timezone
                         cutoff_date = cutoff_date.replace(tzinfo=timezone.utc)
-                    
+
                     if pub_date >= cutoff_date:
                         filtered.append(video)
                 except Exception as e:
@@ -232,5 +318,5 @@ class YouTubeAPI:
             else:
                 # If no date, include it
                 filtered.append(video)
-        
+
         return filtered

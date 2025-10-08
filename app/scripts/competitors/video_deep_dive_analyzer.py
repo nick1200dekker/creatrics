@@ -20,20 +20,25 @@ class VideoDeepDiveAnalyzer:
         self.rapidapi_key = os.getenv('RAPIDAPI_KEY', '16c9c09b8bmsh0f0d3ec2999f27ep115961jsn5f75604e8050')
         self.rapidapi_host = "yt-api.p.rapidapi.com"
 
-    def analyze_video(self, video_id: str, user_id: str) -> Dict[str, Any]:
+    def analyze_video(self, video_id: str, user_id: str, is_short: bool = False) -> Dict[str, Any]:
         """
-        Perform deep dive analysis on a video
+        Perform deep dive analysis on a video or short
 
         Args:
-            video_id: YouTube video ID
+            video_id: YouTube video/short ID
             user_id: User ID for credit deduction
+            is_short: Whether this is a short (default: False)
 
         Returns:
             Dict with analysis results
         """
         try:
-            # Fetch video info
-            video_info = self._fetch_video_info(video_id)
+            # Fetch video/short info
+            if is_short:
+                video_info = self._fetch_short_info(video_id)
+            else:
+                video_info = self._fetch_video_info(video_id)
+
             if not video_info:
                 return {'success': False, 'error': 'Failed to fetch video info'}
 
@@ -87,6 +92,26 @@ class VideoDeepDiveAnalyzer:
         except Exception as e:
             logger.error(f"Error analyzing video {video_id}: {e}")
             return {'success': False, 'error': str(e)}
+
+    def _fetch_short_info(self, video_id: str) -> Dict:
+        """Fetch short information from RapidAPI"""
+        try:
+            url = f"https://{self.rapidapi_host}/shorts/info"
+            headers = {
+                "x-rapidapi-key": self.rapidapi_key,
+                "x-rapidapi-host": self.rapidapi_host
+            }
+
+            response = requests.get(url, headers=headers, params={"id": video_id})
+            response.raise_for_status()
+
+            data = response.json()
+            logger.info(f"Fetched short info for {video_id}")
+            return data
+
+        except Exception as e:
+            logger.error(f"Error fetching short info for {video_id}: {e}")
+            return None
 
     def _fetch_video_info(self, video_id: str) -> Dict:
         """Fetch video information from RapidAPI"""

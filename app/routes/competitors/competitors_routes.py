@@ -22,7 +22,7 @@ def competitors():
 @auth_required
 @require_permission('competitors')
 def video_deep_dive(video_id):
-    """Deep dive analysis page for a competitor video"""
+    """Deep dive analysis page for a competitor video or short"""
     try:
         if not video_id:
             return f"""
@@ -36,12 +36,13 @@ def video_deep_dive(video_id):
             """, 400
 
         user_id = get_workspace_user_id()
+        is_short = request.args.get('is_short', 'false').lower() == 'true'
 
         # Use the analyzer to perform deep dive
         from app.scripts.competitors.video_deep_dive_analyzer import VideoDeepDiveAnalyzer
         analyzer = VideoDeepDiveAnalyzer()
 
-        result = analyzer.analyze_video(video_id, user_id)
+        result = analyzer.analyze_video(video_id, user_id, is_short=is_short)
 
         if not result.get('success'):
             error_msg = result.get('error', 'Analysis failed')
@@ -749,44 +750,90 @@ def get_channel_videos(channel_id):
     """Get videos for a specific channel"""
     try:
         continuation_token = request.args.get('continuation_token')
-        
+        timeframe_days = request.args.get('timeframe_days', type=int)
+
         youtube_api = YouTubeAPI()
         result = youtube_api.get_channel_videos(
             channel_identifier=channel_id,
             continuation_token=continuation_token
         )
-        
+
         if not result:
             return jsonify({'success': False, 'error': 'Failed to fetch videos'}), 500
-        
+
+        videos = result.get('videos', [])
+
+        # Apply timeframe filter if specified
+        if timeframe_days:
+            videos = youtube_api.filter_videos_by_timeframe(videos, timeframe_days)
+
         return jsonify({
             'success': True,
-            'videos': result.get('videos', []),
+            'videos': videos,
             'continuation_token': result.get('continuation_token')
         })
-        
+
     except Exception as e:
         logger.error(f"Error fetching channel videos: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/competitors/shorts/<channel_id>', methods=['GET'])
+@auth_required
+@require_permission('competitors')
+def get_channel_shorts(channel_id):
+    """Get shorts for a specific channel"""
+    try:
+        continuation_token = request.args.get('continuation_token')
+        timeframe_days = request.args.get('timeframe_days', type=int)
+
+        youtube_api = YouTubeAPI()
+        result = youtube_api.get_channel_shorts(
+            channel_identifier=channel_id,
+            continuation_token=continuation_token
+        )
+
+        if not result:
+            return jsonify({'success': False, 'error': 'Failed to fetch shorts'}), 500
+
+        shorts = result.get('shorts', [])
+
+        # Apply timeframe filter if specified
+        if timeframe_days:
+            shorts = youtube_api.filter_videos_by_timeframe(shorts, timeframe_days)
+
+        return jsonify({
+            'success': True,
+            'shorts': shorts,
+            'continuation_token': result.get('continuation_token')
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching channel shorts: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @bp.route('/api/competitors/video/<video_id>', methods=['GET'])
 @auth_required
 @require_permission('competitors')
 def get_video_details(video_id):
-    """Get detailed information about a specific video"""
+    """Get detailed information about a specific video or short"""
     try:
         youtube_api = YouTubeAPI()
-        
-        # Get video info
-        video_info = youtube_api.get_video_info(video_id)
+        is_short = request.args.get('is_short', 'false').lower() == 'true'
+
+        # Get video or short info
+        if is_short:
+            video_info = youtube_api.get_short_info(video_id)
+        else:
+            video_info = youtube_api.get_video_info(video_id)
+
         if not video_info:
             return jsonify({'success': False, 'error': 'Failed to fetch video info'}), 500
-        
+
         return jsonify({
             'success': True,
             'video': video_info
         })
-        
+
     except Exception as e:
         logger.error(f"Error fetching video details: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500

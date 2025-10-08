@@ -2303,3 +2303,98 @@ html.dark .latest-analysis-card i {
 .latest-analysis-card:hover i {
     transform: translateX(4px);
 }
+
+/* Content Type Toggle */
+.section-header-with-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.content-toggle {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 0.25rem;
+}
+
+html.dark .content-toggle {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.content-toggle .toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.content-toggle .toggle-btn i {
+    font-size: 1rem;
+}
+
+.content-toggle .toggle-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+}
+
+html.dark .content-toggle .toggle-btn:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60A5FA;
+}
+
+.content-toggle .toggle-btn.active {
+    background: #3B82F6;
+    color: white;
+}
+
+html.dark .content-toggle .toggle-btn.active {
+    background: #3B82F6;
+    color: white;
+}
+
+/* Short Badge */
+.short-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(139, 92, 246, 0.9);
+    color: white;
+    font-size: 0.625rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.video-thumbnail-small {
+    position: relative;
+}
+
+/* Spinner animation for loading */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
