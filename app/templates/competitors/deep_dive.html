@@ -9,22 +9,19 @@
 {% block content %}
 <div class="competitors-wrapper">
     <!-- Header -->
-    <div class="competitors-header">
+    <div class="competitors-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h1 class="page-title">
             <i class="ph ph-video"></i>
             Video Deep Dive
         </h1>
+        <button class="back-btn" onclick="window.history.back()">
+            <i class="ph ph-arrow-left"></i>
+            Back to Analysis
+        </button>
     </div>
 
     <!-- Content Area -->
     <div class="competitors-content">
-        <div class="back-button-container">
-            <button class="back-btn" onclick="window.history.back()">
-                <i class="ph ph-arrow-left"></i>
-                Back to Analysis
-            </button>
-        </div>
-
         <div class="deep-dive-container">
             <!-- Video Info Card -->
             <div class="info-card video-header-card">
@@ -295,7 +292,7 @@ html.dark .analysis-content h4 {
     color: var(--text-secondary);
     max-height: 400px;
     overflow-y: auto;
-    background: var(--bg-secondary);
+    background: rgba(248, 250, 252, 0.8);
     padding: 1rem;
     border-radius: 8px;
     white-space: pre-wrap;
@@ -303,7 +300,7 @@ html.dark .analysis-content h4 {
 }
 
 html.dark .transcript-content {
-    background: rgba(63, 63, 70, 0.5);
+    background: rgba(39, 39, 42, 0.8);
     border-color: rgba(82, 82, 91, 0.5);
 }
 
