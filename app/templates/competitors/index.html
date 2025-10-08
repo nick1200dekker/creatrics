@@ -39,6 +39,24 @@
                     <div class="lists-container" id="nicheLists">
                         <!-- Lists will be added here dynamically -->
                     </div>
+
+                    <!-- Latest Analysis -->
+                    <div class="latest-analysis-section" id="latestAnalysisSection" style="display: none;">
+                        <div class="sidebar-header" style="margin-top: 2rem;">
+                            <h3 class="sidebar-title">Latest Analysis</h3>
+                        </div>
+                        <div class="latest-analysis-card" id="latestAnalysisCard" onclick="loadLatestAnalysis()">
+                            <div class="analysis-info">
+                                <div class="analysis-list-name" id="latestAnalysisListName"></div>
+                                <div class="analysis-meta">
+                                    <span id="latestAnalysisChannelCount"></span> channels •
+                                    <span id="latestAnalysisTimeframe"></span> days
+                                </div>
+                                <div class="analysis-date" id="latestAnalysisDate"></div>
+                            </div>
+                            <i class="ph ph-arrow-right"></i>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Main Panel -->
@@ -218,6 +236,7 @@
         </div>
     </div>
 </div>
+
 
 {% endblock %}
 

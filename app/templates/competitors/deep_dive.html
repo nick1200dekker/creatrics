@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}Video Deep Dive - Creator Tools{% endblock %}
+
+{% block content %}
+<div class="deep-dive-page">
+    <div class="deep-dive-header">
+        <button class="back-button" onclick="window.history.back()">
+            <i class="ph ph-arrow-left"></i>
+            Back to Analysis
+        </button>
+    </div>
+
+    <div class="deep-dive-container">
+        <!-- Video Info Card -->
+        <div class="info-card video-header-card">
+            <div class="video-header-content">
+                <div class="video-thumbnail-wrapper">
+                    <img src="{{ video_data.thumbnail }}" alt="Video thumbnail" class="video-thumbnail">
+                    <div class="video-duration">{{ video_data.duration }}</div>
+                </div>
+                <div class="video-meta">
+                    <h2 class="video-title">{{ video_data.title }}</h2>
+                    <p class="channel-name">{{ video_data.channel_title }}</p>
+                    <div class="video-stats">
+                        <span class="stat">
+                            <i class="ph ph-eye"></i>
+                            {{ video_data.view_count }} views
+                        </span>
+                        <span class="stat">
+                            <i class="ph ph-thumbs-up"></i>
+                            {{ video_data.like_count }} likes
+                        </span>
+                        <span class="stat">
+                            <i class="ph ph-calendar"></i>
+                            {{ video_data.publish_date }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Summary -->
+        <div class="info-card">
+            <h3 class="section-title">
+                <i class="ph ph-file-text"></i>
+                Video Summary
+            </h3>
+            <div class="summary-content">
+                {{ video_data.summary }}
+            </div>
+        </div>
+
+        <!-- Keywords -->
+        {% if video_data.keywords %}
+        <div class="info-card">
+            <h3 class="section-title">
+                <i class="ph ph-hash"></i>
+                Keywords & Tags
+            </h3>
+            <div class="keywords-container">
+                {% for keyword in video_data.keywords %}
+                <span class="keyword-tag">{{ keyword }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Description -->
+        {% if video_data.description %}
+        <div class="info-card">
+            <h3 class="section-title">
+                <i class="ph ph-align-left"></i>
+                Description
+            </h3>
+            <div class="description-content">
+                {{ video_data.description }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- AI Analysis -->
+        <div class="info-card analysis-card">
+            <h3 class="section-title">
+                <i class="ph ph-sparkle"></i>
+                AI Analysis & Insights
+            </h3>
+            <div class="analysis-content">
+                {{ video_data.analysis | safe }}
+            </div>
+        </div>
+
+        <!-- Full Transcript -->
+        {% if video_data.transcript_preview %}
+        <div class="info-card">
+            <h3 class="section-title">
+                <i class="ph ph-quotes"></i>
+                Full Video Transcript
+            </h3>
+            <div class="transcript-content">
+                {{ video_data.transcript_preview }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.deep-dive-page {
+    padding: 2rem;
+    width: 100%;
+}
+
+.deep-dive-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.back-button:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: translateX(-2px);
+}
+
+.back-button i {
+    font-size: 1.2rem;
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+.page-title i {
+    font-size: 2rem;
+    color: #3B82F6;
+}
+
+.deep-dive-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.video-header-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.video-header-content {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.video-thumbnail-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.video-thumbnail {
+    width: 320px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.video-duration {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.video-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.video-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.channel-name {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+}
+
+.video-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: auto;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.stat i {
+    font-size: 1.1rem;
+    color: #3B82F6;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 1rem 0;
+}
+
+.section-title i {
+    font-size: 1.5rem;
+    color: #3B82F6;
+}
+
+.summary-content {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(59, 130, 246, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 3px solid #3B82F6;
+}
+
+.keywords-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.keyword-tag {
+    padding: 0.5rem 1rem;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.description-content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.8);
+    white-space: pre-wrap;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.analysis-content {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.analysis-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #3B82F6;
+    margin: 1.5rem 0 0.75rem 0;
+}
+
+.analysis-content h4:first-child {
+    margin-top: 0;
+}
+
+.analysis-content p {
+    margin: 0.5rem 0;
+}
+
+.analysis-content ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.analysis-content li {
+    margin: 0.5rem 0;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.transcript-content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.75);
+    max-height: 400px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    border-radius: 8px;
+    white-space: pre-wrap;
+}
+
+/* Scrollbar styling */
+.description-content::-webkit-scrollbar,
+.transcript-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.description-content::-webkit-scrollbar-track,
+.transcript-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.description-content::-webkit-scrollbar-thumb,
+.transcript-content::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 4px;
+}
+
+.description-content::-webkit-scrollbar-thumb:hover,
+.transcript-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.5);
+}
+
+/* Dark mode optimizations */
+body.dark-mode .info-card {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .back-button {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+body.dark-mode .back-button:hover {
+    background: rgba(59, 130, 246, 0.25);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .deep-dive-page {
+        padding: 1rem;
+    }
+
+    .video-header-content {
+        flex-direction: column;
+    }
+
+    .video-thumbnail {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16/9;
+    }
+
+    .video-stats {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
+</style>
+{% endblock %}

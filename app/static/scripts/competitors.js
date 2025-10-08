@@ -12,6 +12,7 @@ let videosDisplayed = 25;
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     loadNicheLists();
+    loadLatestAnalysisCard();
 });
 
 // Load niche lists
@@ -408,7 +409,8 @@ async function analyzeCompetitors() {
             },
             body: JSON.stringify({
                 timeframe: selectedTimeframe,
-                list_id: currentListId
+                list_id: currentListId,
+                list_name: getListName(currentListId)
             })
         });
 
@@ -624,6 +626,7 @@ function displayResults(data) {
                                 <th>Channel</th>
                                 <th>Views</th>
                                 <th>Published</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="videosTableBody">
@@ -661,8 +664,8 @@ function renderVideos() {
         const views = video.view_count || 0;
 
         return `
-            <tr onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">
-                <td class="video-cell">
+            <tr>
+                <td class="video-cell" onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">
                     <div class="video-thumbnail-small">
                         ${video.thumbnail ?
                             `<img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">` :
@@ -673,12 +676,21 @@ function renderVideos() {
                         ${escapeHtml(video.title)}
                     </div>
                 </td>
-                <td class="channel-cell">${escapeHtml(video.channel_title)}</td>
-                <td class="views-cell">${formatNumber(views)}</td>
-                <td class="published-cell">${video.published_time || 'Recently'}</td>
+                <td class="channel-cell" onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">${escapeHtml(video.channel_title)}</td>
+                <td class="views-cell" onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">${formatNumber(views)}</td>
+                <td class="published-cell" onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">${video.published_time || 'Recently'}</td>
+                <td class="actions-cell">
+                    <button class="deep-dive-btn" data-video-id="${video.video_id}" data-video-title="${escapeHtml(video.title).replace(/"/g, '&quot;')}">
+                        <i class="ph ph-magnifying-glass-plus"></i>
+                        Deep Dive
+                    </button>
+                </td>
             </tr>
         `;
     }).join('');
+
+    // Attach event listeners to all Deep Dive buttons
+    attachDeepDiveListeners();
 
     // Show/hide load more button
     if (loadMoreContainer) {
@@ -688,6 +700,26 @@ function renderVideos() {
             loadMoreContainer.style.display = 'none';
         }
     }
+}
+
+// Attach event listeners to Deep Dive buttons
+function attachDeepDiveListeners() {
+    const buttons = document.querySelectorAll('.deep-dive-btn');
+    buttons.forEach(button => {
+        // Remove old listener if exists
+        button.replaceWith(button.cloneNode(true));
+    });
+
+    // Re-query and attach new listeners
+    const newButtons = document.querySelectorAll('.deep-dive-btn');
+    newButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const videoId = this.getAttribute('data-video-id');
+            const videoTitle = this.getAttribute('data-video-title');
+            openDeepDive.call(this, videoId, videoTitle);
+        });
+    });
 }
 
 // Load more videos
@@ -900,6 +932,118 @@ async function addChannelFromSearch(channelData) {
         }
     } catch (error) {
         console.error('Error adding channel from search:', error);
+    }
+}
+
+// Deep Dive functionality
+function openDeepDive(videoId, videoTitle) {
+    // 'this' is the button element
+    const button = this;
+    const originalContent = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="ph ph-spinner spin"></i> Loading...';
+
+    // Disable all other Deep Dive buttons
+    const allDeepDiveButtons = document.querySelectorAll('.deep-dive-btn');
+    allDeepDiveButtons.forEach(btn => {
+        if (btn !== button) {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        }
+    });
+
+    // Navigate to the deep dive page
+    window.location.href = `/competitors/video/${videoId}/deep-dive`;
+}
+
+
+// Helper function to get list name
+function getListName(listId) {
+    const list = nicheLists.find(l => l.id === listId);
+    return list ? list.name : 'Unknown';
+}
+
+// Latest Analysis Functions
+async function loadLatestAnalysisCard() {
+    try {
+        const response = await fetch('/api/competitors/latest-analysis');
+        const data = await response.json();
+
+        if (data.success && data.has_analysis) {
+            const analysis = data.analysis;
+            const section = document.getElementById('latestAnalysisSection');
+            const listName = document.getElementById('latestAnalysisListName');
+            const channelCount = document.getElementById('latestAnalysisChannelCount');
+            const timeframe = document.getElementById('latestAnalysisTimeframe');
+            const date = document.getElementById('latestAnalysisDate');
+
+            // Format date
+            const createdDate = new Date(analysis.created_at);
+            const now = new Date();
+            const diffMs = now - createdDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            let dateStr;
+            if (diffMins < 60) {
+                dateStr = `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+            } else if (diffHours < 24) {
+                dateStr = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+            } else if (diffDays < 7) {
+                dateStr = `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+            } else {
+                dateStr = createdDate.toLocaleDateString();
+            }
+
+            listName.textContent = analysis.list_name;
+            channelCount.textContent = analysis.channel_count;
+            timeframe.textContent = analysis.timeframe;
+            date.textContent = dateStr;
+
+            section.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading latest analysis:', error);
+    }
+}
+
+async function loadLatestAnalysis() {
+    try {
+        const response = await fetch('/api/competitors/latest-analysis');
+        const data = await response.json();
+
+        console.log('Latest analysis response:', data);
+
+        if (data.success && data.has_analysis) {
+            const analysis = data.analysis;
+
+            console.log('Loading analysis:', analysis);
+
+            // Hide setup and progress sections
+            const setupSection = document.getElementById('setupSection');
+            const progressSection = document.getElementById('progressSection');
+            const resultsSection = document.getElementById('resultsSection');
+
+            if (setupSection) setupSection.style.display = 'none';
+            if (progressSection) progressSection.style.display = 'none';
+            if (resultsSection) resultsSection.style.display = 'block';
+
+            // Display the saved analysis
+            displayResults(analysis.insights);
+
+            // Scroll to results
+            if (resultsSection) {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        } else {
+            console.log('No analysis available or error:', data);
+            alert('No saved analysis found.');
+        }
+    } catch (error) {
+        console.error('Error loading latest analysis:', error);
+        alert('Failed to load analysis: ' + error.message);
     }
 }
 

@@ -2009,3 +2009,297 @@ html.dark .toast-info i {
         height: 34px;
     }
 }
+
+/* Deep Dive Button */
+.deep-dive-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #3B82F6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.deep-dive-btn:hover {
+    background: #2563EB;
+    transform: translateY(-1px);
+}
+
+html.dark .deep-dive-btn {
+    background: #60A5FA;
+    color: #18181B;
+}
+
+html.dark .deep-dive-btn:hover {
+    background: #3B82F6;
+}
+
+.actions-cell {
+    text-align: center;
+    width: 140px;
+}
+
+/* Deep Dive Modal */
+.deep-dive-modal .modal-content {
+    max-width: 900px;
+    max-height: 90vh;
+}
+
+.deep-dive-content {
+    width: 100%;
+}
+
+.deep-dive-body {
+    max-height: calc(90vh - 80px);
+    overflow-y: auto;
+}
+
+.deep-dive-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    gap: 1rem;
+}
+
+.deep-dive-loading i {
+    font-size: 3rem;
+    color: #3B82F6;
+}
+
+html.dark .deep-dive-loading i {
+    color: #60A5FA;
+}
+
+.deep-dive-loading p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.deep-dive-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.deep-dive-section:last-child {
+    border-bottom: none;
+}
+
+.deep-dive-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.deep-dive-section-title i {
+    font-size: 1.3rem;
+    color: #3B82F6;
+}
+
+html.dark .deep-dive-section-title i {
+    color: #60A5FA;
+}
+
+.video-meta {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.meta-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.meta-value {
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.keywords-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.keyword-tag {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+html.dark .keyword-tag {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60A5FA;
+}
+
+.description-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-primary);
+}
+
+html.dark .description-text {
+    background: rgba(39, 39, 42, 0.5);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.analysis-content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-primary);
+}
+
+.analysis-content h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.analysis-content h2:first-child {
+    margin-top: 0;
+}
+
+.analysis-content strong {
+    color: #3B82F6;
+    font-weight: 600;
+}
+
+html.dark .analysis-content strong {
+    color: #60A5FA;
+}
+
+.analysis-content ul {
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.analysis-content li {
+    margin-bottom: 0.5rem;
+}
+
+.error-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    gap: 1rem;
+}
+
+.error-message i {
+    font-size: 3rem;
+    color: #EF4444;
+}
+
+.error-message p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+/* Latest Analysis Section */
+.latest-analysis-section {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-primary);
+}
+
+html.dark .latest-analysis-section {
+    border-top-color: rgba(82, 82, 91, 0.5);
+}
+
+.latest-analysis-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+html.dark .latest-analysis-card {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
+.latest-analysis-card:hover {
+    background: var(--bg-hover);
+    border-color: #3B82F6;
+    transform: translateX(2px);
+}
+
+html.dark .latest-analysis-card:hover {
+    background: rgba(63, 63, 70, 0.8);
+    border-color: #60A5FA;
+}
+
+.analysis-info {
+    flex: 1;
+}
+
+.analysis-list-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.analysis-meta {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    margin-bottom: 0.25rem;
+}
+
+.analysis-date {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.latest-analysis-card i {
+    font-size: 1.25rem;
+    color: #3B82F6;
+    transition: transform 0.2s;
+}
+
+html.dark .latest-analysis-card i {
+    color: #60A5FA;
+}
+
+.latest-analysis-card:hover i {
+    transform: translateX(4px);
+}

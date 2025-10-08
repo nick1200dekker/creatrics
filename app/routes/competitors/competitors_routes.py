@@ -18,6 +18,144 @@ def competitors():
     """Competitor analysis page"""
     return render_template('competitors/index.html')
 
+@bp.route('/competitors/video/<video_id>/deep-dive')
+@auth_required
+@require_permission('competitors')
+def video_deep_dive(video_id):
+    """Deep dive analysis page for a competitor video"""
+    try:
+        if not video_id:
+            return f"""
+                <html>
+                <body style="font-family: Arial; padding: 40px; text-align: center;">
+                    <h1>Error</h1>
+                    <p>Video ID is required</p>
+                    <button onclick="window.history.back()" style="padding: 10px 20px; cursor: pointer;">Go Back</button>
+                </body>
+                </html>
+            """, 400
+
+        user_id = get_workspace_user_id()
+
+        # Use the analyzer to perform deep dive
+        from app.scripts.competitors.video_deep_dive_analyzer import VideoDeepDiveAnalyzer
+        analyzer = VideoDeepDiveAnalyzer()
+
+        result = analyzer.analyze_video(video_id, user_id)
+
+        if not result.get('success'):
+            error_msg = result.get('error', 'Analysis failed')
+            # Check if it's an API overload error
+            if '529' in str(error_msg) or 'overloaded' in str(error_msg).lower():
+                error_display = "Claude AI is currently experiencing high demand. Please try again in a few moments."
+            else:
+                error_display = str(error_msg)
+
+            return f"""
+                <html>
+                <head>
+                    <style>
+                        body {{
+                            font-family: 'Inter', Arial, sans-serif;
+                            padding: 40px;
+                            text-align: center;
+                            background: #18181b;
+                            color: #fafafa;
+                        }}
+                        .error-container {{
+                            max-width: 600px;
+                            margin: 0 auto;
+                            padding: 40px;
+                            background: rgba(255, 255, 255, 0.03);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            border-radius: 12px;
+                        }}
+                        h1 {{ color: #EF4444; margin-bottom: 20px; }}
+                        p {{ margin-bottom: 30px; line-height: 1.6; }}
+                        button {{
+                            padding: 12px 24px;
+                            background: #3B82F6;
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-size: 16px;
+                            margin: 0 10px;
+                        }}
+                        button:hover {{ background: #2563EB; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="error-container">
+                        <h1>⚠️ Analysis Error</h1>
+                        <p>{error_display}</p>
+                        <button onclick="window.history.back()">← Go Back</button>
+                        <button onclick="window.location.reload()">🔄 Try Again</button>
+                    </div>
+                </body>
+                </html>
+            """, 500
+
+        video_data = result.get('data', {}).get('video_info', {})
+        video_data['summary'] = result.get('data', {}).get('summary', '')
+        video_data['transcript_preview'] = result.get('data', {}).get('transcript_preview', '')
+        video_data['analysis'] = result.get('data', {}).get('analysis', '')
+
+        return render_template('competitors/deep_dive.html', video_data=video_data)
+
+    except Exception as e:
+        logger.error(f"Error in video deep dive: {e}")
+        error_msg = str(e)
+        if '529' in error_msg or 'overloaded' in error_msg.lower():
+            error_display = "Claude AI is currently experiencing high demand. Please try again in a few moments."
+        else:
+            error_display = error_msg
+
+        return f"""
+            <html>
+            <head>
+                <style>
+                    body {{
+                        font-family: 'Inter', Arial, sans-serif;
+                        padding: 40px;
+                        text-align: center;
+                        background: #18181b;
+                        color: #fafafa;
+                    }}
+                    .error-container {{
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 40px;
+                        background: rgba(255, 255, 255, 0.03);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: 12px;
+                    }}
+                    h1 {{ color: #EF4444; margin-bottom: 20px; }}
+                    p {{ margin-bottom: 30px; line-height: 1.6; }}
+                    button {{
+                        padding: 12px 24px;
+                        background: #3B82F6;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        margin: 0 10px;
+                    }}
+                    button:hover {{ background: #2563EB; }}
+                </style>
+            </head>
+            <body>
+                <div class="error-container">
+                    <h1>⚠️ Unexpected Error</h1>
+                    <p>{error_display}</p>
+                    <button onclick="window.history.back()">← Go Back</button>
+                    <button onclick="window.location.reload()">🔄 Try Again</button>
+                </div>
+            </body>
+            </html>
+        """, 500
+
 @bp.route('/api/competitors/lists', methods=['GET'])
 @auth_required
 @require_permission('competitors')
@@ -458,6 +596,40 @@ def list_competitors():
         logger.error(f"Error listing competitors: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@bp.route('/api/competitors/latest-analysis', methods=['GET'])
+@auth_required
+@require_permission('competitors')
+def get_latest_analysis():
+    """Get the latest saved competitor analysis"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get the latest analysis document
+        analysis_ref = db.collection('users').document(user_id).collection('competitor_analyses').document('latest')
+        analysis_doc = analysis_ref.get()
+
+        if not analysis_doc.exists:
+            return jsonify({
+                'success': True,
+                'has_analysis': False
+            })
+
+        analysis_data = analysis_doc.to_dict()
+
+        # Convert timestamp
+        if analysis_data.get('created_at'):
+            analysis_data['created_at'] = analysis_data['created_at'].isoformat()
+
+        return jsonify({
+            'success': True,
+            'has_analysis': True,
+            'analysis': analysis_data
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting latest analysis: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @bp.route('/api/competitors/analyze', methods=['POST'])
 @auth_required
 @require_permission('competitors')
@@ -539,7 +711,27 @@ def analyze_competitors():
                     output_tokens=token_usage.get('output_tokens', 300),
                     description="Competitor Analysis"
                 )
-        
+
+        # Save as latest analysis (replace if exists)
+        try:
+            analysis_data = {
+                'list_id': list_id,
+                'list_name': data.get('list_name', 'Unknown'),
+                'timeframe': timeframe,
+                'channel_count': len(channel_data),
+                'insights': result.get('data', {}),
+                'created_at': datetime.now(timezone.utc)
+            }
+
+            # Store in user's latest_analysis document (overwrites previous)
+            analysis_ref = db.collection('users').document(user_id).collection('competitor_analyses').document('latest')
+            analysis_ref.set(analysis_data)
+
+            logger.info(f"Saved latest analysis for user {user_id}")
+        except Exception as e:
+            logger.error(f"Error saving analysis: {e}")
+            # Don't fail the request if save fails
+
         return jsonify({
             'success': True,
             'data': result.get('data', {}),
