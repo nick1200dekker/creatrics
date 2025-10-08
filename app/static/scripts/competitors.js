@@ -624,9 +624,9 @@ function displayResults(data) {
         `;
     }
 
-    // Publishing Heatmap
-    if (patterns.publish_heatmap && patterns.publish_heatmap.data && patterns.publish_heatmap.data.length > 0) {
-        html += renderPublishHeatmap(patterns.publish_heatmap);
+    // Channel Activity (videos per channel)
+    if (patterns.channel_performance) {
+        html += renderChannelActivity(patterns.channel_performance, timeframeText);
     }
 
     // Top Videos/Shorts as Table
@@ -654,12 +654,12 @@ function displayResults(data) {
                         </tbody>
                     </table>
                 </div>
-                <div class="load-more-container" id="loadMoreContainer" style="display: none;">
-                    <button class="load-more-btn" onclick="loadMoreVideos()">
-                        <i class="ph ph-arrow-down"></i>
-                        <span id="loadMoreLabel">Load More Videos</span>
-                    </button>
-                </div>
+            </div>
+            <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+                <button class="load-more-btn" onclick="loadMoreVideos()">
+                    <i class="ph ph-arrow-down"></i>
+                    <span id="loadMoreLabel">Load More Videos</span>
+                </button>
             </div>
         `;
     }
@@ -719,8 +719,8 @@ function renderVideos() {
 
     // Show/hide load more button
     if (loadMoreContainer) {
-        if (videosDisplayed < allVideos.length) {
-            loadMoreContainer.style.display = 'block';
+        if (videosDisplayed < allVideos.length && videosDisplayed < 250) {
+            loadMoreContainer.style.display = 'flex';
         } else {
             loadMoreContainer.style.display = 'none';
         }
@@ -749,7 +749,8 @@ function attachDeepDiveListeners() {
 
 // Load more videos
 function loadMoreVideos() {
-    videosDisplayed += 25;
+    // Cap at 250 videos max
+    videosDisplayed = Math.min(videosDisplayed + 25, 250, allVideos.length);
     renderVideos();
 }
 
@@ -1125,46 +1126,53 @@ function filterByTimeframe(content, days) {
     });
 }
 
-// Render Publishing Heatmap (Day of Week Distribution)
-function renderPublishHeatmap(heatmapData) {
-    const { data, max_count } = heatmapData;
+// Render Channel Activity (videos posted per channel)
+function renderChannelActivity(channelPerformance, timeframeText) {
+    if (!channelPerformance || Object.keys(channelPerformance).length === 0) return '';
 
-    if (!data || data.length === 0) return '';
+    // Convert to array and sort by video count (most active first)
+    const channels = Object.entries(channelPerformance)
+        .map(([name, stats]) => ({
+            name,
+            videoCount: stats.video_count || 0,
+            avgViews: stats.avg_views || 0
+        }))
+        .sort((a, b) => b.videoCount - a.videoCount);
 
-    const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const maxCount = Math.max(...channels.map(c => c.videoCount));
 
-    // Generate day bars
-    let dayBars = '';
-    data.forEach(item => {
-        const percentage = max_count > 0 ? (item.count / max_count) * 100 : 0;
-        const intensity = max_count > 0 ? item.count / max_count : 0;
+    // Generate channel bars
+    let channelBars = '';
+    channels.forEach(channel => {
+        const percentage = maxCount > 0 ? (channel.videoCount / maxCount) * 100 : 0;
+        const intensity = maxCount > 0 ? channel.videoCount / maxCount : 0;
+        const colorIntensity = Math.max(0.3, intensity);
 
-        // Color gradient from light to dark blue based on count
-        const colorIntensity = Math.max(0.3, intensity); // Minimum 30% intensity
-
-        dayBars += `
+        channelBars += `
             <div class="day-bar-row">
-                <div class="day-bar-label">${dayLabels[item.day]}</div>
+                <div class="day-bar-label">${escapeHtml(channel.name)}</div>
                 <div class="day-bar-container">
                     <div class="day-bar-fill"
                          style="width: ${percentage}%; opacity: ${colorIntensity}"
-                         title="${item.count} post${item.count !== 1 ? 's' : ''} on ${dayLabels[item.day]}">
+                         title="${channel.videoCount} video${channel.videoCount !== 1 ? 's' : ''} posted">
                     </div>
-                    <span class="day-bar-count">${item.count}</span>
+                    <span class="day-bar-count">${channel.videoCount}</span>
                 </div>
             </div>
         `;
     });
 
+    const totalVideos = channels.reduce((sum, c) => sum + c.videoCount, 0);
+
     return `
         <div class="heatmap-card">
             <h3 class="section-title">
-                <i class="ph ph-calendar-dots"></i>
-                Publishing Schedule
+                <i class="ph ph-chart-bar"></i>
+                Channel Activity
             </h3>
-            <p class="heatmap-description">Which days of the week competitors post content</p>
+            <p class="heatmap-description">${totalVideos} video${totalVideos !== 1 ? 's' : ''} posted across ${channels.length} channel${channels.length !== 1 ? 's' : ''} in ${timeframeText}</p>
             <div class="day-bars-container">
-                ${dayBars}
+                ${channelBars}
             </div>
         </div>
     `;

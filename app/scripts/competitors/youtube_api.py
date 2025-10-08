@@ -123,22 +123,32 @@ class YouTubeAPI:
             response.raise_for_status()
             
             data = response.json()
-            
+
             videos = []
-            for video in data.get('data', []):
+            for i, video in enumerate(data.get('data', [])):
                 if video.get('type') == 'video':
-                    videos.append({
+                    # Handle API inconsistency: sometimes publishedTimeText is in channelTitle field
+                    published_time = video.get('publishedTimeText')
+                    if not published_time:
+                        # Fallback: check if channelTitle contains relative time (e.g., "16 hours ago")
+                        channel_title = video.get('channelTitle', '')
+                        if 'ago' in channel_title.lower():
+                            published_time = channel_title
+
+                    video_dict = {
                         'video_id': video.get('videoId'),
                         'title': video.get('title'),
                         'description': video.get('description', ''),
                         'view_count': self._parse_view_count(video.get('viewCountText', '0')),
                         'view_count_text': video.get('viewCountText', '0'),
-                        'published_time': video.get('publishedTimeText'),
+                        'published_time': published_time,
                         'published_at': video.get('publishedAt'),
                         'publish_date': video.get('publishDate'),
                         'length': video.get('lengthText'),
                         'thumbnail': video.get('thumbnail', [{}])[-1].get('url') if video.get('thumbnail') else None
-                    })
+                    }
+
+                    videos.append(video_dict)
             
             return {
                 'videos': videos,
@@ -289,37 +299,103 @@ class YouTubeAPI:
             logger.error(f"Error fetching short info: {e}")
             return None
 
+    def _parse_relative_time(self, time_str: str, conservative: bool = False) -> datetime:
+        """Parse relative time strings like '2 days ago', '5 hours ago' to datetime
+
+        Args:
+            time_str: Relative time string from YouTube
+            conservative: If True, add extra buffer to imprecise units (weeks/months/years)
+                         to avoid including videos that might be older than stated
+        """
+        import re
+        from datetime import timezone
+
+        if not time_str:
+            return None
+
+        time_str = time_str.lower().strip()
+        now = datetime.now(timezone.utc)
+
+        # Match patterns like "X hours ago", "X days ago", "X weeks ago"
+        match = re.match(r'(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago', time_str)
+        if match:
+            amount = int(match.group(1))
+            unit = match.group(2)
+
+            # Precise units (seconds, minutes, hours, days) - no buffer needed
+            if unit == 'second':
+                return now - timedelta(seconds=amount)
+            elif unit == 'minute':
+                return now - timedelta(minutes=amount)
+            elif unit == 'hour':
+                return now - timedelta(hours=amount)
+            elif unit == 'day':
+                return now - timedelta(days=amount)
+
+            # Imprecise units - add conservative buffer if requested
+            elif unit == 'week':
+                # "1 week ago" could mean 7-13 days, so add 3 days buffer
+                days = amount * 7
+                if conservative:
+                    days += 3
+                return now - timedelta(days=days)
+            elif unit == 'month':
+                # "1 month ago" is imprecise and could mean 30-60+ days
+                # To be conservative for filtering, treat it as the MAXIMUM likely duration
+                # This ensures we don't include videos that are actually older than our cutoff
+                days = amount * 31  # Use 31 days as minimum for "1 month"
+                if conservative:
+                    days += 15  # Add buffer for conservative filtering
+                return now - timedelta(days=days)
+            elif unit == 'year':
+                # "1 year ago" could mean 365-400 days, so add 30 days buffer
+                days = amount * 365
+                if conservative:
+                    days += 30
+                return now - timedelta(days=days)
+
+        return None
+
     def filter_videos_by_timeframe(self, videos: List[Dict], days: int) -> List[Dict]:
         """Filter videos by timeframe"""
-        cutoff_date = datetime.now() - timedelta(days=days)
+        from datetime import timezone
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         filtered = []
 
         for video in videos:
-            # Try multiple date fields
-            pub_date_str = video.get('published_at') or video.get('publishedAt') or video.get('publish_date')
+            pub_date = None
 
-            if pub_date_str:
-                try:
-                    # Parse ISO format date
-                    if 'T' in pub_date_str:
-                        pub_date = datetime.fromisoformat(pub_date_str.replace('Z', '+00:00'))
-                    else:
-                        # Try YYYY-MM-DD format
-                        pub_date = datetime.strptime(pub_date_str, '%Y-%m-%d')
+            # PREFER relative time text (more accurate) over API-provided dates
+            pub_time_text = video.get('published_time')
+            if pub_time_text:
+                # For short timeframes (30 days), exclude videos with imprecise time units
+                # "1 month ago" is too imprecise and likely means >30 days
+                if days <= 30:
+                    time_lower = pub_time_text.lower()
+                    if 'month' in time_lower or 'year' in time_lower:
+                        # Skip this video - it's likely older than our cutoff
+                        continue
 
-                    # Make cutoff_date timezone-aware if pub_date is
-                    if pub_date.tzinfo is not None and cutoff_date.tzinfo is None:
-                        from datetime import timezone
-                        cutoff_date = cutoff_date.replace(tzinfo=timezone.utc)
+                pub_date = self._parse_relative_time(pub_time_text, conservative=False)
+                # Store the calculated date back into the video for later use
+                if pub_date:
+                    video['published_at'] = pub_date.isoformat()
 
-                    if pub_date >= cutoff_date:
-                        filtered.append(video)
-                except Exception as e:
-                    logger.debug(f"Could not parse date {pub_date_str}: {e}")
-                    # If parsing fails, include the video
-                    filtered.append(video)
-            else:
-                # If no date, include it
+            # Fallback to API-provided dates if no relative time available
+            if not pub_date:
+                pub_date_str = video.get('published_at') or video.get('publishedAt') or video.get('publish_date')
+                if pub_date_str and pub_date_str != 'None':
+                    try:
+                        # Parse ISO format date
+                        if 'T' in pub_date_str:
+                            pub_date = datetime.fromisoformat(pub_date_str.replace('Z', '+00:00'))
+                        else:
+                            # Try YYYY-MM-DD format
+                            pub_date = datetime.strptime(pub_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                    except Exception as e:
+                        logger.debug(f"Could not parse date {pub_date_str}: {e}")
+
+            if pub_date and pub_date >= cutoff_date:
                 filtered.append(video)
 
         return filtered

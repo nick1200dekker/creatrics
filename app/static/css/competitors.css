@@ -1014,6 +1014,7 @@ html.dark .add-result-btn:hover:not(:disabled) {
     padding: 1.5rem 0;
     margin-top: 1rem;
     text-align: center;
+    width: 100%;
 }
 
 .load-more-btn {
@@ -1762,10 +1763,14 @@ html.dark .heatmap-card {
 }
 
 .day-bar-label {
-    min-width: 100px;
+    width: 150px;
+    flex-shrink: 0;
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .day-bar-container {

@@ -142,7 +142,7 @@ class CompetitorAnalyzer:
             return {
                 'success': True,
                 'data': {
-                    'videos': all_videos[:50],  # Top 50 videos
+                    'videos': all_videos[:250],  # Top 250 videos
                     'channels': channels_info,
                     'patterns': patterns,
                     'insights': insights,
@@ -298,10 +298,32 @@ class CompetitorAnalyzer:
                 logger.debug(f"Error parsing publish time for video {video.get('title', 'unknown')}: {e}")
                 continue
 
+        # Log sample dates with calculated weekdays
+        logger.info(f"Sample videos with dates (first 3):")
+        for i, video in enumerate(videos[:3]):
+            pub_at = video.get('published_at') or video.get('publishedAt') or video.get('publish_date')
+            pub_time = video.get('published_time')
+
+            # Calculate weekday for debugging
+            weekday_name = "Unknown"
+            if pub_at and isinstance(pub_at, str):
+                try:
+                    dt = datetime.fromisoformat(pub_at.replace('Z', '+00:00'))
+                    weekday_name = day_names[dt.weekday()]
+                except:
+                    pass
+
+            logger.info(f"  Video {i+1}: published_at='{pub_at}', published_time='{pub_time}', weekday={weekday_name}")
+
         logger.info(f"Day Distribution: Parsed publish dates for {parsed_count}/{len(videos)} videos")
 
-        # Convert to list format for easier frontend consumption
+        # Log the distribution for debugging
         day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        for day in range(7):
+            if day_counts[day] > 0:
+                logger.info(f"  {day_names[day]}: {day_counts[day]} videos")
+
+        # Convert to list format for easier frontend consumption
         heatmap_data = []
 
         for day in range(7):
@@ -312,9 +334,13 @@ class CompetitorAnalyzer:
                 'count': count
             })
 
+        total_counted = sum(day_counts.values())
+        logger.info(f"Total videos counted in distribution: {total_counted}")
+
         return {
             'data': heatmap_data,
-            'max_count': max(day_counts.values()) if day_counts else 0
+            'max_count': max(day_counts.values()) if day_counts else 0,
+            'total_parsed': parsed_count
         }
 
     def _generate_insights(self, videos: List[Dict], patterns: Dict, days: int, channel_stats: Dict = None) -> Dict:
