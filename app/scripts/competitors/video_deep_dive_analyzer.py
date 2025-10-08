@@ -319,26 +319,31 @@ IMPORTANT RULES:
             ai_provider = get_ai_provider()
 
             # Use full transcript for comprehensive summary
-            prompt = f"""Summarize this YouTube video in a detailed paragraph (4-6 sentences).
+            prompt = f"""Summarize this YouTube video in 3-4 SHORT paragraphs with clear breaks between them.
 
-Focus on:
-1. What is the main topic/subject of this video?
-2. What are the key points, strategies, or insights discussed?
-3. What specific examples, demonstrations, or highlights are shown?
-4. What value does this provide to viewers?
+Structure:
+- Paragraph 1: Main topic and what the video is about (2-3 sentences)
+- Paragraph 2: Key points, strategies, or insights discussed (2-3 sentences)
+- Paragraph 3: Specific examples or demonstrations shown (2-3 sentences)
+- Paragraph 4 (optional): Value for viewers and takeaway (1-2 sentences)
+
+IMPORTANT:
+- Put a blank line between each paragraph
+- Keep each paragraph short and scannable
+- Write in a clear, direct style
 
 Full Video Transcript:
 {transcript_text}
 
-Write an engaging, informative summary that captures the essence and best parts of the video."""
+Write the summary now with proper paragraph breaks."""
 
             response = ai_provider.create_completion(
                 messages=[
-                    {"role": "system", "content": "You are a YouTube video analyst. Create detailed, informative summaries that capture key points and value."},
+                    {"role": "system", "content": "You are a YouTube video analyst. Create well-structured summaries with clear paragraph breaks. Always separate paragraphs with blank lines for readability."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.5,
-                max_tokens=250
+                max_tokens=500
             )
 
             summary = response.get('content', '') if isinstance(response, dict) else str(response)
