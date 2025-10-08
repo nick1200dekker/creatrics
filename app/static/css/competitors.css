@@ -85,6 +85,7 @@ html.dark .competitors-content {
     display: flex;
     gap: 1.5rem;
     width: 100%;
+    margin-bottom: 2rem;
 }
 
 /* Niche Lists Sidebar */
@@ -695,11 +696,7 @@ html.dark .back-btn:hover {
     font-size: 1rem;
 }
 
-/* Setup Section */
-.setup-section {
-    margin-bottom: 2rem;
-}
-
+/* Setup Card */
 .setup-card {
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
@@ -2073,15 +2070,24 @@ html.dark .toast-info i {
     .competitors-content {
         padding: 1rem;
     }
-    
+
     .competitors-header {
         padding: 1rem 1.5rem;
     }
-    
+
     .page-title {
         font-size: 1.375rem;
     }
-    
+
+    .setup-section {
+        flex-direction: column;
+    }
+
+    .niche-lists-sidebar {
+        width: 100%;
+        max-height: 400px;
+    }
+
     .setup-header,
     .setup-body {
         padding: 1rem;

@@ -354,49 +354,46 @@ class CompetitorAnalyzer:
                     f"{channel_name} ({stats['avg_views']:,.0f} avg views, {stats['video_count']} videos)"
                 )
             
-            prompt = f"""Analyze YouTube competitor data from the last {days} days and provide a CONCISE, scannable analysis.
+            prompt = f"""Analyze YouTube competitor data from the last {days} days and provide creative, actionable insights focused on content themes and strategies.
 
-**DATA:**
-Channels: {patterns.get('total_channels', 0)} | Videos: {patterns.get('total_videos_analyzed', 0)} | Avg Views: {patterns.get('avg_views', 0):,} | Overperformers: {patterns.get('overperformers_count', 0)}
-
-**TOP VIDEOS (including overperformers):**
+**TOP PERFORMING VIDEOS:**
 {chr(10).join(video_summaries)}
 
-**PATTERNS:** {top_words}
-**TOP CHANNELS BY PERFORMANCE:**
-{chr(10).join([f"- {info}" for info in performance_info])}
+**COMMON THEMES:** {top_words}
 
 Provide analysis with these sections:
 
 ## Key Insights
-3-5 SHORT bullet points (one sentence each) about what's working in this niche. Focus on:
-- Content types that consistently perform well (with specific examples and view counts)
-- Which channels are overperforming and why
-- Clear patterns in successful content
-Keep each bullet to 1-2 lines maximum. Be specific with numbers.
+3-5 SHORT bullet points about content themes and creative patterns that resonate with audiences. Focus on:
+- What types of content ideas, formats, or angles are working
+- Creative approaches that stand out (unique formats, storytelling styles, hooks)
+- Audience preferences and interests you can identify
+Avoid listing view counts or performance metrics. Focus on the "why" behind what works.
 
 ## What Content Works
-Identify 2-3 content patterns that drive high engagement. Format as:
-• [Content Type] (e.g., "Challenge videos like 'X'", [view count]) consistently [performance metric], showing [insight about why it works].
+Identify 2-3 creative patterns or content themes. Format as:
+• [Content theme or format] (example: "Challenge-based narratives") resonates because [why it appeals to viewers' interests/emotions/curiosity].
 
-Focus on actionable patterns, not just listing videos.
+Focus on creative insights and viewer psychology, not numbers.
 
 ## Title Strategies
-List 4-5 specific title patterns being used successfully. Format as one-liners:
-• [Pattern description with example]
+List 4-5 title patterns that capture attention. Format as one-liners with examples:
+• [Pattern] — Example: "[concrete title example]"
+
+Focus on hooks, curiosity gaps, and emotional triggers rather than formulas.
 
 ## Content Opportunities
-List ONLY 8 video title ideas - just the titles, nothing else. Mix of different content types. Format as:
+List ONLY 8 video title ideas inspired by the analysis. Make them creative and specific to the niche. Format as:
 "[Video Title 1]"
 "[Video Title 2]"
 ...continuing to 8 titles
 
-Keep it ULTRA CONCISE and scannable. Total response should be under 500 words."""
+Keep it CONCISE and creative. Prioritize actionable creative insights over metrics."""
 
-            system_prompt = f"""You are a YouTube strategy analyst. Current date: {datetime.now().strftime('%B %d, %Y')}.
+            system_prompt = f"""You are a creative YouTube strategist focused on content ideas and storytelling. Current date: {datetime.now().strftime('%B %d, %Y')}.
 
-Provide concise, data-driven insights. Every claim must have specific metrics. Keep formatting clean and scannable.
-IMPORTANT: Use bullet points (•) and simple formatting. Keep responses short and actionable."""
+Analyze what makes content compelling from a creative perspective. Focus on themes, angles, formats, and viewer psychology rather than pure performance metrics. Be concise and actionable.
+IMPORTANT: Minimize references to view counts and performance ratios. Focus on creative insights."""
 
             response = ai_provider.create_completion(
                 messages=[
