@@ -75,8 +75,12 @@ function switchContentType(type) {
     const searchInput = document.getElementById('searchQuery');
     if (type === 'shorts') {
         searchInput.placeholder = 'Search for shorts...';
+        // Hide sort toggle for shorts since it doesn't work properly
+        document.getElementById('sortToggle').style.display = 'none';
     } else {
         searchInput.placeholder = 'Search for videos...';
+        // Show sort toggle for videos
+        document.getElementById('sortToggle').style.display = 'flex';
     }
 }
 

@@ -107,7 +107,7 @@ class VideoDeepDiveAnalyzer:
             return {'success': False, 'error': str(e)}
 
     def _fetch_short_info(self, video_id: str) -> Dict:
-        """Fetch short information from RapidAPI with extended data"""
+        """Fetch short information from RapidAPI with extended data and publish date"""
         try:
             url = f"https://{self.rapidapi_host}/shorts/info"
             headers = {
@@ -115,8 +115,8 @@ class VideoDeepDiveAnalyzer:
                 "x-rapidapi-host": self.rapidapi_host
             }
 
-            # Use extend=2 to get engagement metrics
-            response = requests.get(url, headers=headers, params={"id": video_id, "extend": "2"})
+            # Use params=WHATTOWATCH to get publish date and engagement metrics
+            response = requests.get(url, headers=headers, params={"id": video_id, "params": "WHATTOWATCH"})
             response.raise_for_status()
 
             data = response.json()

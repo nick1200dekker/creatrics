@@ -8,7 +8,6 @@ let searchResults = [];
 let isSearching = false;
 let allVideos = [];
 let videosDisplayed = 25;
-let currentContentType = 'videos'; // 'videos' or 'shorts'
 let currentTimeframeDays = 30; // Store the timeframe used in analysis
 
 // Initialize
@@ -620,16 +619,6 @@ function displayResults(data) {
                         <i class="ph ph-play-circle"></i>
                         <span id="contentTypeLabel">Top Performing Videos</span> (<span id="contentCount">${videos.length}</span> total)
                     </h3>
-                    <div class="content-toggle">
-                        <button class="toggle-btn active" onclick="switchContentType('videos')" id="videosToggleBtn">
-                            <i class="ph ph-video-camera"></i>
-                            Videos
-                        </button>
-                        <button class="toggle-btn" onclick="switchContentType('shorts')" id="shortsToggleBtn">
-                            <i class="ph ph-device-mobile"></i>
-                            Shorts
-                        </button>
-                    </div>
                 </div>
                 <div class="videos-table">
                     <table>
@@ -1117,134 +1106,5 @@ function filterByTimeframe(content, days) {
     });
 }
 
-// Switch between videos and shorts
-async function switchContentType(type) {
-    if (type === currentContentType) return;
-
-    currentContentType = type;
-
-    // Update toggle buttons
-    const videosBtn = document.getElementById('videosToggleBtn');
-    const shortsBtn = document.getElementById('shortsToggleBtn');
-
-    if (type === 'videos') {
-        videosBtn.classList.add('active');
-        shortsBtn.classList.remove('active');
-    } else {
-        videosBtn.classList.remove('active');
-        shortsBtn.classList.add('active');
-    }
-
-    // Update labels
-    const contentTypeLabel = document.getElementById('contentTypeLabel');
-    const contentTypeTableLabel = document.getElementById('contentTypeTableLabel');
-    const loadMoreLabel = document.getElementById('loadMoreLabel');
-
-    if (type === 'videos') {
-        contentTypeLabel.textContent = 'Top Performing Videos';
-        contentTypeTableLabel.textContent = 'Video';
-        loadMoreLabel.textContent = 'Load More Videos';
-    } else {
-        contentTypeLabel.textContent = 'Top Performing Shorts';
-        contentTypeTableLabel.textContent = 'Short';
-        loadMoreLabel.textContent = 'Load More Shorts';
-    }
-
-    // Fetch and display content
-    await fetchAndDisplayContent(type);
-}
-
-// Fetch and display videos or shorts
-async function fetchAndDisplayContent(type) {
-    const tbody = document.getElementById('videosTableBody');
-    if (!tbody) return;
-
-    // Show loading state
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="5" style="text-align: center; padding: 2rem;">
-                <i class="ph ph-spinner spin" style="font-size: 2rem; color: #3B82F6;"></i>
-                <p style="margin-top: 1rem; color: #71717a;">Loading ${type}...</p>
-            </td>
-        </tr>
-    `;
-
-    try {
-        // Fetch content from all competitor channels IN PARALLEL
-        const fetchPromises = competitors.map(async (competitor) => {
-            const channelId = competitor.channel_id;
-            const channelHandle = competitor.channel_handle || channelId;
-
-            try {
-                const endpoint = type === 'videos'
-                    ? `/api/competitors/videos/${channelId}?timeframe_days=${currentTimeframeDays}`
-                    : `/api/competitors/shorts/${channelId}?timeframe_days=${currentTimeframeDays}`;
-
-                const response = await fetch(endpoint);
-                const data = await response.json();
-
-                if (data.success) {
-                    const items = type === 'videos' ? data.videos : data.shorts;
-
-                    // Add channel info to each item and mark if short
-                    return items.map(item => ({
-                        ...item,
-                        channel_title: competitor.title,
-                        channel_id: channelId,
-                        channel_handle: channelHandle,
-                        is_short: type === 'shorts'
-                    }));
-                }
-            } catch (error) {
-                console.error(`Error fetching ${type} for channel ${channelId}:`, error);
-            }
-            return [];
-        });
-
-        // Wait for all fetches to complete
-        const results = await Promise.all(fetchPromises);
-        const allContent = results.flat();
-
-        if (allContent.length === 0) {
-            const timeframeText = currentTimeframeDays === 1 ? '24 hours' :
-                                 currentTimeframeDays === 2 ? '48 hours' :
-                                 `${currentTimeframeDays} days`;
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 2rem;">
-                        <i class="ph ph-video-camera-slash" style="font-size: 2rem; color: #71717a;"></i>
-                        <p style="margin-top: 1rem; color: #71717a;">No ${type} found in the last ${timeframeText}.</p>
-                    </td>
-                </tr>
-            `;
-            document.getElementById('contentCount').textContent = '0';
-            return;
-        }
-
-        // Sort by view count (backend already filtered by timeframe)
-        allContent.sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
-
-        // Take top 50
-        allVideos = allContent.slice(0, 50);
-        videosDisplayed = 25;
-
-        // Update count
-        document.getElementById('contentCount').textContent = allVideos.length;
-
-        // Render the content
-        renderVideos();
-
-    } catch (error) {
-        console.error(`Error fetching ${type}:`, error);
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 2rem;">
-                    <i class="ph ph-warning" style="font-size: 2rem; color: #EF4444;"></i>
-                    <p style="margin-top: 1rem; color: #EF4444;">Error loading ${type}. Please try again.</p>
-                </td>
-            </tr>
-        `;
-    }
-}
 
 // Show toast notification (removed - toasts disabled)

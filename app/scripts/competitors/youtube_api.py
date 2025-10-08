@@ -255,10 +255,11 @@ class YouTubeAPI:
             return None
 
     def get_short_info(self, short_id: str) -> Optional[Dict]:
-        """Get detailed short information"""
+        """Get detailed short information with publish date using WHATTOWATCH param"""
         try:
             url = f"{self.base_url}/shorts/info"
-            querystring = {"id": short_id}
+            # Use WHATTOWATCH param to get publish date
+            querystring = {"id": short_id, "params": "WHATTOWATCH"}
 
             response = requests.get(url, headers=self.headers, params=querystring, timeout=10)
             response.raise_for_status()
@@ -266,7 +267,7 @@ class YouTubeAPI:
             data = response.json()
 
             return {
-                'video_id': data.get('id'),
+                'video_id': data.get('videoId') or data.get('id'),
                 'title': data.get('title'),
                 'description': data.get('description'),
                 'keywords': data.get('keywords', []),
@@ -276,6 +277,8 @@ class YouTubeAPI:
                 'like_count': data.get('likeCount'),
                 'comment_count': data.get('commentCount', 0),
                 'publish_date': data.get('publishDate'),
+                'published_at': data.get('publishedAt'),
+                'published_time_text': data.get('publishedTimeText'),
                 'length_seconds': data.get('lengthSeconds'),
                 'thumbnails': data.get('thumbnail', []),
                 'subtitles': data.get('subtitles', {}),
