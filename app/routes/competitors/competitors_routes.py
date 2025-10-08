@@ -108,13 +108,21 @@ def list_competitors():
         for comp in competitors:
             comp_data = comp.to_dict()
             comp_data['id'] = comp.id
-            
+
+            # Fix avatar format - handle both old (array) and new (string) formats
+            avatar = comp_data.get('avatar')
+            if isinstance(avatar, list) and len(avatar) > 0:
+                # Old format: array of avatar objects
+                comp_data['avatar'] = avatar[0].get('url') if isinstance(avatar[0], dict) else None
+            elif not isinstance(avatar, str):
+                comp_data['avatar'] = None
+
             # Convert timestamps to ISO format
             if comp_data.get('added_at'):
                 comp_data['added_at'] = comp_data['added_at'].isoformat()
             if comp_data.get('updated_at'):
                 comp_data['updated_at'] = comp_data['updated_at'].isoformat()
-            
+
             competitors_list.append(comp_data)
         
         return jsonify({

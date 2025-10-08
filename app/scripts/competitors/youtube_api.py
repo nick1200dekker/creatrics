@@ -189,6 +189,7 @@ class YouTubeAPI:
                 'channel_title': data.get('channelTitle'),
                 'view_count': data.get('viewCount'),
                 'like_count': data.get('likeCount'),
+                'comment_count': data.get('commentCount', 0),
                 'publish_date': data.get('publishDate'),
                 'length_seconds': data.get('lengthSeconds'),
                 'thumbnails': data.get('thumbnail', []),

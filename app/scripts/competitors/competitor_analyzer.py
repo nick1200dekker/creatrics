@@ -75,15 +75,15 @@ class CompetitorAnalyzer:
                 
                 # Filter by timeframe
                 filtered_videos = self.youtube_api.filter_videos_by_timeframe(videos, days)
-                
+
                 logger.info(f"After filtering by {days} days: {len(filtered_videos)} videos")
-                
+
                 # Add channel info to each video
                 for video in filtered_videos:
                     video['channel_title'] = channel_title
                     video['channel_id'] = channel_id
                     video['channel_handle'] = channel_handle
-                
+
                 all_videos.extend(filtered_videos)
                 
                 # Store channel info
@@ -99,17 +99,33 @@ class CompetitorAnalyzer:
                     'success': False,
                     'error': f'No videos found in the last {days} days from any competitor'
                 }
-            
-            # Sort videos by view count
-            all_videos.sort(key=lambda x: int(x.get('view_count', 0) or 0), reverse=True)
-            
+
+            # Calculate channel averages and identify overperformers
+            channel_stats = self._calculate_channel_stats(all_videos, channels_info)
+
+            # Mark overperformers
+            for video in all_videos:
+                channel_id = video.get('channel_id')
+                if channel_id in channel_stats:
+                    avg_views = channel_stats[channel_id]['avg_views']
+                    video_views = int(video.get('view_count', 0) or 0)
+                    # Mark as overperformer if views are 2x or more above channel average
+                    video['is_overperformer'] = video_views >= (avg_views * 2) if avg_views > 0 else False
+                    video['performance_ratio'] = (video_views / avg_views) if avg_views > 0 else 0
+
+            # Sort videos: prioritize mix of absolute top performers and overperformers
+            all_videos.sort(key=lambda x: (
+                int(x.get('is_overperformer', False)),  # Overperformers first
+                int(x.get('view_count', 0) or 0)         # Then by view count
+            ), reverse=True)
+
             logger.info(f"Total videos to analyze: {len(all_videos)}")
-            
+
             # Analyze patterns
-            patterns = self._analyze_patterns(all_videos, channels_info)
-            
+            patterns = self._analyze_patterns(all_videos, channels_info, channel_stats)
+
             # Generate insights with AI
-            insights = self._generate_insights(all_videos, patterns, days)
+            insights = self._generate_insights(all_videos, patterns, days, channel_stats)
             
             return {
                 'success': True,
@@ -136,7 +152,30 @@ class CompetitorAnalyzer:
                 'error': str(e)
             }
     
-    def _analyze_patterns(self, videos: List[Dict], channels: List[Dict]) -> Dict:
+    def _calculate_channel_stats(self, videos: List[Dict], channels: List[Dict]) -> Dict:
+        """Calculate statistics for each channel"""
+        channel_stats = {}
+
+        for channel in channels:
+            channel_id = channel['channel_id']
+            channel_videos = [v for v in videos if v.get('channel_id') == channel_id]
+
+            if channel_videos:
+                views = [int(v.get('view_count', 0) or 0) for v in channel_videos]
+
+                total_views = sum(views)
+                avg_views = total_views / len(views) if views else 0
+
+                channel_stats[channel_id] = {
+                    'avg_views': avg_views,
+                    'total_views': total_views,
+                    'video_count': len(channel_videos),
+                    'channel_title': channel['title']
+                }
+
+        return channel_stats
+
+    def _analyze_patterns(self, videos: List[Dict], channels: List[Dict], channel_stats: Dict = None) -> Dict:
         """Analyze patterns in video data"""
         if not videos:
             return {}
@@ -170,7 +209,19 @@ class CompetitorAnalyzer:
         for channel in channels:
             videos_count = channel.get('videos_in_timeframe', 0)
             channel_upload_freq[channel['title']] = videos_count
-        
+
+        # Identify overperformers
+        overperformers = [v for v in videos if v.get('is_overperformer', False)]
+
+        # Get channel performance stats
+        channel_performance = {}
+        if channel_stats:
+            for channel_id, stats in channel_stats.items():
+                channel_performance[stats['channel_title']] = {
+                    'avg_views': stats['avg_views'],
+                    'video_count': stats['video_count']
+                }
+
         return {
             'top_title_words': [{'word': w, 'count': c} for w, c in top_title_words],
             'avg_views': int(avg_views),
@@ -178,64 +229,88 @@ class CompetitorAnalyzer:
             'top_videos': top_videos,
             'total_channels': len(channels),
             'total_videos_analyzed': len(videos),
-            'channel_upload_frequency': channel_upload_freq
+            'channel_upload_frequency': channel_upload_freq,
+            'overperformers_count': len(overperformers),
+            'channel_performance': channel_performance
         }
     
-    def _generate_insights(self, videos: List[Dict], patterns: Dict, days: int) -> Dict:
+    def _generate_insights(self, videos: List[Dict], patterns: Dict, days: int, channel_stats: Dict = None) -> Dict:
         """Generate AI insights from the data"""
         try:
             ai_provider = get_ai_provider()
-            
+
             if not ai_provider or not videos:
                 return self._generate_fallback_insights(videos, patterns, days)
-            
-            # Prepare data summary for AI
+
+            # Prepare data summary for AI - include mix of top performers and overperformers
             top_videos = videos[:15]
             video_summaries = []
             for v in top_videos:
                 views = v.get('view_count', 0)
                 channel = v.get('channel_title', 'Unknown')
-                video_summaries.append(f"- '{v.get('title')}' by {channel} ({views:,} views)")
-            
+                is_overperformer = v.get('is_overperformer', False)
+                performance_ratio = v.get('performance_ratio', 0)
+
+                status = f" [OVERPERFORMER {performance_ratio:.1f}x avg]" if is_overperformer else ""
+                video_summaries.append(f"- '{v.get('title')}' by {channel} ({views:,} views){status}")
+
             # Get top words
             top_words = ', '.join([w['word'] for w in patterns.get('top_title_words', [])[:10]])
-            
+
             # Channel performance
-            channel_freq = patterns.get('channel_upload_frequency', {})
-            most_active = sorted(channel_freq.items(), key=lambda x: x[1], reverse=True)[:5]
-            active_channels = ', '.join([f"{c[0]} ({c[1]} videos)" for c in most_active])
+            channel_performance = patterns.get('channel_performance', {})
+            sorted_channels = sorted(
+                channel_performance.items(),
+                key=lambda x: x[1]['avg_views'],
+                reverse=True
+            )[:5]
+
+            performance_info = []
+            for channel_name, stats in sorted_channels:
+                performance_info.append(
+                    f"{channel_name} ({stats['avg_views']:,.0f} avg views, {stats['video_count']} videos)"
+                )
             
             prompt = f"""Analyze YouTube competitor data from the last {days} days and provide a CONCISE analysis.
 
 **DATA:**
-Channels: {patterns.get('total_channels', 0)} | Videos: {patterns.get('total_videos_analyzed', 0)} | Avg Views: {patterns.get('avg_views', 0):,} | Total Views: {patterns.get('total_views', 0):,}
+Channels: {patterns.get('total_channels', 0)} | Videos: {patterns.get('total_videos_analyzed', 0)} | Avg Views: {patterns.get('avg_views', 0):,} | Overperformers: {patterns.get('overperformers_count', 0)}
 
-**TOP VIDEOS:**
+**TOP VIDEOS (including overperformers):**
 {chr(10).join(video_summaries)}
 
 **PATTERNS:** {top_words}
-**ACTIVE CHANNELS:** {active_channels}
+**TOP CHANNELS BY PERFORMANCE:**
+{chr(10).join([f"- {info}" for info in performance_info])}
 
 Provide a BRIEF analysis with these sections:
 
 ## Content Performance
-Identify the 2-3 highest-performing content types with specific metrics and examples. Keep each format to 2-3 sentences max.
+Identify 2-3 highest-performing content types. Include both absolute top performers AND overperformers (smaller channels punching above their weight). Focus on view counts and patterns. 2-3 sentences max.
 
 ## Title Strategies
 List 4-5 proven title patterns from top videos. Format as:
 - **Pattern Name**: Brief example and why it works (1 sentence)
 
-## Upload Strategy
-Compare top channels' frequency vs engagement in 2-3 sentences.
-
 ## Content Opportunities
-Create 4 SPECIFIC content ideas based on gaps in competitor coverage. Format each as:
-**"[Title]"** - One sentence explaining the data-driven reasoning and unique angle.
+Create 4 ORIGINAL, ACCESSIBLE content ideas (mix of long-form videos AND shorts) that ANYONE can create - NOT copies of existing videos. AVOID suggesting:
+- High skill/trophy requirements
+- Formats already done by competitors
+- Generic "tips and tricks" or "best deck" videos
+
+INSTEAD, focus on:
+- Fresh angles NO ONE is covering (opposite perspectives, unexplored questions, beginner-friendly takes)
+- Content the CREATOR can realistically make (don't assume expertise or resources)
+- Unique formats that stand out from the competition
+- Questions/problems the audience has that competitors aren't answering
+
+Format each as:
+**"[Suggested Video Title]"** [LONG-FORM or SHORT] - One sentence explaining what UNIQUE VALUE this provides that's missing from all competitors.
 
 ## Key Takeaways
-3-4 bullet points with specific, actionable recommendations.
+3-4 bullet points with SPECIFIC, actionable recommendations about content strategy and what's working in this niche.
 
-Keep it CONCISE and scannable. Use bold for emphasis. Total response should be under 800 words."""
+Keep it CONCISE and scannable. Use bold for emphasis. Total response should be under 700 words."""
 
             system_prompt = f"""You are a YouTube strategy analyst. Current date: {datetime.now().strftime('%B %d, %Y')}.
 

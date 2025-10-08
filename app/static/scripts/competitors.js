@@ -109,10 +109,10 @@ function renderCompetitorsList() {
         </div>
         <div class="competitors-grid">
             ${competitors.map(comp => {
-                const avatarHTML = comp.avatar ? 
-                    `<img src="${comp.avatar}" alt="${escapeHtml(comp.title || 'Channel')}" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\\'avatar-placeholder\\'>${(comp.title || '?')[0].toUpperCase()}</div>';">` : 
+                const avatarHTML = comp.avatar ?
+                    `<img src="${comp.avatar}" alt="${escapeHtml(comp.title || 'Channel')}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="avatar-placeholder" style="display:none;">${(comp.title || '?')[0].toUpperCase()}</div>` :
                     `<div class="avatar-placeholder">${(comp.title || '?')[0].toUpperCase()}</div>`;
-                
+
                 return `
                     <div class="competitor-card">
                         <div class="competitor-avatar">
@@ -434,12 +434,15 @@ function displayResults(data) {
                             </tr>
                         </thead>
                         <tbody>
-                            ${videos.slice(0, 20).map(video => `
+                            ${videos.slice(0, 20).map(video => {
+                                const views = video.view_count || 0;
+
+                                return `
                                 <tr onclick="window.open('https://youtube.com/watch?v=${video.video_id}', '_blank')" style="cursor: pointer;">
                                     <td class="video-cell">
                                         <div class="video-thumbnail-small">
-                                            ${video.thumbnail ? 
-                                                `<img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">` : 
+                                            ${video.thumbnail ?
+                                                `<img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">` :
                                                 '<div class="thumbnail-placeholder-small"><i class="ph ph-video-camera"></i></div>'
                                             }
                                         </div>
@@ -448,10 +451,10 @@ function displayResults(data) {
                                         </div>
                                     </td>
                                     <td class="channel-cell">${escapeHtml(video.channel_title)}</td>
-                                    <td class="views-cell">${formatNumber(video.view_count)}</td>
+                                    <td class="views-cell">${formatNumber(views)}</td>
                                     <td class="published-cell">${video.published_time || 'Recently'}</td>
                                 </tr>
-                            `).join('')}
+                            `}).join('')}
                         </tbody>
                     </table>
                 </div>

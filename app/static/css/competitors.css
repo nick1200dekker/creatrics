@@ -82,6 +82,7 @@ html.dark .competitors-content {
     align-items: center;
     justify-content: center;
     min-height: 400px;
+    width: 100%;
 }
 
 .progress-card {
@@ -89,10 +90,11 @@ html.dark .competitors-content {
     border: 1px solid var(--border-primary);
     border-radius: 12px;
     padding: 3rem 2rem;
-    max-width: 500px;
-    width: 100%;
+    max-width: 600px;
+    width: 90%;
     text-align: center;
     transition: all 0.2s ease;
+    margin: 0 auto;
 }
 
 html.dark .progress-card {
@@ -134,13 +136,17 @@ html.dark .progress-icon {
     }
 }
 
-html.dark @keyframes pulse {
+@keyframes pulse-dark {
     0%, 100% {
         box-shadow: 0 4px 16px rgba(96, 165, 250, 0.4);
     }
     50% {
         box-shadow: 0 4px 24px rgba(96, 165, 250, 0.6);
     }
+}
+
+html.dark .progress-icon {
+    animation: pulse-dark 2s ease-in-out infinite;
 }
 
 .progress-icon i {
@@ -1153,6 +1159,23 @@ html.dark .thumbnail-placeholder-small {
 
 html.dark .views-cell {
     color: #60A5FA;
+}
+
+.likes-cell,
+.comments-cell {
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.engagement-cell {
+    color: #10B981;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+html.dark .engagement-cell {
+    color: #34D399;
 }
 
 .published-cell {
