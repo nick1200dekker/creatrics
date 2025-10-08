@@ -43,6 +43,13 @@ html.dark .competitors-header {
 
 .header-content {
     max-width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-back-btn {
+    margin-left: auto;
 }
 
 .page-title {
@@ -616,11 +623,39 @@ html.dark .progress-percent {
 }
 
 /* =============================================
-   BACK BUTTON
+   RESULTS HEADER WITH BACK BUTTON
    ============================================= */
 
-.back-button-container {
-    margin-bottom: 1.5rem;
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+html.dark .results-header {
+    border-bottom-color: rgba(82, 82, 91, 0.5);
+}
+
+.results-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.results-title i {
+    font-size: 1.75rem;
+    color: #3B82F6;
+}
+
+html.dark .results-title i {
+    color: #60A5FA;
 }
 
 .back-btn {
@@ -1450,7 +1485,7 @@ html.dark .analyze-btn:hover:not(:disabled) {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 3rem;
 }
 
 @media (max-width: 768px) {
@@ -1660,49 +1695,136 @@ html.dark .insight-section-header {
     line-height: 1.6;
 }
 
-/* Quick Wins */
-.quick-wins-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+/* Content Opportunities Grid */
+.content-ideas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
 }
 
-.quick-win-item {
-    padding: 1.25rem;
+.content-idea-chip {
+    padding: 0.875rem 1rem;
     background: var(--bg-secondary);
-    border-left: 3px solid #3B82F6;
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.4;
     transition: all 0.2s ease;
 }
 
-html.dark .quick-win-item {
+html.dark .content-idea-chip {
     background: rgba(63, 63, 70, 0.5);
-    border-left-color: #60A5FA;
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
-.quick-win-item:hover {
+.content-idea-chip:hover {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: #3B82F6;
+    transform: translateY(-1px);
+}
+
+html.dark .content-idea-chip:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #60A5FA;
+}
+
+/* Publishing Heatmap */
+.heatmap-card {
     background: var(--bg-primary);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-    transform: translateX(2px);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
-html.dark .quick-win-item:hover {
-    background: rgba(63, 63, 70, 0.8);
-    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.2);
+html.dark .heatmap-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+    backdrop-filter: blur(10px);
 }
 
-.win-title {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.625rem;
-    line-height: 1.4;
-}
-
-.win-opportunity {
+.heatmap-description {
     font-size: 0.875rem;
     color: var(--text-secondary);
-    line-height: 1.6;
+    margin: -0.5rem 0 1.25rem 0;
+}
+
+/* Day Bars Container */
+.day-bars-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.day-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.day-bar-label {
+    min-width: 100px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.day-bar-container {
+    flex: 1;
+    position: relative;
+    height: 32px;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.day-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: #3B82F6;
+    border-radius: 6px;
+    transition: width 0.6s ease, opacity 0.3s ease;
+    min-width: 2px;
+}
+
+html.dark .day-bar-fill {
+    background: #60A5FA;
+}
+
+.day-bar-count {
+    position: relative;
+    z-index: 1;
+    padding-left: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.day-bar-row:hover .day-bar-fill {
+    opacity: 0.8 !important;
+    filter: brightness(1.1);
+}
+
+@media (max-width: 768px) {
+    .day-bar-label {
+        min-width: 80px;
+        font-size: 0.8125rem;
+    }
+
+    .day-bar-container {
+        height: 28px;
+    }
+
+    .day-bar-count {
+        font-size: 0.8125rem;
+        padding-left: 0.5rem;
+    }
 }
 
 /* Videos Table */

@@ -230,6 +230,9 @@ class CompetitorAnalyzer:
                     'video_count': stats['video_count']
                 }
 
+        # Analyze publish times for heatmap (day of week + hour)
+        publish_heatmap = self._analyze_publish_times(videos)
+
         return {
             'top_title_words': [{'word': w, 'count': c} for w, c in top_title_words],
             'avg_views': int(avg_views),
@@ -239,9 +242,81 @@ class CompetitorAnalyzer:
             'total_videos_analyzed': len(videos),
             'channel_upload_frequency': channel_upload_freq,
             'overperformers_count': len(overperformers),
-            'channel_performance': channel_performance
+            'channel_performance': channel_performance,
+            'publish_heatmap': publish_heatmap
         }
-    
+
+    def _analyze_publish_times(self, videos: List[Dict]) -> Dict:
+        """Analyze when videos are published (day of week only, since API doesn't provide time)"""
+        from datetime import datetime, timezone
+
+        # Initialize day-of-week counter
+        day_counts = {day: 0 for day in range(7)}  # 0 = Monday, 6 = Sunday
+
+        parsed_count = 0
+        for video in videos:
+            try:
+                # Get published_at timestamp - try multiple field names
+                published_at = video.get('published_at') or video.get('publishedAt') or video.get('publish_date')
+                if not published_at:
+                    continue
+
+                dt = None
+                # Parse the timestamp (try multiple formats)
+                if isinstance(published_at, str):
+                    # Handle ISO format with T and Z
+                    if 'T' in published_at or '-' in published_at:
+                        try:
+                            dt = datetime.fromisoformat(published_at.replace('Z', '+00:00'))
+                        except:
+                            pass
+
+                    # Try parsing as Unix timestamp string
+                    if not dt and published_at.isdigit():
+                        try:
+                            dt = datetime.fromtimestamp(int(published_at), tz=timezone.utc)
+                        except:
+                            pass
+
+                elif isinstance(published_at, (int, float)):
+                    try:
+                        dt = datetime.fromtimestamp(published_at, tz=timezone.utc)
+                    except:
+                        pass
+
+                if not dt:
+                    continue
+
+                # Get day of week (0 = Monday, 6 = Sunday)
+                day_of_week = dt.weekday()
+
+                # Increment counter for this day
+                day_counts[day_of_week] += 1
+                parsed_count += 1
+
+            except Exception as e:
+                logger.debug(f"Error parsing publish time for video {video.get('title', 'unknown')}: {e}")
+                continue
+
+        logger.info(f"Day Distribution: Parsed publish dates for {parsed_count}/{len(videos)} videos")
+
+        # Convert to list format for easier frontend consumption
+        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        heatmap_data = []
+
+        for day in range(7):
+            count = day_counts[day]
+            heatmap_data.append({
+                'day': day,
+                'day_name': day_names[day],
+                'count': count
+            })
+
+        return {
+            'data': heatmap_data,
+            'max_count': max(day_counts.values()) if day_counts else 0
+        }
+
     def _generate_insights(self, videos: List[Dict], patterns: Dict, days: int, channel_stats: Dict = None) -> Dict:
         """Generate AI insights from the data"""
         try:
@@ -279,7 +354,7 @@ class CompetitorAnalyzer:
                     f"{channel_name} ({stats['avg_views']:,.0f} avg views, {stats['video_count']} videos)"
                 )
             
-            prompt = f"""Analyze YouTube competitor data from the last {days} days and provide a CONCISE analysis.
+            prompt = f"""Analyze YouTube competitor data from the last {days} days and provide a CONCISE, scannable analysis.
 
 **DATA:**
 Channels: {patterns.get('total_channels', 0)} | Videos: {patterns.get('total_videos_analyzed', 0)} | Avg Views: {patterns.get('avg_views', 0):,} | Overperformers: {patterns.get('overperformers_count', 0)}
@@ -291,38 +366,37 @@ Channels: {patterns.get('total_channels', 0)} | Videos: {patterns.get('total_vid
 **TOP CHANNELS BY PERFORMANCE:**
 {chr(10).join([f"- {info}" for info in performance_info])}
 
-Provide a BRIEF analysis with these sections:
+Provide analysis with these sections:
 
-## Content Performance
-Identify 2-3 highest-performing content types. Include both absolute top performers AND overperformers (smaller channels punching above their weight). Focus on view counts and patterns. 2-3 sentences max.
+## Key Insights
+3-5 SHORT bullet points (one sentence each) about what's working in this niche. Focus on:
+- Content types that consistently perform well (with specific examples and view counts)
+- Which channels are overperforming and why
+- Clear patterns in successful content
+Keep each bullet to 1-2 lines maximum. Be specific with numbers.
+
+## What Content Works
+Identify 2-3 content patterns that drive high engagement. Format as:
+• [Content Type] (e.g., "Challenge videos like 'X'", [view count]) consistently [performance metric], showing [insight about why it works].
+
+Focus on actionable patterns, not just listing videos.
 
 ## Title Strategies
-List 4-5 proven title patterns from top videos. Format as:
-- **Pattern Name**: Brief example and why it works (1 sentence)
+List 4-5 specific title patterns being used successfully. Format as one-liners:
+• [Pattern description with example]
 
 ## Content Opportunities
-Create 4 ORIGINAL, ACCESSIBLE content ideas (mix of long-form videos AND shorts) that ANYONE can create - NOT copies of existing videos. AVOID suggesting:
-- High skill/trophy requirements
-- Formats already done by competitors
-- Generic "tips and tricks" or "best deck" videos
+List ONLY 8 video title ideas - just the titles, nothing else. Mix of different content types. Format as:
+"[Video Title 1]"
+"[Video Title 2]"
+...continuing to 8 titles
 
-INSTEAD, focus on:
-- Fresh angles NO ONE is covering (opposite perspectives, unexplored questions, beginner-friendly takes)
-- Content the CREATOR can realistically make (don't assume expertise or resources)
-- Unique formats that stand out from the competition
-- Questions/problems the audience has that competitors aren't answering
-
-Format each as:
-**"[Suggested Video Title]"** [LONG-FORM or SHORT] - One sentence explaining what UNIQUE VALUE this provides that's missing from all competitors.
-
-## Key Takeaways
-3-4 bullet points with SPECIFIC, actionable recommendations about content strategy and what's working in this niche.
-
-Keep it CONCISE and scannable. Use bold for emphasis. Total response should be under 700 words."""
+Keep it ULTRA CONCISE and scannable. Total response should be under 500 words."""
 
             system_prompt = f"""You are a YouTube strategy analyst. Current date: {datetime.now().strftime('%B %d, %Y')}.
 
-Provide concise, data-driven insights. Every claim must have specific metrics. Keep formatting clean and scannable."""
+Provide concise, data-driven insights. Every claim must have specific metrics. Keep formatting clean and scannable.
+IMPORTANT: Use bullet points (•) and simple formatting. Keep responses short and actionable."""
 
             response = ai_provider.create_completion(
                 messages=[
@@ -380,37 +454,31 @@ Provide concise, data-driven insights. Every claim must have specific metrics. K
     def _parse_content_ideas(self, text: str) -> List[Dict]:
         """Extract content ideas from Content Opportunities section"""
         ideas = []
-        
+
         try:
             # Find Content Opportunities section
             section_match = re.search(r'##\s*Content Opportunities(.+?)(?=##|$)', text, re.DOTALL)
             if not section_match:
                 return ideas
-            
+
             section_text = section_match.group(1)
-            
-            # Pattern: **"Title"** - Explanation
-            pattern = r'\*\*["\']([^"\']+)["\']?\*\*\s*[-–—]\s*(.+?)(?=\n\*\*|$)'
-            
-            for match in re.finditer(pattern, section_text, re.DOTALL):
+
+            # Pattern: "Title" (just titles in quotes)
+            pattern = r'"([^"]+)"'
+
+            for match in re.finditer(pattern, section_text):
                 title = match.group(1).strip()
-                opportunity = match.group(2).strip()
-                
-                # Clean up opportunity text
-                opportunity = re.sub(r'\n+', ' ', opportunity)
-                opportunity = opportunity.strip()
-                
-                # Only include if substantial
-                if len(opportunity) > 30:
+
+                if title and len(title) > 10:  # Basic validation
                     ideas.append({
                         'title': title,
-                        'opportunity': opportunity,
+                        'opportunity': '',  # No description needed
                         'channel': 'Content Opportunity',
                         'views': 0
                     })
-            
-            return ideas[:4]  # Max 4 ideas
-            
+
+            return ideas[:8]  # Max 8 titles
+
         except Exception as e:
             logger.error(f"Error parsing content ideas: {e}")
             return ideas

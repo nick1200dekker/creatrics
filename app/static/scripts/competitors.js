@@ -467,6 +467,13 @@ function backToSetup() {
     document.getElementById('resultsSection').style.display = 'none';
     document.getElementById('setupSection').style.display = 'block';
 
+    // Remove back button from header
+    const mainHeader = document.querySelector('.competitors-header .header-content');
+    if (mainHeader) {
+        const backBtn = mainHeader.querySelector('.back-btn');
+        if (backBtn) backBtn.remove();
+    }
+
     // Scroll to the top of the page
     window.scrollTo({
         top: 0,
@@ -502,15 +509,22 @@ function displayResults(data) {
                          `${timeframe_days} days`;
     
     // Build HTML with back button and stats grid first
+    // Add Back button to main header
+    const mainHeader = document.querySelector('.competitors-header .header-content');
+    if (mainHeader) {
+        // Remove existing back button if present
+        const existingBackBtn = mainHeader.querySelector('.back-btn');
+        if (existingBackBtn) existingBackBtn.remove();
+
+        // Add back button
+        const backBtn = document.createElement('button');
+        backBtn.className = 'back-btn header-back-btn';
+        backBtn.onclick = backToSetup;
+        backBtn.innerHTML = '<i class="ph ph-arrow-left"></i> Back to Setup';
+        mainHeader.appendChild(backBtn);
+    }
+
     let html = `
-        <!-- Back Button -->
-        <div class="back-button-container">
-            <button class="back-btn" onclick="backToSetup()">
-                <i class="ph ph-arrow-left"></i>
-                Back to Setup
-            </button>
-        </div>
-        
         <!-- Quick Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
@@ -556,15 +570,20 @@ function displayResults(data) {
                 <div class="insights-content">
         `;
         
-        // Parse and format the markdown content
+        // Parse and format the markdown content, but exclude Content Opportunities section
         const sections = insights.summary.split(/(?=##\s)/);
-        
+
         sections.forEach(section => {
+            // Skip Content Opportunities section (it has its own styled cards)
+            if (section.includes('## Content Opportunities')) {
+                return;
+            }
+
             const lines = section.split('\n').filter(line => line.trim());
-            
+
             lines.forEach(line => {
                 const trimmed = line.trim();
-                
+
                 if (trimmed.startsWith('##')) {
                     const headerText = trimmed.replace(/^##\s*/, '');
                     html += `<h4 class="insight-section-header">${formatMarkdown(escapeHtml(headerText))}</h4>`;
@@ -586,30 +605,30 @@ function displayResults(data) {
         `;
     }
     
-    // Quick Wins
+    // Content Opportunities (Just Titles)
     if (insights.quick_wins && insights.quick_wins.length > 0) {
-        const meaningfulWins = insights.quick_wins.filter(win => win.opportunity && win.opportunity.length > 30);
-        
-        if (meaningfulWins.length > 0) {
-            html += `
-                <div class="quick-wins-card">
-                    <h3 class="section-title">
-                        <i class="ph ph-rocket-launch"></i>
-                        Content Opportunities
-                    </h3>
-                    <div class="quick-wins-list">
-                        ${meaningfulWins.map(win => `
-                            <div class="quick-win-item">
-                                <div class="win-title">"${formatMarkdown(escapeHtml(win.title))}"</div>
-                                <div class="win-opportunity">${formatMarkdown(escapeHtml(win.opportunity))}</div>
-                            </div>
-                        `).join('')}
-                    </div>
+        html += `
+            <div class="quick-wins-card">
+                <h3 class="section-title">
+                    <i class="ph ph-rocket-launch"></i>
+                    Content Opportunities
+                </h3>
+                <div class="content-ideas-grid">
+                    ${insights.quick_wins.map(win => `
+                        <div class="content-idea-chip">
+                            "${escapeHtml(win.title)}"
+                        </div>
+                    `).join('')}
                 </div>
-            `;
-        }
+            </div>
+        `;
     }
-    
+
+    // Publishing Heatmap
+    if (patterns.publish_heatmap && patterns.publish_heatmap.data && patterns.publish_heatmap.data.length > 0) {
+        html += renderPublishHeatmap(patterns.publish_heatmap);
+    }
+
     // Top Videos/Shorts as Table
     if (videos && videos.length > 0) {
         html += `
@@ -617,7 +636,7 @@ function displayResults(data) {
                 <div class="section-header-with-toggle">
                     <h3 class="section-title">
                         <i class="ph ph-play-circle"></i>
-                        <span id="contentTypeLabel">Top Performing Videos</span> (<span id="contentCount">${videos.length}</span> total)
+                        <span id="contentTypeLabel">Top Performing Videos</span>
                     </h3>
                 </div>
                 <div class="videos-table">
@@ -1106,5 +1125,49 @@ function filterByTimeframe(content, days) {
     });
 }
 
+// Render Publishing Heatmap (Day of Week Distribution)
+function renderPublishHeatmap(heatmapData) {
+    const { data, max_count } = heatmapData;
+
+    if (!data || data.length === 0) return '';
+
+    const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    // Generate day bars
+    let dayBars = '';
+    data.forEach(item => {
+        const percentage = max_count > 0 ? (item.count / max_count) * 100 : 0;
+        const intensity = max_count > 0 ? item.count / max_count : 0;
+
+        // Color gradient from light to dark blue based on count
+        const colorIntensity = Math.max(0.3, intensity); // Minimum 30% intensity
+
+        dayBars += `
+            <div class="day-bar-row">
+                <div class="day-bar-label">${dayLabels[item.day]}</div>
+                <div class="day-bar-container">
+                    <div class="day-bar-fill"
+                         style="width: ${percentage}%; opacity: ${colorIntensity}"
+                         title="${item.count} post${item.count !== 1 ? 's' : ''} on ${dayLabels[item.day]}">
+                    </div>
+                    <span class="day-bar-count">${item.count}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    return `
+        <div class="heatmap-card">
+            <h3 class="section-title">
+                <i class="ph ph-calendar-dots"></i>
+                Publishing Schedule
+            </h3>
+            <p class="heatmap-description">Which days of the week competitors post content</p>
+            <div class="day-bars-container">
+                ${dayBars}
+            </div>
+        </div>
+    `;
+}
 
 // Show toast notification (removed - toasts disabled)

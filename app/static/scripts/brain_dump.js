@@ -1260,8 +1260,7 @@ async function modifyNoteWithAI() {
             },
             body: JSON.stringify({
                 content: noteContent,
-                prompt: prompt,
-                model: 'gpt-4o-mini' // Using the same model as script generator
+                prompt: prompt
             })
         });
 

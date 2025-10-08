@@ -110,7 +110,66 @@
                     <i class="ph ph-quotes"></i>
                     Full Video Transcript
                 </h3>
-                <div class="transcript-content">{{ video_data.transcript_preview | trim }}</div>
+
+                <!-- AI Agent Panel -->
+                <div class="ai-agent-section">
+                    <button class="ai-toggle-btn" onclick="toggleTranscriptAI()" id="transcriptAIToggle">
+                        <i class="ph ph-robot"></i>
+                        AI Assistant
+                        <i class="ph ph-caret-down ai-caret"></i>
+                    </button>
+
+                    <div class="ai-agent-panel collapsed" id="transcriptAIPanel">
+                        <div class="ai-agent-content">
+                            <div class="ai-prompt-group">
+                                <input type="text"
+                                       id="transcriptAIInput"
+                                       class="ai-modify-input"
+                                       placeholder="e.g., 'create a short script from this', 'explain the main points', 'extract quotes'"
+                                       onkeypress="if(event.key === 'Enter') processTranscriptWithAI()"/>
+                                <button class="ai-modify-btn" onclick="processTranscriptWithAI()" id="transcriptAIBtn">
+                                    <i class="ph ph-magic-wand"></i>
+                                    <span>Apply</span>
+                                </button>
+                            </div>
+                            <div class="ai-suggestions">
+                                <span class="suggestion-label">Quick actions:</span>
+                                <button class="suggestion-chip" onclick="setTranscriptPrompt('Create a short script (30-60 seconds) from the key points')">
+                                    <i class="ph ph-film-script"></i> Short Script
+                                </button>
+                                <button class="suggestion-chip" onclick="setTranscriptPrompt('Explain this section in simple terms')">
+                                    <i class="ph ph-lightbulb"></i> Explain
+                                </button>
+                                <button class="suggestion-chip" onclick="setTranscriptPrompt('Extract the most powerful quotes')">
+                                    <i class="ph ph-quotes"></i> Extract Quotes
+                                </button>
+                                <button class="suggestion-chip" onclick="setTranscriptPrompt('Summarize the main talking points')">
+                                    <i class="ph ph-list-bullets"></i> Key Points
+                                </button>
+                            </div>
+                            <div class="ai-warning">
+                                <i class="ph ph-info"></i>
+                                <span>Long transcripts or complex requests may use more credits</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transcript-content" id="transcriptContent">{{ video_data.transcript_preview | trim }}</div>
+
+                <!-- AI Result Panel -->
+                <div class="ai-result-panel" id="aiResultPanel" style="display: none;">
+                    <div class="ai-result-header">
+                        <h4 class="ai-result-title">
+                            <i class="ph ph-sparkle"></i>
+                            AI Result
+                        </h4>
+                        <button class="copy-result-btn" onclick="copyAIResult()" title="Copy to clipboard">
+                            <i class="ph ph-copy"></i>
+                        </button>
+                    </div>
+                    <div class="ai-result-content" id="aiResultContent"></div>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -357,6 +416,270 @@ html.dark .transcript-content::-webkit-scrollbar-thumb:hover {
     background: rgba(96, 165, 250, 0.5);
 }
 
+/* AI Agent Section */
+.ai-agent-section {
+    margin-bottom: 1rem;
+}
+
+.ai-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: fit-content;
+}
+
+html.dark .ai-toggle-btn {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.ai-toggle-btn i.ph-robot {
+    color: #3B82F6;
+    font-size: 1.1rem;
+}
+
+html.dark .ai-toggle-btn i.ph-robot {
+    color: #60A5FA;
+}
+
+.ai-toggle-btn:hover {
+    border-color: #3B82F6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+html.dark .ai-toggle-btn:hover {
+    border-color: #60A5FA;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.ai-toggle-btn.active {
+    border-color: #3B82F6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+html.dark .ai-toggle-btn.active {
+    border-color: #60A5FA;
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.ai-caret {
+    margin-left: 0.25rem;
+    transition: transform 0.2s ease;
+    color: var(--text-secondary);
+}
+
+.ai-agent-panel {
+    max-height: 500px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+    margin-top: 1rem;
+}
+
+.ai-agent-panel.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+}
+
+.ai-agent-content {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+html.dark .ai-agent-content {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.ai-prompt-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.ai-modify-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.ai-modify-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ai-modify-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #3B82F6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.ai-modify-btn:hover:not(:disabled) {
+    background: #2563EB;
+    transform: translateY(-1px);
+}
+
+.ai-modify-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ai-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.suggestion-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.suggestion-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.suggestion-chip:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3B82F6;
+    color: #3B82F6;
+    transform: translateY(-1px);
+}
+
+.suggestion-chip i {
+    font-size: 1rem;
+}
+
+.ai-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+html.dark .ai-warning {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.4);
+}
+
+.ai-warning i {
+    color: #F59E0B;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+html.dark .ai-warning i {
+    color: #FBBF24;
+}
+
+/* AI Result Panel */
+.ai-result-panel {
+    margin-top: 1.5rem;
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+
+html.dark .ai-result-panel {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.ai-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.ai-result-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #10B981;
+    margin: 0;
+}
+
+html.dark .ai-result-title {
+    color: #34D399;
+}
+
+.copy-result-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+}
+
+.copy-result-btn:hover {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: #10B981;
+    color: #10B981;
+}
+
+.ai-result-content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .competitors-content {
@@ -381,6 +704,149 @@ html.dark .transcript-content::-webkit-scrollbar-thumb:hover {
     .info-card {
         padding: 1rem;
     }
+
+    .ai-prompt-group {
+        flex-direction: column;
+    }
+
+    .ai-modify-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .ai-suggestions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .suggestion-chip {
+        justify-content: center;
+    }
 }
 </style>
+
+<script>
+// AI Agent Functions
+function toggleTranscriptAI() {
+    const panel = document.getElementById('transcriptAIPanel');
+    const toggleBtn = document.getElementById('transcriptAIToggle');
+    const caret = toggleBtn.querySelector('.ai-caret');
+
+    const isCollapsed = panel.classList.contains('collapsed');
+
+    if (isCollapsed) {
+        panel.classList.remove('collapsed');
+        toggleBtn.classList.add('active');
+        caret.className = 'ph ph-caret-up ai-caret';
+    } else {
+        panel.classList.add('collapsed');
+        toggleBtn.classList.remove('active');
+        caret.className = 'ph ph-caret-down ai-caret';
+    }
+}
+
+function setTranscriptPrompt(prompt) {
+    const input = document.getElementById('transcriptAIInput');
+    input.value = prompt;
+    input.focus();
+}
+
+async function processTranscriptWithAI() {
+    const promptInput = document.getElementById('transcriptAIInput');
+    const aiBtn = document.getElementById('transcriptAIBtn');
+    const transcriptContent = document.getElementById('transcriptContent');
+    const resultPanel = document.getElementById('aiResultPanel');
+    const resultContent = document.getElementById('aiResultContent');
+
+    const prompt = promptInput.value.trim();
+    const transcript = transcriptContent.textContent.trim();
+
+    if (!prompt) {
+        alert('Please enter a prompt or select a quick action');
+        return;
+    }
+
+    if (!transcript) {
+        alert('No transcript available');
+        return;
+    }
+
+    // Disable button and show loading state
+    aiBtn.disabled = true;
+    const originalBtnContent = aiBtn.innerHTML;
+    aiBtn.innerHTML = '<i class="ph ph-spinner spin"></i> <span>Processing...</span>';
+
+    try {
+        const response = await fetch('/api/ai/process-transcript', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                transcript: transcript,
+                prompt: prompt
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to process transcript');
+        }
+
+        const data = await response.json();
+
+        if (data.status === 'success' && data.result) {
+            // Show result panel
+            resultPanel.style.display = 'block';
+            resultContent.textContent = data.result;
+
+            // Scroll to result
+            resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            throw new Error('Invalid response from server');
+        }
+
+    } catch (error) {
+        console.error('Error processing transcript:', error);
+        alert('Failed to process transcript: ' + error.message);
+    } finally {
+        // Re-enable button
+        aiBtn.disabled = false;
+        aiBtn.innerHTML = originalBtnContent;
+    }
+}
+
+function copyAIResult() {
+    const resultContent = document.getElementById('aiResultContent');
+    const text = resultContent.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const copyBtn = document.querySelector('.copy-result-btn');
+        const originalContent = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="ph ph-check"></i> Copied!';
+        copyBtn.style.color = '#10B981';
+
+        setTimeout(() => {
+            copyBtn.innerHTML = originalContent;
+            copyBtn.style.color = '';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy to clipboard');
+    });
+}
+
+// Add spinner animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+`;
+document.head.appendChild(style);
+</script>
 {% endblock %}
