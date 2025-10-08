@@ -18,6 +18,289 @@ def competitors():
     """Competitor analysis page"""
     return render_template('competitors/index.html')
 
+@bp.route('/api/competitors/lists', methods=['GET'])
+@auth_required
+@require_permission('competitors')
+def get_niche_lists():
+    """Get all niche lists"""
+    try:
+        user_id = get_workspace_user_id()
+        lists_ref = db.collection('users').document(user_id).collection('niche_lists')
+        lists = lists_ref.order_by('created_at').stream()
+
+        lists_data = []
+        for lst in lists:
+            list_dict = lst.to_dict()
+            list_dict['id'] = lst.id
+
+            # Convert timestamps
+            if list_dict.get('created_at'):
+                list_dict['created_at'] = list_dict['created_at'].isoformat()
+            if list_dict.get('updated_at'):
+                list_dict['updated_at'] = list_dict['updated_at'].isoformat()
+
+            lists_data.append(list_dict)
+
+        return jsonify({
+            'success': True,
+            'lists': lists_data
+        })
+    except Exception as e:
+        logger.error(f"Error getting niche lists: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/competitors/lists', methods=['POST'])
+@auth_required
+@require_permission('competitors')
+def create_niche_list():
+    """Create a new niche list"""
+    try:
+        data = request.json
+        list_name = data.get('name', '').strip()
+
+        if not list_name:
+            return jsonify({'success': False, 'error': 'List name is required'}), 400
+
+        user_id = get_workspace_user_id()
+        now = datetime.now(timezone.utc)
+
+        list_data = {
+            'name': list_name,
+            'created_at': now,
+            'updated_at': now,
+            'channel_count': 0
+        }
+
+        lists_ref = db.collection('users').document(user_id).collection('niche_lists')
+        doc_ref = lists_ref.add(list_data)
+
+        # Get the document ID
+        if isinstance(doc_ref, tuple):
+            doc_id = doc_ref[1].id
+        else:
+            doc_id = doc_ref.id
+
+        list_data['id'] = doc_id
+        list_data['created_at'] = list_data['created_at'].isoformat()
+        list_data['updated_at'] = list_data['updated_at'].isoformat()
+
+        return jsonify({
+            'success': True,
+            'list': list_data
+        })
+    except Exception as e:
+        logger.error(f"Error creating niche list: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/competitors/lists/<list_id>', methods=['DELETE'])
+@auth_required
+@require_permission('competitors')
+def delete_niche_list(list_id):
+    """Delete a niche list and all its channels"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Delete all channels in this list (using subcollection)
+        channels_ref = db.collection('users').document(user_id).collection('niche_lists').document(list_id).collection('channels')
+        channels = channels_ref.stream()
+        for channel in channels:
+            channel.reference.delete()
+
+        # Delete the list
+        lists_ref = db.collection('users').document(user_id).collection('niche_lists')
+        lists_ref.document(list_id).delete()
+
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error deleting niche list: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/competitors/search', methods=['GET'])
+@auth_required
+@require_permission('competitors')
+def search_channels():
+    """Search for YouTube channels using RapidAPI"""
+    try:
+        import requests
+        import os
+
+        query = request.args.get('query', '').strip()
+
+        if not query:
+            return jsonify({'success': False, 'error': 'Search query is required'}), 400
+
+        # Get RapidAPI key from environment
+        rapidapi_key = os.getenv('RAPIDAPI_KEY', '16c9c09b8bmsh0f0d3ec2999f27ep115961jsn5f75604e8050')
+
+        url = "https://yt-api.p.rapidapi.com/search"
+        headers = {
+            "x-rapidapi-key": rapidapi_key,
+            "x-rapidapi-host": "yt-api.p.rapidapi.com"
+        }
+
+        # Extract unique channels from search results
+        channels = {}
+        continuation_token = None
+        max_requests = 5  # Make up to 5 API requests to get ~50 channels
+
+        # First request
+        querystring = {"query": query, "sort_by": "relevance"}
+        response = requests.get(url, headers=headers, params=querystring)
+        data = response.json()
+
+        # Extract channels from first response
+        if 'data' in data:
+            for item in data['data']:
+                if item.get('type') in ['video', 'shorts', 'channel']:
+                    channel_id = item.get('channelId')
+                    if channel_id and channel_id not in channels:
+                        # Parse subscriber count
+                        sub_count = 0
+                        sub_text = 'Unknown'
+                        if item.get('subscriberCountText'):
+                            sub_text = item.get('subscriberCountText')
+                            # Try to parse the number
+                            try:
+                                sub_str = sub_text.replace(' subscribers', '').replace(' subscriber', '').strip()
+                                if 'K' in sub_str:
+                                    sub_count = int(float(sub_str.replace('K', '')) * 1000)
+                                elif 'M' in sub_str:
+                                    sub_count = int(float(sub_str.replace('M', '')) * 1000000)
+                                else:
+                                    sub_count = int(sub_str)
+                            except:
+                                pass
+
+                        # Parse video count
+                        video_count = 0
+                        if item.get('videoCount'):
+                            try:
+                                video_count = int(item.get('videoCount'))
+                            except:
+                                pass
+
+                        channels[channel_id] = {
+                            'channel_id': channel_id,
+                            'title': item.get('channelTitle', ''),
+                            'channel_handle': item.get('channelHandle', ''),
+                            'avatar': item.get('channelAvatar', [{}])[0].get('url', '') if item.get('channelAvatar') else '',
+                            'subscriber_count': sub_count,
+                            'subscriber_count_text': sub_text,
+                            'video_count': video_count
+                        }
+
+        continuation_token = data.get('continuation')
+
+        # Make additional requests using continuation token
+        request_count = 1
+        while continuation_token and len(channels) < 50 and request_count < max_requests:
+            querystring = {"query": query, "token": continuation_token, "sort_by": "relevance"}
+            response = requests.get(url, headers=headers, params=querystring)
+            data = response.json()
+
+            if 'data' in data:
+                for item in data['data']:
+                    if item.get('type') in ['video', 'shorts', 'channel']:
+                        channel_id = item.get('channelId')
+                        if channel_id and channel_id not in channels:
+                            # Parse subscriber count
+                            sub_count = 0
+                            sub_text = 'Unknown'
+                            if item.get('subscriberCountText'):
+                                sub_text = item.get('subscriberCountText')
+                                # Try to parse the number
+                                try:
+                                    sub_str = sub_text.replace(' subscribers', '').replace(' subscriber', '').strip()
+                                    if 'K' in sub_str:
+                                        sub_count = int(float(sub_str.replace('K', '')) * 1000)
+                                    elif 'M' in sub_str:
+                                        sub_count = int(float(sub_str.replace('M', '')) * 1000000)
+                                    else:
+                                        sub_count = int(sub_str)
+                                except:
+                                    pass
+
+                            # Parse video count
+                            video_count = 0
+                            if item.get('videoCount'):
+                                try:
+                                    video_count = int(item.get('videoCount'))
+                                except:
+                                    pass
+
+                            channels[channel_id] = {
+                                'channel_id': channel_id,
+                                'title': item.get('channelTitle', ''),
+                                'channel_handle': item.get('channelHandle', ''),
+                                'avatar': item.get('channelAvatar', [{}])[0].get('url', '') if item.get('channelAvatar') else '',
+                                'subscriber_count': sub_count,
+                                'subscriber_count_text': sub_text,
+                                'video_count': video_count
+                            }
+
+            continuation_token = data.get('continuation')
+            request_count += 1
+
+        # Fetch detailed channel info for channels with missing data
+        channel_details_url = "https://yt-api.p.rapidapi.com/channel/about"
+        for channel_id, channel_data in list(channels.items()):
+            # Only fetch if we don't have subscriber info
+            if channel_data['subscriber_count_text'] == 'Unknown':
+                try:
+                    detail_querystring = {"id": channel_id}
+                    detail_response = requests.get(channel_details_url, headers=headers, params=detail_querystring)
+                    detail_data = detail_response.json()
+
+                    if detail_data.get('subscriberCountText'):
+                        sub_text = detail_data.get('subscriberCountText', 'Unknown')
+                        channel_data['subscriber_count_text'] = sub_text
+
+                        # Parse subscriber count
+                        try:
+                            sub_str = sub_text.replace(' subscribers', '').replace(' subscriber', '').strip()
+                            if 'K' in sub_str:
+                                channel_data['subscriber_count'] = int(float(sub_str.replace('K', '')) * 1000)
+                            elif 'M' in sub_str:
+                                channel_data['subscriber_count'] = int(float(sub_str.replace('M', '')) * 1000000)
+                            else:
+                                channel_data['subscriber_count'] = int(sub_str)
+                        except:
+                            pass
+
+                    if detail_data.get('videoCount'):
+                        try:
+                            channel_data['video_count'] = int(detail_data.get('videoCount'))
+                        except:
+                            pass
+
+                    if detail_data.get('avatar'):
+                        avatars = detail_data.get('avatar', [])
+                        if avatars and len(avatars) > 0:
+                            channel_data['avatar'] = avatars[0].get('url', channel_data['avatar'])
+                except Exception as e:
+                    logger.error(f"Error fetching channel details for {channel_id}: {e}")
+                    # Continue with existing data
+
+        # Filter out channels with unknown subs or below 1K subs
+        filtered_channels = []
+        for channel_data in channels.values():
+            # Skip if subscriber count is unknown
+            if channel_data['subscriber_count_text'] == 'Unknown':
+                continue
+            # Skip if subscriber count is below 1000
+            if channel_data['subscriber_count'] < 1000:
+                continue
+            filtered_channels.append(channel_data)
+
+        return jsonify({
+            'success': True,
+            'channels': filtered_channels[:50]  # Return up to 50 filtered channels
+        })
+
+    except Exception as e:
+        logger.error(f"Error searching channels: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @bp.route('/api/competitors/add', methods=['POST'])
 @auth_required
 @require_permission('competitors')
@@ -26,68 +309,105 @@ def add_competitor():
     try:
         data = request.json
         channel_url = data.get('channel_url', '').strip()
-        
-        if not channel_url:
-            return jsonify({'success': False, 'error': 'Channel URL is required'}), 400
-        
+        channel_data_from_search = data.get('channel_data')  # From search results
+        list_id = data.get('list_id', '').strip()
+
+        if not list_id:
+            return jsonify({'success': False, 'error': 'List ID is required'}), 400
+
         user_id = get_workspace_user_id()
-        youtube_api = YouTubeAPI()
-        
-        # Extract channel handle or ID from URL
-        channel_identifier = youtube_api.extract_channel_handle(channel_url)
-        if not channel_identifier:
-            return jsonify({'success': False, 'error': 'Invalid YouTube channel URL. Use format: youtube.com/@username'}), 400
-        
-        # Get channel info
-        channel_info = youtube_api.get_channel_info(channel_identifier)
-        if not channel_info:
-            return jsonify({'success': False, 'error': 'Failed to fetch channel information. Please check the URL.'}), 500
-        
-        channel_id = channel_info.get('channel_id')
-        if not channel_id:
-            return jsonify({'success': False, 'error': 'Could not get channel ID from YouTube'}), 500
-        
-        # Check if competitor already exists
-        competitors_ref = db.collection('users').document(user_id).collection('competitor_channels')
-        existing = competitors_ref.where('channel_id', '==', channel_id).limit(1).get()
-        
-        if len(list(existing)) > 0:
-            return jsonify({'success': False, 'error': 'This channel is already in your competitors list'}), 400
-        
-        # Save to Firebase
         now = datetime.now(timezone.utc)
-        competitor_data = {
-            'channel_id': channel_id,
-            'channel_handle': channel_info.get('channel_handle', ''),
-            'title': channel_info.get('title', ''),
-            'description': channel_info.get('description', ''),
-            'avatar': channel_info.get('avatar', ''),
-            'subscriber_count': channel_info.get('subscriber_count', 0),
-            'subscriber_count_text': channel_info.get('subscriber_count_text', '0'),
-            'video_count': channel_info.get('video_count', 0),
-            'keywords': channel_info.get('keywords', []),
-            'added_at': now,
-            'updated_at': now
-        }
-        
+
+        # If channel data is provided from search (explore), use it directly
+        if channel_data_from_search:
+            channel_id = channel_data_from_search.get('channel_id')
+            if not channel_id:
+                return jsonify({'success': False, 'error': 'Channel ID is required'}), 400
+
+            competitor_data = {
+                'channel_id': channel_id,
+                'channel_handle': channel_data_from_search.get('channel_handle', ''),
+                'title': channel_data_from_search.get('title', ''),
+                'description': '',
+                'avatar': channel_data_from_search.get('avatar', ''),
+                'subscriber_count': channel_data_from_search.get('subscriber_count', 0),
+                'subscriber_count_text': channel_data_from_search.get('subscriber_count_text', 'Unknown'),
+                'video_count': channel_data_from_search.get('video_count', 0),
+                'keywords': [],
+                'added_at': now,
+                'updated_at': now
+            }
+        else:
+            # Original flow: fetch from YouTube API
+            if not channel_url:
+                return jsonify({'success': False, 'error': 'Channel URL is required'}), 400
+
+            youtube_api = YouTubeAPI()
+
+            # Extract channel handle or ID from URL
+            channel_identifier = youtube_api.extract_channel_handle(channel_url)
+            if not channel_identifier:
+                return jsonify({'success': False, 'error': 'Invalid YouTube channel URL. Use format: youtube.com/@username'}), 400
+
+            # Get channel info
+            channel_info = youtube_api.get_channel_info(channel_identifier)
+            if not channel_info:
+                return jsonify({'success': False, 'error': 'Failed to fetch channel information. Please check the URL.'}), 500
+
+            channel_id = channel_info.get('channel_id')
+            if not channel_id:
+                return jsonify({'success': False, 'error': 'Could not get channel ID from YouTube'}), 500
+
+            competitor_data = {
+                'channel_id': channel_id,
+                'channel_handle': channel_info.get('channel_handle', ''),
+                'title': channel_info.get('title', ''),
+                'description': channel_info.get('description', ''),
+                'avatar': channel_info.get('avatar', ''),
+                'subscriber_count': channel_info.get('subscriber_count', 0),
+                'subscriber_count_text': channel_info.get('subscriber_count_text', '0'),
+                'video_count': channel_info.get('video_count', 0),
+                'keywords': channel_info.get('keywords', []),
+                'added_at': now,
+                'updated_at': now
+            }
+
+        # Check if competitor already exists in this list (using subcollection)
+        competitors_ref = db.collection('users').document(user_id).collection('niche_lists').document(list_id).collection('channels')
+        existing = competitors_ref.where('channel_id', '==', channel_id).limit(1).get()
+
+        if len(list(existing)) > 0:
+            return jsonify({'success': False, 'error': 'This channel is already in this niche list'}), 400
+
+        # Save to Firebase
         doc_ref = competitors_ref.add(competitor_data)
-        
+
         # Get the document ID
         if isinstance(doc_ref, tuple):
             doc_id = doc_ref[1].id
         else:
             doc_id = doc_ref.id
-        
+
+        # Update channel count in list
+        lists_ref = db.collection('users').document(user_id).collection('niche_lists')
+        list_doc = lists_ref.document(list_id).get()
+        if list_doc.exists:
+            current_count = list_doc.to_dict().get('channel_count', 0)
+            lists_ref.document(list_id).update({
+                'channel_count': current_count + 1,
+                'updated_at': now
+            })
+
         # Add ID to response
         competitor_data['id'] = doc_id
         competitor_data['added_at'] = competitor_data['added_at'].isoformat()
         competitor_data['updated_at'] = competitor_data['updated_at'].isoformat()
-        
+
         return jsonify({
             'success': True,
             'channel': competitor_data
         })
-        
+
     except Exception as e:
         logger.error(f"Error adding competitor: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -96,14 +416,18 @@ def add_competitor():
 @auth_required
 @require_permission('competitors')
 def list_competitors():
-    """Get all saved competitors"""
+    """Get all saved competitors for a specific list"""
     try:
         user_id = get_workspace_user_id()
-        
-        # Get all competitors from Firebase
-        competitors_ref = db.collection('users').document(user_id).collection('competitor_channels')
-        competitors = competitors_ref.order_by('added_at').stream()
-        
+        list_id = request.args.get('list_id')
+
+        if not list_id:
+            return jsonify({'success': False, 'error': 'List ID is required'}), 400
+
+        # Get all competitors from Firebase for this list (using subcollection)
+        competitors_ref = db.collection('users').document(user_id).collection('niche_lists').document(list_id).collection('channels')
+        competitors = competitors_ref.stream()
+
         competitors_list = []
         for comp in competitors:
             comp_data = comp.to_dict()
@@ -124,12 +448,12 @@ def list_competitors():
                 comp_data['updated_at'] = comp_data['updated_at'].isoformat()
 
             competitors_list.append(comp_data)
-        
+
         return jsonify({
             'success': True,
             'competitors': competitors_list
         })
-        
+
     except Exception as e:
         logger.error(f"Error listing competitors: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -142,16 +466,20 @@ def analyze_competitors():
     try:
         data = request.json
         timeframe = data.get('timeframe', '30')  # days
-        
+        list_id = data.get('list_id', '').strip()
+
+        if not list_id:
+            return jsonify({'success': False, 'error': 'List ID is required'}), 400
+
         user_id = get_workspace_user_id()
-        
-        # Get all saved competitors
-        competitors_ref = db.collection('users').document(user_id).collection('competitor_channels')
+
+        # Get all saved competitors for this list (using subcollection)
+        competitors_ref = db.collection('users').document(user_id).collection('niche_lists').document(list_id).collection('channels')
         competitors = list(competitors_ref.stream())
-        
+
         if not competitors:
             return jsonify({'success': False, 'error': 'No competitors added. Please add some channels first.'}), 400
-        
+
         if len(competitors) > 15:
             return jsonify({'success': False, 'error': 'Maximum 15 competitors allowed for analysis'}), 400
         
@@ -271,20 +599,30 @@ def get_video_details(video_id):
         logger.error(f"Error fetching video details: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@bp.route('/api/competitors/remove/<doc_id>', methods=['DELETE'])
+@bp.route('/api/competitors/remove/<list_id>/<doc_id>', methods=['DELETE'])
 @auth_required
 @require_permission('competitors')
-def remove_competitor(doc_id):
+def remove_competitor(list_id, doc_id):
     """Remove a competitor"""
     try:
         user_id = get_workspace_user_id()
-        
-        # Delete from Firebase
-        competitors_ref = db.collection('users').document(user_id).collection('competitor_channels')
+
+        # Delete from Firebase (using subcollection)
+        competitors_ref = db.collection('users').document(user_id).collection('niche_lists').document(list_id).collection('channels')
         competitors_ref.document(doc_id).delete()
-        
+
+        # Update channel count in list
+        lists_ref = db.collection('users').document(user_id).collection('niche_lists')
+        list_doc = lists_ref.document(list_id).get()
+        if list_doc.exists:
+            current_count = list_doc.to_dict().get('channel_count', 1)
+            lists_ref.document(list_id).update({
+                'channel_count': max(0, current_count - 1),
+                'updated_at': datetime.now(timezone.utc)
+            })
+
         return jsonify({'success': True, 'message': 'Competitor removed successfully'})
-        
+
     except Exception as e:
         logger.error(f"Error removing competitor: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500

@@ -28,61 +28,138 @@
         <div class="competitors-content">
             <!-- Setup Section -->
             <div class="setup-section" id="setupSection">
-                <div class="setup-card">
-                    <div class="setup-header">
-                        <h2 class="setup-title">
-                            <i class="ph ph-plus-circle"></i>
-                            Add Competitors
-                        </h2>
-                        <p class="setup-subtitle">Add 10-15 YouTube channels from your niche to get started</p>
+                <!-- Niche Lists Sidebar -->
+                <div class="niche-lists-sidebar">
+                    <div class="sidebar-header">
+                        <h3 class="sidebar-title">Niche Lists</h3>
+                        <button class="new-list-btn" onclick="showCreateListModal()">
+                            <i class="ph ph-plus"></i>
+                        </button>
                     </div>
+                    <div class="lists-container" id="nicheLists">
+                        <!-- Lists will be added here dynamically -->
+                    </div>
+                </div>
 
-                    <div class="setup-body">
-                        <!-- Add Competitor Form -->
-                        <div class="add-competitor-form">
-                            <input type="text"
-                                   id="channelUrlInput"
-                                   class="channel-input"
-                                   placeholder="Paste YouTube channel URL (e.g., youtube.com/@channelname or youtube.com/channel/UC...)"
-                                   onkeypress="if(event.key === 'Enter') addCompetitor()">
-                            <button class="add-btn" onclick="addCompetitor()">
-                                <i class="ph ph-plus"></i>
-                                Add Channel
-                            </button>
+                <!-- Main Panel -->
+                <div class="main-panel">
+                    <div class="setup-card">
+                        <div class="setup-header">
+                            <div class="header-top">
+                                <div class="header-left">
+                                    <h2 class="setup-title">
+                                        <i class="ph ph-plus-circle"></i>
+                                        <span id="currentListName">Select a list to get started</span>
+                                    </h2>
+                                </div>
+                                <div class="header-right" id="viewToggle" style="display: none;">
+                                    <div class="view-toggle">
+                                        <button class="toggle-btn active" onclick="switchView('list')" id="listViewBtn">
+                                            <i class="ph ph-list-bullets"></i>
+                                            List
+                                        </button>
+                                        <button class="toggle-btn" onclick="switchView('url')" id="urlViewBtn">
+                                            <i class="ph ph-link"></i>
+                                            Add by URL
+                                        </button>
+                                        <button class="toggle-btn" onclick="switchView('explore')" id="exploreViewBtn">
+                                            <i class="ph ph-magnifying-glass"></i>
+                                            Explore
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Competitors List -->
-                        <div class="competitors-list" id="competitorsList">
-                            <!-- Competitors will be added here dynamically -->
-                        </div>
+                        <div class="setup-body" id="setupBody" style="display: none;">
+                            <!-- List View (Default) -->
+                            <div class="view-content" id="listView">
+                                <!-- Competitors List -->
+                                <div class="competitors-list" id="competitorsList">
+                                    <!-- Competitors will be added here dynamically -->
+                                </div>
 
-                        <!-- Analysis Options -->
-                        <div class="analysis-options" id="analysisOptions" style="display: none;">
-                            <div class="timeframe-selector">
-                                <label class="option-label">Analyze videos from:</label>
-                                <div class="timeframe-buttons">
-                                    <button class="timeframe-btn" onclick="setTimeframe('1')" data-days="1">
-                                        Last 24 hours
-                                    </button>
-                                    <button class="timeframe-btn" onclick="setTimeframe('2')" data-days="2">
-                                        Last 48 hours
-                                    </button>
-                                    <button class="timeframe-btn" onclick="setTimeframe('7')" data-days="7">
-                                        Last 7 days
-                                    </button>
-                                    <button class="timeframe-btn active" onclick="setTimeframe('30')" data-days="30">
-                                        Last 30 days
-                                    </button>
-                                    <button class="timeframe-btn" onclick="setTimeframe('90')" data-days="90">
-                                        Last 90 days
+                                <!-- Analysis Options -->
+                                <div class="analysis-options" id="analysisOptions" style="display: none;">
+                                <div class="timeframe-selector">
+                                    <label class="option-label">Analyze videos from:</label>
+                                    <div class="timeframe-buttons">
+                                        <button class="timeframe-btn" onclick="setTimeframe('1')" data-days="1">
+                                            Last 24 hours
+                                        </button>
+                                        <button class="timeframe-btn" onclick="setTimeframe('2')" data-days="2">
+                                            Last 48 hours
+                                        </button>
+                                        <button class="timeframe-btn" onclick="setTimeframe('7')" data-days="7">
+                                            Last 7 days
+                                        </button>
+                                        <button class="timeframe-btn active" onclick="setTimeframe('30')" data-days="30">
+                                            Last 30 days
+                                        </button>
+                                        <button class="timeframe-btn" onclick="setTimeframe('90')" data-days="90">
+                                            Last 90 days
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button class="analyze-btn" onclick="analyzeCompetitors()" id="analyzeBtn">
+                                    <i class="ph ph-chart-line"></i>
+                                    Analyze Competitors
+                                </button>
+                                </div>
+                            </div>
+
+                            <!-- URL View -->
+                            <div class="view-content" id="urlView" style="display: none;">
+                                <div class="add-competitor-form">
+                                    <input type="text"
+                                           id="channelUrlInput"
+                                           class="channel-input"
+                                           placeholder="Paste YouTube channel URL (e.g., youtube.com/@channelname or youtube.com/channel/UC...)"
+                                           onkeypress="if(event.key === 'Enter') addCompetitor()">
+                                    <button class="add-btn" onclick="addCompetitor()">
+                                        <i class="ph ph-plus"></i>
+                                        Add Channel
                                     </button>
                                 </div>
                             </div>
 
-                            <button class="analyze-btn" onclick="analyzeCompetitors()" id="analyzeBtn">
-                                <i class="ph ph-chart-line"></i>
-                                Analyze Competitors
-                            </button>
+                            <!-- Explore View -->
+                            <div class="view-content" id="exploreView" style="display: none;">
+                                <div class="search-form">
+                                    <input type="text"
+                                           id="searchInput"
+                                           class="channel-input"
+                                           placeholder="Search for channels (e.g., Clash Royale, tech reviews, cooking)"
+                                           onkeypress="if(event.key === 'Enter') searchChannels()">
+                                    <button class="search-btn" onclick="searchChannels()">
+                                        <i class="ph ph-magnifying-glass"></i>
+                                        Search
+                                    </button>
+                                </div>
+
+                                <!-- Search Results -->
+                                <div class="search-results" id="searchResults" style="display: none;">
+                                    <div class="search-results-header">
+                                        <span class="results-count" id="resultsCount"></span>
+                                    </div>
+                                    <div class="search-results-grid" id="searchResultsGrid">
+                                        <!-- Search results will be added here -->
+                                    </div>
+                                </div>
+
+                                <!-- Empty State for Search -->
+                                <div class="search-empty-state" id="searchEmptyState">
+                                    <i class="ph ph-magnifying-glass empty-icon"></i>
+                                    <p class="empty-text">Search for YouTube channels to add to your list</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div class="empty-state-large" id="emptyState">
+                            <i class="ph ph-folder-open empty-icon-large"></i>
+                            <p class="empty-text-large">Create or select a niche list to start analyzing competitors</p>
                         </div>
                     </div>
                 </div>
@@ -118,6 +195,30 @@
         </div>
     </div>
 </div>
+
+<!-- Create List Modal -->
+<div class="modal" id="createListModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Create Niche List</h3>
+            <button class="modal-close" onclick="hideCreateListModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="text"
+                   id="listNameInput"
+                   class="modal-input"
+                   placeholder="e.g., Tech Reviewers, Cooking Channels, Gaming"
+                   onkeypress="if(event.key === 'Enter') createList()">
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="hideCreateListModal()">Cancel</button>
+            <button class="modal-btn modal-btn-primary" onclick="createList()">Create List</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}

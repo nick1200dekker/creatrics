@@ -126,7 +126,19 @@ class CompetitorAnalyzer:
 
             # Generate insights with AI
             insights = self._generate_insights(all_videos, patterns, days, channel_stats)
-            
+
+            # Extract token usage from insights (if available)
+            token_usage = insights.pop('_token_usage', None)
+            used_ai = token_usage is not None
+
+            # Default token usage if AI wasn't used or failed
+            if not token_usage:
+                token_usage = {
+                    'model': 'fallback',
+                    'input_tokens': 0,
+                    'output_tokens': 0
+                }
+
             return {
                 'success': True,
                 'data': {
@@ -137,12 +149,8 @@ class CompetitorAnalyzer:
                     'total_videos': len(all_videos),
                     'timeframe_days': days
                 },
-                'used_ai': True,
-                'token_usage': {
-                    'model': 'claude-3-sonnet-20240229',
-                    'input_tokens': 500,
-                    'output_tokens': 300
-                }
+                'used_ai': used_ai,
+                'token_usage': token_usage
             }
             
         except Exception as e:
@@ -324,12 +332,20 @@ Provide concise, data-driven insights. Every claim must have specific metrics. K
                 temperature=0.7,
                 max_tokens=1200
             )
-            
+
             insights_text = response.get('content', '') if isinstance(response, dict) else str(response)
-            
+
             # Parse the insights
             parsed_insights = self._parse_ai_insights(insights_text)
-            
+
+            # Store token usage for later return
+            usage = response.get('usage', {})
+            parsed_insights['_token_usage'] = {
+                'model': response.get('model', 'unknown'),
+                'input_tokens': usage.get('input_tokens', 0),
+                'output_tokens': usage.get('output_tokens', 0)
+            }
+
             return parsed_insights
             
         except Exception as e:
