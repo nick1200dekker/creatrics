@@ -7,131 +7,122 @@
 {% endblock %}
 
 {% block content %}
-<div class="deep-dive-page">
-    <div class="back-button-container">
-        <button class="back-btn" onclick="window.history.back()">
-            <i class="ph ph-arrow-left"></i>
-            Back to Analysis
-        </button>
+<div class="competitors-wrapper">
+    <!-- Header -->
+    <div class="competitors-header">
+        <h1 class="page-title">
+            <i class="ph ph-video"></i>
+            Video Deep Dive
+        </h1>
     </div>
 
-    <div class="deep-dive-container">
-        <!-- Video Info Card -->
-        <div class="info-card video-header-card">
-            <div class="video-header-content">
-                <div class="video-thumbnail-wrapper">
-                    <img src="{{ video_data.thumbnail }}" alt="Video thumbnail" class="video-thumbnail">
-                    <div class="video-duration">{{ video_data.duration }}</div>
-                </div>
-                <div class="video-meta">
-                    <h2 class="video-title">{{ video_data.title }}</h2>
-                    <p class="channel-name">{{ video_data.channel_title }}</p>
-                    <div class="video-stats">
-                        <span class="stat">
-                            <i class="ph ph-eye"></i>
-                            {{ video_data.view_count }} views
-                        </span>
-                        <span class="stat">
-                            <i class="ph ph-thumbs-up"></i>
-                            {{ video_data.like_count }} likes
-                        </span>
-                        {% if video_data.comment_count %}
-                        <span class="stat">
-                            <i class="ph ph-chat-circle"></i>
-                            {{ video_data.comment_count }} comments
-                        </span>
-                        {% endif %}
-                        <span class="stat">
-                            <i class="ph ph-calendar"></i>
-                            {{ video_data.publish_date }}
-                        </span>
+    <!-- Content Area -->
+    <div class="competitors-content">
+        <div class="back-button-container">
+            <button class="back-btn" onclick="window.history.back()">
+                <i class="ph ph-arrow-left"></i>
+                Back to Analysis
+            </button>
+        </div>
+
+        <div class="deep-dive-container">
+            <!-- Video Info Card -->
+            <div class="info-card video-header-card">
+                <div class="video-header-content">
+                    <div class="video-thumbnail-wrapper">
+                        <img src="{{ video_data.thumbnail }}" alt="Video thumbnail" class="video-thumbnail">
+                        <div class="video-duration">{{ video_data.duration }}</div>
+                    </div>
+                    <div class="video-meta">
+                        <h2 class="video-title">{{ video_data.title }}</h2>
+                        <p class="channel-name">{{ video_data.channel_title }}</p>
+                        <div class="video-stats">
+                            <span class="stat">
+                                <i class="ph ph-eye"></i>
+                                {{ video_data.view_count }} views
+                            </span>
+                            <span class="stat">
+                                <i class="ph ph-thumbs-up"></i>
+                                {{ video_data.like_count }} likes
+                            </span>
+                            {% if video_data.comment_count %}
+                            <span class="stat">
+                                <i class="ph ph-chat-circle"></i>
+                                {{ video_data.comment_count }} comments
+                            </span>
+                            {% endif %}
+                            <span class="stat">
+                                <i class="ph ph-calendar"></i>
+                                {{ video_data.publish_date }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Video Summary -->
-        <div class="info-card">
-            <h3 class="section-title">
-                <i class="ph ph-file-text"></i>
-                Video Summary
-            </h3>
-            <div class="summary-content">
-                {{ video_data.summary }}
+            <!-- Video Summary -->
+            <div class="info-card">
+                <h3 class="section-title">
+                    <i class="ph ph-file-text"></i>
+                    Video Summary
+                </h3>
+                <div class="summary-content">
+                    {{ video_data.summary }}
+                </div>
             </div>
-        </div>
 
-        <!-- Keywords -->
-        {% if video_data.keywords %}
-        <div class="info-card">
-            <h3 class="section-title">
-                <i class="ph ph-hash"></i>
-                Keywords & Tags
-            </h3>
-            <div class="keywords-container">
-                {% for keyword in video_data.keywords %}
-                <span class="keyword-tag">{{ keyword }}</span>
-                {% endfor %}
+            <!-- Keywords -->
+            {% if video_data.keywords %}
+            <div class="info-card">
+                <h3 class="section-title">
+                    <i class="ph ph-hash"></i>
+                    Keywords & Tags
+                </h3>
+                <div class="keywords-container">
+                    {% for keyword in video_data.keywords %}
+                    <span class="keyword-tag">{{ keyword }}</span>
+                    {% endfor %}
+                </div>
             </div>
-        </div>
-        {% endif %}
+            {% endif %}
 
-        <!-- Description -->
-        {% if video_data.description %}
-        <div class="info-card">
-            <h3 class="section-title">
-                <i class="ph ph-align-left"></i>
-                Description
-            </h3>
-            <div class="description-content">{{ video_data.description | trim }}</div>
-        </div>
-        {% endif %}
-
-        <!-- AI Analysis -->
-        <div class="info-card analysis-card">
-            <h3 class="section-title">
-                <i class="ph ph-sparkle"></i>
-                AI Analysis & Insights
-            </h3>
-            <div class="analysis-content">
-                {{ video_data.analysis | safe }}
+            <!-- Description -->
+            {% if video_data.description %}
+            <div class="info-card">
+                <h3 class="section-title">
+                    <i class="ph ph-align-left"></i>
+                    Description
+                </h3>
+                <div class="description-content">{{ video_data.description | trim }}</div>
             </div>
-        </div>
+            {% endif %}
 
-        <!-- Full Transcript -->
-        {% if video_data.transcript_preview %}
-        <div class="info-card">
-            <h3 class="section-title">
-                <i class="ph ph-quotes"></i>
-                Full Video Transcript
-            </h3>
-            <div class="transcript-content">{{ video_data.transcript_preview | trim }}</div>
+            <!-- AI Analysis -->
+            <div class="info-card analysis-card">
+                <h3 class="section-title">
+                    <i class="ph ph-sparkle"></i>
+                    AI Analysis & Insights
+                </h3>
+                <div class="analysis-content">
+                    {{ video_data.analysis | safe }}
+                </div>
+            </div>
+
+            <!-- Full Transcript -->
+            {% if video_data.transcript_preview %}
+            <div class="info-card">
+                <h3 class="section-title">
+                    <i class="ph ph-quotes"></i>
+                    Full Video Transcript
+                </h3>
+                <div class="transcript-content">{{ video_data.transcript_preview | trim }}</div>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 </div>
 
 <style>
-.deep-dive-page {
-    padding: 2rem;
-    width: 100%;
-}
-
-.page-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #ffffff;
-    margin: 0;
-}
-
-.page-title i {
-    font-size: 2rem;
-    color: #3B82F6;
-}
-
 .deep-dive-container {
     display: flex;
     flex-direction: column;
@@ -139,10 +130,16 @@
 }
 
 .info-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
     border-radius: 12px;
     padding: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+html.dark .info-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
     backdrop-filter: blur(10px);
 }
 
@@ -191,14 +188,14 @@
 .video-title {
     font-size: 1.5rem;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-primary);
     margin: 0;
     line-height: 1.4;
 }
 
 .channel-name {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-secondary);
     margin: 0;
 }
 
@@ -206,6 +203,7 @@
     display: flex;
     gap: 1.5rem;
     margin-top: auto;
+    flex-wrap: wrap;
 }
 
 .stat {
@@ -213,7 +211,7 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
 }
 
 .stat i {
@@ -221,29 +219,23 @@
     color: #3B82F6;
 }
 
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #ffffff;
-    margin: 0 0 1rem 0;
-}
-
-.section-title i {
-    font-size: 1.5rem;
-    color: #3B82F6;
+html.dark .stat i {
+    color: #60A5FA;
 }
 
 .summary-content {
     font-size: 1rem;
     line-height: 1.7;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-secondary);
     background: rgba(59, 130, 246, 0.05);
     padding: 1rem;
     border-radius: 8px;
     border-left: 3px solid #3B82F6;
+}
+
+html.dark .summary-content {
+    background: rgba(59, 130, 246, 0.1);
+    border-left-color: #60A5FA;
 }
 
 .keywords-container {
@@ -252,20 +244,10 @@
     gap: 0.75rem;
 }
 
-.keyword-tag {
-    padding: 0.5rem 1rem;
-    background: rgba(59, 130, 246, 0.1);
-    color: #3B82F6;
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
 .description-content {
     font-size: 0.95rem;
     line-height: 1.7;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
     white-space: pre-wrap;
     max-height: 600px;
     overflow-y: auto;
@@ -274,7 +256,7 @@
 .analysis-content {
     font-size: 1rem;
     line-height: 1.8;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
 }
 
 .analysis-content h4 {
@@ -284,12 +266,17 @@
     margin: 1.5rem 0 0.75rem 0;
 }
 
+html.dark .analysis-content h4 {
+    color: #60A5FA;
+}
+
 .analysis-content h4:first-child {
     margin-top: 0;
 }
 
 .analysis-content p {
     margin: 0.5rem 0;
+    color: var(--text-secondary);
 }
 
 .analysis-content ul {
@@ -299,19 +286,25 @@
 
 .analysis-content li {
     margin: 0.5rem 0;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--text-secondary);
 }
 
 .transcript-content {
     font-size: 0.95rem;
     line-height: 1.7;
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--text-secondary);
     max-height: 400px;
     overflow-y: auto;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-secondary);
     padding: 1rem;
     border-radius: 8px;
     white-space: pre-wrap;
+    border: 1px solid var(--border-primary);
+}
+
+html.dark .transcript-content {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 /* Scrollbar styling */
@@ -322,8 +315,13 @@
 
 .description-content::-webkit-scrollbar-track,
 .transcript-content::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-tertiary);
     border-radius: 4px;
+}
+
+html.dark .description-content::-webkit-scrollbar-track,
+html.dark .transcript-content::-webkit-scrollbar-track {
+    background: rgba(63, 63, 70, 0.3);
 }
 
 .description-content::-webkit-scrollbar-thumb,
@@ -332,20 +330,24 @@
     border-radius: 4px;
 }
 
+html.dark .description-content::-webkit-scrollbar-thumb,
+html.dark .transcript-content::-webkit-scrollbar-thumb {
+    background: rgba(96, 165, 250, 0.3);
+}
+
 .description-content::-webkit-scrollbar-thumb:hover,
 .transcript-content::-webkit-scrollbar-thumb:hover {
     background: rgba(59, 130, 246, 0.5);
 }
 
-/* Dark mode optimizations */
-body.dark-mode .info-card {
-    background: rgba(255, 255, 255, 0.02);
-    border-color: rgba(255, 255, 255, 0.08);
+html.dark .description-content::-webkit-scrollbar-thumb:hover,
+html.dark .transcript-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(96, 165, 250, 0.5);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-    .deep-dive-page {
+    .competitors-content {
         padding: 1rem;
     }
 
@@ -362,6 +364,10 @@ body.dark-mode .info-card {
     .video-stats {
         flex-direction: column;
         gap: 0.75rem;
+    }
+
+    .info-card {
+        padding: 1rem;
     }
 }
 </style>
