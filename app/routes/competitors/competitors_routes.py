@@ -102,6 +102,40 @@ def video_deep_dive(video_id):
         video_data['transcript_preview'] = result.get('data', {}).get('transcript_preview', '')
         video_data['analysis'] = result.get('data', {}).get('analysis', '')
 
+        # Save to user's video analysis history (same as Analyze Video page)
+        try:
+            from datetime import datetime, timezone
+            import firebase_admin
+            from firebase_admin import firestore
+
+            # Initialize Firestore if needed
+            if not firebase_admin._apps:
+                firebase_admin.initialize_app()
+
+            db = firestore.client()
+            history_ref = db.collection('users').document(user_id).collection('video_analyses').document(video_id)
+
+            history_data = {
+                'title': video_data.get('title', ''),
+                'channel_title': video_data.get('channel_title', ''),
+                'thumbnail': video_data.get('thumbnail', ''),
+                'view_count': video_data.get('view_count', '0'),
+                'like_count': video_data.get('like_count', '0'),
+                'comment_count': video_data.get('comment_count', '0'),
+                'description': video_data.get('description', ''),
+                'summary': video_data.get('summary', ''),
+                'transcript_preview': video_data.get('transcript_preview', ''),
+                'analysis': video_data.get('analysis', ''),
+                'is_short': is_short,
+                'analyzed_at': datetime.now(timezone.utc)
+            }
+
+            history_ref.set(history_data)
+            logger.info(f"Saved deep dive analysis to history for user {user_id}: {video_id}")
+        except Exception as e:
+            logger.error(f"Error saving deep dive to history: {e}")
+            # Don't fail the request if history save fails
+
         return render_template('competitors/deep_dive.html', video_data=video_data)
 
     except Exception as e:
