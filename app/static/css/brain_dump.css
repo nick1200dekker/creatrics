@@ -514,6 +514,70 @@ html.dark .icon-btn.shared {
 }
 
 /* Tags Section */
+/* Tags dropdown menu */
+.tags-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    padding: 1rem;
+    width: 360px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+html.dark .tags-dropdown {
+    background: rgba(39, 39, 42, 0.98);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.tags-dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+html.dark .tags-dropdown-header {
+    border-bottom-color: rgba(63, 63, 70, 0.6);
+}
+
+.tags-dropdown-header span {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.938rem;
+}
+
+.icon-btn-small {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.icon-btn-small:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+html.dark .icon-btn-small:hover {
+    background: rgba(63, 63, 70, 0.6);
+}
+
 .tags-section {
     padding: 1rem 2rem 0;
     display: flex;

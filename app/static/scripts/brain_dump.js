@@ -995,6 +995,24 @@ function updateTagsUI(tags) {
 // Share functionality
 let selectedExpiry = 30; // Default 30 days
 
+function toggleTagsMenu() {
+    const dropdown = document.getElementById('tagsDropdown');
+    const isVisible = dropdown.style.display !== 'none';
+    dropdown.style.display = isVisible ? 'none' : 'block';
+}
+
+// Close tags dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('tagsDropdown');
+    const tagsMenuBtn = document.getElementById('tagsMenuBtn');
+
+    if (dropdown && tagsMenuBtn &&
+        !dropdown.contains(e.target) &&
+        !tagsMenuBtn.contains(e.target)) {
+        dropdown.style.display = 'none';
+    }
+});
+
 function toggleShare() {
     const modal = document.getElementById('shareModal');
     modal.classList.add('active');

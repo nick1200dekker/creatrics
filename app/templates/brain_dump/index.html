@@ -61,49 +61,59 @@
         <div id="noteEditor" style="height: 100%; display: flex; flex-direction: column;">
             <div class="editor-header">
                 <div class="editor-title-wrapper">
-                    <input type="text" 
-                           class="editor-title-input" 
-                           id="noteTitle" 
+                    <input type="text"
+                           class="editor-title-input"
+                           id="noteTitle"
                            placeholder="Untitled Note"
                            autocomplete="off">
-                    <div class="title-actions">
+                    <div class="title-actions" style="position: relative;">
+                        <button class="icon-btn" id="tagsMenuBtn" onclick="toggleTagsMenu()" title="Manage Tags">
+                            <i class="ph ph-tag"></i>
+                        </button>
                         <button class="icon-btn" id="shareBtn" onclick="toggleShare()" title="Share Note">
                             <i class="ph ph-share-network"></i>
                         </button>
-                    </div>
+
+                        <!-- Tags Dropdown Menu -->
+                        <div class="tags-dropdown" id="tagsDropdown" style="display: none;">
+                <div class="tags-dropdown-header">
+                    <span>Manage Tags</span>
+                    <button class="icon-btn-small" onclick="toggleTagsMenu()">
+                        <i class="ph ph-x"></i>
+                    </button>
                 </div>
-                <!-- Tags Section -->
-                <div class="tags-section">
-                    <div class="tags-container" id="tagsContainer">
-                        <!-- Preset tags -->
-                        <button class="tag-preset" data-tag="video-idea" onclick="toggleTag('video-idea')">
-                            🎥 Video Idea
-                        </button>
-                        <button class="tag-preset" data-tag="content-idea" onclick="toggleTag('content-idea')">
-                            💡 Content Idea
-                        </button>
-                        <button class="tag-preset" data-tag="draft" onclick="toggleTag('draft')">
-                            📝 Draft
-                        </button>
-                        <button class="tag-preset" data-tag="important" onclick="toggleTag('important')">
-                            ⭐ Important
-                        </button>
-                        <button class="tag-preset" data-tag="research" onclick="toggleTag('research')">
-                            🔍 Research
-                        </button>
-                        <button class="tag-preset" data-tag="script" onclick="toggleTag('script')">
-                            📜 Script
-                        </button>
-                        <button class="tag-preset" data-tag="social-media" onclick="toggleTag('social-media')">
-                            📱 Social Media
-                        </button>
-                        <button class="tag-preset" data-tag="tutorial" onclick="toggleTag('tutorial')">
-                            📚 Tutorial
-                        </button>
-                        <!-- Add custom tag button -->
-                        <button class="tag-add" onclick="addCustomTag()">
-                            <i class="ph ph-plus"></i> Add Tag
-                        </button>
+                <div class="tags-container" id="tagsContainer">
+                    <!-- Preset tags -->
+                    <button class="tag-preset" data-tag="video-idea" onclick="toggleTag('video-idea')">
+                        🎥 Video Idea
+                    </button>
+                    <button class="tag-preset" data-tag="content-idea" onclick="toggleTag('content-idea')">
+                        💡 Content Idea
+                    </button>
+                    <button class="tag-preset" data-tag="draft" onclick="toggleTag('draft')">
+                        📝 Draft
+                    </button>
+                    <button class="tag-preset" data-tag="important" onclick="toggleTag('important')">
+                        ⭐ Important
+                    </button>
+                    <button class="tag-preset" data-tag="research" onclick="toggleTag('research')">
+                        🔍 Research
+                    </button>
+                    <button class="tag-preset" data-tag="script" onclick="toggleTag('script')">
+                        📜 Script
+                    </button>
+                    <button class="tag-preset" data-tag="social-media" onclick="toggleTag('social-media')">
+                        📱 Social Media
+                    </button>
+                    <button class="tag-preset" data-tag="tutorial" onclick="toggleTag('tutorial')">
+                        📚 Tutorial
+                    </button>
+                    <!-- Add custom tag button -->
+                    <button class="tag-add" onclick="addCustomTag()">
+                        <i class="ph ph-plus"></i> Add Tag
+                    </button>
+                </div>
+                        </div>
                     </div>
                 </div>
             </div>
