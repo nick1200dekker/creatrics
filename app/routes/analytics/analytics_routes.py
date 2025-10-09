@@ -1161,6 +1161,7 @@ def tiktok_overview():
         user_info['total_likes_35'] = total_likes_35
         user_info['total_comments_35'] = total_comments_35
         user_info['total_shares_35'] = total_shares_35
+        user_info['post_count'] = posts_count if posts_data else 0
         user_info['fetched_at'] = datetime.now().isoformat()
 
         # Store in Firestore
@@ -1275,6 +1276,7 @@ def refresh_tiktok_data():
     try:
         user_data = UserService.get_user(user_id)
         tiktok_username = user_data.get('tiktok_account', '')
+        sec_uid = user_data.get('tiktok_sec_uid', '')
 
         if not tiktok_username:
             return jsonify({'error': 'No TikTok account connected'}), 404
@@ -1283,24 +1285,198 @@ def refresh_tiktok_data():
 
         # Fetch fresh user data
         from app.system.services.tiktok_service import TikTokService
+        from datetime import datetime, timedelta
+        import firebase_admin
+        from firebase_admin import firestore
+
         user_info = TikTokService.get_user_info(tiktok_username)
 
-        if user_info:
-            # Store secUid
-            UserService.update_user(user_id, {'tiktok_sec_uid': user_info.get('sec_uid')})
-
-            logger.info(f"TikTok analytics refresh completed successfully for user {user_id}")
-            return jsonify({
-                'success': True,
-                'message': 'TikTok analytics data refreshed successfully',
-                'timestamp': user_info.get('fetched_at')
-            })
-        else:
+        if not user_info:
             logger.error(f"TikTok analytics refresh failed for user {user_id}")
             return jsonify({
                 'success': False,
                 'error': 'Failed to refresh TikTok analytics data'
             }), 500
+
+        # Store secUid
+        sec_uid = user_info.get('sec_uid')
+        UserService.update_user(user_id, {'tiktok_sec_uid': sec_uid})
+
+        # Fetch recent posts (last 7 days) with pagination (like X Analytics)
+        one_week_ago = datetime.now() - timedelta(days=7)
+        recent_posts = []
+        cursor = "0"
+        max_pages = 5  # Limit for refresh
+        page = 0
+
+        logger.info(f"Fetching recent TikTok posts (last 7 days) for refresh")
+
+        while page < max_pages:
+            page += 1
+
+            # Retry logic for API calls
+            posts_data = None
+            max_retries = 3
+            for retry in range(max_retries):
+                posts_data = TikTokService.get_user_posts(sec_uid, count=35, cursor=cursor)
+
+                if posts_data:
+                    break
+
+                if retry < max_retries - 1:
+                    wait_time = (retry + 1) * 3  # 3s, 6s, 9s
+                    logger.warning(f"Failed to fetch page {page}, retrying in {wait_time}s (attempt {retry + 1}/{max_retries})")
+                    import time
+                    time.sleep(wait_time)
+
+            if not posts_data:
+                break
+
+            posts = posts_data.get('posts', [])
+            page_posts = []
+            stopped_at_cutoff = False
+
+            for post in posts:
+                create_time = post.get('create_time')
+                if create_time:
+                    try:
+                        post_date = datetime.fromtimestamp(create_time)
+
+                        # Stop if we've reached posts older than 7 days
+                        if post_date < one_week_ago:
+                            logger.info(f"Reached posts older than 7 days, stopping refresh")
+                            stopped_at_cutoff = True
+                            break
+
+                        page_posts.append(post)
+                    except Exception as e:
+                        logger.error(f"Error parsing post date: {e}")
+                        page_posts.append(post)
+                else:
+                    page_posts.append(post)
+
+            recent_posts.extend(page_posts)
+
+            if stopped_at_cutoff:
+                break
+
+            if not posts_data.get('has_more', False) or not posts_data.get('cursor'):
+                break
+
+            cursor = posts_data.get('cursor')
+
+            # Add delay between pages to avoid rate limiting
+            import time
+            time.sleep(2)
+
+        logger.info(f"Fetched {len(recent_posts)} recent posts for refresh")
+
+        # Initialize Firestore if needed
+        if not firebase_admin._apps:
+            try:
+                firebase_admin.initialize_app()
+            except ValueError:
+                pass
+
+        db = firestore.client()
+
+        # Get existing posts from Firestore
+        posts_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('posts')
+        posts_doc = posts_ref.get()
+
+        existing_posts = []
+        if posts_doc.exists:
+            existing_posts = posts_doc.to_dict().get('posts', [])
+
+        # Merge recent posts with existing posts (avoiding duplicates)
+        existing_post_ids = {post.get('id') for post in existing_posts if post.get('id')}
+
+        for post in recent_posts:
+            if post.get('id') not in existing_post_ids:
+                existing_posts.insert(0, post)  # Add to beginning
+
+        # Sort all posts by date
+        all_posts = sorted(existing_posts, key=lambda p: p.get('create_time', 0), reverse=True)
+
+        # Calculate metrics from last 35 posts
+        last_35_posts = all_posts[:35]
+        engagement_rate = 0
+        total_views_35 = 0
+        total_likes_35 = 0
+        total_comments_35 = 0
+        total_shares_35 = 0
+
+        total_engagement_rate = 0
+        posts_count = 0
+
+        for post in last_35_posts:
+            views = post.get('views', 0)
+            likes = post.get('likes', 0)
+            comments = post.get('comments', 0)
+            shares = post.get('shares', 0)
+
+            total_views_35 += views
+            total_likes_35 += likes
+            total_comments_35 += comments
+            total_shares_35 += shares
+
+            if views > 0:
+                engagement = likes + comments + shares
+                post_engagement_rate = (engagement / views) * 100
+                total_engagement_rate += post_engagement_rate
+                posts_count += 1
+
+        if posts_count > 0:
+            engagement_rate = total_engagement_rate / posts_count
+
+        # Calculate engagement rate for all posts
+        for post in all_posts:
+            views = post.get('views', 0)
+            likes = post.get('likes', 0)
+            comments = post.get('comments', 0)
+            shares = post.get('shares', 0)
+
+            if views > 0:
+                post['engagement_rate'] = ((likes + comments + shares) / views) * 100
+            else:
+                post['engagement_rate'] = 0
+
+        # Update user info with calculated metrics
+        user_info['engagement_rate'] = engagement_rate
+        user_info['total_views_35'] = total_views_35
+        user_info['total_likes_35'] = total_likes_35
+        user_info['total_comments_35'] = total_comments_35
+        user_info['total_shares_35'] = total_shares_35
+        user_info['post_count'] = len(last_35_posts)
+        user_info['fetched_at'] = datetime.now().isoformat()
+
+        # Store updated overview data in Firestore
+        tiktok_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('latest')
+        tiktok_ref.set(user_info)
+
+        # Store updated posts data in Firestore
+        posts_ref.set({
+            'posts': all_posts,
+            'has_more': False,
+            'fetched_at': datetime.now().isoformat(),
+            'total_posts': len(all_posts)
+        })
+
+        # Clear cache
+        cache_key = f'tiktok_overview_{user_id}'
+        if cache_key in tiktok_cache:
+            del tiktok_cache[cache_key]
+
+        cache_key = f'tiktok_posts_{user_id}'
+        if cache_key in tiktok_cache:
+            del tiktok_cache[cache_key]
+
+        logger.info(f"TikTok analytics refresh completed successfully for user {user_id}")
+        return jsonify({
+            'success': True,
+            'message': 'TikTok analytics data refreshed successfully',
+            'timestamp': user_info.get('fetched_at')
+        })
 
     except Exception as e:
         logger.error(f"Error refreshing TikTok analytics for user {user_id}: {str(e)}")

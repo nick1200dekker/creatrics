@@ -117,6 +117,8 @@ function initializeAnalytics() {
                 updateYouTubeTitles();
                 loadYouTubeAnalytics();
             }, 100);
+        } else if (currentPlatform === 'tiktok') {
+            loadTikTokAnalytics();
         }
     };
     
@@ -138,21 +140,13 @@ function initializeAnalytics() {
         
         currentPlatform = platform;
 
-        // Show/hide timeframe selector based on platform
+        // Show timeframe selector for all platforms
         const timeframeSelector = document.querySelector('.timeframe-selector');
         if (timeframeSelector) {
-            if (platform === 'tiktok') {
-                // Hide timeframe selector for TikTok (data is always last 35 posts)
-                // Use visibility instead of display to maintain layout
-                timeframeSelector.style.visibility = 'hidden';
-                timeframeSelector.style.pointerEvents = 'none';
-            } else {
-                // Show timeframe selector for X and YouTube
-                timeframeSelector.style.visibility = 'visible';
-                timeframeSelector.style.opacity = '1';
-                timeframeSelector.style.pointerEvents = 'auto';
-                timeframeSelector.title = '';
-            }
+            timeframeSelector.style.visibility = 'visible';
+            timeframeSelector.style.opacity = '1';
+            timeframeSelector.style.pointerEvents = 'auto';
+            timeframeSelector.title = '';
         }
 
         if (platform === 'x' && contentElement) {
@@ -1141,6 +1135,10 @@ function initializeAnalytics() {
 
     // TikTok Analytics functions
     function loadTikTokAnalytics() {
+        // Get current timeframe
+        const timeframe = currentTimeframe || '30days';
+        console.log(`Loading TikTok analytics with timeframe: ${timeframe}`);
+
         // Load overview metrics
         fetch('/analytics/tiktok/overview')
             .then(response => response.json())
@@ -1149,19 +1147,19 @@ function initializeAnalytics() {
                     showTikTokError(data.error);
                     return;
                 }
-                renderTikTokMetrics(data.current);
+                renderTikTokMetrics(data.current, timeframe);
             })
             .catch(error => {
                 console.error('Error loading TikTok overview:', error);
                 showTikTokError('Failed to load TikTok analytics');
             });
 
-        // Load posts and render charts
+        // Load posts and render charts with timeframe
         loadTikTokPosts('recent');
-        loadTikTokCharts();
+        loadTikTokCharts(timeframe);
     }
 
-    function loadTikTokCharts() {
+    function loadTikTokCharts(timeframe = '30days') {
         fetch('/analytics/tiktok/posts')
             .then(response => response.json())
             .then(data => {
@@ -1169,13 +1167,51 @@ function initializeAnalytics() {
                     return;
                 }
                 const posts = data.posts || [];
-                renderTikTokViewsChart(posts);
-                renderTikTokEngagementChart(posts);
-                renderTikTokFrequencyChart(posts);
+
+                // Filter posts by timeframe
+                const filteredPosts = filterPostsByTimeframe(posts, timeframe);
+
+                renderTikTokViewsChart(filteredPosts);
+                renderTikTokEngagementChart(filteredPosts);
+                renderTikTokFrequencyChart(filteredPosts);
             })
             .catch(error => {
                 console.error('Error loading TikTok charts:', error);
             });
+    }
+
+    // Helper function to filter TikTok posts by timeframe
+    function filterPostsByTimeframe(posts, timeframe) {
+        const now = new Date();
+        let cutoffDate;
+
+        switch(timeframe) {
+            case '7days':
+                cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case '30days':
+                cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                break;
+            case '90days':
+                cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                break;
+            case '6months':
+                cutoffDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+                break;
+            default:
+                cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        }
+
+        console.log(`TikTok: Filtering ${posts.length} posts by timeframe ${timeframe}`);
+        console.log(`Cutoff date: ${cutoffDate.toISOString()}`);
+
+        const filtered = posts.filter(post => {
+            const postDate = new Date(post.create_time * 1000);
+            return postDate >= cutoffDate;
+        });
+
+        console.log(`TikTok: Filtered to ${filtered.length} posts`);
+        return filtered;
     }
 
     function renderTikTokViewsChart(posts) {
@@ -1318,6 +1354,11 @@ function initializeAnalytics() {
         const chartElement = document.getElementById('tiktok-frequency-chart');
         if (!chartElement) return;
 
+        if (!posts || posts.length === 0) {
+            chartElement.innerHTML = '<div class="text-center p-8 text-gray-500">No posts data available</div>';
+            return;
+        }
+
         // Group posts by date
         const postsByDate = {};
         posts.forEach(post => {
@@ -1329,12 +1370,25 @@ function initializeAnalytics() {
             }
         });
 
-        // Sort dates and create chart data
-        const sortedDates = Object.keys(postsByDate).sort();
-        const chartData = sortedDates.map(date => ({
-            x: new Date(date).getTime(),
-            y: postsByDate[date]
-        }));
+        // Get date range from posts
+        const dates = Object.keys(postsByDate).sort();
+        if (dates.length === 0) {
+            chartElement.innerHTML = '<div class="text-center p-8 text-gray-500">No posts data available</div>';
+            return;
+        }
+
+        const minDate = new Date(dates[0]);
+        const maxDate = new Date(dates[dates.length - 1]);
+
+        // Fill in missing dates with 0 posts
+        const chartData = [];
+        for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            chartData.push({
+                x: new Date(dateStr).getTime(),
+                y: postsByDate[dateStr] || 0
+            });
+        }
 
         const options = {
             series: [{
@@ -1407,75 +1461,122 @@ function initializeAnalytics() {
         chart.render();
     }
 
-    function renderTikTokMetrics(data) {
-        const mainMetricsGrid = document.getElementById('tiktok-main-metrics');
-        const postsMetricsGrid = document.getElementById('tiktok-posts-metrics');
-        if (!mainMetricsGrid || !postsMetricsGrid) return;
+    function renderTikTokMetrics(data, timeframe = '30days') {
+        const metricsGrid = document.getElementById('tiktok-metrics');
+        if (!metricsGrid) return;
 
         const followers = data.followers || 0;
         const totalLikes = data.likes || 0;
-        const engagementRate = data.engagement_rate || 0;
-        const totalViews35 = data.total_views_35 || 0;
-        const totalLikes35 = data.total_likes_35 || 0;
 
-        // Top row: Main account metrics (Followers, Total Likes)
-        mainMetricsGrid.innerHTML = `
-            <div class="metric-card">
-                <div class="metric-icon">
-                    <i class="ph ph-users"></i>
-                </div>
-                <div class="metric-content">
-                    <div class="metric-value">${formatNumber(followers)}</div>
-                    <div class="metric-label">Followers</div>
-                </div>
-            </div>
+        // Fetch posts and calculate metrics based on timeframe
+        fetch('/analytics/tiktok/posts')
+            .then(response => response.json())
+            .then(postsData => {
+                const allPosts = postsData.posts || [];
+                const filteredPosts = filterPostsByTimeframe(allPosts, timeframe);
 
-            <div class="metric-card">
-                <div class="metric-icon">
-                    <i class="ph ph-heart"></i>
-                </div>
-                <div class="metric-content">
-                    <div class="metric-value">${formatNumber(totalLikes)}</div>
-                    <div class="metric-label">Total Likes</div>
-                </div>
-            </div>
-        `;
+                // Calculate metrics from filtered posts
+                let engagementRate = 0;
+                let totalViews = 0;
+                let totalLikesFiltered = 0;
+                let totalComments = 0;
+                let totalShares = 0;
+                let totalEngagementRate = 0;
+                let postsWithViews = 0;
 
-        // Second row: Last 35 posts metrics
-        postsMetricsGrid.innerHTML = `
-            <div class="metric-card">
-                <div class="metric-icon">
-                    <i class="ph ph-eye"></i>
-                </div>
-                <div class="metric-content">
-                    <div class="metric-value">${formatNumber(totalViews35)}</div>
-                    <div class="metric-label">Total Views</div>
-                    <div class="metric-sublabel">(Last 35 posts)</div>
-                </div>
-            </div>
+                filteredPosts.forEach(post => {
+                    const views = post.views || 0;
+                    const likes = post.likes || 0;
+                    const comments = post.comments || 0;
+                    const shares = post.shares || 0;
 
-            <div class="metric-card">
-                <div class="metric-icon">
-                    <i class="ph ph-heart-fill"></i>
-                </div>
-                <div class="metric-content">
-                    <div class="metric-value">${formatNumber(totalLikes35)}</div>
-                    <div class="metric-label">Total Likes</div>
-                    <div class="metric-sublabel">(Last 35 posts)</div>
-                </div>
-            </div>
+                    totalViews += views;
+                    totalLikesFiltered += likes;
+                    totalComments += comments;
+                    totalShares += shares;
 
-            <div class="metric-card">
-                <div class="metric-icon">
-                    <i class="ph ph-chart-line"></i>
-                </div>
-                <div class="metric-content">
-                    <div class="metric-value">${engagementRate.toFixed(2)}%</div>
-                    <div class="metric-label">Avg Engagement Rate</div>
-                    <div class="metric-sublabel">(Last 35 posts)</div>
-                </div>
-            </div>
-        `;
+                    if (views > 0) {
+                        const engagement = likes + comments + shares;
+                        const postEngagementRate = (engagement / views) * 100;
+                        totalEngagementRate += postEngagementRate;
+                        postsWithViews++;
+                    }
+                });
+
+                if (postsWithViews > 0) {
+                    engagementRate = totalEngagementRate / postsWithViews;
+                }
+
+                const postCount = filteredPosts.length;
+
+                // Get timeframe label
+                const timeframeLabels = {
+                    '7days': '7 days',
+                    '30days': '30 days',
+                    '90days': '90 days',
+                    '6months': '6 months'
+                };
+                const timeframeLabel = timeframeLabels[timeframe] || '30 days';
+
+                // Single row with all 5 metrics (like X Analytics)
+                metricsGrid.innerHTML = `
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="ph ph-users"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value">${formatNumber(followers)}</div>
+                            <div class="metric-label">Followers</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="ph ph-heart"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value">${formatNumber(totalLikes)}</div>
+                            <div class="metric-label">Total Likes</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="ph ph-eye"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value">${formatNumber(totalViews)}</div>
+                            <div class="metric-label">Total Views</div>
+                            <div class="metric-sublabel">(${timeframeLabel})</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="ph ph-heart-fill"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value">${formatNumber(totalLikesFiltered)}</div>
+                            <div class="metric-label">Likes</div>
+                            <div class="metric-sublabel">(${timeframeLabel})</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="ph ph-chart-line"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-value">${engagementRate.toFixed(2)}%</div>
+                            <div class="metric-label">Engagement Rate</div>
+                            <div class="metric-sublabel">(${timeframeLabel})</div>
+                        </div>
+                    </div>
+                `;
+            })
+            .catch(error => {
+                console.error('Error calculating TikTok metrics:', error);
+            });
     }
 
     window.loadTikTokPosts = function(filter = 'recent') {

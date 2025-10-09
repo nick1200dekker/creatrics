@@ -120,9 +120,23 @@ class TikTokService:
             response = requests.get(url, headers=cls._get_headers(), params=querystring, timeout=15)
 
             logger.info(f"TikTok posts API response status: {response.status_code}")
-            logger.debug(f"TikTok posts API response text (first 200 chars): {response.text[:200]}")
+            logger.debug(f"TikTok posts API response text (first 200 chars): {response.text[:200] if response.text else 'EMPTY'}")
+
+            # Handle rate limiting or empty responses
+            if response.status_code == 204:
+                logger.warning(f"TikTok API returned 204 No Content - API may be rate limited")
+                return None
+
+            if response.status_code == 429:
+                logger.warning(f"TikTok API rate limit exceeded for secUid {sec_uid}")
+                return None
 
             response.raise_for_status()
+
+            # Check if response has content
+            if not response.text or response.text.strip() == '':
+                logger.error(f"TikTok API returned empty response for posts")
+                return None
 
             # Check if response is JSON
             try:

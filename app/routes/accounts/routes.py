@@ -164,7 +164,56 @@ def disconnect_account():
         
     elif platform == 'tiktok':
         # Remove TikTok account from Firebase
-        UserService.update_user(user_id, {'tiktok_account': ''})
+        UserService.update_user(user_id, {
+            'tiktok_account': '',
+            'tiktok_sec_uid': ''
+        })
+
+        # Clean up TikTok analytics data
+        try:
+            def clean_tiktok_data():
+                try:
+                    logger.info(f"Cleaning TikTok analytics data for user {user_id}")
+
+                    import firebase_admin
+                    from firebase_admin import firestore
+
+                    # Initialize Firestore if needed
+                    if not firebase_admin._apps:
+                        try:
+                            firebase_admin.initialize_app()
+                        except ValueError:
+                            pass
+
+                    db = firestore.client()
+
+                    # Delete TikTok analytics documents
+                    tiktok_collection = db.collection('users').document(user_id).collection('tiktok_analytics')
+
+                    # Delete 'latest' document
+                    latest_ref = tiktok_collection.document('latest')
+                    if latest_ref.get().exists:
+                        latest_ref.delete()
+                        logger.info(f"Deleted TikTok 'latest' document for user {user_id}")
+
+                    # Delete 'posts' document
+                    posts_ref = tiktok_collection.document('posts')
+                    if posts_ref.get().exists:
+                        posts_ref.delete()
+                        logger.info(f"Deleted TikTok 'posts' document for user {user_id}")
+
+                    logger.info(f"Successfully cleaned TikTok analytics data for user {user_id}")
+
+                except Exception as e:
+                    logger.error(f"Error cleaning TikTok analytics data: {str(e)}")
+
+            thread = threading.Thread(target=clean_tiktok_data)
+            thread.daemon = True
+            thread.start()
+
+        except Exception as e:
+            logger.error(f"Error starting TikTok cleanup thread: {str(e)}")
+
         flash("Successfully disconnected TikTok account", "success")
         
     else:
@@ -279,7 +328,7 @@ def fetch_initial_tiktok_data(user_id, username):
         from app.system.services.tiktok_service import TikTokService
         import firebase_admin
         from firebase_admin import firestore
-        from datetime import datetime
+        from datetime import datetime, timedelta
 
         # Initialize Firestore if needed
         if not firebase_admin._apps:
@@ -298,16 +347,95 @@ def fetch_initial_tiktok_data(user_id, username):
         sec_uid = user_info.get('sec_uid')
         UserService.update_user(user_id, {'tiktok_sec_uid': sec_uid})
 
-        # Fetch last 35 posts
-        posts_data = TikTokService.get_user_posts(sec_uid, count=35)
+        # Fetch posts from last 6 months with pagination (like X Analytics)
+        six_months_ago = datetime.now() - timedelta(days=180)
+        all_posts = []
+        cursor = "0"
+        max_pages = 30  # Limit to prevent infinite loops
+        page = 0
 
-        if not posts_data:
-            logger.error(f"Failed to fetch TikTok posts for {username}")
-            return
+        logger.info(f"Starting pagination to fetch 6 months of TikTok posts for {username}")
+        logger.info(f"Six months ago cutoff: {six_months_ago.strftime('%Y-%m-%d')}")
 
-        posts = posts_data.get('posts', [])
+        while page < max_pages:
+            page += 1
+            logger.info(f"Fetching page {page} with cursor: {cursor}")
 
-        # Calculate metrics from last 35 posts
+            # Retry logic for API calls
+            posts_data = None
+            max_retries = 3
+            for retry in range(max_retries):
+                posts_data = TikTokService.get_user_posts(sec_uid, count=35, cursor=cursor)
+
+                if posts_data:
+                    break
+
+                if retry < max_retries - 1:
+                    wait_time = (retry + 1) * 5  # 5s, 10s, 15s
+                    logger.warning(f"Failed to fetch page {page}, retrying in {wait_time}s (attempt {retry + 1}/{max_retries})")
+                    import time
+                    time.sleep(wait_time)
+                else:
+                    logger.error(f"Failed to fetch TikTok posts for {username} on page {page} after {max_retries} attempts")
+
+            if not posts_data:
+                break
+
+            posts = posts_data.get('posts', [])
+            logger.info(f"Page {page}: Got {len(posts)} posts from API")
+
+            # Filter posts by 6-month cutoff
+            page_posts = []
+            stopped_at_cutoff = False
+
+            for post in posts:
+                create_time = post.get('create_time')
+                if create_time:
+                    try:
+                        post_date = datetime.fromtimestamp(create_time)
+
+                        # Stop if we've reached posts older than 6 months
+                        if post_date < six_months_ago:
+                            logger.info(f"Reached posts older than 6 months (post from {post_date.strftime('%Y-%m-%d')}), stopping")
+                            stopped_at_cutoff = True
+                            break
+
+                        page_posts.append(post)
+                    except Exception as e:
+                        logger.error(f"Error parsing post date: {e}")
+                        page_posts.append(post)
+                else:
+                    page_posts.append(post)
+
+            all_posts.extend(page_posts)
+            logger.info(f"Page {page}: Added {len(page_posts)} posts within 6-month window (total now: {len(all_posts)})")
+
+            if stopped_at_cutoff:
+                logger.info(f"Stopped at 6-month cutoff")
+                break
+
+            # Check if there are more pages
+            has_more = posts_data.get('has_more', False)
+            next_cursor = posts_data.get('cursor')
+
+            if not has_more or not next_cursor:
+                logger.info(f"No more pages available (has_more: {has_more}, cursor: {next_cursor})")
+                break
+
+            cursor = next_cursor
+            logger.info(f"Page {page}: Has more pages, continuing with cursor: {cursor}")
+
+            # Add delay between pages to avoid rate limiting
+            import time
+            time.sleep(2)
+
+        logger.info(f"Completed pagination: Fetched {len(all_posts)} posts across {page} pages")
+
+        # Sort posts by date (most recent first) and take last 35 for metrics calculation
+        posts_sorted = sorted(all_posts, key=lambda p: p.get('create_time', 0), reverse=True)
+        last_35_posts = posts_sorted[:35]
+
+        # Calculate metrics from last 35 posts only
         engagement_rate = 0
         total_views_35 = 0
         total_likes_35 = 0
@@ -317,7 +445,7 @@ def fetch_initial_tiktok_data(user_id, username):
         total_engagement_rate = 0
         posts_count = 0
 
-        for post in posts:
+        for post in last_35_posts:
             views = post.get('views', 0)
             likes = post.get('likes', 0)
             comments = post.get('comments', 0)
@@ -334,14 +462,20 @@ def fetch_initial_tiktok_data(user_id, username):
                 total_engagement_rate += post_engagement_rate
                 posts_count += 1
 
-            # Calculate engagement rate for post
+        if posts_count > 0:
+            engagement_rate = total_engagement_rate / posts_count
+
+        # Calculate engagement rate for all posts (for display in posts table)
+        for post in all_posts:
+            views = post.get('views', 0)
+            likes = post.get('likes', 0)
+            comments = post.get('comments', 0)
+            shares = post.get('shares', 0)
+
             if views > 0:
                 post['engagement_rate'] = ((likes + comments + shares) / views) * 100
             else:
                 post['engagement_rate'] = 0
-
-        if posts_count > 0:
-            engagement_rate = total_engagement_rate / posts_count
 
         # Add calculated metrics to user info
         user_info['engagement_rate'] = engagement_rate
@@ -349,21 +483,23 @@ def fetch_initial_tiktok_data(user_id, username):
         user_info['total_likes_35'] = total_likes_35
         user_info['total_comments_35'] = total_comments_35
         user_info['total_shares_35'] = total_shares_35
+        user_info['post_count'] = len(last_35_posts)
         user_info['fetched_at'] = datetime.now().isoformat()
 
         # Store overview data in Firestore
         tiktok_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('latest')
         tiktok_ref.set(user_info)
 
-        # Store posts data in Firestore
+        # Store all posts data in Firestore
         posts_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('posts')
         posts_ref.set({
-            'posts': posts,
-            'has_more': posts_data.get('has_more', False),
-            'fetched_at': datetime.now().isoformat()
+            'posts': all_posts,
+            'has_more': False,  # We've fetched all available posts within 6 months
+            'fetched_at': datetime.now().isoformat(),
+            'total_posts': len(all_posts)
         })
 
-        logger.info(f"Successfully fetched and stored initial TikTok data for user {user_id}")
+        logger.info(f"Successfully fetched and stored {len(all_posts)} TikTok posts for user {user_id}")
 
     except Exception as e:
         logger.error(f"Error fetching initial TikTok data: {str(e)}", exc_info=True)
