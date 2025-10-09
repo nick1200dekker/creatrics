@@ -53,8 +53,8 @@ function renderNicheLists() {
         return;
     }
 
-    container.innerHTML = nicheLists.map(list => `
-        <div class="list-item ${currentListId === list.id ? 'active' : ''}" onclick="selectList('${list.id}')">
+    container.innerHTML = nicheLists.map((list, index) => `
+        <div class="list-item ${currentListId === list.id ? 'active' : ''}" onclick="selectList('${list.id}')" style="animation-delay: ${index * 0.05}s">
             <div class="list-info">
                 <div class="list-name">${escapeHtml(list.name)}</div>
                 <div class="list-count">${list.channel_count || 0} channels</div>

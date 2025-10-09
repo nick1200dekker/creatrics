@@ -19,6 +19,19 @@
     overflow: hidden;
     width: 100%;
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    opacity: 0;
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 html.dark .competitors-wrapper {
@@ -177,7 +190,7 @@ html.dark .new-list-btn:hover {
 
 .list-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     padding: 0.75rem;
     border-radius: 8px;
@@ -185,6 +198,21 @@ html.dark .new-list-btn:hover {
     transition: all 0.2s;
     border: 1px solid transparent;
     background: var(--bg-secondary);
+    gap: 0.5rem;
+    opacity: 0;
+    animation: fadeInItem 0.3s ease-out forwards;
+    position: relative;
+}
+
+@keyframes fadeInItem {
+    from {
+        opacity: 0;
+        transform: translateX(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 html.dark .list-item {
@@ -244,7 +272,11 @@ html.dark .list-item.active {
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-    opacity: 0;
+    opacity: 0.6;
+    flex-shrink: 0;
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
 }
 
 .list-item:hover .list-delete-btn {

@@ -1,327 +1,316 @@
 {% extends "base.html" %}
-{% set check_auth = true %}
-{% block title %}Content Wiki - Coming Soon - Creatrics{% endblock %}
+
+{% block title %}Content Wiki - Knowledge Base & Documentation | Creatrics{% endblock %}
 
 {% block seo_meta %}
-<meta name="description" content="Content Wiki - Build your content knowledge base. Store ideas, research, and references all in one place. Coming soon to Creatrics.">
-<meta name="keywords" content="content wiki, knowledge base, video research, content ideas, content planning">
+<meta name="description" content="Build your content knowledge base with brand guidelines, documentation, templates, and resources. Organize everything your team needs in one centralized wiki.">
+<meta name="keywords" content="content wiki, brand guidelines, documentation, knowledge base, content standards, team resources">
 {% endblock %}
 
 {% block additional_styles %}
-<style>
-    /* Override base template padding */
-    .content-panel {
-        padding: 0 !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
-
-    /* Main wrapper */
-    .coming-soon-wrapper {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border-secondary);
-        overflow: hidden;
-        width: 100%;
-        min-height: calc(100vh - 60px);
-        transition: background-color 0.3s ease, border-color 0.3s ease;
-        position: relative;
-    }
-
-    html.dark .coming-soon-wrapper {
-        border-color: transparent;
-    }
-
-    /* Animated background gradient */
-    .coming-soon-wrapper::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
-        pointer-events: none;
-    }
-
-    /* Header */
-    .coming-soon-header {
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid var(--border-primary);
-        background: var(--bg-secondary);
-        transition: background-color 0.3s ease, border-color 0.3s ease;
-        position: relative;
-        z-index: 1;
-    }
-
-    .coming-soon-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .coming-soon-title i {
-        color: #3B82F6;
-    }
-
-    /* Content */
-    .coming-soon-content {
-        padding: 4rem 2rem;
-        text-align: center;
-        position: relative;
-        z-index: 1;
-    }
-
-    .coming-soon-hero {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-    .coming-soon-icon {
-        width: 120px;
-        height: 120px;
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-        border-radius: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 2rem;
-        box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.3);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .coming-soon-icon::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 100px;
-        height: 100px;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
-        pointer-events: none;
-    }
-
-    .coming-soon-icon i {
-        font-size: 3rem;
-        color: white;
-        position: relative;
-        z-index: 1;
-    }
-
-    .coming-soon-hero h1 {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-        line-height: 1.2;
-    }
-
-    .coming-soon-hero .gradient-text {
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .coming-soon-hero p {
-        font-size: 1.25rem;
-        color: var(--text-secondary);
-        margin-bottom: 2rem;
-        line-height: 1.6;
-    }
-
-    .coming-soon-badge {
-        display: inline-block;
-        background: rgba(59, 130, 246, 0.1);
-        color: #3B82F6;
-        padding: 0.5rem 1.5rem;
-        border-radius: 50px;
-        font-size: 0.875rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 2rem;
-        border: 1px solid rgba(59, 130, 246, 0.2);
-    }
-
-    html.dark .coming-soon-badge {
-        background: rgba(59, 130, 246, 0.2);
-        color: #60A5FA;
-        border-color: rgba(59, 130, 246, 0.3);
-    }
-
-    /* Features preview */
-    .features-preview {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        margin-top: 3rem;
-        max-width: 900px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .feature-preview-card {
-        background: var(--bg-tertiary);
-        border-radius: 16px;
-        padding: 1.5rem;
-        border: 1px solid var(--border-secondary);
-        transition: all 0.3s ease;
-        opacity: 0.7;
-    }
-
-    html.dark .feature-preview-card {
-        border-color: transparent;
-    }
-
-    .feature-preview-card h3 {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .feature-preview-card h3 i {
-        color: #3B82F6;
-        font-size: 1rem;
-    }
-
-    .feature-preview-card p {
-        font-size: 0.875rem;
-        color: var(--text-tertiary);
-        line-height: 1.5;
-        margin: 0;
-    }
-
-    /* CTA buttons */
-    .coming-soon-cta {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-        margin-top: 2rem;
-    }
-
-    .btn-primary, .btn-secondary {
-        padding: 0.875rem 2rem;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
-    }
-
-    .btn-secondary {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-primary);
-        box-shadow: var(--shadow-sm);
-    }
-
-    .btn-secondary:hover {
-        background: var(--bg-primary);
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .coming-soon-content {
-            padding: 2rem 1rem;
-        }
-        
-        .coming-soon-hero h1 {
-            font-size: 2rem;
-        }
-        
-        .coming-soon-hero p {
-            font-size: 1.125rem;
-        }
-        
-        .features-preview {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/content_wiki.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="coming-soon-wrapper">
-    <!-- Header -->
-    <div class="coming-soon-header">
-        <h1 class="coming-soon-title">
-            <i class="ph ph-books"></i>
-            Content Wiki
-        </h1>
+<div class="content-panel">
+    <div class="wiki-wrapper">
+        <!-- Left Sidebar -->
+        <aside class="wiki-sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">
+                    <i class="ph ph-books"></i>
+                    Content Wiki
+                </h2>
+                <button class="new-page-btn" onclick="WikiApp.createNewPage()">
+                    <i class="ph ph-plus"></i>
+                    New Page
+                </button>
+            </div>
+
+            <!-- Search -->
+            <div class="search-box">
+                <div class="search-wrapper">
+                    <input type="text" 
+                           class="search-input" 
+                           id="searchInput" 
+                           placeholder="Search wiki..."
+                           onkeyup="WikiApp.searchDebounced(this.value)">
+                    <i class="ph ph-magnifying-glass search-icon"></i>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="categories-section">
+                <div class="categories-header">
+                    <span class="categories-title">Categories</span>
+                    <button class="view-all-btn" onclick="WikiApp.showAllPages()">
+                        All
+                    </button>
+                </div>
+                <div class="categories-list" id="categoriesList">
+                    <!-- Categories will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Pages List -->
+            <div class="pages-section">
+                <div class="pages-header">
+                    <span class="pages-title" id="pagesTitle">All Pages</span>
+                    <span class="pages-count" id="pagesCount">0</span>
+                </div>
+                <div class="pages-list" id="pagesList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pinned Pages -->
+            <div class="pinned-section" id="pinnedSection" style="display: none;">
+                <div class="pinned-header">
+                    <i class="ph ph-push-pin"></i>
+                    <span>Pinned</span>
+                </div>
+                <div class="pinned-list" id="pinnedList">
+                    <!-- Pinned pages will be loaded here -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="wiki-content" id="wikiContent">
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+                <i class="ph ph-books empty-state-icon"></i>
+                <h2 class="empty-state-title">Welcome to Content Wiki</h2>
+                <p class="empty-state-text">Create your first documentation page or select one to get started</p>
+                <button class="action-btn" onclick="WikiApp.createNewPage()">
+                    <i class="ph ph-plus"></i>
+                    <span>Create Your First Page</span>
+                </button>
+
+                <!-- Templates Section -->
+                <div class="templates-showcase">
+                    <h3>Start with a Template</h3>
+                    <div class="template-cards">
+                        <div class="template-card" onclick="WikiApp.createFromTemplate('brand-guidelines')">
+                            <i class="ph ph-palette"></i>
+                            <span>Brand Guidelines</span>
+                        </div>
+                        <div class="template-card" onclick="WikiApp.createFromTemplate('content-standards')">
+                            <i class="ph ph-file-text"></i>
+                            <span>Content Standards</span>
+                        </div>
+                        <div class="template-card" onclick="WikiApp.createFromTemplate('editor-letter')">
+                            <i class="ph ph-envelope"></i>
+                            <span>Letter to Editors</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Editor -->
+            <div class="page-editor" id="pageEditor" style="display: none;">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-top">
+                        <input type="text" 
+                               class="page-title-input" 
+                               id="pageTitle" 
+                               placeholder="Page Title"
+                               autocomplete="off">
+                        <div class="page-actions">
+                            <button class="icon-btn" onclick="WikiApp.togglePagePin()" title="Pin Page" id="pinBtn">
+                                <i class="ph ph-push-pin"></i>
+                            </button>
+                            <button class="icon-btn" onclick="WikiApp.duplicatePage()" title="Duplicate">
+                                <i class="ph ph-copy"></i>
+                            </button>
+                            <button class="icon-btn" onclick="WikiApp.showPageInfo()" title="Page Info">
+                                <i class="ph ph-info"></i>
+                            </button>
+                            <button class="icon-btn danger" onclick="WikiApp.deletePage()" title="Delete">
+                                <i class="ph ph-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category and Tags -->
+                    <div class="page-metadata">
+                        <select class="category-select" id="pageCategory">
+                            <!-- Categories will be loaded here -->
+                        </select>
+                        <div class="tags-input-wrapper">
+                            <input type="text" 
+                                   class="tags-input" 
+                                   id="pageTags" 
+                                   placeholder="Add tags (comma separated)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Editor Toolbar -->
+                <div class="editor-toolbar">
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('bold')" title="Bold">
+                            <i class="ph ph-text-b"></i>
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('italic')" title="Italic">
+                            <i class="ph ph-text-italic"></i>
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('underline')" title="Underline">
+                            <i class="ph ph-text-underline"></i>
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('strikeThrough')" title="Strikethrough">
+                            <i class="ph ph-text-strikethrough"></i>
+                        </button>
+                    </div>
+
+                    <div class="toolbar-separator"></div>
+
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('formatBlock', 'h1')" title="Heading 1">
+                            H1
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('formatBlock', 'h2')" title="Heading 2">
+                            H2
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('formatBlock', 'h3')" title="Heading 3">
+                            H3
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('formatBlock', 'p')" title="Paragraph">
+                            P
+                        </button>
+                    </div>
+
+                    <div class="toolbar-separator"></div>
+
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('insertUnorderedList')" title="Bullet List">
+                            <i class="ph ph-list-bullets"></i>
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('insertOrderedList')" title="Numbered List">
+                            <i class="ph ph-list-numbers"></i>
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.insertTable()" title="Insert Table">
+                            <i class="ph ph-table"></i>
+                        </button>
+                    </div>
+
+                    <div class="toolbar-separator"></div>
+
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="WikiApp.insertLink()" title="Link">
+                            <i class="ph ph-link"></i>
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.insertImage()" title="Image">
+                            <i class="ph ph-image"></i>
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.uploadAttachment()" title="Attach File">
+                            <i class="ph ph-paperclip"></i>
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.insertCode()" title="Code Block">
+                            <i class="ph ph-code"></i>
+                        </button>
+                    </div>
+
+                    <div class="toolbar-separator"></div>
+
+                    <div class="toolbar-group">
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="textColorPicker" onchange="WikiApp.changeTextColor(this.value)">
+                            <button class="toolbar-btn" onclick="document.getElementById('textColorPicker').click()" title="Text Color">
+                                <i class="ph ph-palette"></i>
+                            </button>
+                        </div>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="bgColorPicker" onchange="WikiApp.changeBgColor(this.value)">
+                            <button class="toolbar-btn" onclick="document.getElementById('bgColorPicker').click()" title="Background Color">
+                                <i class="ph ph-paint-bucket"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="toolbar-separator"></div>
+
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="WikiApp.formatText('formatBlock', 'blockquote')" title="Quote">
+                            <i class="ph ph-quotes"></i>
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.insertCallout('info')" title="Info Callout">
+                            <i class="ph ph-info"></i>
+                        </button>
+                        <button class="toolbar-btn" onclick="WikiApp.insertCallout('warning')" title="Warning Callout">
+                            <i class="ph ph-warning"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Editor -->
+                <div class="editor-content">
+                    <div id="wikiEditor" contenteditable="true" class="wiki-editor"></div>
+                </div>
+
+                <!-- Attachments Section -->
+                <div class="attachments-section" id="attachmentsSection" style="display: none;">
+                    <div class="attachments-header">
+                        <i class="ph ph-paperclip"></i>
+                        <span>Attachments</span>
+                    </div>
+                    <div class="attachments-list" id="attachmentsList">
+                        <!-- Attachments will be listed here -->
+                    </div>
+                </div>
+
+                <!-- Save Status -->
+                <div class="editor-footer">
+                    <div class="save-status saved" id="saveStatus">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Saved</span>
+                    </div>
+                    <div class="page-info">
+                        <span id="pageVersion">v1</span>
+                        <span id="lastEdited">Just now</span>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
+</div>
 
-    <!-- Content -->
-    <div class="coming-soon-content">
-        <div class="coming-soon-hero">
-            <div class="coming-soon-icon">
-                <i class="ph ph-books"></i>
-            </div>
-            
-            <div class="coming-soon-badge">Coming Soon</div>
-            
-            <h1>Build Your <span class="gradient-text">Knowledge Base</span></h1>
-            
-            <p>Create a centralized hub for all your content research, ideas, and references. Build your own wiki to organize information and never lose a great idea again.</p>
-            
-            <div class="coming-soon-cta">
-                <a href="{{ url_for('home.dashboard') }}" class="btn-primary">
-                    <i class="ph ph-house"></i>
-                    Back to Dashboard
-                </a>
-                <a href="{{ url_for('brain_dump.brain_dump') }}" class="btn-secondary">
-                    <i class="ph ph-brain"></i>
-                    Try Brain Dump
-                </a>
-            </div>
+<!-- Hidden file input for uploads -->
+<input type="file" id="fileUpload" style="display: none;" accept="*/*" onchange="WikiApp.handleFileUpload(this)">
+<input type="file" id="imageUpload" style="display: none;" accept="image/*" onchange="WikiApp.handleImageUpload(this)">
+
+<!-- Page Info Modal -->
+<div class="modal" id="pageInfoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Page Information</h3>
+            <button class="modal-close" onclick="WikiApp.closePageInfo()">
+                <i class="ph ph-x"></i>
+            </button>
         </div>
-
-        <!-- Features Preview -->
-        <div class="features-preview">
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-note-pencil"></i>Smart Notes</h3>
-                <p>Organize research notes with tags, categories, and powerful search capabilities.</p>
-            </div>
-            
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-link"></i>Link References</h3>
-                <p>Connect related topics and build knowledge networks with cross-references.</p>
-            </div>
-            
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-database"></i>Content Library</h3>
-                <p>Store and organize all your content assets, research, and inspiration in one place.</p>
-            </div>
+        <div class="modal-body" id="pageInfoContent">
+            <!-- Page info will be displayed here -->
         </div>
     </div>
 </div>
+
+<!-- Template for attachment item -->
+<template id="attachmentTemplate">
+    <div class="attachment-item">
+        <i class="ph ph-file"></i>
+        <span class="attachment-name"></span>
+        <span class="attachment-size"></span>
+        <button class="attachment-remove" onclick="WikiApp.removeAttachment(this)">
+            <i class="ph ph-x"></i>
+        </button>
+    </div>
+</template>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='scripts/content_wiki.js') }}"></script>
 {% endblock %}
