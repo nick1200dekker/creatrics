@@ -72,17 +72,14 @@
         }
 
         .logo {
-            font-size: 1.25rem;
-            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            color: var(--text-primary);
             text-decoration: none;
         }
 
-        .logo i {
-            color: var(--primary);
+        .logo img {
+            height: 32px;
+            width: auto;
         }
 
         .share-badge {
@@ -423,8 +420,7 @@
     <header class="header">
         <div class="header-container">
             <a href="https://creatrics.com" class="logo">
-                <i class="ph ph-brain"></i>
-                Creatrics
+                <img src="/static/images/logo.png" alt="Creatrics">
             </a>
             <div class="share-badge">
                 {% if note.permission == 'edit' %}
