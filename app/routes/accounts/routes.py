@@ -96,9 +96,17 @@ def connect_account():
         if not username:
             flash("Please enter your TikTok username", "error")
             return redirect(url_for('accounts.index'))
-        
+
         # Store TikTok account in Firebase
         UserService.update_user(user_id, {'tiktok_account': username})
+
+        # Start initial TikTok data fetch in background
+        logger.info(f"Starting initial TikTok analytics fetch for user {user_id}")
+        import threading
+        thread = threading.Thread(target=fetch_initial_tiktok_data, args=(user_id, username))
+        thread.daemon = True
+        thread.start()
+
         flash(f"Successfully connected TikTok account @{username}", "success")
         return redirect(url_for('accounts.index', show_super_powers='true', platform='tiktok'))
         
@@ -262,3 +270,100 @@ def get_x_posts():
     except Exception as e:
         logger.error(f"Error fetching X posts: {str(e)}")
         return jsonify({'error': 'Failed to fetch posts data'}), 500
+
+def fetch_initial_tiktok_data(user_id, username):
+    """Background function to fetch initial TikTok analytics data"""
+    try:
+        logger.info(f"Fetching initial TikTok data for user {user_id}, username: {username}")
+
+        from app.system.services.tiktok_service import TikTokService
+        import firebase_admin
+        from firebase_admin import firestore
+        from datetime import datetime
+
+        # Initialize Firestore if needed
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app()
+
+        db = firestore.client()
+
+        # Fetch user info
+        user_info = TikTokService.get_user_info(username)
+
+        if not user_info:
+            logger.error(f"Failed to fetch TikTok user info for {username}")
+            return
+
+        # Store secUid
+        sec_uid = user_info.get('sec_uid')
+        UserService.update_user(user_id, {'tiktok_sec_uid': sec_uid})
+
+        # Fetch last 35 posts
+        posts_data = TikTokService.get_user_posts(sec_uid, count=35)
+
+        if not posts_data:
+            logger.error(f"Failed to fetch TikTok posts for {username}")
+            return
+
+        posts = posts_data.get('posts', [])
+
+        # Calculate metrics from last 35 posts
+        engagement_rate = 0
+        total_views_35 = 0
+        total_likes_35 = 0
+        total_comments_35 = 0
+        total_shares_35 = 0
+
+        total_engagement_rate = 0
+        posts_count = 0
+
+        for post in posts:
+            views = post.get('views', 0)
+            likes = post.get('likes', 0)
+            comments = post.get('comments', 0)
+            shares = post.get('shares', 0)
+
+            total_views_35 += views
+            total_likes_35 += likes
+            total_comments_35 += comments
+            total_shares_35 += shares
+
+            if views > 0:
+                engagement = likes + comments + shares
+                post_engagement_rate = (engagement / views) * 100
+                total_engagement_rate += post_engagement_rate
+                posts_count += 1
+
+            # Calculate engagement rate for post
+            if views > 0:
+                post['engagement_rate'] = ((likes + comments + shares) / views) * 100
+            else:
+                post['engagement_rate'] = 0
+
+        if posts_count > 0:
+            engagement_rate = total_engagement_rate / posts_count
+
+        # Add calculated metrics to user info
+        user_info['engagement_rate'] = engagement_rate
+        user_info['total_views_35'] = total_views_35
+        user_info['total_likes_35'] = total_likes_35
+        user_info['total_comments_35'] = total_comments_35
+        user_info['total_shares_35'] = total_shares_35
+        user_info['fetched_at'] = datetime.now().isoformat()
+
+        # Store overview data in Firestore
+        tiktok_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('latest')
+        tiktok_ref.set(user_info)
+
+        # Store posts data in Firestore
+        posts_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('posts')
+        posts_ref.set({
+            'posts': posts,
+            'has_more': posts_data.get('has_more', False),
+            'fetched_at': datetime.now().isoformat()
+        })
+
+        logger.info(f"Successfully fetched and stored initial TikTok data for user {user_id}")
+
+    except Exception as e:
+        logger.error(f"Error fetching initial TikTok data: {str(e)}", exc_info=True)

@@ -39,6 +39,13 @@ function initializeAnalytics() {
         currentPlatform = defaultPlatform;
     }
 
+    // Utility function to format numbers
+    function formatNumber(num) {
+        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+        return num.toLocaleString();
+    }
+
     // Function to get chart colors based on theme
     function getChartColors() {
         const isDarkMode = document.documentElement.classList.contains('dark');
@@ -130,16 +137,24 @@ function initializeAnalytics() {
         }
         
         currentPlatform = platform;
-        
+
         // Show/hide timeframe selector based on platform
         const timeframeSelector = document.querySelector('.timeframe-selector');
         if (timeframeSelector) {
-            // YouTube now supports timeframes too!
-            timeframeSelector.style.opacity = '1';
-            timeframeSelector.style.pointerEvents = 'auto';
-            timeframeSelector.title = '';
+            if (platform === 'tiktok') {
+                // Hide timeframe selector for TikTok (data is always last 35 posts)
+                // Use visibility instead of display to maintain layout
+                timeframeSelector.style.visibility = 'hidden';
+                timeframeSelector.style.pointerEvents = 'none';
+            } else {
+                // Show timeframe selector for X and YouTube
+                timeframeSelector.style.visibility = 'visible';
+                timeframeSelector.style.opacity = '1';
+                timeframeSelector.style.pointerEvents = 'auto';
+                timeframeSelector.title = '';
+            }
         }
-        
+
         if (platform === 'x' && contentElement) {
             loadXAnalytics();
         } else if (platform === 'youtube' && contentElement) {
@@ -148,6 +163,9 @@ function initializeAnalytics() {
                 updateYouTubeTitles();
                 loadYouTubeAnalytics();
             }, 100);
+        } else if (platform === 'tiktok' && contentElement) {
+            // Load TikTok analytics
+            loadTikTokAnalytics();
         }
     };
     
@@ -1120,4 +1138,499 @@ function initializeAnalytics() {
                 refreshBtn.innerHTML = originalContent;
             });
     };
+
+    // TikTok Analytics functions
+    function loadTikTokAnalytics() {
+        // Load overview metrics
+        fetch('/analytics/tiktok/overview')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showTikTokError(data.error);
+                    return;
+                }
+                renderTikTokMetrics(data.current);
+            })
+            .catch(error => {
+                console.error('Error loading TikTok overview:', error);
+                showTikTokError('Failed to load TikTok analytics');
+            });
+
+        // Load posts and render charts
+        loadTikTokPosts('recent');
+        loadTikTokCharts();
+    }
+
+    function loadTikTokCharts() {
+        fetch('/analytics/tiktok/posts')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    return;
+                }
+                const posts = data.posts || [];
+                renderTikTokViewsChart(posts);
+                renderTikTokEngagementChart(posts);
+                renderTikTokFrequencyChart(posts);
+            })
+            .catch(error => {
+                console.error('Error loading TikTok charts:', error);
+            });
+    }
+
+    function renderTikTokViewsChart(posts) {
+        const chartElement = document.getElementById('tiktok-views-chart');
+        if (!chartElement) return;
+
+        // Sort posts by date (oldest to newest) and take last 35
+        const sortedPosts = posts.slice(0, 35).reverse();
+
+        const chartData = sortedPosts.map((post, index) => ({
+            x: `Post ${index + 1}`,
+            y: post.views || 0
+        }));
+
+        const options = {
+            series: [{
+                name: 'Views',
+                data: chartData.map(d => d.y)
+            }],
+            chart: {
+                type: 'bar',
+                height: 300,
+                toolbar: { show: false },
+                background: 'transparent'
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 4,
+                    dataLabels: { position: 'top' },
+                    colors: {
+                        ranges: [{
+                            from: 0,
+                            to: 1000000000,
+                            color: '#3b82f6'
+                        }]
+                    }
+                }
+            },
+            dataLabels: { enabled: false },
+            xaxis: {
+                categories: chartData.map(d => d.x),
+                labels: {
+                    show: false
+                }
+            },
+            yaxis: {
+                labels: {
+                    formatter: function(val) {
+                        return formatNumber(val);
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function(val) {
+                        return formatNumber(val) + ' views';
+                    }
+                }
+            },
+            grid: {
+                borderColor: '#e5e7eb',
+                strokeDashArray: 4
+            }
+        };
+
+        chartElement.innerHTML = '';
+        const chart = new ApexCharts(chartElement, options);
+        chart.render();
+    }
+
+    function renderTikTokEngagementChart(posts) {
+        const chartElement = document.getElementById('tiktok-engagement-chart');
+        if (!chartElement) return;
+
+        // Sort posts by date (oldest to newest) and take last 35
+        const sortedPosts = posts.slice(0, 35).reverse();
+
+        const chartData = sortedPosts.map((post, index) => ({
+            x: `Post ${index + 1}`,
+            y: post.engagement_rate || 0
+        }));
+
+        const options = {
+            series: [{
+                name: 'Engagement Rate',
+                data: chartData.map(d => d.y)
+            }],
+            chart: {
+                type: 'line',
+                height: 300,
+                toolbar: { show: false },
+                background: 'transparent'
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 3,
+                colors: ['#8b5cf6']
+            },
+            markers: {
+                size: 4,
+                colors: ['#8b5cf6'],
+                strokeColors: '#fff',
+                strokeWidth: 2
+            },
+            dataLabels: { enabled: false },
+            xaxis: {
+                categories: chartData.map(d => d.x),
+                labels: {
+                    show: false
+                }
+            },
+            yaxis: {
+                labels: {
+                    formatter: function(val) {
+                        return val.toFixed(2) + '%';
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function(val) {
+                        return val.toFixed(2) + '%';
+                    }
+                }
+            },
+            grid: {
+                borderColor: '#e5e7eb',
+                strokeDashArray: 4
+            }
+        };
+
+        chartElement.innerHTML = '';
+        const chart = new ApexCharts(chartElement, options);
+        chart.render();
+    }
+
+    function renderTikTokFrequencyChart(posts) {
+        const chartElement = document.getElementById('tiktok-frequency-chart');
+        if (!chartElement) return;
+
+        // Group posts by date
+        const postsByDate = {};
+        posts.forEach(post => {
+            const createTime = post.create_time;
+            if (createTime) {
+                const date = new Date(createTime * 1000);
+                const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+                postsByDate[dateStr] = (postsByDate[dateStr] || 0) + 1;
+            }
+        });
+
+        // Sort dates and create chart data
+        const sortedDates = Object.keys(postsByDate).sort();
+        const chartData = sortedDates.map(date => ({
+            x: new Date(date).getTime(),
+            y: postsByDate[date]
+        }));
+
+        const options = {
+            series: [{
+                name: 'Posts',
+                data: chartData
+            }],
+            chart: {
+                type: 'bar',
+                height: 300,
+                toolbar: { show: false },
+                background: 'transparent'
+            },
+            plotOptions: {
+                bar: {
+                    borderRadius: 4,
+                    columnWidth: '60%',
+                    colors: {
+                        ranges: [{
+                            from: 0,
+                            to: 1000,
+                            color: '#10b981'
+                        }]
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                style: {
+                    colors: ['#fff']
+                }
+            },
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    format: 'MMM dd',
+                    style: {
+                        colors: '#6b7280'
+                    }
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Number of Posts'
+                },
+                labels: {
+                    formatter: function(val) {
+                        return Math.floor(val);
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'dark',
+                x: {
+                    format: 'MMM dd, yyyy'
+                },
+                y: {
+                    formatter: function(val) {
+                        return val + ' post' + (val !== 1 ? 's' : '');
+                    }
+                }
+            },
+            grid: {
+                borderColor: '#e5e7eb',
+                strokeDashArray: 4
+            }
+        };
+
+        chartElement.innerHTML = '';
+        const chart = new ApexCharts(chartElement, options);
+        chart.render();
+    }
+
+    function renderTikTokMetrics(data) {
+        const mainMetricsGrid = document.getElementById('tiktok-main-metrics');
+        const postsMetricsGrid = document.getElementById('tiktok-posts-metrics');
+        if (!mainMetricsGrid || !postsMetricsGrid) return;
+
+        const followers = data.followers || 0;
+        const totalLikes = data.likes || 0;
+        const engagementRate = data.engagement_rate || 0;
+        const totalViews35 = data.total_views_35 || 0;
+        const totalLikes35 = data.total_likes_35 || 0;
+
+        // Top row: Main account metrics (Followers, Total Likes)
+        mainMetricsGrid.innerHTML = `
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="ph ph-users"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">${formatNumber(followers)}</div>
+                    <div class="metric-label">Followers</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="ph ph-heart"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">${formatNumber(totalLikes)}</div>
+                    <div class="metric-label">Total Likes</div>
+                </div>
+            </div>
+        `;
+
+        // Second row: Last 35 posts metrics
+        postsMetricsGrid.innerHTML = `
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="ph ph-eye"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">${formatNumber(totalViews35)}</div>
+                    <div class="metric-label">Total Views</div>
+                    <div class="metric-sublabel">(Last 35 posts)</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="ph ph-heart-fill"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">${formatNumber(totalLikes35)}</div>
+                    <div class="metric-label">Total Likes</div>
+                    <div class="metric-sublabel">(Last 35 posts)</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">
+                    <i class="ph ph-chart-line"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">${engagementRate.toFixed(2)}%</div>
+                    <div class="metric-label">Avg Engagement Rate</div>
+                    <div class="metric-sublabel">(Last 35 posts)</div>
+                </div>
+            </div>
+        `;
+    }
+
+    window.loadTikTokPosts = function(filter = 'recent') {
+        fetch(`/analytics/tiktok/posts`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showTikTokError(data.error);
+                    return;
+                }
+                renderTikTokPosts(data.posts, filter);
+            })
+            .catch(error => {
+                console.error('Error loading TikTok posts:', error);
+                showTikTokError('Failed to load TikTok posts');
+            });
+    };
+
+    function renderTikTokPosts(posts, filter) {
+        const tbody = document.getElementById('tiktok-posts-tbody');
+        if (!tbody) return;
+
+        // Apply sorting based on filter
+        let sortedPosts = [...posts];
+        if (filter === 'views') {
+            sortedPosts.sort((a, b) => b.views - a.views);
+        } else if (filter === 'engagement') {
+            sortedPosts.sort((a, b) => b.engagement_rate - a.engagement_rate);
+        }
+        // 'recent' is already sorted by create_time from API
+
+        if (sortedPosts.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-8">No posts available</td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = sortedPosts.map(post => {
+            const date = new Date(post.create_time * 1000);
+            const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const truncatedDesc = post.desc.length > 80 ? post.desc.substring(0, 80) + '...' : post.desc;
+
+            return `
+                <tr>
+                    <td>
+                        <div class="post-content">
+                            <p>${escapeHtml(truncatedDesc)}</p>
+                        </div>
+                    </td>
+                    <td>${formattedDate}</td>
+                    <td>${formatNumber(post.views)}</td>
+                    <td>${formatNumber(post.likes)}</td>
+                    <td>${formatNumber(post.comments)}</td>
+                    <td>${formatNumber(post.shares)}</td>
+                    <td>
+                        <span class="engagement-badge ${getEngagementClass(post.engagement_rate)}">
+                            ${post.engagement_rate.toFixed(2)}%
+                        </span>
+                    </td>
+                    <td>
+                        <a href="https://www.tiktok.com/@${window.analyticsConfig.tiktokUsername}/video/${post.id}"
+                           target="_blank" class="post-link">
+                            <i class="ph ph-arrow-square-out"></i>
+                        </a>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function showTikTokError(message) {
+        const metricsGrid = document.getElementById('tiktok-metrics-grid');
+        if (metricsGrid) {
+            metricsGrid.innerHTML = `
+                <div class="col-span-4 text-center py-8 text-red-500">
+                    <i class="ph ph-warning-circle text-4xl mb-2"></i>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+    }
+
+    window.refreshTikTokData = function() {
+        const refreshBtn = document.getElementById('tiktok-refresh-btn');
+        if (!refreshBtn) return;
+
+        const originalContent = refreshBtn.innerHTML;
+
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<div class="loading-spinner"></div><span>Refreshing...</span>';
+
+        fetch('/analytics/tiktok/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (window.BaseApp && window.BaseApp.showToast) {
+                        window.BaseApp.showToast('TikTok data refreshed successfully!', 'success');
+                    }
+                    setTimeout(() => loadTikTokAnalytics(), 1000);
+                } else {
+                    if (window.BaseApp && window.BaseApp.showToast) {
+                        window.BaseApp.showToast(data.error || 'Failed to refresh data', 'error');
+                    }
+                }
+            })
+            .finally(() => {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalContent;
+            });
+    };
+
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Helper function to get engagement class
+    function getEngagementClass(rate) {
+        if (rate >= 10) return 'high';
+        if (rate >= 5) return 'medium';
+        return 'low';
+    }
+
+    // Initialize TikTok analytics if connected
+    const tiktokConnected = window.analyticsConfig?.tiktokConnected || false;
+
+    // Update platform detection
+    if (!platformParam) {
+        if (tiktokConnected && !xConnected && !youtubeConnected) {
+            defaultPlatform = 'tiktok';
+            currentPlatform = 'tiktok';
+        }
+    }
+
+    // Update platform validation
+    if (platformParam === 'tiktok' && !tiktokConnected) {
+        currentPlatform = defaultPlatform;
+    }
+
+    // Add TikTok to platform switching
+    if (currentPlatform === 'tiktok' && tiktokConnected) {
+        switchPlatform('tiktok');
+        loadTikTokAnalytics();
+    }
 }

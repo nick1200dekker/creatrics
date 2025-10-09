@@ -369,6 +369,17 @@ html.dark .metric-label {
     color: #a1a1aa;
 }
 
+.metric-sublabel {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    font-weight: 400;
+    margin-top: 0.25rem;
+}
+
+html.dark .metric-sublabel {
+    color: #71717a;
+}
+
 .metric-value {
     font-size: 1.75rem;
     font-weight: 700;
@@ -514,6 +525,44 @@ html.dark .data-table-wrapper {
 html.dark .data-table-header {
     border-bottom: 1px solid rgba(82, 82, 91, 0.5);
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+}
+
+.filter-select {
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background-color: white;
+    color: #1f2937;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.25rem;
+}
+
+.filter-select:hover {
+    border-color: #3b82f6;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .filter-select {
+    background-color: rgba(39, 39, 42, 0.8);
+    border-color: rgba(82, 82, 91, 0.5);
+    color: #fafafa;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+}
+
+html.dark .filter-select:hover {
+    border-color: #3b82f6;
 }
 
 .data-table-container {

@@ -174,12 +174,15 @@ class XAnalytics:
         cursor = None
         
         # Set target based on whether this is initial fetch
+        # For initial: try to get as much historical data as API allows (target 1000 posts)
+        # For refresh: only get last week of posts (stop when we hit posts older than 7 days)
         six_months_ago = datetime.now() - timedelta(days=180)
-        target_posts = max_posts if max_posts else (1000 if is_initial else 100)
-        
-        logger.info(f"Fetching {'initial 6 months' if is_initial else 'recent'} timeline data for {username}")
-        
-        # We need to paginate until we have enough posts or reach 6 months ago
+        one_week_ago = datetime.now() - timedelta(days=7)
+        target_posts = max_posts if max_posts else (1000 if is_initial else 200)  # 200 for refresh to ensure we get a full week
+
+        logger.info(f"Fetching {'initial historical' if is_initial else 'last 7 days'} timeline data for {username}")
+
+        # We need to paginate until we have enough posts or reach the time cutoff
         while len(all_posts) < target_posts:
             # Try up to 2 times for each page (initial attempt + 1 retry)
             max_attempts = 2
@@ -215,28 +218,37 @@ class XAnalytics:
                     
                     # Process tweets to ensure IDs are properly captured
                     for tweet in tweets:
-                        # Parse created_at to check if within 6 months
+                        # Parse created_at to check time cutoffs
                         created_at = tweet.get('created_at', '')
-                        if created_at and is_initial:
+                        if created_at:
                             try:
                                 tweet_date = datetime.strptime(created_at, '%a %b %d %H:%M:%S %z %Y')
-                                if tweet_date.replace(tzinfo=None) < six_months_ago:
+                                tweet_date_local = tweet_date.replace(tzinfo=None)
+
+                                # For initial fetch: stop at 6 months
+                                if is_initial and tweet_date_local < six_months_ago:
                                     logger.info(f"Reached posts older than 6 months, stopping")
                                     return all_posts
+
+                                # For refresh: stop at 7 days
+                                if not is_initial and tweet_date_local < one_week_ago:
+                                    logger.info(f"Reached posts older than 7 days, stopping refresh")
+                                    return all_posts
+
                             except Exception as e:
                                 logger.debug(f"Error parsing date: {e}")
-                        
+
                         # Ensure the tweet has an id_str
                         if 'id' in tweet and not 'id_str' in tweet:
                             tweet['id_str'] = str(tweet['id'])
-                        
+
                         # Fix empty author.screen_name by setting it to the requested screen_name
                         if 'author' in tweet:
                             if not tweet['author'].get('screen_name'):
                                 tweet['author']['screen_name'] = username
                         else:
                             tweet['author'] = {'screen_name': username}
-                        
+
                         # Only add non-retweets to our collection
                         if not tweet.get('retweeted', False):
                             all_posts.append(tweet)
@@ -271,6 +283,24 @@ class XAnalytics:
         
         # If we've made it here, we either have enough posts or no more pages
         logger.info(f"Completed timeline fetch with {len(all_posts)} posts")
+
+        # Log date distribution of fetched posts
+        if all_posts:
+            post_dates = []
+            for post in all_posts:
+                created_at = post.get('created_at', '')
+                if created_at:
+                    try:
+                        post_date = datetime.strptime(created_at, '%a %b %d %H:%M:%S %z %Y')
+                        post_dates.append(post_date.replace(tzinfo=None).strftime('%Y-%m-%d'))
+                    except:
+                        pass
+
+            if post_dates:
+                unique_dates = sorted(set(post_dates))
+                logger.info(f"Fetched posts span {len(unique_dates)} unique days from {unique_dates[0]} to {unique_dates[-1]}")
+                logger.info(f"All unique post dates: {', '.join(unique_dates)}")
+
         return all_posts
     
     def get_replies_data(self):
@@ -857,16 +887,19 @@ class XAnalytics:
         try:
             # Get all posts
             posts_collection = self.db.collection('users').document(self.user_id).collection('x_posts_individual')
-            
-            # Get posts from last 30 days for daily metrics
-            thirty_days_ago = datetime.now() - timedelta(days=30)
-            
+
+            # Get posts from last 180 days (6 months) for daily metrics
+            cutoff_date = datetime.now() - timedelta(days=180)
+            logger.info(f"Calculating daily metrics with cutoff date: {cutoff_date.strftime('%Y-%m-%d')}")
+
             # Query posts (we'll filter by date in memory since Firestore doesn't support timestamp queries well)
             all_posts = posts_collection.stream()
-            
+
             # Group posts by day
             daily_data = {}
             posts_processed = 0
+            posts_within_cutoff = 0
+            date_parse_errors = 0
             
             for doc in all_posts:
                 post = doc.to_dict()
@@ -889,13 +922,14 @@ class XAnalytics:
                         
                         if post_date:
                             post_date_local = post_date.replace(tzinfo=None)
-                            
+
                             # Count all posts for metrics
                             posts_processed += 1
-                            
-                            if post_date_local >= thirty_days_ago:
+
+                            if post_date_local >= cutoff_date:
+                                posts_within_cutoff += 1
                                 date_key = post_date_local.strftime('%Y-%m-%d')
-                                
+
                                 if date_key not in daily_data:
                                     daily_data[date_key] = {
                                         'date': date_key,
@@ -921,9 +955,19 @@ class XAnalytics:
                                     post.get('bookmarks', 0)
                                 )
                     except Exception as e:
+                        date_parse_errors += 1
                         logger.debug(f"Error processing post date: {e}")
-            
+
             logger.info(f"Processed {posts_processed} total posts")
+            logger.info(f"Posts within {cutoff_date.strftime('%Y-%m-%d')} cutoff: {posts_within_cutoff}")
+            logger.info(f"Date parse errors: {date_parse_errors}")
+            logger.info(f"Unique days with posts: {len(daily_data)}")
+
+            # Log date range if we have data
+            if daily_data:
+                sorted_dates = sorted(daily_data.keys())
+                logger.info(f"Date range: {sorted_dates[0]} to {sorted_dates[-1]}")
+                logger.info(f"Days with posts: {', '.join(sorted_dates)}")
             
             # Calculate engagement rates and averages
             for date_key, data in daily_data.items():

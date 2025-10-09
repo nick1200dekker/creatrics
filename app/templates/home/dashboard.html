@@ -842,7 +842,7 @@ html.dark .coming-soon-card {
             </a>
 
             <!-- Analytics -->
-            <a href="{{ url_for('tiktok_analytics.analytics') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
+            <a href="{{ url_for('analytics.index', platform='tiktok') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
                 <div class="feature-content">
                     <h3><i class="ph ph-chart-line feature-icon-inline"></i>Analytics</h3>
                     <p>Track performance & growth</p>

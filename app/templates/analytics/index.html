@@ -30,7 +30,7 @@
             
             <!-- Platform Selector (center) -->
             <div class="platform-selector">
-                <button class="platform-btn icon-only {% if x_connected %}active{% endif %}" data-platform="x" 
+                <button class="platform-btn icon-only {% if x_connected %}active{% endif %}" data-platform="x"
                         onclick="{% if x_connected %}switchPlatform('x');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="X Analytics">
                     <i class="ph ph-x-logo"></i>
                 </button>
@@ -38,6 +38,11 @@
                         onclick="{% if youtube_connected %}switchPlatform('youtube');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="YouTube Analytics">
                     <i class="ph ph-youtube-logo"></i>
                     <span>YouTube</span>
+                </button>
+                <button class="platform-btn {% if tiktok_connected and not x_connected and not youtube_connected %}active{% endif %}" data-platform="tiktok"
+                        onclick="{% if tiktok_connected %}switchPlatform('tiktok');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="TikTok Analytics">
+                    <i class="ph ph-tiktok-logo"></i>
+                    <span>TikTok</span>
                 </button>
             </div>
             
@@ -54,7 +59,7 @@
         <div class="analytics-container">
 
     <!-- No accounts connected state -->
-    {% if not x_connected and not youtube_connected %}
+    {% if not x_connected and not youtube_connected and not tiktok_connected %}
     <div class="premium-card">
         <div class="empty-state">
             <div class="empty-state-icon">
@@ -166,7 +171,7 @@
         <div class="data-table-wrapper">
             <div class="data-table-header">
                 <h3 class="text-lg font-semibold">All Posts</h3>
-                <select id="x-posts-filter" onchange="loadXPosts(this.value)">
+                <select id="x-posts-filter" class="filter-select" onchange="loadXPosts(this.value)">
                     <option value="all">Most Recent</option>
                     <option value="views">Top by Views</option>
                     <option value="engagement">Top by Engagement</option>
@@ -296,6 +301,124 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- TikTok Analytics Content -->
+    {% if tiktok_connected %}
+    <div id="tiktok-content" class="tab-content {% if tiktok_connected and not x_connected and not youtube_connected %}active{% endif %}">
+
+        <!-- Overview Metrics -->
+        <div class="premium-card">
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 id="tiktok-overview-title" class="text-lg font-semibold">Account Overview</h2>
+                    <button id="tiktok-refresh-btn" class="secondary-button" onclick="refreshTikTokData()" title="Refresh TikTok data">
+                        <i class="ph ph-arrow-clockwise"></i>
+                        <span>Refresh Data</span>
+                    </button>
+                </div>
+
+                <!-- Top Row: Main Account Metrics -->
+                <div id="tiktok-main-metrics" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="loading-container">
+                        <div class="loading-spinner"></div>
+                        <span class="ml-3">Loading metrics...</span>
+                    </div>
+                </div>
+
+                <!-- Second Row: Last 35 Posts Metrics -->
+                <div id="tiktok-posts-metrics" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                </div>
+            </div>
+        </div>
+
+        <!-- Views Per Post Chart (Full Width) -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="ph ph-eye"></i>
+                    Views Per Post
+                </h3>
+                <div class="chart-subtitle">Last 35 Posts</div>
+            </div>
+            <div id="tiktok-views-chart" class="chart-container">
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Engagement Rate Chart (Full Width) -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="ph ph-chart-line"></i>
+                    Engagement Rate Per Post
+                </h3>
+                <div class="chart-subtitle">Last 35 Posts</div>
+            </div>
+            <div id="tiktok-engagement-chart" class="chart-container">
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Posting Frequency Chart (Full Width) -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="ph ph-calendar"></i>
+                    Posting Frequency
+                </h3>
+                <div class="chart-subtitle">Last 35 Posts</div>
+            </div>
+            <div id="tiktok-frequency-chart" class="chart-container">
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Posts Table -->
+        <div class="data-table-wrapper">
+            <div class="data-table-header">
+                <h3 class="text-lg font-semibold">Recent Posts</h3>
+                <select id="tiktok-posts-filter" class="filter-select" onchange="loadTikTokPosts(this.value)">
+                    <option value="recent">Most Recent</option>
+                    <option value="views">Top by Views</option>
+                    <option value="engagement">Top by Engagement</option>
+                </select>
+            </div>
+
+            <div class="data-table-container">
+                <table class="data-table" id="tiktok-posts-table">
+                    <thead>
+                        <tr>
+                            <th>Post</th>
+                            <th>Date</th>
+                            <th>Views</th>
+                            <th>Likes</th>
+                            <th>Comments</th>
+                            <th>Shares</th>
+                            <th>Engagement Rate</th>
+                            <th>Link</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tiktok-posts-tbody">
+                        <tr>
+                            <td colspan="8" class="text-center">
+                                <div class="loading-container">
+                                    <div class="loading-spinner"></div>
+                                    <span class="ml-3">Loading posts...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
         </div>
     </div>
 </div>
@@ -304,7 +427,8 @@
 <script>
 window.analyticsConfig = {
     xConnected: {{ 'true' if x_connected else 'false' }},
-    youtubeConnected: {{ 'true' if youtube_connected else 'false' }}
+    youtubeConnected: {{ 'true' if youtube_connected else 'false' }},
+    tiktokConnected: {{ 'true' if tiktok_connected else 'false' }}
 };
 </script>
 {% endblock %}

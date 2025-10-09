@@ -149,10 +149,7 @@
                         <input type="checkbox" id="perm_trend_finder" checked>
                         <label for="perm_trend_finder">Trend Finder</label>
                     </div>
-                    <div class="permission-item">
-                        <input type="checkbox" id="perm_tiktok_analytics" checked>
-                        <label for="perm_tiktok_analytics">Analytics</label>
-                    </div>
+                    <!-- Analytics permission shared across all platforms (defined in YouTube section) -->
                 </div>
             </div>
 
@@ -297,7 +294,7 @@ function updateUIForWorkspace() {
                 const categories = {
                     'YouTube': ['video_script', 'video_title', 'video_tags', 'video_description', 'thumbnail', 'analytics', 'competitors'],
                     'X (Twitter)': ['x_post_editor', 'reply_guy', 'clip_spaces', 'niche'],
-                    'TikTok': ['hook_generator', 'titles_hashtags', 'trending_sounds', 'trend_finder', 'tiktok_analytics'],
+                    'TikTok': ['hook_generator', 'titles_hashtags', 'trending_sounds', 'trend_finder'],
                     'Content Hub': ['brain_dump', 'mind_map', 'content_wiki', 'content_calendar']
                 };
 
@@ -323,8 +320,7 @@ function updateUIForWorkspace() {
                                     ${activePerms.map(perm => {
                                         const name = perm.replace(/_/g, ' ')
                                             .replace(/\b\w/g, l => l.toUpperCase())
-                                            .replace('X Post Editor', 'Post Editor')
-                                            .replace('Tiktok Analytics', 'Analytics');
+                                            .replace('X Post Editor', 'Post Editor');
                                         return `<span class="permission-badge">
                                             <i class="ph-fill ph-check-circle" style="color: #10B981;"></i> ${name}
                                         </span>`;
@@ -449,7 +445,6 @@ async function sendInvite() {
         titles_hashtags: document.getElementById('perm_titles_hashtags').checked,
         trending_sounds: document.getElementById('perm_trending_sounds').checked,
         trend_finder: document.getElementById('perm_trend_finder').checked,
-        tiktok_analytics: document.getElementById('perm_tiktok_analytics').checked,
         // Content Hub
         brain_dump: document.getElementById('perm_brain_dump').checked,
         mind_map: document.getElementById('perm_mind_map').checked,
@@ -519,8 +514,7 @@ function editPermissions(memberId, permissions) {
                 { id: 'hook_generator', label: 'Hook Generator' },
                 { id: 'titles_hashtags', label: 'Titles & Hashtags' },
                 { id: 'trending_sounds', label: 'Trending Sounds' },
-                { id: 'trend_finder', label: 'Trend Finder' },
-                { id: 'tiktok_analytics', label: 'Analytics' }
+                { id: 'trend_finder', label: 'Trend Finder' }
             ]
         },
         {
@@ -576,7 +570,6 @@ async function savePermissions() {
         titles_hashtags: document.getElementById('modal_perm_titles_hashtags').checked,
         trending_sounds: document.getElementById('modal_perm_trending_sounds').checked,
         trend_finder: document.getElementById('modal_perm_trend_finder').checked,
-        tiktok_analytics: document.getElementById('modal_perm_tiktok_analytics').checked,
         // Content Hub
         brain_dump: document.getElementById('modal_perm_brain_dump').checked,
         mind_map: document.getElementById('modal_perm_mind_map').checked,
