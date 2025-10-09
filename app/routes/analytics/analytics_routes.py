@@ -1004,7 +1004,7 @@ def refresh_youtube_data():
         
         # Fetch fresh data
         result = fetch_youtube_analytics(user_id)
-        
+
         if result:
             logger.info(f"YouTube analytics refresh completed successfully for user {user_id}")
             return jsonify({
@@ -1016,8 +1016,9 @@ def refresh_youtube_data():
             logger.error(f"YouTube analytics refresh failed for user {user_id}")
             return jsonify({
                 'success': False,
-                'error': 'Failed to refresh YouTube analytics data'
-            }), 500
+                'error': 'Failed to refresh YouTube analytics data. Your YouTube connection may have expired. Please reconnect your account in Settings.',
+                'needs_reconnect': True
+            }), 401
             
     except Exception as e:
         logger.error(f"Error refreshing YouTube analytics for user {user_id}: {str(e)}")

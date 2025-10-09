@@ -622,10 +622,10 @@ function createNewMap() {
     newTab.className = 'tab';
     newTab.setAttribute('data-map-id', newMapId);
     newTab.innerHTML = `
-        <span>Map ${mapCount}</span>
+        <span class="tab-name" ondblclick="editTabName(this)" title="Double-click to rename">Map ${mapCount}</span>
         <button class="tab-close" onclick="closeMap('${newMapId}')" title="Close Map">×</button>
     `;
-    
+
     newTab.addEventListener('click', (e) => {
         if (!e.target.classList.contains('tab-close')) {
             switchToMap(newMapId);
@@ -772,16 +772,16 @@ function rebuildTabs() {
         if (map.id === currentMapId) tab.classList.add('active');
         tab.setAttribute('data-map-id', map.id);
         tab.innerHTML = `
-            <span>${map.name}</span>
+            <span class="tab-name" ondblclick="editTabName(this)" title="Double-click to rename">${map.name}</span>
             <button class="tab-close" onclick="closeMap('${map.id}')" title="Close Map">×</button>
         `;
-        
+
         tab.addEventListener('click', (e) => {
             if (!e.target.classList.contains('tab-close')) {
                 switchToMap(map.id);
             }
         });
-        
+
         tabList.insertBefore(tab, addButton);
     });
 }
