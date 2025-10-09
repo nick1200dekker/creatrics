@@ -30,16 +30,16 @@
             
             <!-- Platform Selector (center) -->
             <div class="platform-selector">
-                <button class="platform-btn icon-only {% if x_connected %}active{% endif %}" data-platform="x"
+                <button class="platform-btn icon-only" data-platform="x"
                         onclick="{% if x_connected %}switchPlatform('x');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="X Analytics">
                     <i class="ph ph-x-logo"></i>
                 </button>
-                <button class="platform-btn {% if youtube_connected and not x_connected %}active{% endif %}" data-platform="youtube"
+                <button class="platform-btn" data-platform="youtube"
                         onclick="{% if youtube_connected %}switchPlatform('youtube');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="YouTube Analytics">
                     <i class="ph ph-youtube-logo"></i>
                     <span>YouTube</span>
                 </button>
-                <button class="platform-btn {% if tiktok_connected and not x_connected and not youtube_connected %}active{% endif %}" data-platform="tiktok"
+                <button class="platform-btn" data-platform="tiktok"
                         onclick="{% if tiktok_connected %}switchPlatform('tiktok');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="TikTok Analytics">
                     <i class="ph ph-tiktok-logo"></i>
                     <span>TikTok</span>
@@ -58,373 +58,377 @@
         <!-- Content Area -->
         <div class="analytics-container">
 
-    <!-- No accounts connected state -->
-    {% if not x_connected and not youtube_connected and not tiktok_connected %}
-    <div class="premium-card">
-        <div class="empty-state">
-            <div class="empty-state-icon">
-                <i class="ph ph-link-break"></i>
-            </div>
-            <div class="empty-state-title">No Accounts Connected</div>
-            <div class="empty-state-description">
-                Connect your social media accounts to start tracking analytics
-            </div>
-            <a href="{{ url_for('accounts.index') }}" class="secondary-button mt-4">
-                <i class="ph ph-link"></i>
-                <span>Connect Accounts</span>
-            </a>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- X Analytics Content -->
-    {% if x_connected %}
-    <div id="x-content" class="tab-content {% if x_connected %}active{% endif %}">
-        <!-- Overview Metrics -->
-        <div class="premium-card">
-            <div class="p-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold">Overview</h2>
-                    <button id="x-refresh-btn" class="secondary-button" onclick="refreshXData()" title="Refresh X data">
-                        <i class="ph ph-arrow-clockwise"></i>
-                        <span>Refresh Data</span>
-                    </button>
+            <!-- No accounts connected state -->
+            {% if not x_connected and not youtube_connected and not tiktok_connected %}
+            <div class="premium-card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="ph ph-link-break"></i>
+                    </div>
+                    <div class="empty-state-title">No Accounts Connected</div>
+                    <div class="empty-state-description">
+                        Connect your social media accounts to start tracking analytics
+                    </div>
+                    <a href="{{ url_for('accounts.index') }}" class="secondary-button mt-4">
+                        <i class="ph ph-link"></i>
+                        <span>Connect Accounts</span>
+                    </a>
                 </div>
+            </div>
+            {% endif %}
+
+            <!-- X Analytics Content -->
+            {% if x_connected %}
+            <div id="x-content" class="tab-content">
+                <!-- Overview Metrics -->
+                <div class="premium-card">
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold">Overview</h2>
+                            <button id="x-refresh-btn" class="secondary-button" onclick="refreshXData()" title="Refresh X data">
+                                <i class="ph ph-arrow-clockwise"></i>
+                                <span>Refresh Data</span>
+                            </button>
+                        </div>
+                        
+                        <div id="x-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="loading-container">
+                                <div class="loading-spinner"></div>
+                                <span class="ml-3">Loading metrics...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="grid grid-cols-1 gap-6">
+                    <!-- Daily Impressions Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="ph ph-eye"></i>
+                                <span id="impressions-title">Daily Impressions</span>
+                            </h3>
+                            <div class="chart-toggle">
+                                <button class="toggle-btn active" id="impressions-daily-btn" onclick="toggleChartView('impressions', 'daily')">Daily</button>
+                                <button class="toggle-btn" onclick="toggleChartView('impressions', 'rolling')">Rolling Avg (10 Posts)</button>
+                            </div>
+                        </div>
+                        <div id="x-impressions-note" class="data-note hidden">
+                            <i class="ph ph-info"></i>
+                            <span>Rolling average requires more historical data. Building over time...</span>
+                        </div>
+                        <div id="x-impressions-chart" class="chart-container"></div>
+                    </div>
+
+                    <!-- Daily Engagement Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="ph ph-heart"></i>
+                                <span id="engagement-title">Daily Engagement</span>
+                            </h3>
+                            <div class="chart-toggle">
+                                <button class="toggle-btn active" id="engagement-daily-btn" onclick="toggleChartView('engagement', 'daily')">Daily</button>
+                                <button class="toggle-btn" onclick="toggleChartView('engagement', 'rolling')">Rolling Avg (10 Posts)</button>
+                            </div>
+                        </div>
+                        <div id="x-engagement-note" class="data-note hidden">
+                            <i class="ph ph-info"></i>
+                            <span>Rolling average requires more historical data. Building over time...</span>
+                        </div>
+                        <div id="x-engagement-chart" class="chart-container"></div>
+                    </div>
+
+                    <!-- Daily Posts Count -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="ph ph-article"></i>
+                                <span id="posts-count-title">Daily Posts Count</span>
+                            </h3>
+                        </div>
+                        <div id="x-posts-count-chart" class="chart-container"></div>
+                    </div>
+
+                    <!-- Followers Growth -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="ph ph-users"></i>
+                                <span id="followers-title">Followers Growth</span>
+                            </h3>
+                        </div>
+                        <div id="x-followers-note" class="data-note hidden">
+                            <i class="ph ph-info"></i>
+                            <span>Building over time...</span>
+                        </div>
+                        <div id="x-followers-chart" class="chart-container"></div>
+                    </div>
+                </div>
+
+                <!-- Posts Table -->
+                <div class="data-table-wrapper">
+                    <div class="data-table-header">
+                        <h3 class="text-lg font-semibold">All Posts</h3>
+                        <select id="x-posts-filter" class="filter-select" onchange="loadXPosts(this.value)">
+                            <option value="all">Most Recent</option>
+                            <option value="views">Top by Views</option>
+                            <option value="engagement">Top by Engagement</option>
+                        </select>
+                    </div>
+                    
+                    <div class="data-table-container">
+                        <table class="data-table" id="x-posts-table">
+                            <thead>
+                                <tr>
+                                    <th>Post</th>
+                                    <th>Date</th>
+                                    <th>Views</th>
+                                    <th>Likes</th>
+                                    <th>Retweets</th>
+                                    <th>Replies</th>
+                                    <th>Engagement Rate</th>
+                                    <th>Link</th>
+                                </tr>
+                            </thead>
+                            <tbody id="x-posts-tbody">
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        <div class="loading-container">
+                                            <div class="loading-spinner"></div>
+                                            <span class="ml-3">Loading posts...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="pagination" id="x-posts-pagination"></div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- YouTube Analytics Content -->
+            {% if youtube_connected %}
+            <div id="youtube-content" class="tab-content">
                 
-                <div id="x-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="loading-container">
-                        <div class="loading-spinner"></div>
-                        <span class="ml-3">Loading metrics...</span>
+                <!-- Overview Metrics -->
+                <div class="premium-card">
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 id="youtube-overview-title" class="text-lg font-semibold">Channel Overview</h2>
+                            <button id="youtube-refresh-btn" class="secondary-button" onclick="refreshYouTubeData()" title="Refresh YouTube data">
+                                <i class="ph ph-arrow-clockwise"></i>
+                                <span>Refresh Data</span>
+                            </button>
+                        </div>
+                        
+                        <div id="youtube-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="loading-container">
+                                <div class="loading-spinner"></div>
+                                <span class="ml-3">Loading metrics...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Performance Overview Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 id="youtube-performance-title" class="chart-title">
+                                <i class="ph ph-chart-bar"></i>
+                                Performance Overview
+                            </h3>
+                        </div>
+                        <div id="youtube-views-chart" class="chart-container">
+                            <div class="loading-container">
+                                <div class="loading-spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Traffic Sources Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 id="youtube-traffic-title" class="chart-title">
+                                <i class="ph ph-funnel"></i>
+                                Traffic Sources
+                            </h3>
+                        </div>
+                        <div id="youtube-traffic-chart" class="chart-container">
+                            <div class="loading-container">
+                                <div class="loading-spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Videos Table -->
+                <div class="data-table-wrapper">
+                    <div class="data-table-header">
+                        <h3 class="text-lg font-semibold">Top Videos</h3>
+                    </div>
+                    
+                    <div class="data-table-container">
+                        <table class="data-table" id="youtube-videos-table">
+                            <thead>
+                                <tr>
+                                    <th>Video</th>
+                                    <th>Views</th>
+                                    <th>Watch Time (hrs)</th>
+                                    <th>Avg View Duration</th>
+                                    <th>Likes</th>
+                                    <th>Comments</th>
+                                    <th>Engagement Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody id="youtube-videos-tbody">
+                                <tr>
+                                    <td colspan="7" class="text-center">
+                                        <div class="loading-container">
+                                            <div class="loading-spinner"></div>
+                                            <span class="ml-3">Loading videos...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
+            {% endif %}
 
-        <!-- Charts Grid -->
-        <div class="grid grid-cols-1 gap-6">
-            <!-- Daily Impressions Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h3 class="chart-title">
-                        <i class="ph ph-eye"></i>
-                        <span id="impressions-title">Daily Impressions</span>
-                    </h3>
-                    <div class="chart-toggle">
-                        <button class="toggle-btn active" id="impressions-daily-btn" onclick="toggleChartView('impressions', 'daily')">Daily</button>
-                        <button class="toggle-btn" onclick="toggleChartView('impressions', 'rolling')">Rolling Avg (10 Posts)</button>
+            <!-- TikTok Analytics Content -->
+            {% if tiktok_connected %}
+            <div id="tiktok-content" class="tab-content">
+
+                <!-- Overview Metrics -->
+                <div class="premium-card">
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 id="tiktok-overview-title" class="text-lg font-semibold">Account Overview</h2>
+                            <button id="tiktok-refresh-btn" class="secondary-button" onclick="refreshTikTokData()" title="Refresh TikTok data">
+                                <i class="ph ph-arrow-clockwise"></i>
+                                <span>Refresh Data</span>
+                            </button>
+                        </div>
+
+                        <!-- Fixed Grid Layout for TikTok Metrics -->
+                        <div id="tiktok-metrics" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            <div class="loading-container">
+                                <div class="loading-spinner"></div>
+                                <span class="ml-3">Loading metrics...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div id="x-impressions-note" class="data-note hidden">
-                    <i class="ph ph-info"></i>
-                    <span>Rolling average requires more historical data. Building over time...</span>
-                </div>
-                <div id="x-impressions-chart" class="chart-container"></div>
-            </div>
 
-            <!-- Daily Engagement Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h3 class="chart-title">
-                        <i class="ph ph-heart"></i>
-                        <span id="engagement-title">Daily Engagement</span>
-                    </h3>
-                    <div class="chart-toggle">
-                        <button class="toggle-btn active" id="engagement-daily-btn" onclick="toggleChartView('engagement', 'daily')">Daily</button>
-                        <button class="toggle-btn" onclick="toggleChartView('engagement', 'rolling')">Rolling Avg (10 Posts)</button>
+                <!-- Charts Grid -->
+                <div class="grid grid-cols-1 gap-6">
+                    <!-- Views Per Post Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="ph ph-eye"></i>
+                                Views Per Post
+                            </h3>
+                        </div>
+                        <div id="tiktok-views-chart" class="chart-container">
+                            <div class="loading-container">
+                                <div class="loading-spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Engagement Rate Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="ph ph-chart-line"></i>
+                                Engagement Rate Per Post
+                            </h3>
+                        </div>
+                        <div id="tiktok-engagement-chart" class="chart-container">
+                            <div class="loading-container">
+                                <div class="loading-spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Posting Frequency Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">
+                                <i class="ph ph-calendar"></i>
+                                Posting Frequency
+                            </h3>
+                        </div>
+                        <div id="tiktok-frequency-chart" class="chart-container">
+                            <div class="loading-container">
+                                <div class="loading-spinner"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div id="x-engagement-note" class="data-note hidden">
-                    <i class="ph ph-info"></i>
-                    <span>Rolling average requires more historical data. Building over time...</span>
-                </div>
-                <div id="x-engagement-chart" class="chart-container"></div>
-            </div>
 
-            <!-- Daily Posts Count -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h3 class="chart-title">
-                        <i class="ph ph-article"></i>
-                        <span id="posts-count-title">Daily Posts Count</span>
-                    </h3>
-                </div>
-                <div id="x-posts-count-chart" class="chart-container"></div>
-            </div>
+                <!-- Posts Table -->
+                <div class="data-table-wrapper">
+                    <div class="data-table-header">
+                        <h3 class="text-lg font-semibold">Recent Posts</h3>
+                        <select id="tiktok-posts-filter" class="filter-select" onchange="loadTikTokPosts(this.value)">
+                            <option value="recent">Most Recent</option>
+                            <option value="views">Top by Views</option>
+                            <option value="engagement">Top by Engagement</option>
+                        </select>
+                    </div>
 
-            <!-- Followers Growth -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h3 class="chart-title">
-                        <i class="ph ph-users"></i>
-                        <span id="followers-title">Followers Growth</span>
-                    </h3>
-                </div>
-                <div id="x-followers-note" class="data-note hidden">
-                    <i class="ph ph-info"></i>
-                    <span>Building over time...</span>
-                </div>
-                <div id="x-followers-chart" class="chart-container"></div>
-            </div>
-        </div>
-
-        <!-- Posts Table -->
-        <div class="data-table-wrapper">
-            <div class="data-table-header">
-                <h3 class="text-lg font-semibold">All Posts</h3>
-                <select id="x-posts-filter" class="filter-select" onchange="loadXPosts(this.value)">
-                    <option value="all">Most Recent</option>
-                    <option value="views">Top by Views</option>
-                    <option value="engagement">Top by Engagement</option>
-                </select>
-            </div>
-            
-            <div class="data-table-container">
-                <table class="data-table" id="x-posts-table">
-                    <thead>
-                        <tr>
-                            <th>Post</th>
-                            <th>Date</th>
-                            <th>Views</th>
-                            <th>Likes</th>
-                            <th>Retweets</th>
-                            <th>Replies</th>
-                            <th>Engagement Rate</th>
-                            <th>Link</th>
-                        </tr>
-                    </thead>
-                    <tbody id="x-posts-tbody">
-                        <tr>
-                            <td colspan="8" class="text-center">
-                                <div class="loading-container">
-                                    <div class="loading-spinner"></div>
-                                    <span class="ml-3">Loading posts...</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="pagination" id="x-posts-pagination"></div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- YouTube Analytics Content -->
-    {% if youtube_connected %}
-    <div id="youtube-content" class="tab-content {% if youtube_connected and not x_connected %}active{% endif %}">
-        
-        <!-- Overview Metrics -->
-        <div class="premium-card">
-            <div class="p-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 id="youtube-overview-title" class="text-lg font-semibold">Channel Overview</h2>
-                    <button id="youtube-refresh-btn" class="secondary-button" onclick="refreshYouTubeData()" title="Refresh YouTube data">
-                        <i class="ph ph-arrow-clockwise"></i>
-                        <span>Refresh Data</span>
-                    </button>
-                </div>
-                
-                <div id="youtube-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="loading-container">
-                        <div class="loading-spinner"></div>
-                        <span class="ml-3">Loading metrics...</span>
+                    <div class="data-table-container">
+                        <table class="data-table" id="tiktok-posts-table">
+                            <thead>
+                                <tr>
+                                    <th>Post</th>
+                                    <th>Date</th>
+                                    <th>Views</th>
+                                    <th>Likes</th>
+                                    <th>Comments</th>
+                                    <th>Shares</th>
+                                    <th>Engagement Rate</th>
+                                    <th>Link</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tiktok-posts-tbody">
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        <div class="loading-container">
+                                            <div class="loading-spinner"></div>
+                                            <span class="ml-3">Loading posts...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
+            {% endif %}
 
-        <!-- Charts Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Performance Overview Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h3 id="youtube-performance-title" class="chart-title">
-                        <i class="ph ph-chart-bar"></i>
-                        Performance Overview
-                    </h3>
-                </div>
-                <div id="youtube-views-chart" class="chart-container">
-                    <div class="loading-container">
-                        <div class="loading-spinner"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Traffic Sources Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h3 id="youtube-traffic-title" class="chart-title">
-                        <i class="ph ph-funnel"></i>
-                        Traffic Sources
-                    </h3>
-                </div>
-                <div id="youtube-traffic-chart" class="chart-container">
-                    <div class="loading-container">
-                        <div class="loading-spinner"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Top Videos Table -->
-        <div class="data-table-wrapper">
-            <div class="data-table-header">
-                <h3 class="text-lg font-semibold">Top Videos</h3>
-            </div>
-            
-            <div class="data-table-container">
-                <table class="data-table" id="youtube-videos-table">
-                    <thead>
-                        <tr>
-                            <th>Video</th>
-                            <th>Views</th>
-                            <th>Watch Time (hrs)</th>
-                            <th>Avg View Duration</th>
-                            <th>Likes</th>
-                            <th>Comments</th>
-                            <th>Engagement Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody id="youtube-videos-tbody">
-                        <tr>
-                            <td colspan="7" class="text-center">
-                                <div class="loading-container">
-                                    <div class="loading-spinner"></div>
-                                    <span class="ml-3">Loading videos...</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- TikTok Analytics Content -->
-    {% if tiktok_connected %}
-    <div id="tiktok-content" class="tab-content {% if tiktok_connected and not x_connected and not youtube_connected %}active{% endif %}">
-
-        <!-- Overview Metrics -->
-        <div class="premium-card">
-            <div class="p-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 id="tiktok-overview-title" class="text-lg font-semibold">Account Overview</h2>
-                    <button id="tiktok-refresh-btn" class="secondary-button" onclick="refreshTikTokData()" title="Refresh TikTok data">
-                        <i class="ph ph-arrow-clockwise"></i>
-                        <span>Refresh Data</span>
-                    </button>
-                </div>
-
-                <!-- All Metrics in One Row -->
-                <div id="tiktok-metrics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-                    <div class="loading-container">
-                        <div class="loading-spinner"></div>
-                        <span class="ml-3">Loading metrics...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Views Per Post Chart (Full Width) -->
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3 class="chart-title">
-                    <i class="ph ph-eye"></i>
-                    Views Per Post
-                </h3>
-                <div class="chart-subtitle">Last 35 Posts</div>
-            </div>
-            <div id="tiktok-views-chart" class="chart-container">
-                <div class="loading-container">
-                    <div class="loading-spinner"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Engagement Rate Chart (Full Width) -->
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3 class="chart-title">
-                    <i class="ph ph-chart-line"></i>
-                    Engagement Rate Per Post
-                </h3>
-                <div class="chart-subtitle">Last 35 Posts</div>
-            </div>
-            <div id="tiktok-engagement-chart" class="chart-container">
-                <div class="loading-container">
-                    <div class="loading-spinner"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Posting Frequency Chart (Full Width) -->
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3 class="chart-title">
-                    <i class="ph ph-calendar"></i>
-                    Posting Frequency
-                </h3>
-                <div class="chart-subtitle">Last 35 Posts</div>
-            </div>
-            <div id="tiktok-frequency-chart" class="chart-container">
-                <div class="loading-container">
-                    <div class="loading-spinner"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Posts Table -->
-        <div class="data-table-wrapper">
-            <div class="data-table-header">
-                <h3 class="text-lg font-semibold">Recent Posts</h3>
-                <select id="tiktok-posts-filter" class="filter-select" onchange="loadTikTokPosts(this.value)">
-                    <option value="recent">Most Recent</option>
-                    <option value="views">Top by Views</option>
-                    <option value="engagement">Top by Engagement</option>
-                </select>
-            </div>
-
-            <div class="data-table-container">
-                <table class="data-table" id="tiktok-posts-table">
-                    <thead>
-                        <tr>
-                            <th>Post</th>
-                            <th>Date</th>
-                            <th>Views</th>
-                            <th>Likes</th>
-                            <th>Comments</th>
-                            <th>Shares</th>
-                            <th>Engagement Rate</th>
-                            <th>Link</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tiktok-posts-tbody">
-                        <tr>
-                            <td colspan="8" class="text-center">
-                                <div class="loading-container">
-                                    <div class="loading-spinner"></div>
-                                    <span class="ml-3">Loading posts...</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Pass connection status to JavaScript -->
+<!-- Pass connection status and username to JavaScript -->
 <script>
 window.analyticsConfig = {
     xConnected: {{ 'true' if x_connected else 'false' }},
     youtubeConnected: {{ 'true' if youtube_connected else 'false' }},
-    tiktokConnected: {{ 'true' if tiktok_connected else 'false' }}
+    tiktokConnected: {{ 'true' if tiktok_connected else 'false' }},
+    {% if tiktok_connected %}
+    tiktokUsername: '{{ g.user.get('data', {}).get('tiktok_account', '') if g.user else '' }}'
+    {% endif %}
 };
 </script>
 {% endblock %}

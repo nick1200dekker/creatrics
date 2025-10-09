@@ -2,6 +2,8 @@
 :root {
     --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     --button-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+    --chart-height: 350px;
+    --metric-card-height: 120px;
 }
 
 /* Force override base.html styles for this page */
@@ -78,7 +80,7 @@ html.dark #dark-mode-toggle .ph-moon {
     padding: 1.5rem;
 }
 
-/* Premium card styling - Fixed with consistent heights */
+/* Premium card styling - Consistent heights and styling */
 .premium-card {
     background-color: #ffffff;
     border-radius: 12px;
@@ -101,9 +103,10 @@ html.dark .premium-card {
     flex: 1;
     display: flex;
     flex-direction: column;
+    padding: 1.5rem !important;
 }
 
-/* Header inside the panel - MATCH BASE.HTML LOGO SECTION */
+/* Header inside the panel */
 .analytics-header {
     display: flex;
     align-items: center;
@@ -145,20 +148,6 @@ html.dark .analytics-title i {
     gap: 2rem;
 }
 
-/* Header card specific (legacy) */
-.header-card {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-html.dark .header-card {
-    background: rgba(63, 63, 70, 0.5);
-    border-color: rgba(63, 63, 70, 0.6);
-}
-
 /* Flex utilities */
 .flex { display: flex !important; }
 .items-center { align-items: center !important; }
@@ -170,21 +159,26 @@ html.dark .header-card {
 
 /* Padding utilities */
 .p-4 { padding: 1rem !important; }
+.p-8 { padding: 2rem !important; }
 .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
 .pb-4 { padding-bottom: 1rem !important; }
+.py-8 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
 
 /* Margin utilities */
+.mb-2 { margin-bottom: 0.5rem !important; }
 .mb-4 { margin-bottom: 1rem !important; }
 .mb-6 { margin-bottom: 1.5rem !important; }
 .mr-3 { margin-right: 0.75rem !important; }
 .ml-3 { margin-left: 0.75rem !important; }
 .mt-2 { margin-top: 0.5rem !important; }
+.mt-4 { margin-top: 1rem !important; }
 
 /* Text utilities */
 .text-xl { font-size: 1.25rem !important; }
 .text-lg { font-size: 1.125rem !important; }
 .text-xs { font-size: 0.75rem !important; }
 .text-2xl { font-size: 1.5rem !important; }
+.text-4xl { font-size: 2.25rem !important; }
 .font-bold { font-weight: 700 !important; }
 .font-semibold { font-weight: 600 !important; }
 .font-medium { font-weight: 500 !important; }
@@ -192,19 +186,20 @@ html.dark .header-card {
 
 /* Text colors */
 .text-white { color: white !important; }
-.text-teal-primary { color: #14b8a6 !important; }
 .text-gray-400 { color: #9ca3af !important; }
+.text-gray-500 { color: #6b7280 !important; }
 .text-green-400 { color: #4ade80 !important; }
 .text-yellow-400 { color: #facc15 !important; }
 .text-red-400 { color: #f87171 !important; }
+.text-red-500 { color: #ef4444 !important; }
 
-/* Secondary button */
+/* Secondary button - Consistent across all platforms */
 .secondary-button {
     background: #f3f4f6;
     color: #1f2937;
     border: 1px solid #e5e7eb;
     padding: 0.5rem 1rem;
-    height: 36px;
+    height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -231,6 +226,12 @@ html.dark .secondary-button {
 html.dark .secondary-button:hover {
     background: rgba(63, 63, 70, 0.9);
     border-color: rgba(96, 165, 250, 0.5);
+}
+
+.secondary-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Platform selector */
@@ -331,13 +332,17 @@ html.dark .timeframe-btn.active {
     background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
 }
 
-/* Metric cards */
+/* UNIFIED Metric cards - Same styling for all platforms */
 .metric-card {
     background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     padding: 1rem;
+    min-height: var(--metric-card-height);
     transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 html.dark .metric-card {
@@ -355,6 +360,36 @@ html.dark .metric-card:hover {
     border-color: rgba(96, 165, 250, 0.3);
 }
 
+/* Metric card with icon layout (for TikTok) */
+.metric-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+}
+
+.metric-icon i {
+    font-size: 1.25rem;
+    color: #3B82F6;
+}
+
+html.dark .metric-icon {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+}
+
+html.dark .metric-icon i {
+    color: #60A5FA;
+}
+
+.metric-content {
+    flex: 1;
+}
+
+/* Standard metric layout */
 .metric-label {
     color: #6b7280;
     font-size: 0.813rem;
@@ -406,7 +441,7 @@ html.dark .trend-down { color: #f87171; }
 .trend-neutral { color: #6b7280; }
 html.dark .trend-neutral { color: #a1a1aa; }
 
-/* Chart containers */
+/* UNIFIED Chart containers - Consistent heights and styling */
 .chart-card {
     background: #ffffff;
     border: 1px solid #e5e7eb;
@@ -415,7 +450,7 @@ html.dark .trend-neutral { color: #a1a1aa; }
     margin-bottom: 1.5rem;
     position: relative;
     overflow: hidden;
-    min-height: 400px;
+    min-height: 450px;
     display: flex;
     flex-direction: column;
 }
@@ -431,6 +466,7 @@ html.dark .chart-card {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    min-height: 32px;
 }
 
 .chart-title {
@@ -446,11 +482,25 @@ html.dark .chart-title {
     color: #fafafa;
 }
 
+.chart-subtitle {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-left: auto;
+    padding-left: 1rem;
+}
+
+html.dark .chart-subtitle {
+    color: #a1a1aa;
+}
+
+/* Consistent chart container height */
 .chart-container {
     width: 100%;
-    height: 300px;
+    height: var(--chart-height);
     position: relative;
     overflow: hidden;
+    flex: 1;
+    min-height: 300px;
 }
 
 /* Chart toggle */
@@ -496,7 +546,7 @@ html.dark .toggle-btn.active {
     background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
 }
 
-/* Data table */
+/* Data table - Consistent styling */
 .data-table-wrapper {
     background: #ffffff;
     border: 1px solid #e5e7eb;
@@ -618,6 +668,17 @@ html.dark .data-table tbody tr:hover {
     white-space: nowrap;
 }
 
+.post-content {
+    max-width: 400px;
+}
+
+.post-content p {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .post-link {
     display: inline-flex;
     align-items: center;
@@ -648,7 +709,7 @@ html.dark .post-link:hover {
     background: rgba(96, 165, 250, 0.25);
 }
 
-/* Engagement badge */
+/* Engagement badge - Consistent styling */
 .engagement-badge {
     display: inline-flex;
     align-items: center;
@@ -658,16 +719,19 @@ html.dark .post-link:hover {
     font-weight: 500;
 }
 
+.engagement-badge.high,
 .engagement-high {
     background: rgba(16, 185, 129, 0.2);
     color: #10b981;
 }
 
+.engagement-badge.medium,
 .engagement-medium {
     background: rgba(251, 191, 36, 0.2);
-    color: #fbbf24;
+    color: #f59e0b;
 }
 
+.engagement-badge.low,
 .engagement-low {
     background: rgba(239, 68, 68, 0.2);
     color: #ef4444;
@@ -677,37 +741,13 @@ html.dark .engagement-low {
     color: #f87171;
 }
 
-/* Filter dropdown */
-#x-posts-filter {
-    background: #f3f4f6;
-    color: #1f2937;
-    border: 1px solid #e5e7eb;
-    padding: 0.5rem 2rem 0.5rem 0.75rem;
-    height: 36px;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 0.875rem;
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 8px center;
-    background-repeat: no-repeat;
-    background-size: 16px;
-}
-
-html.dark #x-posts-filter {
-    background-color: rgba(63, 63, 70, 0.6);
-    color: #fafafa;
-    border: 1px solid rgba(82, 82, 91, 0.6);
-}
-
 /* Data note */
 .data-note {
     background: rgba(251, 191, 36, 0.1);
     border: 1px solid rgba(251, 191, 36, 0.2);
     border-radius: 6px;
     padding: 0.75rem 1rem;
-    color: #fbbf24;
+    color: #f59e0b;
     font-size: 0.813rem;
     display: flex;
     align-items: center;
@@ -715,13 +755,20 @@ html.dark #x-posts-filter {
     margin-bottom: 1rem;
 }
 
-/* Loading states */
+html.dark .data-note {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+}
+
+/* UNIFIED Loading states - Same spinner everywhere */
 .loading-container {
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 2rem;
     color: #6b7280;
+    min-height: 200px;
 }
 
 html.dark .loading-container {
@@ -736,8 +783,8 @@ html.dark .loading-container {
 
 .loading-spinner {
     display: inline-block;
-    width: 1rem;
-    height: 1rem;
+    width: 1.25rem;
+    height: 1.25rem;
     border: 2px solid #e5e7eb;
     border-radius: 50%;
     border-top-color: #3B82F6;
@@ -753,7 +800,7 @@ html.dark .loading-spinner {
     to { transform: rotate(360deg); }
 }
 
-/* Empty state */
+/* Empty state - Consistent styling */
 .empty-state {
     text-align: center;
     padding: 3rem;
@@ -768,6 +815,7 @@ html.dark .empty-state {
     font-size: 3rem;
     margin-bottom: 1rem;
     opacity: 0.5;
+    color: #6b7280;
 }
 
 html.dark .empty-state-icon {
@@ -795,10 +843,22 @@ html.dark .empty-state-title {
 /* Tab content */
 .tab-content {
     display: none;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 .tab-content.active {
     display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Pagination */
@@ -866,28 +926,51 @@ html.dark .pagination-info {
     color: #a1a1aa;
 }
 
-/* Grid system */
+/* Grid system - FIXED for TikTok metrics */
 .grid { display: grid !important; }
 .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+.grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
 .gap-4 { gap: 1rem !important; }
 .gap-6 { gap: 1.5rem !important; }
 .col-span-full { grid-column: 1 / -1 !important; }
+.col-span-4 { grid-column: span 4 / span 4 !important; }
 .hidden { display: none !important; }
 
 @media (min-width: 768px) {
     .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
     .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+    .md\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
 }
 
 @media (min-width: 1024px) {
     .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
     .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+    .lg\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+}
+
+/* Special warning/error icon styling */
+.ph-warning-circle {
+    font-size: inherit;
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+    /* Stack TikTok metrics in 3 columns on tablets */
+    #tiktok-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+
 @media (max-width: 768px) {
     .analytics-container {
         padding: 0.5rem;
+    }
+    
+    .analytics-header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
     }
     
     .metric-value {
@@ -896,11 +979,35 @@ html.dark .pagination-info {
     
     .platform-selector {
         width: 100%;
-        position: static !important;
-        margin-bottom: 1rem;
+        order: 2;
     }
     
     .timeframe-selector {
+        width: 100%;
+        order: 3;
+    }
+    
+    /* Stack all metrics vertically on mobile */
+    #tiktok-metrics,
+    #x-metrics-grid,
+    #youtube-metrics-grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    }
+    
+    .chart-container {
+        height: 250px;
+        min-height: 250px;
+    }
+    
+    .chart-card {
+        min-height: 350px;
+    }
+    
+    .data-table-wrapper {
+        border-radius: 8px;
+    }
+    
+    .filter-select {
         width: 100%;
     }
 }
