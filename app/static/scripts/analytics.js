@@ -1634,31 +1634,25 @@ function initializeAnalytics() {
 
         tbody.innerHTML = sortedPosts.map(post => {
             const date = new Date(post.create_time * 1000);
-            const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const formattedDate = date.toLocaleDateString();
             const truncatedDesc = post.desc.length > 80 ? post.desc.substring(0, 80) + '...' : post.desc;
 
             return `
                 <tr>
                     <td>
-                        <div class="post-content">
-                            <p>${escapeHtml(truncatedDesc)}</p>
-                        </div>
+                        <div class="post-preview">${escapeHtml(truncatedDesc)}</div>
                     </td>
                     <td>${formattedDate}</td>
-                    <td>${formatNumber(post.views)}</td>
+                    <td class="font-medium">${formatNumber(post.views)}</td>
                     <td>${formatNumber(post.likes)}</td>
                     <td>${formatNumber(post.comments)}</td>
                     <td>${formatNumber(post.shares)}</td>
                     <td>
-                        <span class="engagement-badge ${getEngagementClass(post.engagement_rate)}">
-                            ${post.engagement_rate.toFixed(1)}%
-                        </span>
+                        <span class="engagement-badge">${post.engagement_rate.toFixed(1)}%</span>
                     </td>
                     <td>
                         <a href="https://www.tiktok.com/@${window.analyticsConfig.tiktokUsername}/video/${post.id}"
-                           target="_blank" class="post-link">
-                            <i class="ph ph-arrow-square-out"></i>
-                        </a>
+                           target="_blank" class="post-link">View</a>
                     </td>
                 </tr>
             `;
