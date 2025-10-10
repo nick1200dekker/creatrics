@@ -1192,7 +1192,7 @@ html.dark .preview-card {
         </div>
 
         <!-- Analytics Section -->
-        <div class="calendar-section">
+        <div class="calendar-section" id="analytics-section" style="display: none;">
             <div class="calendar-header">
                 <h2><i class="ph ph-chart-line"></i> Analytics</h2>
             </div>
@@ -1775,7 +1775,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         } else {
             document.getElementById('connect-tiktok').style.display = 'block';
         }
-        
+
+        // Show Analytics section if at least one platform is connected
+        const analyticsSection = document.getElementById('analytics-section');
+        if (analyticsSection && hasConnections) {
+            analyticsSection.style.display = 'block';
+        }
+
         // Load Quick Actions based on connected platforms
         const quickActionsSection = document.getElementById('quick-actions-section');
         if (quickActionsSection) {
@@ -1892,7 +1898,7 @@ async function loadXSuggestions(forceRefresh = false) {
 
     suggestionsContainer.innerHTML = `
         <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
-            <i class="ph ph-circle-notch" style="font-size: 2rem; animation: spin 1s linear infinite;"></i>
+            <i class="ph ph-circle-notch" style="font-size: 2rem; display: block; margin: 0 auto; animation: spin 1s linear infinite;"></i>
             <p style="margin-top: 1rem;">Loading suggestions...</p>
         </div>
     `;
@@ -1923,6 +1929,7 @@ async function loadXSuggestions(forceRefresh = false) {
         let suggestionsHtml = '<div class="suggestions-list">';
 
         suggestions.forEach((suggestion, index) => {
+            const contentId = `suggestion-content-${index}`;
             suggestionsHtml += `
                 <div class="suggestion-card" onclick="toggleSuggestion(${index})">
                     <div class="suggestion-collapsed">
@@ -1935,14 +1942,14 @@ async function loadXSuggestions(forceRefresh = false) {
                     </div>
 
                     <div class="suggestion-expanded">
-                        <div class="suggestion-content">${suggestion.content}</div>
+                        <div class="suggestion-content" id="${contentId}">${suggestion.content}</div>
 
                         <div class="suggestion-actions">
-                            <a href="{{ url_for('x_post_editor.x_post_editor') }}" class="suggestion-btn btn-use" onclick="event.stopPropagation()">
+                            <button class="suggestion-btn btn-use" onclick="event.stopPropagation(); useInEditorById('${contentId}')">
                                 <i class="ph ph-pencil-simple"></i>
                                 Use in Editor
-                            </a>
-                            <button class="suggestion-btn btn-copy" onclick="event.stopPropagation(); copySuggestion('${escapeHtml(suggestion.content)}', this)">
+                            </button>
+                            <button class="suggestion-btn btn-copy" onclick="event.stopPropagation(); copySuggestionById('${contentId}', this)">
                                 <i class="ph ph-copy"></i>
                                 Copy
                             </button>
@@ -2000,15 +2007,34 @@ function escapeHtml(text) {
     return div.innerHTML.replace(/'/g, '&#39;');
 }
 
-// Copy suggestion to clipboard
-async function copySuggestion(content, button) {
-    try {
-        // Decode HTML entities
-        const textarea = document.createElement('textarea');
-        textarea.innerHTML = content;
-        const decodedContent = textarea.value;
+// Use suggestion in editor by element ID
+function useInEditorById(contentId) {
+    const contentElement = document.getElementById(contentId);
+    if (!contentElement) {
+        console.error('Content element not found:', contentId);
+        return;
+    }
 
-        await navigator.clipboard.writeText(decodedContent);
+    const content = contentElement.textContent;
+
+    // Store in sessionStorage to pass to editor
+    sessionStorage.setItem('x_post_suggestion', content);
+
+    // Navigate to editor
+    window.location.href = '{{ url_for("x_post_editor.x_post_editor") }}';
+}
+
+// Copy suggestion to clipboard by element ID
+async function copySuggestionById(contentId, button) {
+    try {
+        const contentElement = document.getElementById(contentId);
+        if (!contentElement) {
+            console.error('Content element not found:', contentId);
+            return;
+        }
+
+        const content = contentElement.textContent;
+        await navigator.clipboard.writeText(content);
 
         // Update button text temporarily
         const originalHtml = button.innerHTML;

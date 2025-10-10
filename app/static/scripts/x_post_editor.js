@@ -73,10 +73,33 @@
         initializeVoiceTone().catch(console.error);
         setupVoiceToneEventListener();
 
+        // Check for suggestion from dashboard
+        checkForSuggestion();
+
         updateStatusMessage('Ready to create content');
-        
+
         window.CreatorPal.PostEditor.initialized = true;
         console.log('Post Editor initialized with fresh post');
+    }
+
+    // Check for suggestion from dashboard
+    function checkForSuggestion() {
+        const suggestion = sessionStorage.getItem('x_post_suggestion');
+        if (suggestion) {
+            // Clear the storage
+            sessionStorage.removeItem('x_post_suggestion');
+
+            // Set the text in the first post
+            setTimeout(() => {
+                const firstTextarea = document.querySelector('.post-item textarea');
+                if (firstTextarea) {
+                    firstTextarea.value = suggestion;
+                    // Trigger input event to update character count
+                    firstTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    console.log('Loaded suggestion from dashboard');
+                }
+            }, 100);
+        }
     }
 
     // Load drafts with spinner

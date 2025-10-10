@@ -71,7 +71,7 @@ def connect_account():
         # Start background process to fetch X analytics with 6 months of historical data
         try:
             from app.scripts.accounts.x_analytics import fetch_x_analytics
-            
+
             def fetch_analytics_bg():
                 try:
                     # Initial fetch with 6 months of historical data
@@ -79,14 +79,18 @@ def connect_account():
                     fetch_x_analytics(user_id, is_initial=True)
                     logger.info(f"Completed initial X analytics fetch for user {user_id}")
                 except Exception as e:
+                    import traceback
                     logger.error(f"Error fetching initial X analytics: {str(e)}")
-            
-            thread = threading.Thread(target=fetch_analytics_bg)
-            thread.daemon = True
-            thread.start()
-            
+                    logger.error(traceback.format_exc())
+
+            bg_thread = threading.Thread(target=fetch_analytics_bg)
+            bg_thread.daemon = True
+            bg_thread.start()
+
         except Exception as e:
+            import traceback
             logger.error(f"Error setting up X analytics: {str(e)}")
+            logger.error(traceback.format_exc())
         
         flash(f"Successfully connected X account @{username}", "success")
         return redirect(url_for('accounts.index', show_super_powers='true', platform='x'))
@@ -102,10 +106,9 @@ def connect_account():
 
         # Start initial TikTok data fetch in background
         logger.info(f"Starting initial TikTok analytics fetch for user {user_id}")
-        import threading
-        thread = threading.Thread(target=fetch_initial_tiktok_data, args=(user_id, username))
-        thread.daemon = True
-        thread.start()
+        bg_thread = threading.Thread(target=fetch_initial_tiktok_data, args=(user_id, username))
+        bg_thread.daemon = True
+        bg_thread.start()
 
         flash(f"Successfully connected TikTok account @{username}", "success")
         return redirect(url_for('accounts.index', show_super_powers='true', platform='tiktok'))
