@@ -1,7 +1,7 @@
-# File: app/routes/home/routes.py
+# File: app/routes/home/home_routes.py
 
 from flask import Blueprint, render_template, jsonify, g, request
-from app.system.auth.middleware import auth_required  # Changed from optional_auth
+from app.system.auth.middleware import auth_required
 from app.system.services.firebase_service import UserService
 import logging
 import firebase_admin
@@ -36,7 +36,7 @@ def home():
             logger.error(f"Error updating login streak: {e}")
     
     # Render the home page (template will show different content based on g.user)
-    return render_template('core/home.html')
+    return render_template('home/dashboard.html')
 
 @bp.route('/api/dashboard-stats')
 def dashboard_stats():
@@ -44,7 +44,7 @@ def dashboard_stats():
     
     Returns user credits, login streak, and content created count.
     """
-    if not hasattr(g, 'user') or not g.user:
+    if not hasattr(g, 'user') or not g.user or g.user.get('is_guest'):
         return jsonify({"error": "Not authenticated"}), 401
     
     try:
@@ -66,161 +66,114 @@ def dashboard_stats():
         return jsonify({"error": "Failed to load stats"}), 500
 
 @bp.route('/api/dashboard-data')
-# @auth_required - Removed since middleware now handles authentication
 def dashboard_data():
-    """API endpoint to get dashboard data
+    """API endpoint to get comprehensive dashboard data
     
-    This endpoint requires authentication and returns user-specific
-    dashboard data, including X and YouTube analytics if available.
+    This endpoint returns user-specific dashboard data including:
+    - Connected accounts status
+    - Channel analytics summaries
+    - Quick access suggestions
     """
-    if not hasattr(g, 'user') or not g.user:
+    if not hasattr(g, 'user') or not g.user or g.user.get('is_guest'):
         return jsonify({"error": "Not authenticated"}), 401
     
     # Get user data from g.user
     user_id = g.user.get('id')
     
-    # Try to get more detailed user data from Firebase
+    # Get detailed user data from Firebase
     user_data = UserService.get_user(user_id) or {}
-    
-    # Check if X is connected
-    x_connected = bool(user_data.get('x_account', ''))
-    x_analytics = None
-    
-    if x_connected:
-        try:
-            # Initialize Firestore if needed
-            if not firebase_admin._apps:
-                try:
-                    firebase_admin.initialize_app()
-                except ValueError:
-                    pass
-            
-            # Get Firestore client
-            db = firestore.client()
-            
-            # Get analytics document from X subcollection structure - NEW: Read from 'latest'
-            analytics_ref = db.collection('users').document(user_id).collection('x_analytics').document('latest')
-            analytics_doc = analytics_ref.get()
-            
-            if analytics_doc.exists:
-                x_analytics = analytics_doc.to_dict()
-                
-                # Format metrics for display on dashboard
-                if x_analytics:
-                    # Format followers_to_following_ratio for display
-                    ratio = x_analytics.get('followers_to_following_ratio', 0)
-                    x_analytics['followers_to_following_ratio_display'] = f"{ratio:.1f}%"
-                    
-                    # Format rolling_avg_engagement for display
-                    engagement = x_analytics.get('rolling_avg_engagement', 0)
-                    x_analytics['engagement_rate_display'] = f"{engagement:.1f}%"
-                    
-                    # Format rolling_avg_views for display - rounded to nearest whole number
-                    avg_views = int(round(x_analytics.get('rolling_avg_views', 0)))
-                    x_analytics['avg_views'] = avg_views
-                    
-                    # Format followers for display
-                    x_analytics['followers'] = x_analytics.get('followers_count', 0)
-                
-        except Exception as e:
-            logger.error(f"Error fetching X analytics data: {str(e)}")
-            x_analytics = None
-    
-    # Check if YouTube is connected
-    youtube_connected = bool(user_data.get('youtube_account', ''))
-    youtube_analytics = None
-    
-    if youtube_connected:
-        try:
-            # Initialize Firestore if needed
-            if not firebase_admin._apps:
-                try:
-                    firebase_admin.initialize_app()
-                except ValueError:
-                    pass
-            
-            # Get Firestore client
-            db = firestore.client()
-            
-            # Get YouTube analytics document from subcollection structure - NEW: Read from 'latest'
-            youtube_analytics_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
-            youtube_analytics_doc = youtube_analytics_ref.get()
-            
-            if youtube_analytics_doc.exists:
-                youtube_analytics = youtube_analytics_doc.to_dict()
-                
-                # Format metrics for display on dashboard
-                if youtube_analytics:
-                    # Format views for display
-                    views = youtube_analytics.get('views', 0)
-                    youtube_analytics['views_display'] = f"{views:,}" if views > 0 else "0"
-                    
-                    # Format average view percentage for display
-                    avg_view_percentage = youtube_analytics.get('average_view_percentage', 0)
-                    youtube_analytics['avg_watch_time_display'] = f"{avg_view_percentage:.1f}%"
-                    
-                    # Format subscribers gained for display
-                    subscribers_gained = youtube_analytics.get('subscribers_gained', 0)
-                    youtube_analytics['new_subscribers'] = subscribers_gained
-                    youtube_analytics['new_subscribers_display'] = f"+{subscribers_gained}" if subscribers_gained > 0 else "0"
-                    
-                    # Format engagement rate for display
-                    engagement_rate = youtube_analytics.get('engagement_rate', 0)
-                    youtube_analytics['engagement_rate_display'] = f"{engagement_rate:.1f}%"
-                
-        except Exception as e:
-            logger.error(f"Error fetching YouTube analytics data: {str(e)}")
-            youtube_analytics = None
     
     # Prepare response data
     response_data = {
         "user_id": user_id,
         "username": user_data.get('username', g.user.get('data', {}).get('username', 'User')),
-        "credits": user_data.get('credits', 100),  # Use actual credits or default
+        "credits": user_data.get('credits', 0),
         "subscription_plan": user_data.get('subscription_plan', 'Free Plan'),
-        "x_connected": x_connected,
+        
+        # Connected accounts
+        "x_connected": bool(user_data.get('x_account', '')),
         "x_account": user_data.get('x_account', ''),
-        "youtube_connected": youtube_connected,
+        "youtube_connected": bool(user_data.get('youtube_account', '')),
         "youtube_account": user_data.get('youtube_account', ''),
-        "widgets": [
-            {"id": "recent_posts", "title": "Recent Posts"},
-            {"id": "analytics", "title": "Analytics"},
-            {"id": "tasks", "title": "Upcoming Tasks"}
-        ]
+        "tiktok_connected": bool(user_data.get('tiktok_account', '')),
+        "tiktok_account": user_data.get('tiktok_account', ''),
     }
     
-    # Include X analytics if available
-    if x_analytics:
-        response_data["x_analytics"] = x_analytics
-    
-    # Include YouTube analytics if available
-    if youtube_analytics:
-        response_data["youtube_analytics"] = youtube_analytics
+    # Initialize Firestore if needed
+    try:
+        if not firebase_admin._apps:
+            try:
+                firebase_admin.initialize_app()
+            except ValueError:
+                pass
+        
+        db = firestore.client()
+        
+        # Get X Analytics Summary if connected
+        if response_data['x_connected']:
+            try:
+                analytics_ref = db.collection('users').document(user_id).collection('x_analytics').document('latest')
+                analytics_doc = analytics_ref.get()
+                
+                if analytics_doc.exists:
+                    x_analytics = analytics_doc.to_dict()
+                    
+                    # Extract key metrics for dashboard
+                    response_data["x_analytics"] = {
+                        'followers': x_analytics.get('followers_count', 0),
+                        'avg_views': int(round(x_analytics.get('rolling_avg_views', 0))),
+                        'engagement_rate': x_analytics.get('rolling_avg_engagement', 0),
+                        'engagement_rate_display': f"{x_analytics.get('rolling_avg_engagement', 0):.1f}%",
+                        'followers_to_following_ratio': x_analytics.get('followers_to_following_ratio', 0),
+                        'ratio_status': x_analytics.get('ratio_status', 'N/A')
+                    }
+            except Exception as e:
+                logger.error(f"Error fetching X analytics: {str(e)}")
+        
+        # Get YouTube Analytics Summary if connected
+        if response_data['youtube_connected']:
+            try:
+                youtube_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
+                youtube_doc = youtube_ref.get()
+                
+                if youtube_doc.exists:
+                    youtube_analytics = youtube_doc.to_dict()
+                    
+                    # Extract key metrics for dashboard
+                    response_data["youtube_analytics"] = {
+                        'views': youtube_analytics.get('views', 0),
+                        'subscribers_gained': youtube_analytics.get('subscribers_gained', 0),
+                        'watch_time_minutes': youtube_analytics.get('watch_time_minutes', 0),
+                        'watch_time_hours': round(youtube_analytics.get('watch_time_minutes', 0) / 60, 1),
+                        'average_view_percentage': youtube_analytics.get('average_view_percentage', 0),
+                        'engagement_rate': youtube_analytics.get('engagement_rate', 0)
+                    }
+            except Exception as e:
+                logger.error(f"Error fetching YouTube analytics: {str(e)}")
+        
+    except Exception as e:
+        logger.error(f"Error fetching analytics data: {str(e)}")
     
     return jsonify(response_data)
 
 @bp.route('/api/analytics-history/<platform>')
-# @auth_required - Removed since middleware now handles authentication
 def get_analytics_history(platform):
-    """Get historical analytics data for a platform
+    """Get historical analytics data for charts on dashboard
     
-    Optional endpoint to retrieve historical data for charts/trends
     Query parameters:
-    - days: number of days to retrieve (default: 30)
-    - start_date: start date in YYYY-MM-DD format
-    - end_date: end date in YYYY-MM-DD format
+    - days: number of days to retrieve (default: 7)
     """
-    if not hasattr(g, 'user') or not g.user:
+    if not hasattr(g, 'user') or not g.user or g.user.get('is_guest'):
         return jsonify({"error": "Not authenticated"}), 401
     
     user_id = g.user.get('id')
     
     # Validate platform
-    if platform not in ['x', 'youtube']:
+    if platform not in ['x', 'youtube', 'tiktok']:
         return jsonify({"error": "Invalid platform"}), 400
     
     try:
-        # Initialize Firestore if needed
+        # Initialize Firestore
         if not firebase_admin._apps:
             try:
                 firebase_admin.initialize_app()
@@ -230,49 +183,106 @@ def get_analytics_history(platform):
         db = firestore.client()
         
         # Get query parameters
-        days = request.args.get('days', 30, type=int)
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
+        days = request.args.get('days', 7, type=int)
         
-        # Build collection reference
-        if platform == 'x':
-            collection_ref = db.collection('users').document(user_id).collection('x_analytics').document('history').collection('daily')
-        else:
-            collection_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('history').collection('daily')
-        
-        # Query historical data
-        if start_date and end_date:
-            # Use date range
-            query = collection_ref.where('__name__', '>=', start_date).where('__name__', '<=', end_date).order_by('__name__')
-        else:
-            # Use days limit - get most recent documents
-            from datetime import datetime, timedelta
-            end_dt = datetime.now()
-            start_dt = end_dt - timedelta(days=days)
-            start_date_str = start_dt.strftime('%Y-%m-%d')
-            end_date_str = end_dt.strftime('%Y-%m-%d')
-            
-            query = collection_ref.where('__name__', '>=', start_date_str).where('__name__', '<=', end_date_str).order_by('__name__')
-        
-        # Execute query
-        docs = query.stream()
+        # Calculate date range
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
         
         historical_data = []
-        for doc in docs:
-            data = doc.to_dict()
-            data['date'] = doc.id  # Document ID is the date
-            historical_data.append(data)
+        
+        if platform == 'x':
+            # Get X historical data
+            collection_ref = db.collection('users').document(user_id).collection('x_analytics').document('history').collection('daily')
+            query = collection_ref.where('__name__', '>=', start_date_str).where('__name__', '<=', end_date_str).order_by('__name__')
+            
+            docs = query.stream()
+            for doc in docs:
+                data = doc.to_dict()
+                data['date'] = doc.id
+                historical_data.append({
+                    'date': data['date'],
+                    'followers': data.get('followers_count', 0),
+                    'views': data.get('rolling_avg_views', 0),
+                    'engagement': data.get('rolling_avg_engagement', 0)
+                })
+                
+        elif platform == 'youtube':
+            # Get YouTube historical data
+            collection_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('history').collection('daily')
+            query = collection_ref.where('__name__', '>=', start_date_str).where('__name__', '<=', end_date_str).order_by('__name__')
+            
+            docs = query.stream()
+            for doc in docs:
+                data = doc.to_dict()
+                data['date'] = doc.id
+                historical_data.append({
+                    'date': data['date'],
+                    'views': data.get('views', 0),
+                    'watch_time_minutes': data.get('watch_time_minutes', 0),
+                    'subscribers_gained': data.get('subscribers_gained', 0)
+                })
         
         return jsonify({
             "platform": platform,
             "data": historical_data,
-            "count": len(historical_data)
+            "days": days
         })
         
     except Exception as e:
         logger.error(f"Error fetching {platform} analytics history: {str(e)}")
         return jsonify({"error": "Failed to fetch historical data"}), 500
 
+@bp.route('/api/upcoming-content')
+def get_upcoming_content():
+    """Get upcoming scheduled content from calendar
+    
+    Returns the next 5 scheduled content pieces
+    """
+    if not hasattr(g, 'user') or not g.user or g.user.get('is_guest'):
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    user_id = g.user.get('id')
+    
+    try:
+        # Initialize Firestore
+        if not firebase_admin._apps:
+            try:
+                firebase_admin.initialize_app()
+            except ValueError:
+                pass
+        
+        db = firestore.client()
+        
+        # Get upcoming events from content calendar
+        today = datetime.now().strftime('%Y-%m-%d')
+        events_ref = db.collection(f'users/{user_id}/content_calendar')
+        
+        # Query for future events
+        query = events_ref.where('publish_date', '>=', today).order_by('publish_date').limit(5)
+        
+        upcoming_events = []
+        for doc in query.stream():
+            event = doc.to_dict()
+            upcoming_events.append({
+                'id': event.get('id'),
+                'title': event.get('title'),
+                'publish_date': event.get('publish_date'),
+                'platform': event.get('platform'),
+                'status': event.get('status', 'draft'),
+                'content_type': event.get('content_type', 'organic')
+            })
+        
+        return jsonify({
+            "events": upcoming_events,
+            "count": len(upcoming_events)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching upcoming content: {str(e)}")
+        return jsonify({"error": "Failed to fetch upcoming content"}), 500
 
 def update_login_streak(user_id):
     """Update user's login streak
@@ -331,10 +341,10 @@ def update_login_streak(user_id):
             logger.info(f"User {user_id} earned {bonus_credits} bonus credits for {current_streak}-day streak")
         
         UserService.update_user(user_id, update_data)
-        logger.info(f"Updated login streak for user {user_id}: {current_streak} days")
-        
+        logger.info(f"Updated login streak for user {user_id}: current_streak={current_streak}")
+
         return current_streak
-        
+
     except Exception as e:
-        logger.error(f"Error updating login streak for user {user_id}: {e}")
+        logger.error(f"Error updating login streak for user {user_id}: {str(e)}")
         return 0

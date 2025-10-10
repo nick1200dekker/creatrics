@@ -4,7 +4,7 @@
 
 {% block additional_styles %}
 <style>
-/* Reset default content-panel padding like Analytics */
+/* Reset default content-panel padding */
 .content-panel {
     padding: 0 !important;
     background: transparent !important;
@@ -12,7 +12,7 @@
     border: none !important;
 }
 
-/* Dashboard wrapper - full height like analytics */
+/* Dashboard wrapper */
 .dashboard-wrapper {
     background: var(--bg-secondary);
     border-radius: 12px;
@@ -25,56 +25,43 @@
     position: relative;
 }
 
-/* Subtle animated background gradient */
-.dashboard-wrapper::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
-    pointer-events: none;
-}
-
 html.dark .dashboard-wrapper {
     border-color: transparent;
 }
 
-/* Dashboard Specific Styles */
+/* Dashboard container */
 .dashboard-container {
-    padding: 2rem;
+    padding: 1.5rem;
     position: relative;
     z-index: 1;
 }
 
-/* Welcome Section - Clean without animation */
-.welcome-section {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.05) 100%);
-    border-radius: 16px;
-    padding: 2rem;
+/* Header section with welcome */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 2rem;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-secondary);
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
-html.dark .welcome-section {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.1) 100%);
-    border-color: transparent;
+html.dark .dashboard-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.welcome-content {
+    flex: 1;
 }
 
 .welcome-title {
-    font-size: 2.25rem;
-    font-weight: 800;
+    font-size: 1.75rem;
+    font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
 }
 
 .welcome-title span {
@@ -82,163 +69,489 @@ html.dark .welcome-section {
 }
 
 .welcome-subtitle {
-    font-size: 1.125rem;
+    font-size: 0.95rem;
     color: var(--text-secondary);
-    margin-bottom: 0;
-    font-weight: 500;
 }
 
-/* Credits Section - Enhanced but cleaner */
-.credits-section {
-    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-    color: white;
-    padding: 1.5rem;
-    border-radius: 16px;
+.header-stats {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.header-stat {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+}
+
+/* Channels Grid */
+.channels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
     margin-bottom: 2rem;
-    box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.25);
-    position: relative;
+}
+
+/* Channel Card */
+.channel-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
     overflow: hidden;
     transition: all 0.3s ease;
-}
-
-.credits-section:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.35);
-}
-
-html.dark .credits-section {
-    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-    box-shadow: 0 10px 25px -5px rgba(30, 64, 175, 0.3);
-}
-
-.credits-section::after {
-    content: '';
-    position: absolute;
-    bottom: -30%;
-    left: -10%;
-    width: 150px;
-    height: 150px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    filter: blur(40px);
-}
-
-.credits-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
-    flex-wrap: wrap;
     position: relative;
-    z-index: 1;
 }
 
-.credits-info {
+html.dark .channel-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+    backdrop-filter: blur(10px);
+}
+
+.channel-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+html.dark .channel-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    border-color: rgba(96, 165, 250, 0.4);
+}
+
+.channel-header {
+    padding: 1.25rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
+    border-bottom: 1px solid var(--border-primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+html.dark .channel-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+    border-bottom-color: rgba(63, 63, 70, 0.5);
+}
+
+.channel-info {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    transition: transform 0.2s ease;
-    padding: 0.5rem;
-    border-radius: 12px;
-    margin: -0.5rem;
+    gap: 0.75rem;
 }
 
-.credits-info:hover {
-    transform: translateY(-2px);
-}
-
-.credits-avatar {
-    width: 56px;
-    height: 56px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 14px;
+.channel-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    font-weight: 700;
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.credits-details h3 {
-    font-size: 0.875rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    opacity: 0.9;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.credits-amount {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-}
-
-.credits-number {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-}
-
-.credits-label {
-    font-size: 0.875rem;
-    opacity: 0.85;
-}
-
-.credits-action {
-    background: rgba(255, 255, 255, 0.2);
+    font-size: 1.25rem;
     color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
+}
+
+.channel-icon.youtube { background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); }
+.channel-icon.x { background: linear-gradient(135deg, #000000 0%, #333333 100%); }
+.channel-icon.tiktok { background: linear-gradient(135deg, #000000 0%, #69C9D0 100%); }
+
+.channel-name h3 {
+    font-size: 1.125rem;
     font-weight: 600;
-    text-decoration: none;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.channel-username {
+    font-size: 0.813rem;
+    color: var(--text-tertiary);
+}
+
+.view-analytics-btn {
+    padding: 0.375rem 0.75rem;
+    background: transparent;
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
     transition: all 0.2s ease;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.view-analytics-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3B82F6;
+}
+
+html.dark .view-analytics-btn {
+    color: #60A5FA;
+    border-color: rgba(96, 165, 250, 0.3);
+}
+
+html.dark .view-analytics-btn:hover {
+    background: rgba(96, 165, 250, 0.15);
+    border-color: #60A5FA;
+}
+
+/* Channel Metrics */
+.channel-metrics {
+    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.metric-item {
+    text-align: center;
+    padding: 0.75rem 0.5rem;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    transition: all 0.2s ease;
+}
+
+html.dark .metric-item {
+    background: rgba(63, 63, 70, 0.3);
+}
+
+.metric-item:hover {
+    background: var(--bg-tertiary);
+}
+
+html.dark .metric-item:hover {
+    background: rgba(63, 63, 70, 0.5);
+}
+
+.metric-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 0.25rem;
+}
+
+.metric-change {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.metric-change.positive { color: #10B981; }
+.metric-change.negative { color: #EF4444; }
+.metric-change.neutral { color: var(--text-tertiary); }
+
+/* Quick Actions */
+.quick-actions {
+    padding: 1.25rem;
+    border-top: 1px solid var(--border-primary);
+}
+
+html.dark .quick-actions {
+    border-top-color: rgba(63, 63, 70, 0.5);
+}
+
+.quick-actions-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.action-btn {
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.813rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+html.dark .action-btn {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
+.action-btn:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
+}
+
+html.dark .action-btn:hover {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+    border-color: rgba(96, 165, 250, 0.4);
+}
+
+.action-btn i {
+    font-size: 1.25rem;
+    color: #3B82F6;
+}
+
+/* Connect Channel Card */
+.connect-channel-card {
+    background: var(--bg-tertiary);
+    border: 2px dashed var(--border-primary);
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    text-align: center;
+    padding: 2rem;
+    transition: all 0.3s ease;
+}
+
+html.dark .connect-channel-card {
+    background: rgba(63, 63, 70, 0.3);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
+.connect-channel-card:hover {
+    opacity: 0.9;
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.connect-content h3 {
+    font-size: 1.125rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.connect-content p {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    margin-bottom: 1.5rem;
+}
+
+.connect-btn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.875rem;
 }
 
-.credits-action:hover {
-    background: rgba(255, 255, 255, 0.3);
+.connect-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    color: white;
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
-.credits-action i {
-    font-size: 1.125rem;
-}
-
-/* Guest Hero Section - Cleaner gradient */
-.guest-hero {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
-    padding: 3rem 2rem;
-    border-radius: 24px;
+/* Calendar Section */
+.calendar-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
     margin-bottom: 2rem;
+}
+
+html.dark .calendar-section {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.calendar-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calendar-header i {
+    color: #3B82F6;
+}
+
+.view-calendar-btn {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 6px;
+    font-size: 0.813rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.view-calendar-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3B82F6;
+}
+
+.calendar-events {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.calendar-event {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border-left: 3px solid #3B82F6;
+    transition: all 0.2s ease;
+}
+
+html.dark .calendar-event {
+    background: rgba(63, 63, 70, 0.3);
+}
+
+.calendar-event:hover {
+    transform: translateX(4px);
+}
+
+.event-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    min-width: 50px;
+}
+
+html.dark .event-date {
+    background: rgba(63, 63, 70, 0.5);
+}
+
+.event-day {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.event-month {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+}
+
+.event-details {
+    flex: 1;
+}
+
+.event-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.event-platform {
+    font-size: 0.813rem;
+    color: var(--text-tertiary);
+}
+
+.event-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-draft { background: #F3F4F6; color: #6B7280; }
+.status-in-progress { background: #FEF3C7; color: #D97706; }
+.status-ready { background: #D1FAE5; color: #059669; }
+
+html.dark .status-draft { background: #374151; color: #9CA3AF; }
+html.dark .status-in-progress { background: #78350F; color: #FCD34D; }
+html.dark .status-ready { background: #064E3B; color: #6EE7B7; }
+
+.empty-calendar {
     text-align: center;
-    border: 1px solid rgba(59, 130, 246, 0.1);
-    transition: background 0.3s ease, border-color 0.3s ease;
+    padding: 2rem;
+    color: var(--text-tertiary);
+}
+
+.empty-calendar i {
+    font-size: 3rem;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+/* Guest Hero */
+.guest-hero {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    padding: 4rem 2rem;
+    border-radius: 24px;
+    margin-bottom: 3rem;
+    text-align: center;
+    border: 1px solid rgba(59, 130, 246, 0.15);
 }
 
 html.dark .guest-hero {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border-color: rgba(59, 130, 246, 0.25);
 }
 
 .guest-hero h1 {
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 900;
     color: var(--text-primary);
     margin-bottom: 1rem;
     line-height: 1.1;
 }
 
-.guest-hero .gradient-text {
+.gradient-text {
     background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -248,318 +561,132 @@ html.dark .guest-hero {
 .guest-hero p {
     font-size: 1.25rem;
     color: var(--text-secondary);
-    margin-bottom: 2rem;
-    max-width: 600px;
+    margin-bottom: 2.5rem;
+    max-width: 700px;
     margin-left: auto;
     margin-right: auto;
 }
 
-.guest-cta-buttons {
+.hero-cta {
     display: flex;
     gap: 1rem;
     justify-content: center;
     flex-wrap: wrap;
 }
 
-.guest-cta-buttons .btn-primary,
-.guest-cta-buttons .btn-secondary {
-    padding: 0.875rem 2rem;
-    font-size: 1rem;
+.hero-btn {
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-/* Platform Section - Clean with subtle enhancements */
-.platform-section {
+.hero-btn-primary {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.hero-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.hero-btn-secondary {
     background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-primary);
+}
+
+.hero-btn-secondary:hover {
+    background: var(--bg-tertiary);
+}
+
+/* Features Preview */
+.features-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.preview-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
     border-radius: 16px;
-    padding: 1.75rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-secondary);
+    padding: 2rem;
+    text-align: center;
     transition: all 0.3s ease;
 }
 
-html.dark .platform-section {
-    border-color: transparent;
-    background: var(--bg-secondary);
+html.dark .preview-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
 }
 
-.platform-section:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+.preview-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
-/* Platform Headers - Keep consistent color */
-.platform-header {
+.preview-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-radius: 16px;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.5);
-}
-
-.platform-header h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.01em;
-}
-
-.platform-header i {
+    justify-content: center;
     font-size: 1.75rem;
     color: #3B82F6;
-    opacity: 0.8;
 }
 
-html.dark .platform-header {
-    border-bottom-color: rgba(63, 63, 70, 0.5);
-}
-
-/* Features Grid - Enhanced but functional */
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.5rem;
-}
-
-.feature-card {
-    background: var(--bg-secondary);
-    border-radius: 16px;
-    padding: 1.25rem;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-secondary);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    text-decoration: none;
-    display: block;
-}
-
-html.dark .feature-card {
-    border-color: transparent;
-    background: var(--bg-tertiary);
-}
-
-.feature-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-}
-
-.feature-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-}
-
-.feature-card:hover::before {
-    transform: translateX(0);
-}
-
-.feature-card:hover .feature-icon-inline {
-    color: #3B82F6;
-    transform: scale(1.1);
-}
-
-.feature-icon-inline {
-    font-size: 1.25rem;
-    color: #64748B;
-    margin-right: 0.5rem;
-    vertical-align: middle;
-    transition: all 0.3s ease;
-}
-
-.feature-content h3 {
+.preview-card h3 {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
-.feature-content p {
-    font-size: 0.9rem;
-    color: var(--text-tertiary);
+.preview-card p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
     line-height: 1.6;
-    margin-bottom: 0;
+    margin-bottom: 1.5rem;
 }
 
-/* Coming Soon Section - Subtle and greyed out */
-.coming-soon-section {
-    background: var(--bg-tertiary);
-    opacity: 0.7;
-    transition: all 0.3s ease;
+.preview-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: left;
+    margin-top: 1rem;
 }
 
-html.dark .coming-soon-section {
-    background: var(--bg-secondary);
-    opacity: 0.6;
+.preview-feature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.813rem;
+    color: var(--text-secondary);
 }
 
-.coming-soon-card {
-    background: var(--bg-tertiary);
-    border: 2px dashed var(--border-primary);
-    opacity: 0.65;
-    cursor: not-allowed;
-    transition: none;
-    pointer-events: none;
+.preview-feature i {
+    color: #10B981;
+    font-size: 0.875rem;
 }
 
-html.dark .coming-soon-card {
-    background: var(--bg-tertiary);
-    border-color: var(--border-primary);
-}
-
-.coming-soon-card:hover {
-    transform: none;
-    box-shadow: var(--shadow-sm);
-}
-
-.coming-soon-card .feature-icon-inline {
-    color: #94A3B8;
-}
-
-.coming-soon-badge {
-    display: inline-block;
-    background: rgba(148, 163, 184, 0.1);
-    color: #94A3B8;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: 0.75rem;
-}
-
-/* Final CTA - Cleaner gradient */
-.final-cta {
-    text-align: center;
-    padding: 3rem;
-    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
-    border-radius: 24px;
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.final-cta::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-    pointer-events: none;
-}
-
-.final-cta h3 {
-    font-size: 2rem;
-    color: white;
-    font-weight: 800;
-    margin-bottom: 1rem;
-    position: relative;
-    z-index: 1;
-}
-
-.final-cta p {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1.25rem;
-    margin-bottom: 2rem;
-    position: relative;
-    z-index: 1;
-}
-
-.final-cta .btn-primary {
-    background: white;
-    color: #3B82F6;
-    padding: 1.25rem 3rem;
-    font-size: 1.125rem;
-    font-weight: 700;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    position: relative;
-    z-index: 1;
-    transition: all 0.3s ease;
-}
-
-.final-cta .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .dashboard-container {
-        padding: 0;
-    }
-    
-    .welcome-title {
-        font-size: 1.875rem;
-    }
-    
-    .welcome-subtitle {
-        font-size: 1rem;
-    }
-    
-    .guest-hero {
-        padding: 2rem 1.5rem;
-    }
-    
-    .guest-hero h1 {
-        font-size: 2.25rem;
-    }
-    
-    .guest-hero p {
-        font-size: 1.125rem;
-    }
-    
-    .platform-section {
-        padding: 1.25rem;
-        margin-bottom: 2rem;
-        border-radius: 12px;
-    }
-    
-    .features-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .credits-container {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .credits-info {
-        flex-direction: column;
-    }
-    
-    .credits-number {
-        font-size: 1.75rem;
-    }
-    
-    .benefit-card {
-        padding: 1.5rem 1.25rem;
-    }
-}
-
-/* Loading animation */
-.skeleton-text {
-    display: inline-block;
-    background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
+/* Loading states */
+.skeleton-loader {
+    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
     background-size: 200% 100%;
     animation: loading 1.5s infinite;
     border-radius: 6px;
-    height: 1rem;
-    width: 100px;
 }
 
 @keyframes loading {
@@ -567,9 +694,52 @@ html.dark .coming-soon-card {
     100% { background-position: -200% 0; }
 }
 
-/* Smooth animations */
-* {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+/* Responsive */
+@media (max-width: 1024px) {
+    .channels-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+    
+    .dashboard-header {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+    }
+    
+    .header-stats {
+        width: 100%;
+        justify-content: space-around;
+    }
+    
+    .channels-grid {
+        gap: 1rem;
+    }
+    
+    .channel-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .action-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .guest-hero h1 {
+        font-size: 2.5rem;
+    }
+    
+    .guest-hero p {
+        font-size: 1.125rem;
+    }
+    
+    .features-preview {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 {% endblock %}
@@ -577,458 +747,529 @@ html.dark .coming-soon-card {
 {% block content %}
 <div class="dashboard-wrapper">
     <div class="dashboard-container">
-        <div class="dashboard-header">
         {% if g.user and not g.user.get('is_guest') %}
         <!-- Logged in user dashboard -->
-        <div class="welcome-section">
-            <h1 class="welcome-title">Welcome back, <span id="username-display">{{ g.user.get('data', {}).get('username', 'Creator') }}</span></h1>
-            <p class="welcome-subtitle">Ready to create amazing content today?</p>
-        </div>
         
-        <!-- Credits Section -->
-        <div class="credits-section">
-            <div class="credits-container">
-                <a href="{{ url_for('credits_history.index') }}" class="credits-info" style="text-decoration: none; color: inherit; cursor: pointer;">
-                    <div class="credits-avatar">
-                        <span id="user-avatar">{{ g.user.get('data', {}).get('username', 'U')[0].upper() }}</span>
+        <!-- Header with Welcome and Stats -->
+        <div class="dashboard-header">
+            <div class="welcome-content">
+                <h1 class="welcome-title">Welcome back, <span id="username-display">{{ g.user.get('data', {}).get('username', 'Creator') }}</span>!</h1>
+                <p class="welcome-subtitle">Here's your content performance overview</p>
+            </div>
+            <div class="header-stats">
+                <div class="header-stat">
+                    <div class="stat-value" id="credits-display">
+                        <div class="skeleton-loader" style="width: 60px; height: 24px;"></div>
                     </div>
-                    <div class="credits-details">
-                        <h3>AI Credits</h3>
-                        <div class="credits-amount">
-                            <span class="credits-number" id="credits-display">
-                                <span class="skeleton-text" style="width: 80px; height: 2.5rem;"></span>
-                            </span>
-                            <span class="credits-label">credits remaining</span>
-                        </div>
-                        <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.8); margin-top: 0.25rem;">
-                            <i class="ph ph-clock-counter-clockwise"></i> View history
-                        </div>
+                    <div class="stat-label">Credits</div>
+                </div>
+                <div class="header-stat">
+                    <div class="stat-value" id="streak-display">
+                        <div class="skeleton-loader" style="width: 40px; height: 24px;"></div>
                     </div>
-                </a>
-                <a href="{{ url_for('payment.index') }}" class="credits-action">
-                    <i class="ph ph-sparkle"></i>
-                    Get More Credits
-                </a>
+                    <div class="stat-label">Day Streak</div>
+                </div>
             </div>
         </div>
-        
+
+        <!-- Connected Channels Grid -->
+        <div class="channels-grid" id="channels-container">
+            <!-- YouTube Channel Card -->
+            <div class="channel-card" id="youtube-card" style="display: none;">
+                <div class="channel-header">
+                    <div class="channel-info">
+                        <div class="channel-icon youtube">
+                            <i class="ph ph-youtube-logo"></i>
+                        </div>
+                        <div class="channel-name">
+                            <h3>YouTube</h3>
+                            <div class="channel-username" id="youtube-username">Loading...</div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('analytics.index', platform='youtube') }}" class="view-analytics-btn">
+                        <i class="ph ph-chart-line"></i>
+                        Analytics
+                    </a>
+                </div>
+                
+                <div class="channel-metrics" id="youtube-metrics">
+                    <div class="metric-item">
+                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-label">Views</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-label">Subscribers</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-label">Watch Time</div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions">
+                    <div class="quick-actions-title">What would you like to do today?</div>
+                    <div class="action-buttons">
+                        <a href="{{ url_for('competitors.competitors') }}" class="action-btn">
+                            <i class="ph ph-users-three"></i>
+                            <span>Analyze Competitors</span>
+                        </a>
+                        <a href="{{ url_for('thumbnail.index') }}" class="action-btn">
+                            <i class="ph ph-image"></i>
+                            <span>Make Thumbnail</span>
+                        </a>
+                        <a href="{{ url_for('analyze_video.analyze_video') }}" class="action-btn">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <span>Find Videos</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- X Channel Card -->
+            <div class="channel-card" id="x-card" style="display: none;">
+                <div class="channel-header">
+                    <div class="channel-info">
+                        <div class="channel-icon x">
+                            <i class="ph ph-x-logo"></i>
+                        </div>
+                        <div class="channel-name">
+                            <h3>X</h3>
+                            <div class="channel-username" id="x-username">Loading...</div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('analytics.index', platform='x') }}" class="view-analytics-btn">
+                        <i class="ph ph-chart-line"></i>
+                        Analytics
+                    </a>
+                </div>
+                
+                <div class="channel-metrics" id="x-metrics">
+                    <div class="metric-item">
+                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-label">Followers</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-label">Avg Views</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-label">Engagement</div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions">
+                    <div class="quick-actions-title">What would you like to do today?</div>
+                    <div class="action-buttons">
+                        <a href="{{ url_for('x_post_editor.x_post_editor') }}" class="action-btn">
+                            <i class="ph ph-pencil-simple"></i>
+                            <span>Write Post</span>
+                        </a>
+                        <a href="{{ url_for('clip_spaces.index') }}" class="action-btn">
+                            <i class="ph ph-scissors"></i>
+                            <span>Clip Spaces</span>
+                        </a>
+                        <a href="{{ url_for('niche.index') }}" class="action-btn">
+                            <i class="ph ph-fire"></i>
+                            <span>What's Hot</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TikTok Channel Card -->
+            <div class="channel-card" id="tiktok-card" style="display: none;">
+                <div class="channel-header">
+                    <div class="channel-info">
+                        <div class="channel-icon tiktok">
+                            <i class="ph ph-tiktok-logo"></i>
+                        </div>
+                        <div class="channel-name">
+                            <h3>TikTok</h3>
+                            <div class="channel-username" id="tiktok-username">Loading...</div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('analytics.index', platform='tiktok') }}" class="view-analytics-btn">
+                        <i class="ph ph-chart-line"></i>
+                        Analytics
+                    </a>
+                </div>
+                
+                <div class="channel-metrics" id="tiktok-metrics">
+                    <div class="metric-item">
+                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-label">Followers</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-label">Total Likes</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-label">Engagement</div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions">
+                    <div class="quick-actions-title">What would you like to do today?</div>
+                    <div class="action-buttons">
+                        <a href="{{ url_for('hook_generator.hook_generator') }}" class="action-btn">
+                            <i class="ph ph-megaphone-simple"></i>
+                            <span>Create Hook</span>
+                        </a>
+                        <a href="{{ url_for('trending_sounds.trending_sounds') }}" class="action-btn">
+                            <i class="ph ph-music-notes"></i>
+                            <span>Find Sounds</span>
+                        </a>
+                        <a href="{{ url_for('trend_finder.trend_finder') }}" class="action-btn">
+                            <i class="ph ph-trend-up"></i>
+                            <span>Find Trends</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connect Channel Cards -->
+            <div class="channel-card connect-channel-card" id="connect-youtube" style="display: none;">
+                <div class="connect-content">
+                    <i class="ph ph-youtube-logo" style="font-size: 3rem; color: var(--text-tertiary); margin-bottom: 1rem;"></i>
+                    <h3>Connect YouTube</h3>
+                    <p>Track your channel analytics and optimize your content strategy</p>
+                    <a href="{{ url_for('accounts.index') }}" class="connect-btn">
+                        <i class="ph ph-link"></i>
+                        Connect Channel
+                    </a>
+                </div>
+            </div>
+
+            <div class="channel-card connect-channel-card" id="connect-x" style="display: none;">
+                <div class="connect-content">
+                    <i class="ph ph-x-logo" style="font-size: 3rem; color: var(--text-tertiary); margin-bottom: 1rem;"></i>
+                    <h3>Connect X</h3>
+                    <p>Monitor your engagement and discover trending topics</p>
+                    <a href="{{ url_for('accounts.index') }}" class="connect-btn">
+                        <i class="ph ph-link"></i>
+                        Connect Account
+                    </a>
+                </div>
+            </div>
+
+            <div class="channel-card connect-channel-card" id="connect-tiktok" style="display: none;">
+                <div class="connect-content">
+                    <i class="ph ph-tiktok-logo" style="font-size: 3rem; color: var(--text-tertiary); margin-bottom: 1rem;"></i>
+                    <h3>Connect TikTok</h3>
+                    <p>Track your viral potential and trending content</p>
+                    <a href="{{ url_for('accounts.index') }}" class="connect-btn">
+                        <i class="ph ph-link"></i>
+                        Connect Account
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Section -->
+        <div class="calendar-section" id="calendar-section" style="display: none;">
+            <div class="calendar-header">
+                <h2><i class="ph ph-calendar"></i> Upcoming Content</h2>
+                <a href="{{ url_for('content_calendar.content_calendar') }}" class="view-calendar-btn">
+                    View Full Calendar
+                </a>
+            </div>
+            
+            <div class="calendar-events" id="calendar-events">
+                <div class="empty-calendar">
+                    <i class="ph ph-calendar-x"></i>
+                    <p>No upcoming content scheduled</p>
+                </div>
+            </div>
+        </div>
+
         {% else %}
-        <!-- Guest user hero section -->
+        <!-- Guest user dashboard -->
         <div class="guest-hero">
-            <h1>Create Content That <span class="gradient-text">Gets Results</span></h1>
-            <p>AI-powered tools to help you create viral thumbnails, engaging titles, and optimize your content across YouTube and X</p>
-            <div class="guest-cta-buttons">
-                <a href="/auth/register" class="btn-primary">
+            <h1>Create Content That <span class="gradient-text">Goes Viral</span></h1>
+            <p>AI-powered tools to help you create engaging content, analyze performance, and grow your audience across YouTube, X, and TikTok</p>
+            <div class="hero-cta">
+                <a href="/auth/register" class="hero-btn hero-btn-primary">
                     <i class="ph ph-rocket-launch"></i>
                     Start Creating Free
                 </a>
-                <a href="/auth/login" class="btn-secondary">
+                <a href="/auth/login" class="hero-btn hero-btn-secondary">
                     <i class="ph ph-sign-in"></i>
                     Sign In
                 </a>
             </div>
         </div>
+
+        <!-- Features Preview -->
+        <div class="features-preview">
+            <div class="preview-card">
+                <div class="preview-icon">
+                    <i class="ph ph-youtube-logo"></i>
+                </div>
+                <h3>YouTube Suite</h3>
+                <p>Everything you need to grow your YouTube channel</p>
+                <div class="preview-features">
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>AI Script Generator</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Thumbnail Creator</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Title Optimizer</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Competitor Analysis</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-card">
+                <div class="preview-icon">
+                    <i class="ph ph-x-logo"></i>
+                </div>
+                <h3>X Toolkit</h3>
+                <p>Master the art of engagement on X</p>
+                <div class="preview-features">
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Thread Builder</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Reply Generator</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Spaces Clipper</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Trend Finder</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-card">
+                <div class="preview-icon">
+                    <i class="ph ph-tiktok-logo"></i>
+                </div>
+                <h3>TikTok Tools</h3>
+                <p>Create viral content that resonates</p>
+                <div class="preview-features">
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Hook Generator</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Trending Sounds</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Hashtag Research</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Trend Tracking</span>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% endif %}
-    </div>
-
-    <!-- YouTube Tools Section -->
-    {% set has_youtube_permissions = not workspace_info or workspace_info.is_owner or
-       workspace_info.permissions.video_script or
-       workspace_info.permissions.video_title or
-       workspace_info.permissions.video_tags or
-       workspace_info.permissions.video_description or
-       workspace_info.permissions.thumbnail or
-       workspace_info.permissions.analytics or
-       workspace_info.permissions.competitors %}
-
-    {% if has_youtube_permissions %}
-    <div class="platform-section">
-        <div class="platform-header">
-            <i class="ph ph-youtube-logo"></i>
-            <h2>YouTube Tools</h2>
-        </div>
-
-        <div class="features-grid">
-            <!-- Video Script -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_script %}
-            <a href="{{ url_for('video_script.video_script') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-file-doc feature-icon-inline"></i>Scripts</h3>
-                    <p>Write and manage video scripts</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Video Title -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_title %}
-            <a href="{{ url_for('video_title.video_title') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-text-t feature-icon-inline"></i>Titles</h3>
-                    <p>Generate viral video titles</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Video Tags -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_tags %}
-            <a href="{{ url_for('video_tags.video_tags') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-hash feature-icon-inline"></i>Tags</h3>
-                    <p>Find trending tags for reach</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Video Description -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_description %}
-            <a href="{{ url_for('video_description.video_description') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-file-text feature-icon-inline"></i>Descriptions</h3>
-                    <p>Write SEO-optimized descriptions</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Thumbnail -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.thumbnail %}
-            <a href="{{ url_for('thumbnail.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-image feature-icon-inline"></i>Thumbnails</h3>
-                    <p>Design thumbnails that get clicks</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Competitors -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.competitors %}
-            <a href="{{ url_for('competitors.competitors') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-users-three feature-icon-inline"></i>Competitors</h3>
-                    <p>Analyze competitor strategies</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Analyze Video -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analyze_video %}
-            <a href="{{ url_for('analyze_video.analyze_video') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-video feature-icon-inline"></i>Analyze Video</h3>
-                    <p>Deep dive into video performance</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Analytics -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
-            <a href="{{ url_for('analytics.index', platform='youtube') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-chart-line feature-icon-inline"></i>Analytics</h3>
-                    <p>Track performance metrics</p>
-                </div>
-            </a>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- X Tools Section -->
-    {% set has_x_permissions = not workspace_info or workspace_info.is_owner or
-       workspace_info.permissions.x_post_editor or
-       workspace_info.permissions.analytics or
-       workspace_info.permissions.reply_guy or
-       workspace_info.permissions.clip_spaces or
-       workspace_info.permissions.niche %}
-
-    {% if has_x_permissions %}
-    <div class="platform-section">
-        <div class="platform-header">
-            <i class="ph ph-x-logo"></i>
-            <h2>X Tools</h2>
-        </div>
-
-        <div class="features-grid">
-            <!-- X Post Editor -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.x_post_editor %}
-            <a href="{{ url_for('x_post_editor.x_post_editor') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-pencil-simple feature-icon-inline"></i>Post Editor</h3>
-                    <p>Create posts and threads</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Reply Guy -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.reply_guy %}
-            <a href="{{ url_for('reply_guy.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-chat-circle-text feature-icon-inline"></i>Reply Guy</h3>
-                    <p>Create engaging replies</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Clip Spaces -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.clip_spaces %}
-            <a href="{{ url_for('clip_spaces.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-scissors feature-icon-inline"></i>Clip Spaces</h3>
-                    <p>Clip hot moments from Spaces</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Niche -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.niche %}
-            <a href="{{ url_for('niche.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-compass feature-icon-inline"></i>Niche</h3>
-                    <p>Discover what's hot on timeline</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- X Analytics -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
-            <a href="{{ url_for('analytics.index', platform='x') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-chart-bar feature-icon-inline"></i>Analytics</h3>
-                    <p>Monitor growth metrics</p>
-                </div>
-            </a>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- TikTok Tools Section -->
-    <div class="platform-section">
-        <div class="platform-header">
-            <i class="ph ph-tiktok-logo"></i>
-            <h2>TikTok Tools</h2>
-        </div>
-
-        <div class="features-grid">
-            <!-- Hook Generator -->
-            <a href="{{ url_for('hook_generator.hook_generator') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-megaphone-simple feature-icon-inline"></i>Hook Generator</h3>
-                    <p>Write viral hooks for first 3 seconds</p>
-                </div>
-            </a>
-
-            <!-- Titles & Hashtags -->
-            <a href="{{ url_for('titles_hashtags.titles_hashtags') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-hash feature-icon-inline"></i>Titles & Hashtags</h3>
-                    <p>Create captions with trending keywords</p>
-                </div>
-            </a>
-
-            <!-- Trending Sounds -->
-            <a href="{{ url_for('trending_sounds.trending_sounds') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-music-notes feature-icon-inline"></i>Trending Sounds</h3>
-                    <p>Discover hot sounds in your niche</p>
-                </div>
-            </a>
-
-            <!-- Trend Finder -->
-            <a href="{{ url_for('trend_finder.trend_finder') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-trend-up feature-icon-inline"></i>Trend Finder</h3>
-                    <p>Spot challenges & content styles</p>
-                </div>
-            </a>
-
-            <!-- Analytics -->
-            <a href="{{ url_for('analytics.index', platform='tiktok') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-chart-line feature-icon-inline"></i>Analytics</h3>
-                    <p>Track performance & growth</p>
-                </div>
-            </a>
-        </div>
-    </div>
-
-    <!-- Content Hub Section -->
-    {% set has_content_permissions = not workspace_info or workspace_info.is_owner or
-       workspace_info.permissions.brain_dump or
-       workspace_info.permissions.mind_map or
-       workspace_info.permissions.content_wiki or
-       workspace_info.permissions.content_calendar %}
-
-    {% if has_content_permissions %}
-    <div class="platform-section">
-        <div class="platform-header">
-            <i class="ph ph-folder"></i>
-            <h2>Content Hub</h2>
-        </div>
-
-        <div class="features-grid">
-            <!-- Brain Dump -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.brain_dump %}
-            <a href="{{ url_for('brain_dump.brain_dump') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-brain feature-icon-inline"></i>Brain Dump</h3>
-                    <p>Capture and organize ideas</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Mind Map -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.mind_map %}
-            <a href="{{ url_for('mind_map.mind_map') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-graph feature-icon-inline"></i>Mind Map</h3>
-                    <p>Visual brainstorming & connections</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Content Wiki -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.content_wiki %}
-            <a href="{{ url_for('content_wiki.content_wiki') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-books feature-icon-inline"></i>Content Wiki</h3>
-                    <p>Build your knowledge base</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Content Calendar -->
-            {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.content_calendar %}
-            <a href="{{ url_for('content_calendar.content_calendar') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-calendar feature-icon-inline"></i>Content Calendar</h3>
-                    <p>Plan and schedule content</p>
-                </div>
-            </a>
-            {% endif %}
-
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Settings Section - Always show since Teams is always visible -->
-    <div class="platform-section">
-        <div class="platform-header">
-            <i class="ph ph-gear"></i>
-            <h2>Settings</h2>
-        </div>
-
-        <div class="features-grid">
-            <!-- Social Accounts -->
-            {% if not workspace_info or workspace_info.is_owner %}
-            <a href="{{ url_for('accounts.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-user-gear feature-icon-inline"></i>Social Accounts</h3>
-                    <p>Connect your social platforms</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Subscription -->
-            {% if not workspace_info or workspace_info.is_owner %}
-            <a href="{{ url_for('payment.index') }}" class="feature-card" onclick="return BaseApp.checkGuestAccess(event, this)">
-                <div class="feature-content">
-                    <h3><i class="ph ph-crown feature-icon-inline"></i>Subscription</h3>
-                    <p>Manage your plan & billing</p>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- Teams - Always visible for workspace switching -->
-            <a href="/teams" class="feature-card">
-                <div class="feature-content">
-                    <h3><i class="ph ph-users-three feature-icon-inline"></i>Teams</h3>
-                    <p>{% if workspace_info and not workspace_info.is_owner %}Switch workspaces{% else %}Collaborate with your team{% endif %}</p>
-                </div>
-            </a>
-        </div>
-    </div>
-
-    <!-- Coming Soon Section -->
-    <div class="platform-section coming-soon-section">
-        <div class="platform-header">
-            <i class="ph ph-sparkle" style="color: #94A3B8;"></i>
-            <h2>Coming Soon</h2>
-        </div>
-
-        <div class="features-grid">
-            <!-- TikTok -->
-            <div class="feature-card coming-soon-card">
-                <div class="feature-content">
-                    <h3><i class="ph ph-tiktok-logo feature-icon-inline"></i>TikTok Tools</h3>
-                    <p>Trending sounds and viral hashtags</p>
-                    <span class="coming-soon-badge">Coming Soon</span>
-                </div>
-            </div>
-            
-            <!-- Instagram -->
-            <div class="feature-card coming-soon-card">
-                <div class="feature-content">
-                    <h3><i class="ph ph-instagram-logo feature-icon-inline"></i>Instagram Suite</h3>
-                    <p>Reels, Stories, and feed optimization</p>
-                    <span class="coming-soon-badge">Coming Soon</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {% if not g.user or g.user.get('is_guest') %}
-    <!-- Final CTA -->
-    <div class="final-cta">
-        <h3>Ready to Transform Your Content?</h3>
-        <p>Join thousands of creators who are growing faster with Creatrics</p>
-        <a href="/auth/register" class="btn-primary">
-            <i class="ph ph-rocket-launch"></i>
-            Start Creating for Free
-        </a>
-    </div>
-    {% endif %}
     </div>
 </div>
 
 <script>
-// Load user credits when logged in
-document.addEventListener('DOMContentLoaded', function() {
+// Format numbers for display
+function formatNumber(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toLocaleString();
+}
+
+// Format watch time hours
+function formatWatchTime(minutes) {
+    const hours = Math.floor(minutes / 60);
+    if (hours >= 1000) return (hours / 1000).toFixed(1) + 'K hrs';
+    return hours + ' hrs';
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
     {% if g.user and not g.user.get('is_guest') %}
-    // Fetch dashboard stats
-    fetch('/api/dashboard-stats')
-        .then(response => response.json())
-        .then(data => {
-            // Update credits display with animation
-            const creditsDisplay = document.getElementById('credits-display');
-            if (creditsDisplay && data.credits !== undefined) {
-                creditsDisplay.style.opacity = '0';
-                creditsDisplay.textContent = data.credits.toLocaleString();
-                setTimeout(() => {
-                    creditsDisplay.style.transition = 'opacity 0.5s ease';
-                    creditsDisplay.style.opacity = '1';
-                }, 100);
-            }
+    
+    // Load dashboard data
+    try {
+        const response = await fetch('/api/dashboard-data');
+        const data = await response.json();
+        
+        // Update username
+        const usernameDisplay = document.getElementById('username-display');
+        if (usernameDisplay && data.username) {
+            usernameDisplay.textContent = data.username;
+        }
+        
+        // Load credits and streak
+        const statsResponse = await fetch('/api/dashboard-stats');
+        const stats = await statsResponse.json();
+        
+        // Update credits
+        const creditsDisplay = document.getElementById('credits-display');
+        if (creditsDisplay) {
+            creditsDisplay.textContent = stats.credits?.toLocaleString() || '0';
+        }
+        
+        // Update streak
+        const streakDisplay = document.getElementById('streak-display');
+        if (streakDisplay) {
+            streakDisplay.textContent = stats.login_streak || '0';
+        }
+        
+        // Show/hide channel cards based on connections
+        let hasConnections = false;
+        
+        // YouTube Card
+        if (data.youtube_connected) {
+            hasConnections = true;
+            document.getElementById('youtube-card').style.display = 'block';
+            document.getElementById('youtube-username').textContent = '@' + data.youtube_account;
             
-            // Update username if needed
-            const usernameDisplay = document.getElementById('username-display');
-            if (usernameDisplay && data.username) {
-                usernameDisplay.textContent = data.username;
+            // Load YouTube analytics if available
+            if (data.youtube_analytics) {
+                const metrics = document.getElementById('youtube-metrics');
+                metrics.innerHTML = `
+                    <div class="metric-item">
+                        <div class="metric-value">${formatNumber(data.youtube_analytics.views || 0)}</div>
+                        <div class="metric-label">Views</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">+${formatNumber(data.youtube_analytics.subscribers_gained || 0)}</div>
+                        <div class="metric-label">Subscribers</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${formatWatchTime(data.youtube_analytics.watch_time_minutes || 0)}</div>
+                        <div class="metric-label">Watch Time</div>
+                    </div>
+                `;
             }
+        } else {
+            document.getElementById('connect-youtube').style.display = 'block';
+        }
+        
+        // X Card
+        if (data.x_connected) {
+            hasConnections = true;
+            document.getElementById('x-card').style.display = 'block';
+            document.getElementById('x-username').textContent = '@' + data.x_account;
             
-            // Update avatar
-            const avatarDisplay = document.getElementById('user-avatar');
-            if (avatarDisplay && data.username) {
-                avatarDisplay.textContent = data.username[0].toUpperCase();
+            // Load X analytics if available
+            if (data.x_analytics) {
+                const metrics = document.getElementById('x-metrics');
+                metrics.innerHTML = `
+                    <div class="metric-item">
+                        <div class="metric-value">${formatNumber(data.x_analytics.followers || 0)}</div>
+                        <div class="metric-label">Followers</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${formatNumber(data.x_analytics.avg_views || 0)}</div>
+                        <div class="metric-label">Avg Views</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${data.x_analytics.engagement_rate_display || '0%'}</div>
+                        <div class="metric-label">Engagement</div>
+                    </div>
+                `;
             }
-        })
-        .catch(error => {
-            console.error('Error loading dashboard stats:', error);
-            // Remove skeleton loader even on error
-            const creditsDisplay = document.getElementById('credits-display');
-            if (creditsDisplay) {
-                creditsDisplay.textContent = '0';
+        } else {
+            document.getElementById('connect-x').style.display = 'block';
+        }
+        
+        // TikTok Card
+        if (data.tiktok_connected) {
+            hasConnections = true;
+            document.getElementById('tiktok-card').style.display = 'block';
+            document.getElementById('tiktok-username').textContent = '@' + data.tiktok_account;
+            
+            // Load TikTok analytics
+            try {
+                const tiktokResponse = await fetch('/analytics/tiktok/overview');
+                const tiktokData = await tiktokResponse.json();
+                
+                if (tiktokData.current) {
+                    const metrics = document.getElementById('tiktok-metrics');
+                    metrics.innerHTML = `
+                        <div class="metric-item">
+                            <div class="metric-value">${formatNumber(tiktokData.current.followers || 0)}</div>
+                            <div class="metric-label">Followers</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${formatNumber(tiktokData.current.likes || 0)}</div>
+                            <div class="metric-label">Total Likes</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${(tiktokData.current.engagement_rate || 0).toFixed(1)}%</div>
+                            <div class="metric-label">Engagement</div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.error('Error loading TikTok analytics:', e);
             }
-        });
+        } else {
+            document.getElementById('connect-tiktok').style.display = 'block';
+        }
+        
+        // Load calendar events if user has connected channels
+        if (hasConnections) {
+            try {
+                const calendarResponse = await fetch('/content-calendar/api/events/date-range?' + 
+                    new URLSearchParams({
+                        start_date: new Date().toISOString().split('T')[0],
+                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        limit: 5
+                    })
+                );
+                const events = await calendarResponse.json();
+                
+                if (events && events.length > 0) {
+                    document.getElementById('calendar-section').style.display = 'block';
+                    const eventsContainer = document.getElementById('calendar-events');
+                    
+                    eventsContainer.innerHTML = events.map(event => {
+                        const eventDate = new Date(event.publish_date);
+                        const statusClass = `status-${event.status || 'draft'}`;
+                        const statusText = event.status ? event.status.replace('-', ' ') : 'draft';
+                        
+                        return `
+                            <div class="calendar-event">
+                                <div class="event-date">
+                                    <div class="event-day">${eventDate.getDate()}</div>
+                                    <div class="event-month">${eventDate.toLocaleDateString('en', { month: 'short' })}</div>
+                                </div>
+                                <div class="event-details">
+                                    <div class="event-title">${event.title}</div>
+                                    <div class="event-platform">${event.platform || 'Not specified'}</div>
+                                </div>
+                                <div class="event-status ${statusClass}">${statusText}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                console.error('Error loading calendar events:', e);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+    
     {% endif %}
 });
 </script>
