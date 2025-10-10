@@ -106,6 +106,7 @@ from app.routes.payment import bp as payment_bp
 from app.routes.thumbnail import bp as thumbnail_bp
 from app.routes.video_title import bp as video_title_bp
 from app.routes.video_tags import bp as video_tags_bp
+from app.routes.video_title_tags import bp as video_title_tags_bp
 from app.routes.video_description import bp as video_description_bp
 from app.routes.video_script import bp as video_script_bp
 from app.routes.competitors import bp as competitors_bp
@@ -144,6 +145,7 @@ app.register_blueprint(payment_bp)
 app.register_blueprint(thumbnail_bp)
 app.register_blueprint(video_title_bp)
 app.register_blueprint(video_tags_bp)
+app.register_blueprint(video_title_tags_bp)
 app.register_blueprint(video_description_bp)
 app.register_blueprint(video_script_bp)
 app.register_blueprint(competitors_bp)

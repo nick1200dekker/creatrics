@@ -1404,11 +1404,11 @@ html.dark .preview-card {
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
-                        <span>Title & Description Optimizer</span>
+                        <span>Title & Tags Generator</span>
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
-                        <span>Video Tags & SEO</span>
+                        <span>Description Optimizer</span>
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
@@ -1521,8 +1521,7 @@ html.dark .preview-card {
 const platformFeatures = {
     youtube: [
         { icon: 'ph-scroll', title: 'Create Script', desc: 'AI-powered scripts', url: '{{ url_for("video_script.video_script") }}' },
-        { icon: 'ph-sparkle', title: 'Generate Title', desc: 'Catchy video titles', url: '{{ url_for("video_title.video_title") }}' },
-        { icon: 'ph-hash', title: 'Find Tags', desc: 'SEO optimized tags', url: '{{ url_for("video_tags.video_tags") }}' },
+        { icon: 'ph-sparkle', title: 'Title & Tags', desc: 'Viral titles + SEO tags', url: '{{ url_for("video_title_tags.video_title_tags") }}' },
         { icon: 'ph-file-text', title: 'Write Description', desc: 'Engaging descriptions', url: '{{ url_for("video_description.video_description") }}' },
         { icon: 'ph-image', title: 'Design Thumbnail', desc: 'Eye-catching thumbnails', url: '{{ url_for("thumbnail.index") }}' },
         { icon: 'ph-video', title: 'Analyze Video', desc: 'Performance insights', url: '{{ url_for("analyze_video.analyze_video") }}' },

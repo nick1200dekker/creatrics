@@ -1003,20 +1003,11 @@
                 {% endif %}
 
                 {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_title %}
-                <a href="{{ url_for('video_title.video_title') }}"
-                   class="nav-subitem {% if request.endpoint and 'video_title' in request.endpoint %}active{% endif %}"
+                <a href="{{ url_for('video_title_tags.video_title_tags') }}"
+                   class="nav-subitem {% if request.endpoint and 'video_title_tags' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-sparkle"></i>
-                    <span>Video Title</span>
-                </a>
-                {% endif %}
-
-                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_tags %}
-                <a href="{{ url_for('video_tags.video_tags') }}"
-                   class="nav-subitem {% if request.endpoint and 'video_tags' in request.endpoint %}active{% endif %}"
-                   onclick="return BaseApp.checkGuestAccess(event, this)">
-                    <i class="ph ph-hash"></i>
-                    <span>Video Tags</span>
+                    <span>Title & Tags</span>
                 </a>
                 {% endif %}
 

@@ -1,0 +1,653 @@
+{% extends "base.html" %}
+
+{% block seo_meta %}
+<meta name="description" content="Generate viral YouTube video titles and optimized tags with AI. Create click-worthy titles and SEO-friendly tags that boost views and discoverability. Professional optimization made easy with Creatrics AI.">
+<meta name="keywords" content="AI video title generator, YouTube title creator, viral video titles, video tags optimizer, YouTube tags, SEO video optimization">
+{% endblock %}
+
+{% block title %}AI Video Title & Tags Generator - Create Viral YouTube Content | Creatrics{% endblock %}
+
+{% block additional_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/video_title.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/video_tags.css') }}">
+<style>
+/* Additional styles for combined view */
+#tagsSection {
+    margin-top: 1.5rem;
+}
+
+.title-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.title-item:hover {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.title-item.selected {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+html.dark .title-item:hover {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+html.dark .title-item.selected {
+    background: rgba(59, 130, 246, 0.15) !important;
+    border-color: rgba(96, 165, 250, 0.4) !important;
+}
+
+.title-action-btn.tags {
+    color: #8B5CF6;
+}
+
+.title-action-btn.tags:hover {
+    background: rgba(139, 92, 246, 0.1);
+}
+
+html.dark .title-action-btn.tags {
+    color: #A78BFA;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-panel">
+    <div class="generator-wrapper">
+        <!-- Header -->
+        <div class="generator-header">
+            <h1 class="generator-title">
+                <i class="ph ph-sparkle"></i>
+                Title & Tags Generator
+            </h1>
+        </div>
+
+        <!-- Content Area -->
+        <div class="generator-content">
+            <div class="editor-grid">
+                <!-- Left Panel - Input -->
+                <div class="input-section">
+                    <div class="input-panel">
+                        <!-- Video Type Selection -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="ph ph-video"></i>
+                                Video Type
+                            </label>
+                            <div class="video-type-toggle">
+                                <button class="type-btn active" onclick="setVideoType('long')" id="longFormBtn">
+                                    <i class="ph ph-film-script"></i>
+                                    Long Form
+                                </button>
+                                <button class="type-btn" onclick="setVideoType('short')" id="shortFormBtn">
+                                    <i class="ph ph-device-mobile"></i>
+                                    Shorts
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Video Description Input -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="ph ph-article"></i>
+                                Video Description or Script
+                            </label>
+                            <textarea class="input-textarea"
+                                      id="videoInput"
+                                      placeholder="Describe your video content, paste your script, or outline your main points. The more detail you provide, the better titles we can generate..."
+                                      maxlength="5000"
+                                      onkeyup="updateCharCount()"></textarea>
+                            <div class="char-count" id="charCount">0 / 5000</div>
+                        </div>
+
+                        <!-- Generate Titles Button -->
+                        <button class="generate-btn" onclick="generateTitles()" id="generateBtn">
+                            <i class="ph ph-sparkle"></i>
+                            Generate 10 Titles
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Results -->
+                <div class="output-section">
+                    <div class="results-panel">
+                        <div id="resultsContainer">
+                            <!-- Empty State -->
+                            <div class="empty-results">
+                                <i class="ph ph-sparkle empty-icon"></i>
+                                <div class="empty-title">Ready to Create</div>
+                                <div class="empty-text">Your AI-generated viral titles will appear here. Select a title to generate optimized tags.</div>
+                            </div>
+                        </div>
+
+                        <!-- Tags Section (Hidden Initially) -->
+                        <div id="tagsSection" style="display: none; margin-top: 1.5rem;">
+                            <div class="results-panel">
+                                <div id="tagsContainer">
+                                    <!-- Tags will appear here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// State management
+let currentVideoType = 'long';
+let currentTitles = [];
+let selectedTitle = null;
+let currentTags = [];
+let totalCharacters = 0;
+let isGenerating = false;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateCharCount();
+});
+
+// Set video type
+function setVideoType(type) {
+    currentVideoType = type;
+    document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+    if (type === 'long') {
+        document.getElementById('longFormBtn').classList.add('active');
+    } else {
+        document.getElementById('shortFormBtn').classList.add('active');
+    }
+}
+
+// Update character count
+function updateCharCount() {
+    const input = document.getElementById('videoInput');
+    const count = input.value.length;
+    document.getElementById('charCount').textContent = `${count} / 5000`;
+}
+
+// Generate titles
+async function generateTitles() {
+    const input = document.getElementById('videoInput').value.trim();
+
+    if (!input) {
+        showToast('Please enter your video description or script', 'error');
+        return;
+    }
+
+    if (isGenerating) return;
+
+    isGenerating = true;
+    const generateBtn = document.getElementById('generateBtn');
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="ph ph-spinner"></i> Generating Titles...';
+
+    // Hide tags section when regenerating
+    document.getElementById('tagsSection').style.display = 'none';
+    selectedTitle = null;
+
+    // Show loading state
+    document.getElementById('resultsContainer').innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Creating Viral Titles</div>
+            <div class="loading-subtext">Analyzing your content to generate click-worthy titles that drive engagement...</div>
+        </div>
+    `;
+
+    try {
+        const response = await fetch('/api/generate-video-titles', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                input: input,
+                type: currentVideoType
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentTitles = data.titles;
+            displayResults(data.titles);
+            showToast('Titles generated successfully! Select a title to generate tags.', 'success');
+        } else {
+            // Check if it's an insufficient credits error
+            if (data.error_type === 'insufficient_credits') {
+                document.getElementById('resultsContainer').innerHTML = `
+                    <div class="insufficient-credits-card">
+                        <div class="credit-icon-wrapper">
+                            <i class="ph ph-coins"></i>
+                        </div>
+                        <div class="credits-title">Insufficient Credits</div>
+                        <div class="credits-description">
+                            You need <strong>${data.required_credits?.toFixed(2) || '0.00'}</strong> credits but only have
+                            <strong>${data.current_credits?.toFixed(2) || '0.00'}</strong> credits.
+                        </div>
+                        <a href="/payment" class="upgrade-btn-primary">
+                            <i class="ph ph-crown"></i>
+                            Upgrade Plan
+                        </a>
+                    </div>
+                `;
+            } else {
+                throw new Error(data.error || 'Failed to generate titles');
+            }
+        }
+    } catch (error) {
+        console.error('Error generating titles:', error);
+        document.getElementById('resultsContainer').innerHTML = `
+            <div class="error-state">
+                <i class="ph ph-warning-circle error-icon"></i>
+                <div class="error-title">Generation Failed</div>
+                <div class="error-text">Unable to generate titles. Please try again.</div>
+            </div>
+        `;
+        showToast('Failed to generate titles', 'error');
+    } finally {
+        isGenerating = false;
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="ph ph-sparkle"></i> Generate 10 Titles';
+    }
+}
+
+// Display results
+function displayResults(titles) {
+    let html = `
+        <div class="results-header">
+            <h3 class="results-title">
+                <i class="ph ph-check-circle"></i>
+                Generated Titles (${titles.length})
+            </h3>
+            <div class="results-actions">
+                <button class="action-btn" onclick="copyAllTitles()" title="Copy all titles to clipboard">
+                    <i class="ph ph-copy"></i> Copy All
+                </button>
+            </div>
+        </div>
+
+        <div class="titles-content">
+            <div class="titles-list">
+    `;
+
+    titles.forEach((title, index) => {
+        html += `
+            <div class="title-item" id="title-item-${index}" onclick="selectTitle(${index})">
+                <span class="title-number">${index + 1}</span>
+                <span class="title-text" id="title-${index}">${escapeHtml(title)}</span>
+                <div class="title-actions">
+                    <button class="title-action-btn copy" onclick="event.stopPropagation(); copyTitle(${index})" title="Copy title">
+                        <i class="ph ph-copy"></i>
+                    </button>
+                    <button class="title-action-btn tags" onclick="event.stopPropagation(); generateTagsForTitle(${index})" title="Generate tags for this title">
+                        <i class="ph ph-hash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+            <div class="input-helper" style="margin-top: 1rem; text-align: center;">
+                <i class="ph ph-info"></i>
+                Click on a title or the <i class="ph ph-hash" style="font-size: 0.9em;"></i> button to generate optimized tags
+            </div>
+        </div>
+    `;
+
+    document.getElementById('resultsContainer').innerHTML = html;
+}
+
+// Select title and generate tags
+function selectTitle(index) {
+    generateTagsForTitle(index);
+}
+
+// Generate tags for selected title
+async function generateTagsForTitle(index) {
+    if (isGenerating) return;
+
+    selectedTitle = currentTitles[index];
+    const input = document.getElementById('videoInput').value.trim();
+
+    // Highlight selected title
+    document.querySelectorAll('.title-item').forEach((item, i) => {
+        if (i === index) {
+            item.style.background = 'rgba(59, 130, 246, 0.1)';
+            item.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+        } else {
+            item.style.background = '';
+            item.style.borderColor = '';
+        }
+    });
+
+    isGenerating = true;
+
+    // Show loading in tags section
+    document.getElementById('tagsSection').style.display = 'block';
+    document.getElementById('tagsContainer').innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Generating Tags</div>
+            <div class="loading-subtext">Creating optimized tags based on your selected title...</div>
+        </div>
+    `;
+
+    try {
+        // Combine input + selected title for better tag generation
+        const tagInput = `${input}\n\nVideo Title: ${selectedTitle}`;
+
+        const response = await fetch('/api/generate-video-tags', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                input: tagInput
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentTags = data.tags;
+            displayTags(data.tags);
+            showToast('Tags generated successfully!', 'success');
+        } else {
+            if (data.error_type === 'insufficient_credits') {
+                document.getElementById('tagsContainer').innerHTML = `
+                    <div class="insufficient-credits-card">
+                        <div class="credit-icon-wrapper">
+                            <i class="ph ph-coins"></i>
+                        </div>
+                        <div class="credits-title">Insufficient Credits</div>
+                        <div class="credits-description">
+                            You need <strong>${data.required_credits?.toFixed(2) || '0.00'}</strong> credits but only have
+                            <strong>${data.current_credits?.toFixed(2) || '0.00'}</strong> credits.
+                        </div>
+                        <a href="/payment" class="upgrade-btn-primary">
+                            <i class="ph ph-crown"></i>
+                            Upgrade Plan
+                        </a>
+                    </div>
+                `;
+            } else {
+                throw new Error(data.error || 'Failed to generate tags');
+            }
+        }
+    } catch (error) {
+        console.error('Error generating tags:', error);
+        document.getElementById('tagsContainer').innerHTML = `
+            <div class="error-state">
+                <i class="ph ph-warning-circle error-icon"></i>
+                <div class="error-title">Generation Failed</div>
+                <div class="error-text">Unable to generate tags. Please try again.</div>
+            </div>
+        `;
+        showToast('Failed to generate tags', 'error');
+    } finally {
+        isGenerating = false;
+    }
+}
+
+// Display tags
+function displayTags(tags) {
+    // Calculate total characters
+    totalCharacters = tags.join(', ').length;
+
+    // Determine character count status
+    let charStatus = 'good';
+    let charStatusClass = 'good';
+    let hintMessage = '';
+    let hintIcon = '✅';
+
+    if (totalCharacters < 400) {
+        charStatus = 'warning';
+        charStatusClass = 'warning';
+        hintMessage = `Add ${400 - totalCharacters} more characters for optimal reach`;
+        hintIcon = '⚠️';
+    } else if (totalCharacters > 500) {
+        charStatus = 'error';
+        charStatusClass = 'error';
+        hintMessage = `Remove ${totalCharacters - 500} characters to meet YouTube's limit`;
+        hintIcon = '⚠️';
+    } else {
+        hintMessage = 'Perfect! Your tags are optimized for YouTube';
+        hintIcon = '✅';
+    }
+
+    let html = `
+        <div class="results-header">
+            <div class="results-title-section">
+                <h3 class="results-title">
+                    <i class="ph ph-check-circle"></i>
+                    Generated Tags
+                </h3>
+                <div class="results-info">
+                    <div class="info-item">
+                        <i class="ph ph-hash"></i>
+                        <span class="info-label">Tags:</span>
+                        <span class="info-value">${tags.length}</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="ph ph-text-aa"></i>
+                        <span class="info-label">Characters:</span>
+                        <span class="info-value ${charStatusClass}">${totalCharacters}/500</span>
+                    </div>
+                </div>
+            </div>
+            <div class="results-actions">
+                <button class="action-btn" onclick="copyTags()" title="Copy all tags to clipboard">
+                    <i class="ph ph-copy"></i> Copy All
+                </button>
+                <button class="action-btn" onclick="editTags()" title="Edit tags">
+                    <i class="ph ph-pencil"></i> Edit
+                </button>
+            </div>
+        </div>
+
+        <div class="tags-content">
+            <div class="tags-list" id="tagsList">
+    `;
+
+    tags.forEach((tag, index) => {
+        html += `
+            <div class="tag-item" id="tag-${index}">
+                <span>${escapeHtml(tag)}</span>
+                <button class="tag-remove" onclick="removeTag(${index})" title="Remove tag">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+
+            <div class="char-count-section">
+                <div class="char-count-header">
+                    <span class="char-count-label">Character Usage</span>
+                    <span class="char-count-value ${charStatusClass}">${totalCharacters} / 500</span>
+                </div>
+                <div class="char-count-progress">
+                    <div class="char-count-fill ${charStatusClass}" style="width: ${Math.min(totalCharacters / 500 * 100, 100)}%"></div>
+                </div>
+                <div class="char-count-hint ${charStatusClass}">
+                    <span>${hintIcon}</span>
+                    <span>${hintMessage}</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('tagsContainer').innerHTML = html;
+}
+
+// Remove tag
+function removeTag(index) {
+    currentTags.splice(index, 1);
+    displayTags(currentTags);
+    showToast('Tag removed', 'info');
+}
+
+// Copy tags
+async function copyTags() {
+    const tagsText = currentTags.join(', ');
+
+    try {
+        await navigator.clipboard.writeText(tagsText);
+        showToast('Tags copied to clipboard!', 'success');
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        showToast('Failed to copy tags', 'error');
+    }
+}
+
+// Edit tags
+function editTags() {
+    if (!currentTags || currentTags.length === 0) {
+        showToast('No tags to edit', 'error');
+        return;
+    }
+
+    const currentTagsText = currentTags.join(', ');
+    const modal = document.createElement('div');
+    modal.className = 'edit-modal';
+    modal.innerHTML = `
+        <div class="edit-modal-content">
+            <div class="edit-modal-header">
+                <h3>Edit Tags</h3>
+                <button onclick="closeEditModal()" class="close-btn">&times;</button>
+            </div>
+            <div class="edit-modal-body">
+                <textarea id="editTagsTextarea" class="edit-textarea" placeholder="Edit your tags here (separate with commas)">${escapeHtml(currentTagsText)}</textarea>
+                <div class="char-count" id="editCharCount"></div>
+            </div>
+            <div class="edit-modal-footer">
+                <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-save" onclick="saveTags()">Save Tags</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const textarea = document.getElementById('editTagsTextarea');
+    const updateEditCharCount = () => {
+        const count = textarea.value.length;
+        const countEl = document.getElementById('editCharCount');
+        countEl.textContent = `${count}/500 characters`;
+        countEl.className = 'char-count ' + (count > 500 ? 'error' : count > 450 ? 'warning' : 'success');
+    };
+
+    textarea.addEventListener('input', updateEditCharCount);
+    updateEditCharCount();
+    textarea.focus();
+    textarea.select();
+}
+
+function closeEditModal() {
+    const modal = document.querySelector('.edit-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function saveTags() {
+    const textarea = document.getElementById('editTagsTextarea');
+    const newTagsText = textarea.value.trim();
+
+    if (!newTagsText) {
+        showToast('Tags cannot be empty', 'error');
+        return;
+    }
+
+    if (newTagsText.length > 500) {
+        showToast('Tags exceed 500 character limit', 'error');
+        return;
+    }
+
+    const newTags = newTagsText.split(',').map(tag => tag.trim()).filter(tag => tag);
+    currentTags = newTags;
+    displayTags(currentTags);
+    closeEditModal();
+    showToast('Tags updated successfully!', 'success');
+}
+
+// Copy single title
+async function copyTitle(index) {
+    const title = currentTitles[index];
+
+    try {
+        await navigator.clipboard.writeText(title);
+        showToast('Title copied to clipboard!', 'success');
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        showToast('Failed to copy title', 'error');
+    }
+}
+
+// Copy all titles
+async function copyAllTitles() {
+    if (currentTitles && currentTitles.length > 0) {
+        const allTitles = currentTitles.map((title, index) => `${index + 1}. ${title}`).join('\n');
+
+        try {
+            await navigator.clipboard.writeText(allTitles);
+            showToast('All titles copied to clipboard!', 'success');
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            showToast('Failed to copy titles', 'error');
+        }
+    }
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+
+    let icon = 'ph-check-circle';
+    if (type === 'error') icon = 'ph-x-circle';
+    else if (type === 'info') icon = 'ph-info';
+
+    toast.innerHTML = `
+        <i class="ph ${icon}"></i>
+        <span class="toast-text">${message}</span>
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add('show'), 100);
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+</script>
+{% endblock %}
