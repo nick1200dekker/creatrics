@@ -36,13 +36,14 @@ html.dark .dashboard-wrapper {
     z-index: 1;
 }
 
-/* Header section with welcome */
+/* Header section with welcome - Increased height */
 .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
-    padding: 1.5rem;
+    padding: 2rem;
+    min-height: 120px;
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
     border-radius: 16px;
     border: 1px solid rgba(59, 130, 246, 0.1);
@@ -58,10 +59,10 @@ html.dark .dashboard-header {
 }
 
 .welcome-title {
-    font-size: 1.75rem;
+    font-size: 2rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
 }
 
 .welcome-title span {
@@ -69,7 +70,7 @@ html.dark .dashboard-header {
 }
 
 .welcome-subtitle {
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: var(--text-secondary);
 }
 
@@ -84,7 +85,7 @@ html.dark .dashboard-header {
 }
 
 .stat-value {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
@@ -252,20 +253,7 @@ html.dark .metric-item:hover {
     margin-top: 0.25rem;
 }
 
-.metric-change {
-    font-size: 0.75rem;
-    margin-top: 0.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-}
-
-.metric-change.positive { color: #10B981; }
-.metric-change.negative { color: #EF4444; }
-.metric-change.neutral { color: var(--text-tertiary); }
-
-/* Quick Actions */
+/* Quick Actions - Horizontal Scrollable */
 .quick-actions {
     padding: 1.25rem;
     border-top: 1px solid var(--border-primary);
@@ -283,13 +271,21 @@ html.dark .quick-actions {
 }
 
 .action-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    display: flex;
     gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    /* Hide scrollbar but keep functionality */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.action-buttons::-webkit-scrollbar {
+    display: none;
 }
 
 .action-btn {
-    padding: 0.75rem;
+    padding: 0.75rem 1rem;
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
     border-radius: 8px;
@@ -302,6 +298,9 @@ html.dark .quick-actions {
     gap: 0.5rem;
     transition: all 0.2s ease;
     text-align: center;
+    min-width: 110px;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 html.dark .action-btn {
@@ -323,6 +322,10 @@ html.dark .action-btn:hover {
 .action-btn i {
     font-size: 1.25rem;
     color: #3B82F6;
+}
+
+.action-btn span {
+    font-size: 0.75rem;
 }
 
 /* Connect Channel Card */
@@ -710,6 +713,12 @@ html.dark .preview-card {
         flex-direction: column;
         gap: 1.5rem;
         text-align: center;
+        min-height: auto;
+        padding: 1.5rem;
+    }
+    
+    .welcome-title {
+        font-size: 1.5rem;
     }
     
     .header-stats {
@@ -722,10 +731,6 @@ html.dark .preview-card {
     }
     
     .channel-metrics {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .action-buttons {
         grid-template-columns: repeat(2, 1fr);
     }
     
@@ -753,7 +758,7 @@ html.dark .preview-card {
         <!-- Header with Welcome and Stats -->
         <div class="dashboard-header">
             <div class="welcome-content">
-                <h1 class="welcome-title">Welcome back, <span id="username-display">{{ g.user.get('data', {}).get('username', 'Creator') }}</span>!</h1>
+                <h1 class="welcome-title">Welcome back, <span id="username-display">{{ g.user.get('data', {}).get('username', 'Creator') }}</span></h1>
                 <p class="welcome-subtitle">Here's your content performance overview</p>
             </div>
             <div class="header-stats">
@@ -810,17 +815,33 @@ html.dark .preview-card {
                 <div class="quick-actions">
                     <div class="quick-actions-title">What would you like to do today?</div>
                     <div class="action-buttons">
-                        <a href="{{ url_for('competitors.competitors') }}" class="action-btn">
-                            <i class="ph ph-users-three"></i>
-                            <span>Analyze Competitors</span>
+                        <a href="{{ url_for('video_script.video_script') }}" class="action-btn">
+                            <i class="ph ph-scroll"></i>
+                            <span>Video Script</span>
+                        </a>
+                        <a href="{{ url_for('video_title.video_title') }}" class="action-btn">
+                            <i class="ph ph-sparkle"></i>
+                            <span>Video Title</span>
+                        </a>
+                        <a href="{{ url_for('video_tags.video_tags') }}" class="action-btn">
+                            <i class="ph ph-hash"></i>
+                            <span>Video Tags</span>
+                        </a>
+                        <a href="{{ url_for('video_description.video_description') }}" class="action-btn">
+                            <i class="ph ph-file-text"></i>
+                            <span>Description</span>
                         </a>
                         <a href="{{ url_for('thumbnail.index') }}" class="action-btn">
                             <i class="ph ph-image"></i>
-                            <span>Make Thumbnail</span>
+                            <span>Thumbnail</span>
                         </a>
                         <a href="{{ url_for('analyze_video.analyze_video') }}" class="action-btn">
-                            <i class="ph ph-magnifying-glass"></i>
-                            <span>Find Videos</span>
+                            <i class="ph ph-video"></i>
+                            <span>Analyze Video</span>
+                        </a>
+                        <a href="{{ url_for('competitors.competitors') }}" class="action-btn">
+                            <i class="ph ph-users-three"></i>
+                            <span>Competitors</span>
                         </a>
                     </div>
                 </div>
@@ -864,15 +885,19 @@ html.dark .preview-card {
                     <div class="action-buttons">
                         <a href="{{ url_for('x_post_editor.x_post_editor') }}" class="action-btn">
                             <i class="ph ph-pencil-simple"></i>
-                            <span>Write Post</span>
+                            <span>Post Editor</span>
+                        </a>
+                        <a href="{{ url_for('reply_guy.index') }}" class="action-btn">
+                            <i class="ph ph-chat-circle-text"></i>
+                            <span>Reply Guy</span>
                         </a>
                         <a href="{{ url_for('clip_spaces.index') }}" class="action-btn">
                             <i class="ph ph-scissors"></i>
                             <span>Clip Spaces</span>
                         </a>
                         <a href="{{ url_for('niche.index') }}" class="action-btn">
-                            <i class="ph ph-fire"></i>
-                            <span>What's Hot</span>
+                            <i class="ph ph-compass"></i>
+                            <span>Niche Radar</span>
                         </a>
                     </div>
                 </div>
@@ -907,7 +932,7 @@ html.dark .preview-card {
                     </div>
                     <div class="metric-item">
                         <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
-                        <div class="metric-label">Engagement</div>
+                        <div class="metric-label">Engagement Rate</div>
                     </div>
                 </div>
                 
@@ -916,15 +941,19 @@ html.dark .preview-card {
                     <div class="action-buttons">
                         <a href="{{ url_for('hook_generator.hook_generator') }}" class="action-btn">
                             <i class="ph ph-megaphone-simple"></i>
-                            <span>Create Hook</span>
+                            <span>Hook Generator</span>
+                        </a>
+                        <a href="{{ url_for('titles_hashtags.titles_hashtags') }}" class="action-btn">
+                            <i class="ph ph-hash"></i>
+                            <span>Titles & Tags</span>
                         </a>
                         <a href="{{ url_for('trending_sounds.trending_sounds') }}" class="action-btn">
                             <i class="ph ph-music-notes"></i>
-                            <span>Find Sounds</span>
+                            <span>Trending Sounds</span>
                         </a>
                         <a href="{{ url_for('trend_finder.trend_finder') }}" class="action-btn">
                             <i class="ph ph-trend-up"></i>
-                            <span>Find Trends</span>
+                            <span>Trend Finder</span>
                         </a>
                     </div>
                 </div>
@@ -1021,11 +1050,19 @@ html.dark .preview-card {
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
-                        <span>Title Optimizer</span>
+                        <span>Title & Description Optimizer</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Video Tags & SEO</span>
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
                         <span>Competitor Analysis</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Video Performance Analytics</span>
                     </div>
                 </div>
             </div>
@@ -1039,11 +1076,11 @@ html.dark .preview-card {
                 <div class="preview-features">
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
-                        <span>Thread Builder</span>
+                        <span>Thread & Post Editor</span>
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
-                        <span>Reply Generator</span>
+                        <span>Reply Guy Generator</span>
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
@@ -1051,7 +1088,11 @@ html.dark .preview-card {
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
-                        <span>Trend Finder</span>
+                        <span>Niche Radar</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Engagement Analytics</span>
                     </div>
                 </div>
             </div>
@@ -1069,15 +1110,45 @@ html.dark .preview-card {
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
-                        <span>Trending Sounds</span>
+                        <span>Titles & Hashtags</span>
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
-                        <span>Hashtag Research</span>
+                        <span>Trending Sounds Finder</span>
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
-                        <span>Trend Tracking</span>
+                        <span>Trend Tracker</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Performance Analytics</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-card">
+                <div class="preview-icon">
+                    <i class="ph ph-folder-open"></i>
+                </div>
+                <h3>Content Management</h3>
+                <p>Organize and plan your content strategy</p>
+                <div class="preview-features">
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Brain Dump - Capture Ideas</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Mind Map - Visualize Concepts</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Content Wiki - Knowledge Base</span>
+                    </div>
+                    <div class="preview-feature">
+                        <i class="ph ph-check-circle"></i>
+                        <span>Content Calendar - Plan & Schedule</span>
                     </div>
                 </div>
             </div>
@@ -1203,6 +1274,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 
                 if (tiktokData.current) {
                     const metrics = document.getElementById('tiktok-metrics');
+                    const engagementRate = tiktokData.current.engagement_rate || 0;
                     metrics.innerHTML = `
                         <div class="metric-item">
                             <div class="metric-value">${formatNumber(tiktokData.current.followers || 0)}</div>
@@ -1213,8 +1285,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <div class="metric-label">Total Likes</div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-value">${(tiktokData.current.engagement_rate || 0).toFixed(1)}%</div>
-                            <div class="metric-label">Engagement</div>
+                            <div class="metric-value">${engagementRate.toFixed(1)}%</div>
+                            <div class="metric-label">Engagement Rate</div>
                         </div>
                     `;
                 }
