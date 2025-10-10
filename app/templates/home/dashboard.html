@@ -334,12 +334,11 @@ html.dark .action-btn:hover {
     border: 2px dashed var(--border-primary);
     opacity: 0.7;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 320px;
+    flex-direction: column;
     text-align: center;
     padding: 2rem;
     transition: all 0.3s ease;
+    height: 100%;
 }
 
 html.dark .connect-channel-card {
@@ -352,6 +351,14 @@ html.dark .connect-channel-card {
     border-color: rgba(59, 130, 246, 0.4);
 }
 
+.connect-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+}
+
 .connect-content h3 {
     font-size: 1.125rem;
     color: var(--text-primary);
@@ -362,6 +369,7 @@ html.dark .connect-channel-card {
     font-size: 0.875rem;
     color: var(--text-tertiary);
     margin-bottom: 1.5rem;
+    min-height: 2.5rem;
 }
 
 .connect-btn {
@@ -378,6 +386,7 @@ html.dark .connect-channel-card {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    margin-top: auto;
 }
 
 .connect-btn:hover {
@@ -521,14 +530,59 @@ html.dark .status-ready { background: #064E3B; color: #6EE7B7; }
 
 .empty-calendar {
     text-align: center;
-    padding: 2rem;
-    color: var(--text-tertiary);
+    padding: 3rem 2rem;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    border: 2px dashed var(--border-primary);
+    opacity: 0.7;
 }
 
-.empty-calendar i {
+.empty-calendar > i {
     font-size: 3rem;
-    opacity: 0.3;
+    color: var(--text-tertiary);
     margin-bottom: 1rem;
+}
+
+.empty-calendar h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-calendar p {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    margin-bottom: 1.5rem;
+}
+
+.empty-calendar .plan-content-btn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.empty-calendar .plan-content-btn i {
+    font-size: 1rem;
+}
+
+.empty-calendar .plan-content-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+html.dark .empty-calendar {
+    background: rgba(63, 63, 70, 0.3);
 }
 
 /* Guest Hero */
@@ -653,7 +707,7 @@ html.dark .preview-card {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
 }
 
 .preview-card p {
@@ -669,6 +723,7 @@ html.dark .preview-card {
     gap: 0.5rem;
     text-align: left;
     margin-top: 1rem;
+    min-height: 180px;
 }
 
 .preview-feature {
@@ -677,11 +732,17 @@ html.dark .preview-card {
     gap: 0.5rem;
     font-size: 0.813rem;
     color: var(--text-secondary);
+    min-height: 24px;
 }
 
 .preview-feature i {
     color: #10B981;
     font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.preview-feature span {
+    line-height: 1.3;
 }
 
 /* Loading states */
@@ -695,6 +756,11 @@ html.dark .preview-card {
 @keyframes loading {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Responsive */
@@ -817,23 +883,23 @@ html.dark .preview-card {
                     <div class="action-buttons">
                         <a href="{{ url_for('video_script.video_script') }}" class="action-btn">
                             <i class="ph ph-scroll"></i>
-                            <span>Video Script</span>
+                            <span>Create Script</span>
                         </a>
                         <a href="{{ url_for('video_title.video_title') }}" class="action-btn">
                             <i class="ph ph-sparkle"></i>
-                            <span>Video Title</span>
+                            <span>Generate Title</span>
                         </a>
                         <a href="{{ url_for('video_tags.video_tags') }}" class="action-btn">
                             <i class="ph ph-hash"></i>
-                            <span>Video Tags</span>
+                            <span>Find Tags</span>
                         </a>
                         <a href="{{ url_for('video_description.video_description') }}" class="action-btn">
                             <i class="ph ph-file-text"></i>
-                            <span>Description</span>
+                            <span>Write Description</span>
                         </a>
                         <a href="{{ url_for('thumbnail.index') }}" class="action-btn">
                             <i class="ph ph-image"></i>
-                            <span>Thumbnail</span>
+                            <span>Design Thumbnail</span>
                         </a>
                         <a href="{{ url_for('analyze_video.analyze_video') }}" class="action-btn">
                             <i class="ph ph-video"></i>
@@ -841,7 +907,7 @@ html.dark .preview-card {
                         </a>
                         <a href="{{ url_for('competitors.competitors') }}" class="action-btn">
                             <i class="ph ph-users-three"></i>
-                            <span>Competitors</span>
+                            <span>Track Competitors</span>
                         </a>
                     </div>
                 </div>
@@ -885,11 +951,11 @@ html.dark .preview-card {
                     <div class="action-buttons">
                         <a href="{{ url_for('x_post_editor.x_post_editor') }}" class="action-btn">
                             <i class="ph ph-pencil-simple"></i>
-                            <span>Post Editor</span>
+                            <span>Write Posts</span>
                         </a>
                         <a href="{{ url_for('reply_guy.index') }}" class="action-btn">
                             <i class="ph ph-chat-circle-text"></i>
-                            <span>Reply Guy</span>
+                            <span>Generate Replies</span>
                         </a>
                         <a href="{{ url_for('clip_spaces.index') }}" class="action-btn">
                             <i class="ph ph-scissors"></i>
@@ -897,7 +963,7 @@ html.dark .preview-card {
                         </a>
                         <a href="{{ url_for('niche.index') }}" class="action-btn">
                             <i class="ph ph-compass"></i>
-                            <span>Niche Radar</span>
+                            <span>Find Trends</span>
                         </a>
                     </div>
                 </div>
@@ -941,19 +1007,19 @@ html.dark .preview-card {
                     <div class="action-buttons">
                         <a href="{{ url_for('hook_generator.hook_generator') }}" class="action-btn">
                             <i class="ph ph-megaphone-simple"></i>
-                            <span>Hook Generator</span>
+                            <span>Create Hooks</span>
                         </a>
                         <a href="{{ url_for('titles_hashtags.titles_hashtags') }}" class="action-btn">
                             <i class="ph ph-hash"></i>
-                            <span>Titles & Tags</span>
+                            <span>Generate Hashtags</span>
                         </a>
                         <a href="{{ url_for('trending_sounds.trending_sounds') }}" class="action-btn">
                             <i class="ph ph-music-notes"></i>
-                            <span>Trending Sounds</span>
+                            <span>Find Sounds</span>
                         </a>
                         <a href="{{ url_for('trend_finder.trend_finder') }}" class="action-btn">
                             <i class="ph ph-trend-up"></i>
-                            <span>Trend Finder</span>
+                            <span>Discover Trends</span>
                         </a>
                     </div>
                 </div>
@@ -1007,10 +1073,7 @@ html.dark .preview-card {
             </div>
             
             <div class="calendar-events" id="calendar-events">
-                <div class="empty-calendar">
-                    <i class="ph ph-calendar-x"></i>
-                    <p>No upcoming content scheduled</p>
-                </div>
+                <!-- Calendar events will be loaded here -->
             </div>
         </div>
 
@@ -1038,7 +1101,6 @@ html.dark .preview-card {
                     <i class="ph ph-youtube-logo"></i>
                 </div>
                 <h3>YouTube Suite</h3>
-                <p>Everything you need to grow your YouTube channel</p>
                 <div class="preview-features">
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
@@ -1062,7 +1124,7 @@ html.dark .preview-card {
                     </div>
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
-                        <span>Video Performance Analytics</span>
+                        <span>Performance Analytics</span>
                     </div>
                 </div>
             </div>
@@ -1072,7 +1134,6 @@ html.dark .preview-card {
                     <i class="ph ph-x-logo"></i>
                 </div>
                 <h3>X Toolkit</h3>
-                <p>Master the art of engagement on X</p>
                 <div class="preview-features">
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
@@ -1094,6 +1155,10 @@ html.dark .preview-card {
                         <i class="ph ph-check-circle"></i>
                         <span>Engagement Analytics</span>
                     </div>
+                    <div class="preview-feature" style="visibility: hidden;">
+                        <i class="ph ph-check-circle"></i>
+                        <span>&nbsp;</span>
+                    </div>
                 </div>
             </div>
 
@@ -1102,7 +1167,6 @@ html.dark .preview-card {
                     <i class="ph ph-tiktok-logo"></i>
                 </div>
                 <h3>TikTok Tools</h3>
-                <p>Create viral content that resonates</p>
                 <div class="preview-features">
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
@@ -1124,6 +1188,10 @@ html.dark .preview-card {
                         <i class="ph ph-check-circle"></i>
                         <span>Performance Analytics</span>
                     </div>
+                    <div class="preview-feature" style="visibility: hidden;">
+                        <i class="ph ph-check-circle"></i>
+                        <span>&nbsp;</span>
+                    </div>
                 </div>
             </div>
 
@@ -1132,7 +1200,6 @@ html.dark .preview-card {
                     <i class="ph ph-folder-open"></i>
                 </div>
                 <h3>Content Management</h3>
-                <p>Organize and plan your content strategy</p>
                 <div class="preview-features">
                     <div class="preview-feature">
                         <i class="ph ph-check-circle"></i>
@@ -1274,7 +1341,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 
                 if (tiktokData.current) {
                     const metrics = document.getElementById('tiktok-metrics');
-                    const engagementRate = tiktokData.current.engagement_rate || 0;
+                    const engagementRate = tiktokData.current.engagement_rate !== undefined ? tiktokData.current.engagement_rate : 0;
+                    const displayEngagement = `${engagementRate.toFixed(1)}%`;
                     metrics.innerHTML = `
                         <div class="metric-item">
                             <div class="metric-value">${formatNumber(tiktokData.current.followers || 0)}</div>
@@ -1285,7 +1353,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <div class="metric-label">Total Likes</div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-value">${engagementRate.toFixed(1)}%</div>
+                            <div class="metric-value">${displayEngagement}</div>
                             <div class="metric-label">Engagement Rate</div>
                         </div>
                     `;
@@ -1297,45 +1365,82 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('connect-tiktok').style.display = 'block';
         }
         
-        // Load calendar events if user has connected channels
-        if (hasConnections) {
-            try {
-                const calendarResponse = await fetch('/content-calendar/api/events/date-range?' + 
-                    new URLSearchParams({
-                        start_date: new Date().toISOString().split('T')[0],
-                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        limit: 5
-                    })
-                );
-                const events = await calendarResponse.json();
-                
-                if (events && events.length > 0) {
-                    document.getElementById('calendar-section').style.display = 'block';
-                    const eventsContainer = document.getElementById('calendar-events');
-                    
-                    eventsContainer.innerHTML = events.map(event => {
-                        const eventDate = new Date(event.publish_date);
-                        const statusClass = `status-${event.status || 'draft'}`;
-                        const statusText = event.status ? event.status.replace('-', ' ') : 'draft';
-                        
-                        return `
-                            <div class="calendar-event">
-                                <div class="event-date">
-                                    <div class="event-day">${eventDate.getDate()}</div>
-                                    <div class="event-month">${eventDate.toLocaleDateString('en', { month: 'short' })}</div>
-                                </div>
-                                <div class="event-details">
-                                    <div class="event-title">${event.title}</div>
-                                    <div class="event-platform">${event.platform || 'Not specified'}</div>
-                                </div>
-                                <div class="event-status ${statusClass}">${statusText}</div>
+        // Always show calendar section for logged in users
+        const calendarSection = document.getElementById('calendar-section');
+        const eventsContainer = document.getElementById('calendar-events');
+
+        // Show calendar section
+        calendarSection.style.display = 'block';
+
+        // Show loading state initially
+        eventsContainer.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
+                <i class="ph ph-circle-notch" style="font-size: 2rem; animation: spin 1s linear infinite;"></i>
+                <p style="margin-top: 1rem;">Loading calendar events...</p>
+            </div>
+        `;
+
+        try {
+            const calendarResponse = await fetch('/content-calendar/api/events/date-range?' +
+                new URLSearchParams({
+                    start_date: new Date().toISOString().split('T')[0],
+                    end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    limit: 5
+                })
+            );
+
+            const events = await calendarResponse.json();
+
+            // Clear loading state
+            if (events && events.length > 0) {
+                // Show the events
+                eventsContainer.innerHTML = events.map(event => {
+                    const eventDate = new Date(event.publish_date);
+                    const statusClass = `status-${event.status || 'draft'}`;
+                    const statusText = event.status ? event.status.replace('-', ' ') : 'draft';
+
+                    return `
+                        <div class="calendar-event">
+                            <div class="event-date">
+                                <div class="event-day">${eventDate.getDate()}</div>
+                                <div class="event-month">${eventDate.toLocaleDateString('en', { month: 'short' })}</div>
                             </div>
-                        `;
-                    }).join('');
-                }
-            } catch (e) {
-                console.error('Error loading calendar events:', e);
+                            <div class="event-details">
+                                <div class="event-title">${event.title}</div>
+                                <div class="event-platform">${event.platform || 'Not specified'}</div>
+                            </div>
+                            <div class="event-status ${statusClass}">${statusText}</div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                // Show the empty state with call-to-action when no events
+                eventsContainer.innerHTML = `
+                    <div class="empty-calendar">
+                        <i class="ph ph-calendar-plus"></i>
+                        <h4>Start Planning Your Content</h4>
+                        <p>Schedule your posts, track deadlines, and never miss an upload again</p>
+                        <a href="/content-calendar" class="plan-content-btn">
+                            <i class="ph ph-plus"></i>
+                            Plan Content
+                        </a>
+                    </div>
+                `;
             }
+        } catch (e) {
+            console.error('Error loading calendar events:', e);
+            // Show empty state on error
+            eventsContainer.innerHTML = `
+                <div class="empty-calendar">
+                    <i class="ph ph-calendar-plus"></i>
+                    <h4>Start Planning Your Content</h4>
+                    <p>Schedule your posts, track deadlines, and never miss an upload again</p>
+                    <a href="/content-calendar" class="plan-content-btn">
+                        <i class="ph ph-plus"></i>
+                        Plan Content
+                    </a>
+                </div>
+            `;
         }
         
     } catch (error) {
