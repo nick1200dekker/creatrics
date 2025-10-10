@@ -77,11 +77,7 @@
                     </div>
                     <div class="permission-item">
                         <input type="checkbox" id="perm_video_title" checked>
-                        <label for="perm_video_title">Video Title</label>
-                    </div>
-                    <div class="permission-item">
-                        <input type="checkbox" id="perm_video_tags" checked>
-                        <label for="perm_video_tags">Video Tags</label>
+                        <label for="perm_video_title">Title & Tags</label>
                     </div>
                     <div class="permission-item">
                         <input type="checkbox" id="perm_video_description" checked>
@@ -92,8 +88,8 @@
                         <label for="perm_thumbnail">Thumbnail</label>
                     </div>
                     <div class="permission-item">
-                        <input type="checkbox" id="perm_analytics" checked>
-                        <label for="perm_analytics">Analytics</label>
+                        <input type="checkbox" id="perm_analyze_video" checked>
+                        <label for="perm_analyze_video">Analyze Video</label>
                     </div>
                     <div class="permission-item">
                         <input type="checkbox" id="perm_competitors" checked>
@@ -174,6 +170,19 @@
                     <div class="permission-item">
                         <input type="checkbox" id="perm_content_calendar" checked>
                         <label for="perm_content_calendar">Content Calendar</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Permissions -->
+            <div class="permission-category" style="margin-top: 1.5rem;">
+                <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ph ph-chart-line"></i> Analytics
+                </h3>
+                <div class="permissions-grid">
+                    <div class="permission-item">
+                        <input type="checkbox" id="perm_analytics" checked>
+                        <label for="perm_analytics">Analytics (All Platforms)</label>
                     </div>
                 </div>
             </div>
@@ -292,10 +301,11 @@ function updateUIForWorkspace() {
 
                 // Define permission categories
                 const categories = {
-                    'YouTube': ['video_script', 'video_title', 'video_tags', 'video_description', 'thumbnail', 'analytics', 'competitors'],
+                    'YouTube': ['video_script', 'video_title', 'video_description', 'thumbnail', 'analyze_video', 'competitors'],
                     'X (Twitter)': ['x_post_editor', 'reply_guy', 'clip_spaces', 'niche'],
                     'TikTok': ['hook_generator', 'titles_hashtags', 'trending_sounds', 'trend_finder'],
-                    'Content Hub': ['brain_dump', 'mind_map', 'content_wiki', 'content_calendar']
+                    'Content Hub': ['brain_dump', 'mind_map', 'content_wiki', 'content_calendar'],
+                    'Analytics': ['analytics']
                 };
 
                 let permissionHTML = '<h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-secondary);">Your Permissions:</h3>';
@@ -308,7 +318,8 @@ function updateUIForWorkspace() {
                             'YouTube': 'ph-youtube-logo',
                             'X (Twitter)': 'ph-x-logo',
                             'TikTok': 'ph-tiktok-logo',
-                            'Content Hub': 'ph-folder-open'
+                            'Content Hub': 'ph-folder-open',
+                            'Analytics': 'ph-chart-line'
                         }[category];
 
                         permissionHTML += `
@@ -430,10 +441,10 @@ async function sendInvite() {
         // YouTube
         video_script: document.getElementById('perm_video_script').checked,
         video_title: document.getElementById('perm_video_title').checked,
-        video_tags: document.getElementById('perm_video_tags').checked,
+        video_tags: document.getElementById('perm_video_title').checked, // Same as video_title for backward compatibility
         video_description: document.getElementById('perm_video_description').checked,
         thumbnail: document.getElementById('perm_thumbnail').checked,
-        analytics: document.getElementById('perm_analytics').checked,
+        analyze_video: document.getElementById('perm_analyze_video').checked,
         competitors: document.getElementById('perm_competitors').checked,
         // X (Twitter)
         x_post_editor: document.getElementById('perm_x_post_editor').checked,
@@ -449,7 +460,9 @@ async function sendInvite() {
         brain_dump: document.getElementById('perm_brain_dump').checked,
         mind_map: document.getElementById('perm_mind_map').checked,
         content_wiki: document.getElementById('perm_content_wiki').checked,
-        content_calendar: document.getElementById('perm_content_calendar').checked
+        content_calendar: document.getElementById('perm_content_calendar').checked,
+        // Analytics
+        analytics: document.getElementById('perm_analytics').checked
     };
 
     try {
@@ -489,11 +502,10 @@ function editPermissions(memberId, permissions) {
             icon: 'ph-youtube-logo',
             features: [
                 { id: 'video_script', label: 'Video Script' },
-                { id: 'video_title', label: 'Video Title' },
-                { id: 'video_tags', label: 'Video Tags' },
+                { id: 'video_title', label: 'Title & Tags' },
                 { id: 'video_description', label: 'Video Description' },
                 { id: 'thumbnail', label: 'Thumbnail' },
-                { id: 'analytics', label: 'Analytics' },
+                { id: 'analyze_video', label: 'Analyze Video' },
                 { id: 'competitors', label: 'Competitors' }
             ]
         },
@@ -526,6 +538,13 @@ function editPermissions(memberId, permissions) {
                 { id: 'content_wiki', label: 'Content Wiki' },
                 { id: 'content_calendar', label: 'Content Calendar' }
             ]
+        },
+        {
+            name: 'Analytics',
+            icon: 'ph-chart-line',
+            features: [
+                { id: 'analytics', label: 'Analytics (All Platforms)' }
+            ]
         }
     ];
 
@@ -555,10 +574,10 @@ async function savePermissions() {
         // YouTube
         video_script: document.getElementById('modal_perm_video_script').checked,
         video_title: document.getElementById('modal_perm_video_title').checked,
-        video_tags: document.getElementById('modal_perm_video_tags').checked,
+        video_tags: document.getElementById('modal_perm_video_title').checked, // Same as video_title for backward compatibility
         video_description: document.getElementById('modal_perm_video_description').checked,
         thumbnail: document.getElementById('modal_perm_thumbnail').checked,
-        analytics: document.getElementById('modal_perm_analytics').checked,
+        analyze_video: document.getElementById('modal_perm_analyze_video').checked,
         competitors: document.getElementById('modal_perm_competitors').checked,
         // X (Twitter)
         x_post_editor: document.getElementById('modal_perm_x_post_editor').checked,
@@ -574,7 +593,9 @@ async function savePermissions() {
         brain_dump: document.getElementById('modal_perm_brain_dump').checked,
         mind_map: document.getElementById('modal_perm_mind_map').checked,
         content_wiki: document.getElementById('modal_perm_content_wiki').checked,
-        content_calendar: document.getElementById('modal_perm_content_calendar').checked
+        content_calendar: document.getElementById('modal_perm_content_calendar').checked,
+        // Analytics
+        analytics: document.getElementById('modal_perm_analytics').checked
     };
 
     try {
