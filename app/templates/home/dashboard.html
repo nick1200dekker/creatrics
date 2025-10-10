@@ -317,7 +317,7 @@ html.dark .quick-actions-section {
 
 @keyframes autoScroll {
     0% { transform: translateX(0); }
-    100% { transform: translateX(calc(-100% - 1rem)); }
+    100% { transform: translateX(-50%); }
 }
 
 /* Action Cards - New Design */
@@ -1571,8 +1571,10 @@ function startAutoScroll() {
     const track = document.getElementById('carousel-track');
     if (!track) return;
 
-    // Clone items for infinite scroll
+    // Clone items for seamless infinite scroll
     const items = Array.from(track.children);
+
+    // Duplicate the items once (creates seamless loop)
     items.forEach(item => {
         const clone = item.cloneNode(true);
         track.appendChild(clone);
