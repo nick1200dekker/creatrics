@@ -248,16 +248,29 @@ class XContentSuggestions:
 
 Based on these posts, identify:
 1. The creator's niche and main topics
-2. Their writing style and tone
+2. Their EXACT writing style (tone, formatting, sentence structure, paragraph breaks, emoji usage, capitalization patterns)
 3. What type of content gets the most engagement
 4. Patterns in their successful posts
 
+CRITICAL: You must PERFECTLY MIMIC their writing style. Study:
+- How they structure sentences (short vs long)
+- How they use line breaks and spacing
+- Their punctuation patterns
+- Their emoji placement and frequency
+- Their capitalization style
+- Their energy level and tone
+- Their use of questions, statements, or calls-to-action
+
 Now generate EXACTLY 5 content suggestions that:
-- Match their niche and style perfectly
+- Match their EXACT writing style (this is most important)
+- Stay within their niche but explore fresh angles/ideas
 - Are timely and relevant for TODAY
 - Have viral potential based on their past performance
 - Are specific enough to post immediately (not just topics)
-- Build on their best-performing content themes
+- Cover different aspects/angles within their niche
+- Sound EXACTLY like they wrote it themselves
+
+Each suggestion should feel like it came directly from this creator - same voice, same rhythm, same formatting.
 
 Format your response as a JSON array with exactly 5 objects, each containing:
 - "title": A catchy 3-5 word title for the suggestion

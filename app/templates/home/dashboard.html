@@ -1930,13 +1930,14 @@ async function loadXSuggestions(forceRefresh = false) {
 
         suggestions.forEach((suggestion, index) => {
             const contentId = `suggestion-content-${index}`;
+            const hookTypeDisplay = formatHookType(suggestion.hook_type);
             suggestionsHtml += `
                 <div class="suggestion-card" onclick="toggleSuggestion(${index})">
                     <div class="suggestion-collapsed">
                         <div class="suggestion-title-row">
                             <div class="suggestion-number">${index + 1}</div>
                             <div class="suggestion-title">${suggestion.title}</div>
-                            <div class="hook-badge">${suggestion.hook_type}</div>
+                            <div class="hook-badge">${hookTypeDisplay}</div>
                         </div>
                         <i class="ph ph-caret-down expand-icon"></i>
                     </div>
@@ -1986,6 +1987,18 @@ function toggleSuggestion(index) {
     if (cards[index]) {
         cards[index].classList.toggle('expanded');
     }
+}
+
+// Format hook type for display
+function formatHookType(hookType) {
+    const formatted = {
+        'question': 'Question',
+        'stat': 'Stat',
+        'story': 'Story',
+        'hot_take': 'Hot Take',
+        'thread': 'Thread'
+    };
+    return formatted[hookType] || hookType;
 }
 
 // Helper function to get icon for hook type
