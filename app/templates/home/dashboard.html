@@ -102,9 +102,10 @@ html.dark .dashboard-header {
 /* Channels Grid */
 .channels-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
+    max-width: 100%;
 }
 
 /* Channel Card */
@@ -136,7 +137,7 @@ html.dark .channel-card:hover {
 
 .channel-header {
     padding: 1.25rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
+    background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-primary);
     display: flex;
     justify-content: space-between;
@@ -144,7 +145,7 @@ html.dark .channel-card:hover {
 }
 
 html.dark .channel-header {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+    background: rgba(39, 39, 42, 0.4);
     border-bottom-color: rgba(63, 63, 70, 0.5);
 }
 
@@ -168,6 +169,8 @@ html.dark .channel-header {
 .channel-icon.youtube { background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); }
 .channel-icon.x { background: linear-gradient(135deg, #000000 0%, #333333 100%); }
 .channel-icon.tiktok { background: linear-gradient(135deg, #000000 0%, #333333 100%); }
+
+html.dark .channel-icon.youtube { background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); }
 
 .channel-name h3 {
     font-size: 1.125rem;
@@ -253,80 +256,174 @@ html.dark .metric-item:hover {
     margin-top: 0.25rem;
 }
 
-/* Quick Actions - Horizontal Scrollable */
-.quick-actions {
-    padding: 1.25rem;
-    border-top: 1px solid var(--border-primary);
+/* NEW: Quick Actions Section - Standalone with auto-scroll */
+.quick-actions-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
 }
 
-html.dark .quick-actions {
-    border-top-color: rgba(63, 63, 70, 0.5);
+html.dark .quick-actions-section {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.quick-actions-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 0 2rem;
 }
 
 .quick-actions-title {
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.quick-actions-subtitle {
+    font-size: 0.938rem;
     color: var(--text-secondary);
-    margin-bottom: 1rem;
 }
 
-.action-buttons {
+/* Carousel Container */
+.carousel-container {
+    position: relative;
+    padding: 0 2rem;
+}
+
+.carousel-wrapper {
+    overflow: hidden;
+    position: relative;
+}
+
+.carousel-track {
     display: flex;
-    gap: 0.75rem;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-    /* Hide scrollbar but keep functionality */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    gap: 1rem;
+    transition: transform 0.5s ease;
 }
 
-.action-buttons::-webkit-scrollbar {
-    display: none;
+.carousel-track.auto-scrolling {
+    animation: autoScroll 30s linear infinite;
 }
 
-.action-btn {
-    padding: 0.75rem 1rem;
+.carousel-track:hover {
+    animation-play-state: paused;
+}
+
+@keyframes autoScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(-100% - 1rem)); }
+}
+
+/* Action Cards - New Design */
+.action-card {
+    flex-shrink: 0;
+    width: 240px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    font-size: 0.813rem;
-    color: var(--text-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
     text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
-    text-align: center;
-    min-width: 110px;
-    flex-shrink: 0;
-    white-space: nowrap;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
 
-html.dark .action-btn {
+html.dark .action-card {
     background: rgba(63, 63, 70, 0.5);
     border-color: rgba(82, 82, 91, 0.5);
 }
 
-.action-btn:hover {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-    border-color: rgba(59, 130, 246, 0.3);
-    transform: translateY(-1px);
+.action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent, rgba(59, 130, 246, 0.05));
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-html.dark .action-btn:hover {
-    background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-    border-color: rgba(96, 165, 250, 0.4);
+.action-card:hover::before {
+    opacity: 1;
 }
 
-.action-btn i {
-    font-size: 1.25rem;
+.action-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+html.dark .action-card:hover {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+.action-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    position: relative;
+    z-index: 1;
+}
+
+.action-card:hover .action-icon-wrapper {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+}
+
+.action-icon-wrapper i {
+    font-size: 1.5rem;
     color: #3B82F6;
 }
 
-.action-btn span {
-    font-size: 0.75rem;
+.action-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.375rem;
 }
+
+.action-card-desc {
+    font-size: 0.813rem;
+    color: var(--text-tertiary);
+    line-height: 1.3;
+}
+
+
+/* Platform Indicator */
+.platform-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    opacity: 0.7;
+}
+
+.platform-badge.youtube { color: #FF0000; }
+.platform-badge.x { color: #000000; }
+html.dark .platform-badge.x { color: #FFFFFF; }
+.platform-badge.tiktok { color: #000000; }
+html.dark .platform-badge.tiktok { color: #FFFFFF; }
 
 /* Connect Channel Card */
 .connect-channel-card {
@@ -768,6 +865,10 @@ html.dark .preview-card {
     .channels-grid {
         grid-template-columns: 1fr;
     }
+    
+    .carousel-container {
+        padding: 0 2rem;
+    }
 }
 
 @media (max-width: 768px) {
@@ -811,6 +912,14 @@ html.dark .preview-card {
     .features-preview {
         grid-template-columns: 1fr;
     }
+    
+    .carousel-container {
+        padding: 0 1rem;
+    }
+    
+    .action-card {
+        width: 200px;
+    }
 }
 </style>
 {% endblock %}
@@ -825,7 +934,6 @@ html.dark .preview-card {
         <div class="dashboard-header">
             <div class="welcome-content">
                 <h1 class="welcome-title">Welcome back, <span id="username-display">{{ g.user.get('data', {}).get('username', 'Creator') }}</span></h1>
-                <p class="welcome-subtitle">Here's your content performance overview</p>
             </div>
             <div class="header-stats">
                 <div class="header-stat">
@@ -839,6 +947,22 @@ html.dark .preview-card {
                         <div class="skeleton-loader" style="width: 40px; height: 24px;"></div>
                     </div>
                     <div class="stat-label">Day Streak</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: Quick Actions Carousel Section -->
+        <div class="quick-actions-section" id="quick-actions-section" style="display: none;">
+            <div class="quick-actions-header">
+                <h2 class="quick-actions-title">What would you like to do today?</h2>
+                <p class="quick-actions-subtitle">Your personalized toolkit based on connected accounts</p>
+            </div>
+
+            <div class="carousel-container">
+                <div class="carousel-wrapper">
+                    <div class="carousel-track auto-scrolling" id="carousel-track">
+                        <!-- Action cards will be dynamically loaded here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -877,40 +1001,6 @@ html.dark .preview-card {
                         <div class="metric-label">Watch Time</div>
                     </div>
                 </div>
-                
-                <div class="quick-actions">
-                    <div class="quick-actions-title">What would you like to do today?</div>
-                    <div class="action-buttons">
-                        <a href="{{ url_for('video_script.video_script') }}" class="action-btn">
-                            <i class="ph ph-scroll"></i>
-                            <span>Create Script</span>
-                        </a>
-                        <a href="{{ url_for('video_title.video_title') }}" class="action-btn">
-                            <i class="ph ph-sparkle"></i>
-                            <span>Generate Title</span>
-                        </a>
-                        <a href="{{ url_for('video_tags.video_tags') }}" class="action-btn">
-                            <i class="ph ph-hash"></i>
-                            <span>Find Tags</span>
-                        </a>
-                        <a href="{{ url_for('video_description.video_description') }}" class="action-btn">
-                            <i class="ph ph-file-text"></i>
-                            <span>Write Description</span>
-                        </a>
-                        <a href="{{ url_for('thumbnail.index') }}" class="action-btn">
-                            <i class="ph ph-image"></i>
-                            <span>Design Thumbnail</span>
-                        </a>
-                        <a href="{{ url_for('analyze_video.analyze_video') }}" class="action-btn">
-                            <i class="ph ph-video"></i>
-                            <span>Analyze Video</span>
-                        </a>
-                        <a href="{{ url_for('competitors.competitors') }}" class="action-btn">
-                            <i class="ph ph-users-three"></i>
-                            <span>Track Competitors</span>
-                        </a>
-                    </div>
-                </div>
             </div>
 
             <!-- X Channel Card -->
@@ -945,28 +1035,6 @@ html.dark .preview-card {
                         <div class="metric-label">Engagement</div>
                     </div>
                 </div>
-                
-                <div class="quick-actions">
-                    <div class="quick-actions-title">What would you like to do today?</div>
-                    <div class="action-buttons">
-                        <a href="{{ url_for('x_post_editor.x_post_editor') }}" class="action-btn">
-                            <i class="ph ph-pencil-simple"></i>
-                            <span>Write Posts</span>
-                        </a>
-                        <a href="{{ url_for('reply_guy.index') }}" class="action-btn">
-                            <i class="ph ph-chat-circle-text"></i>
-                            <span>Generate Replies</span>
-                        </a>
-                        <a href="{{ url_for('clip_spaces.index') }}" class="action-btn">
-                            <i class="ph ph-scissors"></i>
-                            <span>Clip Spaces</span>
-                        </a>
-                        <a href="{{ url_for('niche.index') }}" class="action-btn">
-                            <i class="ph ph-compass"></i>
-                            <span>Find Trends</span>
-                        </a>
-                    </div>
-                </div>
             </div>
 
             <!-- TikTok Channel Card -->
@@ -999,28 +1067,6 @@ html.dark .preview-card {
                     <div class="metric-item">
                         <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
                         <div class="metric-label">Engagement Rate</div>
-                    </div>
-                </div>
-                
-                <div class="quick-actions">
-                    <div class="quick-actions-title">What would you like to do today?</div>
-                    <div class="action-buttons">
-                        <a href="{{ url_for('hook_generator.hook_generator') }}" class="action-btn">
-                            <i class="ph ph-megaphone-simple"></i>
-                            <span>Create Hooks</span>
-                        </a>
-                        <a href="{{ url_for('titles_hashtags.titles_hashtags') }}" class="action-btn">
-                            <i class="ph ph-hash"></i>
-                            <span>Generate Hashtags</span>
-                        </a>
-                        <a href="{{ url_for('trending_sounds.trending_sounds') }}" class="action-btn">
-                            <i class="ph ph-music-notes"></i>
-                            <span>Find Sounds</span>
-                        </a>
-                        <a href="{{ url_for('trend_finder.trend_finder') }}" class="action-btn">
-                            <i class="ph ph-trend-up"></i>
-                            <span>Discover Trends</span>
-                        </a>
                     </div>
                 </div>
             </div>
@@ -1225,6 +1271,40 @@ html.dark .preview-card {
 </div>
 
 <script>
+// Define all available features per platform
+const platformFeatures = {
+    youtube: [
+        { icon: 'ph-scroll', title: 'Create Script', desc: 'AI-powered scripts', url: '{{ url_for("video_script.video_script") }}' },
+        { icon: 'ph-sparkle', title: 'Generate Title', desc: 'Catchy video titles', url: '{{ url_for("video_title.video_title") }}' },
+        { icon: 'ph-hash', title: 'Find Tags', desc: 'SEO optimized tags', url: '{{ url_for("video_tags.video_tags") }}' },
+        { icon: 'ph-file-text', title: 'Write Description', desc: 'Engaging descriptions', url: '{{ url_for("video_description.video_description") }}' },
+        { icon: 'ph-image', title: 'Design Thumbnail', desc: 'Eye-catching thumbnails', url: '{{ url_for("thumbnail.index") }}' },
+        { icon: 'ph-video', title: 'Analyze Video', desc: 'Performance insights', url: '{{ url_for("analyze_video.analyze_video") }}' },
+        { icon: 'ph-users-three', title: 'Track Competitors', desc: 'Monitor competition', url: '{{ url_for("competitors.competitors") }}' },
+        { icon: 'ph-chart-line-up', title: 'Growth Analytics', desc: 'Track your progress', url: '{{ url_for("analytics.index", platform="youtube") }}' }
+    ],
+    x: [
+        { icon: 'ph-pencil-simple', title: 'Write Posts', desc: 'Create viral threads', url: '{{ url_for("x_post_editor.x_post_editor") }}' },
+        { icon: 'ph-chat-circle-text', title: 'Generate Replies', desc: 'Smart reply suggestions', url: '{{ url_for("reply_guy.index") }}' },
+        { icon: 'ph-scissors', title: 'Clip Spaces', desc: 'Extract key moments', url: '{{ url_for("clip_spaces.index") }}' },
+        { icon: 'ph-compass', title: 'Find Trends', desc: 'Discover hot topics', url: '{{ url_for("niche.index") }}' },
+        { icon: 'ph-chart-line-up', title: 'Track Performance', desc: 'Monitor engagement', url: '{{ url_for("analytics.index", platform="x") }}' }
+    ],
+    tiktok: [
+        { icon: 'ph-megaphone-simple', title: 'Create Hooks', desc: 'Viral opening lines', url: '{{ url_for("hook_generator.hook_generator") }}' },
+        { icon: 'ph-hash', title: 'Generate Hashtags', desc: 'Trending hashtags', url: '{{ url_for("titles_hashtags.titles_hashtags") }}' },
+        { icon: 'ph-music-notes', title: 'Find Sounds', desc: 'Popular audio tracks', url: '{{ url_for("trending_sounds.trending_sounds") }}' },
+        { icon: 'ph-trend-up', title: 'Discover Trends', desc: 'Viral content ideas', url: '{{ url_for("trend_finder.trend_finder") }}' },
+        { icon: 'ph-chart-line-up', title: 'View Analytics', desc: 'Track performance', url: '{{ url_for("analytics.index", platform="tiktok") }}' }
+    ],
+    general: [
+        { icon: 'ph-brain', title: 'Brain Dump', desc: 'Capture all ideas', url: '{{ url_for("brain_dump.brain_dump") }}' },
+        { icon: 'ph-git-branch', title: 'Mind Map', desc: 'Visualize concepts', url: '{{ url_for("mind_map.mind_map") }}' },
+        { icon: 'ph-book-open', title: 'Content Wiki', desc: 'Knowledge base', url: '{{ url_for("content_wiki.content_wiki") }}' },
+        { icon: 'ph-calendar-check', title: 'Content Calendar', desc: 'Plan & schedule', url: '{{ url_for("content_calendar.content_calendar") }}' }
+    ]
+};
+
 // Format numbers for display
 function formatNumber(num) {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -1237,6 +1317,75 @@ function formatWatchTime(minutes) {
     const hours = Math.floor(minutes / 60);
     if (hours >= 1000) return (hours / 1000).toFixed(1) + 'K hrs';
     return hours + ' hrs';
+}
+
+// Carousel functionality
+
+function startAutoScroll() {
+    const track = document.getElementById('carousel-track');
+    if (!track) return;
+
+    // Clone items for infinite scroll
+    const items = Array.from(track.children);
+    items.forEach(item => {
+        const clone = item.cloneNode(true);
+        track.appendChild(clone);
+    });
+
+    track.classList.add('auto-scrolling');
+}
+
+function stopAutoScroll() {
+    const track = document.getElementById('carousel-track');
+    if (track) {
+        track.classList.remove('auto-scrolling');
+    }
+}
+
+function loadQuickActions(connectedPlatforms) {
+    const track = document.getElementById('carousel-track');
+    if (!track) return;
+
+    let allFeatures = [];
+
+    // Add features for connected platforms
+    if (connectedPlatforms.youtube) {
+        allFeatures.push(...platformFeatures.youtube.map(f => ({...f, platform: 'youtube'})));
+    }
+    if (connectedPlatforms.x) {
+        allFeatures.push(...platformFeatures.x.map(f => ({...f, platform: 'x'})));
+    }
+    if (connectedPlatforms.tiktok) {
+        allFeatures.push(...platformFeatures.tiktok.map(f => ({...f, platform: 'tiktok'})));
+    }
+
+    // Always add general features
+    allFeatures.push(...platformFeatures.general.map(f => ({...f, platform: 'general'})));
+
+    // Shuffle array to randomize card order
+    for (let i = allFeatures.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allFeatures[i], allFeatures[j]] = [allFeatures[j], allFeatures[i]];
+    }
+
+    // Generate HTML for action cards
+    track.innerHTML = allFeatures.map(feature => `
+        <a href="${feature.url}" class="action-card">
+            ${feature.platform && feature.platform !== 'general' ?
+                `<div class="platform-badge ${feature.platform}">
+                    <i class="ph ph-${feature.platform === 'youtube' ? 'youtube' : feature.platform === 'x' ? 'x' : 'tiktok'}-logo"></i>
+                </div>` : ''
+            }
+            <div class="action-icon-wrapper">
+                <i class="ph ${feature.icon}"></i>
+            </div>
+            <div class="action-card-title">${feature.title}</div>
+            <div class="action-card-desc">${feature.desc}</div>
+        </a>
+    `).join('');
+
+    // Start auto-scroll after a delay
+    setTimeout(startAutoScroll, 2000);
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -1269,12 +1418,20 @@ document.addEventListener('DOMContentLoaded', async function() {
             streakDisplay.textContent = stats.login_streak || '0';
         }
         
+        // Track connected platforms
+        const connectedPlatforms = {
+            youtube: false,
+            x: false,
+            tiktok: false
+        };
+        
         // Show/hide channel cards based on connections
         let hasConnections = false;
         
         // YouTube Card
         if (data.youtube_connected) {
             hasConnections = true;
+            connectedPlatforms.youtube = true;
             document.getElementById('youtube-card').style.display = 'block';
             document.getElementById('youtube-username').textContent = '@' + data.youtube_account;
             
@@ -1303,6 +1460,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         // X Card
         if (data.x_connected) {
             hasConnections = true;
+            connectedPlatforms.x = true;
             document.getElementById('x-card').style.display = 'block';
             document.getElementById('x-username').textContent = '@' + data.x_account;
             
@@ -1331,6 +1489,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         // TikTok Card
         if (data.tiktok_connected) {
             hasConnections = true;
+            connectedPlatforms.tiktok = true;
             document.getElementById('tiktok-card').style.display = 'block';
             document.getElementById('tiktok-username').textContent = '@' + data.tiktok_account;
 
@@ -1369,6 +1528,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         } else {
             document.getElementById('connect-tiktok').style.display = 'block';
+        }
+        
+        // Load Quick Actions based on connected platforms
+        const quickActionsSection = document.getElementById('quick-actions-section');
+        if (quickActionsSection) {
+            quickActionsSection.style.display = 'block';
+            loadQuickActions(connectedPlatforms);
         }
         
         // Always show calendar section for logged in users
@@ -1454,6 +1620,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     {% endif %}
+});
+
+// Pause auto-scroll when hovering
+document.addEventListener('DOMContentLoaded', function() {
+    const track = document.getElementById('carousel-track');
+    if (track) {
+        track.addEventListener('mouseenter', () => {
+            track.style.animationPlayState = 'paused';
+        });
+        
+        track.addEventListener('mouseleave', () => {
+            track.style.animationPlayState = 'running';
+        });
+    }
 });
 </script>
 {% endblock %}
