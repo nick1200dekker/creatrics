@@ -6,6 +6,7 @@ import os
 import logging
 import json
 import re
+from datetime import datetime
 from typing import List, Dict, Optional
 from pathlib import Path
 from app.system.ai_provider.ai_provider import get_ai_provider
@@ -68,10 +69,15 @@ class VideoTitleGenerator:
 
             if ai_provider:
                 try:
+                    # Get current date for system prompt
+                    now = datetime.now()
+
                     # System prompt to ensure correct format
-                    system_prompt = """You are a YouTube title generation expert.
+                    system_prompt = f"""You are a YouTube title generation expert.
+                    Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}. Always use current and up-to-date references.
                     Always return exactly 10 titles in a JSON array format.
-                    For shorts, always include 3 hashtags at the end of each title."""
+                    For shorts, always include 3 hashtags at the end of each title.
+                    IMPORTANT: Use {now.year} for any year references, not past years like 2024."""
 
                     # Generate using AI provider
                     response = ai_provider.create_completion(
