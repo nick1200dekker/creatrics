@@ -1087,7 +1087,7 @@ def tiktok_overview():
 
         if tiktok_doc.exists:
             cached_data = tiktok_doc.to_dict()
-            # Check if data is less than 1 hour old
+            # Check if data is less than 24 hours old (increased from 1 hour due to rate limiting)
             fetched_at = cached_data.get('fetched_at')
             if fetched_at:
                 from datetime import datetime, timedelta
@@ -1096,7 +1096,8 @@ def tiktok_overview():
                 else:
                     fetched_time = fetched_at
 
-                if datetime.now() - fetched_time.replace(tzinfo=None) < timedelta(hours=1):
+                # Use 24 hour cache to handle rate limiting better
+                if datetime.now() - fetched_time.replace(tzinfo=None) < timedelta(hours=24):
                     logger.info(f"Returning cached TikTok data for user {user_id}")
                     return jsonify({'current': cached_data})
 
@@ -1113,6 +1114,11 @@ def tiktok_overview():
         user_info = TikTokService.get_user_info(tiktok_username)
 
         if not user_info:
+            # If API fails, try to return cached data if it exists
+            if tiktok_doc.exists:
+                cached_data = tiktok_doc.to_dict()
+                logger.warning(f"TikTok API failed, returning cached data for user {user_id}")
+                return jsonify({'current': cached_data})
             return jsonify({'error': 'Failed to fetch TikTok user data'}), 500
 
         # Store secUid for future use

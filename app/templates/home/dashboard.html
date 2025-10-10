@@ -1333,35 +1333,39 @@ document.addEventListener('DOMContentLoaded', async function() {
             hasConnections = true;
             document.getElementById('tiktok-card').style.display = 'block';
             document.getElementById('tiktok-username').textContent = '@' + data.tiktok_account;
-            
-            // Load TikTok analytics
-            try {
-                const tiktokResponse = await fetch('/analytics/tiktok/overview');
-                const tiktokData = await tiktokResponse.json();
-                
-                if (tiktokData) {
-                    const metrics = document.getElementById('tiktok-metrics');
-                    // Use the engagement_rate_30d from the API response
-                    const engagementRate = tiktokData.engagement_rate_30d !== undefined ? tiktokData.engagement_rate_30d : 0;
-                    // Show proper formatting for engagement rate
-                    const displayEngagement = engagementRate === 0 ? '0%' : `${engagementRate.toFixed(1)}%`;
-                    metrics.innerHTML = `
-                        <div class="metric-item">
-                            <div class="metric-value">${formatNumber(tiktokData.current?.followers || 0)}</div>
-                            <div class="metric-label">Followers</div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-value">${formatNumber(tiktokData.current?.likes || 0)}</div>
-                            <div class="metric-label">Total Likes</div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-value">${displayEngagement}</div>
-                            <div class="metric-label">Engagement Rate</div>
-                        </div>
-                    `;
+
+            // Load TikTok analytics if available from dashboard-data
+            if (data.tiktok_analytics) {
+                const metrics = document.getElementById('tiktok-metrics');
+                const tiktokData = data.tiktok_analytics;
+
+                // Get engagement rate
+                let engagementRate = tiktokData.engagement_rate || 0;
+
+                // If engagement_rate is 0 but we have the raw data, calculate it
+                if (engagementRate === 0 && tiktokData.total_views_35 > 0) {
+                    const totalEngagement = (tiktokData.total_likes_35 || 0) +
+                                          (tiktokData.total_comments_35 || 0) +
+                                          (tiktokData.total_shares_35 || 0);
+                    engagementRate = (totalEngagement / tiktokData.total_views_35) * 100;
                 }
-            } catch (e) {
-                console.error('Error loading TikTok analytics:', e);
+
+                const displayEngagement = engagementRate === 0 ? '0%' : `${engagementRate.toFixed(1)}%`;
+
+                metrics.innerHTML = `
+                    <div class="metric-item">
+                        <div class="metric-value">${formatNumber(tiktokData.followers || 0)}</div>
+                        <div class="metric-label">Followers</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${formatNumber(tiktokData.likes || 0)}</div>
+                        <div class="metric-label">Total Likes</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${displayEngagement}</div>
+                        <div class="metric-label">Engagement Rate</div>
+                    </div>
+                `;
             }
         } else {
             document.getElementById('connect-tiktok').style.display = 'block';

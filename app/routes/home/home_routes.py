@@ -150,7 +150,30 @@ def dashboard_data():
                     }
             except Exception as e:
                 logger.error(f"Error fetching YouTube analytics: {str(e)}")
-        
+
+        # Get TikTok Analytics Summary if connected
+        if response_data['tiktok_connected']:
+            try:
+                tiktok_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('latest')
+                tiktok_doc = tiktok_ref.get()
+
+                if tiktok_doc.exists:
+                    tiktok_analytics = tiktok_doc.to_dict()
+
+                    # Extract key metrics for dashboard
+                    response_data["tiktok_analytics"] = {
+                        'followers': tiktok_analytics.get('followers', 0),
+                        'likes': tiktok_analytics.get('likes', 0),
+                        'engagement_rate': tiktok_analytics.get('engagement_rate', 0),
+                        'total_views_35': tiktok_analytics.get('total_views_35', 0),
+                        'total_likes_35': tiktok_analytics.get('total_likes_35', 0),
+                        'total_comments_35': tiktok_analytics.get('total_comments_35', 0),
+                        'total_shares_35': tiktok_analytics.get('total_shares_35', 0),
+                        'post_count': tiktok_analytics.get('post_count', 0)
+                    }
+            except Exception as e:
+                logger.error(f"Error fetching TikTok analytics: {str(e)}")
+
     except Exception as e:
         logger.error(f"Error fetching analytics data: {str(e)}")
     
