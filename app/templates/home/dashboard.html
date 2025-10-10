@@ -167,7 +167,7 @@ html.dark .channel-header {
 
 .channel-icon.youtube { background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); }
 .channel-icon.x { background: linear-gradient(135deg, #000000 0%, #333333 100%); }
-.channel-icon.tiktok { background: linear-gradient(135deg, #000000 0%, #69C9D0 100%); }
+.channel-icon.tiktok { background: linear-gradient(135deg, #000000 0%, #333333 100%); }
 
 .channel-name h3 {
     font-size: 1.125rem;
@@ -1339,17 +1339,19 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const tiktokResponse = await fetch('/analytics/tiktok/overview');
                 const tiktokData = await tiktokResponse.json();
                 
-                if (tiktokData.current) {
+                if (tiktokData) {
                     const metrics = document.getElementById('tiktok-metrics');
-                    const engagementRate = tiktokData.current.engagement_rate !== undefined ? tiktokData.current.engagement_rate : 0;
-                    const displayEngagement = `${engagementRate.toFixed(1)}%`;
+                    // Use the engagement_rate_30d from the API response
+                    const engagementRate = tiktokData.engagement_rate_30d !== undefined ? tiktokData.engagement_rate_30d : 0;
+                    // Show proper formatting for engagement rate
+                    const displayEngagement = engagementRate === 0 ? '0%' : `${engagementRate.toFixed(1)}%`;
                     metrics.innerHTML = `
                         <div class="metric-item">
-                            <div class="metric-value">${formatNumber(tiktokData.current.followers || 0)}</div>
+                            <div class="metric-value">${formatNumber(tiktokData.current?.followers || 0)}</div>
                             <div class="metric-label">Followers</div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-value">${formatNumber(tiktokData.current.likes || 0)}</div>
+                            <div class="metric-value">${formatNumber(tiktokData.current?.likes || 0)}</div>
                             <div class="metric-label">Total Likes</div>
                         </div>
                         <div class="metric-item">

@@ -188,7 +188,7 @@ html.dark .account-card:hover {
 }
 
 .platform-icon.x-platform {
-    background: linear-gradient(135deg, #1DA1F2 0%, #0E71C8 100%);
+    background: linear-gradient(135deg, #000000 0%, #333333 100%);
 }
 
 .platform-icon.youtube-platform {
@@ -196,7 +196,7 @@ html.dark .account-card:hover {
 }
 
 .platform-icon.tiktok-platform {
-    background: linear-gradient(135deg, #000000 0%, #69C9D0 100%);
+    background: linear-gradient(135deg, #000000 0%, #333333 100%);
 }
 
 .platform-name {
@@ -569,53 +569,6 @@ html.dark .info-text {
         
         <!-- Account Cards -->
         <div class="accounts-grid">
-            <!-- X Account -->
-            <div class="account-card">
-                <div class="card-header">
-                    <div class="platform-icon x-platform">
-                        <i class="ph ph-x-logo"></i>
-                    </div>
-                    <h2 class="platform-name">X Account</h2>
-                </div>
-                
-                {% if x_connected %}
-                    <div class="connection-status">
-                        <div class="status-info">
-                            <span class="status-label">Connected</span>
-                            <span class="status-value">@{{ x_username }}</span>
-                        </div>
-                        <span class="status-badge">Active</span>
-                    </div>
-                    
-                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}">
-                        <input type="hidden" name="platform" value="x">
-                        <button type="submit" class="action-button secondary">
-                            <i class="ph ph-link-break"></i>
-                            Disconnect Account
-                        </button>
-                    </form>
-                {% else %}
-                    <form method="POST" action="{{ url_for('accounts.connect_account') }}">
-                        <input type="hidden" name="platform" value="x">
-                        
-                        <div class="form-group">
-                            <label for="x_username" class="form-label">Username</label>
-                            <input type="text" 
-                                   id="x_username" 
-                                   name="x_username" 
-                                   class="form-input" 
-                                   placeholder="username" 
-                                   required>
-                        </div>
-                        
-                        <button type="submit" class="action-button primary">
-                            <i class="ph ph-link"></i>
-                            Configure Account
-                        </button>
-                    </form>
-                {% endif %}
-            </div>
-            
             <!-- YouTube Account -->
             <div class="account-card">
                 <div class="card-header">
@@ -660,7 +613,54 @@ html.dark .info-text {
                     </a>
                 {% endif %}
             </div>
-            
+
+            <!-- X Account -->
+            <div class="account-card">
+                <div class="card-header">
+                    <div class="platform-icon x-platform">
+                        <i class="ph ph-x-logo"></i>
+                    </div>
+                    <h2 class="platform-name">X Account</h2>
+                </div>
+
+                {% if x_connected %}
+                    <div class="connection-status">
+                        <div class="status-info">
+                            <span class="status-label">Connected</span>
+                            <span class="status-value">@{{ x_username }}</span>
+                        </div>
+                        <span class="status-badge">Active</span>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}">
+                        <input type="hidden" name="platform" value="x">
+                        <button type="submit" class="action-button secondary">
+                            <i class="ph ph-link-break"></i>
+                            Disconnect Account
+                        </button>
+                    </form>
+                {% else %}
+                    <form method="POST" action="{{ url_for('accounts.connect_account') }}">
+                        <input type="hidden" name="platform" value="x">
+
+                        <div class="form-group">
+                            <label for="x_username" class="form-label">Username</label>
+                            <input type="text"
+                                   id="x_username"
+                                   name="x_username"
+                                   class="form-input"
+                                   placeholder="username"
+                                   required>
+                        </div>
+
+                        <button type="submit" class="action-button primary">
+                            <i class="ph ph-link"></i>
+                            Configure Account
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+
             <!-- TikTok Account -->
             <div class="account-card">
                 <div class="card-header">
