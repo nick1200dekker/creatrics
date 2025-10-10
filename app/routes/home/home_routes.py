@@ -307,31 +307,69 @@ def get_upcoming_content():
         logger.error(f"Error fetching upcoming content: {str(e)}")
         return jsonify({"error": "Failed to fetch upcoming content"}), 500
 
+@bp.route('/api/x-content-suggestions')
+def get_x_content_suggestions():
+    """Generate X content suggestions based on user's recent posts
+
+    Query parameters:
+    - refresh: Set to 'true' to force refresh and bypass cache
+
+    Returns 5 personalized content suggestions (cached for 24 hours)
+    """
+    if not hasattr(g, 'user') or not g.user or g.user.get('is_guest'):
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    user_id = g.user.get('id')
+
+    try:
+        from app.scripts.home.x_content_suggestions import XContentSuggestions
+
+        # Check if force refresh is requested
+        force_refresh = request.args.get('refresh', '').lower() == 'true'
+
+        # Initialize the suggestions generator
+        suggestions_generator = XContentSuggestions()
+
+        # Generate suggestions (will use cache if available and < 24h old)
+        result = suggestions_generator.generate_suggestions(user_id, force_refresh=force_refresh)
+
+        if not result.get('success'):
+            return jsonify(result), 400
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error generating X content suggestions: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to generate suggestions. Please try again later."
+        }), 500
+
 def update_login_streak(user_id):
     """Update user's login streak
-    
+
     Tracks consecutive days of user logins and updates the streak count.
     Resets streak if more than 24 hours have passed since last login.
     """
     try:
         user_data = UserService.get_user(user_id) or {}
-        
+
         # Get current time and last login
         now = datetime.now()
         today = now.date()
-        
+
         last_login_str = user_data.get('last_login_date')
         current_streak = user_data.get('login_streak', 0)
-        
+
         # Check if user logged in today already
         if last_login_str:
             try:
                 last_login = datetime.fromisoformat(last_login_str).date()
-                
+
                 # If already logged in today, don't update streak
                 if last_login == today:
                     return current_streak
-                
+
                 # If logged in yesterday, increment streak
                 if last_login == today - timedelta(days=1):
                     current_streak += 1
@@ -340,29 +378,29 @@ def update_login_streak(user_id):
                     current_streak = 1
                 else:
                     current_streak = 1
-                    
+
             except ValueError:
                 # Invalid date format, start fresh
                 current_streak = 1
         else:
             # First time login
             current_streak = 1
-        
+
         # Update user data
         update_data = {
             'last_login_date': now.isoformat(),
             'login_streak': current_streak,
             'last_activity': now.isoformat()
         }
-        
+
         # Reward long streaks (optional)
         if current_streak > 0 and current_streak % 7 == 0:  # Every 7 days
             bonus_credits = 2
             current_credits = user_data.get('credits', 0)
             update_data['credits'] = current_credits + bonus_credits
-            
+
             logger.info(f"User {user_id} earned {bonus_credits} bonus credits for {current_streak}-day streak")
-        
+
         UserService.update_user(user_id, update_data)
         logger.info(f"Updated login streak for user {user_id}: current_streak={current_streak}")
 
