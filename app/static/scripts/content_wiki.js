@@ -1,8 +1,9 @@
-// Content Wiki Application - Grid-based Category System
+// Content Wiki Application - Grid-based Category System with Folders
 const WikiApp = (function() {
     // State
     let currentCategory = null;
     let currentDocumentId = null;
+    let currentFolder = null;
     let currentContent = [];
     let categories = [];
     let autoSaveTimer = null;
@@ -98,8 +99,10 @@ const WikiApp = (function() {
                 // Count content per category
                 const pages = data.pages || [];
                 categories.forEach(cat => {
-                    cat.documentCount = pages.filter(p => p.category === cat.id && !p.is_file).length;
-                    cat.fileCount = pages.filter(p => p.category === cat.id && p.is_file).length;
+                    const categoryContent = pages.filter(p => p.category === cat.id);
+                    cat.documentCount = categoryContent.filter(p => !p.is_file && !p.is_folder).length;
+                    cat.fileCount = categoryContent.filter(p => p.is_file).length;
+                    cat.folderCount = categoryContent.filter(p => p.is_folder).length;
                 });
 
                 displayCategories();
@@ -116,25 +119,30 @@ const WikiApp = (function() {
         const categoriesList = document.getElementById('categoriesList');
         if (!categoriesList) return;
 
-        categoriesList.innerHTML = categories.map(cat => `
-            <div class="category-item ${cat.id === currentCategory ? 'active' : ''}" 
-                 data-category="${cat.id}"
-                 onclick="WikiApp.openCategory('${cat.id}')">
-                <span class="category-icon">${cat.icon}</span>
-                <div class="category-info">
-                    <span class="category-name">${cat.name}</span>
-                    <span class="category-meta">${cat.documentCount + cat.fileCount} items</span>
+        categoriesList.innerHTML = categories.map(cat => {
+            const totalItems = cat.documentCount + cat.fileCount + cat.folderCount;
+            return `
+                <div class="category-item ${cat.id === currentCategory ? 'active' : ''}" 
+                     data-category="${cat.id}"
+                     onclick="WikiApp.openCategory('${cat.id}')">
+                    <span class="category-icon">${cat.icon}</span>
+                    <div class="category-info">
+                        <span class="category-name">${cat.name}</span>
+                        <span class="category-meta">${totalItems} items</span>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     // Update stats
     function updateStats(pages) {
-        const totalDocs = pages.filter(p => !p.is_file).length;
+        const totalDocs = pages.filter(p => !p.is_file && !p.is_folder).length;
+        const totalFolders = pages.filter(p => p.is_folder).length;
         const totalFiles = pages.filter(p => p.is_file).length;
-        
+
         document.getElementById('totalDocs').textContent = totalDocs;
+        document.getElementById('totalFolders').textContent = totalFolders;
         document.getElementById('totalFiles').textContent = totalFiles;
     }
 
@@ -142,6 +150,7 @@ const WikiApp = (function() {
     function showOverview() {
         currentCategory = null;
         currentDocumentId = null;
+        currentFolder = null;
         
         // Update sidebar
         document.querySelectorAll('.category-item').forEach(item => {
@@ -179,6 +188,7 @@ const WikiApp = (function() {
     // Open category
     async function openCategory(categoryId) {
         currentCategory = categoryId;
+        currentFolder = null;
         const category = categories.find(c => c.id === categoryId);
         if (!category) return;
 
@@ -196,8 +206,7 @@ const WikiApp = (function() {
         const categorySpace = document.getElementById('categorySpace');
         categorySpace.style.display = 'flex';
 
-        // Update header
-        document.getElementById('spaceIcon').textContent = category.icon;
+        // Update header (no icon in title)
         document.getElementById('spaceName').textContent = category.name;
 
         // Load content
@@ -205,19 +214,32 @@ const WikiApp = (function() {
     }
 
     // Load category content
-    async function loadCategoryContent(categoryId) {
+    async function loadCategoryContent(categoryId, folderId = null) {
         try {
-            const response = await fetch(`/api/content-wiki/pages?category=${categoryId}`);
+            let url = `/api/content-wiki/pages?category=${categoryId}`;
+            if (folderId) {
+                url += `&folder=${folderId}`;
+            }
+
+            const response = await fetch(url);
             const data = await response.json();
 
             if (data.success) {
                 currentContent = data.pages || [];
                 
                 // Update stats
-                const docs = currentContent.filter(c => !c.is_file);
+                const docs = currentContent.filter(c => !c.is_file && !c.is_folder);
                 const files = currentContent.filter(c => c.is_file);
+                const folders = currentContent.filter(c => c.is_folder);
+                
                 document.getElementById('spaceDocs').textContent = docs.length;
                 document.getElementById('spaceFiles').textContent = files.length;
+                
+                // Check if spaceFolders element exists
+                const spaceFoldersEl = document.getElementById('spaceFolders');
+                if (spaceFoldersEl) {
+                    spaceFoldersEl.textContent = folders.length;
+                }
 
                 displayContent();
             }
@@ -234,8 +256,10 @@ const WikiApp = (function() {
         
         // Filter content
         let filteredContent = currentContent;
-        if (filterMode === 'documents') {
-            filteredContent = currentContent.filter(c => !c.is_file);
+        if (filterMode === 'folders') {
+            filteredContent = currentContent.filter(c => c.is_folder);
+        } else if (filterMode === 'documents') {
+            filteredContent = currentContent.filter(c => !c.is_file && !c.is_folder);
         } else if (filterMode === 'files') {
             filteredContent = currentContent.filter(c => c.is_file);
         }
@@ -257,8 +281,10 @@ const WikiApp = (function() {
             grid.classList.remove('list-view');
         }
 
-        // Sort: pinned first, then by date
+        // Sort: folders first, then pinned, then by date
         filteredContent.sort((a, b) => {
+            if (a.is_folder && !b.is_folder) return -1;
+            if (!a.is_folder && b.is_folder) return 1;
             if (a.is_pinned && !b.is_pinned) return -1;
             if (!a.is_pinned && b.is_pinned) return 1;
             return new Date(b.updated_at) - new Date(a.updated_at);
@@ -266,15 +292,18 @@ const WikiApp = (function() {
 
         // Display cards
         grid.innerHTML = filteredContent.map(item => {
+            const isFolder = item.is_folder || false;
             const isFile = item.is_file || false;
             const isPinned = item.is_pinned || false;
             const icon = getContentIcon(item);
             const date = formatDate(new Date(item.updated_at));
-            
+            const type = isFolder ? 'folder' : (isFile ? getFileType(item) : 'document');
+            const clickHandler = isFolder ? 'openFolder' : (isFile ? 'previewFile' : 'openDocument');
+
             if (viewMode === 'list') {
                 return `
-                    <div class="content-card ${isFile ? 'file' : 'document'} ${isPinned ? 'pinned' : ''}"
-                         onclick="WikiApp.${isFile ? 'previewFile' : 'openDocument'}('${item.id}')">
+                    <div class="content-card ${type} ${isPinned ? 'pinned' : ''}"
+                         onclick="WikiApp.${clickHandler}('${item.id}')">
                         <div class="content-card-icon">
                             <i class="${icon}"></i>
                         </div>
@@ -288,12 +317,15 @@ const WikiApp = (function() {
                                 ${item.size ? `<span class="content-card-size">${formatFileSize(item.size)}</span>` : ''}
                             </div>
                         </div>
+                        <button class="card-delete-btn" onclick="event.stopPropagation(); WikiApp.deleteCardItem('${item.id}', '${type}')" title="Delete">
+                            <i class="ph ph-trash"></i>
+                        </button>
                     </div>
                 `;
             } else {
                 return `
-                    <div class="content-card ${isFile ? 'file' : 'document'} ${isPinned ? 'pinned' : ''}"
-                         onclick="WikiApp.${isFile ? 'previewFile' : 'openDocument'}('${item.id}')">
+                    <div class="content-card ${type} ${isPinned ? 'pinned' : ''}"
+                         onclick="WikiApp.${clickHandler}('${item.id}')">
                         <div class="content-card-icon">
                             <i class="${icon}"></i>
                         </div>
@@ -304,14 +336,36 @@ const WikiApp = (function() {
                             </span>
                             ${item.size ? `<span class="content-card-size">${formatFileSize(item.size)}</span>` : ''}
                         </div>
+                        <button class="card-delete-btn" onclick="event.stopPropagation(); WikiApp.deleteCardItem('${item.id}', '${type}')" title="Delete">
+                            <i class="ph ph-trash"></i>
+                        </button>
                     </div>
                 `;
             }
         }).join('');
     }
 
+    // Get file type for styling
+    function getFileType(item) {
+        if (!item.is_file) return 'document';
+        
+        const filename = item.filename || '';
+        const ext = filename.split('.').pop().toLowerCase();
+        
+        if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)) {
+            return 'image';
+        } else if (['pdf'].includes(ext)) {
+            return 'pdf';
+        } else if (['mp4', 'avi', 'mov', 'wmv'].includes(ext)) {
+            return 'video';
+        } else {
+            return 'file';
+        }
+    }
+
     // Get content icon
     function getContentIcon(item) {
+        if (item.is_folder) return 'ph ph-folder';
         if (!item.is_file) return 'ph ph-file-text';
         
         const filename = item.filename || '';
@@ -334,6 +388,65 @@ const WikiApp = (function() {
         }
     }
 
+    // Create folder
+    function createFolder() {
+        if (!currentCategory) {
+            showToast('Please select a category first', 'error');
+            return;
+        }
+
+        const modal = document.getElementById('newFolderModal');
+        modal.classList.add('active');
+        document.getElementById('folderNameInput').value = '';
+        document.getElementById('folderNameInput').focus();
+    }
+
+    // Confirm create folder
+    async function confirmCreateFolder() {
+        const folderName = document.getElementById('folderNameInput').value.trim();
+        
+        if (!folderName) {
+            showToast('Please enter a folder name', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/content-wiki/pages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: folderName,
+                    category: currentCategory,
+                    parent_folder: currentFolder,
+                    is_folder: true
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                closeFolderModal();
+                showToast('Folder created', 'success');
+                loadCategoryContent(currentCategory, currentFolder);
+                loadCategories(); // Update overview stats
+            }
+        } catch (error) {
+            console.error('Error creating folder:', error);
+            showToast('Failed to create folder', 'error');
+        }
+    }
+
+    // Close folder modal
+    function closeFolderModal() {
+        document.getElementById('newFolderModal').classList.remove('active');
+    }
+
+    // Open folder
+    async function openFolder(folderId) {
+        currentFolder = folderId;
+        await loadCategoryContent(currentCategory, folderId);
+    }
+
     // Create document
     async function createDocument() {
         if (!currentCategory) {
@@ -349,8 +462,10 @@ const WikiApp = (function() {
                     title: 'New Document',
                     content: '',
                     category: currentCategory,
+                    parent_folder: currentFolder,
                     tags: [],
-                    is_file: false
+                    is_file: false,
+                    is_folder: false
                 })
             });
 
@@ -374,6 +489,23 @@ const WikiApp = (function() {
             const data = await response.json();
 
             if (data.success && data.page) {
+                // Check if it's a file or folder - don't open as document
+                // Also check for file extensions as fallback for old entries without is_file flag
+                const filename = data.page.filename || data.page.title || '';
+                const ext = filename.split('.').pop().toLowerCase();
+                const isActualFile = data.page.is_file ||
+                                   data.page.url ||
+                                   ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'mp4', 'webm', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'rar'].includes(ext);
+
+                if (isActualFile || data.page.is_folder) {
+                    if (data.page.is_folder) {
+                        openFolder(documentId);
+                    } else {
+                        previewFile(documentId);
+                    }
+                    return;
+                }
+
                 currentDocumentId = documentId;
                 
                 // Hide other views
@@ -407,6 +539,89 @@ const WikiApp = (function() {
         }
     }
 
+    // Download document
+    function downloadDocument() {
+        if (!currentDocumentId) return;
+
+        const title = document.getElementById('documentTitle').value || 'document';
+        const content = document.getElementById('wikiEditor').innerHTML;
+
+        // Create Word-compatible HTML document (.doc format)
+        // This format can be opened by Google Docs, Microsoft Word, and other word processors
+        const docContent = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset='utf-8'>
+    <title>${escapeHtml(title)}</title>
+    <style>
+        body {
+            font-family: 'Calibri', 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            margin: 1in;
+        }
+        h1 {
+            font-size: 20pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+        }
+        h2 {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-top: 10pt;
+            margin-bottom: 6pt;
+        }
+        h3 {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-top: 10pt;
+            margin-bottom: 6pt;
+        }
+        p {
+            margin-top: 0;
+            margin-bottom: 10pt;
+        }
+        pre, code {
+            font-family: 'Courier New', monospace;
+            background-color: #f3f4f6;
+            padding: 10pt;
+        }
+        blockquote {
+            border-left: 3pt solid #3B82F6;
+            padding-left: 10pt;
+            margin-left: 0;
+            font-style: italic;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1pt solid #000;
+            padding: 5pt;
+        }
+    </style>
+</head>
+<body>
+    <h1>${escapeHtml(title)}</h1>
+    ${content}
+</body>
+</html>`;
+
+        const blob = new Blob(['\ufeff', docContent], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('Document downloaded as .doc (compatible with Google Docs & Word)', 'success');
+    }
+
     // Close editor
     function closeEditor() {
         currentDocumentId = null;
@@ -414,7 +629,7 @@ const WikiApp = (function() {
         
         if (currentCategory) {
             document.getElementById('categorySpace').style.display = 'flex';
-            loadCategoryContent(currentCategory);
+            loadCategoryContent(currentCategory, currentFolder);
         } else {
             showOverview();
         }
@@ -468,6 +683,7 @@ const WikiApp = (function() {
             if (data.success) {
                 showToast('Document deleted', 'success');
                 closeEditor();
+                loadCategories(); // Update overview stats
             }
         } catch (error) {
             console.error('Error deleting document:', error);
@@ -565,7 +781,9 @@ const WikiApp = (function() {
                     title: file.name,
                     filename: file.name,
                     category: currentCategory,
+                    parent_folder: currentFolder,
                     is_file: true,
+                    is_folder: false,
                     url: data.attachment.url,
                     size: data.attachment.size,
                     type: data.attachment.type
@@ -581,7 +799,8 @@ const WikiApp = (function() {
 
                 if (saveData.success) {
                     showToast('File uploaded', 'success');
-                    loadCategoryContent(currentCategory);
+                    loadCategoryContent(currentCategory, currentFolder);
+                    loadCategories(); // Update overview stats
                 }
             }
         } catch (error) {
@@ -605,23 +824,57 @@ const WikiApp = (function() {
                 const content = document.getElementById('filePreviewContent');
                 
                 title.textContent = data.page.filename || data.page.title;
-                
-                // Store current file for download
+
+                // Store current file for download and delete
+                window.currentFileId = fileId;
                 window.currentFileUrl = data.page.url;
+                window.currentFileName = data.page.filename || data.page.title;
                 
                 // Display based on file type
                 const ext = (data.page.filename || '').split('.').pop().toLowerCase();
                 
-                if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)) {
-                    content.innerHTML = `<img src="${data.page.url}" style="max-width: 100%; height: auto;">`;
-                } else if (['pdf'].includes(ext)) {
-                    content.innerHTML = `<embed src="${data.page.url}" type="application/pdf" width="100%" height="600px">`;
-                } else {
+                if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) {
+                    // Image preview
                     content.innerHTML = `
-                        <div style="text-align: center; padding: 2rem;">
-                            <i class="${getContentIcon(data.page)}" style="font-size: 4rem; color: var(--text-tertiary); margin-bottom: 1rem;"></i>
-                            <p>${escapeHtml(data.page.filename)}</p>
-                            <p style="color: var(--text-tertiary);">Size: ${formatFileSize(data.page.size)}</p>
+                        <div class="file-preview-container">
+                            <img src="${data.page.url}" alt="${escapeHtml(data.page.filename)}">
+                        </div>
+                    `;
+                } else if (ext === 'pdf') {
+                    // PDF preview
+                    content.innerHTML = `
+                        <div class="file-preview-container">
+                            <iframe src="${data.page.url}" type="application/pdf"></iframe>
+                        </div>
+                    `;
+                } else if (['mp4', 'webm', 'ogg'].includes(ext)) {
+                    // Video preview
+                    content.innerHTML = `
+                        <div class="file-preview-container">
+                            <video controls style="max-width: 100%; height: auto;">
+                                <source src="${data.page.url}" type="video/${ext}">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                    `;
+                } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+                    // Audio preview
+                    content.innerHTML = `
+                        <div class="file-preview-container">
+                            <audio controls style="width: 100%;">
+                                <source src="${data.page.url}" type="audio/${ext}">
+                                Your browser does not support the audio tag.
+                            </audio>
+                        </div>
+                    `;
+                } else {
+                    // Other files - show info
+                    content.innerHTML = `
+                        <div style="text-align: center; padding: 3rem;">
+                            <i class="${getContentIcon(data.page)}" style="font-size: 5rem; color: var(--text-tertiary); margin-bottom: 1.5rem; display: block;"></i>
+                            <h3 style="margin-bottom: 1rem;">${escapeHtml(data.page.filename)}</h3>
+                            <p style="color: var(--text-tertiary); margin-bottom: 0.5rem;">Size: ${formatFileSize(data.page.size || 0)}</p>
+                            <p style="color: var(--text-tertiary);">Type: ${data.page.type || 'Unknown'}</p>
                         </div>
                     `;
                 }
@@ -637,13 +890,150 @@ const WikiApp = (function() {
     // Close file preview
     function closeFilePreview() {
         document.getElementById('filePreviewModal').classList.remove('active');
+        window.currentFileId = null;
         window.currentFileUrl = null;
+        window.currentFileName = null;
     }
 
     // Download file
     function downloadFile() {
         if (window.currentFileUrl) {
-            window.open(window.currentFileUrl, '_blank');
+            const a = document.createElement('a');
+            a.href = window.currentFileUrl;
+            a.download = window.currentFileName || 'download';
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Download started', 'success');
+        }
+    }
+
+    // Delete file
+    async function deleteFile() {
+        if (!window.currentFileId) return;
+
+        if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/content-wiki/pages/${window.currentFileId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('File deleted', 'success');
+                closeFilePreview();
+                loadCategoryContent(currentCategory, currentFolder);
+                loadCategories(); // Update overview stats
+            } else {
+                showToast('Failed to delete file', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting file:', error);
+            showToast('Failed to delete file', 'error');
+        }
+    }
+
+    // Delete item from card (works for files, folders, and pages)
+    async function deleteCardItem(itemId, type) {
+        const itemName = type === 'folder' ? 'folder' : (type === 'document' ? 'page' : 'file');
+
+        if (!confirm(`Are you sure you want to delete this ${itemName}? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/content-wiki/pages/${itemId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast(`${itemName.charAt(0).toUpperCase() + itemName.slice(1)} deleted`, 'success');
+                loadCategoryContent(currentCategory, currentFolder);
+                loadCategories(); // Update overview stats
+            } else {
+                showToast(`Failed to delete ${itemName}`, 'error');
+            }
+        } catch (error) {
+            console.error(`Error deleting ${itemName}:`, error);
+            showToast(`Failed to delete ${itemName}`, 'error');
+        }
+    }
+
+    // Rename file
+    function renameFile() {
+        if (!window.currentFileId) return;
+
+        const modal = document.getElementById('renameModal');
+        const input = document.getElementById('renameInput');
+
+        // Pre-fill with current name
+        input.value = window.currentFileName || '';
+
+        // Store the item ID and type for rename
+        window.renameItemId = window.currentFileId;
+        window.renameItemType = 'file';
+
+        modal.classList.add('active');
+        setTimeout(() => input.focus(), 100);
+    }
+
+    // Close rename modal
+    function closeRenameModal() {
+        document.getElementById('renameModal').classList.remove('active');
+        window.renameItemId = null;
+        window.renameItemType = null;
+    }
+
+    // Confirm rename
+    async function confirmRename() {
+        const newName = document.getElementById('renameInput').value.trim();
+
+        if (!newName) {
+            showToast('Please enter a name', 'error');
+            return;
+        }
+
+        if (!window.renameItemId) return;
+
+        try {
+            const updateData = window.renameItemType === 'file'
+                ? { filename: newName, title: newName }
+                : { title: newName };
+
+            const response = await fetch(`/api/content-wiki/pages/${window.renameItemId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('Renamed successfully', 'success');
+                closeRenameModal();
+
+                // Update current file name if file is still open
+                if (window.renameItemType === 'file' && window.currentFileId === window.renameItemId) {
+                    window.currentFileName = newName;
+                    document.getElementById('filePreviewTitle').textContent = newName;
+                }
+
+                // Reload content
+                loadCategoryContent(currentCategory, currentFolder);
+                loadCategories(); // Update overview stats
+            } else {
+                showToast('Failed to rename', 'error');
+            }
+        } catch (error) {
+            console.error('Error renaming:', error);
+            showToast('Failed to rename', 'error');
         }
     }
 
@@ -717,30 +1107,94 @@ const WikiApp = (function() {
         displayContent();
     }
 
-    // Search
-    function searchDebounced(query) {
+    // Search in space
+    function searchInSpace(query) {
         clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => search(query), 300);
+        searchDebounceTimer = setTimeout(() => {
+            filterContentBySearch(query);
+        }, 300);
     }
 
-    async function search(query) {
+    // Filter content by search
+    function filterContentBySearch(query) {
         if (!query) {
-            loadCategories();
+            displayContent();
             return;
         }
 
-        try {
-            const response = await fetch(`/api/content-wiki/search?q=${encodeURIComponent(query)}`);
-            const data = await response.json();
+        const searchTerm = query.toLowerCase();
+        const filtered = currentContent.filter(item => {
+            const title = (item.title || item.filename || '').toLowerCase();
+            return title.includes(searchTerm);
+        });
 
-            if (data.success) {
-                // Show search results in current view
-                currentContent = data.results.map(r => r.page);
-                displayContent();
-            }
-        } catch (error) {
-            console.error('Error searching:', error);
+        // Display filtered results
+        const grid = document.getElementById('contentGrid');
+        const emptyState = document.getElementById('emptyState');
+
+        if (filtered.length === 0) {
+            grid.style.display = 'none';
+            emptyState.style.display = 'flex';
+            return;
         }
+
+        grid.style.display = 'grid';
+        emptyState.style.display = 'none';
+
+        // Apply view mode
+        if (viewMode === 'list') {
+            grid.classList.add('list-view');
+        } else {
+            grid.classList.remove('list-view');
+        }
+
+        // Display filtered cards
+        grid.innerHTML = filtered.map(item => {
+            const isFolder = item.is_folder || false;
+            const isFile = item.is_file || false;
+            const isPinned = item.is_pinned || false;
+            const icon = getContentIcon(item);
+            const date = formatDate(new Date(item.updated_at));
+            const type = isFolder ? 'folder' : (isFile ? getFileType(item) : 'document');
+            const clickHandler = isFolder ? 'openFolder' : (isFile ? 'previewFile' : 'openDocument');
+            
+            if (viewMode === 'list') {
+                return `
+                    <div class="content-card ${type} ${isPinned ? 'pinned' : ''}"
+                         onclick="WikiApp.${clickHandler}('${item.id}')">
+                        <div class="content-card-icon">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="content-card-info">
+                            <div class="content-card-title">${escapeHtml(item.title || item.filename || 'Untitled')}</div>
+                            <div class="content-card-meta">
+                                <span class="content-card-date">
+                                    <i class="ph ph-clock"></i>
+                                    ${date}
+                                </span>
+                                ${item.size ? `<span class="content-card-size">${formatFileSize(item.size)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="content-card ${type} ${isPinned ? 'pinned' : ''}"
+                         onclick="WikiApp.${clickHandler}('${item.id}')">
+                        <div class="content-card-icon">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="content-card-title">${escapeHtml(item.title || item.filename || 'Untitled')}</div>
+                        <div class="content-card-meta">
+                            <span class="content-card-date">
+                                ${date}
+                            </span>
+                            ${item.size ? `<span class="content-card-size">${formatFileSize(item.size)}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+        }).join('');
     }
 
     // Format text
@@ -877,7 +1331,7 @@ const WikiApp = (function() {
     // Utility functions
     function getCategoryName(categoryId) {
         const cat = categories.find(c => c.id === categoryId);
-        return cat ? `${cat.icon} ${cat.name}` : categoryId;
+        return cat ? cat.name : categoryId;
     }
 
     function escapeHtml(text) {
@@ -937,8 +1391,13 @@ const WikiApp = (function() {
         init,
         showOverview,
         openCategory,
+        createFolder,
+        confirmCreateFolder,
+        closeFolderModal,
+        openFolder,
         createDocument,
         openDocument,
+        downloadDocument,
         closeEditor,
         saveDocument,
         deleteDocument,
@@ -949,11 +1408,16 @@ const WikiApp = (function() {
         previewFile,
         closeFilePreview,
         downloadFile,
+        deleteFile,
+        deleteCardItem,
+        renameFile,
+        closeRenameModal,
+        confirmRename,
         showDocInfo,
         closeDocInfo,
         filterContent,
         setView,
-        searchDebounced,
+        searchInSpace,
         formatText,
         insertLink,
         insertImage,

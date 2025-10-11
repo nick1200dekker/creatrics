@@ -23,17 +23,7 @@
                 </h2>
             </div>
 
-            <!-- Search -->
-            <div class="search-box">
-                <div class="search-wrapper">
-                    <input type="text" 
-                           class="search-input" 
-                           id="searchInput" 
-                           placeholder="Search wiki..."
-                           onkeyup="WikiApp.searchDebounced(this.value)">
-                    <i class="ph ph-magnifying-glass search-icon"></i>
-                </div>
-            </div>
+
 
             <!-- Categories List -->
             <div class="categories-section">
@@ -51,7 +41,14 @@
                     <i class="ph ph-file-text"></i>
                     <div class="stat-content">
                         <span class="stat-value" id="totalDocs">0</span>
-                        <span class="stat-label">Documents</span>
+                        <span class="stat-label">Pages</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="ph ph-folder"></i>
+                    <div class="stat-content">
+                        <span class="stat-value" id="totalFolders">0</span>
+                        <span class="stat-label">Folders</span>
                     </div>
                 </div>
                 <div class="stat-item">
@@ -96,7 +93,11 @@
                         <div class="space-stats">
                             <span class="stat-badge">
                                 <i class="ph ph-file-text"></i>
-                                <span id="spaceDocs">0</span> documents
+                                <span id="spaceDocs">0</span> pages
+                            </span>
+                            <span class="stat-badge">
+                                <i class="ph ph-folder"></i>
+                                <span id="spaceFolders">0</span> folders
                             </span>
                             <span class="stat-badge">
                                 <i class="ph ph-paperclip"></i>
@@ -109,22 +110,38 @@
                             <i class="ph ph-upload"></i>
                             Upload File
                         </button>
+                        <button class="action-btn secondary" onclick="WikiApp.createFolder()">
+                            <i class="ph ph-folder-plus"></i>
+                            New Folder
+                        </button>
                         <button class="action-btn primary" onclick="WikiApp.createDocument()">
                             <i class="ph ph-plus"></i>
-                            New Document
+                            New Page
                         </button>
                     </div>
                 </div>
 
-                <!-- Filters and View Options -->
+            <!-- Content Controls -->
                 <div class="content-controls">
+                    <div class="search-wrapper">
+                        <input type="text" 
+                               class="search-input" 
+                               id="workspaceSearch" 
+                               placeholder="Search in this space..."
+                               onkeyup="WikiApp.searchInSpace(this.value)">
+                        <i class="ph ph-magnifying-glass search-icon"></i>
+                    </div>
                     <div class="filter-tabs">
                         <button class="filter-tab active" onclick="WikiApp.filterContent('all')">
                             All
                         </button>
+                        <button class="filter-tab" onclick="WikiApp.filterContent('folders')">
+                            <i class="ph ph-folder"></i>
+                            Folders
+                        </button>
                         <button class="filter-tab" onclick="WikiApp.filterContent('documents')">
                             <i class="ph ph-file-text"></i>
-                            Documents
+                            Pages
                         </button>
                         <button class="filter-tab" onclick="WikiApp.filterContent('files')">
                             <i class="ph ph-paperclip"></i>
@@ -177,6 +194,9 @@
                            placeholder="Document Title"
                            autocomplete="off">
                     <div class="editor-actions">
+                        <button class="icon-btn" onclick="WikiApp.downloadDocument()" title="Download">
+                            <i class="ph ph-download"></i>
+                        </button>
                         <button class="icon-btn" onclick="WikiApp.togglePin()" title="Pin Document" id="pinBtn">
                             <i class="ph ph-push-pin"></i>
                         </button>
@@ -298,17 +318,77 @@
     <div class="modal-content modal-large">
         <div class="modal-header">
             <h3 id="filePreviewTitle">File Preview</h3>
-            <button class="modal-close" onclick="WikiApp.closeFilePreview()">
-                <i class="ph ph-x"></i>
-            </button>
+            <div class="modal-actions">
+                <button class="icon-btn" onclick="WikiApp.renameFile()" title="Rename">
+                    <i class="ph ph-pencil"></i>
+                </button>
+                <button class="icon-btn" onclick="WikiApp.downloadFile()" title="Download">
+                    <i class="ph ph-download"></i>
+                </button>
+                <button class="icon-btn" onclick="WikiApp.deleteFile()" title="Delete" style="color: #EF4444;">
+                    <i class="ph ph-trash"></i>
+                </button>
+                <button class="modal-close" onclick="WikiApp.closeFilePreview()">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
         </div>
         <div class="modal-body" id="filePreviewContent">
             <!-- File preview will be displayed here -->
         </div>
+    </div>
+</div>
+
+<!-- Rename Modal -->
+<div class="modal" id="renameModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Rename</h3>
+            <button class="modal-close" onclick="WikiApp.closeRenameModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="text"
+                   id="renameInput"
+                   class="folder-name-input"
+                   placeholder="Enter new name..."
+                   onkeypress="if(event.key==='Enter') WikiApp.confirmRename()">
+        </div>
         <div class="modal-footer">
-            <button class="action-btn secondary" onclick="WikiApp.downloadFile()">
-                <i class="ph ph-download"></i>
-                Download
+            <button class="action-btn secondary" onclick="WikiApp.closeRenameModal()">
+                Cancel
+            </button>
+            <button class="action-btn primary" onclick="WikiApp.confirmRename()">
+                Rename
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- New Folder Modal -->
+<div class="modal" id="newFolderModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Create New Folder</h3>
+            <button class="modal-close" onclick="WikiApp.closeFolderModal()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="text"
+                   id="folderNameInput"
+                   class="folder-name-input"
+                   placeholder="Folder name..."
+                   onkeypress="if(event.key==='Enter') WikiApp.confirmCreateFolder()">
+        </div>
+        <div class="modal-footer">
+            <button class="action-btn secondary" onclick="WikiApp.closeFolderModal()">
+                Cancel
+            </button>
+            <button class="action-btn primary" onclick="WikiApp.confirmCreateFolder()">
+                <i class="ph ph-folder-plus"></i>
+                Create Folder
             </button>
         </div>
     </div>

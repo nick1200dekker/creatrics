@@ -39,32 +39,43 @@ def get_pages():
     try:
         user_id = get_workspace_user_id()
         category = request.args.get('category')
+        folder = request.args.get('folder')
         search_query = request.args.get('q', '').lower()
-        
+
         # Get user's wiki pages from Firebase
         pages_ref = db.collection('users').document(user_id).collection('content_wiki')
-        
+
         # Filter by category if specified
         if category:
             pages_query = pages_ref.where('category', '==', category)
         else:
             pages_query = pages_ref
-        
+
         pages_docs = pages_query.stream()
-        
+
         # Convert to list and filter
         pages = []
         for doc in pages_docs:
             page_data = doc.to_dict()
             page_data['id'] = doc.id
-            
+
+            # Apply folder filter if specified
+            if folder:
+                # Only show items in this specific folder
+                if page_data.get('parent_folder') != folder:
+                    continue
+            elif category:
+                # If category is specified but no folder, only show items at root level (no parent_folder)
+                if page_data.get('parent_folder'):
+                    continue
+
             # Apply search filter if needed
             if search_query:
                 title_match = search_query in (page_data.get('title', '') or '').lower()
                 content_match = search_query in (page_data.get('content', '') or '').lower()
                 if not (title_match or content_match):
                     continue
-            
+
             pages.append(page_data)
         
         # Sort by updated_at descending (newest first)
@@ -88,23 +99,31 @@ def get_pages():
 @auth_required
 @require_permission('content_wiki')
 def create_page():
-    """Create a new wiki page"""
+    """Create a new wiki page, file entry, or folder"""
     try:
         data = request.json or {}
         user_id = get_workspace_user_id()
-        
-        # Generate slug from title
-        title = data.get('title', 'Untitled Page')
-        slug = generate_slug(title)
-        
-        # Check if slug exists and make it unique
-        pages_ref = db.collection('users').document(user_id).collection('content_wiki')
-        existing = pages_ref.where('slug', '==', slug).get()
-        if existing:
-            slug = f"{slug}-{uuid.uuid4().hex[:6]}"
-        
+
+        # Check if it's a file, folder, or document
+        is_file = data.get('is_file', False)
+        is_folder = data.get('is_folder', False)
+
+        # Generate slug from title (for documents and folders)
+        title = data.get('title', 'Untitled')
+        if not is_file:
+            slug = generate_slug(title)
+
+            # Check if slug exists and make it unique
+            pages_ref = db.collection('users').document(user_id).collection('content_wiki')
+            existing = pages_ref.where('slug', '==', slug).get()
+            if existing:
+                slug = f"{slug}-{uuid.uuid4().hex[:6]}"
+        else:
+            slug = None
+            title = data.get('filename', title)
+
         now = datetime.now(timezone.utc).isoformat()
-        
+
         new_page = {
             'title': title,
             'slug': slug,
@@ -113,6 +132,9 @@ def create_page():
             'tags': data.get('tags', []),
             'is_pinned': data.get('is_pinned', False),
             'is_template': data.get('is_template', False),
+            'is_file': is_file,
+            'is_folder': is_folder,
+            'parent_folder': data.get('parent_folder'),
             'metadata': data.get('metadata', {}),
             'attachments': data.get('attachments', []),
             'created_at': now,
@@ -120,27 +142,36 @@ def create_page():
             'version': 1,
             'last_edited_by': g.user.get('data', {}).get('username', 'Unknown')
         }
-        
+
+        # Add file-specific fields
+        if is_file:
+            new_page['filename'] = data.get('filename', '')
+            new_page['url'] = data.get('url', '')
+            new_page['size'] = data.get('size', 0)
+            new_page['type'] = data.get('type', '')
+
         # Store page in Firebase
+        pages_ref = db.collection('users').document(user_id).collection('content_wiki')
         doc_ref = pages_ref.add(new_page)
         page_id = doc_ref[1].id
-        
+
         # Add the ID to the page object for response
         new_page['id'] = page_id
-        
-        logger.info(f"Created wiki page {page_id} for user {user_id}")
-        
+
+        item_type = 'folder' if is_folder else 'file' if is_file else 'page'
+        logger.info(f"Created wiki {item_type} {page_id} for user {user_id}")
+
         return jsonify({
             'success': True,
             'page': new_page,
-            'message': 'Page created successfully'
+            'message': f"{'Folder' if is_folder else 'File' if is_file else 'Page'} created successfully"
         })
-    
+
     except Exception as e:
         logger.error(f"Error creating wiki page: {e}")
         return jsonify({
             'success': False,
-            'error': 'Failed to create page'
+            'error': 'Failed to create'
         }), 500
 
 @bp.route('/api/content-wiki/pages/<page_id>', methods=['GET'])
@@ -231,6 +262,8 @@ def update_page(page_id):
             update_data['metadata'] = data['metadata']
         if 'attachments' in data:
             update_data['attachments'] = data['attachments']
+        if 'filename' in data:
+            update_data['filename'] = data['filename']
         
         update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
         update_data['version'] = existing_page.get('version', 1) + 1
