@@ -86,7 +86,12 @@ class TikTokHookGenerator:
 
                     # Extract hooks from response
                     response_content = response.get('content', '') if isinstance(response, dict) else str(response)
+                    logger.info(f"AI response content preview: {response_content[:200]}...")
                     hooks = self.parse_ai_response(response_content)
+
+                    # Calculate output tokens from hook text
+                    hook_texts = [h.get('hook', '') if isinstance(h, dict) else str(h) for h in hooks]
+                    output_token_estimate = len(' '.join(hook_texts).split())
 
                     return {
                         'success': True,
@@ -95,7 +100,7 @@ class TikTokHookGenerator:
                         'token_usage': {
                             'model': 'ai_provider',
                             'input_tokens': len(prompt.split()),  # Rough estimate
-                            'output_tokens': len(' '.join(hooks).split())  # Rough estimate
+                            'output_tokens': output_token_estimate
                         }
                     }
 
@@ -118,22 +123,37 @@ class TikTokHookGenerator:
             }
 
         except Exception as e:
-            logger.error(f"Error generating hooks: {e}")
+            logger.error(f"Error generating hooks: {e}", exc_info=True)
             return {
                 'success': False,
                 'error': str(e),
                 'hooks': []
             }
 
-    def parse_ai_response(self, response: str) -> List[str]:
-        """Parse AI response to extract hooks"""
+    def parse_ai_response(self, response: str) -> List[Dict]:
+        """Parse AI response to extract hooks with emotions"""
         try:
             # Try to extract JSON array
             json_match = re.search(r'\[.*\]', response, re.DOTALL)
             if json_match:
-                hooks = json.loads(json_match.group())
-                if isinstance(hooks, list):
-                    return self.ensure_ten_hooks(hooks)
+                try:
+                    hooks_data = json.loads(json_match.group())
+                    if isinstance(hooks_data, list) and len(hooks_data) > 0:
+                        # Check if it's already in the format with emotions
+                        if isinstance(hooks_data[0], dict):
+                            return self.ensure_ten_hooks(hooks_data)
+                        else:
+                            # Old format - just strings, need to add default emotions
+                            hooks_with_emotions = []
+                            for hook in hooks_data:
+                                if isinstance(hook, str):
+                                    hooks_with_emotions.append({
+                                        'hook': hook,
+                                        'emotion': 'Curiosity'
+                                    })
+                            return self.ensure_ten_hooks(hooks_with_emotions)
+                except json.JSONDecodeError as je:
+                    logger.warning(f"JSON decode error: {je}. Falling back to line parsing.")
 
             # Fallback: Parse line by line
             lines = response.split('\n')
@@ -144,18 +164,29 @@ class TikTokHookGenerator:
                 # Remove quotes
                 cleaned = cleaned.strip('"\'')
                 if cleaned and len(cleaned) > 5:
-                    hooks.append(cleaned)
+                    hooks.append({
+                        'hook': cleaned,
+                        'emotion': 'Curiosity'
+                    })
 
-            return self.ensure_ten_hooks(hooks)
+            if len(hooks) > 0:
+                return self.ensure_ten_hooks(hooks)
+            else:
+                # If we still have nothing, use fallback
+                logger.warning("No hooks parsed from AI response, using fallback")
+                return self.generate_fallback_hooks("")
 
         except Exception as e:
             logger.error(f"Error parsing AI response: {e}")
             return self.generate_fallback_hooks("")
 
-    def ensure_ten_hooks(self, hooks: List[str]) -> List[str]:
-        """Ensure we have exactly 10 hooks"""
+    def ensure_ten_hooks(self, hooks: List[Dict]) -> List[Dict]:
+        """Ensure we have exactly 10 hooks with emotions"""
         # Remove empty or too short hooks
-        hooks = [h for h in hooks if h and len(h) > 5]
+        if hooks and len(hooks) > 0 and isinstance(hooks[0], dict):
+            hooks = [h for h in hooks if h.get('hook') and len(h.get('hook', '')) > 5]
+        elif not hooks:
+            hooks = []
 
         # If we have more than 10, take the first 10
         if len(hooks) > 10:
@@ -164,27 +195,30 @@ class TikTokHookGenerator:
         # If we have less than 10, add generic ones
         while len(hooks) < 10:
             index = len(hooks) + 1
-            hooks.append(f"Wait until you see what happens next... #{index}")
+            hooks.append({
+                'hook': f"Wait until you see what happens next... #{index}",
+                'emotion': 'Curiosity'
+            })
 
         return hooks
 
-    def generate_fallback_hooks(self, content: str) -> List[str]:
+    def generate_fallback_hooks(self, content: str) -> List[Dict]:
         """Generate fallback hooks when AI is not available"""
         # Extract key terms from content
         words = content.split()[:10] if content else []
         topic = ' '.join(words[:3]) if len(words) >= 3 else content[:30] if content else "this"
 
         return [
-            f"POV: You discover {topic}",
-            f"Wait for it... {topic}",
-            f"This {topic} changed everything for me",
-            f"Nobody talks about {topic}",
-            f"You've been doing {topic} wrong",
-            f"STOP scrolling! You need to see {topic}",
-            f"I tried {topic} and I'm speechless",
-            f"The truth about {topic} that nobody tells you",
-            f"Watch before {topic} gets deleted",
-            f"This is why {topic} went viral"
+            {'hook': f"POV: You discover {topic}", 'emotion': 'Curiosity'},
+            {'hook': f"Wait for it... {topic}", 'emotion': 'Anticipation'},
+            {'hook': f"This {topic} changed everything for me", 'emotion': 'Surprise'},
+            {'hook': f"Nobody talks about {topic}", 'emotion': 'Exclusivity'},
+            {'hook': f"You've been doing {topic} wrong", 'emotion': 'Shock'},
+            {'hook': f"STOP scrolling! You need to see {topic}", 'emotion': 'Urgency'},
+            {'hook': f"I tried {topic} and I'm speechless", 'emotion': 'Wonder'},
+            {'hook': f"The truth about {topic} that nobody tells you", 'emotion': 'Revelation'},
+            {'hook': f"Watch before {topic} gets deleted", 'emotion': 'FOMO'},
+            {'hook': f"This is why {topic} went viral", 'emotion': 'Social Proof'}
         ]
 
     def get_fallback_prompt(self) -> str:

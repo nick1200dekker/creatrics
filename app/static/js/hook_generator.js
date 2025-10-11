@@ -131,11 +131,18 @@
                 <div class="hooks-list">
         `;
 
-        hooks.forEach((hook, index) => {
+        hooks.forEach((hookData, index) => {
+            // Handle both old format (string) and new format (object with hook and emotion)
+            const hookText = typeof hookData === 'string' ? hookData : hookData.hook;
+            const emotion = typeof hookData === 'object' ? hookData.emotion : 'Curiosity';
+
             html += `
                 <div class="hook-item">
                     <span class="hook-number">${index + 1}</span>
-                    <span class="hook-text" id="hook-${index}">${escapeHtml(hook)}</span>
+                    <div class="hook-content">
+                        <span class="hook-text" id="hook-${index}">${escapeHtml(hookText)}</span>
+                        <span class="emotion-badge">${escapeHtml(emotion)}</span>
+                    </div>
                     <div class="hook-actions">
                         <button class="hook-action-btn copy" onclick="copyHook(${index})" title="Copy hook">
                             <i class="ph ph-copy"></i>
@@ -155,10 +162,11 @@
 
     // Copy single hook
     async function copyHook(index) {
-        const hook = currentHooks[index];
+        const hookData = currentHooks[index];
+        const hookText = typeof hookData === 'string' ? hookData : hookData.hook;
 
         try {
-            await navigator.clipboard.writeText(hook);
+            await navigator.clipboard.writeText(hookText);
             showToast('Hook copied to clipboard!', 'success');
         } catch (err) {
             console.error('Failed to copy:', err);
@@ -169,7 +177,10 @@
     // Copy all hooks
     async function copyAllHooks() {
         if (currentHooks && currentHooks.length > 0) {
-            const allHooks = currentHooks.map((hook, index) => `${index + 1}. ${hook}`).join('\n\n');
+            const allHooks = currentHooks.map((hookData, index) => {
+                const hookText = typeof hookData === 'string' ? hookData : hookData.hook;
+                return `${index + 1}. ${hookText}`;
+            }).join('\n\n');
 
             try {
                 await navigator.clipboard.writeText(allHooks);

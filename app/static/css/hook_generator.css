@@ -437,14 +437,40 @@ html.dark .hook-number {
     box-shadow: 0 2px 4px rgba(96, 165, 250, 0.3);
 }
 
-.hook-text {
+.hook-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.hook-text {
     color: var(--text-primary);
     font-size: 0.9rem;
     line-height: 1.5;
     font-weight: 500;
     cursor: text;
     word-wrap: break-word;
+}
+
+.emotion-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    width: fit-content;
+}
+
+html.dark .emotion-badge {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60A5FA;
+    border-color: rgba(96, 165, 250, 0.3);
 }
 
 .hook-actions {

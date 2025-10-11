@@ -41,9 +41,17 @@ AVOID:
 - Boring or predictable openings
 
 OUTPUT FORMAT:
-Return ONLY a JSON array with exactly 10 hooks. No additional text, explanations, or formatting.
+Return ONLY a JSON array with exactly 10 objects. Each object should contain:
+- "hook": The actual hook text (string)
+- "emotion": A SHORT 1-2 word emotion/psychological trigger this hook targets (e.g., "Curiosity", "FOMO", "Shock", "Surprise", "Exclusivity", "Urgency", "Wonder", "Social Proof", "Anticipation", "Revelation")
+
+No additional text, explanations, or formatting outside the JSON array.
 
 Example format:
-["Hook 1 here", "Hook 2 here", "Hook 3 here", ...]
+[
+  {{"hook": "POV: You discover this hidden feature", "emotion": "Curiosity"}},
+  {{"hook": "Wait for the ending...", "emotion": "Anticipation"}},
+  {{"hook": "This changed everything for me", "emotion": "Surprise"}}
+]
 
 Now generate 10 powerful, scroll-stopping hooks for the provided content.
