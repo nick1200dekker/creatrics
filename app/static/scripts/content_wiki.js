@@ -106,44 +106,21 @@ const WikiApp = (function() {
                 });
 
                 displayCategories();
-                updateStats(pages);
+                showOverview(); // Show the overview with categories
             }
         } catch (error) {
             console.error('Error loading categories:', error);
-            showToast('Failed to load categories', 'error');
         }
     }
 
-    // Display categories in sidebar
+    // Display categories (no sidebar, just prepare data)
     function displayCategories() {
-        const categoriesList = document.getElementById('categoriesList');
-        if (!categoriesList) return;
-
-        categoriesList.innerHTML = categories.map(cat => {
-            const totalItems = cat.documentCount + cat.fileCount + cat.folderCount;
-            return `
-                <div class="category-item ${cat.id === currentCategory ? 'active' : ''}" 
-                     data-category="${cat.id}"
-                     onclick="WikiApp.openCategory('${cat.id}')">
-                    <span class="category-icon">${cat.icon}</span>
-                    <div class="category-info">
-                        <span class="category-name">${cat.name}</span>
-                        <span class="category-meta">${totalItems} items</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
+        // Categories will be displayed in showOverview()
     }
 
-    // Update stats
+    // Update stats (not needed in header anymore)
     function updateStats(pages) {
-        const totalDocs = pages.filter(p => !p.is_file && !p.is_folder).length;
-        const totalFolders = pages.filter(p => p.is_folder).length;
-        const totalFiles = pages.filter(p => p.is_file).length;
-
-        document.getElementById('totalDocs').textContent = totalDocs;
-        document.getElementById('totalFolders').textContent = totalFolders;
-        document.getElementById('totalFiles').textContent = totalFiles;
+        // Stats are now shown per-category in the space view
     }
 
     // Show overview

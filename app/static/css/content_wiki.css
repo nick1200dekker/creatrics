@@ -1,4 +1,4 @@
-/* Content Wiki Styles - Updated Grid Layout */
+/* Content Wiki Styles - Dashboard Layout */
 
 /* Reset content-panel padding */
 .content-panel {
@@ -18,6 +18,7 @@
     width: 100%;
     transition: background-color 0.3s ease, border-color 0.3s ease;
     display: flex;
+    flex-direction: column;
     min-height: calc(100vh - 60px);
 }
 
@@ -26,250 +27,37 @@ html.dark .wiki-wrapper {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
-/* Categories Sidebar */
-.wiki-sidebar {
-    width: 280px;
-    background: var(--bg-secondary);
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid var(--border-primary);
-    overflow: hidden;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-html.dark .wiki-sidebar {
-    border-right-color: rgba(63, 63, 70, 0.5);
-}
-
-.sidebar-header {
-    padding: 1.5rem;
+/* Header */
+.wiki-header {
+    padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
     background: linear-gradient(135deg,
         rgba(59, 130, 246, 0.03) 0%,
-        rgba(37, 99, 235, 0.03) 100%);
+        rgba(139, 92, 246, 0.03) 100%);
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-html.dark .sidebar-header {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(37, 99, 235, 0.06) 100%);
+html.dark .wiki-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
     border-bottom-color: rgba(63, 63, 70, 0.5);
 }
 
-.sidebar-title {
+.wiki-title {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     color: var(--text-primary);
     font-size: 1.5rem;
     font-weight: 700;
+    margin: 0;
 }
 
-.sidebar-title i {
+.wiki-title i {
     color: #3B82F6;
 }
 
-html.dark .sidebar-title i {
+html.dark .wiki-title i {
     color: #60A5FA;
-}
-
-/* Search Box */
-.search-box {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border-primary);
-    transition: border-color 0.3s ease;
-}
-
-html.dark .search-box {
-    border-bottom-color: rgba(63, 63, 70, 0.5);
-}
-
-.search-wrapper {
-    position: relative;
-}
-
-.search-input {
-    width: 100%;
-    padding: 0.625rem 2.5rem 0.625rem 1rem;
-    border: 1px solid var(--border-primary);
-    border-radius: 10px;
-    font-size: 0.875rem;
-    transition: all 0.2s;
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-}
-
-html.dark .search-input {
-    background: rgba(63, 63, 70, 0.5);
-    border-color: rgba(82, 82, 91, 0.5);
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: #3B82F6;
-    background: var(--bg-secondary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.search-icon {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-tertiary);
-    pointer-events: none;
-}
-
-/* Categories Section */
-.categories-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding-top: 1rem;
-}
-
-.categories-header {
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.categories-title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
-    letter-spacing: 0.05em;
-}
-
-.categories-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.5rem;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-primary) transparent;
-}
-
-.categories-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.categories-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.categories-list::-webkit-scrollbar-thumb {
-    background: var(--border-primary);
-    border-radius: 3px;
-}
-
-html.dark .categories-list::-webkit-scrollbar-thumb {
-    background: rgba(167, 139, 250, 0.3);
-}
-
-/* Category Item */
-.category-item {
-    padding: 0.75rem 1rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: 10px;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
-}
-
-html.dark .category-item {
-    background: rgba(63, 63, 70, 0.5);
-    border-color: rgba(82, 82, 91, 0.5);
-}
-
-.category-item:hover {
-    background: var(--hover-bg);
-    border-color: #3B82F6;
-    transform: translateX(4px);
-}
-
-.category-item.active {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
-    border-color: #3B82F6;
-    color: #3B82F6;
-}
-
-html.dark .category-item.active {
-    background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
-    border-color: #60A5FA;
-    color: #60A5FA;
-}
-
-.category-icon {
-    font-size: 1.25rem;
-    flex-shrink: 0;
-}
-
-.category-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.category-name {
-    font-weight: 600;
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.category-meta {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-    margin-top: 0.125rem;
-}
-
-/* Wiki Stats */
-.wiki-stats {
-    padding: 1rem;
-    border-top: 1px solid var(--border-primary);
-    background: var(--bg-tertiary);
-    display: flex;
-    gap: 1rem;
-}
-
-html.dark .wiki-stats {
-    background: rgba(63, 63, 70, 0.3);
-    border-top-color: rgba(63, 63, 70, 0.5);
-}
-
-.stat-item {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.stat-item i {
-    font-size: 1.25rem;
-    color: #3B82F6;
-}
-
-.stat-content {
-    display: flex;
-    flex-direction: column;
-}
-
-.stat-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.stat-label {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
 }
 
 /* Main Content Area */
@@ -285,33 +73,8 @@ html.dark .wiki-stats {
 /* Category Overview */
 .category-overview {
     flex: 1;
-    padding: 2rem;
+    padding: 3rem 2rem;
     overflow-y: auto;
-}
-
-.overview-header {
-    text-align: center;
-    margin-bottom: 3rem;
-}
-
-.overview-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-}
-
-.overview-title i {
-    color: #3B82F6;
-}
-
-.overview-subtitle {
-    font-size: 1.125rem;
-    color: var(--text-tertiary);
 }
 
 /* Category Grid */
@@ -319,7 +82,7 @@ html.dark .wiki-stats {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -449,15 +212,26 @@ html.dark .back-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    padding: 0.25rem 0.75rem;
+    padding: 0.375rem 0.875rem;
     background: var(--bg-tertiary);
     border-radius: 20px;
     font-size: 0.875rem;
     color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
 }
 
 html.dark .stat-badge {
     background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
+.stat-badge i {
+    color: #3B82F6;
+    font-size: 1rem;
+}
+
+html.dark .stat-badge i {
+    color: #60A5FA;
 }
 
 .space-actions {
@@ -529,12 +303,13 @@ html.dark .content-controls {
     border-bottom-color: rgba(63, 63, 70, 0.5);
 }
 
-.content-controls .search-wrapper {
+.search-wrapper {
+    position: relative;
     flex: 1;
     max-width: 300px;
 }
 
-.content-controls .search-input {
+.search-input {
     width: 100%;
     padding: 0.5rem 2.5rem 0.5rem 1rem;
     border: 1px solid var(--border-primary);
@@ -545,12 +320,19 @@ html.dark .content-controls {
     color: var(--text-primary);
 }
 
-html.dark .content-controls .search-input {
+html.dark .search-input {
     background: rgba(39, 39, 42, 0.5);
     border-color: rgba(82, 82, 91, 0.5);
 }
 
-.content-controls .search-icon {
+.search-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-icon {
     position: absolute;
     right: 0.75rem;
     top: 50%;
@@ -659,6 +441,10 @@ html.dark .content-card {
     border-color: #3B82F6;
 }
 
+.content-card:hover .card-delete-btn {
+    opacity: 1;
+}
+
 .content-card-icon {
     width: 48px;
     height: 48px;
@@ -669,6 +455,32 @@ html.dark .content-card {
     border-radius: 10px;
     margin-bottom: 0.875rem;
     font-size: 1.5rem;
+}
+
+/* Delete button on cards */
+.card-delete-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s;
+    font-size: 1rem;
+    z-index: 10;
+}
+
+.card-delete-btn:hover {
+    background: #DC2626;
+    transform: scale(1.1);
 }
 
 /* Content Card Types */
@@ -792,6 +604,12 @@ html.dark .content-card {
 .content-grid.list-view .content-card-meta {
     display: flex;
     gap: 1rem;
+}
+
+.content-grid.list-view .card-delete-btn {
+    position: relative;
+    top: auto;
+    right: auto;
 }
 
 /* Empty State */
@@ -1293,15 +1111,10 @@ html.dark .spinner {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .wiki-wrapper {
+    .wiki-header {
         flex-direction: column;
-    }
-
-    .wiki-sidebar {
-        width: 100%;
-        height: auto;
-        border-right: none;
-        border-bottom: 1px solid var(--border-primary);
+        align-items: flex-start;
+        gap: 1rem;
     }
 
     .category-grid {

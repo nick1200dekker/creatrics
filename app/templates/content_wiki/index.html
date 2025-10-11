@@ -14,65 +14,18 @@
 {% block content %}
 <div class="content-panel">
     <div class="wiki-wrapper">
-        <!-- Categories Sidebar -->
-        <aside class="wiki-sidebar">
-            <div class="sidebar-header">
-                <h2 class="sidebar-title">
-                    <i class="ph ph-books"></i>
-                    Content Wiki
-                </h2>
-            </div>
-
-
-
-            <!-- Categories List -->
-            <div class="categories-section">
-                <div class="categories-header">
-                    <span class="categories-title">Spaces</span>
-                </div>
-                <div class="categories-list" id="categoriesList">
-                    <!-- Categories will be loaded here -->
-                </div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="wiki-stats">
-                <div class="stat-item">
-                    <i class="ph ph-file-text"></i>
-                    <div class="stat-content">
-                        <span class="stat-value" id="totalDocs">0</span>
-                        <span class="stat-label">Pages</span>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <i class="ph ph-folder"></i>
-                    <div class="stat-content">
-                        <span class="stat-value" id="totalFolders">0</span>
-                        <span class="stat-label">Folders</span>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <i class="ph ph-paperclip"></i>
-                    <div class="stat-content">
-                        <span class="stat-value" id="totalFiles">0</span>
-                        <span class="stat-label">Files</span>
-                    </div>
-                </div>
-            </div>
-        </aside>
+        <!-- Header -->
+        <div class="wiki-header">
+            <h1 class="wiki-title">
+                <i class="ph ph-books"></i>
+                Content Wiki
+            </h1>
+        </div>
 
         <!-- Main Content Area -->
         <main class="wiki-content" id="wikiContent">
             <!-- Category Overview (Default View) -->
             <div class="category-overview" id="categoryOverview">
-                <div class="overview-header">
-                    <h1 class="overview-title">
-                        <i class="ph ph-books"></i>
-                        Content Wiki
-                    </h1>
-                    <p class="overview-subtitle">Select a space to view and manage your content</p>
-                </div>
-
                 <div class="category-grid">
                     <!-- Category cards will be displayed here -->
                 </div>
