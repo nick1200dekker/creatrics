@@ -14,17 +14,13 @@
 {% block content %}
 <div class="content-panel">
     <div class="wiki-wrapper">
-        <!-- Left Sidebar -->
+        <!-- Categories Sidebar -->
         <aside class="wiki-sidebar">
             <div class="sidebar-header">
                 <h2 class="sidebar-title">
                     <i class="ph ph-books"></i>
                     Content Wiki
                 </h2>
-                <button class="new-page-btn" onclick="WikiApp.createNewPage()">
-                    <i class="ph ph-plus"></i>
-                    New Page
-                </button>
             </div>
 
             <!-- Search -->
@@ -39,113 +35,160 @@
                 </div>
             </div>
 
-            <!-- Categories -->
+            <!-- Categories List -->
             <div class="categories-section">
                 <div class="categories-header">
-                    <span class="categories-title">Categories</span>
-                    <button class="view-all-btn" onclick="WikiApp.showAllPages()">
-                        All
-                    </button>
+                    <span class="categories-title">Spaces</span>
                 </div>
                 <div class="categories-list" id="categoriesList">
                     <!-- Categories will be loaded here -->
                 </div>
             </div>
 
-            <!-- Pages List -->
-            <div class="pages-section">
-                <div class="pages-header">
-                    <span class="pages-title" id="pagesTitle">All Pages</span>
-                    <span class="pages-count" id="pagesCount">0</span>
-                </div>
-                <div class="pages-list" id="pagesList">
-                    <div class="loading">
-                        <div class="spinner"></div>
+            <!-- Quick Stats -->
+            <div class="wiki-stats">
+                <div class="stat-item">
+                    <i class="ph ph-file-text"></i>
+                    <div class="stat-content">
+                        <span class="stat-value" id="totalDocs">0</span>
+                        <span class="stat-label">Documents</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- Pinned Pages -->
-            <div class="pinned-section" id="pinnedSection" style="display: none;">
-                <div class="pinned-header">
-                    <i class="ph ph-push-pin"></i>
-                    <span>Pinned</span>
-                </div>
-                <div class="pinned-list" id="pinnedList">
-                    <!-- Pinned pages will be loaded here -->
+                <div class="stat-item">
+                    <i class="ph ph-paperclip"></i>
+                    <div class="stat-content">
+                        <span class="stat-value" id="totalFiles">0</span>
+                        <span class="stat-label">Files</span>
+                    </div>
                 </div>
             </div>
         </aside>
 
         <!-- Main Content Area -->
         <main class="wiki-content" id="wikiContent">
-            <!-- Empty State -->
-            <div class="empty-state" id="emptyState">
-                <i class="ph ph-books empty-state-icon"></i>
-                <h2 class="empty-state-title">Welcome to Content Wiki</h2>
-                <p class="empty-state-text">Create your first documentation page or select one to get started</p>
-                <button class="action-btn" onclick="WikiApp.createNewPage()">
-                    <i class="ph ph-plus"></i>
-                    <span>Create Your First Page</span>
-                </button>
+            <!-- Category Overview (Default View) -->
+            <div class="category-overview" id="categoryOverview">
+                <div class="overview-header">
+                    <h1 class="overview-title">
+                        <i class="ph ph-books"></i>
+                        Content Wiki
+                    </h1>
+                    <p class="overview-subtitle">Select a space to view and manage your content</p>
+                </div>
 
-                <!-- Templates Section -->
-                <div class="templates-showcase">
-                    <h3>Start with a Template</h3>
-                    <div class="template-cards">
-                        <div class="template-card" onclick="WikiApp.createFromTemplate('brand-guidelines')">
-                            <i class="ph ph-palette"></i>
-                            <span>Brand Guidelines</span>
+                <div class="category-grid">
+                    <!-- Category cards will be displayed here -->
+                </div>
+            </div>
+
+            <!-- Category Space View -->
+            <div class="category-space" id="categorySpace" style="display: none;">
+                <!-- Category Header -->
+                <div class="space-header">
+                    <button class="back-btn" onclick="WikiApp.showOverview()">
+                        <i class="ph ph-arrow-left"></i>
+                    </button>
+                    <div class="space-info">
+                        <h1 class="space-title" id="spaceTitle">
+                            <span class="space-icon" id="spaceIcon"></span>
+                            <span class="space-name" id="spaceName"></span>
+                        </h1>
+                        <div class="space-stats">
+                            <span class="stat-badge">
+                                <i class="ph ph-file-text"></i>
+                                <span id="spaceDocs">0</span> documents
+                            </span>
+                            <span class="stat-badge">
+                                <i class="ph ph-paperclip"></i>
+                                <span id="spaceFiles">0</span> files
+                            </span>
                         </div>
-                        <div class="template-card" onclick="WikiApp.createFromTemplate('content-standards')">
+                    </div>
+                    <div class="space-actions">
+                        <button class="action-btn secondary" onclick="WikiApp.uploadFile()">
+                            <i class="ph ph-upload"></i>
+                            Upload File
+                        </button>
+                        <button class="action-btn primary" onclick="WikiApp.createDocument()">
+                            <i class="ph ph-plus"></i>
+                            New Document
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters and View Options -->
+                <div class="content-controls">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" onclick="WikiApp.filterContent('all')">
+                            All
+                        </button>
+                        <button class="filter-tab" onclick="WikiApp.filterContent('documents')">
                             <i class="ph ph-file-text"></i>
-                            <span>Content Standards</span>
-                        </div>
-                        <div class="template-card" onclick="WikiApp.createFromTemplate('editor-letter')">
-                            <i class="ph ph-envelope"></i>
-                            <span>Letter to Editors</span>
-                        </div>
+                            Documents
+                        </button>
+                        <button class="filter-tab" onclick="WikiApp.filterContent('files')">
+                            <i class="ph ph-paperclip"></i>
+                            Files
+                        </button>
+                    </div>
+                    <div class="view-options">
+                        <button class="view-toggle active" onclick="WikiApp.setView('grid')" title="Grid View">
+                            <i class="ph ph-grid-four"></i>
+                        </button>
+                        <button class="view-toggle" onclick="WikiApp.setView('list')" title="List View">
+                            <i class="ph ph-list"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Grid -->
+                <div class="content-grid" id="contentGrid">
+                    <!-- Content cards will be displayed here -->
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <i class="ph ph-folder-open empty-state-icon"></i>
+                    <h3 class="empty-state-title">No content yet</h3>
+                    <p class="empty-state-text">Start by creating a document or uploading a file</p>
+                    <div class="empty-state-actions">
+                        <button class="action-btn secondary" onclick="WikiApp.uploadFile()">
+                            <i class="ph ph-upload"></i>
+                            Upload File
+                        </button>
+                        <button class="action-btn primary" onclick="WikiApp.createDocument()">
+                            <i class="ph ph-plus"></i>
+                            Create Document
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Page Editor -->
-            <div class="page-editor" id="pageEditor" style="display: none;">
-                <!-- Page Header -->
-                <div class="page-header">
-                    <div class="page-header-top">
-                        <input type="text" 
-                               class="page-title-input" 
-                               id="pageTitle" 
-                               placeholder="Page Title"
-                               autocomplete="off">
-                        <div class="page-actions">
-                            <button class="icon-btn" onclick="WikiApp.togglePagePin()" title="Pin Page" id="pinBtn">
-                                <i class="ph ph-push-pin"></i>
-                            </button>
-                            <button class="icon-btn" onclick="WikiApp.duplicatePage()" title="Duplicate">
-                                <i class="ph ph-copy"></i>
-                            </button>
-                            <button class="icon-btn" onclick="WikiApp.showPageInfo()" title="Page Info">
-                                <i class="ph ph-info"></i>
-                            </button>
-                            <button class="icon-btn danger" onclick="WikiApp.deletePage()" title="Delete">
-                                <i class="ph ph-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Category and Tags -->
-                    <div class="page-metadata">
-                        <select class="category-select" id="pageCategory">
-                            <!-- Categories will be loaded here -->
-                        </select>
-                        <div class="tags-input-wrapper">
-                            <input type="text" 
-                                   class="tags-input" 
-                                   id="pageTags" 
-                                   placeholder="Add tags (comma separated)">
-                        </div>
+            <!-- Document Editor -->
+            <div class="document-editor" id="documentEditor" style="display: none;">
+                <!-- Editor Header -->
+                <div class="editor-header">
+                    <button class="back-btn" onclick="WikiApp.closeEditor()">
+                        <i class="ph ph-arrow-left"></i>
+                    </button>
+                    <input type="text" 
+                           class="document-title-input" 
+                           id="documentTitle" 
+                           placeholder="Document Title"
+                           autocomplete="off">
+                    <div class="editor-actions">
+                        <button class="icon-btn" onclick="WikiApp.togglePin()" title="Pin Document" id="pinBtn">
+                            <i class="ph ph-push-pin"></i>
+                        </button>
+                        <button class="icon-btn" onclick="WikiApp.duplicateDocument()" title="Duplicate">
+                            <i class="ph ph-copy"></i>
+                        </button>
+                        <button class="icon-btn" onclick="WikiApp.showDocInfo()" title="Document Info">
+                            <i class="ph ph-info"></i>
+                        </button>
+                        <button class="icon-btn danger" onclick="WikiApp.deleteDocument()" title="Delete">
+                            <i class="ph ph-trash"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -178,9 +221,6 @@
                         <button class="toolbar-btn" onclick="WikiApp.formatText('formatBlock', 'h3')" title="Heading 3">
                             H3
                         </button>
-                        <button class="toolbar-btn" onclick="WikiApp.formatText('formatBlock', 'p')" title="Paragraph">
-                            P
-                        </button>
                     </div>
 
                     <div class="toolbar-separator"></div>
@@ -206,70 +246,25 @@
                         <button class="toolbar-btn" onclick="WikiApp.insertImage()" title="Image">
                             <i class="ph ph-image"></i>
                         </button>
-                        <button class="toolbar-btn" onclick="WikiApp.uploadAttachment()" title="Attach File">
-                            <i class="ph ph-paperclip"></i>
-                        </button>
                         <button class="toolbar-btn" onclick="WikiApp.insertCode()" title="Code Block">
                             <i class="ph ph-code"></i>
                         </button>
                     </div>
-
-                    <div class="toolbar-separator"></div>
-
-                    <div class="toolbar-group">
-                        <div class="color-picker-wrapper">
-                            <input type="color" id="textColorPicker" onchange="WikiApp.changeTextColor(this.value)">
-                            <button class="toolbar-btn" onclick="document.getElementById('textColorPicker').click()" title="Text Color">
-                                <i class="ph ph-palette"></i>
-                            </button>
-                        </div>
-                        <div class="color-picker-wrapper">
-                            <input type="color" id="bgColorPicker" onchange="WikiApp.changeBgColor(this.value)">
-                            <button class="toolbar-btn" onclick="document.getElementById('bgColorPicker').click()" title="Background Color">
-                                <i class="ph ph-paint-bucket"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="toolbar-separator"></div>
-
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn" onclick="WikiApp.formatText('formatBlock', 'blockquote')" title="Quote">
-                            <i class="ph ph-quotes"></i>
-                        </button>
-                        <button class="toolbar-btn" onclick="WikiApp.insertCallout('info')" title="Info Callout">
-                            <i class="ph ph-info"></i>
-                        </button>
-                        <button class="toolbar-btn" onclick="WikiApp.insertCallout('warning')" title="Warning Callout">
-                            <i class="ph ph-warning"></i>
-                        </button>
-                    </div>
                 </div>
 
-                <!-- Content Editor -->
+                <!-- Editor Content -->
                 <div class="editor-content">
                     <div id="wikiEditor" contenteditable="true" class="wiki-editor"></div>
                 </div>
 
-                <!-- Attachments Section -->
-                <div class="attachments-section" id="attachmentsSection" style="display: none;">
-                    <div class="attachments-header">
-                        <i class="ph ph-paperclip"></i>
-                        <span>Attachments</span>
-                    </div>
-                    <div class="attachments-list" id="attachmentsList">
-                        <!-- Attachments will be listed here -->
-                    </div>
-                </div>
-
-                <!-- Save Status -->
+                <!-- Editor Footer -->
                 <div class="editor-footer">
                     <div class="save-status saved" id="saveStatus">
                         <i class="ph ph-check-circle"></i>
                         <span>Saved</span>
                     </div>
                     <div class="page-info">
-                        <span id="pageVersion">v1</span>
+                        <span id="docVersion">v1</span>
                         <span id="lastEdited">Just now</span>
                     </div>
                 </div>
@@ -278,36 +273,46 @@
     </div>
 </div>
 
-<!-- Hidden file input for uploads -->
+<!-- Hidden file inputs -->
 <input type="file" id="fileUpload" style="display: none;" accept="*/*" onchange="WikiApp.handleFileUpload(this)">
 <input type="file" id="imageUpload" style="display: none;" accept="image/*" onchange="WikiApp.handleImageUpload(this)">
 
-<!-- Page Info Modal -->
-<div class="modal" id="pageInfoModal">
+<!-- Modals -->
+<!-- Document Info Modal -->
+<div class="modal" id="docInfoModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Page Information</h3>
-            <button class="modal-close" onclick="WikiApp.closePageInfo()">
+            <h3>Document Information</h3>
+            <button class="modal-close" onclick="WikiApp.closeDocInfo()">
                 <i class="ph ph-x"></i>
             </button>
         </div>
-        <div class="modal-body" id="pageInfoContent">
-            <!-- Page info will be displayed here -->
+        <div class="modal-body" id="docInfoContent">
+            <!-- Document info will be displayed here -->
         </div>
     </div>
 </div>
 
-<!-- Template for attachment item -->
-<template id="attachmentTemplate">
-    <div class="attachment-item">
-        <i class="ph ph-file"></i>
-        <span class="attachment-name"></span>
-        <span class="attachment-size"></span>
-        <button class="attachment-remove" onclick="WikiApp.removeAttachment(this)">
-            <i class="ph ph-x"></i>
-        </button>
+<!-- File Preview Modal -->
+<div class="modal" id="filePreviewModal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3 id="filePreviewTitle">File Preview</h3>
+            <button class="modal-close" onclick="WikiApp.closeFilePreview()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="filePreviewContent">
+            <!-- File preview will be displayed here -->
+        </div>
+        <div class="modal-footer">
+            <button class="action-btn secondary" onclick="WikiApp.downloadFile()">
+                <i class="ph ph-download"></i>
+                Download
+            </button>
+        </div>
     </div>
-</template>
+</div>
 
 {% endblock %}
 

@@ -1,62 +1,58 @@
-// Content Wiki Application
+// Content Wiki Application - Grid-based Category System
 const WikiApp = (function() {
     // State
-    let currentPageId = null;
-    let pages = [];
+    let currentCategory = null;
+    let currentDocumentId = null;
+    let currentContent = [];
     let categories = [];
     let autoSaveTimer = null;
-    let isEditing = false;
-    let currentAttachments = [];
+    let viewMode = 'grid';
+    let filterMode = 'all';
     let searchDebounceTimer = null;
     
     // Initialize
     function init() {
         console.log('Initializing Content Wiki...');
         loadCategories();
-        loadPages();
         setupEventListeners();
-        setupEditor();
+        showOverview();
     }
 
     // Setup event listeners
     function setupEventListeners() {
-        // Page title auto-save
-        const titleInput = document.getElementById('pageTitle');
-        if (titleInput) {
-            titleInput.addEventListener('input', handleContentChange);
-        }
-
-        // Category and tags change
-        const categorySelect = document.getElementById('pageCategory');
-        const tagsInput = document.getElementById('pageTags');
-        if (categorySelect) {
-            categorySelect.addEventListener('change', handleContentChange);
-        }
-        if (tagsInput) {
-            tagsInput.addEventListener('input', handleContentChange);
-        }
-
         // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             // Ctrl/Cmd + S to save
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
-                if (currentPageId) savePage();
+                if (currentDocumentId) saveDocument();
             }
 
-            // Ctrl/Cmd + N for new page
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n' && !e.shiftKey) {
-                e.preventDefault();
-                createNewPage();
+            // Escape to go back
+            if (e.key === 'Escape') {
+                if (currentDocumentId) {
+                    closeEditor();
+                } else if (currentCategory) {
+                    showOverview();
+                }
             }
         });
+
+        // Document title auto-save
+        const titleInput = document.getElementById('documentTitle');
+        if (titleInput) {
+            titleInput.addEventListener('input', handleContentChange);
+        }
+
+        // Setup editor
+        const editor = document.getElementById('wikiEditor');
+        if (editor) {
+            setupEditor(editor);
+        }
     }
 
     // Setup editor
-    function setupEditor() {
-        const editor = document.getElementById('wikiEditor');
-        if (!editor) return;
-
+    function setupEditor(editor) {
         // Handle paste to preserve formatting
         editor.addEventListener('paste', function(e) {
             e.preventDefault();
@@ -90,495 +86,440 @@ const WikiApp = (function() {
     }
 
     // Load categories
-    function loadCategories() {
-        const categoriesList = document.getElementById('categoriesList');
-        const categorySelect = document.getElementById('pageCategory');
-        
-        // Default categories
-        categories = [
-            { id: 'brand', name: 'Brand Guidelines', icon: '🎨', color: '#8B5CF6', count: 0 },
-            { id: 'content', name: 'Content Standards', icon: '📝', color: '#3B82F6', count: 0 },
-            { id: 'visual', name: 'Visual Assets', icon: '🖼️', color: '#EC4899', count: 0 },
-            { id: 'templates', name: 'Templates', icon: '📋', color: '#F59E0B', count: 0 },
-            { id: 'processes', name: 'Processes', icon: '⚙️', color: '#10B981', count: 0 },
-            { id: 'team', name: 'Team Resources', icon: '👥', color: '#06B6D4', count: 0 },
-            { id: 'legal', name: 'Legal & Compliance', icon: '⚖️', color: '#EF4444', count: 0 },
-            { id: 'reference', name: 'Reference Materials', icon: '📚', color: '#84CC16', count: 0 }
-        ];
-
-        if (categoriesList) {
-            categoriesList.innerHTML = categories.map(cat => `
-                <div class="category-item" data-category="${cat.id}" onclick="WikiApp.filterByCategory('${cat.id}')">
-                    <span class="category-icon">${cat.icon}</span>
-                    <span class="category-name">${cat.name}</span>
-                    <span class="category-count">${cat.count}</span>
-                </div>
-            `).join('');
-        }
-
-        if (categorySelect) {
-            categorySelect.innerHTML = categories.map(cat => 
-                `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`
-            ).join('');
-        }
-    }
-
-    // Load pages
-    async function loadPages(category = null) {
+    async function loadCategories() {
         try {
-            let url = '/api/content-wiki/pages';
-            if (category) {
-                url += `?category=${category}`;
-            }
-
-            const response = await fetch(url);
+            const response = await fetch('/api/content-wiki/pages');
             const data = await response.json();
 
             if (data.success) {
-                pages = data.pages || [];
-                displayPages(pages);
-                updateCategoryCounts();
+                // Get preset categories
+                categories = data.categories || [];
                 
-                // Show pinned section if there are pinned pages
-                const pinnedPages = pages.filter(p => p.is_pinned);
-                if (pinnedPages.length > 0) {
-                    displayPinnedPages(pinnedPages);
-                }
+                // Count content per category
+                const pages = data.pages || [];
+                categories.forEach(cat => {
+                    cat.documentCount = pages.filter(p => p.category === cat.id && !p.is_file).length;
+                    cat.fileCount = pages.filter(p => p.category === cat.id && p.is_file).length;
+                });
+
+                displayCategories();
+                updateStats(pages);
             }
         } catch (error) {
-            console.error('Error loading pages:', error);
-            showToast('Failed to load pages', 'error');
+            console.error('Error loading categories:', error);
+            showToast('Failed to load categories', 'error');
         }
     }
 
-    // Display pages
-    function displayPages(pagesToShow) {
-        const pagesList = document.getElementById('pagesList');
-        const pagesCount = document.getElementById('pagesCount');
+    // Display categories in sidebar
+    function displayCategories() {
+        const categoriesList = document.getElementById('categoriesList');
+        if (!categoriesList) return;
+
+        categoriesList.innerHTML = categories.map(cat => `
+            <div class="category-item ${cat.id === currentCategory ? 'active' : ''}" 
+                 data-category="${cat.id}"
+                 onclick="WikiApp.openCategory('${cat.id}')">
+                <span class="category-icon">${cat.icon}</span>
+                <div class="category-info">
+                    <span class="category-name">${cat.name}</span>
+                    <span class="category-meta">${cat.documentCount + cat.fileCount} items</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Update stats
+    function updateStats(pages) {
+        const totalDocs = pages.filter(p => !p.is_file).length;
+        const totalFiles = pages.filter(p => p.is_file).length;
         
-        if (pagesCount) {
-            pagesCount.textContent = pagesToShow.length;
+        document.getElementById('totalDocs').textContent = totalDocs;
+        document.getElementById('totalFiles').textContent = totalFiles;
+    }
+
+    // Show overview
+    function showOverview() {
+        currentCategory = null;
+        currentDocumentId = null;
+        
+        // Update sidebar
+        document.querySelectorAll('.category-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // Hide other views
+        document.getElementById('categorySpace').style.display = 'none';
+        document.getElementById('documentEditor').style.display = 'none';
+        
+        // Show overview
+        const overview = document.getElementById('categoryOverview');
+        overview.style.display = 'block';
+        
+        // Display category cards
+        const grid = overview.querySelector('.category-grid');
+        grid.innerHTML = categories.map(cat => `
+            <div class="category-card" onclick="WikiApp.openCategory('${cat.id}')">
+                <span class="category-card-icon">${cat.icon}</span>
+                <h3 class="category-card-name">${cat.name}</h3>
+                <div class="category-card-stats">
+                    <span class="category-card-stat">
+                        <i class="ph ph-file-text"></i>
+                        ${cat.documentCount}
+                    </span>
+                    <span class="category-card-stat">
+                        <i class="ph ph-paperclip"></i>
+                        ${cat.fileCount}
+                    </span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Open category
+    async function openCategory(categoryId) {
+        currentCategory = categoryId;
+        const category = categories.find(c => c.id === categoryId);
+        if (!category) return;
+
+        // Update sidebar
+        document.querySelectorAll('.category-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelector(`[data-category="${categoryId}"]`)?.classList.add('active');
+
+        // Hide other views
+        document.getElementById('categoryOverview').style.display = 'none';
+        document.getElementById('documentEditor').style.display = 'none';
+        
+        // Show category space
+        const categorySpace = document.getElementById('categorySpace');
+        categorySpace.style.display = 'flex';
+
+        // Update header
+        document.getElementById('spaceIcon').textContent = category.icon;
+        document.getElementById('spaceName').textContent = category.name;
+
+        // Load content
+        await loadCategoryContent(categoryId);
+    }
+
+    // Load category content
+    async function loadCategoryContent(categoryId) {
+        try {
+            const response = await fetch(`/api/content-wiki/pages?category=${categoryId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                currentContent = data.pages || [];
+                
+                // Update stats
+                const docs = currentContent.filter(c => !c.is_file);
+                const files = currentContent.filter(c => c.is_file);
+                document.getElementById('spaceDocs').textContent = docs.length;
+                document.getElementById('spaceFiles').textContent = files.length;
+
+                displayContent();
+            }
+        } catch (error) {
+            console.error('Error loading content:', error);
+            showToast('Failed to load content', 'error');
+        }
+    }
+
+    // Display content
+    function displayContent() {
+        const grid = document.getElementById('contentGrid');
+        const emptyState = document.getElementById('emptyState');
+        
+        // Filter content
+        let filteredContent = currentContent;
+        if (filterMode === 'documents') {
+            filteredContent = currentContent.filter(c => !c.is_file);
+        } else if (filterMode === 'files') {
+            filteredContent = currentContent.filter(c => c.is_file);
         }
 
-        if (!pagesList) return;
-
-        if (pagesToShow.length === 0) {
-            pagesList.innerHTML = `
-                <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
-                    <i class="ph ph-file-dashed" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
-                    <p style="font-size: 0.875rem;">No pages yet</p>
-                </div>
-            `;
+        // Show empty state if no content
+        if (filteredContent.length === 0) {
+            grid.style.display = 'none';
+            emptyState.style.display = 'flex';
             return;
         }
 
-        pagesList.innerHTML = pagesToShow.map(page => {
-            const isPinned = page.is_pinned ? '<i class="ph ph-push-pin"></i>' : '';
-            const date = formatDate(new Date(page.updated_at));
+        grid.style.display = 'grid';
+        emptyState.style.display = 'none';
+
+        // Apply view mode
+        if (viewMode === 'list') {
+            grid.classList.add('list-view');
+        } else {
+            grid.classList.remove('list-view');
+        }
+
+        // Sort: pinned first, then by date
+        filteredContent.sort((a, b) => {
+            if (a.is_pinned && !b.is_pinned) return -1;
+            if (!a.is_pinned && b.is_pinned) return 1;
+            return new Date(b.updated_at) - new Date(a.updated_at);
+        });
+
+        // Display cards
+        grid.innerHTML = filteredContent.map(item => {
+            const isFile = item.is_file || false;
+            const isPinned = item.is_pinned || false;
+            const icon = getContentIcon(item);
+            const date = formatDate(new Date(item.updated_at));
             
-            return `
-                <div class="page-item ${page.id === currentPageId ? 'active' : ''} ${page.is_pinned ? 'pinned' : ''}"
-                     data-page-id="${page.id}"
-                     onclick="WikiApp.selectPage('${page.id}')">
-                    <div class="page-item-title">
-                        ${isPinned}
-                        <span>${escapeHtml(page.title || 'Untitled')}</span>
+            if (viewMode === 'list') {
+                return `
+                    <div class="content-card ${isFile ? 'file' : 'document'} ${isPinned ? 'pinned' : ''}"
+                         onclick="WikiApp.${isFile ? 'previewFile' : 'openDocument'}('${item.id}')">
+                        <div class="content-card-icon">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="content-card-info">
+                            <div class="content-card-title">${escapeHtml(item.title || item.filename || 'Untitled')}</div>
+                            <div class="content-card-meta">
+                                <span class="content-card-date">
+                                    <i class="ph ph-clock"></i>
+                                    ${date}
+                                </span>
+                                ${item.size ? `<span class="content-card-size">${formatFileSize(item.size)}</span>` : ''}
+                            </div>
+                        </div>
                     </div>
-                    <div class="page-item-meta">
-                        ${getCategoryIcon(page.category)} • ${date}
+                `;
+            } else {
+                return `
+                    <div class="content-card ${isFile ? 'file' : 'document'} ${isPinned ? 'pinned' : ''}"
+                         onclick="WikiApp.${isFile ? 'previewFile' : 'openDocument'}('${item.id}')">
+                        <div class="content-card-icon">
+                            <i class="${icon}"></i>
+                        </div>
+                        <div class="content-card-title">${escapeHtml(item.title || item.filename || 'Untitled')}</div>
+                        <div class="content-card-meta">
+                            <span class="content-card-date">
+                                ${date}
+                            </span>
+                            ${item.size ? `<span class="content-card-size">${formatFileSize(item.size)}</span>` : ''}
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
         }).join('');
     }
 
-    // Display pinned pages
-    function displayPinnedPages(pinnedPages) {
-        const pinnedSection = document.getElementById('pinnedSection');
-        const pinnedList = document.getElementById('pinnedList');
+    // Get content icon
+    function getContentIcon(item) {
+        if (!item.is_file) return 'ph ph-file-text';
         
-        if (!pinnedSection || !pinnedList) return;
-
-        if (pinnedPages.length > 0) {
-            pinnedSection.style.display = 'block';
-            pinnedList.innerHTML = pinnedPages.map(page => `
-                <div class="pinned-item" onclick="WikiApp.selectPage('${page.id}')">
-                    <i class="ph ph-push-pin"></i>
-                    <span>${escapeHtml(page.title)}</span>
-                </div>
-            `).join('');
+        const filename = item.filename || '';
+        const ext = filename.split('.').pop().toLowerCase();
+        
+        if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)) {
+            return 'ph ph-image';
+        } else if (['mp4', 'avi', 'mov', 'wmv'].includes(ext)) {
+            return 'ph ph-video';
+        } else if (['pdf'].includes(ext)) {
+            return 'ph ph-file-pdf';
+        } else if (['doc', 'docx'].includes(ext)) {
+            return 'ph ph-file-doc';
+        } else if (['xls', 'xlsx'].includes(ext)) {
+            return 'ph ph-file-xls';
+        } else if (['zip', 'rar', '7z'].includes(ext)) {
+            return 'ph ph-file-zip';
         } else {
-            pinnedSection.style.display = 'none';
+            return 'ph ph-file';
         }
     }
 
-    // Update category counts
-    function updateCategoryCounts() {
-        // Reset counts
-        categories.forEach(cat => cat.count = 0);
-        
-        // Count pages per category
-        pages.forEach(page => {
-            const cat = categories.find(c => c.id === page.category);
-            if (cat) cat.count++;
-        });
+    // Create document
+    async function createDocument() {
+        if (!currentCategory) {
+            showToast('Please select a category first', 'error');
+            return;
+        }
 
-        // Update UI
-        document.querySelectorAll('.category-item').forEach(item => {
-            const categoryId = item.getAttribute('data-category');
-            const cat = categories.find(c => c.id === categoryId);
-            if (cat) {
-                const countEl = item.querySelector('.category-count');
-                if (countEl) countEl.textContent = cat.count;
-            }
-        });
-    }
-
-    // Create new page
-    async function createNewPage(templateId = null) {
         try {
-            let pageData = {
-                title: 'New Page',
-                content: '',
-                category: 'brand',
-                tags: []
-            };
-
-            // Load template if specified
-            if (templateId) {
-                const template = await loadTemplate(templateId);
-                if (template) {
-                    pageData = {
-                        title: template.title,
-                        content: template.content,
-                        category: template.category || 'brand',
-                        tags: template.tags || []
-                    };
-                }
-            }
-
             const response = await fetch('/api/content-wiki/pages', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(pageData)
-            });
-
-            const data = await response.json();
-
-            if (data.success && data.page) {
-                currentPageId = data.page.id;
-                pages.unshift(data.page);
-                displayPages(pages);
-                selectPage(data.page.id);
-                showToast('Page created successfully', 'success');
-            }
-        } catch (error) {
-            console.error('Error creating page:', error);
-            showToast('Failed to create page', 'error');
-        }
-    }
-
-    // Create from template
-    async function createFromTemplate(templateId) {
-        createNewPage(templateId);
-    }
-
-    // Load template
-    async function loadTemplate(templateId) {
-        // For system templates, return hardcoded content
-        const systemTemplates = {
-            'brand-guidelines': {
-                title: 'Brand Guidelines',
-                category: 'brand',
-                content: `
-                    <h2>Brand Identity</h2>
-                    <h3>Mission Statement</h3>
-                    <p>[Your mission statement here]</p>
-                    
-                    <h3>Brand Values</h3>
-                    <ul>
-                        <li>Value 1: [Description]</li>
-                        <li>Value 2: [Description]</li>
-                        <li>Value 3: [Description]</li>
-                    </ul>
-                    
-                    <h2>Visual Identity</h2>
-                    <h3>Logo Usage</h3>
-                    <p>[Logo guidelines and rules]</p>
-                    
-                    <h3>Color Palette</h3>
-                    <ul>
-                        <li>Primary Color: #[HEX]</li>
-                        <li>Secondary Color: #[HEX]</li>
-                        <li>Accent Color: #[HEX]</li>
-                    </ul>
-                    
-                    <h3>Typography</h3>
-                    <p>Primary Font: [Font Name]</p>
-                    <p>Secondary Font: [Font Name]</p>
-                    
-                    <h2>Voice & Tone</h2>
-                    <p>[Brand voice description]</p>
-                `
-            },
-            'content-standards': {
-                title: 'Content Standards',
-                category: 'content',
-                content: `
-                    <h2>Content Guidelines</h2>
-                    
-                    <h3>Writing Style</h3>
-                    <ul>
-                        <li>Tone: [Professional/Casual/Friendly]</li>
-                        <li>Voice: [First person/Third person]</li>
-                        <li>Language: [Simple/Technical]</li>
-                    </ul>
-                    
-                    <h3>Video Standards</h3>
-                    <ul>
-                        <li>Resolution: [1080p/4K]</li>
-                        <li>Frame Rate: [24/30/60 fps]</li>
-                        <li>Aspect Ratio: [16:9/9:16]</li>
-                        <li>Duration: [Target length]</li>
-                    </ul>
-                    
-                    <h3>Thumbnail Guidelines</h3>
-                    <ul>
-                        <li>Dimensions: 1280x720px</li>
-                        <li>File Format: JPG/PNG</li>
-                        <li>Text Size: [Minimum size]</li>
-                    </ul>
-                `
-            },
-            'editor-letter': {
-                title: 'Letter to Editors',
-                category: 'team',
-                content: `
-                    <h2>Letter to Video Editors</h2>
-                    
-                    <h3>Project Overview</h3>
-                    <p>[Brief description of your content and channel]</p>
-                    
-                    <h3>Editing Style Guidelines</h3>
-                    <ul>
-                        <li>Pacing: [Fast/Medium/Slow]</li>
-                        <li>Transitions: [Types to use]</li>
-                        <li>Music: [Style preferences]</li>
-                        <li>Effects: [Guidelines for effects usage]</li>
-                    </ul>
-                    
-                    <h3>Brand Elements to Include</h3>
-                    <ul>
-                        <li>Intro: [Description]</li>
-                        <li>Outro: [Description]</li>
-                        <li>Lower Thirds: [Style guide]</li>
-                        <li>Watermark: [Position and opacity]</li>
-                    </ul>
-                `
-            }
-        };
-
-        return systemTemplates[templateId] || null;
-    }
-
-    // Select page
-    async function selectPage(pageId) {
-        const page = pages.find(p => p.id === pageId);
-        if (!page) return;
-
-        currentPageId = pageId;
-        isEditing = true;
-
-        // Show editor
-        document.getElementById('emptyState').style.display = 'none';
-        document.getElementById('pageEditor').style.display = 'flex';
-
-        // Update editor
-        document.getElementById('pageTitle').value = page.title || '';
-        document.getElementById('wikiEditor').innerHTML = page.content || '';
-        document.getElementById('pageCategory').value = page.category || 'brand';
-        document.getElementById('pageTags').value = (page.tags || []).join(', ');
-
-        // Update pin button
-        const pinBtn = document.getElementById('pinBtn');
-        if (page.is_pinned) {
-            pinBtn.classList.add('active');
-        } else {
-            pinBtn.classList.remove('active');
-        }
-
-        // Update page info
-        document.getElementById('pageVersion').textContent = `v${page.version || 1}`;
-        document.getElementById('lastEdited').textContent = formatDate(new Date(page.updated_at));
-
-        // Update attachments
-        if (page.attachments && page.attachments.length > 0) {
-            currentAttachments = page.attachments;
-            displayAttachments();
-        } else {
-            currentAttachments = [];
-            document.getElementById('attachmentsSection').style.display = 'none';
-        }
-
-        // Update sidebar selection
-        document.querySelectorAll('.page-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        document.querySelector(`[data-page-id="${pageId}"]`)?.classList.add('active');
-
-        updateSaveStatus('saved');
-    }
-
-    // Save page
-    async function savePage(silent = false) {
-        if (!currentPageId) return;
-
-        const title = document.getElementById('pageTitle').value || 'Untitled';
-        const content = document.getElementById('wikiEditor').innerHTML;
-        const category = document.getElementById('pageCategory').value;
-        const tagsValue = document.getElementById('pageTags').value;
-        const tags = tagsValue ? tagsValue.split(',').map(t => t.trim()).filter(Boolean) : [];
-
-        updateSaveStatus('saving');
-
-        try {
-            const response = await fetch(`/api/content-wiki/pages/${currentPageId}`, {
-                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    title, 
-                    content, 
-                    category, 
-                    tags,
-                    attachments: currentAttachments
+                body: JSON.stringify({
+                    title: 'New Document',
+                    content: '',
+                    category: currentCategory,
+                    tags: [],
+                    is_file: false
                 })
             });
 
             const data = await response.json();
 
-            if (data.success) {
-                // Update local page
-                const pageIndex = pages.findIndex(p => p.id === currentPageId);
-                if (pageIndex !== -1 && data.page) {
-                    pages[pageIndex] = data.page;
-                    displayPages(pages);
-                }
-
-                updateSaveStatus('saved');
-                
-                if (!silent) {
-                    showToast('Page saved', 'success');
-                }
-            } else {
-                updateSaveStatus('error');
-                if (!silent) {
-                    showToast('Failed to save', 'error');
-                }
+            if (data.success && data.page) {
+                currentDocumentId = data.page.id;
+                openDocument(data.page.id);
+                showToast('Document created', 'success');
             }
         } catch (error) {
-            console.error('Error saving page:', error);
-            updateSaveStatus('error');
-            if (!silent) {
-                showToast('Failed to save', 'error');
-            }
+            console.error('Error creating document:', error);
+            showToast('Failed to create document', 'error');
         }
     }
 
-    // Delete page
-    async function deletePage() {
-        if (!currentPageId) return;
+    // Open document
+    async function openDocument(documentId) {
+        try {
+            const response = await fetch(`/api/content-wiki/pages/${documentId}`);
+            const data = await response.json();
 
-        const page = pages.find(p => p.id === currentPageId);
-        const pageTitle = page ? page.title : 'this page';
+            if (data.success && data.page) {
+                currentDocumentId = documentId;
+                
+                // Hide other views
+                document.getElementById('categoryOverview').style.display = 'none';
+                document.getElementById('categorySpace').style.display = 'none';
+                
+                // Show editor
+                document.getElementById('documentEditor').style.display = 'flex';
+                
+                // Load document data
+                document.getElementById('documentTitle').value = data.page.title || '';
+                document.getElementById('wikiEditor').innerHTML = data.page.content || '';
+                
+                // Update pin button
+                const pinBtn = document.getElementById('pinBtn');
+                if (data.page.is_pinned) {
+                    pinBtn.classList.add('active');
+                } else {
+                    pinBtn.classList.remove('active');
+                }
+                
+                // Update info
+                document.getElementById('docVersion').textContent = `v${data.page.version || 1}`;
+                document.getElementById('lastEdited').textContent = formatDate(new Date(data.page.updated_at));
+                
+                updateSaveStatus('saved');
+            }
+        } catch (error) {
+            console.error('Error opening document:', error);
+            showToast('Failed to open document', 'error');
+        }
+    }
 
-        if (!confirm(`Delete "${pageTitle}"? This cannot be undone.`)) return;
+    // Close editor
+    function closeEditor() {
+        currentDocumentId = null;
+        document.getElementById('documentEditor').style.display = 'none';
+        
+        if (currentCategory) {
+            document.getElementById('categorySpace').style.display = 'flex';
+            loadCategoryContent(currentCategory);
+        } else {
+            showOverview();
+        }
+    }
+
+    // Save document
+    async function saveDocument(silent = false) {
+        if (!currentDocumentId) return;
+
+        const title = document.getElementById('documentTitle').value || 'Untitled';
+        const content = document.getElementById('wikiEditor').innerHTML;
+
+        updateSaveStatus('saving');
 
         try {
-            const response = await fetch(`/api/content-wiki/pages/${currentPageId}`, {
+            const response = await fetch(`/api/content-wiki/pages/${currentDocumentId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                updateSaveStatus('saved');
+                if (!silent) showToast('Document saved', 'success');
+            } else {
+                updateSaveStatus('error');
+                if (!silent) showToast('Failed to save', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving document:', error);
+            updateSaveStatus('error');
+            if (!silent) showToast('Failed to save', 'error');
+        }
+    }
+
+    // Delete document
+    async function deleteDocument() {
+        if (!currentDocumentId) return;
+
+        if (!confirm('Delete this document? This cannot be undone.')) return;
+
+        try {
+            const response = await fetch(`/api/content-wiki/pages/${currentDocumentId}`, {
                 method: 'DELETE'
             });
 
             const data = await response.json();
 
             if (data.success) {
-                pages = pages.filter(p => p.id !== currentPageId);
-                displayPages(pages);
-                
-                // Reset editor
-                currentPageId = null;
-                document.getElementById('pageEditor').style.display = 'none';
-                document.getElementById('emptyState').style.display = 'flex';
-
-                showToast('Page deleted', 'success');
+                showToast('Document deleted', 'success');
+                closeEditor();
             }
         } catch (error) {
-            console.error('Error deleting page:', error);
+            console.error('Error deleting document:', error);
             showToast('Failed to delete', 'error');
         }
     }
 
-    // Duplicate page
-    async function duplicatePage() {
-        if (!currentPageId) return;
+    // Duplicate document
+    async function duplicateDocument() {
+        if (!currentDocumentId) return;
 
         try {
-            const response = await fetch(`/api/content-wiki/pages/${currentPageId}/duplicate`, {
+            const response = await fetch(`/api/content-wiki/pages/${currentDocumentId}/duplicate`, {
                 method: 'POST'
             });
 
             const data = await response.json();
 
             if (data.success && data.page) {
-                pages.unshift(data.page);
-                displayPages(pages);
-                selectPage(data.page.id);
-                showToast('Page duplicated', 'success');
+                openDocument(data.page.id);
+                showToast('Document duplicated', 'success');
             }
         } catch (error) {
-            console.error('Error duplicating page:', error);
-            showToast('Failed to duplicate page', 'error');
+            console.error('Error duplicating document:', error);
+            showToast('Failed to duplicate', 'error');
         }
     }
 
-    // Toggle page pin
-    async function togglePagePin() {
-        if (!currentPageId) return;
+    // Toggle pin
+    async function togglePin() {
+        if (!currentDocumentId) return;
 
-        const page = pages.find(p => p.id === currentPageId);
-        if (!page) return;
-
-        const newPinState = !page.is_pinned;
+        const pinBtn = document.getElementById('pinBtn');
+        const isPinned = pinBtn.classList.contains('active');
 
         try {
-            const response = await fetch(`/api/content-wiki/pages/${currentPageId}`, {
+            const response = await fetch(`/api/content-wiki/pages/${currentDocumentId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ is_pinned: newPinState })
+                body: JSON.stringify({ is_pinned: !isPinned })
             });
 
             const data = await response.json();
 
             if (data.success) {
-                page.is_pinned = newPinState;
-                
-                // Update UI
-                const pinBtn = document.getElementById('pinBtn');
-                if (newPinState) {
+                if (!isPinned) {
                     pinBtn.classList.add('active');
+                    showToast('Document pinned', 'success');
                 } else {
                     pinBtn.classList.remove('active');
+                    showToast('Document unpinned', 'success');
                 }
-
-                // Refresh pages list
-                displayPages(pages);
-                
-                // Update pinned section
-                const pinnedPages = pages.filter(p => p.is_pinned);
-                displayPinnedPages(pinnedPages);
-
-                showToast(newPinState ? 'Page pinned' : 'Page unpinned', 'success');
             }
         } catch (error) {
             console.error('Error toggling pin:', error);
@@ -586,43 +527,205 @@ const WikiApp = (function() {
         }
     }
 
-    // Filter by category
-    function filterByCategory(categoryId) {
-        // Update UI
-        document.querySelectorAll('.category-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        document.querySelector(`[data-category="${categoryId}"]`)?.classList.add('active');
-
-        // Update title
-        const category = categories.find(c => c.id === categoryId);
-        document.getElementById('pagesTitle').textContent = category ? category.name : 'All Pages';
-
-        // Load filtered pages
-        loadPages(categoryId);
+    // Upload file
+    function uploadFile() {
+        document.getElementById('fileUpload').click();
     }
 
-    // Show all pages
-    function showAllPages() {
-        // Update UI
-        document.querySelectorAll('.category-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        document.getElementById('pagesTitle').textContent = 'All Pages';
+    // Handle file upload
+    async function handleFileUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
 
-        // Load all pages
-        loadPages();
+        if (!currentCategory) {
+            showToast('Please select a category first', 'error');
+            return;
+        }
+
+        // Validate file size
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('File too large. Maximum size is 10MB', 'error');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/api/content-wiki/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.attachment) {
+                // Create a file entry
+                const fileEntry = {
+                    title: file.name,
+                    filename: file.name,
+                    category: currentCategory,
+                    is_file: true,
+                    url: data.attachment.url,
+                    size: data.attachment.size,
+                    type: data.attachment.type
+                };
+
+                const saveResponse = await fetch('/api/content-wiki/pages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(fileEntry)
+                });
+
+                const saveData = await saveResponse.json();
+
+                if (saveData.success) {
+                    showToast('File uploaded', 'success');
+                    loadCategoryContent(currentCategory);
+                }
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            showToast('Failed to upload file', 'error');
+        }
+
+        // Clear input
+        input.value = '';
     }
 
-    // Search pages
+    // Preview file
+    async function previewFile(fileId) {
+        try {
+            const response = await fetch(`/api/content-wiki/pages/${fileId}`);
+            const data = await response.json();
+
+            if (data.success && data.page) {
+                const modal = document.getElementById('filePreviewModal');
+                const title = document.getElementById('filePreviewTitle');
+                const content = document.getElementById('filePreviewContent');
+                
+                title.textContent = data.page.filename || data.page.title;
+                
+                // Store current file for download
+                window.currentFileUrl = data.page.url;
+                
+                // Display based on file type
+                const ext = (data.page.filename || '').split('.').pop().toLowerCase();
+                
+                if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)) {
+                    content.innerHTML = `<img src="${data.page.url}" style="max-width: 100%; height: auto;">`;
+                } else if (['pdf'].includes(ext)) {
+                    content.innerHTML = `<embed src="${data.page.url}" type="application/pdf" width="100%" height="600px">`;
+                } else {
+                    content.innerHTML = `
+                        <div style="text-align: center; padding: 2rem;">
+                            <i class="${getContentIcon(data.page)}" style="font-size: 4rem; color: var(--text-tertiary); margin-bottom: 1rem;"></i>
+                            <p>${escapeHtml(data.page.filename)}</p>
+                            <p style="color: var(--text-tertiary);">Size: ${formatFileSize(data.page.size)}</p>
+                        </div>
+                    `;
+                }
+                
+                modal.classList.add('active');
+            }
+        } catch (error) {
+            console.error('Error previewing file:', error);
+            showToast('Failed to preview file', 'error');
+        }
+    }
+
+    // Close file preview
+    function closeFilePreview() {
+        document.getElementById('filePreviewModal').classList.remove('active');
+        window.currentFileUrl = null;
+    }
+
+    // Download file
+    function downloadFile() {
+        if (window.currentFileUrl) {
+            window.open(window.currentFileUrl, '_blank');
+        }
+    }
+
+    // Show document info
+    function showDocInfo() {
+        if (!currentDocumentId) return;
+
+        const modal = document.getElementById('docInfoModal');
+        const content = document.getElementById('docInfoContent');
+        
+        // Get current document from content array
+        const doc = currentContent.find(c => c.id === currentDocumentId);
+        if (!doc) return;
+        
+        content.innerHTML = `
+            <div style="display: grid; gap: 1rem;">
+                <div>
+                    <strong>Title:</strong> ${escapeHtml(doc.title)}
+                </div>
+                <div>
+                    <strong>Category:</strong> ${getCategoryName(doc.category)}
+                </div>
+                <div>
+                    <strong>Created:</strong> ${formatFullDate(new Date(doc.created_at))}
+                </div>
+                <div>
+                    <strong>Last Updated:</strong> ${formatFullDate(new Date(doc.updated_at))}
+                </div>
+                <div>
+                    <strong>Version:</strong> ${doc.version || 1}
+                </div>
+                ${doc.last_edited_by ? `
+                    <div>
+                        <strong>Last Edited By:</strong> ${doc.last_edited_by}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        modal.classList.add('active');
+    }
+
+    // Close document info
+    function closeDocInfo() {
+        document.getElementById('docInfoModal').classList.remove('active');
+    }
+
+    // Filter content
+    function filterContent(mode) {
+        filterMode = mode;
+        
+        // Update UI
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        event.target.closest('.filter-tab').classList.add('active');
+        
+        displayContent();
+    }
+
+    // Set view mode
+    function setView(mode) {
+        viewMode = mode;
+        
+        // Update UI
+        document.querySelectorAll('.view-toggle').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.closest('.view-toggle').classList.add('active');
+        
+        displayContent();
+    }
+
+    // Search
     function searchDebounced(query) {
         clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => searchPages(query), 300);
+        searchDebounceTimer = setTimeout(() => search(query), 300);
     }
 
-    async function searchPages(query) {
+    async function search(query) {
         if (!query) {
-            loadPages();
+            loadCategories();
             return;
         }
 
@@ -631,12 +734,12 @@ const WikiApp = (function() {
             const data = await response.json();
 
             if (data.success) {
-                const searchResults = data.results.map(r => r.page);
-                displayPages(searchResults);
-                document.getElementById('pagesTitle').textContent = 'Search Results';
+                // Show search results in current view
+                currentContent = data.results.map(r => r.page);
+                displayContent();
             }
         } catch (error) {
-            console.error('Error searching pages:', error);
+            console.error('Error searching:', error);
         }
     }
 
@@ -698,83 +801,6 @@ const WikiApp = (function() {
         input.value = '';
     }
 
-    // Upload attachment
-    function uploadAttachment() {
-        document.getElementById('fileUpload').click();
-    }
-
-    // Handle file upload
-    async function handleFileUpload(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        // Validate file size
-        if (file.size > 10 * 1024 * 1024) {
-            showToast('File too large. Maximum size is 10MB', 'error');
-            return;
-        }
-
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const response = await fetch('/api/content-wiki/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (data.success && data.attachment) {
-                // Add to current attachments
-                currentAttachments.push(data.attachment);
-                displayAttachments();
-                
-                // Auto-save
-                handleContentChange();
-                
-                showToast('File uploaded', 'success');
-            }
-        } catch (error) {
-            console.error('Error uploading file:', error);
-            showToast('Failed to upload file', 'error');
-        }
-
-        // Clear input
-        input.value = '';
-    }
-
-    // Display attachments
-    function displayAttachments() {
-        const section = document.getElementById('attachmentsSection');
-        const list = document.getElementById('attachmentsList');
-        
-        if (!section || !list) return;
-
-        if (currentAttachments.length > 0) {
-            section.style.display = 'block';
-            list.innerHTML = currentAttachments.map((att, index) => `
-                <div class="attachment-item" data-index="${index}">
-                    <i class="ph ph-file"></i>
-                    <span class="attachment-name">${escapeHtml(att.filename)}</span>
-                    <span class="attachment-size">${formatFileSize(att.size)}</span>
-                    <button class="attachment-remove" onclick="WikiApp.removeAttachment(${index})">
-                        <i class="ph ph-x"></i>
-                    </button>
-                </div>
-            `).join('');
-        } else {
-            section.style.display = 'none';
-        }
-    }
-
-    // Remove attachment
-    function removeAttachment(index) {
-        currentAttachments.splice(index, 1);
-        displayAttachments();
-        handleContentChange();
-    }
-
     // Insert code block
     function insertCode() {
         const code = '<pre><code>// Your code here</code></pre>';
@@ -785,19 +811,19 @@ const WikiApp = (function() {
     // Insert table
     function insertTable() {
         const table = `
-            <table>
+            <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr>
-                        <th>Column 1</th>
-                        <th>Column 2</th>
-                        <th>Column 3</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Column 1</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Column 2</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Column 3</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Data 1</td>
-                        <td>Data 2</td>
-                        <td>Data 3</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">Data 1</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">Data 2</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">Data 3</td>
                     </tr>
                 </tbody>
             </table>
@@ -806,83 +832,15 @@ const WikiApp = (function() {
         document.getElementById('wikiEditor').focus();
     }
 
-    // Insert callout
-    function insertCallout(type) {
-        const callout = `<div class="callout callout-${type}"><p>${type === 'info' ? 'Information' : 'Warning'}: Your text here</p></div>`;
-        document.execCommand('insertHTML', false, callout);
-        document.getElementById('wikiEditor').focus();
-    }
-
-    // Change text color
-    function changeTextColor(color) {
-        document.execCommand('foreColor', false, color);
-        document.getElementById('wikiEditor').focus();
-    }
-
-    // Change background color
-    function changeBgColor(color) {
-        document.execCommand('hiliteColor', false, color);
-        document.getElementById('wikiEditor').focus();
-    }
-
-    // Show page info
-    function showPageInfo() {
-        if (!currentPageId) return;
-
-        const page = pages.find(p => p.id === currentPageId);
-        if (!page) return;
-
-        const modal = document.getElementById('pageInfoModal');
-        const content = document.getElementById('pageInfoContent');
-        
-        content.innerHTML = `
-            <div style="display: grid; gap: 1rem;">
-                <div>
-                    <strong>Title:</strong> ${escapeHtml(page.title)}
-                </div>
-                <div>
-                    <strong>Category:</strong> ${getCategoryName(page.category)}
-                </div>
-                <div>
-                    <strong>Tags:</strong> ${(page.tags || []).join(', ') || 'None'}
-                </div>
-                <div>
-                    <strong>Created:</strong> ${formatFullDate(new Date(page.created_at))}
-                </div>
-                <div>
-                    <strong>Last Updated:</strong> ${formatFullDate(new Date(page.updated_at))}
-                </div>
-                <div>
-                    <strong>Version:</strong> ${page.version || 1}
-                </div>
-                <div>
-                    <strong>Last Edited By:</strong> ${page.last_edited_by || 'Unknown'}
-                </div>
-                ${page.attachments && page.attachments.length > 0 ? `
-                    <div>
-                        <strong>Attachments:</strong> ${page.attachments.length} file(s)
-                    </div>
-                ` : ''}
-            </div>
-        `;
-        
-        modal.classList.add('active');
-    }
-
-    // Close page info
-    function closePageInfo() {
-        document.getElementById('pageInfoModal').classList.remove('active');
-    }
-
     // Handle content change
     function handleContentChange() {
-        if (!currentPageId) return;
+        if (!currentDocumentId) return;
 
         clearTimeout(autoSaveTimer);
         updateSaveStatus('typing');
 
         autoSaveTimer = setTimeout(() => {
-            savePage(true);
+            saveDocument(true);
         }, 1000);
     }
 
@@ -917,11 +875,6 @@ const WikiApp = (function() {
     }
 
     // Utility functions
-    function getCategoryIcon(categoryId) {
-        const cat = categories.find(c => c.id === categoryId);
-        return cat ? cat.icon : '📄';
-    }
-
     function getCategoryName(categoryId) {
         const cat = categories.find(c => c.id === categoryId);
         return cat ? `${cat.icon} ${cat.name}` : categoryId;
@@ -982,30 +935,31 @@ const WikiApp = (function() {
     // Public API
     return {
         init,
-        createNewPage,
-        createFromTemplate,
-        selectPage,
-        savePage,
-        deletePage,
-        duplicatePage,
-        togglePagePin,
-        filterByCategory,
-        showAllPages,
+        showOverview,
+        openCategory,
+        createDocument,
+        openDocument,
+        closeEditor,
+        saveDocument,
+        deleteDocument,
+        duplicateDocument,
+        togglePin,
+        uploadFile,
+        handleFileUpload,
+        previewFile,
+        closeFilePreview,
+        downloadFile,
+        showDocInfo,
+        closeDocInfo,
+        filterContent,
+        setView,
         searchDebounced,
         formatText,
         insertLink,
         insertImage,
         handleImageUpload,
-        uploadAttachment,
-        handleFileUpload,
-        removeAttachment,
         insertCode,
-        insertTable,
-        insertCallout,
-        changeTextColor,
-        changeBgColor,
-        showPageInfo,
-        closePageInfo
+        insertTable
     };
 })();
 
