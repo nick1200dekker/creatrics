@@ -304,11 +304,11 @@ html.dark .quick-actions-section {
 .carousel-track {
     display: flex;
     gap: 1rem;
-    transition: transform 0.5s ease;
+    will-change: transform;
 }
 
 .carousel-track.auto-scrolling {
-    animation: autoScroll 30s linear infinite;
+    animation: autoScroll 120s linear infinite;
 }
 
 .carousel-track:hover {
@@ -317,7 +317,7 @@ html.dark .quick-actions-section {
 
 @keyframes autoScroll {
     0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    100% { transform: translateX(calc(-100% - 1rem)); }
 }
 
 /* Action Cards - New Design */
@@ -1570,14 +1570,20 @@ function startAutoScroll() {
     const track = document.getElementById('carousel-track');
     if (!track) return;
 
-    // Clone items for seamless infinite scroll
+    // Get original items
     const items = Array.from(track.children);
+    const itemCount = items.length;
 
-    // Duplicate the items once (creates seamless loop)
-    items.forEach(item => {
-        const clone = item.cloneNode(true);
-        track.appendChild(clone);
-    });
+    // Clone items many times for a very long seamless scroll
+    // Duplicate 5-6 times to create a long track
+    const cloneCount = Math.max(5, Math.ceil(40 / itemCount));
+
+    for (let i = 0; i < cloneCount; i++) {
+        items.forEach(item => {
+            const clone = item.cloneNode(true);
+            track.appendChild(clone);
+        });
+    }
 
     track.classList.add('auto-scrolling');
 }
