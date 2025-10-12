@@ -11,6 +11,9 @@ from datetime import datetime, timedelta
 # Setup logger
 logger = logging.getLogger('analytics_routes')
 
+# Cache for TikTok analytics data
+tiktok_cache = {}
+
 @bp.route('/analytics')
 @auth_required
 @require_permission('analytics')
@@ -1298,11 +1301,26 @@ def refresh_tiktok_data():
         user_info = TikTokService.get_user_info(tiktok_username)
 
         if not user_info:
-            logger.error(f"TikTok analytics refresh failed for user {user_id}")
+            logger.warning(f"TikTok API unavailable for user {user_id} - possibly rate limited")
+            # Try to return cached data if available
+            db = firestore.client()
+            tiktok_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('latest')
+            tiktok_doc = tiktok_ref.get()
+
+            if tiktok_doc.exists:
+                cached_data = tiktok_doc.to_dict()
+                logger.info(f"Returning cached TikTok data for user {user_id}")
+                return jsonify({
+                    'success': True,
+                    'message': 'TikTok API temporarily unavailable, showing cached data',
+                    'cached': True,
+                    'timestamp': cached_data.get('fetched_at')
+                })
+
             return jsonify({
                 'success': False,
-                'error': 'Failed to refresh TikTok analytics data'
-            }), 500
+                'error': 'TikTok API is temporarily unavailable. This may be due to rate limiting. Please try again later.'
+            }), 503
 
         # Store secUid
         sec_uid = user_info.get('sec_uid')
@@ -1336,6 +1354,7 @@ def refresh_tiktok_data():
                     time.sleep(wait_time)
 
             if not posts_data:
+                logger.warning(f"Failed to fetch posts after {max_retries} retries, stopping pagination at page {page}")
                 break
 
             posts = posts_data.get('posts', [])
@@ -1376,6 +1395,34 @@ def refresh_tiktok_data():
             time.sleep(2)
 
         logger.info(f"Fetched {len(recent_posts)} recent posts for refresh")
+
+        # If no recent posts fetched (likely due to rate limiting), return cached data
+        if len(recent_posts) == 0:
+            logger.warning(f"No recent posts fetched for user {user_id}, likely rate limited. Returning cached data.")
+            # Initialize Firestore
+            if not firebase_admin._apps:
+                try:
+                    firebase_admin.initialize_app()
+                except ValueError:
+                    pass
+
+            db = firestore.client()
+            tiktok_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('latest')
+            tiktok_doc = tiktok_ref.get()
+
+            if tiktok_doc.exists:
+                cached_data = tiktok_doc.to_dict()
+                return jsonify({
+                    'success': True,
+                    'message': 'TikTok API rate limited. Showing cached data.',
+                    'cached': True,
+                    'timestamp': cached_data.get('fetched_at')
+                })
+
+            return jsonify({
+                'success': False,
+                'error': 'TikTok API is temporarily unavailable and no cached data exists. Please try again later.'
+            }), 503
 
         # Initialize Firestore if needed
         if not firebase_admin._apps:
