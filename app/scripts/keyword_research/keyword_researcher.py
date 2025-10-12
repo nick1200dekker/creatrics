@@ -29,10 +29,16 @@ class KeywordResearcher:
         Use AI to extract 3 main search topics from content
         This is a TINY AI call - very few tokens
         """
+        from datetime import datetime
+
         # Ultra-compact prompt to minimize tokens
         content_preview = content[:500]
+        now = datetime.now()
+        current_year = now.year
 
         prompt = f"""Extract exactly 3 DIVERSE YouTube search terms from this content.
+
+IMPORTANT: Current year is {current_year}. Use {current_year} in search terms, NOT 2024 or past years.
 
 Content: {content_preview}
 
@@ -72,7 +78,7 @@ iPhone 16 Pro  ← Should be just "iPhone 16"
 
 Now extract 3 DIVERSE search terms:"""
 
-        system_prompt = "You extract YouTube search keywords. Be concise."
+        system_prompt = f"You extract YouTube search keywords. Current year: {current_year}. Always use current year in keywords."
 
         try:
             response = ai_provider.create_completion(
