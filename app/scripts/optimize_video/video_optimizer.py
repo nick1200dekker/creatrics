@@ -6,6 +6,7 @@ import os
 import logging
 import requests
 from typing import Dict, Any
+from datetime import datetime
 from app.system.ai_provider.ai_provider import get_ai_provider
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_title.video_title import VideoTitleGenerator
@@ -312,8 +313,12 @@ Provide specific recommendations in these areas:
 
 Format as clear, actionable bullet points for each section."""
 
-            system_prompt = """You are a YouTube optimization expert. Provide specific, actionable recommendations
-            to improve video performance. Focus on SEO, engagement, and discoverability."""
+            now = datetime.now()
+            system_prompt = f"""You are a YouTube optimization expert. Provide specific, actionable recommendations
+            to improve video performance. Focus on SEO, engagement, and discoverability.
+
+            Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}.
+            IMPORTANT: Use {now.year} for any year references, not past years like 2024."""
 
             response = ai_provider.create_completion(
                 messages=[

@@ -7,6 +7,7 @@ import logging
 import json
 from typing import Dict, Optional
 from pathlib import Path
+from datetime import datetime
 from app.system.ai_provider.ai_provider import get_ai_provider
 
 # Configure logging
@@ -73,10 +74,17 @@ class VideoDescriptionGenerator:
 
             if ai_provider:
                 try:
+                    # Get current date for system prompt
+                    now = datetime.now()
+
                     # System prompt to ensure correct format
                     system_prompt = f"""You are a YouTube content strategist specializing in video descriptions.
                     Create engaging descriptions that maximize viewer retention and discoverability.
                     The description should be optimized for {'YouTube Shorts' if video_type == 'short' else 'long-form YouTube videos'}.
+
+                    Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}. Always use current and up-to-date references.
+
+                    IMPORTANT: Use {now.year} for any year references, not past years like 2024.
 
                     CRITICAL FORMATTING RULES:
                     - NO bold text or markdown formatting (no ** or ##)

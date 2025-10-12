@@ -259,19 +259,6 @@ function displayOptimizationResults(data) {
                 </div>
             </div>
 
-            <!-- Thumbnail Analysis -->
-            ${data.thumbnail_analysis ? `
-            <div class="result-card">
-                <h3 class="section-title">
-                    <i class="ph ph-image"></i>
-                    Thumbnail Analysis
-                </h3>
-                <div class="thumbnail-analysis-content">
-                    <div class="recommendations-text">${formatMarkdown(data.thumbnail_analysis)}</div>
-                </div>
-            </div>
-            ` : ''}
-
             <!-- Title Suggestions -->
             <div class="result-card">
                 <div class="section-header">
@@ -339,7 +326,7 @@ function displayOptimizationResults(data) {
                     <div class="tags-section">
                         <div class="tags-label">
                             Optimized Tags
-                            <button class="copy-btn-small" onclick="copyAllTags()">
+                            <button class="copy-btn-small" onclick="copyAllTags(this)">
                                 <i class="ph ph-copy"></i>
                                 Copy All
                             </button>
@@ -350,6 +337,19 @@ function displayOptimizationResults(data) {
                     </div>
                 </div>
             </div>
+
+            <!-- Thumbnail Analysis -->
+            ${data.thumbnail_analysis ? `
+            <div class="result-card">
+                <h3 class="section-title">
+                    <i class="ph ph-image"></i>
+                    Thumbnail Analysis
+                </h3>
+                <div class="thumbnail-analysis-content">
+                    <div class="recommendations-text">${formatMarkdown(data.thumbnail_analysis)}</div>
+                </div>
+            </div>
+            ` : ''}
         </div>
     `;
 
@@ -490,7 +490,7 @@ function copyDescription(button) {
 /**
  * Copy all optimized tags
  */
-function copyAllTags() {
+function copyAllTags(button) {
     const tags = window.optimizedTags || [];
     if (tags.length === 0) {
         showToast('No tags to copy');
@@ -500,20 +500,19 @@ function copyAllTags() {
     const tagsText = tags.join(', ');
 
     navigator.clipboard.writeText(tagsText).then(() => {
-        const btn = event.target.closest('button');
-        const icon = btn.querySelector('i');
+        const icon = button.querySelector('i');
         const originalClass = icon.className;
         icon.className = 'ph ph-check';
-        btn.style.color = '#10B981';
+        button.style.color = '#10B981';
 
         showToast(`${tags.length} tags copied to clipboard!`);
 
         setTimeout(() => {
             icon.className = originalClass;
-            btn.style.color = '';
+            button.style.color = '';
         }, 2000);
     }).catch(err => {
-        console.error('Failed to copy:', err);
+        console.error('Failed to copy tags:', err);
         showToast('Failed to copy tags');
     });
 }

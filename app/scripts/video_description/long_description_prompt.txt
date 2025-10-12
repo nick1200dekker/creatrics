@@ -14,7 +14,7 @@ CRITICAL RULES:
 The first 125 characters appear in YouTube search results and suggested videos. This is the MOST IMPORTANT part:
 - START with 2-3 PRIMARY KEYWORDS in the first 10 words (e.g., "Clash Royale card upgrade guide" NOT "Check out this video about")
 - Pack in specific, searchable terms that people type into YouTube
-- Include numbers/results if possible ("2024 meta deck" or "save 1000+ gold")
+- Include numbers/results if possible ("current meta deck" or "save 1000+ gold")
 - Make it benefit-driven and specific
 - Do NOT waste these characters on greetings, intros, or generic phrases
 

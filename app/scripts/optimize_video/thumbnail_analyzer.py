@@ -6,6 +6,7 @@ import logging
 import requests
 import base64
 from typing import Dict
+from datetime import datetime
 from app.system.ai_provider.ai_provider import get_ai_provider
 from app.system.credits.credits_manager import CreditsManager
 
@@ -48,27 +49,41 @@ class ThumbnailAnalyzer:
                 return {'success': False, 'error': 'Failed to download thumbnail'}
 
             # Prepare prompt for Claude Vision
-            prompt = f"""Analyze this YouTube video thumbnail for: "{video_title}"
+            now = datetime.now()
+            prompt = f"""Analyze this YouTube thumbnail for: "{video_title}"
 
-Provide a concise analysis with these sections:
+Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}.
 
-1. Visual Impact ⭐⭐⭐⭐⭐ (X/5) - Rate 1-5 stars ONLY (no half stars like 3.5, round to nearest whole number)
-2. Text Readability ⭐⭐⭐⭐⭐ (X/5)
-3. Color Scheme ⭐⭐⭐⭐⭐ (X/5)
-4. Composition ⭐⭐⭐⭐⭐ (X/5)
-5. Branding ⭐⭐⭐⭐⭐ (X/5)
-6. Mobile Optimization ⭐⭐⭐⭐⭐ (X/5)
-7. Emotional Appeal ⭐⭐⭐⭐⭐ (X/5)
+IMPORTANT: Viewers decide to click in 0.3 seconds. 70% watch on mobile. Be ruthlessly concise.
 
-For each section:
-- Show rating with stars (ONLY whole numbers like ⭐⭐⭐⭐, NO ⭐⭐⭐½ or 3.5/5)
-- List 2-3 brief bullet points of key strengths or issues
+Give ONLY these 3 sections:
 
-End with:
-**What Can Be Improved:**
-- 3-5 specific, actionable recommendations prioritized by impact
+**Quick Verdict** (1-2 sentences max)
+Overall impression and estimated CTR potential (Low/Medium/High)
 
-Keep it concise. NO markdown headers (## or #), just bold section titles. Focus on practical feedback."""
+**What Works** (2-3 bullet points max)
+- Be specific: "Yellow text with black outline = max contrast" not "good colors"
+- Focus on what drives clicks: emotion, benefit, curiosity
+
+**Fix These Now** (Top 3 changes only, ordered by impact)
+1. Most critical fix (what will increase clicks most)
+2. Second priority
+3. Third priority
+
+Rules:
+- NO ratings or star systems
+- NO section headers like "Visual Impact" or "Color Scheme"
+- NO long explanations
+- Each bullet: max 10 words
+- Think: "Will this change increase clicks?" If no, don't mention it
+- Focus on mobile readability (70% of views)
+- Faces with clear emotions beat everything else
+- Less text = better (max 3-5 words on thumbnail)
+- High contrast colors are non-negotiable
+
+Example good fix: "Make text 40% larger for mobile"
+Example bad fix: "Consider evaluating the color scheme for better brand consistency"
+"""
 
             # Use vision-capable model for analysis
             try:
