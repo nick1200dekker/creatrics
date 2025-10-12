@@ -110,34 +110,24 @@ html.dark .dashboard-header {
 
 /* Channel Card */
 .channel-card {
-    background: var(--bg-primary);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
     border: 1px solid var(--border-primary);
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
-    transition: all 0.3s ease;
     position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 html.dark .channel-card {
-    background: rgba(39, 39, 42, 0.6);
+    background: linear-gradient(135deg, rgba(39, 39, 42, 0.8) 0%, rgba(39, 39, 42, 0.6) 100%);
     border-color: rgba(63, 63, 70, 0.6);
     backdrop-filter: blur(10px);
-}
-
-.channel-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    border-color: rgba(59, 130, 246, 0.3);
-}
-
-html.dark .channel-card:hover {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    border-color: rgba(96, 165, 250, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .channel-header {
-    padding: 1.25rem;
-    background: var(--bg-secondary);
+    padding: 1.5rem;
+    background: transparent;
     border-bottom: 1px solid var(--border-primary);
     display: flex;
     justify-content: space-between;
@@ -145,8 +135,7 @@ html.dark .channel-card:hover {
 }
 
 html.dark .channel-header {
-    background: rgba(39, 39, 42, 0.4);
-    border-bottom-color: rgba(63, 63, 70, 0.5);
+    border-bottom-color: rgba(63, 63, 70, 0.4);
 }
 
 .channel-info {
@@ -156,21 +145,36 @@ html.dark .channel-header {
 }
 
 .channel-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.channel-icon.youtube { background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); }
-.channel-icon.x { background: linear-gradient(135deg, #000000 0%, #333333 100%); }
-.channel-icon.tiktok { background: linear-gradient(135deg, #000000 0%, #333333 100%); }
+.channel-icon.youtube {
+    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+}
 
-html.dark .channel-icon.youtube { background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); }
+.channel-icon.x {
+    background: linear-gradient(135deg, #14171A 0%, #000000 100%);
+}
+
+.channel-icon.tiktok {
+    background: #000000;
+}
+
+html.dark .channel-icon.youtube {
+    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+}
+
+html.dark .channel-icon.tiktok {
+    background: #000000;
+}
 
 .channel-name h3 {
     font-size: 1.125rem;
@@ -185,39 +189,29 @@ html.dark .channel-icon.youtube { background: linear-gradient(135deg, #FF0000 0%
 }
 
 .view-analytics-btn {
-    padding: 0.375rem 0.75rem;
-    background: transparent;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
     color: #3B82F6;
     border: 1px solid rgba(59, 130, 246, 0.3);
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 500;
+    border-radius: 8px;
+    font-size: 0.813rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
-}
-
-.view-analytics-btn:hover {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: #3B82F6;
+    gap: 0.5rem;
 }
 
 html.dark .view-analytics-btn {
     color: #60A5FA;
     border-color: rgba(96, 165, 250, 0.3);
-}
-
-html.dark .view-analytics-btn:hover {
-    background: rgba(96, 165, 250, 0.15);
-    border-color: #60A5FA;
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.12), rgba(167, 139, 250, 0.12));
 }
 
 /* Channel Metrics */
 .channel-metrics {
-    padding: 1.25rem;
+    padding: 1.5rem;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
@@ -225,22 +219,15 @@ html.dark .view-analytics-btn:hover {
 
 .metric-item {
     text-align: center;
-    padding: 0.75rem 0.5rem;
-    border-radius: 8px;
+    padding: 1rem 0.75rem;
+    border-radius: 10px;
     background: var(--bg-secondary);
-    transition: all 0.2s ease;
+    border: 1px solid var(--border-primary);
 }
 
 html.dark .metric-item {
-    background: rgba(63, 63, 70, 0.3);
-}
-
-.metric-item:hover {
-    background: var(--bg-tertiary);
-}
-
-html.dark .metric-item:hover {
-    background: rgba(63, 63, 70, 0.5);
+    background: rgba(63, 63, 70, 0.4);
+    border-color: rgba(82, 82, 91, 0.4);
 }
 
 .metric-value {
@@ -253,7 +240,10 @@ html.dark .metric-item:hover {
 .metric-label {
     font-size: 0.75rem;
     color: var(--text-tertiary);
-    margin-top: 0.25rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 /* NEW: Quick Actions Section - Standalone with auto-scroll */
@@ -1296,7 +1286,7 @@ html.dark .preview-card {
                     </div>
                     <div class="metric-item">
                         <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
-                        <div class="metric-label">Engagement Rate</div>
+                        <div class="metric-label">Engagement</div>
                     </div>
                 </div>
             </div>
@@ -1775,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     </div>
                     <div class="metric-item">
                         <div class="metric-value">${displayEngagement}</div>
-                        <div class="metric-label">Engagement Rate</div>
+                        <div class="metric-label">Engagement</div>
                     </div>
                 `;
             }
