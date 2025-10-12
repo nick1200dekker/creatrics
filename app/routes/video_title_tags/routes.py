@@ -100,7 +100,8 @@ def generate_video_titles():
             'success': True,
             'titles': generation_result.get('titles', []),
             'message': 'Titles generated successfully',
-            'used_ai': generation_result.get('used_ai', False)
+            'used_ai': generation_result.get('used_ai', False),
+            'keyword_data': generation_result.get('keyword_data', {})
         })
 
     except Exception as e:

@@ -38,48 +38,41 @@ Content: {content_preview}
 
 Return ONLY 3 search terms, one per line (NO numbering, NO bullet points):
 
-Line 1: BROAD main topic ONLY (1-3 words maximum, just the core subject)
-   Examples: "Clash Royale" NOT "Clash Royale Best Deck"
-             "Pokemon TCG" NOT "Pokemon TCG Meta Decks"
-             "iPhone 16" NOT "iPhone 16 Review"
+Line 1: THE BROADEST POSSIBLE MAIN TOPIC (remove ALL descriptors, just the core brand/game/product/subject)
+   Rules for Line 1:
+   - If about a game/app: Just the game name (e.g., "Clash Royale" NOT "Clash Royale Evolutions")
+   - If about a product: Just product name (e.g., "iPhone 16" NOT "iPhone 16 Pro")
+   - If about a topic: Just the topic (e.g., "Pasta" NOT "Pasta Recipe")
+   - Maximum 1-3 words
+   - NO descriptors, NO modifiers, NO features
 
-Line 2: Main topic + ONE specific modifier (best/how to/tutorial/tips/vs/review)
+Line 2: Main topic from Line 1 + add ONE specific modifier based on content
 
-Line 3: Main topic + DIFFERENT modifier (beginner/guide/explained/comparison/year)
+Line 3: Main topic from Line 1 + add DIFFERENT modifier
 
-Make lines 2 and 3 use DIFFERENT modifiers for diversity.
+CRITICAL: Lines 2 and 3 should ADD to Line 1, not repeat specifics already in the content.
 
 Correct Examples:
 Clash Royale
+Clash Royale Evolutions
 Clash Royale Best Deck
-Clash Royale Beginner Guide
 
 Pokemon TCG
 Pokemon TCG Meta Decks
 Pokemon TCG Tutorial
 
 iPhone 16
-iPhone 16 Review
-iPhone 16 vs iPhone 15
+iPhone 16 Pro Review
+iPhone 16 vs Samsung
 
-Wrong Examples (Line 1 is too specific):
-❌ Clash Royale Best Deck (too specific, should be just "Clash Royale")
-❌ Pokemon TCG Meta Decks (too specific, should be just "Pokemon TCG")
-❌ iPhone 16 Review (too specific, should be just "iPhone 16")
+❌ WRONG (Line 1 too specific):
+Clash Royale Evolutions  ← Should be just "Clash Royale"
+Pokemon TCG Meta  ← Should be just "Pokemon TCG"
+iPhone 16 Pro  ← Should be just "iPhone 16"
 
 Now extract 3 DIVERSE search terms:"""
 
         system_prompt = "You extract YouTube search keywords. Be concise."
-
-        logger.info("=" * 80)
-        logger.info("KEYWORD RESEARCH - STEP 1: AI Topic Extraction")
-        logger.info("=" * 80)
-        logger.info(f"INPUT TO AI (first 500 chars of content):")
-        logger.info(f"{content_preview}")
-        logger.info("-" * 80)
-        logger.info(f"PROMPT SENT TO AI:")
-        logger.info(f"{prompt}")
-        logger.info("-" * 80)
 
         try:
             response = ai_provider.create_completion(
@@ -104,10 +97,6 @@ Now extract 3 DIVERSE search terms:"""
             else:
                 ai_response_text = str(response).strip()
 
-            logger.info(f"AI RESPONSE:")
-            logger.info(f"{ai_response_text}")
-            logger.info("-" * 80)
-
             # Parse the 3 lines
             topics = ai_response_text.split('\n')
             topics = [t.strip() for t in topics if t.strip()][:3]
@@ -126,8 +115,7 @@ Now extract 3 DIVERSE search terms:"""
             while len(cleaned_topics) < 3:
                 cleaned_topics.append(cleaned_topics[0] if cleaned_topics else "YouTube")
 
-            logger.info(f"EXTRACTED TOPICS: {cleaned_topics}")
-            logger.info("=" * 80)
+            logger.info(f"Extracted topics: {cleaned_topics}")
             return cleaned_topics[:3]
 
         except Exception as e:
@@ -136,8 +124,7 @@ Now extract 3 DIVERSE search terms:"""
             words = content.split()[:3]
             main = ' '.join(words)
             fallback_topics = [main, f"{main} best", f"{main} beginner"]
-            logger.info(f"FALLBACK TOPICS: {fallback_topics}")
-            logger.info("=" * 80)
+            logger.info(f"Using fallback topics: {fallback_topics}")
             return fallback_topics
 
     def get_autocomplete_suggestions(self, query: str, geo: str = "US") -> List[str]:
@@ -155,15 +142,14 @@ Now extract 3 DIVERSE search terms:"""
                 "geo": geo
             }
 
-            logger.info(f"Fetching YouTube autocomplete for: '{query}'")
             response = requests.get(url, headers=headers, params=params, timeout=10)
 
             # Check for rate limit or auth errors
             if response.status_code == 429:
-                logger.warning(f"⚠️  Rate limit hit for '{query}' - skipping autocomplete for this topic")
+                logger.warning(f"Rate limit hit for '{query}'")
                 return []
             elif response.status_code == 401:
-                logger.warning(f"⚠️  API authentication failed for '{query}' - check RapidAPI key")
+                logger.warning(f"API authentication failed for '{query}'")
                 return []
 
             response.raise_for_status()
@@ -171,14 +157,14 @@ Now extract 3 DIVERSE search terms:"""
             data = response.json()
             suggestions = data.get('suggestions', [])
 
-            logger.info(f"✓ Got {len(suggestions)} suggestions for '{query}': {suggestions[:5]}...")
-            return suggestions[:10]  # Top 10
+            logger.info(f"Got {len(suggestions)} suggestions for '{query}'")
+            return suggestions  # Return all suggestions from API
 
         except requests.exceptions.RequestException as e:
-            logger.warning(f"⚠️  Could not fetch autocomplete for '{query}': {e}")
+            logger.warning(f"Could not fetch autocomplete for '{query}': {e}")
             return []
         except Exception as e:
-            logger.error(f"❌ Unexpected error getting autocomplete for '{query}': {e}")
+            logger.error(f"Unexpected error getting autocomplete for '{query}': {e}")
             return []
 
     def research_keywords(self, content: str, ai_provider) -> Dict:
@@ -188,18 +174,12 @@ Now extract 3 DIVERSE search terms:"""
         2. Get autocomplete for each topic (free API)
         3. Return structured data
         """
-        logger.info("\n" + "🔍 " + "=" * 78)
-        logger.info("STARTING YOUTUBE KEYWORD RESEARCH")
-        logger.info("=" * 80 + "\n")
+        logger.info("Starting YouTube keyword research...")
 
         # Step 1: AI extracts 3 topics (uses ~50-100 tokens)
         topics = self.extract_topics_with_ai(content, ai_provider)
 
         # Step 2: Get autocomplete suggestions for each topic (FREE, no tokens)
-        logger.info("\n" + "=" * 80)
-        logger.info("KEYWORD RESEARCH - STEP 2: YouTube Autocomplete API")
-        logger.info("=" * 80)
-
         keyword_data = {
             'main_topic': topics[0],
             'topics': topics,
@@ -211,23 +191,7 @@ Now extract 3 DIVERSE search terms:"""
             keyword_data['suggestions'][topic] = suggestions
 
         total_keywords = sum(len(s) for s in keyword_data['suggestions'].values())
-
-        logger.info("\n" + "=" * 80)
-        logger.info("KEYWORD RESEARCH COMPLETE - SUMMARY")
-        logger.info("=" * 80)
-        logger.info(f"Main Topic: {keyword_data['main_topic']}")
-        logger.info(f"Total Keywords Discovered: {total_keywords}")
-
-        if total_keywords > 0:
-            for topic, suggestions in keyword_data['suggestions'].items():
-                if suggestions:
-                    logger.info(f"\n'{topic}' -> {len(suggestions)} suggestions")
-                    logger.info(f"  Top 5: {suggestions[:5]}")
-        else:
-            logger.warning("⚠️  No autocomplete data available (API limits or errors)")
-            logger.info("💡 Will still use extracted topics for optimization")
-
-        logger.info("=" * 80 + "\n")
+        logger.info(f"Keyword research complete: {total_keywords} keywords found for {len(topics)} topics")
 
         return keyword_data
 
@@ -265,12 +229,6 @@ Now extract 3 DIVERSE search terms:"""
                 for i, topic in enumerate(keyword_data['topics'], 1):
                     text += f"  {i}. {topic}\n"
             text += "\nIMPORTANT: Optimize content around these topics for discoverability.\n"
-
-        logger.info("\n" + "=" * 80)
-        logger.info("KEYWORD PROMPT BEING ADDED TO AI:")
-        logger.info("=" * 80)
-        logger.info(text)
-        logger.info("=" * 80 + "\n")
 
         return text
 

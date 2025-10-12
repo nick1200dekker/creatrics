@@ -107,6 +107,7 @@ class VideoTitleGenerator:
                         'success': True,
                         'titles': titles,
                         'used_ai': True,
+                        'keyword_data': keyword_data,  # Include keyword research data
                         'token_usage': {
                             'model': 'ai_provider',
                             'input_tokens': len(prompt.split()),  # Rough estimate
