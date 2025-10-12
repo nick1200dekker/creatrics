@@ -141,6 +141,7 @@ def optimize_video_analysis(video_id):
             'current_tags': result.get('current_tags', []),
             'transcript_preview': result.get('transcript_preview', ''),
             'optimized_title': result.get('optimized_title', ''),
+            'title_suggestions': result.get('title_suggestions', []),
             'optimized_description': result.get('optimized_description', ''),
             'optimized_tags': result.get('optimized_tags', []),
             'thumbnail_analysis': result.get('thumbnail_analysis', ''),
@@ -190,4 +191,62 @@ def get_optimization_history():
 
     except Exception as e:
         logger.error(f"Error getting optimization history: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/refresh-titles/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def refresh_titles(video_id):
+    """Regenerate title suggestions for a video"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get existing optimization to retrieve context
+        optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
+        existing_doc = optimization_ref.get()
+
+        if not existing_doc.exists:
+            return jsonify({'success': False, 'error': 'Optimization not found'}), 404
+
+        stored_data = existing_doc.to_dict()
+
+        # Build context for title generation
+        from app.scripts.video_title.video_title import VideoTitleGenerator
+
+        optimization_context = f"""
+Video Title: {stored_data.get('current_title', '')}
+Video Description: {stored_data.get('current_description', '')[:500]}
+Video Transcript: {stored_data.get('transcript_preview', '')}
+"""
+
+        # Generate new title suggestions
+        title_generator = VideoTitleGenerator()
+        title_result = title_generator.generate_titles(
+            optimization_context,
+            video_type='long_form',
+            user_id=user_id
+        )
+
+        # Get 10 titles from the result
+        all_titles = title_result.get('titles', [])
+        if len(all_titles) >= 10:
+            new_title_suggestions = all_titles[:10]
+        else:
+            new_title_suggestions = all_titles + [stored_data.get('current_title', '')] * (10 - len(all_titles))
+
+        # Update Firebase with new titles
+        optimization_ref.update({
+            'title_suggestions': new_title_suggestions,
+            'optimized_title': new_title_suggestions[0] if new_title_suggestions else stored_data.get('current_title', '')
+        })
+
+        logger.info(f"Regenerated titles for user {user_id}, video {video_id}")
+
+        return jsonify({
+            'success': True,
+            'title_suggestions': new_title_suggestions
+        })
+
+    except Exception as e:
+        logger.error(f"Error refreshing titles: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500

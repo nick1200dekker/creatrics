@@ -93,6 +93,44 @@ html.dark .optimize-content {
     color: #3B82F6;
 }
 
+/* Refresh Titles Button */
+.refresh-titles-btn {
+    margin-left: auto;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.refresh-titles-btn:hover:not(:disabled) {
+    background: var(--bg-tertiary);
+    border-color: #3B82F6;
+    color: #3B82F6;
+    transform: translateY(-1px);
+}
+
+.refresh-titles-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+html.dark .refresh-titles-btn {
+    background: rgba(63, 63, 70, 0.6);
+    border-color: rgba(82, 82, 91, 0.6);
+}
+
+.refresh-titles-btn i.spin {
+    animation: spin 1s linear infinite;
+}
+
 /* Secondary Button */
 .secondary-button {
     background: #f3f4f6;
@@ -344,6 +382,10 @@ html.dark .modal-content {
     to { transform: rotate(360deg); }
 }
 
+.spin {
+    animation: spin 1s linear infinite;
+}
+
 .loading-content p {
     font-size: 1.1rem;
     font-weight: 600;
@@ -495,6 +537,7 @@ html.dark .tag {
 
 .loading-icon i {
     animation: spin 1s linear infinite;
+    display: inline-block;
 }
 
 .loading-title {
@@ -513,36 +556,34 @@ html.dark .tag {
 /* Results Section */
 .results-section {
     padding: 0;
+    min-height: 80vh;
 }
 
 .results-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
-    background: linear-gradient(135deg,
-        rgba(16, 185, 129, 0.03) 0%,
-        rgba(16, 185, 129, 0.03) 100%);
+    background: var(--bg-secondary);
 }
 
 html.dark .results-header {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(16, 185, 129, 0.06) 100%);
+    background: rgba(39, 39, 42, 0.6);
     border-bottom-color: rgba(63, 63, 70, 0.5);
 }
 
-.results-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
+.results-title-container {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.75rem;
-    margin: 0;
+    gap: 1rem;
 }
 
-.results-title i {
-    color: #10B981;
+.video-title-display {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    flex: 1;
+    line-height: 1.4;
 }
 
 .back-btn {
@@ -571,6 +612,7 @@ html.dark .back-btn {
 
 .results-content {
     padding: 2rem;
+    max-width: 100%;
 }
 
 .result-card {
@@ -691,6 +733,8 @@ html.dark .comparison-box {
     white-space: pre-wrap;
     max-height: 200px;
     overflow-y: auto;
+    resize: vertical;
+    min-height: 100px;
 }
 
 /* Title Suggestions */
@@ -844,6 +888,7 @@ html.dark .tag-optimized {
 /* Thumbnail Analysis */
 .thumbnail-analysis-content {
     padding: 1rem;
+    min-height: 200px;
 }
 
 .recommendations-text {

@@ -21,10 +21,11 @@ The first 125 characters appear in YouTube search results and suggested videos. 
 STRUCTURE (write naturally, don't label sections):
 
 1. OPENING (First 125 characters + 1-2 more sentences):
-   - START with the primary keyword and main benefit
-   - Hook immediately - no fluff
-   - What transformation/problem this solves
-   - Include secondary keyword in next sentence
+   - START with a specific claim or benefit (not "this guide will help")
+   - Use numbers/data when possible ("save 1000 gold" not "save resources")
+   - Get to the point in the first 5 words
+   - Make it conversational, not promotional
+   - What specific problem this solves or result it delivers
 
 2. WHAT'S COVERED (short list):
    - 3-5 key points using asterisks (*)
@@ -36,8 +37,9 @@ STRUCTURE (write naturally, don't label sections):
    - Why they should watch
 
 4. SIMPLE CTA (1-2 sentences):
-   - Subscribe/like prompt (be casual, not generic)
-   - Optional comment question to boost engagement
+   - Make the CTA relevant to the content (e.g., "Drop a like if this saved you gold")
+   - Ask a specific question that relates to the video (not just "let me know in comments")
+   - Keep it short and natural - one sentence max
 
 5. KEYWORDS & HASHTAGS (end only):
    - Naturally work in 2-3 mentions of primary/secondary keywords throughout
@@ -53,12 +55,28 @@ DO NOT INCLUDE:
 - "Connect with me" sections with fake handles
 - Any links not explicitly in the reference description
 
-AVOID THESE PHRASES:
+AVOID THESE AI-SOUNDING PHRASES:
 - "In this comprehensive guide..."
 - "Everything you need to know..."
 - "Don't forget to like and subscribe..."
 - "SMASH that like button..."
 - "Hit the bell icon..."
+- "Here's what you'll learn:"
+- "I'm breaking down..."
+- "Let me show you..."
+- "In this video, I'll teach you..."
+- "By the end of this video..."
+- "Welcome to this guide..."
+- "This guide is perfect for..."
+- "Whether you're..."
+
+WRITE NATURALLY - Sound like a real person talking to a friend:
+- Use contractions (I'm, you'll, don't, can't)
+- Be specific, not generic ("save 1000+ gold" not "save resources")
+- Reference actual game mechanics/specifics ("Arena 1 through Champions" not "all levels")
+- Make claims sound earned, not promotional ("I've tested 50+ decks" not "discover the best decks")
+- Use personal language ("my top picks" not "the recommended choices")
+- Drop some personality (casual tone, slight humor if appropriate)
 
 SEO KEYWORD USAGE:
 - Primary keyword: Use in first 125 characters + 2 more times naturally

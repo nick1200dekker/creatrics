@@ -3,6 +3,9 @@
  * Handles video optimization interface and API interactions
  */
 
+// Global state
+let currentVideoId = null;
+
 // Load videos on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadMyVideos();
@@ -120,6 +123,9 @@ async function loadOptimizationHistory() {
  */
 async function optimizeVideo(videoId) {
     try {
+        // Store current video ID globally
+        currentVideoId = videoId;
+
         // Hide videos list, show loading section
         document.getElementById('videosListSection').style.display = 'none';
         document.getElementById('loadingSection').style.display = 'block';
@@ -134,24 +140,31 @@ async function optimizeVideo(videoId) {
 
         const data = await response.json();
 
+        console.log('Optimization complete:', data);
+
         if (!data.success) {
             throw new Error(data.error || 'Optimization failed');
         }
 
-        // Show results after brief delay
-        setTimeout(() => {
-            displayOptimizationResults(data.data);
-            document.getElementById('loadingSection').style.display = 'none';
-            document.getElementById('resultsSection').style.display = 'block';
+        if (!data.data) {
+            throw new Error('No optimization data received from server');
+        }
 
-            // Scroll to results
-            setTimeout(() => {
-                document.getElementById('resultsSection').scrollIntoView({
+        // Display results immediately
+        displayOptimizationResults(data.data);
+        document.getElementById('loadingSection').style.display = 'none';
+        document.getElementById('resultsSection').style.display = 'block';
+
+        // Scroll to results
+        setTimeout(() => {
+            const resultsSection = document.getElementById('resultsSection');
+            if (resultsSection) {
+                resultsSection.scrollIntoView({
                     behavior: 'smooth',
                     block: 'start'
                 });
-            }, 100);
-        }, 500);
+            }
+        }, 100);
 
         // Reload history
         loadOptimizationHistory();
@@ -175,14 +188,13 @@ function displayOptimizationResults(data) {
 
     const html = `
         <div class="results-header">
-            <h2 class="results-title">
-                <i class="ph ph-check-circle"></i>
-                Optimization Complete
-            </h2>
-            <button class="back-btn" onclick="backToVideos()">
-                <i class="ph ph-arrow-left"></i>
-                Back to Videos
-            </button>
+            <div class="results-title-container">
+                <h3 class="video-title-display">${escapeHtml(videoInfo.title || data.current_title || '')}</h3>
+                <button class="back-btn" onclick="backToVideos()">
+                    <i class="ph ph-arrow-left"></i>
+                    Back to Videos
+                </button>
+            </div>
         </div>
 
         <div class="results-content">
@@ -226,12 +238,16 @@ function displayOptimizationResults(data) {
                 <h3 class="section-title">
                     <i class="ph ph-text-aa"></i>
                     Title Suggestions
+                    <button class="refresh-titles-btn" onclick="refreshTitles()" id="refreshTitlesBtn">
+                        <i class="ph ph-arrows-clockwise"></i>
+                        <span>Refresh</span>
+                    </button>
                 </h3>
                 <div class="comparison-box current-box">
                     <div class="comparison-label">Current Title</div>
                     <div class="comparison-value">${escapeHtml(data.current_title || videoInfo.title || '')}</div>
                 </div>
-                <div class="suggestions-list">
+                <div class="suggestions-list" id="titleSuggestionsList">
                     ${titleSuggestions.map((title, index) => `
                         <div class="suggestion-item">
                             <div class="suggestion-number">${index + 1}</div>
@@ -390,4 +406,71 @@ function copyAllTags() {
             btn.style.color = '';
         }, 2000);
     });
+}
+
+/**
+ * Refresh title suggestions
+ */
+async function refreshTitles() {
+    if (!currentVideoId) {
+        alert('No video selected');
+        return;
+    }
+
+    const refreshBtn = document.getElementById('refreshTitlesBtn');
+    const icon = refreshBtn.querySelector('i');
+    const span = refreshBtn.querySelector('span');
+
+    try {
+        // Show loading state
+        refreshBtn.disabled = true;
+        icon.className = 'ph ph-spinner spin';
+        span.textContent = 'Refreshing...';
+
+        const response = await fetch(`/optimize-video/api/refresh-titles/${currentVideoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to refresh titles');
+        }
+
+        // Update the title suggestions list
+        const titlesList = document.getElementById('titleSuggestionsList');
+        const newTitles = data.title_suggestions || [];
+
+        titlesList.innerHTML = newTitles.map((title, index) => `
+            <div class="suggestion-item">
+                <div class="suggestion-number">${index + 1}</div>
+                <div class="suggestion-text">${escapeHtml(title)}</div>
+                <button class="copy-btn" onclick="copyToClipboard(this, \`${escapeHtml(title).replace(/`/g, '\\`')}\`)">
+                    <i class="ph ph-copy"></i>
+                </button>
+            </div>
+        `).join('');
+
+        // Show success feedback
+        icon.className = 'ph ph-check';
+        span.textContent = 'Refreshed!';
+
+        setTimeout(() => {
+            icon.className = 'ph ph-arrows-clockwise';
+            span.textContent = 'Refresh';
+            refreshBtn.disabled = false;
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error refreshing titles:', error);
+        alert(`Failed to refresh titles: ${error.message}`);
+
+        // Reset button state
+        icon.className = 'ph ph-arrows-clockwise';
+        span.textContent = 'Refresh';
+        refreshBtn.disabled = false;
+    }
 }

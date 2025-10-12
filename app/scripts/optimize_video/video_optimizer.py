@@ -62,22 +62,22 @@ Video Description: {current_description[:500]}
 Video Transcript: {transcript_text[:2000]}
 """
 
-            # Generate 5 optimized title suggestions
-            title_suggestions = []
-            for i in range(5):
-                title_result = self.title_generator.generate_titles(
-                    optimization_context,
-                    video_type='long_form',
-                    user_id=user_id
-                )
-                if title_result.get('titles'):
-                    title_suggestions.append(title_result.get('titles')[0])
+            # Generate optimized title suggestions (1 AI call generates 10 titles)
+            title_result = self.title_generator.generate_titles(
+                optimization_context,
+                video_type='long_form',
+                user_id=user_id
+            )
 
-            # Fallback if not enough titles generated
-            if len(title_suggestions) < 5:
-                title_suggestions.extend([current_title] * (5 - len(title_suggestions)))
+            # Get all 10 titles from the result
+            all_titles = title_result.get('titles', [])
+            if len(all_titles) >= 10:
+                title_suggestions = all_titles[:10]
+            else:
+                # Fallback if not enough titles generated
+                title_suggestions = all_titles + [current_title] * (10 - len(all_titles))
 
-            optimized_titles = title_suggestions[0]  # Keep first for backward compatibility
+            optimized_titles = title_suggestions[0] if title_suggestions else current_title  # Keep first for backward compatibility
 
             # Generate optimized description
             description_result = self.description_generator.generate_description(
@@ -241,11 +241,6 @@ Video Transcript: {transcript_text[:2000]}
             if not ai_provider:
                 return {'error': 'AI provider not available'}
 
-            # Deduct credits
-            credits_manager = CreditsManager()
-            if not credits_manager.deduct_credits(user_id, 10):
-                return {'error': 'Insufficient credits'}
-
             # Build analysis prompt
             prompt = f"""Analyze this YouTube video and provide optimization recommendations.
 
@@ -292,6 +287,23 @@ Format as clear, actionable bullet points for each section."""
             )
 
             recommendations_text = response.get('content', '') if isinstance(response, dict) else str(response)
+
+            # Deduct credits based on actual token usage
+            credits_manager = CreditsManager()
+            usage = response.get('usage', {})
+            input_tokens = usage.get('input_tokens', 0)
+            output_tokens = usage.get('output_tokens', 0)
+            model_name = response.get('model', 'claude-3-5-sonnet-20241022')
+
+            if input_tokens > 0 or output_tokens > 0:
+                credits_manager.deduct_llm_credits(
+                    user_id,
+                    model_name,
+                    input_tokens,
+                    output_tokens,
+                    'Video optimization recommendations',
+                    feature_id='optimize_video'
+                )
 
             return {
                 'overview': recommendations_text,

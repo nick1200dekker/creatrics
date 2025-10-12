@@ -84,6 +84,10 @@ html.dark .dashboard-header {
     text-align: center;
 }
 
+.header-stat:hover {
+    transform: translateY(-2px);
+}
+
 .stat-value {
     font-size: 1.75rem;
     font-weight: 700;
@@ -1150,12 +1154,12 @@ html.dark .preview-card {
                 <h1 class="welcome-title">Welcome back, <span id="username-display">{{ g.user.get('data', {}).get('username', 'Creator') }}</span></h1>
             </div>
             <div class="header-stats">
-                <div class="header-stat">
+                <a href="{{ url_for('credits_history.index') }}" class="header-stat" style="text-decoration: none; cursor: pointer; transition: transform 0.2s ease;">
                     <div class="stat-value" id="credits-display">
                         <div class="skeleton-loader" style="width: 60px; height: 24px;"></div>
                     </div>
                     <div class="stat-label">Credits</div>
-                </div>
+                </a>
                 <div class="header-stat">
                     <div class="stat-value" id="streak-display">
                         <div class="skeleton-loader" style="width: 40px; height: 24px;"></div>
