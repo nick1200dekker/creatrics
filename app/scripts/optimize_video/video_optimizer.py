@@ -62,13 +62,22 @@ Video Description: {current_description[:500]}
 Video Transcript: {transcript_text[:2000]}
 """
 
-            # Generate optimized title
-            title_result = self.title_generator.generate_titles(
-                optimization_context,
-                video_type='long_form',
-                user_id=user_id
-            )
-            optimized_titles = title_result.get('titles', [])[0] if title_result.get('titles') else current_title
+            # Generate 5 optimized title suggestions
+            title_suggestions = []
+            for i in range(5):
+                title_result = self.title_generator.generate_titles(
+                    optimization_context,
+                    video_type='long_form',
+                    user_id=user_id
+                )
+                if title_result.get('titles'):
+                    title_suggestions.append(title_result.get('titles')[0])
+
+            # Fallback if not enough titles generated
+            if len(title_suggestions) < 5:
+                title_suggestions.extend([current_title] * (5 - len(title_suggestions)))
+
+            optimized_titles = title_suggestions[0]  # Keep first for backward compatibility
 
             # Generate optimized description
             description_result = self.description_generator.generate_description(
@@ -115,13 +124,15 @@ Video Transcript: {transcript_text[:2000]}
                     'channel_title': video_info.get('channelTitle', ''),
                     'view_count': f"{int(video_info.get('viewCount', 0)):,}",
                     'like_count': f"{int(video_info.get('likeCount', 0)):,}",
-                    'thumbnail': thumbnail_url
+                    'thumbnail': thumbnail_url,
+                    'published_time': video_info.get('publishDate', '')
                 },
                 'current_title': current_title,
                 'current_description': current_description,
                 'current_tags': current_tags,
                 'transcript_preview': transcript_text[:500] + '...' if len(transcript_text) > 500 else transcript_text,
                 'optimized_title': optimized_titles,
+                'title_suggestions': title_suggestions,  # Return all 5 suggestions
                 'optimized_description': optimized_description,
                 'optimized_tags': optimized_tags,
                 'thumbnail_analysis': thumbnail_analysis.get('analysis', ''),

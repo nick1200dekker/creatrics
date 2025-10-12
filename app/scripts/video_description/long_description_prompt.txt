@@ -1,77 +1,73 @@
-Generate a YouTube video description for the following content:
-
-IMPORTANT: Write naturally as if you're the actual creator. Avoid generic AI phrases.
+Generate a concise YouTube video description for the following content:
 
 {input}
 
-DESCRIPTION STRUCTURE:
+CRITICAL RULES:
+- Keep it focused (200-500 words MAX)
+- Write as the actual creator, not an AI
+- NO placeholder links (like @YourHandle, [Link], discord links, etc.)
+- NO section headers like "HOOK:" or "OVERVIEW:"
+- NO bold text or markdown (no ** or ##)
+- Only include links/resources that exist in the reference description
 
-1. OPENING HOOK (First 125 characters):
-   - Start with the most compelling benefit or transformation
-   - Include the main keyword naturally
-   - Create urgency or curiosity
-   - This text shows in search results - make it count!
+⚠️ FIRST 125 CHARACTERS ARE CRITICAL ⚠️
+The first 125 characters appear in YouTube search results and suggested videos. This is the MOST IMPORTANT part:
+- Include PRIMARY KEYWORD in the first sentence
+- Make it compelling and benefit-driven
+- Front-load the value proposition
+- Think of it as a mini-headline
+- Do NOT waste these precious characters on generic openings
 
-2. OVERVIEW (2-3 sentences):
-   - Expand on what viewers will learn/gain
-   - Set expectations for the video content
-   - Include secondary keywords naturally
+STRUCTURE (write naturally, don't label sections):
 
-3. KEY TOPICS/CHAPTERS:
-   - List main points covered in the video
-   - Use single asterisk (*) for bullet points
-   - Add emojis for visual appeal
-   - Make it scannable for viewers
+1. OPENING (First 125 characters + 1-2 more sentences):
+   - START with the primary keyword and main benefit
+   - Hook immediately - no fluff
+   - What transformation/problem this solves
+   - Include secondary keyword in next sentence
 
-4. VALUE PROPOSITION:
-   - Why should they watch THIS video?
-   - What makes your content unique?
-   - What problem does it solve?
+2. WHAT'S COVERED (short list):
+   - 3-5 key points using asterisks (*)
+   - Add relevant emojis if they fit the style
+   - Keep each point brief (one line)
 
-5. CALL TO ACTION:
-   - Subscribe reminder with bell icon mention
-   - Like and comment prompts
-   - Share if valuable
+3. WHO IT'S FOR (1-2 sentences):
+   - Quick statement about target audience
+   - Why they should watch
 
-6. RESOURCES/LINKS:
-   - Related videos or playlists
-   - Downloads or resources mentioned
-   - Affiliate links if applicable
+4. SIMPLE CTA (1-2 sentences):
+   - Subscribe/like prompt (be casual, not generic)
+   - Optional comment question to boost engagement
 
-7. ENGAGEMENT SECTION:
-   - Question for comments
-   - Community building element
-   - Invitation to connect
+5. KEYWORDS & HASHTAGS (end only):
+   - Naturally work in 2-3 mentions of primary/secondary keywords throughout
+   - End with maximum 3-5 relevant hashtags
+   - No generic hashtags like #viral
 
-FORMAT REQUIREMENTS:
-- NO bold text or markdown headers (no ** or ##)
-- Use single asterisk (*) for bullet points only
-- Use line breaks for readability
-- Include emojis based on reference style (if provided)
-- Natural keyword placement (no stuffing)
-- Match the tone from reference (if provided)
-- Maximum 5000 characters total
-- Maximum 3 hashtags at the end
+DO NOT INCLUDE:
+- Fake social media links (@YourHandle, etc.)
+- Discord/community links unless in reference
+- Resources sections with [Link] placeholders
+- Timestamps or chapters sections
+- Multiple CTA sections
+- "Connect with me" sections with fake handles
+- Any links not explicitly in the reference description
 
-AVOID THESE GENERIC AI PHRASES:
-- "In this video, you'll learn..."
-- "Don't forget to like and subscribe"
-- "Comprehensive guide"
-- "Everything you need to know"
-- "Make sure to hit the bell"
-- "Step-by-step tutorial"
-Instead, write uniquely and authentically
+AVOID THESE PHRASES:
+- "In this comprehensive guide..."
+- "Everything you need to know..."
+- "Don't forget to like and subscribe..."
+- "SMASH that like button..."
+- "Hit the bell icon..."
 
-SEO OPTIMIZATION:
-- Include primary keyword 2-3 times naturally
-- Add 2-3 secondary keywords
-- Use semantic variations
-- Location keywords if relevant
+SEO KEYWORD USAGE:
+- Primary keyword: Use in first 125 characters + 2 more times naturally
+- Secondary keywords: Sprinkle 2-3 related terms throughout
+- Use semantic variations (e.g., "Clash Royale decks" → "CR deck building" → "card combinations")
+- Front-load keywords in opening lines for maximum SEO impact
 
-CRITICAL:
-- Do not include section headers like "HOOK:" or "OVERVIEW:" - just write the content directly
-- No bold formatting anywhere
-- If a reference is provided, MATCH its writing style exactly
-- Write as if you ARE the creator, not describing what they should write
+If reference description is provided, extract ONLY real social links and match the writing style.
 
-OUTPUT ONLY THE DESCRIPTION CONTENT - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS, NO SECTION HEADERS. JUST THE DESCRIPTION:
+REMEMBER: The first 125 characters determine if people click. Make them COUNT!
+
+OUTPUT ONLY THE DESCRIPTION - NO LABELS, NO HEADERS, NO COMMENTARY:

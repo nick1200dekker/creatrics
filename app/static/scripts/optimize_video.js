@@ -119,11 +119,11 @@ async function loadOptimizationHistory() {
  * Optimize a specific video
  */
 async function optimizeVideo(videoId) {
-    const loadingModal = document.getElementById('loadingModal');
-
     try {
-        // Show loading modal
-        loadingModal.style.display = 'flex';
+        // Hide videos list, show loading section
+        document.getElementById('videosListSection').style.display = 'none';
+        document.getElementById('loadingSection').style.display = 'block';
+        document.getElementById('resultsSection').style.display = 'none';
 
         const response = await fetch(`/optimize-video/api/optimize/${videoId}`, {
             method: 'POST',
@@ -138,111 +138,176 @@ async function optimizeVideo(videoId) {
             throw new Error(data.error || 'Optimization failed');
         }
 
-        // Hide loading modal
-        loadingModal.style.display = 'none';
+        // Show results after brief delay
+        setTimeout(() => {
+            displayOptimizationResults(data.data);
+            document.getElementById('loadingSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
 
-        // Show results
-        displayOptimizationResults(data.data);
+            // Scroll to results
+            setTimeout(() => {
+                document.getElementById('resultsSection').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
+        }, 500);
 
         // Reload history
         loadOptimizationHistory();
 
     } catch (error) {
         console.error('Error optimizing video:', error);
-        loadingModal.style.display = 'none';
+        document.getElementById('loadingSection').style.display = 'none';
+        document.getElementById('videosListSection').style.display = 'block';
         alert(`Failed to optimize video: ${error.message}`);
     }
 }
 
 /**
- * Display optimization results in modal
+ * Display optimization results
  */
 function displayOptimizationResults(data) {
-    const modal = document.getElementById('resultsModal');
-    const body = document.getElementById('resultsBody');
-
+    const resultsSection = document.getElementById('resultsSection');
     const videoInfo = data.video_info || {};
     const recommendations = data.recommendations || {};
+    const titleSuggestions = data.title_suggestions || [data.optimized_title];
 
-    body.innerHTML = `
-        <!-- Video Info -->
-        <div class="result-section">
-            <h3><i class="ph ph-video"></i> Video Information</h3>
-            <div class="comparison-box">
-                <div class="comparison-label">Title</div>
-                <div class="comparison-value">${escapeHtml(videoInfo.title || '')}</div>
-            </div>
-            <div class="video-meta">
-                <span><i class="ph ph-eye"></i> ${videoInfo.view_count || '0'} views</span>
-                <span><i class="ph ph-thumbs-up"></i> ${videoInfo.like_count || '0'} likes</span>
-            </div>
+    const html = `
+        <div class="results-header">
+            <h2 class="results-title">
+                <i class="ph ph-check-circle"></i>
+                Optimization Complete
+            </h2>
+            <button class="back-btn" onclick="backToVideos()">
+                <i class="ph ph-arrow-left"></i>
+                Back to Videos
+            </button>
         </div>
 
-        <!-- Title Optimization -->
-        <div class="result-section">
-            <h3><i class="ph ph-text-aa"></i> Title Optimization</h3>
-            <div class="comparison-box">
-                <div class="comparison-label">Current Title</div>
-                <div class="comparison-value">${escapeHtml(data.current_title || '')}</div>
-            </div>
-            <div class="comparison-box" style="border: 2px solid #10B981;">
-                <div class="comparison-label" style="color: #10B981;">✨ Optimized Title</div>
-                <div class="comparison-value">${escapeHtml(data.optimized_title || '')}</div>
-            </div>
-        </div>
-
-        <!-- Description Optimization -->
-        <div class="result-section">
-            <h3><i class="ph ph-align-left"></i> Description Optimization</h3>
-            <div class="comparison-box">
-                <div class="comparison-label">Current Description</div>
-                <div class="comparison-value" style="max-height: 100px; overflow-y: auto;">${escapeHtml((data.current_description || '').substring(0, 500))}${data.current_description && data.current_description.length > 500 ? '...' : ''}</div>
-            </div>
-            <div class="comparison-box" style="border: 2px solid #10B981;">
-                <div class="comparison-label" style="color: #10B981;">✨ Optimized Description</div>
-                <div class="comparison-value" style="max-height: 100px; overflow-y: auto;">${escapeHtml((data.optimized_description || '').substring(0, 500))}${data.optimized_description && data.optimized_description.length > 500 ? '...' : ''}</div>
-            </div>
-        </div>
-
-        <!-- Tags Optimization -->
-        <div class="result-section">
-            <h3><i class="ph ph-hash"></i> Tags Optimization</h3>
-            <div class="comparison-box">
-                <div class="comparison-label">Current Tags</div>
-                <div class="tags-list">
-                    ${(data.current_tags || []).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+        <div class="results-content">
+            <!-- Video Info Card -->
+            <div class="result-card video-header-card">
+                <div class="video-header-content">
+                    <div class="video-thumbnail-wrapper">
+                        <img src="${videoInfo.thumbnail || ''}" alt="Video thumbnail" class="video-thumbnail-img">
+                    </div>
+                    <div class="video-meta-info">
+                        <h3 class="video-title-text">${escapeHtml(videoInfo.title || data.current_title || '')}</h3>
+                        <div class="video-stats">
+                            <span class="stat">
+                                <i class="ph ph-eye"></i>
+                                ${videoInfo.view_count || '0'} views
+                            </span>
+                            <span class="stat">
+                                <i class="ph ph-clock"></i>
+                                ${videoInfo.published_time || ''}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="comparison-box" style="border: 2px solid #10B981;">
-                <div class="comparison-label" style="color: #10B981;">✨ Optimized Tags</div>
-                <div class="tags-list">
-                    ${(data.optimized_tags || []).slice(0, 15).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+
+            <!-- Thumbnail Analysis -->
+            ${data.thumbnail_analysis ? `
+            <div class="result-card">
+                <h3 class="section-title">
+                    <i class="ph ph-image"></i>
+                    Thumbnail Analysis
+                </h3>
+                <div class="thumbnail-analysis-content">
+                    <div class="recommendations-text">${formatMarkdown(data.thumbnail_analysis)}</div>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Title Suggestions -->
+            <div class="result-card">
+                <h3 class="section-title">
+                    <i class="ph ph-text-aa"></i>
+                    Title Suggestions
+                </h3>
+                <div class="comparison-box current-box">
+                    <div class="comparison-label">Current Title</div>
+                    <div class="comparison-value">${escapeHtml(data.current_title || videoInfo.title || '')}</div>
+                </div>
+                <div class="suggestions-list">
+                    ${titleSuggestions.map((title, index) => `
+                        <div class="suggestion-item">
+                            <div class="suggestion-number">${index + 1}</div>
+                            <div class="suggestion-text">${escapeHtml(title)}</div>
+                            <button class="copy-btn" onclick="copyToClipboard(this, \`${escapeHtml(title).replace(/`/g, '\\`')}\`)">
+                                <i class="ph ph-copy"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Description Optimization -->
+            <div class="result-card">
+                <h3 class="section-title">
+                    <i class="ph ph-align-left"></i>
+                    Description Optimization
+                </h3>
+                <div class="comparison-box current-box">
+                    <div class="comparison-label">Current Description</div>
+                    <div class="comparison-value description-text">${escapeHtml(data.current_description || '')}</div>
+                </div>
+                <div class="comparison-box optimized-box">
+                    <div class="comparison-label">
+                        Optimized Description
+                        <button class="copy-btn-small" onclick="copyToClipboard(this, \`${escapeHtml(data.optimized_description || '').replace(/`/g, '\\`')}\`)">
+                            <i class="ph ph-copy"></i>
+                            Copy
+                        </button>
+                    </div>
+                    <div class="comparison-value description-text">${escapeHtml(data.optimized_description || '')}</div>
+                </div>
+            </div>
+
+            <!-- Tags Optimization -->
+            <div class="result-card">
+                <h3 class="section-title">
+                    <i class="ph ph-hash"></i>
+                    Tags Optimization
+                </h3>
+                <div class="tags-container">
+                    <div class="tags-section">
+                        <div class="tags-label">Current Tags</div>
+                        <div class="tags-list">
+                            ${(data.current_tags || []).map(tag => `<span class="tag tag-current">${escapeHtml(tag)}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="tags-section">
+                        <div class="tags-label">
+                            Optimized Tags
+                            <button class="copy-btn-small" onclick="copyAllTags()">
+                                <i class="ph ph-copy"></i>
+                                Copy All
+                            </button>
+                        </div>
+                        <div class="tags-list" id="optimizedTagsList">
+                            ${(data.optimized_tags || []).slice(0, 30).map(tag => `<span class="tag tag-optimized">${escapeHtml(tag)}</span>`).join('')}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Thumbnail Analysis -->
-        ${data.thumbnail_analysis ? `
-        <div class="result-section">
-            <h3><i class="ph ph-image"></i> Thumbnail Analysis</h3>
-            <div class="comparison-box">
-                <div class="recommendations-text">${formatMarkdown(data.thumbnail_analysis)}</div>
-            </div>
-        </div>
-        ` : ''}
-
-        <!-- Overall Recommendations -->
-        ${recommendations.overview ? `
-        <div class="result-section">
-            <h3><i class="ph ph-lightbulb"></i> Recommendations</h3>
-            <div class="comparison-box">
-                <div class="recommendations-text">${formatMarkdown(recommendations.overview)}</div>
-            </div>
-        </div>
-        ` : ''}
     `;
 
-    modal.style.display = 'flex';
+    resultsSection.innerHTML = html;
+
+    // Store optimized tags globally for copying
+    window.optimizedTags = data.optimized_tags || [];
+}
+
+/**
+ * Back to videos list
+ */
+function backToVideos() {
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('videosListSection').style.display = 'block';
 }
 
 /**
@@ -256,14 +321,6 @@ async function showOptimizationResults(videoId) {
         console.error('Error showing results:', error);
         alert('Failed to load optimization results');
     }
-}
-
-/**
- * Close results modal
- */
-function closeResultsModal() {
-    const modal = document.getElementById('resultsModal');
-    modal.style.display = 'none';
 }
 
 /**
@@ -297,17 +354,40 @@ function formatMarkdown(text) {
     return formatted;
 }
 
-// Close modal when clicking outside
-window.addEventListener('click', function(event) {
-    const resultsModal = document.getElementById('resultsModal');
-    if (event.target === resultsModal) {
-        closeResultsModal();
-    }
-});
+/**
+ * Copy text to clipboard
+ */
+function copyToClipboard(button, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const icon = button.querySelector('i');
+        const originalClass = icon.className;
+        icon.className = 'ph ph-check';
+        button.style.color = '#10B981';
 
-// Close modal on Escape key
-window.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        closeResultsModal();
-    }
-});
+        setTimeout(() => {
+            icon.className = originalClass;
+            button.style.color = '';
+        }, 2000);
+    });
+}
+
+/**
+ * Copy all optimized tags
+ */
+function copyAllTags() {
+    const tags = window.optimizedTags || [];
+    const tagsText = tags.join(', ');
+
+    navigator.clipboard.writeText(tagsText).then(() => {
+        const btn = event.target.closest('button');
+        const icon = btn.querySelector('i');
+        const originalClass = icon.className;
+        icon.className = 'ph ph-check';
+        btn.style.color = '#10B981';
+
+        setTimeout(() => {
+            icon.className = originalClass;
+            btn.style.color = '';
+        }, 2000);
+    });
+}
