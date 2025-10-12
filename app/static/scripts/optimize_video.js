@@ -11,6 +11,14 @@ let currentOptimizedDescription = null;
 document.addEventListener('DOMContentLoaded', function() {
     loadMyVideos();
     loadOptimizationHistory();
+
+    // Check if video_id is in URL params (from homepage)
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoId = urlParams.get('video_id');
+    if (videoId) {
+        // Auto-optimize the video
+        optimizeVideo(videoId);
+    }
 });
 
 /**
@@ -180,6 +188,7 @@ async function optimizeVideo(videoId) {
         const data = await response.json();
 
         console.log('Optimization complete:', data);
+        console.log('Title suggestions received:', data.data?.title_suggestions);
 
         if (!data.success) {
             throw new Error(data.error || 'Optimization failed');
@@ -190,6 +199,7 @@ async function optimizeVideo(videoId) {
         }
 
         // Display results immediately
+        console.log('Displaying results with titles:', data.data.title_suggestions);
         displayOptimizationResults(data.data);
         document.getElementById('loadingSection').style.display = 'none';
         document.getElementById('resultsSection').style.display = 'block';
@@ -366,6 +376,9 @@ function displayOptimizationResults(data) {
 function backToVideos() {
     document.getElementById('resultsSection').style.display = 'none';
     document.getElementById('videosListSection').style.display = 'block';
+
+    // Reload videos from RapidAPI to get fresh data
+    loadMyVideos();
 }
 
 /**

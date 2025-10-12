@@ -26,6 +26,84 @@ def optimize_video():
     """Optimize Video main page"""
     return render_template('optimize_video/index.html')
 
+@bp.route('/api/get-unoptimized-videos', methods=['GET'])
+@auth_required
+def get_unoptimized_videos():
+    """Get user's YouTube videos that haven't been optimized yet - for homepage"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get user's connected YouTube channel
+        user_ref = db.collection('users').document(user_id)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            return jsonify({'success': False, 'videos': []})
+
+        user_data = user_doc.to_dict()
+
+        # Get YouTube channel info
+        channel_id = user_data.get('youtube_channel_id', '')
+        channel_title = user_data.get('youtube_account', '')
+
+        if not channel_id or not channel_title:
+            return jsonify({'success': True, 'videos': []})  # Not connected, return empty
+
+        # Fetch videos from RapidAPI
+        url = f"https://{RAPIDAPI_HOST}/channel/videos"
+        channel_handle = f"@{channel_title}" if not channel_title.startswith('@') else channel_title
+
+        import time
+        querystring = {
+            "forUsername": channel_handle,
+            "_t": int(time.time())
+        }
+        headers = {
+            "x-rapidapi-key": RAPIDAPI_KEY,
+            "x-rapidapi-host": RAPIDAPI_HOST,
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
+        }
+
+        response = requests.get(url, headers=headers, params=querystring, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+
+        # Get list of optimized video IDs from Firebase
+        optimizations_ref = db.collection('users').document(user_id).collection('video_optimizations')
+        optimized_docs = optimizations_ref.stream()
+        optimized_video_ids = {doc.id for doc in optimized_docs}
+
+        # Filter to only non-optimized videos
+        videos = []
+        if 'data' in data:
+            for video in data['data']:
+                if video.get('type') == 'video':
+                    video_id = video.get('videoId')
+                    # Only include if NOT already optimized
+                    if video_id and video_id not in optimized_video_ids:
+                        videos.append({
+                            'video_id': video_id,
+                            'title': video.get('title'),
+                            'thumbnail': video.get('thumbnail', [{}])[0].get('url') if video.get('thumbnail') else '',
+                            'view_count': video.get('viewCountText', '0'),
+                            'published_time': video.get('publishedTimeText', '')
+                        })
+
+                    # Limit to 6 videos for homepage
+                    if len(videos) >= 6:
+                        break
+
+        return jsonify({
+            'success': True,
+            'videos': videos,
+            'has_youtube': True
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting unoptimized videos: {e}")
+        return jsonify({'success': True, 'videos': [], 'has_youtube': False})
+
 @bp.route('/api/get-my-videos', methods=['GET'])
 @auth_required
 @require_permission('optimize_video')
@@ -60,14 +138,22 @@ def get_my_videos():
         url = f"https://{RAPIDAPI_HOST}/channel/videos"
         # Use channel title as handle - add @ if not present
         channel_handle = f"@{channel_title}" if not channel_title.startswith('@') else channel_title
-        querystring = {"forUsername": channel_handle}
+
+        # Add cache-busting timestamp to force fresh data
+        import time
+        querystring = {
+            "forUsername": channel_handle,
+            "_t": int(time.time())  # Cache buster
+        }
         headers = {
             "x-rapidapi-key": RAPIDAPI_KEY,
-            "x-rapidapi-host": RAPIDAPI_HOST
+            "x-rapidapi-host": RAPIDAPI_HOST,
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
         }
 
-        logger.info(f"Fetching videos from RapidAPI for channel {channel_handle}")
-        response = requests.get(url, headers=headers, params=querystring)
+        logger.info(f"Fetching videos from RapidAPI for channel {channel_handle} (cache-busting enabled)")
+        response = requests.get(url, headers=headers, params=querystring, timeout=30)
         response.raise_for_status()
 
         data = response.json()
@@ -118,6 +204,12 @@ def optimize_video_analysis(video_id):
             # Return existing optimization
             logger.info(f"Loading existing optimization from Firebase for user {user_id}: {video_id}")
             stored_data = existing_doc.to_dict()
+
+            # Log what titles we're returning
+            title_suggestions = stored_data.get('title_suggestions', [])
+            logger.info(f"Returning cached optimization with {len(title_suggestions)} titles")
+            if title_suggestions:
+                logger.info(f"First cached title: {title_suggestions[0]}")
 
             return jsonify({
                 'success': True,
@@ -235,12 +327,21 @@ Video Transcript: {stored_data.get('transcript_preview', '')}
             new_title_suggestions = all_titles + [stored_data.get('current_title', '')] * (10 - len(all_titles))
 
         # Update Firebase with new titles
+        logger.info(f"Updating Firebase with {len(new_title_suggestions)} new titles for video {video_id}")
+        logger.info(f"New titles: {new_title_suggestions[:3]}...")  # Log first 3 titles
+
         optimization_ref.update({
             'title_suggestions': new_title_suggestions,
             'optimized_title': new_title_suggestions[0] if new_title_suggestions else stored_data.get('current_title', '')
         })
 
         logger.info(f"Regenerated titles for user {user_id}, video {video_id}")
+
+        # Verify the update by reading back
+        updated_doc = optimization_ref.get()
+        if updated_doc.exists:
+            updated_data = updated_doc.to_dict()
+            logger.info(f"Verified Firebase update - first title: {updated_data.get('title_suggestions', [])[0] if updated_data.get('title_suggestions') else 'NONE'}")
 
         return jsonify({
             'success': True,

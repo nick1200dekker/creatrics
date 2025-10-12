@@ -266,9 +266,15 @@ def search_videos():
         youtube_api = YouTubeAPI()
 
         # Search for videos or shorts with user-selected sorting
+        import time
         url = f"https://yt-api.p.rapidapi.com/search"
         search_type = "shorts" if content_type == "shorts" else "video"
-        querystring = {"query": query, "type": search_type, "sort_by": sort_by}
+        querystring = {
+            "query": query,
+            "type": search_type,
+            "sort_by": sort_by,
+            "_t": int(time.time())  # Cache-busting
+        }
 
         videos = []
         is_short = content_type == "shorts"
@@ -280,7 +286,10 @@ def search_videos():
             if request_count > 0 and continuation_token:
                 querystring['continuation'] = continuation_token
 
-            response = requests.get(url, headers=youtube_api.headers, params=querystring)
+            # Update cache-buster for each request
+            querystring['_t'] = int(time.time())
+
+            response = requests.get(url, headers=youtube_api.headers, params=querystring, timeout=30)
             response.raise_for_status()
 
             data = response.json()

@@ -1078,6 +1078,108 @@ html.dark .preview-card {
     100% { transform: rotate(360deg); }
 }
 
+/* Optimize Videos Grid */
+.optimize-videos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.optimize-video-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: block;
+}
+
+html.dark .optimize-video-card {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
+.optimize-video-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+html.dark .optimize-video-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+.optimize-video-thumbnail {
+    width: 100%;
+    height: 112px;
+    object-fit: cover;
+    background: var(--bg-tertiary);
+}
+
+.optimize-video-info {
+    padding: 1rem;
+}
+
+.optimize-video-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+}
+
+.optimize-video-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.optimize-video-meta .stat {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.optimize-video-meta .stat i {
+    font-size: 0.875rem;
+}
+
+.optimize-videos-empty {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    border: 2px dashed var(--border-primary);
+    opacity: 0.8;
+}
+
+.optimize-videos-empty i {
+    font-size: 3rem;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+}
+
+.optimize-videos-empty h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.optimize-videos-empty p {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .channels-grid {
@@ -1331,6 +1433,20 @@ html.dark .preview-card {
                     </a>
                 </div>
             </div>
+            </div>
+        </div>
+
+        <!-- Optimize Videos Section -->
+        <div class="calendar-section" id="optimize-videos-section" style="display: none;">
+            <div class="calendar-header">
+                <h2><i class="ph ph-magic-wand"></i> Optimize Videos</h2>
+                <a href="{{ url_for('optimize_video.optimize_video') }}" class="view-calendar-btn">
+                    View All Videos
+                </a>
+            </div>
+
+            <div id="optimize-videos-container">
+                <!-- Unoptimized videos will be loaded here -->
             </div>
         </div>
 
@@ -1874,6 +1990,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             loadXSuggestions();
         }
 
+        // Load Optimize Videos if user has YouTube connected
+        if (data.youtube_connected) {
+            loadUnoptimizedVideos();
+        }
+
     } catch (error) {
         console.error('Error loading dashboard data:', error);
     }
@@ -2084,5 +2205,72 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Load Unoptimized Videos
+async function loadUnoptimizedVideos() {
+    const section = document.getElementById('optimize-videos-section');
+    const container = document.getElementById('optimize-videos-container');
+
+    if (!section || !container) return;
+
+    // Show section and loading state
+    section.style.display = 'block';
+
+    container.innerHTML = `
+        <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
+            <i class="ph ph-circle-notch" style="font-size: 2rem; display: block; margin: 0 auto; animation: spin 1s linear infinite;"></i>
+            <p style="margin-top: 1rem;">Loading videos...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch('/optimize-video/api/get-unoptimized-videos');
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Failed to load videos');
+        }
+
+        const videos = result.videos || [];
+
+        if (videos.length === 0) {
+            container.innerHTML = `
+                <div class="optimize-videos-empty">
+                    <i class="ph ph-check-circle"></i>
+                    <h4>All Videos Optimized!</h4>
+                    <p>Great work! All your recent videos have been optimized. Keep creating awesome content!</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Render videos in grid
+        let videosHtml = '<div class="optimize-videos-grid">';
+
+        videos.forEach(video => {
+            videosHtml += `
+                <a href="/optimize-video?video_id=${video.video_id}" class="optimize-video-card">
+                    <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" class="optimize-video-thumbnail" loading="lazy">
+                    <div class="optimize-video-info">
+                        <div class="optimize-video-title">${escapeHtml(video.title)}</div>
+                    </div>
+                </a>
+            `;
+        });
+
+        videosHtml += '</div>';
+        container.innerHTML = videosHtml;
+
+    } catch (error) {
+        console.error('Error loading unoptimized videos:', error);
+        container.innerHTML = `
+            <div class="optimize-videos-empty">
+                <i class="ph ph-warning-circle"></i>
+                <h4>Unable to load videos</h4>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
 </script>
 {% endblock %}

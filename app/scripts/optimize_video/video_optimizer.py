@@ -176,13 +176,23 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
     def _fetch_video_info(self, video_id: str) -> Dict:
         """Fetch video information from RapidAPI"""
         try:
+            import time
             url = f"https://{self.rapidapi_host}/video/info"
             headers = {
                 "x-rapidapi-key": self.rapidapi_key,
-                "x-rapidapi-host": self.rapidapi_host
+                "x-rapidapi-host": self.rapidapi_host,
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache"
             }
 
-            response = requests.get(url, headers=headers, params={"id": video_id, "extend": "2"})
+            # Add cache-busting timestamp
+            params = {
+                "id": video_id,
+                "extend": "2",
+                "_t": int(time.time())
+            }
+
+            response = requests.get(url, headers=headers, params=params, timeout=30)
             response.raise_for_status()
 
             return response.json()
@@ -194,14 +204,18 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
     def _fetch_transcript_with_timestamps(self, video_id: str) -> tuple:
         """Fetch video transcript from RapidAPI"""
         try:
+            import time
             url = f"https://{self.rapidapi_host}/get_transcript"
             headers = {
                 "x-rapidapi-key": self.rapidapi_key,
-                "x-rapidapi-host": self.rapidapi_host
+                "x-rapidapi-host": self.rapidapi_host,
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache"
             }
 
-            # Step 1: Get language menu
-            response = requests.get(url, headers=headers, params={"id": video_id})
+            # Step 1: Get language menu (with cache-busting)
+            params = {"id": video_id, "_t": int(time.time())}
+            response = requests.get(url, headers=headers, params=params, timeout=30)
             response.raise_for_status()
 
             language_data = response.json()
@@ -225,10 +239,11 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
 
             if not transcript_params:
                 logger.warning(f"No transcript found for video {video_id}")
-                return ""
+                return "", []
 
-            # Step 2: Fetch actual transcript
-            response = requests.get(url, headers=headers, params={"id": video_id, "params": transcript_params})
+            # Step 2: Fetch actual transcript (with cache-busting)
+            params = {"id": video_id, "params": transcript_params, "_t": int(time.time())}
+            response = requests.get(url, headers=headers, params=params, timeout=30)
             response.raise_for_status()
 
             transcript_data = response.json()
