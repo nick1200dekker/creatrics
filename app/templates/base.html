@@ -1038,6 +1038,15 @@
                 </a>
                 {% endif %}
 
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.optimize_video %}
+                <a href="{{ url_for('optimize_video.optimize_video') }}"
+                   class="nav-subitem {% if request.endpoint and 'optimize_video' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-magic-wand"></i>
+                    <span>Optimize Video</span>
+                </a>
+                {% endif %}
+
                 {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.competitors %}
                 <a href="{{ url_for('competitors.competitors') }}"
                    class="nav-subitem {% if request.endpoint and 'competitors' in request.endpoint %}active{% endif %}"
