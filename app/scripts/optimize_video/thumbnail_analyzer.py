@@ -48,20 +48,27 @@ class ThumbnailAnalyzer:
                 return {'success': False, 'error': 'Failed to download thumbnail'}
 
             # Prepare prompt for Claude Vision
-            prompt = f"""Analyze this YouTube video thumbnail and provide optimization recommendations.
+            prompt = f"""Analyze this YouTube video thumbnail for: "{video_title}"
 
-Video Title: {video_title}
+Provide a concise analysis with these sections:
 
-Please analyze:
-1. **Visual Impact**: First impressions, clarity, and attention-grabbing elements
-2. **Text Readability**: If text is present, assess readability at different sizes
-3. **Color Scheme**: Color choices, contrast, and emotional appeal
-4. **Composition**: Layout, focal points, and visual hierarchy
-5. **Branding**: Consistency with typical YouTube best practices
-6. **Mobile Optimization**: How well it works on small screens
-7. **Emotional Appeal**: What emotions it evokes and target audience fit
+1. Visual Impact ⭐⭐⭐⭐⭐ (X/5) - Rate 1-5 stars ONLY (no half stars like 3.5, round to nearest whole number)
+2. Text Readability ⭐⭐⭐⭐⭐ (X/5)
+3. Color Scheme ⭐⭐⭐⭐⭐ (X/5)
+4. Composition ⭐⭐⭐⭐⭐ (X/5)
+5. Branding ⭐⭐⭐⭐⭐ (X/5)
+6. Mobile Optimization ⭐⭐⭐⭐⭐ (X/5)
+7. Emotional Appeal ⭐⭐⭐⭐⭐ (X/5)
 
-Provide specific, actionable recommendations for improvement. Be constructive and detailed."""
+For each section:
+- Show rating with stars (ONLY whole numbers like ⭐⭐⭐⭐, NO ⭐⭐⭐½ or 3.5/5)
+- List 2-3 brief bullet points of key strengths or issues
+
+End with:
+**What Can Be Improved:**
+- 3-5 specific, actionable recommendations prioritized by impact
+
+Keep it concise. NO markdown headers (## or #), just bold section titles. Focus on practical feedback."""
 
             # Use vision-capable model for analysis
             try:

@@ -35,7 +35,7 @@ async function loadMyVideos() {
 
         if (videos.length === 0) {
             grid.innerHTML = '';
-            emptyState.style.display = 'block';
+            emptyState.style.display = 'flex';
             return;
         }
 
@@ -48,22 +48,30 @@ async function loadMyVideos() {
                 <div class="video-info">
                     <h4 class="video-title">${escapeHtml(video.title)}</h4>
                     <div class="video-meta">
-                        <span><i class="ph ph-eye"></i> ${video.view_count}</span>
-                        <span><i class="ph ph-clock"></i> ${video.published_time}</span>
+                        <span class="stat">
+                            <i class="ph ph-eye"></i>
+                            ${video.view_count}
+                        </span>
+                        <span class="stat">
+                            <i class="ph ph-clock"></i>
+                            ${video.published_time}
+                        </span>
                     </div>
                 </div>
             </div>
         `).join('');
 
+        emptyState.style.display = 'none';
+
     } catch (error) {
         console.error('Error loading videos:', error);
-        grid.innerHTML = `
-            <div class="empty-state">
-                <i class="ph ph-warning"></i>
-                <p>Failed to load videos</p>
-                <span>${escapeHtml(error.message)}</span>
-            </div>
+        grid.innerHTML = '';
+        emptyState.innerHTML = `
+            <i class="ph ph-warning"></i>
+            <p>Failed to load videos</p>
+            <span>${escapeHtml(error.message)}</span>
         `;
+        emptyState.style.display = 'flex';
     }
 }
 
@@ -86,16 +94,43 @@ async function loadOptimizationHistory() {
 
         if (history.length === 0) {
             grid.innerHTML = '';
-            emptyState.style.display = 'block';
+            emptyState.style.display = 'flex';
             return;
         }
 
         emptyState.style.display = 'none';
 
-        // Render history
+        // Render history using video-card style (matching analyze_video)
         grid.innerHTML = history.map(item => {
             const videoInfo = item.video_info || {};
-            const optimizedAt = item.optimized_at ? new Date(item.optimized_at).toLocaleDateString() : '';
+            const optimizedAt = item.optimized_at ? new Date(item.optimized_at) : null;
+            
+            // Format time ago
+            let timeAgo = '';
+            if (optimizedAt) {
+                const now = new Date();
+                const diffMs = now - optimizedAt;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) {
+                    timeAgo = 'Just now';
+                } else if (diffMins < 60) {
+                    timeAgo = `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`;
+                } else if (diffHours < 24) {
+                    timeAgo = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+                } else if (diffDays < 7) {
+                    timeAgo = `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+                } else {
+                    // Format as "Dec 25, 2024"
+                    timeAgo = optimizedAt.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
+                }
+            }
 
             return `
                 <div class="history-item" onclick="showOptimizationResults('${item.video_id}')">
@@ -105,7 +140,10 @@ async function loadOptimizationHistory() {
                     <div class="history-info">
                         <h4 class="history-title">${escapeHtml(videoInfo.title || item.current_title || 'Untitled')}</h4>
                         <div class="history-meta">
-                            <span><i class="ph ph-calendar"></i> Optimized on ${optimizedAt}</span>
+                            <span class="stat">
+                                <i class="ph ph-calendar"></i>
+                                ${timeAgo}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -114,7 +152,7 @@ async function loadOptimizationHistory() {
 
     } catch (error) {
         console.error('Error loading history:', error);
-        emptyState.style.display = 'block';
+        emptyState.style.display = 'flex';
     }
 }
 
@@ -235,14 +273,16 @@ function displayOptimizationResults(data) {
 
             <!-- Title Suggestions -->
             <div class="result-card">
-                <h3 class="section-title">
-                    <i class="ph ph-text-aa"></i>
-                    Title Suggestions
+                <div class="section-header">
+                    <h3 class="section-title" style="margin: 0; padding: 0; border: none;">
+                        <i class="ph ph-text-aa"></i>
+                        Title Suggestions
+                    </h3>
                     <button class="refresh-titles-btn" onclick="refreshTitles()" id="refreshTitlesBtn">
                         <i class="ph ph-arrows-clockwise"></i>
                         <span>Refresh</span>
                     </button>
-                </h3>
+                </div>
                 <div class="comparison-box current-box">
                     <div class="comparison-label">Current Title</div>
                     <div class="comparison-value">${escapeHtml(data.current_title || videoInfo.title || '')}</div>

@@ -471,12 +471,22 @@ class AIProviderManager:
             
             # Create completion with formatted messages
             client = self.get_client()
-            response = client.messages.create(
-                model=self.api_model_name,
-                messages=formatted_messages,
-                system=system_message,
+
+            # Prepare kwargs for the API call
+            api_kwargs = {
+                'model': self.api_model_name,
+                'messages': formatted_messages,
                 **kwargs
-            )
+            }
+
+            # Add system message if present (must be a list for newer Claude API)
+            if system_message:
+                if isinstance(system_message, str):
+                    api_kwargs['system'] = [{'type': 'text', 'text': system_message}]
+                else:
+                    api_kwargs['system'] = system_message
+
+            response = client.messages.create(**api_kwargs)
             
             return {
                 'content': response.content[0].text if response.content else '',
