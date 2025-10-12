@@ -43,8 +43,8 @@ class VideoOptimizer:
             if not video_info:
                 return {'success': False, 'error': 'Failed to fetch video information'}
 
-            # Fetch transcript
-            transcript_text = self._fetch_transcript(video_id)
+            # Fetch transcript (both text and with timestamps)
+            transcript_text, transcript_with_timestamps = self._fetch_transcript_with_timestamps(video_id)
 
             # Get current metadata
             current_title = video_info.get('title', '')
@@ -55,16 +55,45 @@ class VideoOptimizer:
             thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
 
             # Generate optimized content using existing scripts
-            # Combine transcript and current title/description for context
-            optimization_context = f"""
+            # For descriptions, use full transcript if under 20k chars (roughly <15 min video)
+            # For titles/tags, use preview only
+            use_full_transcript = len(transcript_text) < 20000
+
+            # Context for title/tags generation
+            title_tags_context = f"""
 Video Title: {current_title}
 Video Description: {current_description[:500]}
 Video Transcript: {transcript_text[:2000]}
 """
 
+            # Format timestamps for AI (only if video is short) - just key timestamps
+            timestamps_text = ""
+            if use_full_transcript and transcript_with_timestamps and len(transcript_with_timestamps) > 0:
+                # Extract only 8-10 evenly spaced timestamps for chapter creation
+                num_chapters = min(10, max(4, len(transcript_with_timestamps) // 30))  # 1 chapter per ~30 segments
+                step = len(transcript_with_timestamps) // num_chapters
+
+                timestamps_text = "\n\nKEY TIMESTAMPS (for chapters - these are actual video times):\n"
+                for i in range(0, len(transcript_with_timestamps), step):
+                    if i < len(transcript_with_timestamps):
+                        seg = transcript_with_timestamps[i]
+                        # Only include timestamp and first few words to identify topic
+                        timestamps_text += f"{seg['time']}: {seg['text'][:50]}...\n"
+
+                timestamps_text += f"\n(Video is approximately {len(transcript_with_timestamps)} segments long, use timestamps above to create accurate chapters)"
+
+            # Context for description generation (may include full transcript)
+            description_context = f"""
+Video Title: {current_title}
+Video Description: {current_description[:500]}
+Video Transcript: {transcript_text if use_full_transcript else transcript_text[:2000]}
+Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
+{timestamps_text}
+"""
+
             # Generate optimized title suggestions (1 AI call generates 10 titles)
             title_result = self.title_generator.generate_titles(
-                optimization_context,
+                title_tags_context,
                 video_type='long_form',
                 user_id=user_id
             )
@@ -79,9 +108,9 @@ Video Transcript: {transcript_text[:2000]}
 
             optimized_titles = title_suggestions[0] if title_suggestions else current_title  # Keep first for backward compatibility
 
-            # Generate optimized description
+            # Generate optimized description (with full transcript if short video)
             description_result = self.description_generator.generate_description(
-                optimization_context,
+                description_context,
                 video_type='long',
                 reference_description=current_description,
                 user_id=user_id
@@ -90,7 +119,7 @@ Video Transcript: {transcript_text[:2000]}
 
             # Generate optimized tags
             tags_result = self.tags_generator.generate_tags(
-                optimization_context,
+                title_tags_context,
                 user_id=user_id
             )
             optimized_tags = tags_result.get('tags', current_tags)
@@ -161,7 +190,7 @@ Video Transcript: {transcript_text[:2000]}
             logger.error(f"Error fetching video info for {video_id}: {e}")
             return {}
 
-    def _fetch_transcript(self, video_id: str) -> str:
+    def _fetch_transcript_with_timestamps(self, video_id: str) -> tuple:
         """Fetch video transcript from RapidAPI"""
         try:
             url = f"https://{self.rapidapi_host}/get_transcript"
@@ -203,24 +232,33 @@ Video Transcript: {transcript_text[:2000]}
 
             transcript_data = response.json()
 
-            # Extract transcript text
+            # Extract transcript text and timestamps
             if 'transcript' in transcript_data:
                 segments = transcript_data['transcript']
                 if isinstance(segments, list) and len(segments) > 0:
                     text_segments = []
+                    timestamp_segments = []
+
                     for segment in segments:
                         if isinstance(segment, dict) and 'text' in segment:
                             text_segments.append(segment['text'])
 
+                            # Store timestamp info
+                            if 'startTime' in segment:
+                                timestamp_segments.append({
+                                    'time': segment['startTime'],
+                                    'text': segment['text']
+                                })
+
                     full_transcript = ' '.join(text_segments)
                     logger.info(f"Fetched transcript for {video_id}: {len(full_transcript)} characters")
-                    return full_transcript
+                    return full_transcript, timestamp_segments
 
-            return ""
+            return "", []
 
         except Exception as e:
             logger.error(f"Error fetching transcript for {video_id}: {e}")
-            return ""
+            return "", []
 
     def _generate_recommendations(
         self,

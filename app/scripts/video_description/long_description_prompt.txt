@@ -12,11 +12,11 @@ CRITICAL RULES:
 
 ⚠️ FIRST 125 CHARACTERS ARE CRITICAL ⚠️
 The first 125 characters appear in YouTube search results and suggested videos. This is the MOST IMPORTANT part:
-- Include PRIMARY KEYWORD in the first sentence
-- Make it compelling and benefit-driven
-- Front-load the value proposition
-- Think of it as a mini-headline
-- Do NOT waste these precious characters on generic openings
+- START with 2-3 PRIMARY KEYWORDS in the first 10 words (e.g., "Clash Royale card upgrade guide" NOT "Check out this video about")
+- Pack in specific, searchable terms that people type into YouTube
+- Include numbers/results if possible ("2024 meta deck" or "save 1000+ gold")
+- Make it benefit-driven and specific
+- Do NOT waste these characters on greetings, intros, or generic phrases
 
 STRUCTURE (write naturally, don't label sections):
 
@@ -32,27 +32,38 @@ STRUCTURE (write naturally, don't label sections):
    - Add relevant emojis if they fit the style
    - Keep each point brief (one line)
 
-3. WHO IT'S FOR (1-2 sentences):
+3. TIMESTAMPS (if video is under 15 minutes):
+   - Add chapter timestamps in format: 0:00 Intro, 1:23 Topic Name
+   - First timestamp MUST be 0:00 to activate YouTube chapters
+   - Each chapter must be at least 10 seconds long
+   - Use keyword-rich chapter titles (e.g., "3:45 Best Clash Royale decks for Arena 10" not just "3:45 Decks")
+   - Space 40 seconds to 2 minutes apart for meaningful content shifts
+   - For 10-min video: use 4-7 timestamps; 5-min video: 3-4 timestamps
+   - ONLY include if transcript shows clear content shifts
+
+4. WHO IT'S FOR (1-2 sentences):
    - Quick statement about target audience
    - Why they should watch
 
-4. SIMPLE CTA (1-2 sentences):
+5. SIMPLE CTA (1-2 sentences):
    - Make the CTA relevant to the content (e.g., "Drop a like if this saved you gold")
    - Ask a specific question that relates to the video (not just "let me know in comments")
    - Keep it short and natural - one sentence max
 
-5. KEYWORDS & HASHTAGS (end only):
-   - Naturally work in 2-3 mentions of primary/secondary keywords throughout
-   - End with maximum 3-5 relevant hashtags
-   - No generic hashtags like #viral
+6. KEYWORDS & HASHTAGS (end only):
+   - Use primary keyword 3-4 times total (including first 125 chars)
+   - Sprinkle 2-3 secondary keywords naturally
+   - End with maximum 3 relevant hashtags (YouTube only highlights first 3)
+   - No generic hashtags like #viral or #subscribe
 
 DO NOT INCLUDE:
 - Fake social media links (@YourHandle, etc.)
 - Discord/community links unless in reference
 - Resources sections with [Link] placeholders
-- Timestamps or chapters sections
 - Multiple CTA sections
-- "Connect with me" sections with fake handles
+- "Connect with me" or "Follow me on" sections with fake handles
+- Engagement baiting ("SMASH that subscribe button!")
+- Generic "Related Videos" sections
 - Any links not explicitly in the reference description
 
 AVOID THESE AI-SOUNDING PHRASES:

@@ -154,6 +154,14 @@ html.dark .secondary-button:hover:not(:disabled) {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1rem;
     min-height: 400px;
+    align-items: center;
+    justify-items: center;
+}
+
+.videos-grid:has(.empty-state) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .video-card {
@@ -578,7 +586,6 @@ html.dark .comparison-box {
     min-height: 150px;
     padding: 0.75rem;
     border-radius: 6px;
-    background: var(--bg-tertiary);
 }
 
 /* Title Suggestions */
@@ -885,4 +892,33 @@ html.dark .tag-optimized {
 .copy-btn-small:focus,
 .refresh-titles-btn:focus {
     outline: none;
+}
+
+/* Toast Notification */
+.copy-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #10B981;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.copy-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+html.dark .copy-toast {
+    background: #059669;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
 }

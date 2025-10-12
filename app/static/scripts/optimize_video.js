@@ -5,6 +5,7 @@
 
 // Global state
 let currentVideoId = null;
+let currentOptimizedDescription = null;
 
 // Load videos on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -313,12 +314,12 @@ function displayOptimizationResults(data) {
                 <div class="comparison-box optimized-box">
                     <div class="comparison-label">
                         Optimized Description
-                        <button class="copy-btn-small" onclick="copyToClipboard(this, \`${escapeHtml(data.optimized_description || '').replace(/`/g, '\\`')}\`)">
+                        <button class="copy-btn-small" onclick="copyDescription(this)">
                             <i class="ph ph-copy"></i>
                             Copy
                         </button>
                     </div>
-                    <div class="comparison-value description-text">${escapeHtml(data.optimized_description || '')}</div>
+                    <div class="comparison-value description-text" id="optimizedDescription">${escapeHtml(data.optimized_description || '')}</div>
                 </div>
             </div>
 
@@ -354,8 +355,9 @@ function displayOptimizationResults(data) {
 
     resultsSection.innerHTML = html;
 
-    // Store optimized tags globally for copying
+    // Store optimized data globally for copying
     window.optimizedTags = data.optimized_tags || [];
+    currentOptimizedDescription = data.optimized_description || '';
 }
 
 /**
@@ -411,6 +413,32 @@ function formatMarkdown(text) {
 }
 
 /**
+ * Show toast notification
+ */
+function showToast(message) {
+    // Remove existing toast if any
+    const existingToast = document.querySelector('.copy-toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    // Create toast
+    const toast = document.createElement('div');
+    toast.className = 'copy-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // Remove after 2 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
+
+/**
  * Copy text to clipboard
  */
 function copyToClipboard(button, text) {
@@ -420,10 +448,42 @@ function copyToClipboard(button, text) {
         icon.className = 'ph ph-check';
         button.style.color = '#10B981';
 
+        showToast('Copied to clipboard!');
+
         setTimeout(() => {
             icon.className = originalClass;
             button.style.color = '';
         }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showToast('Failed to copy');
+    });
+}
+
+/**
+ * Copy description to clipboard
+ */
+function copyDescription(button) {
+    if (!currentOptimizedDescription) {
+        showToast('No description to copy');
+        return;
+    }
+
+    navigator.clipboard.writeText(currentOptimizedDescription).then(() => {
+        const icon = button.querySelector('i');
+        const originalClass = icon.className;
+        icon.className = 'ph ph-check';
+        button.style.color = '#10B981';
+
+        showToast('Description copied to clipboard!');
+
+        setTimeout(() => {
+            icon.className = originalClass;
+            button.style.color = '';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showToast('Failed to copy description');
     });
 }
 
@@ -432,6 +492,11 @@ function copyToClipboard(button, text) {
  */
 function copyAllTags() {
     const tags = window.optimizedTags || [];
+    if (tags.length === 0) {
+        showToast('No tags to copy');
+        return;
+    }
+
     const tagsText = tags.join(', ');
 
     navigator.clipboard.writeText(tagsText).then(() => {
@@ -441,10 +506,15 @@ function copyAllTags() {
         icon.className = 'ph ph-check';
         btn.style.color = '#10B981';
 
+        showToast(`${tags.length} tags copied to clipboard!`);
+
         setTimeout(() => {
             icon.className = originalClass;
             btn.style.color = '';
         }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showToast('Failed to copy tags');
     });
 }
 
@@ -476,13 +546,24 @@ async function refreshTitles() {
 
         const data = await response.json();
 
+        console.log('Refresh titles response:', data);
+
         if (!data.success) {
             throw new Error(data.error || 'Failed to refresh titles');
         }
 
         // Update the title suggestions list
         const titlesList = document.getElementById('titleSuggestionsList');
+        if (!titlesList) {
+            throw new Error('Title suggestions list element not found');
+        }
+
         const newTitles = data.title_suggestions || [];
+        console.log('New titles:', newTitles);
+
+        if (newTitles.length === 0) {
+            throw new Error('No titles received from server');
+        }
 
         titlesList.innerHTML = newTitles.map((title, index) => `
             <div class="suggestion-item">
@@ -493,6 +574,8 @@ async function refreshTitles() {
                 </button>
             </div>
         `).join('');
+
+        console.log('Titles updated in UI');
 
         // Show success feedback
         icon.className = 'ph ph-check';
