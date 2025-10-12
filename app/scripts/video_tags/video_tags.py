@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from pathlib import Path
 from app.system.ai_provider.ai_provider import get_ai_provider
+from app.scripts.keyword_research import KeywordResearcher
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -51,29 +52,40 @@ class VideoTagsGenerator:
             Dict with success status and generated tags
         """
         try:
-            # Get the prompt template
-            prompt_template = self.get_prompt_template()
-
-            # Get current date info
-            now = datetime.now()
-            current_date = now.strftime("%B %d, %Y")
-            current_year = now.year
-
-            # Format the prompt with user input and date
-            prompt = prompt_template.format(
-                input=input_text,
-                current_date=current_date,
-                current_year=current_year
-            )
-
             # Get AI provider
             ai_provider = get_ai_provider()
 
             if ai_provider:
                 try:
-                    # System prompt to ensure correct format
-                    # Get current date for system prompt
+                    # Get current date info
                     now = datetime.now()
+                    current_date = now.strftime("%B %d, %Y")
+                    current_year = now.year
+
+                    # STEP 1: Research keywords (small AI call + free API calls)
+                    logger.info("Researching YouTube keywords for tags...")
+                    keyword_researcher = KeywordResearcher()
+                    keyword_data = keyword_researcher.research_keywords(input_text, ai_provider)
+                    keyword_prompt = keyword_researcher.format_for_prompt(keyword_data)
+
+                    # Get all researched keywords as a flat list for tags
+                    researched_keywords = keyword_researcher.get_all_keywords_flat(keyword_data)
+
+                    # Get the prompt template
+                    prompt_template = self.get_prompt_template()
+
+                    # STEP 2: Format the prompt with user input, date AND keywords
+                    prompt = f"""{keyword_prompt}
+
+{prompt_template.format(
+    input=input_text,
+    current_date=current_date,
+    current_year=current_year
+)}
+
+IMPORTANT: Use these researched keywords as tags. They are actual YouTube searches."""
+
+                    # System prompt to ensure correct format
                     system_prompt = f"""You are a YouTube SEO expert specializing in tag generation.
                     Current date: {now.strftime('%B %d, %Y')}. Always use current and up-to-date references.
                     Generate relevant tags that will help the video rank well in YouTube search.
@@ -81,7 +93,8 @@ class VideoTagsGenerator:
                     Focus on a mix of broad and specific tags.
                     Include trending and evergreen keywords when relevant.
                     The total character count should be between 400-500 characters.
-                    IMPORTANT: Use {now.year} for any year references, not past years."""
+                    IMPORTANT: Use {now.year} for any year references, not past years.
+                    IMPORTANT: Prioritize the researched keywords provided - these are REAL searches people use."""
 
                     # Generate using AI provider
                     response = ai_provider.create_completion(
