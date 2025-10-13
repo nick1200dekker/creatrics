@@ -1,37 +1,45 @@
-You are an expert YouTube Shorts title creator specializing in viral short-form content.
-
-Based on the following video content/script/description, generate exactly 10 compelling YouTube Shorts titles.
+Generate 10 YouTube Shorts titles.
 
 VIDEO CONTENT:
 {input}
 
-REQUIREMENTS:
-- Generate exactly 10 unique titles
-- Each title should be punchy and under 40 characters
-- Create immediate hooks that stop scrolling
-- Use trendy language and current memes when appropriate
-- Include 3 relevant hashtags at the end of each title
-- Focus on quick value or entertainment promise
-- Use action words and present tense
-- Create FOMO or curiosity in seconds
+HASHTAG RULE (MOST IMPORTANT):
+Every title MUST end with: #shorts #[niche] #[topic]
+#shorts is ALWAYS first hashtag. No exceptions!
 
-SHORTS-SPECIFIC STRATEGIES:
-1. Start with attention grabbers (WAIT FOR IT, POV:, WATCH THIS)
-2. Use relatable scenarios
-3. Promise quick results or instant gratification
-4. Use trending sounds/challenges references
-5. Include emoji sparingly but effectively
-6. Focus on transformation/before-after
-7. Use pattern interrupts
-8. Keep it conversational and casual
+PROVEN TITLE FORMULAS THAT GO VIRAL:
+- Question: "Did You Know [fact]?"
+- List: "Top [number] [topic]"
+- How-to: "How to [action] in [time]"
+- Challenge: "I Tried [thing] for [duration]"
+- Warning: "Watch This Before [action]"
+- POV: "POV: You Discover [thing]"
+- Day in Life: "Day as a [profession]"
 
-HASHTAG RULES:
-- First hashtag should always be #shorts
-- Other 2 hashtags should be highly relevant to content
-- Use trending hashtags when applicable
+REAL EXAMPLES FROM VARIOUS NICHES:
+"Did You Know This iPhone Trick? #shorts #tech #apple"
+"Top 5 Exercises for Abs #shorts #fitness #workout"
+"How to Cook Pasta in 3 Minutes #shorts #cooking #recipe"
+"I Tried the Viral TikTok Hack #shorts #lifehacks #viral"
+"POV: You Find a Secret Level #shorts #gaming #minecraft"
+"Day as a Software Engineer #shorts #tech #coding"
+"This Recipe Changed Everything #shorts #cooking #baking"
+"Can You Lose Weight Walking? #shorts #fitness #health"
 
-OUTPUT FORMAT:
-Return a JSON array with exactly 10 title strings, each ending with 3 hashtags.
-Example: ["Quick Title #shorts #viral #funny", "Another Title #shorts #howto #diy", ...]
+WRONG EXAMPLES:
+"Amazing trick #tech #shorts #iphone" ❌ #shorts not first
+"Title here #iphone #tech #shorts" ❌ Wrong order
+"Cool video" ❌ No hashtags
 
-OUTPUT ONLY THE JSON ARRAY - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE JSON ARRAY:
+CORRECT:
+"Amazing iPhone Trick #shorts #tech #iphone" ✅
+
+GUIDELINES:
+- Under 40 characters before hashtags
+- Natural and conversational
+- Max 1 exclamation mark
+
+OUTPUT:
+JSON array of 10 titles. Every title ends with #shorts #[niche] #[topic]
+
+["Title #shorts #niche #topic", "Title #shorts #niche #topic"]

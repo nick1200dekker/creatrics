@@ -1082,16 +1082,23 @@ function autoResizeDescriptionTextarea() {
     const textarea = document.getElementById('optimizedDescription');
     if (!textarea) return;
 
+    // Remove overflow to get accurate scrollHeight
+    textarea.style.overflow = 'hidden';
+
     // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
-    // Set height to scrollHeight to fit all content
-    textarea.style.height = textarea.scrollHeight + 'px';
+    // Set height to scrollHeight to fit all content (add small buffer for padding)
+    textarea.style.height = (textarea.scrollHeight + 4) + 'px';
 
-    // Add input listener to resize on edit
-    textarea.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
-    });
+    // Add input listener to resize on edit (only once)
+    if (!textarea.dataset.resizeListenerAdded) {
+        textarea.addEventListener('input', function() {
+            this.style.overflow = 'hidden';
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight + 4) + 'px';
+        });
+        textarea.dataset.resizeListenerAdded = 'true';
+    }
 }
 
 /**

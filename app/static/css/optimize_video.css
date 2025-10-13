@@ -599,12 +599,12 @@ html.dark .comparison-box {
 
 .description-text {
     white-space: pre-wrap;
-    overflow-y: auto;
+    overflow: hidden;
     resize: vertical;
     padding: 0.75rem;
     border-radius: 6px;
     width: 100%;
-    min-height: 800px;
+    min-height: 100px;
     border: 1px solid transparent;
     background: transparent;
     color: var(--text-primary);
