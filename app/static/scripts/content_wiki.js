@@ -495,7 +495,7 @@ const WikiApp = (function() {
                 // Load document data
                 document.getElementById('documentTitle').value = data.page.title || '';
                 document.getElementById('wikiEditor').innerHTML = data.page.content || '';
-                
+
                 // Update pin button
                 const pinBtn = document.getElementById('pinBtn');
                 if (data.page.is_pinned) {

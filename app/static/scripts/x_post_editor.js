@@ -151,12 +151,17 @@
         let draftsHTML = '';
         drafts.forEach(draft => {
             const isActive = draft.id === state.currentDraftId;
-            // Extract preview from posts
+            // Extract preview from posts - only first line
             let preview = '';
             if (draft.posts && draft.posts.length > 0) {
                 preview = draft.posts[0].text || '';
+                // Get only first line
+                const firstLineBreak = preview.indexOf('\n');
+                if (firstLineBreak !== -1) {
+                    preview = preview.substring(0, firstLineBreak).trim();
+                }
             }
-            
+
             draftsHTML += `
                 <div class="draft-item ${isActive ? 'active' : ''}" data-id="${draft.id}">
                     <div class="draft-content">

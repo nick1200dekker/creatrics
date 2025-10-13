@@ -357,7 +357,13 @@ function displayNotes(notesToShow) {
         // Remove extra spaces
         preview = preview.replace(/  +/g, ' ');
 
-        // Limit length but preserve structure
+        // Only show first line as preview
+        const firstLineBreak = preview.indexOf('\n');
+        if (firstLineBreak !== -1) {
+            preview = preview.substring(0, firstLineBreak).trim();
+        }
+
+        // Limit length to 150 chars max
         if (preview.length > 150) {
             preview = preview.substring(0, 150).trim();
             // If we cut off mid-word, go back to last space
