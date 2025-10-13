@@ -661,31 +661,48 @@ def update_video_metadata(user_id, video_id, title=None, description=None, tags=
                 'error': f'Failed to fetch video: {str(e)}'
             }
 
-        # ALWAYS clean existing tags to prevent YouTube API errors
+        # Import string for character validation
         import string
+
+        # ALWAYS clean existing tags to prevent YouTube API errors
+        # This is critical because existing video tags may have invalid characters
         if 'tags' in snippet:
             existing_tags = snippet.get('tags', [])
             cleaned_existing_tags = []
             total_length = 0
 
+            logger.info(f"Cleaning {len(existing_tags)} existing tags for video {video_id}")
+
             for tag in existing_tags:
                 if isinstance(tag, str):
+                    original_tag = tag
                     cleaned_tag = tag.strip()
-                    # Remove ALL invalid characters
-                    # YouTube only allows: letters, numbers, spaces, hyphens, apostrophes
-                    allowed_chars = string.ascii_letters + string.digits + ' -\''
-                    cleaned_tag = ''.join(c for c in cleaned_tag if c in allowed_chars)
-                    cleaned_tag = ' '.join(cleaned_tag.split())  # Normalize whitespace
 
-                    if cleaned_tag:
+                    # Remove ALL special characters - extremely strict
+                    # Only keep ASCII letters, digits, spaces, hyphens (no apostrophes)
+                    allowed_chars = string.ascii_letters + string.digits + ' -'
+                    cleaned_tag = ''.join(c for c in cleaned_tag if c in allowed_chars)
+
+                    # Normalize whitespace
+                    cleaned_tag = ' '.join(cleaned_tag.split())
+
+                    # Remove leading/trailing hyphens or spaces
+                    cleaned_tag = cleaned_tag.strip(' -')
+
+                    if cleaned_tag != original_tag:
+                        logger.info(f"Cleaned tag: '{original_tag}' -> '{cleaned_tag}'")
+
+                    # Skip empty or single-char tags
+                    if cleaned_tag and len(cleaned_tag) > 1:
                         # Check 500 character limit (including separators)
                         # YouTube uses ", " as separator = 2 chars per tag
                         tag_length_with_separator = len(cleaned_tag) + (2 if cleaned_existing_tags else 0)
-                        if total_length + tag_length_with_separator <= 500:
+                        if total_length + tag_length_with_separator <= 480:
                             cleaned_existing_tags.append(cleaned_tag)
                             total_length += tag_length_with_separator
 
             snippet['tags'] = cleaned_existing_tags
+            logger.info(f"Cleaned existing tags: {len(cleaned_existing_tags)} tags, {total_length} chars")
 
         # Update only provided fields
         if title is not None:
@@ -697,35 +714,77 @@ def update_video_metadata(user_id, video_id, title=None, description=None, tags=
             logger.info(f"Updating description for video {video_id}")
 
         if tags is not None:
-            # Clean and validate new tags
+            # Clean and validate new tags with EXTREME strictness
             cleaned_tags = []
             total_length = 0
 
+            logger.info(f"Processing {len(tags)} new tags for video {video_id}")
+
             for tag in tags:
                 if isinstance(tag, str):
+                    original_tag = tag
                     cleaned_tag = tag.strip()
-                    # Remove invalid characters
-                    allowed_chars = string.ascii_letters + string.digits + ' -\''
+
+                    # Remove ALL special characters - be extremely strict
+                    # Only keep ASCII letters, digits, spaces, hyphens
+                    # Remove apostrophes as they might be causing issues
+                    allowed_chars = string.ascii_letters + string.digits + ' -'
                     cleaned_tag = ''.join(c for c in cleaned_tag if c in allowed_chars)
+
+                    # Normalize whitespace
                     cleaned_tag = ' '.join(cleaned_tag.split())
 
-                    if cleaned_tag:
+                    # Remove any leading/trailing hyphens or spaces
+                    cleaned_tag = cleaned_tag.strip(' -')
+
+                    if cleaned_tag != original_tag:
+                        logger.info(f"Cleaned new tag: '{original_tag}' -> '{cleaned_tag}'")
+
+                    # Skip empty tags or tags with only spaces/hyphens
+                    if cleaned_tag and len(cleaned_tag) > 1:
+                        # Check character limit - max 500 chars total including commas
                         tag_length_with_separator = len(cleaned_tag) + (2 if cleaned_tags else 0)
-                        if total_length + tag_length_with_separator <= 500:
+                        if total_length + tag_length_with_separator <= 480:  # Stay under 500
                             cleaned_tags.append(cleaned_tag)
                             total_length += tag_length_with_separator
+                        else:
+                            logger.warning(f"Skipping tag '{cleaned_tag}' - would exceed 480 char limit")
 
             snippet['tags'] = cleaned_tags
             logger.info(f"Updating {len(cleaned_tags)} tags for video {video_id} (total: {total_length} chars)")
+            logger.info(f"Final tags to send: {cleaned_tags}")
 
         # Execute update
         try:
+            # Log the full snippet we're about to send
+            logger.info(f"Sending snippet update for video {video_id}")
+            logger.info(f"Snippet keys: {list(snippet.keys())}")
+
+            # The issue might be that we're sending fields YouTube doesn't like
+            # Let's only send the required fields + what we're updating
+            safe_snippet = {
+                'title': snippet['title'],
+                'categoryId': snippet['categoryId'],
+                'description': snippet.get('description', ''),
+            }
+
+            # Only include tags if they exist and are valid
+            if 'tags' in snippet and snippet['tags']:
+                safe_snippet['tags'] = snippet['tags']
+
+            # Log what we're sending
+            logger.info(f"Safe snippet fields: {list(safe_snippet.keys())}")
+            if 'tags' in safe_snippet:
+                logger.info(f"Sending {len(safe_snippet['tags'])} tags")
+
+            update_body = {
+                'id': video_id,
+                'snippet': safe_snippet
+            }
+
             youtube.videos().update(
                 part='snippet',
-                body={
-                    'id': video_id,
-                    'snippet': snippet
-                }
+                body=update_body
             ).execute()
 
             logger.info(f"Successfully updated video {video_id} for user {user_id}")

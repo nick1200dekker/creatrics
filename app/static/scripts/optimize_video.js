@@ -733,6 +733,62 @@ async function refreshTitles() {
 }
 
 /**
+ * Show confirmation modal
+ */
+function showConfirmModal(title, message, onConfirm) {
+    // Remove existing modal if any
+    const existingModal = document.querySelector('.confirm-modal-overlay');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'confirm-modal-overlay';
+    modal.innerHTML = `
+        <div class="confirm-modal">
+            <div class="confirm-modal-header">
+                <i class="ph ph-youtube-logo"></i>
+                <h3 class="confirm-modal-title">${escapeHtml(title)}</h3>
+            </div>
+            <div class="confirm-modal-content">${escapeHtml(message)}</div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-modal-btn confirm-modal-btn-cancel">Cancel</button>
+                <button class="confirm-modal-btn confirm-modal-btn-confirm">Apply to YouTube</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Show with animation
+    setTimeout(() => modal.classList.add('show'), 10);
+
+    // Handle cancel
+    const cancelBtn = modal.querySelector('.confirm-modal-btn-cancel');
+    cancelBtn.onclick = () => {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 200);
+    };
+
+    // Handle confirm
+    const confirmBtn = modal.querySelector('.confirm-modal-btn-confirm');
+    confirmBtn.onclick = () => {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 200);
+        onConfirm();
+    };
+
+    // Close on overlay click
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 200);
+        }
+    };
+}
+
+/**
  * Apply title to YouTube
  */
 async function applyTitle(button, title) {
@@ -744,41 +800,39 @@ async function applyTitle(button, title) {
     const icon = button.querySelector('i');
     const originalIconClass = icon.className;
 
-    if (!confirm(`Apply this title to YouTube?\n\n"${title}"`)) {
-        return;
-    }
-
-    try {
-        button.disabled = true;
-        icon.className = 'ph ph-spinner spin';
-
-        const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({title: title})
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to apply title');
-        }
-
-        icon.className = 'ph ph-check';
-        button.style.background = '#10B981';
-        button.style.color = '#fff';
-        showToast('✅ Title updated on YouTube!');
-
-        setTimeout(() => {
+    showConfirmModal('Apply Title', `Apply this title to YouTube?\n\n"${title}"`, async () => {
+        try {
             button.disabled = true;
-        }, 2000);
+            icon.className = 'ph ph-spinner spin';
 
-    } catch (error) {
-        console.error('Error applying title:', error);
-        showToast('❌ Failed to apply title: ' + error.message);
-        icon.className = originalIconClass;
-        button.disabled = false;
-    }
+            const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({title: title})
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to apply title');
+            }
+
+            icon.className = 'ph ph-check';
+            button.style.background = '#10B981';
+            button.style.color = '#fff';
+            showToast('✅ Title updated on YouTube!');
+
+            setTimeout(() => {
+                button.disabled = true;
+            }, 2000);
+
+        } catch (error) {
+            console.error('Error applying title:', error);
+            showToast('❌ Failed to apply title: ' + error.message);
+            icon.className = originalIconClass;
+            button.disabled = false;
+        }
+    });
 }
 
 /**
@@ -798,41 +852,43 @@ async function applyDescription(button) {
     const icon = button.querySelector('i');
     const originalIconClass = icon.className;
 
-    if (!confirm('Apply this description to YouTube?')) {
-        return;
-    }
+    const preview = currentOptimizedDescription.length > 100
+        ? currentOptimizedDescription.substring(0, 100) + '...'
+        : currentOptimizedDescription;
 
-    try {
-        button.disabled = true;
-        icon.className = 'ph ph-spinner spin';
-
-        const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({description: currentOptimizedDescription})
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to apply description');
-        }
-
-        icon.className = 'ph ph-check';
-        button.style.background = '#10B981';
-        button.style.color = '#fff';
-        showToast('✅ Description updated on YouTube!');
-
-        setTimeout(() => {
+    showConfirmModal('Apply Description', `Apply this description to YouTube?\n\n"${preview}"`, async () => {
+        try {
             button.disabled = true;
-        }, 2000);
+            icon.className = 'ph ph-spinner spin';
 
-    } catch (error) {
-        console.error('Error applying description:', error);
-        showToast('❌ Failed to apply description: ' + error.message);
-        icon.className = originalIconClass;
-        button.disabled = false;
-    }
+            const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({description: currentOptimizedDescription})
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to apply description');
+            }
+
+            icon.className = 'ph ph-check';
+            button.style.background = '#10B981';
+            button.style.color = '#fff';
+            showToast('✅ Description updated on YouTube!');
+
+            setTimeout(() => {
+                button.disabled = true;
+            }, 2000);
+
+        } catch (error) {
+            console.error('Error applying description:', error);
+            showToast('❌ Failed to apply description: ' + error.message);
+            icon.className = originalIconClass;
+            button.disabled = false;
+        }
+    });
 }
 
 /**
@@ -853,39 +909,39 @@ async function applyTags(button) {
     const icon = button.querySelector('i');
     const originalIconClass = icon.className;
 
-    if (!confirm(`Apply ${tags.length} tags to YouTube?`)) {
-        return;
-    }
+    const preview = tags.slice(0, 5).join(', ') + (tags.length > 5 ? '...' : '');
 
-    try {
-        button.disabled = true;
-        icon.className = 'ph ph-spinner spin';
-
-        const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({tags: tags})
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to apply tags');
-        }
-
-        icon.className = 'ph ph-check';
-        button.style.background = '#10B981';
-        button.style.color = '#fff';
-        showToast('✅ Tags updated on YouTube!');
-
-        setTimeout(() => {
+    showConfirmModal('Apply Tags', `Apply ${tags.length} tags to YouTube?\n\n${preview}`, async () => {
+        try {
             button.disabled = true;
-        }, 2000);
+            icon.className = 'ph ph-spinner spin';
 
-    } catch (error) {
-        console.error('Error applying tags:', error);
-        showToast('❌ Failed to apply tags: ' + error.message);
-        icon.className = originalIconClass;
-        button.disabled = false;
-    }
+            const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({tags: tags})
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to apply tags');
+            }
+
+            icon.className = 'ph ph-check';
+            button.style.background = '#10B981';
+            button.style.color = '#fff';
+            showToast('✅ Tags updated on YouTube!');
+
+            setTimeout(() => {
+                button.disabled = true;
+            }, 2000);
+
+        } catch (error) {
+            console.error('Error applying tags:', error);
+            showToast('❌ Failed to apply tags: ' + error.message);
+            icon.className = originalIconClass;
+            button.disabled = false;
+        }
+    });
 }
