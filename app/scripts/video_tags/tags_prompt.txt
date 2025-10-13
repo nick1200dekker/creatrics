@@ -6,22 +6,25 @@ IMPORTANT: Current date is {current_date}. Use current and relevant time referen
 
 REQUIREMENTS:
 1. Generate 20-30 highly relevant tags
-2. CRITICAL: Total character count MUST NOT EXCEED 480 characters
+2. CRITICAL: Each tag MUST be 30 characters or less
+   - YouTube REJECTS any tag over 30 characters
+   - Keep tags short and concise
+3. CRITICAL: Total character count MUST NOT EXCEED 480 characters
    - Count = sum of all tag characters + commas + spaces between tags
    - Example: "tag1, tag2, tag3" = 4+1+1+4+1+1+4 = 16 characters total
    - YouTube will REJECT tags if total exceeds 500 characters
    - Aim for 400-480 characters to stay safely under the 500 limit
-3. Only use letters, numbers, spaces, hyphens, and apostrophes in tags
+4. Only use letters, numbers, spaces, hyphens, and apostrophes in tags
    - NO brackets, pipes, special characters, or emojis
-4. Return as a comma-separated list
+5. Return as a comma-separated list
 
 TAG STRATEGY:
-- Start with 2-3 BROAD genre/category tags (e.g., "mobile game", "gaming", "strategy game")
-- Add 2-3 main topic/franchise tags (e.g., "clash royale", "supercell")
-- Add 5-7 specific niche keywords related to the exact video topic
-- Include 3-5 long-tail keywords (3-5 word phrases)
-- Add 2-3 trending or seasonal keywords if relevant
-- Include 2-3 audience-specific terms (beginner, advanced, etc.)
+- Start with 2-3 BROAD genre/category tags (e.g., "mobile game", "gaming")
+- Add 2-3 main topic tags (e.g., "clash royale", "supercell")
+- Add 5-7 specific niche keywords (keep under 30 chars each)
+- Include 3-5 long-tail keywords (max 30 chars - be concise!)
+- Add 2-3 trending keywords if relevant (short phrases)
+- Include 2-3 audience terms (beginner, pro tips, etc.)
 - Add 2-3 action words (how to, tutorial, guide, tips)
 - Include current year tags if relevant (current year: {current_year})
 

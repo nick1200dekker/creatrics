@@ -742,6 +742,11 @@ def update_video_metadata(user_id, video_id, title=None, description=None, tags=
 
                     # Skip empty tags or tags with only spaces/hyphens
                     if cleaned_tag and len(cleaned_tag) > 1:
+                        # YouTube limits: each tag max 30 chars, total 500 chars
+                        if len(cleaned_tag) > 30:
+                            logger.warning(f"Skipping tag '{cleaned_tag}' - exceeds 30 char limit ({len(cleaned_tag)} chars)")
+                            continue
+
                         # Check character limit - max 500 chars total including commas
                         tag_length_with_separator = len(cleaned_tag) + (2 if cleaned_tags else 0)
                         if total_length + tag_length_with_separator <= 480:  # Stay under 500
