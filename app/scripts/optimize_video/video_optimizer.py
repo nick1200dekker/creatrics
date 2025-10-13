@@ -118,10 +118,28 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
             )
             optimized_description = description_result.get('description', current_description)
 
-            # Generate optimized tags
+            # Get channel keywords from user document
+            from app.system.services.firebase_service import db
+            import logging
+            logger = logging.getLogger(__name__)
+
+            user_ref = db.collection('users').document(user_id)
+            user_doc = user_ref.get()
+            channel_keywords = []
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                channel_keywords = user_data.get('youtube_channel_keywords', [])
+                logger.info(f"Retrieved {len(channel_keywords)} channel keywords for tag generation")
+                if channel_keywords:
+                    logger.info(f"First 5 keywords: {channel_keywords[:5]}")
+            else:
+                logger.warning(f"User document not found for {user_id}")
+
+            # Generate optimized tags with channel keywords
             tags_result = self.tags_generator.generate_tags(
                 title_tags_context,
-                user_id=user_id
+                user_id=user_id,
+                channel_keywords=channel_keywords
             )
             optimized_tags = tags_result.get('tags', current_tags)
 

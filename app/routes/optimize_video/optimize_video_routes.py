@@ -158,6 +158,21 @@ def get_my_videos():
 
         data = response.json()
 
+        # Extract channel keywords from meta
+        channel_keywords = []
+        if 'meta' in data and 'keywords' in data['meta']:
+            channel_keywords = data['meta'].get('keywords', [])
+            logger.info(f"Found {len(channel_keywords)} channel keywords: {channel_keywords[:5]}...")
+
+            # Store channel keywords in user document for later use
+            try:
+                user_ref.update({
+                    'youtube_channel_keywords': channel_keywords
+                })
+                logger.info(f"Successfully saved {len(channel_keywords)} channel keywords to user document {user_id}")
+            except Exception as e:
+                logger.error(f"Error saving channel keywords: {e}")
+
         # Extract video list
         videos = []
         if 'data' in data:

@@ -40,7 +40,7 @@ class VideoTagsGenerator:
             logger.error(f"Error reading prompt template: {e}")
             return self.get_fallback_prompt()
 
-    def generate_tags(self, input_text: str, user_id: str = None) -> Dict:
+    def generate_tags(self, input_text: str, user_id: str = None, channel_keywords: List[str] = None) -> Dict:
         """
         Generate YouTube tags using AI
 
@@ -74,8 +74,21 @@ class VideoTagsGenerator:
                     # Get the prompt template
                     prompt_template = self.get_prompt_template()
 
+                    # Build channel keywords section
+                    channel_keywords_text = ""
+                    if channel_keywords and len(channel_keywords) > 0:
+                        channel_keywords_text = f"""
+
+CHANNEL KEYWORDS (Your YouTube channel's keywords):
+{', '.join(channel_keywords[:15])}
+
+IMPORTANT: These are your channel's keywords. Include 3-5 of these that are relevant to this specific video.
+This helps with channel branding and ensures consistency across your content.
+Only use the ones that make sense for THIS video - don't force irrelevant ones."""
+
                     # STEP 2: Format the prompt with user input, date AND keywords
                     prompt = f"""{keyword_prompt}
+{channel_keywords_text}
 
 {prompt_template.format(
     input=input_text,
