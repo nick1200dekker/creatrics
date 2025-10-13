@@ -59,7 +59,8 @@ function extractVideoId(input) {
     const patterns = [
         /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
         /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-        /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/
+        /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/  // Handle shorts URLs
     ];
 
     for (const pattern of patterns) {
@@ -143,13 +144,16 @@ function formatTimestamp(timestamp) {
  * Load user's YouTube videos
  */
 async function loadMyVideos() {
-    const grid = document.getElementById('myVideosGrid');
+    const videosGrid = document.getElementById('myVideosGrid');
+    const shortsGrid = document.getElementById('myShortsGrid');
+    const shortsSection = document.getElementById('channelShortsSection');
     const emptyState = document.getElementById('emptyVideos');
 
     try {
         // Show loading state
-        grid.innerHTML = '<div class="empty-state"><i class="ph ph-spinner spin"></i><p>Loading your videos...</p></div>';
+        videosGrid.innerHTML = '<div class="empty-state"><i class="ph ph-spinner spin"></i><p>Loading your videos...</p></div>';
         emptyState.style.display = 'none';
+        shortsSection.style.display = 'none';
 
         const response = await fetch('/optimize-video/api/get-my-videos');
         const data = await response.json();
@@ -158,41 +162,68 @@ async function loadMyVideos() {
             throw new Error(data.error || 'Failed to load videos');
         }
 
-        const videos = data.videos || [];
+        const allVideos = data.videos || [];
 
-        if (videos.length === 0) {
-            grid.innerHTML = '';
+        // Separate videos and shorts
+        const regularVideos = allVideos.filter(v => !v.is_short);
+        const shorts = allVideos.filter(v => v.is_short);
+
+        // Render regular videos
+        if (regularVideos.length === 0) {
+            videosGrid.innerHTML = '';
             emptyState.style.display = 'flex';
-            return;
-        }
-
-        // Render videos
-        grid.innerHTML = videos.map(video => `
-            <div class="video-card" onclick="optimizeVideo('${video.video_id}')">
-                <div class="video-thumbnail">
-                    <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">
-                </div>
-                <div class="video-info">
-                    <h4 class="video-title">${escapeHtml(video.title)}</h4>
-                    <div class="video-meta">
-                        <span class="stat">
-                            <i class="ph ph-eye"></i>
-                            ${video.view_count}
-                        </span>
-                        <span class="stat">
-                            <i class="ph ph-clock"></i>
-                            ${formatTimestamp(video.published_time)}
-                        </span>
+        } else {
+            videosGrid.innerHTML = regularVideos.map(video => `
+                <div class="video-card" onclick="optimizeVideo('${video.video_id}')">
+                    <div class="video-thumbnail">
+                        <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">
+                    </div>
+                    <div class="video-info">
+                        <h4 class="video-title">${escapeHtml(video.title)}</h4>
+                        <div class="video-meta">
+                            <span class="stat">
+                                <i class="ph ph-eye"></i>
+                                ${video.view_count}
+                            </span>
+                            <span class="stat">
+                                <i class="ph ph-clock"></i>
+                                ${formatTimestamp(video.published_time)}
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
+            emptyState.style.display = 'none';
+        }
 
-        emptyState.style.display = 'none';
+        // Render shorts if any exist
+        if (shorts.length > 0) {
+            shortsSection.style.display = 'block';
+            shortsGrid.innerHTML = shorts.map(video => `
+                <div class="video-card" onclick="optimizeVideo('${video.video_id}')">
+                    <div class="video-thumbnail">
+                        <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">
+                        <span class="short-badge">
+                            <i class="ph ph-device-mobile"></i>
+                            Short
+                        </span>
+                    </div>
+                    <div class="video-info">
+                        <h4 class="video-title">${escapeHtml(video.title)}</h4>
+                        <div class="video-meta">
+                            <span class="stat">
+                                <i class="ph ph-eye"></i>
+                                ${video.view_count}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
 
     } catch (error) {
         console.error('Error loading videos:', error);
-        grid.innerHTML = '';
+        videosGrid.innerHTML = '';
         emptyState.innerHTML = `
             <i class="ph ph-warning"></i>
             <p>Failed to load videos</p>

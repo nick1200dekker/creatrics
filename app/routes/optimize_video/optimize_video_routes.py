@@ -185,10 +185,35 @@ def get_my_videos():
                         'thumbnail': video.get('thumbnail', [{}])[0].get('url') if video.get('thumbnail') else '',
                         'view_count': video.get('viewCountText', '0'),
                         'published_time': video.get('publishedTimeText', ''),
-                        'length_text': video.get('lengthText', '')
+                        'length_text': video.get('lengthText', ''),
+                        'is_short': False
                     })
 
-        logger.info(f"Fetched {len(videos)} videos for channel {channel_title}")
+        # Fetch shorts separately
+        shorts_url = f"https://{RAPIDAPI_HOST}/channel/shorts"
+        try:
+            shorts_response = requests.get(shorts_url, headers=headers, params=querystring, timeout=30)
+            shorts_response.raise_for_status()
+            shorts_data = shorts_response.json()
+
+            if 'data' in shorts_data:
+                for short in shorts_data['data']:
+                    if short.get('type') == 'shorts':
+                        videos.append({
+                            'video_id': short.get('videoId'),
+                            'title': short.get('title'),
+                            'thumbnail': short.get('thumbnail', [{}])[0].get('url') if short.get('thumbnail') else '',
+                            'view_count': short.get('viewCountText', '0'),
+                            'published_time': '',
+                            'length_text': 'Short',
+                            'is_short': True
+                        })
+
+            logger.info(f"Fetched {len([v for v in videos if v.get('is_short')])} shorts for channel {channel_title}")
+        except Exception as e:
+            logger.warning(f"Could not fetch shorts: {e}")
+
+        logger.info(f"Fetched {len(videos)} total videos (regular + shorts) for channel {channel_title}")
 
         return jsonify({
             'success': True,

@@ -55,21 +55,31 @@ class VideoOptimizer:
             # Get thumbnail URL
             thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
 
+            # Detect if video is a short (under 60 seconds)
+            video_duration = int(video_info.get('lengthSeconds', 0))
+            is_short = video_duration <= 60
+            video_type = 'short' if is_short else 'long_form'
+
+            logger.info(f"Video duration: {video_duration}s, is_short: {is_short}, video_type: {video_type}")
+
             # Generate optimized content using existing scripts
             # For descriptions, use full transcript if under 20k chars (roughly <15 min video)
-            # For titles/tags, use preview only
-            use_full_transcript = len(transcript_text) < 20000
+            # For shorts, always use full transcript (under 60 seconds = short transcript)
+            use_full_transcript = is_short or len(transcript_text) < 20000
 
             # Context for title/tags generation
+            # For shorts, use full transcript since it's very short (under 60 seconds)
+            transcript_for_title = transcript_text if is_short else transcript_text[:2000]
+
             title_tags_context = f"""
 Video Title: {current_title}
 Video Description: {current_description[:500]}
-Video Transcript: {transcript_text[:2000]}
+Video Transcript: {transcript_for_title}
 """
 
-            # Format timestamps for AI (only if video is short) - just key timestamps
+            # Format timestamps for AI (skip for shorts) - just key timestamps
             timestamps_text = ""
-            if use_full_transcript and transcript_with_timestamps and len(transcript_with_timestamps) > 0:
+            if not is_short and use_full_transcript and transcript_with_timestamps and len(transcript_with_timestamps) > 0:
                 # Extract only 8-10 evenly spaced timestamps for chapter creation
                 num_chapters = min(10, max(4, len(transcript_with_timestamps) // 30))  # 1 chapter per ~30 segments
                 step = len(transcript_with_timestamps) // num_chapters
@@ -95,7 +105,7 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
             # Generate optimized title suggestions (1 AI call generates 10 titles)
             title_result = self.title_generator.generate_titles(
                 title_tags_context,
-                video_type='long_form',
+                video_type=video_type,  # 'short' or 'long_form'
                 user_id=user_id
             )
 
@@ -110,9 +120,11 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
             optimized_titles = title_suggestions[0] if title_suggestions else current_title  # Keep first for backward compatibility
 
             # Generate optimized description (with full transcript if short video)
+            # Use 'short' or 'long' for description generator
+            desc_type = 'short' if is_short else 'long'
             description_result = self.description_generator.generate_description(
                 description_context,
-                video_type='long',
+                video_type=desc_type,  # 'short' or 'long'
                 reference_description=current_description,
                 user_id=user_id
             )
@@ -120,8 +132,6 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
 
             # Get channel keywords from user document
             from app.system.services.firebase_service import db
-            import logging
-            logger = logging.getLogger(__name__)
 
             user_ref = db.collection('users').document(user_id)
             user_doc = user_ref.get()
@@ -143,12 +153,14 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
             )
             optimized_tags = tags_result.get('tags', current_tags)
 
-            # Analyze thumbnail with Claude Vision
-            thumbnail_analysis = self.thumbnail_analyzer.analyze_thumbnail(
-                thumbnail_url,
-                current_title,
-                user_id
-            )
+            # Analyze thumbnail with Claude Vision (skip for shorts)
+            thumbnail_analysis = {}
+            if not is_short:
+                thumbnail_analysis = self.thumbnail_analyzer.analyze_thumbnail(
+                    thumbnail_url,
+                    current_title,
+                    user_id
+                )
 
             # Generate overall recommendations
             recommendations = self._generate_recommendations(

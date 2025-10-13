@@ -207,6 +207,25 @@ html.dark .video-card:hover {
     object-fit: cover;
 }
 
+.short-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.short-badge i {
+    font-size: 0.875rem;
+}
+
 .video-info {
     padding: 1rem;
 }
