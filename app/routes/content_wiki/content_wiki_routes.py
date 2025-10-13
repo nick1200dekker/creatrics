@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 
 # Preset categories for wiki organization
 PRESET_CATEGORIES = [
-    {'id': 'brand', 'name': 'Brand Guidelines', 'icon': '🎨', 'color': '#8B5CF6'},
-    {'id': 'content', 'name': 'Content Standards', 'icon': '📝', 'color': '#3B82F6'},
-    {'id': 'visual', 'name': 'Visual Assets', 'icon': '🖼️', 'color': '#EC4899'},
-    {'id': 'templates', 'name': 'Templates', 'icon': '📋', 'color': '#F59E0B'},
-    {'id': 'processes', 'name': 'Processes', 'icon': '⚙️', 'color': '#10B981'},
-    {'id': 'team', 'name': 'Team Resources', 'icon': '👥', 'color': '#06B6D4'},
-    {'id': 'legal', 'name': 'Legal & Compliance', 'icon': '⚖️', 'color': '#EF4444'},
-    {'id': 'reference', 'name': 'Reference Materials', 'icon': '📚', 'color': '#84CC16'},
+    {'id': 'brand', 'name': 'Brand Guidelines', 'icon': 'ph-palette', 'color': '#8B5CF6'},
+    {'id': 'content', 'name': 'Content Standards', 'icon': 'ph-article', 'color': '#3B82F6'},
+    {'id': 'visual', 'name': 'Visual Assets', 'icon': 'ph-image', 'color': '#EC4899'},
+    {'id': 'templates', 'name': 'Templates', 'icon': 'ph-files', 'color': '#F59E0B'},
+    {'id': 'processes', 'name': 'Processes', 'icon': 'ph-gear-six', 'color': '#10B981'},
+    {'id': 'team', 'name': 'Team Resources', 'icon': 'ph-users-three', 'color': '#06B6D4'},
+    {'id': 'legal', 'name': 'Legal & Compliance', 'icon': 'ph-scales', 'color': '#EF4444'},
+    {'id': 'reference', 'name': 'Reference Materials', 'icon': 'ph-book-open', 'color': '#84CC16'},
 ]
 
 @bp.route('/content-wiki')
@@ -990,3 +990,51 @@ def get_system_templates():
             'is_system': True
         }
     ]
+
+@bp.route('/api/content-wiki/storage', methods=['GET'])
+@auth_required
+@require_permission('content_wiki')
+def get_storage_usage():
+    """Get storage usage for the current workspace"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get all pages (including attachments)
+        pages_ref = db.collection('users').document(user_id).collection('content_wiki')
+        pages = pages_ref.stream()
+
+        total_bytes = 0
+
+        for page in pages:
+            page_data = page.to_dict()
+
+            # Add file size if it's a file
+            if page_data.get('is_file') and page_data.get('size'):
+                total_bytes += page_data.get('size', 0)
+
+            # Add attachment sizes
+            if 'attachments' in page_data:
+                for attachment in page_data.get('attachments', []):
+                    total_bytes += attachment.get('size', 0)
+
+        # Convert to MB
+        total_mb = round(total_bytes / (1024 * 1024), 2)
+        max_mb = 1024  # 1GB limit
+        percentage = round((total_bytes / (max_mb * 1024 * 1024)) * 100, 2)
+
+        return jsonify({
+            'success': True,
+            'storage': {
+                'used_bytes': total_bytes,
+                'used_mb': total_mb,
+                'max_mb': max_mb,
+                'percentage': percentage
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting storage usage: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

@@ -29,6 +29,22 @@
                 <div class="category-grid">
                     <!-- Category cards will be displayed here -->
                 </div>
+
+                <!-- Storage Usage -->
+                <div class="storage-usage-container" id="storageUsageContainer" style="display: none;">
+                    <div class="storage-usage-header">
+                        <div class="storage-usage-title">
+                            <i class="ph ph-hard-drives"></i>
+                            Storage Usage
+                        </div>
+                        <div class="storage-usage-text">
+                            <span id="storageUsedMB">0</span> MB / 1024 MB
+                        </div>
+                    </div>
+                    <div class="storage-usage-bar">
+                        <div class="storage-usage-fill" id="storageUsageFill" style="width: 0%"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Category Space View -->
@@ -109,6 +125,12 @@
                             <i class="ph ph-list"></i>
                         </button>
                     </div>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div class="content-loading" id="contentLoading" style="display: none;">
+                    <div class="content-loading-spinner"></div>
+                    <p class="content-loading-text">Loading...</p>
                 </div>
 
                 <!-- Content Grid -->

@@ -95,7 +95,7 @@ const WikiApp = (function() {
             if (data.success) {
                 // Get preset categories
                 categories = data.categories || [];
-                
+
                 // Count content per category
                 const pages = data.pages || [];
                 categories.forEach(cat => {
@@ -107,9 +107,40 @@ const WikiApp = (function() {
 
                 displayCategories();
                 showOverview(); // Show the overview with categories
+                loadStorageUsage(); // Load storage usage
             }
         } catch (error) {
             console.error('Error loading categories:', error);
+        }
+    }
+
+    // Load storage usage
+    async function loadStorageUsage() {
+        try {
+            const response = await fetch('/api/content-wiki/storage');
+            const data = await response.json();
+
+            if (data.success && data.storage) {
+                const { used_mb, max_mb, percentage } = data.storage;
+
+                // Update display
+                document.getElementById('storageUsedMB').textContent = used_mb;
+                const fillEl = document.getElementById('storageUsageFill');
+                fillEl.style.width = `${Math.min(percentage, 100)}%`;
+
+                // Color coding based on usage
+                fillEl.classList.remove('warning', 'danger');
+                if (percentage >= 90) {
+                    fillEl.classList.add('danger');
+                } else if (percentage >= 70) {
+                    fillEl.classList.add('warning');
+                }
+
+                // Show storage container after loading
+                document.getElementById('storageUsageContainer').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading storage usage:', error);
         }
     }
 
@@ -125,10 +156,18 @@ const WikiApp = (function() {
 
     // Show overview
     function showOverview() {
+        // If we're in a folder, go back to the category root
+        if (currentFolder) {
+            currentFolder = null;
+            loadCategoryContent(currentCategory, null);
+            return;
+        }
+
+        // Otherwise go back to wiki home
         currentCategory = null;
         currentDocumentId = null;
         currentFolder = null;
-        
+
         // Update sidebar
         document.querySelectorAll('.category-item').forEach(item => {
             item.classList.remove('active');
@@ -137,16 +176,16 @@ const WikiApp = (function() {
         // Hide other views
         document.getElementById('categorySpace').style.display = 'none';
         document.getElementById('documentEditor').style.display = 'none';
-        
+
         // Show overview
         const overview = document.getElementById('categoryOverview');
         overview.style.display = 'block';
-        
+
         // Display category cards
         const grid = overview.querySelector('.category-grid');
         grid.innerHTML = categories.map(cat => `
             <div class="category-card" onclick="WikiApp.openCategory('${cat.id}')">
-                <span class="category-card-icon">${cat.icon}</span>
+                <i class="category-card-icon ph ${cat.icon}" style="color: ${cat.color}"></i>
                 <h3 class="category-card-name">${cat.name}</h3>
                 <div class="category-card-stats">
                     <span class="category-card-stat">
@@ -193,6 +232,9 @@ const WikiApp = (function() {
     // Load category content
     async function loadCategoryContent(categoryId, folderId = null) {
         try {
+            // Show loading spinner and hide content
+            showContentLoading();
+
             let url = `/api/content-wiki/pages?category=${categoryId}`;
             if (folderId) {
                 url += `&folder=${folderId}`;
@@ -203,15 +245,15 @@ const WikiApp = (function() {
 
             if (data.success) {
                 currentContent = data.pages || [];
-                
+
                 // Update stats
                 const docs = currentContent.filter(c => !c.is_file && !c.is_folder);
                 const files = currentContent.filter(c => c.is_file);
                 const folders = currentContent.filter(c => c.is_folder);
-                
+
                 document.getElementById('spaceDocs').textContent = docs.length;
                 document.getElementById('spaceFiles').textContent = files.length;
-                
+
                 // Check if spaceFolders element exists
                 const spaceFoldersEl = document.getElementById('spaceFolders');
                 if (spaceFoldersEl) {
@@ -219,11 +261,32 @@ const WikiApp = (function() {
                 }
 
                 displayContent();
+                hideContentLoading();
             }
         } catch (error) {
             console.error('Error loading content:', error);
             showToast('Failed to load content', 'error');
+            hideContentLoading();
         }
+    }
+
+    // Show content loading spinner
+    function showContentLoading() {
+        const loading = document.getElementById('contentLoading');
+        const grid = document.getElementById('contentGrid');
+        const emptyState = document.getElementById('emptyState');
+
+        // Clear current content immediately
+        grid.innerHTML = '';
+        grid.style.display = 'none';
+        emptyState.style.display = 'none';
+        loading.style.display = 'flex';
+    }
+
+    // Hide content loading spinner
+    function hideContentLoading() {
+        const loading = document.getElementById('contentLoading');
+        loading.style.display = 'none';
     }
 
     // Display content
@@ -495,6 +558,9 @@ const WikiApp = (function() {
                 // Load document data
                 document.getElementById('documentTitle').value = data.page.title || '';
                 document.getElementById('wikiEditor').innerHTML = data.page.content || '';
+
+                // Setup image resize for existing images
+                setupImageResize();
 
                 // Update pin button
                 const pinBtn = document.getElementById('pinBtn');
@@ -1217,10 +1283,13 @@ const WikiApp = (function() {
             const data = await response.json();
 
             if (data.success && data.attachment) {
-                // Insert image into editor
-                const img = `<img src="${data.attachment.url}" alt="${data.attachment.filename}" style="max-width: 100%;">`;
+                // Insert resizable image into editor
+                const img = `<img src="${data.attachment.url}" alt="${data.attachment.filename}" style="max-width: 100%; width: 600px; cursor: pointer;" class="resizable-image">`;
                 document.execCommand('insertHTML', false, img);
-                
+
+                // Add resize functionality to all images
+                setupImageResize();
+
                 showToast('Image uploaded', 'success');
             }
         } catch (error) {
@@ -1261,6 +1330,93 @@ const WikiApp = (function() {
         `;
         document.execCommand('insertHTML', false, table);
         document.getElementById('wikiEditor').focus();
+    }
+
+    // Setup image resize functionality
+    function setupImageResize() {
+        const editor = document.getElementById('wikiEditor');
+        if (!editor) return;
+
+        const images = editor.querySelectorAll('img');
+        images.forEach(img => {
+            img.style.cursor = 'pointer';
+            img.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showImageResizeSlider(this);
+            };
+        });
+    }
+
+    // Show image resize slider
+    function showImageResizeSlider(img) {
+        // Remove any existing slider
+        const existingSlider = document.querySelector('.image-resize-slider');
+        if (existingSlider) {
+            existingSlider.remove();
+        }
+
+        // Get current width
+        const currentWidth = parseInt(img.style.width) || img.width;
+        const maxWidth = img.parentElement.offsetWidth;
+
+        // Create slider overlay
+        const slider = document.createElement('div');
+        slider.className = 'image-resize-slider';
+        slider.innerHTML = `
+            <div class="image-resize-slider-content">
+                <div class="image-resize-header">
+                    <span class="image-resize-title">Resize Image</span>
+                    <span class="image-resize-value">${currentWidth}px</span>
+                </div>
+                <input type="range"
+                       class="image-resize-range"
+                       min="200"
+                       max="${Math.max(maxWidth, 1200)}"
+                       value="${currentWidth}"
+                       step="10">
+                <div class="image-resize-actions">
+                    <button class="image-resize-btn image-resize-cancel">Cancel</button>
+                    <button class="image-resize-btn image-resize-apply">Apply</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(slider);
+
+        const rangeInput = slider.querySelector('.image-resize-range');
+        const valueDisplay = slider.querySelector('.image-resize-value');
+        const cancelBtn = slider.querySelector('.image-resize-cancel');
+        const applyBtn = slider.querySelector('.image-resize-apply');
+
+        let newWidth = currentWidth;
+
+        // Update value as slider moves
+        rangeInput.addEventListener('input', (e) => {
+            newWidth = parseInt(e.target.value);
+            valueDisplay.textContent = `${newWidth}px`;
+        });
+
+        // Apply button
+        applyBtn.addEventListener('click', () => {
+            img.style.width = `${newWidth}px`;
+            slider.remove();
+        });
+
+        // Cancel button
+        cancelBtn.addEventListener('click', () => {
+            slider.remove();
+        });
+
+        // Click outside to cancel
+        slider.addEventListener('click', (e) => {
+            if (e.target === slider) {
+                slider.remove();
+            }
+        });
+
+        // Show slider with animation
+        setTimeout(() => slider.classList.add('show'), 10);
     }
 
     // Handle content change
@@ -1390,6 +1546,7 @@ const WikiApp = (function() {
         renameFile,
         closeRenameModal,
         confirmRename,
+        setupImageResize,
         showDocInfo,
         closeDocInfo,
         filterContent,
