@@ -100,7 +100,19 @@ async function optimizeFromUrl() {
 function formatTimestamp(timestamp) {
     if (!timestamp) return 'Unknown';
 
+    // If it's already a human-readable string from RapidAPI (e.g., "2 days ago"), return it
+    if (typeof timestamp === 'string' && timestamp.includes('ago')) {
+        return timestamp;
+    }
+
+    // Try to parse as date
     const date = new Date(timestamp);
+
+    // Check if date is invalid
+    if (isNaN(date.getTime())) {
+        return timestamp; // Return original if can't parse
+    }
+
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
