@@ -201,30 +201,36 @@ function updateZoomDisplay() {
 function addNewNode() {
     const container = document.getElementById('canvasContainer');
     if (!container) return;
-    
+
     nodeCounter++;
     const x = 200 + Math.random() * 400;
     const y = 150 + Math.random() * 300;
-    
+
     const node = document.createElement('div');
-    node.className = 'mind-node';
+    node.className = 'mind-node shape-sticky';
     node.id = 'node_' + nodeCounter;
     node.style.left = x + 'px';
     node.style.top = y + 'px';
     node.style.width = '180px';
-    node.style.height = 'auto';
-    
+    node.style.height = '180px';
+    node.style.backgroundColor = '#1E40AF'; // Dark blue color
+
     const nodeText = document.createElement('div');
     nodeText.className = 'node-text';
-    nodeText.textContent = 'New Node';
-    
+    nodeText.textContent = 'New Note';
+    nodeText.style.color = '#FFFFFF'; // White text on dark background
+
     node.appendChild(nodeText);
     container.appendChild(node);
-    
+
     makeDraggable(node);
     addNodeClickHandlers(node);
-    
+
     console.log('Added node:', node.id, 'at', x, y);
+
+    // Auto-save after creating node
+    setTimeout(saveToFirebase, 500);
+
     return node;
 }
 
@@ -289,8 +295,9 @@ function makeDraggable(node) {
             isResizing = true;
             startX = e.clientX;
             startY = e.clientY;
-            initialWidth = node.offsetWidth;
-            initialHeight = node.offsetHeight;
+            // Get actual CSS width/height, not rendered dimensions
+            initialWidth = parseInt(node.style.width) || node.offsetWidth / currentZoom;
+            initialHeight = parseInt(node.style.height) || node.offsetHeight / currentZoom;
             node.style.cursor = 'nw-resize';
         } else {
             isDragging = true;
@@ -332,6 +339,7 @@ function makeDraggable(node) {
             node.style.top = newY + 'px';
 
             updateConnections();
+            markAsUnsaved();
         } else if (isResizing) {
             const deltaX = (e.clientX - startX) / currentZoom;
             const deltaY = (e.clientY - startY) / currentZoom;
@@ -359,6 +367,7 @@ function makeDraggable(node) {
             }
 
             updateConnections();
+            markAsUnsaved();
         }
     };
 
@@ -434,6 +443,10 @@ function editNodeText(node) {
     selection.removeAllRanges();
     selection.addRange(range);
     
+    textDiv.addEventListener('input', function() {
+        markAsUnsaved();
+    });
+
     textDiv.addEventListener('blur', function() {
         textDiv.contentEditable = false;
         updatePropertiesPanel(node);
@@ -468,7 +481,7 @@ function updatePropertiesPanel(node) {
 
             <div class="property-group">
                 <div class="property-label">Text</div>
-                <textarea class="property-input" id="nodeText" placeholder="Node text..." onchange="updateSelectedNode()">${node.querySelector('.node-text').textContent}</textarea>
+                <textarea class="property-input" id="nodeText" placeholder="Node text..." onchange="updateSelectedNode()">${node.querySelector('.node-text').innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<div>/gi, '\n').replace(/<\/div>/gi, '').trim()}</textarea>
             </div>
 
             <div class="property-group">
@@ -484,14 +497,17 @@ function updatePropertiesPanel(node) {
             <div class="property-group">
                 <div class="property-label">Color</div>
                 <div class="color-options">
-                    <div class="color-option" style="background: #3B82F6;" onclick="changeNodeColor('#3B82F6')" title="Blue"></div>
-                    <div class="color-option" style="background: #EF4444;" onclick="changeNodeColor('#EF4444')" title="Red"></div>
-                    <div class="color-option" style="background: #10B981;" onclick="changeNodeColor('#10B981')" title="Green"></div>
-                    <div class="color-option" style="background: #F59E0B;" onclick="changeNodeColor('#F59E0B')" title="Orange"></div>
-                    <div class="color-option" style="background: #8B5CF6;" onclick="changeNodeColor('#8B5CF6')" title="Purple"></div>
-                    <div class="color-option" style="background: #EC4899;" onclick="changeNodeColor('#EC4899')" title="Pink"></div>
-                    <div class="color-option" style="background: #06B6D4;" onclick="changeNodeColor('#06B6D4')" title="Cyan"></div>
-                    <div class="color-option" style="background: #84CC16;" onclick="changeNodeColor('#84CC16')" title="Lime"></div>
+                    <div class="color-option" style="background: #1E40AF;" onclick="changeNodeColor('#1E40AF')" title="Blue"></div>
+                    <div class="color-option" style="background: #B91C1C;" onclick="changeNodeColor('#B91C1C')" title="Red"></div>
+                    <div class="color-option" style="background: #047857;" onclick="changeNodeColor('#047857')" title="Green"></div>
+                    <div class="color-option" style="background: #C2410C;" onclick="changeNodeColor('#C2410C')" title="Orange"></div>
+                    <div class="color-option" style="background: #6D28D9;" onclick="changeNodeColor('#6D28D9')" title="Purple"></div>
+                    <div class="color-option" style="background: #BE185D;" onclick="changeNodeColor('#BE185D')" title="Pink"></div>
+                    <div class="color-option" style="background: #0E7490;" onclick="changeNodeColor('#0E7490')" title="Cyan"></div>
+                    <div class="color-option" style="background: #4D7C0F;" onclick="changeNodeColor('#4D7C0F')" title="Lime"></div>
+                    <div class="color-option" style="background: #7C2D12;" onclick="changeNodeColor('#7C2D12')" title="Brown"></div>
+                    <div class="color-option" style="background: #1F2937;" onclick="changeNodeColor('#1F2937')" title="Gray"></div>
+                    <div class="color-option" style="background: #18181B;" onclick="changeNodeColor('#18181B')" title="Black"></div>
                 </div>
             </div>
 
@@ -541,8 +557,11 @@ async function loadFromFirebase() {
 
 async function saveToFirebase() {
     try {
+        // Update UI to show saving
+        updateSaveStatus('saving');
+
         saveCurrentMapState();
-        
+
         const response = await fetch('/api/mind-map/save', {
             method: 'POST',
             headers: {
@@ -553,19 +572,51 @@ async function saveToFirebase() {
                 currentMapId: currentMapId
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             console.log('Saved to Firebase successfully');
+            updateSaveStatus('saved');
         } else {
             console.error('Save failed:', result.error);
+            updateSaveStatus('unsaved');
             alert('Failed to save: ' + result.error);
         }
     } catch (error) {
         console.error('Save error:', error);
+        updateSaveStatus('unsaved');
         alert('Failed to save mind map');
     }
+}
+
+function updateSaveStatus(status) {
+    const saveStatusEl = document.getElementById('saveStatus');
+    const saveStatusTextEl = document.getElementById('saveStatusText');
+    const iconEl = saveStatusEl?.querySelector('i');
+
+    if (!saveStatusEl || !saveStatusTextEl || !iconEl) return;
+
+    // Remove all status classes
+    saveStatusEl.classList.remove('saving', 'saved', 'unsaved');
+
+    if (status === 'saving') {
+        saveStatusEl.classList.add('saving');
+        iconEl.className = 'ph ph-circle-notch';
+        saveStatusTextEl.textContent = 'Saving...';
+    } else if (status === 'saved') {
+        saveStatusEl.classList.add('saved');
+        iconEl.className = 'ph ph-check-circle';
+        saveStatusTextEl.textContent = 'Saved';
+    } else if (status === 'unsaved') {
+        saveStatusEl.classList.add('unsaved');
+        iconEl.className = 'ph ph-warning-circle';
+        saveStatusTextEl.textContent = 'Unsaved changes';
+    }
+}
+
+function markAsUnsaved() {
+    updateSaveStatus('unsaved');
 }
 
 // Connection functions
@@ -697,22 +748,31 @@ function clearCanvas() {
 
 function saveCurrentMapState() {
     if (!maps[currentMapId]) return;
-    
+
     const nodes = [];
     document.querySelectorAll('.mind-node').forEach(node => {
+        const textEl = node.querySelector('.node-text');
+        // Use innerHTML to preserve line breaks and formatting
+        let textContent = textEl.innerHTML
+            .replace(/<br\s*\/?>/gi, '\n')  // Convert <br> to newlines
+            .replace(/<div>/gi, '\n')        // Convert <div> to newlines
+            .replace(/<\/div>/gi, '')        // Remove closing divs
+            .trim();
+
         nodes.push({
             id: node.id,
-            text: node.querySelector('.node-text').textContent,
+            text: textContent,
             x: parseInt(node.style.left) || 0,
             y: parseInt(node.style.top) || 0,
             width: node.style.width,
             height: node.style.height,
             backgroundColor: node.style.backgroundColor || '',
+            textColor: textEl.style.color || '',
             shape: getNodeShape(node),
-            fontSize: node.querySelector('.node-text').style.fontSize || '14px'
+            fontSize: textEl.style.fontSize || '14px'
         });
     });
-    
+
     maps[currentMapId].nodes = nodes;
     maps[currentMapId].connections = [...connections];
     maps[currentMapId].updated = new Date().toISOString();
@@ -741,8 +801,12 @@ function loadMapState(mapId) {
         
         const nodeText = document.createElement('div');
         nodeText.className = 'node-text';
+        // Restore text with line breaks preserved
         nodeText.textContent = nodeData.text;
         nodeText.style.fontSize = nodeData.fontSize;
+        if (nodeData.textColor) {
+            nodeText.style.color = nodeData.textColor;
+        }
         
         node.appendChild(nodeText);
         document.getElementById('canvasContainer').appendChild(node);

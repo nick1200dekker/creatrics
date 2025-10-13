@@ -145,6 +145,41 @@ html.dark .mind-map-wrapper {
     margin: 0 0.25rem;
 }
 
+.save-status {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+.save-status i {
+    font-size: 1rem;
+    color: #10B981;
+    transition: all 0.3s ease;
+}
+
+.save-status.saving i {
+    color: #F59E0B;
+    animation: spin 1s linear infinite;
+}
+
+.save-status.unsaved i {
+    color: #EF4444;
+}
+
+.save-status.unsaved {
+    color: #EF4444;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Controls panel */
 .mind-map-controls {
     position: absolute;
@@ -225,7 +260,7 @@ html.dark .mind-map-wrapper {
 .mind-node {
     position: absolute;
     background: #f8fafc;
-    border: 2px solid #e2e8f0;
+    border: none;
     border-radius: 12px;
     padding: 1rem;
     min-width: 120px;
@@ -283,15 +318,7 @@ html.dark .mind-map-wrapper {
 
 .mind-node.shape-sticky {
     border-radius: 2px;
-    min-width: 120px;
-    min-height: 120px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 1rem;
     box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
-    position: relative;
-    transform: rotate(-1deg);
 }
 
 .mind-node.shape-sticky::before {
@@ -307,22 +334,15 @@ html.dark .mind-map-wrapper {
 }
 
 .mind-node.shape-sticky .node-text {
-    text-align: left;
     font-family: 'Comic Sans MS', 'Marker Felt', cursive, sans-serif;
-    line-height: 1.6;
 }
 
 .mind-node:hover {
     box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.15);
-    border-color: #3B82F6;
-    transform: translateY(-1px);
 }
 
 .mind-node.selected {
-    border-color: #3b82f6 !important;
-    border-width: 3px !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 4px 8px -1px rgba(0, 0, 0, 0.15) !important;
-    transform: scale(1.02);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5), 0 4px 8px -1px rgba(0, 0, 0, 0.15) !important;
 }
 
 .mind-node.root {
@@ -353,6 +373,8 @@ html.dark .mind-map-wrapper {
     width: 100%;
     resize: none;
     text-align: center;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .node-text[contenteditable="true"]:focus {

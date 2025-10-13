@@ -51,6 +51,10 @@
             <button class="toolbar-btn" id="saveBtn" title="Save" onclick="handleSave()">
                 <i class="ph ph-floppy-disk"></i>
             </button>
+            <div class="save-status" id="saveStatus">
+                <i class="ph ph-check-circle"></i>
+                <span id="saveStatusText">Saved</span>
+            </div>
         </div>
 
         <!-- Controls Panel -->
@@ -185,9 +189,15 @@ function updateSelectedNode() {
     const textArea = document.getElementById('nodeText');
     const shapeSelect = document.getElementById('nodeShape');
     const fontSelect = document.getElementById('nodeFontSize');
-    
-    if (textArea && textArea.value !== selectedNode.querySelector('.node-text').textContent) {
-        selectedNode.querySelector('.node-text').textContent = textArea.value;
+
+    if (textArea) {
+        const nodeTextEl = selectedNode.querySelector('.node-text');
+        const currentText = nodeTextEl.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<div>/gi, '\n').replace(/<\/div>/gi, '').trim();
+
+        if (textArea.value !== currentText) {
+            // Set text preserving line breaks
+            nodeTextEl.textContent = textArea.value;
+        }
     }
     
     if (shapeSelect) {
@@ -216,29 +226,35 @@ function updateSelectedNode() {
 
 function changeNodeColor(color) {
     let nodeToColor = selectedNode || window.selectedNode;
-    
+
     if (!nodeToColor) {
         alert('Please select a node first');
         return;
     }
-    
+
     console.log('Changing color to:', color);
     console.log('Selected node:', nodeToColor);
     console.log('Node style before:', nodeToColor.style.cssText);
-    
+
     // Set the background color
     nodeToColor.style.backgroundColor = color;
-    
+
+    // Set text color - all dark colors use white text
+    const textEl = nodeToColor.querySelector('.node-text');
+    if (textEl) {
+        textEl.style.color = '#FFFFFF'; // White text for all dark colors
+    }
+
     console.log('Node style after:', nodeToColor.style.cssText);
     console.log('Node has background-color in style?', nodeToColor.style.cssText.includes('background-color'));
-    
+
     // Update color selection
     document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
     const colorElement = document.querySelector(`[onclick*="${color}"]`);
     if (colorElement) {
         colorElement.classList.add('selected');
     }
-    
+
     console.log('Changed node color to:', color);
 }
 
@@ -338,21 +354,24 @@ function closeMap(mapId) {
         alert('Cannot close the last map');
         return;
     }
-    
+
     if (confirm('Are you sure you want to close this map?')) {
         delete maps[mapId];
-        
+
         // Remove tab
         const tab = document.querySelector(`[data-map-id="${mapId}"]`);
         if (tab) tab.remove();
-        
+
         // Switch to first available map if this was active
         if (currentMapId === mapId) {
             const firstMapId = Object.keys(maps)[0];
             switchToMap(firstMapId);
         }
-        
+
         console.log('Closed map:', mapId);
+
+        // Save to Firebase after deleting
+        setTimeout(saveToFirebase, 500);
     }
 }
 
