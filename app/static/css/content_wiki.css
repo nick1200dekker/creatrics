@@ -112,6 +112,11 @@ html.dark .category-card {
     margin-bottom: 1rem;
     display: block;
     font-weight: 400;
+    color: #3B82F6;
+}
+
+html.dark .category-card-icon {
+    color: #60A5FA;
 }
 
 .category-card-name {
@@ -759,8 +764,8 @@ html.dark .toolbar-separator {
 /* Editor Content */
 .editor-content {
     flex: 1;
-    padding: 1.5rem;
-    overflow-y: auto;
+    padding: 0.5rem 2rem;
+    overflow: visible;
     background: var(--bg-secondary);
 }
 
@@ -772,6 +777,7 @@ html.dark .toolbar-separator {
     color: var(--text-primary);
     max-width: 100%;
     margin: 0;
+    padding-top: 0.5rem;
 }
 
 .wiki-editor:empty:before {

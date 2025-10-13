@@ -185,7 +185,7 @@ const WikiApp = (function() {
         const grid = overview.querySelector('.category-grid');
         grid.innerHTML = categories.map(cat => `
             <div class="category-card" onclick="WikiApp.openCategory('${cat.id}')">
-                <i class="category-card-icon ph ${cat.icon}" style="color: ${cat.color}"></i>
+                <i class="category-card-icon ph ${cat.icon}"></i>
                 <h3 class="category-card-name">${cat.name}</h3>
                 <div class="category-card-stats">
                     <span class="category-card-stat">

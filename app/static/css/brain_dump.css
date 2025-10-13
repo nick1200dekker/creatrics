@@ -1576,7 +1576,7 @@ html.dark .toolbar-separator {
 /* Editor Content */
 .editor-content {
     flex: 1;
-    padding: 2rem;
+    padding: 0.5rem 2rem;
     overflow: visible;
     background: var(--bg-secondary);
 }
@@ -1588,7 +1588,8 @@ html.dark .toolbar-separator {
     line-height: 1.8;
     color: var(--text-primary);
     max-width: 800px;
-    margin: 0 auto;
+    margin: 0;
+    padding-top: 0.5rem;
 }
 
 #editor:empty:before {
