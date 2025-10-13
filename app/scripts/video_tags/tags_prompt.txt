@@ -16,13 +16,18 @@ REQUIREMENTS:
 4. Return as a comma-separated list
 
 TAG STRATEGY:
-- Start with 2-3 broad, high-volume keywords
-- Add 5-7 specific niche keywords related to the exact topic
+- Start with 2-3 BROAD genre/category tags (e.g., "mobile game", "gaming", "strategy game")
+- Add 2-3 main topic/franchise tags (e.g., "clash royale", "supercell")
+- Add 5-7 specific niche keywords related to the exact video topic
 - Include 3-5 long-tail keywords (3-5 word phrases)
 - Add 2-3 trending or seasonal keywords if relevant
 - Include 2-3 audience-specific terms (beginner, advanced, etc.)
 - Add 2-3 action words (how to, tutorial, guide, tips)
 - Include current year tags if relevant (current year: {current_year})
+
+IMPORTANT: Balance between broad discoverability and specific targeting
+- Broad tags help new audiences find your content
+- Specific tags help engaged audiences find exactly what they want
 
 OPTIMIZE FOR:
 - YouTube search algorithm
