@@ -1082,13 +1082,18 @@ function autoResizeDescriptionTextarea() {
     const textarea = document.getElementById('optimizedDescription');
     if (!textarea) return;
 
-    // Remove overflow to get accurate scrollHeight
-    textarea.style.overflow = 'hidden';
+    // Use setTimeout to ensure DOM has rendered
+    setTimeout(() => {
+        // Remove overflow to get accurate scrollHeight
+        textarea.style.overflow = 'hidden';
 
-    // Reset height to auto to get the correct scrollHeight
-    textarea.style.height = 'auto';
-    // Set height to scrollHeight to fit all content (add small buffer for padding)
-    textarea.style.height = (textarea.scrollHeight + 4) + 'px';
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto';
+        // Set height to scrollHeight to fit all content (add small buffer for padding)
+        textarea.style.height = (textarea.scrollHeight + 4) + 'px';
+
+        console.log('Resized optimized description to:', textarea.scrollHeight + 4);
+    }, 10);
 
     // Add input listener to resize on edit (only once)
     if (!textarea.dataset.resizeListenerAdded) {

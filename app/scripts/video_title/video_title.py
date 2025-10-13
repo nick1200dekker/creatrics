@@ -89,6 +89,12 @@ class VideoTitleGenerator:
                     IMPORTANT: Use {now.year} for any year references, not past years like 2024.
                     IMPORTANT: Use the researched keywords provided - these are REAL searches people use on YouTube."""
 
+                    # Log the complete prompt being sent
+                    logger.info(f"=== COMPLETE PROMPT TO AI ({video_type}) ===")
+                    logger.info(f"SYSTEM PROMPT:\n{system_prompt}")
+                    logger.info(f"\nUSER PROMPT:\n{prompt}")
+                    logger.info("=== END PROMPT ===")
+
                     # Generate using AI provider
                     response = ai_provider.create_completion(
                         messages=[
@@ -144,14 +150,22 @@ class VideoTitleGenerator:
     def parse_ai_response(self, response: str, video_type: str) -> List[str]:
         """Parse AI response to extract titles"""
         try:
+            logger.info(f"=== AI RESPONSE DEBUG ({video_type}) ===")
+            logger.info(f"Raw response (first 500 chars): {response[:500]}")
+
             # Try to extract JSON array
             json_match = re.search(r'\[.*\]', response, re.DOTALL)
             if json_match:
                 titles = json.loads(json_match.group())
                 if isinstance(titles, list):
+                    logger.info(f"Parsed {len(titles)} titles from JSON")
+                    logger.info(f"Title 1: {titles[0] if len(titles) > 0 else 'none'}")
+                    logger.info(f"Title 2: {titles[1] if len(titles) > 1 else 'none'}")
+                    logger.info(f"Title 3: {titles[2] if len(titles) > 2 else 'none'}")
                     return self.ensure_ten_titles(titles, video_type)
 
             # Fallback: Parse line by line
+            logger.info("No JSON found, parsing line by line")
             lines = response.split('\n')
             titles = []
             for line in lines:
@@ -162,6 +176,9 @@ class VideoTitleGenerator:
                 if cleaned and len(cleaned) > 10:
                     titles.append(cleaned)
 
+            logger.info(f"Parsed {len(titles)} titles line by line")
+            if titles:
+                logger.info(f"First title: {titles[0]}")
             return self.ensure_ten_titles(titles, video_type)
 
         except Exception as e:

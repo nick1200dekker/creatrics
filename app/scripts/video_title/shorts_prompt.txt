@@ -1,45 +1,93 @@
-Generate 10 YouTube Shorts titles.
+Generate 10 YouTube Shorts titles optimized for SEO and engagement.
 
 VIDEO CONTENT:
 {input}
 
-HASHTAG RULE (MOST IMPORTANT):
-Every title MUST end with: #shorts #[niche] #[topic]
-#shorts is ALWAYS first hashtag. No exceptions!
+TITLE FORMULA:
+[Specific Detail/Number] + [Action/Result] + #shorts #[niche] #[topic]
 
-PROVEN TITLE FORMULAS THAT GO VIRAL:
-- Question: "Did You Know [fact]?"
-- List: "Top [number] [topic]"
-- How-to: "How to [action] in [time]"
-- Challenge: "I Tried [thing] for [duration]"
-- Warning: "Watch This Before [action]"
-- POV: "POV: You Discover [thing]"
-- Day in Life: "Day as a [profession]"
+SEO OPTIMIZATION IDEAS:
+1. Extract specific keywords from the content (names, actions, items, techniques)
+2. Include numbers/stats when present (1 minute, 3 tips, 10 pounds, etc.)
+3. Lead with the most interesting/searchable moment
+4. Use words people search: how to, tutorial, guide, tips, trick, hack, strategy
+5. Be specific, not generic ("Lost 5 Pounds" not "Weight Loss Journey")
 
-REAL EXAMPLES FROM VARIOUS NICHES:
-"Did You Know This iPhone Trick? #shorts #tech #apple"
-"Top 5 Exercises for Abs #shorts #fitness #workout"
-"How to Cook Pasta in 3 Minutes #shorts #cooking #recipe"
-"I Tried the Viral TikTok Hack #shorts #lifehacks #viral"
-"POV: You Find a Secret Level #shorts #gaming #minecraft"
-"Day as a Software Engineer #shorts #tech #coding"
-"This Recipe Changed Everything #shorts #cooking #baking"
-"Can You Lose Weight Walking? #shorts #fitness #health"
+EMOTIONAL TRIGGERS:
+- Curiosity: "Did This Work?" "What Happened Next?"
+- Shock: "In 0.3 Seconds" "Only 1 Try"
+- Achievement: "Finally Worked" "Won Against All Odds"
+- Discovery: "Found This Trick" "Hidden Feature"
+- Challenge: "Can You Do This?" "Try This"
 
-WRONG EXAMPLES:
-"Amazing trick #tech #shorts #iphone" ❌ #shorts not first
-"Title here #iphone #tech #shorts" ❌ Wrong order
-"Cool video" ❌ No hashtags
+PROVEN FORMULAS:
+"[Number] + [Action/Result]" → "3 Tips to Win More"
+"[Item/Name] + [Specific Result]" → "This Recipe Changed My Life"
+"[Question] + [Specific]" → "Can You Beat This Time?"
+"[Time] + [Achievement]" → "Lost 10 Pounds in 2 Weeks"
 
-CORRECT:
-"Amazing iPhone Trick #shorts #tech #iphone" ✅
+EXAMPLES (VARIOUS NICHES):
+
+Gaming:
+"Won With 1HP Left #shorts #gaming #fortnite"
+"Found Secret Room #shorts #gaming #minecraft"
+"Beat Boss in 30 Seconds #shorts #gaming #eldenring"
+
+Cooking:
+"3 Ingredient Pasta #shorts #cooking #recipe"
+"Made This in 5 Minutes #shorts #cooking #quick"
+"Best Pizza Dough Trick #shorts #cooking #italian"
+
+Fitness:
+"Lost 5 Pounds This Week #shorts #fitness #weightloss"
+"10 Min Morning Workout #shorts #fitness #routine"
+"This Exercise Changed Me #shorts #fitness #abs"
+
+Tech:
+"Hidden iPhone Feature #shorts #tech #apple"
+"This Shortcut Saves Time #shorts #tech #productivity"
+"Free Software Alternative #shorts #tech #tutorial"
+
+Beauty:
+"5 Min Makeup Look #shorts #beauty #makeup"
+"This Hack Works #shorts #beauty #skincare"
+"Drugstore Dupe That Works #shorts #beauty #affordable"
+
+BAD EXAMPLES:
+"Amazing Content" ❌ No specifics, no SEO
+"This Is Cool" ❌ Generic, not searchable
+"Check This Out" ❌ No keywords, no value
+
+HASHTAG RULE (CRITICAL):
+ALWAYS use this exact order: #shorts #[BROAD CATEGORY] #[SPECIFIC]
+
+BROAD CATEGORY EXAMPLES:
+#gaming - for all games (Fortnite, Minecraft, Clash Royale, etc.)
+#cooking - for all food content
+#fitness - for all workout/health content
+#tech - for all technology content
+#beauty - for all makeup/skincare content
+#lifestyle - for vlogs, daily life
+#education - for learning content
+#diy - for crafts and projects
+#comedy - for funny content
+#music - for music content
+
+EXAMPLES:
+✅ "Title Here #shorts #gaming #clashroyale" (gaming is broad, clashroyale is specific)
+✅ "Title Here #shorts #cooking #italian" (cooking is broad, italian is specific)
+✅ "Title Here #shorts #fitness #abs" (fitness is broad, abs is specific)
+
+❌ "Title Here #shorts #clashroyale #gaming" (WRONG - specific before broad)
+❌ "Title Here #shorts #clashroyale #tips" (WRONG - no broad category)
+❌ "Title Here #shorts #fortnite #gaming" (WRONG - order backwards)
 
 GUIDELINES:
 - Under 40 characters before hashtags
-- Natural and conversational
+- Title Case
 - Max 1 exclamation mark
+- Extract specifics from the actual content
+- ALWAYS use #shorts #[broad] #[specific] format
 
 OUTPUT:
-JSON array of 10 titles. Every title ends with #shorts #[niche] #[topic]
-
-["Title #shorts #niche #topic", "Title #shorts #niche #topic"]
+JSON array: ["Title #shorts #niche #topic", "Title #shorts #niche #topic", ...]

@@ -58,7 +58,7 @@ class VideoOptimizer:
             # Detect if video is a short (under 60 seconds)
             video_duration = int(video_info.get('lengthSeconds', 0))
             is_short = video_duration <= 60
-            video_type = 'short' if is_short else 'long_form'
+            video_type = 'shorts' if is_short else 'long_form'  # Use 'shorts' (plural) for title generator
 
             logger.info(f"Video duration: {video_duration}s, is_short: {is_short}, video_type: {video_type}")
 
@@ -206,20 +206,15 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
     def _fetch_video_info(self, video_id: str) -> Dict:
         """Fetch video information from RapidAPI"""
         try:
-            import time
             url = f"https://{self.rapidapi_host}/video/info"
             headers = {
                 "x-rapidapi-key": self.rapidapi_key,
-                "x-rapidapi-host": self.rapidapi_host,
-                "Cache-Control": "no-cache",
-                "Pragma": "no-cache"
+                "x-rapidapi-host": self.rapidapi_host
             }
 
-            # Add cache-busting timestamp
             params = {
                 "id": video_id,
-                "extend": "2",
-                "_t": int(time.time())
+                "extend": "2"
             }
 
             response = requests.get(url, headers=headers, params=params, timeout=30)
