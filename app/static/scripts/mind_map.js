@@ -278,13 +278,13 @@ function makeDraggable(node) {
     let isDragging = false;
     let isResizing = false;
     let startX, startY, initialX, initialY, initialWidth, initialHeight;
-    
+
     node.addEventListener('mousedown', function(e) {
         if (e.target.contentEditable === 'true') return;
-        
+
         const rect = node.getBoundingClientRect();
         const isResizeArea = (e.clientX > rect.right - 15) && (e.clientY > rect.bottom - 15);
-        
+
         if (isResizeArea) {
             isResizing = true;
             startX = e.clientX;
@@ -300,30 +300,48 @@ function makeDraggable(node) {
             initialY = parseInt(node.style.top) || 0;
             node.style.cursor = 'grabbing';
         }
-        
+
         e.preventDefault();
         e.stopPropagation();
     });
-    
-    document.addEventListener('mousemove', function(e) {
+
+    const moveHandler = function(e) {
         if (isDragging) {
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
-            
-            node.style.left = (initialX + deltaX) + 'px';
-            node.style.top = (initialY + deltaY) + 'px';
-            
+            // Calculate delta in screen space, then divide by zoom to get actual position
+            const deltaX = (e.clientX - startX) / currentZoom;
+            const deltaY = (e.clientY - startY) / currentZoom;
+
+            let newX = initialX + deltaX;
+            let newY = initialY + deltaY;
+
+            // Snap to grid for alignment (20px grid with 10px tolerance)
+            const snapTolerance = 10;
+            const gridSize = 20;
+
+            const snappedX = Math.round(newX / gridSize) * gridSize;
+            const snappedY = Math.round(newY / gridSize) * gridSize;
+
+            if (Math.abs(newX - snappedX) < snapTolerance) {
+                newX = snappedX;
+            }
+            if (Math.abs(newY - snappedY) < snapTolerance) {
+                newY = snappedY;
+            }
+
+            node.style.left = newX + 'px';
+            node.style.top = newY + 'px';
+
             updateConnections();
         } else if (isResizing) {
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
-            
+            const deltaX = (e.clientX - startX) / currentZoom;
+            const deltaY = (e.clientY - startY) / currentZoom;
+
             const newWidth = Math.max(120, initialWidth + deltaX);
             const newHeight = Math.max(60, initialHeight + deltaY);
-            
+
             node.style.width = newWidth + 'px';
             node.style.height = newHeight + 'px';
-            
+
             // For shaped nodes, maintain aspect ratio
             if (node.classList.contains('shape-circle')) {
                 const size = Math.max(newWidth, newHeight);
@@ -333,23 +351,27 @@ function makeDraggable(node) {
                 const size = Math.max(newWidth, newHeight);
                 node.style.width = size + 'px';
                 node.style.height = size + 'px';
-            } else if (node.classList.contains('shape-diamond')) {
+            } else if (node.classList.contains('shape-sticky')) {
+                // Maintain square-ish ratio for sticky notes
                 const size = Math.max(newWidth, newHeight);
                 node.style.width = size + 'px';
                 node.style.height = size + 'px';
             }
-            
+
             updateConnections();
         }
-    });
-    
+    };
+
+    document.addEventListener('mousemove', moveHandler);
+
     document.addEventListener('mouseup', function() {
-        if (isDragging) {
+        if (isDragging || isResizing) {
             isDragging = false;
-            node.style.cursor = 'move';
-        } else if (isResizing) {
             isResizing = false;
             node.style.cursor = 'move';
+
+            // Auto-save after drag/resize
+            setTimeout(saveToFirebase, 500);
         }
     });
 }
@@ -415,8 +437,11 @@ function editNodeText(node) {
     textDiv.addEventListener('blur', function() {
         textDiv.contentEditable = false;
         updatePropertiesPanel(node);
+
+        // Auto-save after text edit
+        setTimeout(saveToFirebase, 500);
     }, { once: true });
-    
+
     textDiv.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -449,10 +474,10 @@ function updatePropertiesPanel(node) {
             <div class="property-group">
                 <div class="property-label">Shape</div>
                 <select class="property-input" id="nodeShape" onchange="updateSelectedNode()">
-                    <option value="rectangle" ${!node.classList.contains('shape-circle') && !node.classList.contains('shape-square') && !node.classList.contains('shape-diamond') ? 'selected' : ''}>Rectangle</option>
+                    <option value="rectangle" ${!node.classList.contains('shape-circle') && !node.classList.contains('shape-square') && !node.classList.contains('shape-sticky') ? 'selected' : ''}>Rectangle</option>
                     <option value="circle" ${node.classList.contains('shape-circle') ? 'selected' : ''}>Circle</option>
                     <option value="square" ${node.classList.contains('shape-square') ? 'selected' : ''}>Square</option>
-                    <option value="diamond" ${node.classList.contains('shape-diamond') ? 'selected' : ''}>Diamond</option>
+                    <option value="sticky" ${node.classList.contains('shape-sticky') ? 'selected' : ''}>Sticky Note</option>
                 </select>
             </div>
 
@@ -789,7 +814,7 @@ function rebuildTabs() {
 function getNodeShape(node) {
     if (node.classList.contains('shape-circle')) return 'circle';
     if (node.classList.contains('shape-square')) return 'square';
-    if (node.classList.contains('shape-diamond')) return 'diamond';
+    if (node.classList.contains('shape-sticky')) return 'sticky';
     return 'rectangle';
 }
 

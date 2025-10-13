@@ -281,19 +281,35 @@ html.dark .mind-map-wrapper {
     text-align: center;
 }
 
-.mind-node.shape-diamond {
-    border-radius: 8px;
-    transform: rotate(45deg);
-    min-width: 80px;
-    min-height: 80px;
+.mind-node.shape-sticky {
+    border-radius: 2px;
+    min-width: 120px;
+    min-height: 120px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 1rem;
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+    transform: rotate(-1deg);
 }
 
-.mind-node.shape-diamond .node-text {
-    transform: rotate(-45deg);
-    text-align: center;
+.mind-node.shape-sticky::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 15px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 4px 4px;
+}
+
+.mind-node.shape-sticky .node-text {
+    text-align: left;
+    font-family: 'Comic Sans MS', 'Marker Felt', cursive, sans-serif;
+    line-height: 1.6;
 }
 
 .mind-node:hover {

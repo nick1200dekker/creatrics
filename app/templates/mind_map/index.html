@@ -192,13 +192,20 @@ function updateSelectedNode() {
     
     if (shapeSelect) {
         // Remove old shape classes
-        selectedNode.classList.remove('shape-circle', 'shape-square', 'shape-diamond');
-        
+        selectedNode.classList.remove('shape-circle', 'shape-square', 'shape-diamond', 'shape-sticky');
+
         // Add new shape class
         if (shapeSelect.value !== 'rectangle') {
             selectedNode.classList.add('shape-' + shapeSelect.value);
         }
     }
+
+    // Auto-save after change
+    setTimeout(() => {
+        if (typeof saveToFirebase === 'function') {
+            saveToFirebase();
+        }
+    }, 500);
     
     if (fontSelect) {
         selectedNode.querySelector('.node-text').style.fontSize = fontSelect.value;
