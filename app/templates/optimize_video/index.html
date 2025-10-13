@@ -27,16 +27,54 @@
             <!-- Videos List Section -->
             <div class="videos-list-section" id="videosListSection">
                 <!-- My Videos Section -->
-                <div class="my-videos-section">
+                <div class="my-videos-section" id="channelVideosSection">
                     <div class="section-header">
                         <h3 class="section-title">
                             <i class="ph ph-video"></i>
                             My Videos
                         </h3>
-                        <button onclick="loadMyVideos()" class="secondary-button">
-                            <i class="ph ph-arrows-clockwise"></i>
-                            <span>Refresh</span>
-                        </button>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div class="view-toggle">
+                                <button class="toggle-btn active" onclick="switchInputMode('channel')" id="channelToggleBtn">
+                                    <i class="ph ph-video"></i>
+                                    Channel
+                                </button>
+                                <button class="toggle-btn" onclick="switchInputMode('url')" id="urlToggleBtn">
+                                    <i class="ph ph-link"></i>
+                                    URL
+                                </button>
+                            </div>
+                            <button onclick="loadMyVideos()" class="secondary-button">
+                                <i class="ph ph-arrows-clockwise"></i>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- URL Input Section -->
+                    <div id="urlInputSection" style="display: none;">
+                        <div class="url-input-container">
+                            <label class="url-input-label">
+                                <i class="ph ph-link"></i>
+                                Enter YouTube Video URL or ID
+                            </label>
+                            <div class="url-input-wrapper">
+                                <input
+                                    type="text"
+                                    id="videoUrlInput"
+                                    class="url-input-field"
+                                    placeholder="https://www.youtube.com/watch?v=VIDEO_ID or just VIDEO_ID"
+                                />
+                                <button onclick="optimizeFromUrl()" class="url-optimize-button">
+                                    <i class="ph ph-magic-wand"></i>
+                                    Optimize
+                                </button>
+                            </div>
+                            <p class="url-input-hint">
+                                <i class="ph ph-info"></i>
+                                Use this to optimize unlisted or hidden videos from your channel
+                            </p>
+                        </div>
                     </div>
                     <div id="myVideosGrid" class="videos-grid">
                         <!-- Videos will be populated here -->

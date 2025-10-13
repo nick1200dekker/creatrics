@@ -6,6 +6,7 @@
 // Global state
 let currentVideoId = null;
 let currentOptimizedDescription = null;
+let currentInputMode = 'channel'; // 'channel' or 'url'
 
 // Load videos on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -20,6 +21,78 @@ document.addEventListener('DOMContentLoaded', function() {
         optimizeVideo(videoId);
     }
 });
+
+/**
+ * Switch between channel and URL input modes
+ */
+function switchInputMode(mode) {
+    currentInputMode = mode;
+
+    // Update toggle buttons
+    document.getElementById('channelToggleBtn').classList.toggle('active', mode === 'channel');
+    document.getElementById('urlToggleBtn').classList.toggle('active', mode === 'url');
+
+    // Show/hide sections
+    if (mode === 'channel') {
+        document.getElementById('urlInputSection').style.display = 'none';
+        document.getElementById('myVideosGrid').style.display = 'grid';
+        document.getElementById('emptyVideos').style.display = document.getElementById('myVideosGrid').children.length === 0 ? 'flex' : 'none';
+    } else {
+        document.getElementById('urlInputSection').style.display = 'block';
+        document.getElementById('myVideosGrid').style.display = 'none';
+        document.getElementById('emptyVideos').style.display = 'none';
+    }
+}
+
+/**
+ * Extract video ID from URL or return as-is if already an ID
+ */
+function extractVideoId(input) {
+    input = input.trim();
+
+    // If it's already just an ID (11 characters, alphanumeric)
+    if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
+        return input;
+    }
+
+    // Try to extract from various YouTube URL formats
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/
+    ];
+
+    for (const pattern of patterns) {
+        const match = input.match(pattern);
+        if (match && match[1]) {
+            return match[1];
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Optimize video from URL input
+ */
+async function optimizeFromUrl() {
+    const input = document.getElementById('videoUrlInput').value.trim();
+
+    if (!input) {
+        showToast('Please enter a YouTube URL or video ID', 'error');
+        return;
+    }
+
+    const videoId = extractVideoId(input);
+
+    if (!videoId) {
+        showToast('Invalid YouTube URL or video ID', 'error');
+        return;
+    }
+
+    // Optimize the video
+    optimizeVideo(videoId);
+}
 
 /**
  * Load user's YouTube videos
