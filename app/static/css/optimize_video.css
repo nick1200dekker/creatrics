@@ -1071,3 +1071,51 @@ html.dark .url-input-field:focus {
 .url-input-hint i {
     color: #3B82F6;
 }
+
+/* Apply Button Icon - YouTube Style */
+.apply-btn-icon {
+    padding: 0.5rem;
+    background: transparent;
+    color: var(--text-tertiary);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.apply-btn-icon i {
+    font-size: 1.125rem;
+}
+
+.apply-btn-icon:hover:not(:disabled) {
+    background: rgba(255, 0, 0, 0.1);
+    color: #FF0000;
+}
+
+.apply-btn-icon:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.apply-btn-icon i.spin {
+    animation: spin 1s linear infinite;
+}
+
+html.dark .apply-btn-icon:hover:not(:disabled) {
+    background: rgba(255, 0, 0, 0.15);
+}
+
+/* Action Buttons Wrapper */
+.action-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btns .apply-btn-icon {
+    margin-right: 0.25rem;
+}

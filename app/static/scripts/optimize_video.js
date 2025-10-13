@@ -396,6 +396,9 @@ function displayOptimizationResults(data) {
                         <div class="suggestion-item">
                             <div class="suggestion-number">${index + 1}</div>
                             <div class="suggestion-text">${escapeHtml(title)}</div>
+                            <button class="apply-btn-icon" onclick="applyTitle(this, \`${escapeHtml(title).replace(/`/g, '\\`').replace(/'/g, "\\'")}\`)" title="Apply to YouTube">
+                                <i class="ph ph-youtube-logo"></i>
+                            </button>
                             <button class="copy-btn" onclick="copyToClipboard(this, \`${escapeHtml(title).replace(/`/g, '\\`')}\`)">
                                 <i class="ph ph-copy"></i>
                             </button>
@@ -417,10 +420,15 @@ function displayOptimizationResults(data) {
                 <div class="comparison-box optimized-box">
                     <div class="comparison-label">
                         Optimized Description
-                        <button class="copy-btn-small" onclick="copyDescription(this)">
-                            <i class="ph ph-copy"></i>
-                            Copy
-                        </button>
+                        <div class="action-btns">
+                            <button class="apply-btn-icon" onclick="applyDescription(this)" title="Apply to YouTube">
+                                <i class="ph ph-youtube-logo"></i>
+                            </button>
+                            <button class="copy-btn-small" onclick="copyDescription(this)">
+                                <i class="ph ph-copy"></i>
+                                Copy
+                            </button>
+                        </div>
                     </div>
                     <div class="comparison-value description-text" id="optimizedDescription">${escapeHtml(data.optimized_description || '')}</div>
                 </div>
@@ -442,10 +450,15 @@ function displayOptimizationResults(data) {
                     <div class="tags-section">
                         <div class="tags-label">
                             Optimized Tags
-                            <button class="copy-btn-small" onclick="copyAllTags(this)">
-                                <i class="ph ph-copy"></i>
-                                Copy All
-                            </button>
+                            <div class="action-btns">
+                                <button class="apply-btn-icon" onclick="applyTags(this)" title="Apply to YouTube">
+                                    <i class="ph ph-youtube-logo"></i>
+                                </button>
+                                <button class="copy-btn-small" onclick="copyAllTags(this)">
+                                    <i class="ph ph-copy"></i>
+                                    Copy All
+                                </button>
+                            </div>
                         </div>
                         <div class="tags-list" id="optimizedTagsList">
                             ${(data.optimized_tags || []).slice(0, 30).map(tag => `<span class="tag tag-optimized">${escapeHtml(tag)}</span>`).join('')}
@@ -687,6 +700,9 @@ async function refreshTitles() {
             <div class="suggestion-item">
                 <div class="suggestion-number">${index + 1}</div>
                 <div class="suggestion-text">${escapeHtml(title)}</div>
+                <button class="apply-btn-icon" onclick="applyTitle(this, \`${escapeHtml(title).replace(/`/g, '\\`').replace(/'/g, "\\'")}\`)" title="Apply to YouTube">
+                    <i class="ph ph-youtube-logo"></i>
+                </button>
                 <button class="copy-btn" onclick="copyToClipboard(this, \`${escapeHtml(title).replace(/`/g, '\\`')}\`)">
                     <i class="ph ph-copy"></i>
                 </button>
@@ -713,5 +729,163 @@ async function refreshTitles() {
         icon.className = 'ph ph-arrows-clockwise';
         span.textContent = 'Refresh';
         refreshBtn.disabled = false;
+    }
+}
+
+/**
+ * Apply title to YouTube
+ */
+async function applyTitle(button, title) {
+    if (!currentVideoId) {
+        showToast('No video selected');
+        return;
+    }
+
+    const icon = button.querySelector('i');
+    const originalIconClass = icon.className;
+
+    if (!confirm(`Apply this title to YouTube?\n\n"${title}"`)) {
+        return;
+    }
+
+    try {
+        button.disabled = true;
+        icon.className = 'ph ph-spinner spin';
+
+        const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title: title})
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to apply title');
+        }
+
+        icon.className = 'ph ph-check';
+        button.style.background = '#10B981';
+        button.style.color = '#fff';
+        showToast('✅ Title updated on YouTube!');
+
+        setTimeout(() => {
+            button.disabled = true;
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error applying title:', error);
+        showToast('❌ Failed to apply title: ' + error.message);
+        icon.className = originalIconClass;
+        button.disabled = false;
+    }
+}
+
+/**
+ * Apply description to YouTube
+ */
+async function applyDescription(button) {
+    if (!currentVideoId) {
+        showToast('No video selected');
+        return;
+    }
+
+    if (!currentOptimizedDescription) {
+        showToast('No description to apply');
+        return;
+    }
+
+    const icon = button.querySelector('i');
+    const originalIconClass = icon.className;
+
+    if (!confirm('Apply this description to YouTube?')) {
+        return;
+    }
+
+    try {
+        button.disabled = true;
+        icon.className = 'ph ph-spinner spin';
+
+        const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({description: currentOptimizedDescription})
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to apply description');
+        }
+
+        icon.className = 'ph ph-check';
+        button.style.background = '#10B981';
+        button.style.color = '#fff';
+        showToast('✅ Description updated on YouTube!');
+
+        setTimeout(() => {
+            button.disabled = true;
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error applying description:', error);
+        showToast('❌ Failed to apply description: ' + error.message);
+        icon.className = originalIconClass;
+        button.disabled = false;
+    }
+}
+
+/**
+ * Apply tags to YouTube
+ */
+async function applyTags(button) {
+    if (!currentVideoId) {
+        showToast('No video selected');
+        return;
+    }
+
+    const tags = window.optimizedTags || [];
+    if (tags.length === 0) {
+        showToast('No tags to apply');
+        return;
+    }
+
+    const icon = button.querySelector('i');
+    const originalIconClass = icon.className;
+
+    if (!confirm(`Apply ${tags.length} tags to YouTube?`)) {
+        return;
+    }
+
+    try {
+        button.disabled = true;
+        icon.className = 'ph ph-spinner spin';
+
+        const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({tags: tags})
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to apply tags');
+        }
+
+        icon.className = 'ph ph-check';
+        button.style.background = '#10B981';
+        button.style.color = '#fff';
+        showToast('✅ Tags updated on YouTube!');
+
+        setTimeout(() => {
+            button.disabled = true;
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error applying tags:', error);
+        showToast('❌ Failed to apply tags: ' + error.message);
+        icon.className = originalIconClass;
+        button.disabled = false;
     }
 }

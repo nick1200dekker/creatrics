@@ -30,7 +30,8 @@ bp = Blueprint('youtube', __name__, url_prefix='/accounts/youtube')
 YOUTUBE_SCOPES = [
     'https://www.googleapis.com/auth/youtube.readonly',
     'https://www.googleapis.com/auth/yt-analytics.readonly',
-    'https://www.googleapis.com/auth/yt-analytics-monetary.readonly'
+    'https://www.googleapis.com/auth/yt-analytics-monetary.readonly',
+    'https://www.googleapis.com/auth/youtube.force-ssl'  # Required for updating video metadata
 ]
 
 # Configuration - Environment dependent

@@ -605,7 +605,154 @@ def get_users_with_youtube():
         
         logger.info(f"Found {len(user_ids)} users with YouTube connected")
         return user_ids
-        
+
     except Exception as e:
         logger.error(f"Error querying users with YouTube: {str(e)}")
         return []
+
+def update_video_metadata(user_id, video_id, title=None, description=None, tags=None):
+    """
+    Update YouTube video metadata (title, description, tags)
+
+    Args:
+        user_id: User ID who owns the video
+        video_id: YouTube video ID
+        title: New title (optional)
+        description: New description (optional)
+        tags: List of new tags (optional)
+
+    Returns:
+        dict: {'success': bool, 'message': str, 'error': str (if failed)}
+    """
+    try:
+        # Initialize YouTubeAnalytics to get credentials
+        analytics = YouTubeAnalytics(user_id)
+
+        if not analytics.credentials:
+            logger.error(f"No YouTube credentials found for user {user_id}")
+            return {
+                'success': False,
+                'error': 'YouTube account not connected'
+            }
+
+        # Build YouTube API client
+        youtube = build('youtube', 'v3', credentials=analytics.credentials)
+
+        # Get current video data
+        try:
+            video_response = youtube.videos().list(
+                part='snippet,status',
+                id=video_id
+            ).execute()
+
+            if not video_response.get('items'):
+                return {
+                    'success': False,
+                    'error': 'Video not found or access denied'
+                }
+
+            video_data = video_response['items'][0]
+            snippet = video_data['snippet']
+
+        except HttpError as e:
+            logger.error(f"HTTP error fetching video {video_id}: {str(e)}")
+            return {
+                'success': False,
+                'error': f'Failed to fetch video: {str(e)}'
+            }
+
+        # ALWAYS clean existing tags to prevent YouTube API errors
+        import string
+        if 'tags' in snippet:
+            existing_tags = snippet.get('tags', [])
+            cleaned_existing_tags = []
+            total_length = 0
+
+            for tag in existing_tags:
+                if isinstance(tag, str):
+                    cleaned_tag = tag.strip()
+                    # Remove ALL invalid characters
+                    # YouTube only allows: letters, numbers, spaces, hyphens, apostrophes
+                    allowed_chars = string.ascii_letters + string.digits + ' -\''
+                    cleaned_tag = ''.join(c for c in cleaned_tag if c in allowed_chars)
+                    cleaned_tag = ' '.join(cleaned_tag.split())  # Normalize whitespace
+
+                    if cleaned_tag:
+                        # Check 500 character limit (including separators)
+                        # YouTube uses ", " as separator = 2 chars per tag
+                        tag_length_with_separator = len(cleaned_tag) + (2 if cleaned_existing_tags else 0)
+                        if total_length + tag_length_with_separator <= 500:
+                            cleaned_existing_tags.append(cleaned_tag)
+                            total_length += tag_length_with_separator
+
+            snippet['tags'] = cleaned_existing_tags
+
+        # Update only provided fields
+        if title is not None:
+            snippet['title'] = title
+            logger.info(f"Updating title for video {video_id}")
+
+        if description is not None:
+            snippet['description'] = description
+            logger.info(f"Updating description for video {video_id}")
+
+        if tags is not None:
+            # Clean and validate new tags
+            cleaned_tags = []
+            total_length = 0
+
+            for tag in tags:
+                if isinstance(tag, str):
+                    cleaned_tag = tag.strip()
+                    # Remove invalid characters
+                    allowed_chars = string.ascii_letters + string.digits + ' -\''
+                    cleaned_tag = ''.join(c for c in cleaned_tag if c in allowed_chars)
+                    cleaned_tag = ' '.join(cleaned_tag.split())
+
+                    if cleaned_tag:
+                        tag_length_with_separator = len(cleaned_tag) + (2 if cleaned_tags else 0)
+                        if total_length + tag_length_with_separator <= 500:
+                            cleaned_tags.append(cleaned_tag)
+                            total_length += tag_length_with_separator
+
+            snippet['tags'] = cleaned_tags
+            logger.info(f"Updating {len(cleaned_tags)} tags for video {video_id} (total: {total_length} chars)")
+
+        # Execute update
+        try:
+            youtube.videos().update(
+                part='snippet',
+                body={
+                    'id': video_id,
+                    'snippet': snippet
+                }
+            ).execute()
+
+            logger.info(f"Successfully updated video {video_id} for user {user_id}")
+            return {
+                'success': True,
+                'message': 'Video metadata updated successfully'
+            }
+
+        except HttpError as e:
+            error_content = e.content.decode('utf-8') if hasattr(e, 'content') else str(e)
+            logger.error(f"HTTP error updating video {video_id}: {error_content}")
+
+            # Try to parse error message
+            try:
+                error_json = json.loads(error_content)
+                error_message = error_json.get('error', {}).get('message', str(e))
+            except:
+                error_message = str(e)
+
+            return {
+                'success': False,
+                'error': f'YouTube API error: {error_message}'
+            }
+
+    except Exception as e:
+        logger.error(f"Error updating video metadata for video {video_id}: {str(e)}")
+        return {
+            'success': False,
+            'error': f'Failed to update video: {str(e)}'
+        }

@@ -351,3 +351,66 @@ Video Transcript: {stored_data.get('transcript_preview', '')}
     except Exception as e:
         logger.error(f"Error refreshing titles: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/apply-optimizations/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def apply_optimizations(video_id):
+    """Apply optimized title, description, or tags to YouTube video"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get request data
+        request_data = request.get_json() or {}
+        title = request_data.get('title')
+        description = request_data.get('description')
+        tags = request_data.get('tags')
+
+        # Validate that at least one field is provided
+        if title is None and description is None and tags is None:
+            return jsonify({
+                'success': False,
+                'error': 'No fields to update provided'
+            }), 400
+
+        # Call update function
+        from app.scripts.accounts.youtube_analytics import update_video_metadata
+        result = update_video_metadata(
+            user_id=user_id,
+            video_id=video_id,
+            title=title,
+            description=description,
+            tags=tags
+        )
+
+        # If successful, update Firebase to mark what was applied
+        if result.get('success'):
+            optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
+            optimization_doc = optimization_ref.get()
+
+            if optimization_doc.exists:
+                update_data = {
+                    'last_applied_at': datetime.now(timezone.utc)
+                }
+
+                if title is not None:
+                    update_data['applied_title'] = title
+                    update_data['applied_title_at'] = datetime.now(timezone.utc)
+
+                if description is not None:
+                    update_data['applied_description_at'] = datetime.now(timezone.utc)
+
+                if tags is not None:
+                    update_data['applied_tags_at'] = datetime.now(timezone.utc)
+
+                optimization_ref.update(update_data)
+                logger.info(f"Updated optimization tracking for video {video_id}")
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error applying optimizations: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to apply optimizations: {str(e)}'
+        }), 500
