@@ -405,13 +405,16 @@ function displayOptimizationResults(data) {
                 </div>
                 <div class="suggestions-list" id="titleSuggestionsList">
                     ${titleSuggestions.map((title, index) => `
-                        <div class="suggestion-item">
+                        <div class="suggestion-item" data-index="${index}">
                             <div class="suggestion-number">${index + 1}</div>
-                            <div class="suggestion-text">${escapeHtml(title)}</div>
-                            <button class="apply-btn-icon" onclick="applyTitle(this, \`${escapeHtml(title).replace(/`/g, '\\`').replace(/'/g, "\\'")}\`)" title="Apply to YouTube">
+                            <div class="suggestion-text" contenteditable="false">${escapeHtml(title)}</div>
+                            <button class="edit-btn" onclick="toggleEditTitle(this, ${index})" title="Edit">
+                                <i class="ph ph-pencil-simple"></i>
+                            </button>
+                            <button class="apply-btn-icon" onclick="applyTitleFromElement(this)" title="Apply to YouTube">
                                 <i class="ph ph-youtube-logo"></i>
                             </button>
-                            <button class="copy-btn" onclick="copyToClipboard(this, \`${escapeHtml(title).replace(/`/g, '\\`')}\`)">
+                            <button class="copy-btn" onclick="copyTitleFromElement(this)">
                                 <i class="ph ph-copy"></i>
                             </button>
                         </div>
@@ -433,6 +436,9 @@ function displayOptimizationResults(data) {
                     <div class="comparison-label">
                         Optimized Description
                         <div class="action-btns">
+                            <button class="edit-btn" onclick="toggleEditDescription(this)" title="Edit">
+                                <i class="ph ph-pencil-simple"></i>
+                            </button>
                             <button class="apply-btn-icon" onclick="applyDescription(this)" title="Apply to YouTube">
                                 <i class="ph ph-youtube-logo"></i>
                             </button>
@@ -442,7 +448,7 @@ function displayOptimizationResults(data) {
                             </button>
                         </div>
                     </div>
-                    <div class="comparison-value description-text" id="optimizedDescription">${escapeHtml(data.optimized_description || '')}</div>
+                    <textarea class="comparison-value description-text" id="optimizedDescription" readonly>${escapeHtml(data.optimized_description || '')}</textarea>
                 </div>
             </div>
 
@@ -472,8 +478,32 @@ function displayOptimizationResults(data) {
                                 </button>
                             </div>
                         </div>
-                        <div class="tags-list" id="optimizedTagsList">
-                            ${(data.optimized_tags || []).slice(0, 30).map(tag => `<span class="tag tag-optimized">${escapeHtml(tag)}</span>`).join('')}
+                        <div class="tags-editor" id="tagsEditor">
+                            <div class="tags-list-editable" id="optimizedTagsList">
+                                ${(data.optimized_tags || []).map((tag, index) => `
+                                    <span class="tag tag-editable">
+                                        ${escapeHtml(tag)}
+                                        <button class="tag-delete-btn" onclick="deleteTag(${index})" title="Remove tag">
+                                            <i class="ph ph-x"></i>
+                                        </button>
+                                    </span>
+                                `).join('')}
+                            </div>
+                            <div class="tag-input-wrapper">
+                                <input type="text" class="tag-input" id="tagInput" placeholder="Type tag and press Enter to add..." />
+                            </div>
+                            <div class="char-count-section">
+                                <div class="char-count-header">
+                                    <span class="char-count-label">Character Usage</span>
+                                    <span class="char-count-value" id="charCountValue">0 / 500</span>
+                                </div>
+                                <div class="char-count-progress">
+                                    <div class="char-count-fill" id="charCountFill" style="width: 0%"></div>
+                                </div>
+                                <div class="char-count-info">
+                                    <span class="tag-count">Tags: <strong id="tagCountValue">0</strong></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -499,6 +529,15 @@ function displayOptimizationResults(data) {
     // Store optimized data globally for copying
     window.optimizedTags = data.optimized_tags || [];
     currentOptimizedDescription = data.optimized_description || '';
+
+    // Setup tag input listener
+    setupTagInput();
+
+    // Auto-resize description textarea to fit content
+    autoResizeDescriptionTextarea();
+
+    // Initialize character count
+    updateCharacterCount();
 }
 
 /**
@@ -956,4 +995,206 @@ async function applyTags(button) {
             button.disabled = false;
         }
     });
+}
+
+/**
+ * Toggle edit mode for title
+ */
+function toggleEditTitle(button, index) {
+    const item = button.closest('.suggestion-item');
+    const textEl = item.querySelector('.suggestion-text');
+    const icon = button.querySelector('i');
+
+    if (textEl.getAttribute('contenteditable') === 'false') {
+        // Enter edit mode
+        textEl.setAttribute('contenteditable', 'true');
+        textEl.focus();
+        icon.className = 'ph ph-check';
+        button.title = 'Save';
+        textEl.style.outline = '2px solid #3B82F6';
+        textEl.style.padding = '0.25rem';
+        textEl.style.borderRadius = '4px';
+    } else {
+        // Exit edit mode
+        textEl.setAttribute('contenteditable', 'false');
+        icon.className = 'ph ph-pencil-simple';
+        button.title = 'Edit';
+        textEl.style.outline = 'none';
+        textEl.style.padding = '0';
+    }
+}
+
+/**
+ * Apply title from element (after possible editing)
+ */
+function applyTitleFromElement(button) {
+    const item = button.closest('.suggestion-item');
+    const textEl = item.querySelector('.suggestion-text');
+    const title = textEl.textContent.trim();
+    applyTitle(button, title);
+}
+
+/**
+ * Copy title from element (after possible editing)
+ */
+function copyTitleFromElement(button) {
+    const item = button.closest('.suggestion-item');
+    const textEl = item.querySelector('.suggestion-text');
+    const title = textEl.textContent.trim();
+    copyToClipboard(button, title);
+}
+
+/**
+ * Auto-resize description textarea to fit content
+ */
+function autoResizeDescriptionTextarea() {
+    const textarea = document.getElementById('optimizedDescription');
+    if (!textarea) return;
+
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    // Set height to scrollHeight to fit all content
+    textarea.style.height = textarea.scrollHeight + 'px';
+
+    // Add input listener to resize on edit
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+}
+
+/**
+ * Toggle edit mode for description
+ */
+function toggleEditDescription(button) {
+    const textarea = document.getElementById('optimizedDescription');
+    const icon = button.querySelector('i');
+
+    if (textarea.hasAttribute('readonly')) {
+        // Enter edit mode
+        textarea.removeAttribute('readonly');
+        textarea.focus();
+        icon.className = 'ph ph-check';
+        button.title = 'Save';
+        textarea.style.outline = '2px solid #3B82F6';
+    } else {
+        // Exit edit mode
+        textarea.setAttribute('readonly', 'true');
+        icon.className = 'ph ph-pencil-simple';
+        button.title = 'Edit';
+        textarea.style.outline = 'none';
+
+        // Update global variable with edited content
+        currentOptimizedDescription = textarea.value;
+
+        // Resize after editing
+        autoResizeDescriptionTextarea();
+    }
+}
+
+/**
+ * Setup tag input listener for Enter key
+ */
+function setupTagInput() {
+    const tagInput = document.getElementById('tagInput');
+    if (!tagInput) return;
+
+    tagInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const newTag = tagInput.value.trim();
+            if (newTag) {
+                addTag(newTag);
+                tagInput.value = '';
+            }
+        }
+    });
+}
+
+/**
+ * Add a new tag
+ */
+function addTag(tagText) {
+    if (!tagText || !tagText.trim()) return;
+
+    // Add to global tags array
+    if (!window.optimizedTags) {
+        window.optimizedTags = [];
+    }
+    window.optimizedTags.push(tagText.trim());
+
+    // Update display
+    renderTags();
+}
+
+/**
+ * Delete a tag
+ */
+function deleteTag(index) {
+    if (!window.optimizedTags) return;
+
+    // Remove from array
+    window.optimizedTags.splice(index, 1);
+
+    // Update display
+    renderTags();
+}
+
+/**
+ * Render tags in the editor
+ */
+function renderTags() {
+    const tagsList = document.getElementById('optimizedTagsList');
+    if (!tagsList) return;
+
+    const tags = window.optimizedTags || [];
+    tagsList.innerHTML = tags.map((tag, index) => `
+        <span class="tag tag-editable">
+            ${escapeHtml(tag)}
+            <button class="tag-delete-btn" onclick="deleteTag(${index})" title="Remove tag">
+                <i class="ph ph-x"></i>
+            </button>
+        </span>
+    `).join('');
+
+    // Update character count
+    updateCharacterCount();
+}
+
+/**
+ * Update character count display
+ */
+function updateCharacterCount() {
+    const tags = window.optimizedTags || [];
+    const tagCountEl = document.getElementById('tagCountValue');
+    const charCountEl = document.getElementById('charCountValue');
+    const charFillEl = document.getElementById('charCountFill');
+
+    if (!tagCountEl || !charCountEl || !charFillEl) return;
+
+    // Calculate total characters (tags + commas + spaces)
+    const totalChars = tags.join(', ').length;
+    const percentage = (totalChars / 500) * 100;
+
+    // Update displays
+    tagCountEl.textContent = tags.length;
+    charCountEl.textContent = `${totalChars} / 500`;
+
+    // Update progress bar
+    charFillEl.style.width = `${Math.min(percentage, 100)}%`;
+
+    // Update color based on usage
+    charFillEl.className = 'char-count-fill';
+    if (totalChars > 500) {
+        charFillEl.classList.add('error');
+        charCountEl.style.color = '#EF4444';
+    } else if (totalChars > 450) {
+        charFillEl.classList.add('warning');
+        charCountEl.style.color = '#F59E0B';
+    } else if (totalChars >= 400) {
+        charFillEl.classList.add('good');
+        charCountEl.style.color = '#10B981';
+    } else {
+        charCountEl.style.color = 'var(--text-secondary)';
+    }
 }
