@@ -2426,21 +2426,27 @@ html.dark .description-text {
 }
 
 .analysis-content strong {
-    color: #3B82F6;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
 html.dark .analysis-content strong {
-    color: #60A5FA;
+    color: var(--text-primary);
 }
 
 .analysis-content ul {
     margin-left: 1.5rem;
     margin-top: 0.5rem;
+    list-style-type: disc;
 }
 
 .analysis-content li {
     margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.analysis-content li::marker {
+    color: var(--text-primary);
 }
 
 .error-message {
