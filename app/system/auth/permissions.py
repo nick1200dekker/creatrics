@@ -17,7 +17,7 @@ def check_workspace_permission(permission_name):
 
     Available permissions:
         - video_script, video_title, video_tags, video_description, thumbnail
-        - analyze_video, optimize_video, analytics, competitors
+        - analyze_video, optimize_video, keyword_research, analytics, competitors
         - x_post_editor, reply_guy, clip_spaces, niche
         - brain_dump, mind_map, content_wiki, content_calendar
 

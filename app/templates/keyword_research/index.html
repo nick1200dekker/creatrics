@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Keyword Research - Find YouTube Keywords | Creatrics{% endblock %}
+
+{% block seo_meta %}
+<meta name="description" content="Discover high-opportunity YouTube keywords with autocomplete suggestions and competition analysis.">
+<meta name="keywords" content="YouTube keyword research, keyword tool, search volume, competition analysis, video SEO">
+{% endblock %}
+
+{% block additional_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/keyword_research.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="content-panel">
+    <div class="keyword-research-wrapper">
+        <!-- Header -->
+        <div class="research-header">
+            <h1 class="research-title">
+                <i class="ph ph-magnifying-glass"></i>
+                Keyword Research
+            </h1>
+            <p class="research-subtitle">Discover high-opportunity keywords with real YouTube search data</p>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-box">
+                <div class="search-input-wrapper">
+                    <i class="ph ph-magnifying-glass search-icon"></i>
+                    <input
+                        type="text"
+                        id="keywordInput"
+                        class="keyword-input"
+                        placeholder="Enter a keyword to research (e.g., clash royale, minecraft, cooking)"
+                        autocomplete="off"
+                    >
+                    <button id="exploreBtn" class="explore-button" onclick="exploreKeyword()">
+                        <i class="ph ph-sparkle"></i>
+                        Explore
+                    </button>
+                </div>
+            </div>
+
+            <!-- Breadcrumb Trail -->
+            <div class="breadcrumb-trail" id="breadcrumbTrail" style="display: none;">
+                <div class="breadcrumb-items" id="breadcrumbItems"></div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-container" id="loadingContainer" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Analyzing keywords...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection" style="display: none;">
+
+            <!-- Current Keyword Analysis -->
+            <div class="keyword-analysis-card" id="currentAnalysis">
+                <div class="analysis-header">
+                    <h2 class="analyzed-keyword" id="analyzedKeyword"></h2>
+                    <span class="opportunity-badge" id="opportunityBadge"></span>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon competition">
+                            <i class="ph ph-stack"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">Competition</div>
+                            <div class="metric-value" id="totalVideos">-</div>
+                            <div class="metric-sublabel" id="competitionLevel">-</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon views">
+                            <i class="ph ph-fire"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">Search Interest</div>
+                            <div class="metric-value" id="searchInterest">-</div>
+                            <div class="metric-sublabel" id="interestLevel">-</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon score">
+                            <i class="ph ph-target"></i>
+                        </div>
+                        <div class="metric-content">
+                            <div class="metric-label">Opportunity Score</div>
+                            <div class="metric-value opportunity-score" id="opportunityScore">-</div>
+                            <div class="metric-sublabel">Interest + Competition</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Keywords Section -->
+            <div class="related-keywords-section">
+                <div class="section-header">
+                    <h3>
+                        <i class="ph ph-lightbulb"></i>
+                        Related Keywords
+                    </h3>
+                    <p class="section-subtitle">Click any keyword to explore its variations</p>
+                </div>
+
+                <div class="keywords-grid" id="keywordsGrid">
+                    <!-- Keywords will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">
+                <i class="ph ph-magnifying-glass"></i>
+            </div>
+            <h3>Start Your Keyword Research</h3>
+            <p>Enter a keyword above to discover related search terms and competition metrics</p>
+
+            <div class="example-keywords">
+                <p class="example-label">Try these examples:</p>
+                <div class="example-chips">
+                    <button class="example-chip" onclick="quickExplore('minecraft')">
+                        <i class="ph ph-game-controller"></i>
+                        minecraft
+                    </button>
+                    <button class="example-chip" onclick="quickExplore('cooking recipes')">
+                        <i class="ph ph-cooking-pot"></i>
+                        cooking recipes
+                    </button>
+                    <button class="example-chip" onclick="quickExplore('tech review')">
+                        <i class="ph ph-device-mobile"></i>
+                        tech review
+                    </button>
+                    <button class="example-chip" onclick="quickExplore('fitness workout')">
+                        <i class="ph ph-barbell"></i>
+                        fitness workout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='scripts/keyword_research.js') }}"></script>
+{% endblock %}

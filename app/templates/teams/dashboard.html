@@ -92,6 +92,14 @@
                         <label for="perm_analyze_video">Analyze Video</label>
                     </div>
                     <div class="permission-item">
+                        <input type="checkbox" id="perm_optimize_video" checked>
+                        <label for="perm_optimize_video">Optimize Video</label>
+                    </div>
+                    <div class="permission-item">
+                        <input type="checkbox" id="perm_keyword_research" checked>
+                        <label for="perm_keyword_research">Keyword Research</label>
+                    </div>
+                    <div class="permission-item">
                         <input type="checkbox" id="perm_competitors" checked>
                         <label for="perm_competitors">Competitors</label>
                     </div>
@@ -301,7 +309,7 @@ function updateUIForWorkspace() {
 
                 // Define permission categories
                 const categories = {
-                    'YouTube': ['video_script', 'video_title', 'video_description', 'thumbnail', 'analyze_video', 'competitors'],
+                    'YouTube': ['video_script', 'video_title', 'video_description', 'thumbnail', 'analyze_video', 'optimize_video', 'keyword_research', 'competitors'],
                     'X (Twitter)': ['x_post_editor', 'reply_guy', 'clip_spaces', 'niche'],
                     'TikTok': ['hook_generator', 'titles_hashtags', 'trending_sounds', 'trend_finder'],
                     'Content Hub': ['brain_dump', 'mind_map', 'content_wiki', 'content_calendar'],
@@ -445,6 +453,8 @@ async function sendInvite() {
         video_description: document.getElementById('perm_video_description').checked,
         thumbnail: document.getElementById('perm_thumbnail').checked,
         analyze_video: document.getElementById('perm_analyze_video').checked,
+        optimize_video: document.getElementById('perm_optimize_video').checked,
+        keyword_research: document.getElementById('perm_keyword_research').checked,
         competitors: document.getElementById('perm_competitors').checked,
         // X (Twitter)
         x_post_editor: document.getElementById('perm_x_post_editor').checked,
@@ -506,6 +516,8 @@ function editPermissions(memberId, permissions) {
                 { id: 'video_description', label: 'Video Description' },
                 { id: 'thumbnail', label: 'Thumbnail' },
                 { id: 'analyze_video', label: 'Analyze Video' },
+                { id: 'optimize_video', label: 'Optimize Video' },
+                { id: 'keyword_research', label: 'Keyword Research' },
                 { id: 'competitors', label: 'Competitors' }
             ]
         },
@@ -578,6 +590,8 @@ async function savePermissions() {
         video_description: document.getElementById('modal_perm_video_description').checked,
         thumbnail: document.getElementById('modal_perm_thumbnail').checked,
         analyze_video: document.getElementById('modal_perm_analyze_video').checked,
+        optimize_video: document.getElementById('modal_perm_optimize_video').checked,
+        keyword_research: document.getElementById('modal_perm_keyword_research').checked,
         competitors: document.getElementById('modal_perm_competitors').checked,
         // X (Twitter)
         x_post_editor: document.getElementById('modal_perm_x_post_editor').checked,

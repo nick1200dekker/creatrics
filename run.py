@@ -110,6 +110,7 @@ from app.routes.video_script import bp as video_script_bp
 from app.routes.competitors import bp as competitors_bp
 from app.routes.analyze_video import bp as analyze_video_bp
 from app.routes.optimize_video import bp as optimize_video_bp
+from app.routes.keyword_research import bp as keyword_research_bp
 from app.routes.brain_dump import bp as brain_dump_bp
 from app.routes.mind_map import mind_map_bp
 from app.routes.content_wiki import bp as content_wiki_bp
@@ -148,6 +149,7 @@ app.register_blueprint(video_script_bp)
 app.register_blueprint(competitors_bp)
 app.register_blueprint(analyze_video_bp)
 app.register_blueprint(optimize_video_bp)
+app.register_blueprint(keyword_research_bp)
 app.register_blueprint(brain_dump_bp)
 app.register_blueprint(mind_map_bp)
 app.register_blueprint(content_wiki_bp)
