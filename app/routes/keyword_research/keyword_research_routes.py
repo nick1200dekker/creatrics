@@ -223,7 +223,7 @@ def analyze_keyword():
 @auth_required
 @require_permission('keyword_research')
 def batch_analyze():
-    """Analyze multiple keywords at once"""
+    """Analyze multiple keywords at once using full algorithm"""
     try:
         data = request.get_json()
         keywords = data.get('keywords', [])
@@ -238,13 +238,12 @@ def batch_analyze():
 
         for keyword in keywords:
             try:
-                # Call analyze_keyword logic for each
                 headers = {
                     "x-rapidapi-key": RAPIDAPI_KEY,
                     "x-rapidapi-host": RAPIDAPI_HOST,
                 }
 
-                # Get basic metrics (faster, just estimatedResults)
+                # Get search results with video data
                 url = f"https://{RAPIDAPI_HOST}/search"
                 params = {"query": keyword}
 
@@ -253,23 +252,99 @@ def batch_analyze():
                 result_data = response.json()
 
                 total_videos = int(result_data.get('estimatedResults', 0))
+                videos = result_data.get('data', [])
 
-                # Simple opportunity score based on competition
+                # Get autocomplete suggestions count
+                autocomplete_url = f"https://{RAPIDAPI_HOST}/suggest_queries"
+                autocomplete_params = {"query": keyword, "geo": "US"}
+
+                try:
+                    autocomplete_response = requests.get(autocomplete_url, headers=headers, params=autocomplete_params, timeout=10)
+                    autocomplete_data = autocomplete_response.json()
+                    suggestion_count = len(autocomplete_data.get('suggestions', []))
+                except:
+                    suggestion_count = 0
+
+                # Filter for recent videos (last 30 days) from the returned data
+                from datetime import datetime, timedelta
+                thirty_days_ago = datetime.now() - timedelta(days=30)
+
+                recent_view_counts = []
+                high_performing_videos = 0
+
+                for video in videos[:20]:
+                    if video.get('type') in ['video', 'shorts']:
+                        # Check if video is recent (published in last 30 days)
+                        publish_date_str = video.get('publishDate') or video.get('publishedAt', '')
+                        if publish_date_str:
+                            try:
+                                # Parse date (format: 2025-10-11 or 2025-10-11T00:00:00Z)
+                                publish_date = datetime.fromisoformat(publish_date_str.replace('Z', '+00:00'))
+
+                                # Only analyze recent videos
+                                if publish_date >= thirty_days_ago:
+                                    view_text = video.get('viewCount')
+                                    if view_text:
+                                        try:
+                                            views = int(view_text)
+                                            recent_view_counts.append(views)
+
+                                            if views > 50000:
+                                                high_performing_videos += 1
+                                        except (ValueError, TypeError):
+                                            continue
+                            except:
+                                continue
+
+                # Calculate metrics
+                avg_recent_views = int(statistics.mean(recent_view_counts)) if recent_view_counts else 0
+
+                # Determine competition level
                 if total_videos < 50000:
-                    opportunity_score = 80
                     competition_level = 'low'
+                    competition_score = 80
                 elif total_videos < 500000:
-                    opportunity_score = 50
                     competition_level = 'medium'
+                    competition_score = 50
                 else:
-                    opportunity_score = 25
                     competition_level = 'high'
+                    competition_score = 20
+
+                # Determine search interest based on recent video performance
+                if avg_recent_views > 100000:
+                    interest_level = 'high'
+                    interest_score = 80
+                elif avg_recent_views > 30000:
+                    interest_level = 'medium'
+                    interest_score = 55
+                elif avg_recent_views > 5000:
+                    interest_level = 'low'
+                    interest_score = 30
+                else:
+                    interest_level = 'very_low'
+                    interest_score = 10
+
+                # Boost for high-performing videos
+                if high_performing_videos >= 5:
+                    interest_score = min(100, interest_score + 20)
+                elif high_performing_videos >= 3:
+                    interest_score = min(100, interest_score + 10)
+
+                # Small boost for autocomplete suggestions
+                if suggestion_count >= 13:
+                    interest_score = min(100, interest_score + 5)
+                elif suggestion_count >= 8:
+                    interest_score = min(100, interest_score + 3)
+
+                # Calculate opportunity score
+                opportunity_score = int((interest_score * 0.6) + (competition_score * 0.4))
 
                 results.append({
                     'keyword': keyword,
                     'total_videos': total_videos,
                     'opportunity_score': opportunity_score,
-                    'competition_level': competition_level
+                    'competition_level': competition_level,
+                    'interest_level': interest_level
                 })
 
             except Exception as e:

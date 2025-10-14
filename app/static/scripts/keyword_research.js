@@ -213,9 +213,8 @@ function displayRelatedKeywords(keywords) {
         return;
     }
 
-    // Sort by competition level (low competition first)
-    const compOrder = { 'low': 0, 'medium': 1, 'high': 2 };
-    keywords.sort((a, b) => compOrder[a.competition_level] - compOrder[b.competition_level]);
+    // Sort by opportunity score (descending)
+    keywords.sort((a, b) => b.opportunity_score - a.opportunity_score);
 
     keywords.forEach(kw => {
         const card = createKeywordCard(kw);
@@ -231,6 +230,16 @@ function createKeywordCard(keyword) {
     card.className = 'keyword-card';
     card.onclick = () => exploreKeyword(keyword.keyword);
 
+    // Determine score class
+    let scoreClass = 'low';
+    if (keyword.opportunity_score >= 70) {
+        scoreClass = 'excellent';
+    } else if (keyword.opportunity_score >= 50) {
+        scoreClass = 'good';
+    } else if (keyword.opportunity_score >= 30) {
+        scoreClass = 'medium';
+    }
+
     // Competition level label
     const compLabels = {
         'low': 'Low Competition',
@@ -238,13 +247,27 @@ function createKeywordCard(keyword) {
         'high': 'High Competition'
     };
 
+    // Interest level label
+    const interestLabels = {
+        'high': '🔥 High Interest',
+        'medium': '📊 Medium Interest',
+        'low': '📉 Low Interest',
+        'very_low': '⚠️ Very Low Interest'
+    };
+
     card.innerHTML = `
         <div class="keyword-header">
             <div class="keyword-text">${escapeHtml(keyword.keyword)}</div>
+            <div class="keyword-score ${scoreClass}">${keyword.opportunity_score}/100</div>
         </div>
         <div class="keyword-stats">
             <div class="keyword-stat">
+                <span class="stat-label">Competition:</span>
                 <span class="stat-value">${compLabels[keyword.competition_level] || 'Unknown'}</span>
+            </div>
+            <div class="keyword-stat">
+                <span class="stat-label">Interest:</span>
+                <span class="stat-value">${interestLabels[keyword.interest_level] || 'Unknown'}</span>
             </div>
         </div>
     `;
