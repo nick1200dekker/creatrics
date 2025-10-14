@@ -53,6 +53,12 @@ async function exploreKeyword(keyword = null) {
     // Show loading state
     showLoading();
 
+    // Disable explore button
+    const exploreBtn = document.getElementById('exploreBtn');
+    const originalBtnText = exploreBtn.innerHTML;
+    exploreBtn.disabled = true;
+    exploreBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Analyzing...';
+
     try {
         // Fetch autocomplete suggestions
         const autocompleteResponse = await fetch('/keyword-research/api/autocomplete', {
@@ -130,6 +136,10 @@ async function exploreKeyword(keyword = null) {
     } catch (error) {
         console.error('Error exploring keyword:', error);
         showError('Failed to analyze keyword. Please try again.');
+    } finally {
+        // Re-enable button
+        exploreBtn.disabled = false;
+        exploreBtn.innerHTML = originalBtnText;
     }
 }
 
@@ -149,6 +159,9 @@ function displayResults(keyword, mainAnalysis, suggestions) {
 
     // Display related keywords
     displayRelatedKeywords(suggestions);
+
+    // Scroll to results
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 /**
@@ -209,7 +222,7 @@ function displayRelatedKeywords(keywords) {
     grid.innerHTML = '';
 
     if (!keywords || keywords.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No related keywords found</p>';
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 2rem;">No related keywords found</p>';
         return;
     }
 
@@ -328,7 +341,7 @@ function navigateToBreadcrumb(index) {
 function showLoading() {
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('resultsSection').style.display = 'none';
-    document.getElementById('loadingContainer').style.display = 'block';
+    document.getElementById('loadingContainer').style.display = 'flex';
 }
 
 /**
