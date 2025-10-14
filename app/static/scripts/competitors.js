@@ -1,4 +1,4 @@
-// Competitors Management
+// Competitors Management - Fixed Version
 let nicheLists = [];
 let currentListId = null;
 let competitors = [];
@@ -8,7 +8,7 @@ let searchResults = [];
 let isSearching = false;
 let allVideos = [];
 let videosDisplayed = 25;
-let currentTimeframeDays = 30; // Store the timeframe used in analysis
+let currentTimeframeDays = 30;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -16,27 +16,41 @@ document.addEventListener('DOMContentLoaded', function() {
     loadLatestAnalysisCard();
 });
 
-// Load niche lists
+// Load niche lists with loading state
 async function loadNicheLists() {
+    const container = document.getElementById('nicheLists');
+    
+    // Show loading spinner
+    container.classList.add('loading');
+    container.innerHTML = `
+        <div class="sidebar-loading">
+            <i class="ph ph-spinner spin"></i>
+            <span>Loading lists...</span>
+        </div>
+    `;
+    
     try {
         const response = await fetch('/api/competitors/lists');
         const data = await response.json();
 
-        console.log('Niche lists response:', data);
-
         if (data.success) {
             nicheLists = data.lists || [];
-            console.log('Loaded niche lists:', nicheLists);
+            container.classList.remove('loading');
             renderNicheLists();
 
             // Auto-select first list if exists
             if (nicheLists.length > 0 && !currentListId) {
-                console.log('Auto-selecting first list:', nicheLists[0].id);
                 await selectList(nicheLists[0].id);
             }
         }
     } catch (error) {
         console.error('Error loading niche lists:', error);
+        container.classList.remove('loading');
+        container.innerHTML = `
+            <div class="empty-lists">
+                <p class="empty-lists-text">Failed to load lists</p>
+            </div>
+        `;
     }
 }
 
@@ -68,18 +82,15 @@ function renderNicheLists() {
 
 // Select a list
 async function selectList(listId) {
-    console.log('selectList called with:', listId);
     currentListId = listId;
     renderNicheLists();
 
     const selectedList = nicheLists.find(l => l.id === listId);
-    console.log('Selected list:', selectedList);
     if (selectedList) {
         document.getElementById('currentListName').textContent = selectedList.name;
     }
 
     // Show the setup body and view toggle
-    console.log('Showing setupBody, hiding emptyState');
     document.getElementById('setupBody').style.display = 'block';
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('viewToggle').style.display = 'block';
@@ -91,37 +102,48 @@ async function selectList(listId) {
     await loadCompetitors();
 }
 
-// Load saved competitors
+// Load saved competitors with loading state
 async function loadCompetitors() {
     if (!currentListId) {
-        console.log('No currentListId, skipping loadCompetitors');
         return;
     }
 
-    console.log('Loading competitors for list:', currentListId);
+    const competitorsList = document.getElementById('competitorsList');
+    
+    // Show loading spinner
+    competitorsList.classList.add('loading');
+    competitorsList.innerHTML = `
+        <div class="list-loading">
+            <i class="ph ph-spinner spin"></i>
+            <span>Loading channels...</span>
+        </div>
+    `;
 
     try {
         const response = await fetch(`/api/competitors/list?list_id=${currentListId}`);
         const data = await response.json();
 
-        console.log('Competitors response:', data);
-
         if (data.success) {
             competitors = data.competitors || [];
-            console.log('Loaded competitors:', competitors.length);
+            competitorsList.classList.remove('loading');
             renderCompetitorsList();
 
             // Show analysis options if we have competitors
             if (competitors.length > 0) {
-                console.log('Showing analysis options');
                 document.getElementById('analysisOptions').style.display = 'block';
             } else {
-                console.log('Hiding analysis options');
                 document.getElementById('analysisOptions').style.display = 'none';
             }
         }
     } catch (error) {
         console.error('Error loading competitors:', error);
+        competitorsList.classList.remove('loading');
+        competitorsList.innerHTML = `
+            <div class="empty-state">
+                <i class="ph ph-users-three empty-icon"></i>
+                <p class="empty-text">Failed to load channels</p>
+            </div>
+        `;
     }
 }
 
@@ -428,7 +450,7 @@ async function analyzeCompetitors() {
             document.getElementById('progressSection').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
 
-            // Display results with loading spinners
+            // Display results with data (no loading spinners during analysis view)
             displayResults(data.data);
 
             // Scroll to results
@@ -462,10 +484,16 @@ function updateProgress(percent, message) {
     if (progressPercent) progressPercent.textContent = `${percent}%`;
 }
 
-// Back to setup
+// Back to setup - FIXED
 function backToSetup() {
+    // Hide results section
     document.getElementById('resultsSection').style.display = 'none';
-    document.getElementById('setupSection').style.display = 'block';
+    
+    // Show setup section with proper structure
+    document.getElementById('setupSection').style.display = 'flex';
+    document.getElementById('setupBody').style.display = 'block';
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('viewToggle').style.display = 'block';
 
     // Remove back button from header
     const mainHeader = document.querySelector('.competitors-header .header-content');
@@ -473,6 +501,9 @@ function backToSetup() {
         const backBtn = mainHeader.querySelector('.back-btn');
         if (backBtn) backBtn.remove();
     }
+
+    // Re-render competitors list to ensure it's displayed correctly
+    renderCompetitorsList();
 
     // Scroll to the top of the page
     window.scrollTo({
@@ -494,7 +525,7 @@ function formatMarkdown(text) {
     return text;
 }
 
-// Display results with improved formatting
+// Display results - NO loading spinners
 function displayResults(data) {
     const resultsSection = document.getElementById('resultsSection');
     const { videos, patterns, insights, timeframe_days } = data;
@@ -508,7 +539,6 @@ function displayResults(data) {
                          timeframe_days === 2 ? '48 hours' :
                          `${timeframe_days} days`;
 
-    // Build HTML with back button and stats grid first
     // Add Back button to main header
     const mainHeader = document.querySelector('.competitors-header .header-content');
     if (mainHeader) {
@@ -524,75 +554,74 @@ function displayResults(data) {
         mainHeader.appendChild(backBtn);
     }
 
+    // Build HTML with all sections populated immediately (no loading spinners)
     let html = `
         <!-- Quick Stats Grid -->
         <div class="stats-grid">
-            <div class="stat-card section-loading">
-                <div class="loading-spinner">
-                    <i class="ph ph-spinner spin"></i>
-                </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ph ph-video-camera"></i></div>
+                <div class="stat-value">${patterns.total_videos_analyzed || 0}</div>
+                <div class="stat-label">Videos Analyzed</div>
             </div>
-            <div class="stat-card section-loading">
-                <div class="loading-spinner">
-                    <i class="ph ph-spinner spin"></i>
-                </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ph ph-eye"></i></div>
+                <div class="stat-value">${formatNumber(patterns.avg_views || 0)}</div>
+                <div class="stat-label">Avg Views</div>
             </div>
-            <div class="stat-card section-loading">
-                <div class="loading-spinner">
-                    <i class="ph ph-spinner spin"></i>
-                </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ph ph-fire"></i></div>
+                <div class="stat-value">${formatNumber(patterns.total_views || 0)}</div>
+                <div class="stat-label">Total Views</div>
             </div>
-            <div class="stat-card section-loading">
-                <div class="loading-spinner">
-                    <i class="ph ph-spinner spin"></i>
-                </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ph ph-users-three"></i></div>
+                <div class="stat-value">${patterns.total_channels || 0}</div>
+                <div class="stat-label">Channels</div>
             </div>
         </div>
 
         <!-- Results Header -->
-        <div class="results-header section-loading">
-            <div class="loading-spinner">
-                <i class="ph ph-spinner spin"></i>
-            </div>
+        <div class="results-header">
+            <h2 class="results-title">
+                <i class="ph ph-chart-line"></i>
+                Analysis Results
+            </h2>
+            <span class="timeframe-badge">Last ${timeframeText}</span>
         </div>
     `;
 
-    // Key Insights with loading spinner
-    html += `
-        <div class="insights-card section-loading">
-            <div class="loading-spinner">
-                <i class="ph ph-spinner spin"></i>
-                <span class="loading-text">Loading insights...</span>
-            </div>
-        </div>
-    `;
+    // Key Insights
+    html += generateInsightsSection(insights);
 
-    // Content Opportunities with loading spinner
-    html += `
-        <div class="quick-wins-card section-loading">
-            <div class="loading-spinner">
-                <i class="ph ph-spinner spin"></i>
-                <span class="loading-text">Loading content opportunities...</span>
-            </div>
-        </div>
-    `;
+    // Content Opportunities
+    html += generateContentOpportunitiesSection(insights);
 
-    // Channel Activity with loading spinner
-    html += `
-        <div class="heatmap-card section-loading">
-            <div class="loading-spinner">
-                <i class="ph ph-spinner spin"></i>
-                <span class="loading-text">Loading channel activity...</span>
-            </div>
-        </div>
-    `;
+    // Channel Activity
+    html += renderChannelActivity(patterns.channel_performance, timeframeText);
 
-    // Videos Table with loading spinner
+    // Videos Table
     html += `
-        <div class="videos-card section-loading" id="videosCard">
-            <div class="loading-spinner">
-                <i class="ph ph-spinner spin"></i>
-                <span class="loading-text">Loading videos...</span>
+        <div class="videos-card" id="videosCard">
+            <div class="section-header-with-toggle">
+                <h3 class="section-title">
+                    <i class="ph ph-play-circle"></i>
+                    <span id="contentTypeLabel">Top Performing Videos</span>
+                </h3>
+            </div>
+            <div class="videos-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><span id="contentTypeTableLabel">Video</span></th>
+                            <th>Channel</th>
+                            <th>Views</th>
+                            <th>Published</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="videosTableBody">
+                    </tbody>
+                </table>
             </div>
         </div>
         <div class="load-more-container" id="loadMoreContainer" style="display: none;">
@@ -605,72 +634,21 @@ function displayResults(data) {
 
     resultsSection.innerHTML = html;
 
-    // Progressive rendering: populate sections one by one with smooth transitions
-    setTimeout(() => populateStatsSection(patterns), 500);
-    setTimeout(() => populateResultsHeader(timeframeText), 800);
-    setTimeout(() => populateInsightsSection(insights), 1100);
-    setTimeout(() => populateContentOpportunities(insights), 1400);
-    setTimeout(() => populateChannelActivity(patterns.channel_performance, timeframeText), 1700);
-    setTimeout(() => populateVideosSection(videos), 2000);
+    // Render videos table
+    renderVideos();
 }
 
-// Populate stats section
-function populateStatsSection(patterns) {
-    const statsGrid = document.querySelector('.stats-grid');
-    if (!statsGrid) return;
-
-    statsGrid.innerHTML = `
-        <div class="stat-card">
-            <div class="stat-icon"><i class="ph ph-video-camera"></i></div>
-            <div class="stat-value">${patterns.total_videos_analyzed || 0}</div>
-            <div class="stat-label">Videos Analyzed</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon"><i class="ph ph-eye"></i></div>
-            <div class="stat-value">${formatNumber(patterns.avg_views || 0)}</div>
-            <div class="stat-label">Avg Views</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon"><i class="ph ph-fire"></i></div>
-            <div class="stat-value">${formatNumber(patterns.total_views || 0)}</div>
-            <div class="stat-label">Total Views</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon"><i class="ph ph-users-three"></i></div>
-            <div class="stat-value">${patterns.total_channels || 0}</div>
-            <div class="stat-label">Channels</div>
-        </div>
-    `;
-}
-
-// Populate results header
-function populateResultsHeader(timeframeText) {
-    const resultsHeader = document.querySelector('.results-header');
-    if (!resultsHeader) return;
-
-    resultsHeader.classList.remove('section-loading');
-    resultsHeader.innerHTML = `
-        <h2 class="results-title">
-            <i class="ph ph-chart-line"></i>
-            Analysis Results
-        </h2>
-        <span class="timeframe-badge">Last ${timeframeText}</span>
-    `;
-}
-
-// Populate insights section
-function populateInsightsSection(insights) {
-    const insightsCard = document.querySelector('.insights-card');
-    if (!insightsCard || !insights || !insights.summary) return;
-
-    insightsCard.classList.remove('section-loading');
+// Generate insights section HTML
+function generateInsightsSection(insights) {
+    if (!insights || !insights.summary) return '';
 
     let html = `
-        <h3 class="section-title">
-            <i class="ph ph-lightbulb"></i>
-            Key Insights
-        </h3>
-        <div class="insights-content">
+        <div class="insights-card">
+            <h3 class="section-title">
+                <i class="ph ph-lightbulb"></i>
+                Key Insights
+            </h3>
+            <div class="insights-content">
     `;
 
     // Parse and format the markdown content, but exclude Content Opportunities section
@@ -703,83 +681,36 @@ function populateInsightsSection(insights) {
     });
 
     html += `
+            </div>
         </div>
     `;
 
-    insightsCard.innerHTML = html;
+    return html;
 }
 
-// Populate content opportunities
-function populateContentOpportunities(insights) {
-    const quickWinsCard = document.querySelector('.quick-wins-card');
-    if (!quickWinsCard || !insights || !insights.quick_wins || insights.quick_wins.length === 0) {
-        if (quickWinsCard) quickWinsCard.style.display = 'none';
-        return;
+// Generate content opportunities section HTML
+function generateContentOpportunitiesSection(insights) {
+    if (!insights || !insights.quick_wins || insights.quick_wins.length === 0) {
+        return '';
     }
 
-    quickWinsCard.classList.remove('section-loading');
-    quickWinsCard.innerHTML = `
-        <h3 class="section-title">
-            <i class="ph ph-rocket-launch"></i>
-            Content Opportunities
-        </h3>
-        <div class="content-ideas-grid">
-            ${insights.quick_wins.map(win => `
-                <div class="content-idea-chip">
-                    "${escapeHtml(win.title)}"
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-// Populate channel activity
-function populateChannelActivity(channelPerformance, timeframeText) {
-    const heatmapCard = document.querySelector('.heatmap-card');
-    if (!heatmapCard || !channelPerformance) {
-        if (heatmapCard) heatmapCard.style.display = 'none';
-        return;
-    }
-
-    heatmapCard.classList.remove('section-loading');
-    heatmapCard.outerHTML = renderChannelActivity(channelPerformance, timeframeText);
-}
-
-// Populate videos section
-function populateVideosSection(videos) {
-    const videosCard = document.getElementById('videosCard');
-    if (!videosCard || !videos || videos.length === 0) {
-        if (videosCard) videosCard.style.display = 'none';
-        return;
-    }
-
-    videosCard.classList.remove('section-loading');
-    videosCard.innerHTML = `
-        <div class="section-header-with-toggle">
+    let html = `
+        <div class="quick-wins-card">
             <h3 class="section-title">
-                <i class="ph ph-play-circle"></i>
-                <span id="contentTypeLabel">Top Performing Videos</span>
+                <i class="ph ph-rocket-launch"></i>
+                Content Opportunities
             </h3>
-        </div>
-        <div class="videos-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th><span id="contentTypeTableLabel">Video</span></th>
-                        <th>Channel</th>
-                        <th>Views</th>
-                        <th>Published</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="videosTableBody">
-                </tbody>
-            </table>
+            <div class="content-ideas-grid">
+                ${insights.quick_wins.map(win => `
+                    <div class="content-idea-chip">
+                        "${escapeHtml(win.title)}"
+                    </div>
+                `).join('')}
+            </div>
         </div>
     `;
 
-    // Render initial videos
-    renderVideos();
+    return html;
 }
 
 // Render videos table
@@ -1157,12 +1088,8 @@ async function loadLatestAnalysis() {
         const response = await fetch('/api/competitors/latest-analysis');
         const data = await response.json();
 
-        console.log('Latest analysis response:', data);
-
         if (data.success && data.has_analysis) {
             const analysis = data.analysis;
-
-            console.log('Loading analysis:', analysis);
 
             // Hide setup and progress sections
             const setupSection = document.getElementById('setupSection');
@@ -1181,59 +1108,12 @@ async function loadLatestAnalysis() {
                 resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         } else {
-            console.log('No analysis available or error:', data);
             alert('No saved analysis found.');
         }
     } catch (error) {
         console.error('Error loading latest analysis:', error);
         alert('Failed to load analysis: ' + error.message);
     }
-}
-
-// Filter content by timeframe
-function filterByTimeframe(content, days) {
-    if (!content || content.length === 0) return [];
-
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
-
-    return content.filter(item => {
-        // Try multiple date fields
-        const pubDateStr = item.published_at || item.publishedAt || item.publish_date;
-
-        if (!pubDateStr) {
-            // No date available - exclude it
-            console.debug('No date found for item:', item.title || item.video_id);
-            return false;
-        }
-
-        try {
-            let pubDate;
-
-            // Parse ISO format date
-            if (pubDateStr.includes('T')) {
-                pubDate = new Date(pubDateStr.replace('Z', '+00:00'));
-            } else {
-                // Try YYYY-MM-DD format
-                pubDate = new Date(pubDateStr);
-            }
-
-            // Check if date is valid and within timeframe
-            if (!isNaN(pubDate.getTime())) {
-                const isWithinTimeframe = pubDate >= cutoffDate;
-                if (!isWithinTimeframe) {
-                    console.debug('Filtering out (too old):', item.title || item.video_id, pubDateStr);
-                }
-                return isWithinTimeframe;
-            } else {
-                console.debug('Invalid date for item:', item.title || item.video_id, pubDateStr);
-                return false;
-            }
-        } catch (e) {
-            console.debug('Could not parse date:', pubDateStr, e);
-            return false;
-        }
-    });
 }
 
 // Render Channel Activity (videos posted per channel)
@@ -1287,5 +1167,3 @@ function renderChannelActivity(channelPerformance, timeframeText) {
         </div>
     `;
 }
-
-// Show toast notification (removed - toasts disabled)

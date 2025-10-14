@@ -1,5 +1,5 @@
 /* =============================================
-   COMPETITORS PAGE - UPDATED WITH PROGRESS
+   COMPETITORS PAGE - FIXED VERSION
    ============================================= */
 
 /* Reset default content-panel */
@@ -175,6 +175,42 @@ html.dark .new-list-btn:hover {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-height: 100px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Loading state for lists */
+.lists-container.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+}
+
+.sidebar-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 2rem 1rem;
+}
+
+.sidebar-loading i {
+    font-size: 2rem;
+    color: #3B82F6;
+    animation: spin 1s linear infinite;
+}
+
+html.dark .sidebar-loading i {
+    color: #60A5FA;
+}
+
+.sidebar-loading span {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
 }
 
 .empty-lists {
@@ -1181,6 +1217,38 @@ html.dark .add-btn:hover:not(:disabled) {
 /* Competitors List */
 .competitors-list {
     min-height: 200px;
+}
+
+/* Loading state for competitors list */
+.competitors-list.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.list-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 3rem 2rem;
+}
+
+.list-loading i {
+    font-size: 2.5rem;
+    color: #3B82F6;
+    animation: spin 1s linear infinite;
+}
+
+html.dark .list-loading i {
+    color: #60A5FA;
+}
+
+.list-loading span {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
 }
 
 .empty-state {
@@ -2562,57 +2630,4 @@ html.dark .content-toggle .toggle-btn.active {
 
 .spin {
     animation: spin 1s linear infinite;
-}
-
-/* Section loading state - matching Optimize Video style */
-.section-loading {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-height: 150px;
-    position: relative;
-    padding: 3rem 2rem !important;
-}
-
-.stat-card.section-loading {
-    min-height: 140px !important;
-}
-
-.results-header.section-loading {
-    min-height: 80px;
-    border-bottom: none;
-}
-
-.insights-card.section-loading,
-.quick-wins-card.section-loading,
-.heatmap-card.section-loading,
-.videos-card.section-loading {
-    min-height: 200px;
-}
-
-.section-loading .loading-spinner {
-    display: flex !important;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    width: 100%;
-}
-
-.section-loading .loading-spinner i {
-    font-size: 3rem !important;
-    color: #3B82F6 !important;
-    animation: spin 1s linear infinite !important;
-    display: inline-block !important;
-}
-
-html.dark .section-loading .loading-spinner i {
-    color: #60A5FA !important;
-}
-
-.section-loading .loading-spinner .loading-text {
-    font-size: 0.875rem;
-    color: var(--text-tertiary);
-    font-weight: 500;
 }
