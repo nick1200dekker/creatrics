@@ -124,7 +124,7 @@ async function generateContent() {
         // Prepare input with keyword if provided
         let enhancedInput = input;
         if (keyword) {
-            enhancedInput = `CRITICAL: You MUST start with this EXACT keyword: "${keyword}"\n\nVIDEO CONTENT:\n${input}`;
+            enhancedInput = `CRITICAL: You MUST start titles with this keyword: "${keyword}"\nIMPORTANT: Capitalize the keyword appropriately for a professional title (brand names, proper nouns, etc.)\n\nVIDEO CONTENT:\n${input}`;
         }
 
         // Generate titles if requested
@@ -152,7 +152,8 @@ async function generateContent() {
                 body: JSON.stringify({
                     input: enhancedInput,
                     type: currentVideoType,
-                    reference_description: referenceDescription
+                    reference_description: referenceDescription,
+                    keyword: keyword
                 })
             });
             descriptionData = await descResponse.json();
@@ -168,7 +169,8 @@ async function generateContent() {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    input: enhancedInput
+                    input: enhancedInput,
+                    keyword: keyword
                 })
             });
             tagsData = await tagsResponse.json();

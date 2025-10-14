@@ -32,14 +32,13 @@ STRUCTURE (write naturally, don't label sections):
    - Add relevant emojis if they fit the style
    - Keep each point brief (one line)
 
-3. TIMESTAMPS (if video is under 15 minutes):
-   - Add chapter timestamps in format: 0:00 Intro, 1:23 Topic Name
+3. TIMESTAMPS (Include ONLY if transcript/content shows clear sections):
+   - If you see a full transcript or detailed content breakdown with timing, add timestamps
+   - If you only see a brief video concept/idea (not a full transcript), DO NOT add timestamps
+   - Format as: 0:00 Intro, 1:23 Topic Name
    - First timestamp MUST be 0:00 to activate YouTube chapters
-   - Each chapter must be at least 10 seconds long
    - Use keyword-rich chapter titles (e.g., "3:45 Best Clash Royale decks for Arena 10" not just "3:45 Decks")
-   - Space 40 seconds to 2 minutes apart for meaningful content shifts
-   - For 10-min video: use 4-7 timestamps; 5-min video: 3-4 timestamps
-   - ONLY include if transcript shows clear content shifts
+   - SKIP THIS SECTION if input is just a concept/idea without detailed timing information
 
 4. WHO IT'S FOR (1-2 sentences):
    - Quick statement about target audience

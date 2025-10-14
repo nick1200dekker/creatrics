@@ -19,6 +19,8 @@ REQUIREMENTS:
 5. Return as a comma-separated list
 
 TAG STRATEGY:
+- If a PRIMARY KEYWORD is provided, ALWAYS include it (or close variations) as the FIRST tags
+- Split the primary keyword into component parts if needed (e.g., "clash royale best decks to climb" → "clash royale", "clash royale decks", "best decks", "clash royale ladder", "trophy climbing")
 - Start with 2-3 BROAD genre/category tags (e.g., "mobile game", "gaming")
 - Add 2-3 main topic tags (e.g., "clash royale", "supercell")
 - Add 5-7 specific niche keywords (keep under 30 chars each)

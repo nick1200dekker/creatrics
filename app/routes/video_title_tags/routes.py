@@ -117,9 +117,14 @@ def generate_video_tags():
     try:
         data = request.json
         input_text = data.get('input', '').strip()
+        keyword = data.get('keyword', '').strip()
 
         if not input_text:
             return jsonify({'success': False, 'error': 'Please provide video details'}), 400
+
+        # Add keyword to the beginning of input if provided
+        if keyword:
+            input_text = f"PRIMARY KEYWORD: {keyword}\n\n{input_text}"
 
         # Initialize managers
         credits_manager = CreditsManager()
@@ -202,6 +207,7 @@ def generate_video_description():
         user_input = data.get('input', '').strip()
         reference_description = data.get('reference_description', '').strip()
         video_type = data.get('type', 'long')
+        keyword = data.get('keyword', '').strip()
 
         if not user_input:
             return jsonify({'success': False, 'error': 'Please provide video content description'}), 400
@@ -249,7 +255,8 @@ def generate_video_description():
             input_text=user_input,
             video_type=video_type,
             user_id=user_id,
-            reference_description=reference_description if reference_description else ""
+            reference_description=reference_description if reference_description else "",
+            keyword=keyword if keyword else ""
         )
 
         if not generation_result.get('success'):

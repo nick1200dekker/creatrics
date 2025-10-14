@@ -50,7 +50,7 @@ class VideoDescriptionGenerator:
             return self.get_fallback_prompt(video_type, reference_description, style_analysis)
 
     def generate_description(self, input_text: str, video_type: str = 'long',
-                           reference_description: str = "", user_id: str = None) -> Dict:
+                           reference_description: str = "", user_id: str = None, keyword: str = "") -> Dict:
         """
         Generate YouTube description using AI
 
@@ -59,6 +59,7 @@ class VideoDescriptionGenerator:
             video_type: Either 'long' or 'short'
             reference_description: Optional reference description for style/links
             user_id: User ID for tracking
+            keyword: Optional target keyword to include in description
 
         Returns:
             Dict with success status and generated description
@@ -86,6 +87,8 @@ class VideoDescriptionGenerator:
                     Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}. Always use current and up-to-date references.
 
                     IMPORTANT: Use {now.year} for any year references, not past years like 2024.
+
+                    {f'PRIMARY KEYWORD: Start the description naturally with this keyword or phrase: "{keyword}". Capitalize it appropriately (brand names, proper nouns, etc.).' if keyword else ''}
 
                     FORMATTING RULES:
                     - NO bold text or markdown formatting (no ** or ##)
