@@ -158,11 +158,6 @@ function displayMainAnalysis(keyword, analysis) {
     document.getElementById('analyzedKeyword').textContent = keyword;
 
     if (analysis) {
-        // Metrics
-        document.getElementById('totalVideos').textContent = formatNumber(analysis.total_videos);
-        document.getElementById('searchInterest').textContent = `${analysis.suggestion_count} suggestions`;
-        document.getElementById('opportunityScore').textContent = analysis.opportunity_score;
-
         // Competition level
         const competitionBadges = {
             'low': { text: 'Low Competition', class: 'low' },
@@ -181,6 +176,9 @@ function displayMainAnalysis(keyword, analysis) {
         };
         document.getElementById('interestLevel').textContent = interestBadges[analysis.interest_level] || 'Unknown';
 
+        // Opportunity score
+        document.getElementById('opportunityScore').textContent = analysis.opportunity_score;
+
         // Opportunity badge
         const opportunityBadge = document.getElementById('opportunityBadge');
         if (analysis.opportunity_score >= 70) {
@@ -195,11 +193,9 @@ function displayMainAnalysis(keyword, analysis) {
         }
     } else {
         // No analysis available
-        document.getElementById('totalVideos').textContent = '-';
-        document.getElementById('searchInterest').textContent = '-';
-        document.getElementById('opportunityScore').textContent = '-';
         document.getElementById('competitionLevel').textContent = '-';
         document.getElementById('interestLevel').textContent = '-';
+        document.getElementById('opportunityScore').textContent = '-';
         document.getElementById('opportunityBadge').textContent = 'Analyzing...';
         document.getElementById('opportunityBadge').className = 'opportunity-badge medium';
     }
@@ -217,8 +213,9 @@ function displayRelatedKeywords(keywords) {
         return;
     }
 
-    // Sort by opportunity score (descending)
-    keywords.sort((a, b) => b.opportunity_score - a.opportunity_score);
+    // Sort by competition level (low competition first)
+    const compOrder = { 'low': 0, 'medium': 1, 'high': 2 };
+    keywords.sort((a, b) => compOrder[a.competition_level] - compOrder[b.competition_level]);
 
     keywords.forEach(kw => {
         const card = createKeywordCard(kw);
@@ -234,17 +231,6 @@ function createKeywordCard(keyword) {
     card.className = 'keyword-card';
     card.onclick = () => exploreKeyword(keyword.keyword);
 
-    // Determine score class
-    let scoreClass = 'low';
-    let scoreLabel = keyword.opportunity_score;
-    if (keyword.opportunity_score >= 70) {
-        scoreClass = 'excellent';
-    } else if (keyword.opportunity_score >= 50) {
-        scoreClass = 'good';
-    } else if (keyword.opportunity_score >= 30) {
-        scoreClass = 'medium';
-    }
-
     // Competition level label
     const compLabels = {
         'low': 'Low Competition',
@@ -255,16 +241,10 @@ function createKeywordCard(keyword) {
     card.innerHTML = `
         <div class="keyword-header">
             <div class="keyword-text">${escapeHtml(keyword.keyword)}</div>
-            <div class="keyword-score ${scoreClass}">${scoreLabel}/100</div>
         </div>
         <div class="keyword-stats">
             <div class="keyword-stat">
-                <span class="stat-label">Competition:</span>
                 <span class="stat-value">${compLabels[keyword.competition_level] || 'Unknown'}</span>
-            </div>
-            <div class="keyword-stat">
-                <span class="stat-label">Total Videos:</span>
-                <span class="stat-value">${formatNumber(keyword.total_videos)}</span>
             </div>
         </div>
     `;

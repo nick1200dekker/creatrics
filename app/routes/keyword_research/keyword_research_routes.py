@@ -100,7 +100,7 @@ def analyze_keyword():
 
         total_videos = int(all_time_data.get('estimatedResults', 0))
 
-        # Get autocomplete suggestions count as search interest indicator
+        # Get autocomplete suggestions count
         autocomplete_url = f"https://{RAPIDAPI_HOST}/suggest_queries"
         autocomplete_params = {"query": keyword, "geo": "US"}
 
@@ -111,20 +111,42 @@ def analyze_keyword():
         except:
             suggestion_count = 0
 
-        # Calculate average views from recent videos (last 20) for interest indication
-        top_videos = all_time_data.get('data', [])[:20]
-        view_counts = []
+        # Get RECENT videos (last 30 days) for better search volume estimation
+        recent_url = f"https://{RAPIDAPI_HOST}/search"
+        recent_params = {
+            "query": keyword,
+            "upload_date": "month"  # Last 30 days
+        }
 
-        for video in top_videos:
+        try:
+            recent_response = requests.get(recent_url, headers=headers, params=recent_params, timeout=30)
+            recent_data = recent_response.json()
+            recent_videos = recent_data.get('data', [])
+        except:
+            recent_videos = []
+
+        # Analyze recent video performance for search interest
+        recent_view_counts = []
+        high_performing_videos = 0  # Videos with 50K+ views in last 30 days
+
+        for video in recent_videos[:20]:
             if video.get('type') in ['video', 'shorts']:
+                # Get view count
                 view_text = video.get('viewCount')
                 if view_text:
                     try:
-                        view_counts.append(int(view_text))
+                        views = int(view_text)
+                        recent_view_counts.append(views)
+
+                        # Count high-performing recent videos
+                        if views > 50000:  # 50K+ views in last 30 days = real interest
+                            high_performing_videos += 1
                     except (ValueError, TypeError):
                         continue
 
-        avg_views = int(statistics.mean(view_counts)) if view_counts else 0
+        # Calculate metrics
+        avg_recent_views = int(statistics.mean(recent_view_counts)) if recent_view_counts else 0
+        recent_video_count = len(recent_view_counts)
 
         # Determine competition level
         if total_videos < 50000:
@@ -137,26 +159,34 @@ def analyze_keyword():
             competition_level = 'high'
             competition_score = 20
 
-        # Determine search interest level based on suggestions and views
-        # More suggestions = more people searching for related terms
-        if suggestion_count >= 13:
+        # Determine search interest based on RECENT video performance (more reliable)
+        # High views on recent content = people are actively searching
+
+        # Base score on recent video performance
+        if avg_recent_views > 100000:  # 100K+ avg views on recent videos
             interest_level = 'high'
             interest_score = 80
-        elif suggestion_count >= 8:
+        elif avg_recent_views > 30000:  # 30K-100K avg views
             interest_level = 'medium'
-            interest_score = 50
-        elif suggestion_count >= 5:
+            interest_score = 55
+        elif avg_recent_views > 5000:   # 5K-30K avg views
             interest_level = 'low'
-            interest_score = 25
-        else:
+            interest_score = 30
+        else:                            # < 5K avg views
             interest_level = 'very_low'
-            interest_score = 5
+            interest_score = 10
 
-        # Boost interest score if videos have good views
-        if avg_views > 100000:
-            interest_score = min(100, interest_score + 15)
-        elif avg_views > 10000:
+        # Boost if multiple videos are performing well (confirms sustained interest)
+        if high_performing_videos >= 5:
+            interest_score = min(100, interest_score + 20)
+        elif high_performing_videos >= 3:
             interest_score = min(100, interest_score + 10)
+
+        # Small boost for autocomplete suggestions (secondary indicator)
+        if suggestion_count >= 13:
+            interest_score = min(100, interest_score + 5)
+        elif suggestion_count >= 8:
+            interest_score = min(100, interest_score + 3)
 
         # Calculate opportunity score
         # Good opportunity = High interest + Low competition
@@ -166,7 +196,9 @@ def analyze_keyword():
             'keyword': keyword,
             'total_videos': total_videos,
             'suggestion_count': suggestion_count,
-            'avg_views': avg_views,
+            'avg_recent_views': avg_recent_views,
+            'recent_video_count': recent_video_count,
+            'high_performing_videos': high_performing_videos,
             'opportunity_score': opportunity_score,
             'competition_level': competition_level,
             'interest_level': interest_level,
