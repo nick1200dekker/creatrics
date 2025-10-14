@@ -1034,16 +1034,7 @@
                    class="nav-subitem {% if request.endpoint and 'video_title_tags' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-sparkle"></i>
-                    <span>Title & Tags</span>
-                </a>
-                {% endif %}
-
-                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.video_description %}
-                <a href="{{ url_for('video_description.video_description') }}"
-                   class="nav-subitem {% if request.endpoint and 'video_description' in request.endpoint %}active{% endif %}"
-                   onclick="return BaseApp.checkGuestAccess(event, this)">
-                    <i class="ph ph-file-text"></i>
-                    <span>Video Description</span>
+                    <span>Title & More</span>
                 </a>
                 {% endif %}
 

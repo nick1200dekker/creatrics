@@ -5,7 +5,7 @@ from app.system.auth.permissions import get_workspace_user_id, check_workspace_p
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_title.video_title import VideoTitleGenerator
 from app.scripts.video_tags.video_tags import VideoTagsGenerator
-from app.scripts.video_description.video_description import VideoDescriptionGenerator
+from app.scripts.video_title.video_description import VideoDescriptionGenerator
 import logging
 
 logger = logging.getLogger(__name__)
