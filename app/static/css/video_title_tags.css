@@ -117,6 +117,75 @@ html.dark .form-label i {
     color: #60A5FA;
 }
 
+/* Info Tooltip */
+.info-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.25rem;
+    cursor: help;
+}
+
+.info-tooltip i {
+    font-size: 1rem;
+    color: var(--text-tertiary);
+    transition: color 0.2s ease;
+}
+
+.info-tooltip:hover i {
+    color: #3B82F6;
+}
+
+html.dark .info-tooltip:hover i {
+    color: #60A5FA;
+}
+
+.tooltip-text {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.625rem 0.875rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    pointer-events: none;
+}
+
+html.dark .tooltip-text {
+    background: rgba(39, 39, 42, 0.95);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip-text::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--bg-primary);
+}
+
+html.dark .tooltip-text::after {
+    border-top-color: rgba(39, 39, 42, 0.95);
+}
+
+.info-tooltip:hover .tooltip-text {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* Video Type Toggle */
 .video-type-toggle {
     display: flex;
@@ -340,11 +409,71 @@ html.dark .reference-textarea:focus {
     box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
+.reference-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.75rem;
+}
+
+.reference-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.reference-action-btn {
+    padding: 0.5rem 0.875rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+html.dark .reference-action-btn {
+    background: rgba(63, 63, 70, 0.6);
+    border-color: rgba(82, 82, 91, 0.6);
+}
+
+.reference-action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.reference-action-btn.clear-btn:hover {
+    background: #EF4444;
+    border-color: #EF4444;
+    color: white;
+}
+
+.reference-action-btn.save-btn {
+    background: #10B981;
+    border-color: #10B981;
+    color: white;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.reference-action-btn.save-btn.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+html.dark .reference-action-btn.save-btn {
+    background: #059669;
+    border-color: #059669;
+}
+
 /* Generation Options - Checkboxes */
 .generation-options {
     display: flex;
     flex-direction: column;
-    gap: 0.625rem;
+    gap: 0.75rem;
 }
 
 .checkbox-label {
@@ -352,16 +481,18 @@ html.dark .reference-textarea:focus {
     align-items: center;
     gap: 0.75rem;
     cursor: pointer;
-    padding: 0.75rem;
+    padding: 1rem 1.125rem;
     background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
+    border: 2px solid var(--border-primary);
+    border-radius: 10px;
     transition: all 0.2s ease;
+    position: relative;
 }
 
 .checkbox-label:hover {
     background: var(--bg-tertiary);
-    border-color: rgba(59, 130, 246, 0.3);
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateX(4px);
 }
 
 html.dark .checkbox-label {
@@ -371,48 +502,60 @@ html.dark .checkbox-label {
 
 html.dark .checkbox-label:hover {
     background: rgba(63, 63, 70, 0.6);
-    border-color: rgba(96, 165, 250, 0.3);
+    border-color: rgba(96, 165, 250, 0.4);
 }
 
 .checkbox-label input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
+    position: absolute;
+    opacity: 0;
     cursor: pointer;
-    border-radius: 4px;
-    flex-shrink: 0;
-    appearance: none;
-    -webkit-appearance: none;
+}
+
+.checkbox-custom {
+    width: 22px;
+    height: 22px;
     border: 2px solid var(--border-primary);
+    border-radius: 6px;
     background: var(--bg-primary);
+    flex-shrink: 0;
     position: relative;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.checkbox-label input[type="checkbox"]:checked {
-    background: #3B82F6;
+html.dark .checkbox-custom {
+    background: rgba(24, 24, 27, 0.6);
+    border-color: rgba(82, 82, 91, 0.8);
+}
+
+.checkbox-label input[type="checkbox"]:checked ~ .checkbox-custom {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     border-color: #3B82F6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
-.checkbox-label input[type="checkbox"]:checked::after {
+html.dark .checkbox-label input[type="checkbox"]:checked ~ .checkbox-custom {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    border-color: #60A5FA;
+}
+
+.checkbox-label input[type="checkbox"]:checked ~ .checkbox-custom::after {
     content: '✓';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     color: white;
     font-size: 14px;
     font-weight: bold;
-}
-
-html.dark .checkbox-label input[type="checkbox"]:checked {
-    background: #60A5FA;
-    border-color: #60A5FA;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .checkbox-text {
     color: var(--text-primary);
     font-weight: 500;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
+    user-select: none;
 }
 
 /* Generate Button */

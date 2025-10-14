@@ -48,10 +48,28 @@ function toggleReferenceSection() {
 
     if (content.classList.contains('show')) {
         content.classList.remove('show');
-        toggle.innerHTML = '<i class="ph ph-plus"></i> Add Reference';
+        toggle.innerHTML = '<i class="ph ph-caret-down"></i>';
     } else {
         content.classList.add('show');
-        toggle.innerHTML = '<i class="ph ph-minus"></i> Remove Reference';
+        toggle.innerHTML = '<i class="ph ph-caret-up"></i>';
+    }
+}
+
+// Clear reference description
+function clearReferenceDescription() {
+    const refDesc = document.getElementById('referenceDescription');
+    refDesc.value = '';
+    updateRefDescCharCount();
+    showToast('Reference description cleared', 'info');
+}
+
+// Save reference description (visual feedback)
+function saveReferenceDescription() {
+    const refDesc = document.getElementById('referenceDescription').value.trim();
+    if (refDesc) {
+        showToast('Reference description saved', 'success');
+    } else {
+        showToast('No reference description to save', 'error');
     }
 }
 

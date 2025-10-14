@@ -51,16 +51,16 @@
                             <label class="form-label">
                                 <i class="ph ph-key"></i>
                                 Target Keyword (Optional)
+                                <div class="info-tooltip">
+                                    <i class="ph ph-info"></i>
+                                    <span class="tooltip-text">If provided, titles and descriptions will start with this exact keyword</span>
+                                </div>
                             </label>
                             <input type="text"
                                    class="input-textarea"
                                    id="keywordInput"
                                    placeholder="e.g., best beginner deck 2025"
                                    style="min-height: 45px; padding: 0.75rem;">
-                            <div class="input-helper">
-                                <i class="ph ph-info"></i>
-                                <span>If provided, titles and descriptions will start with this exact keyword</span>
-                            </div>
                         </div>
 
                         <!-- Video Concept Input -->
@@ -86,7 +86,7 @@
                                         Reference Description
                                     </label>
                                     <button class="reference-toggle-btn" onclick="toggleReferenceSection()" id="referenceToggle">
-                                        <i class="ph ph-plus"></i> Add Reference
+                                        <i class="ph ph-caret-down"></i>
                                     </button>
                                 </div>
                                 <div class="reference-content" id="referenceContent">
@@ -95,7 +95,17 @@
                                               placeholder="Paste an existing description you want to use as a template or reference..."
                                               maxlength="5000"
                                               oninput="updateRefDescCharCount()"></textarea>
-                                    <div class="char-count" id="refDescCharCount">0 / 5000</div>
+                                    <div class="reference-footer">
+                                        <div class="char-count" id="refDescCharCount">0 / 5000</div>
+                                        <div class="reference-actions">
+                                            <button class="reference-action-btn clear-btn" onclick="clearReferenceDescription()" title="Clear reference">
+                                                <i class="ph ph-x"></i> Clear
+                                            </button>
+                                            <button class="reference-action-btn save-btn" onclick="saveReferenceDescription()" title="Save reference">
+                                                <i class="ph ph-check"></i> Saved
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -109,14 +119,17 @@
                             <div class="generation-options">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="generateTitlesCheck" checked>
-                                    <span class="checkbox-text">Titles (10 variations)</span>
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-text">Titles</span>
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="generateDescriptionCheck">
+                                    <span class="checkbox-custom"></span>
                                     <span class="checkbox-text">Description</span>
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="generateTagsCheck">
+                                    <span class="checkbox-custom"></span>
                                     <span class="checkbox-text">Tags</span>
                                 </label>
                             </div>
