@@ -51,6 +51,278 @@ html.dark .title-item.selected {
 html.dark .title-action-btn.tags {
     color: #A78BFA;
 }
+
+/* Input helper text */
+.input-helper {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+/* Reference Section Styling */
+.reference-section {
+    background: transparent;
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+html.dark .reference-section {
+    background: transparent;
+    border-color: var(--border-secondary);
+}
+
+.reference-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: transparent;
+}
+
+html.dark .reference-header {
+    background: transparent;
+    border-bottom-color: var(--border-secondary);
+}
+
+.reference-toggle-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.reference-toggle-btn:hover {
+    background: #3B82F6;
+    border-color: #3B82F6;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.reference-toggle-btn i {
+    font-size: 0.875rem;
+}
+
+.reference-content {
+    padding: 1.5rem;
+    background: var(--bg-primary);
+    display: none;
+}
+
+html.dark .reference-content {
+    background: var(--bg-tertiary);
+}
+
+.reference-content.show {
+    display: block;
+}
+
+.reference-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    resize: vertical;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+}
+
+html.dark .reference-textarea {
+    background: var(--bg-secondary);
+}
+
+.reference-textarea:focus {
+    outline: none;
+    border-color: #3B82F6;
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .reference-textarea:focus {
+    background: var(--bg-primary);
+}
+
+.reference-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+/* Tags Display Styling */
+.tags-display-container {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+}
+
+.tags-display-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag-badge {
+    padding: 0.375rem 0.75rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.tags-display-info {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Generation Options Styling */
+.generation-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.checkbox-label:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+}
+
+html.dark .checkbox-label {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+}
+
+html.dark .checkbox-label:hover {
+    background: var(--bg-tertiary);
+    border-color: #374151;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #3B82F6;
+    border-radius: 4px;
+    flex-shrink: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 2px solid var(--border-primary);
+    background: var(--bg-primary);
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+    background: #3B82F6;
+    border-color: #3B82F6;
+}
+
+.checkbox-label input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+html.dark .checkbox-label input[type="checkbox"] {
+    border-color: var(--border-secondary);
+    background: var(--bg-tertiary);
+}
+
+html.dark .checkbox-label input[type="checkbox"]:checked {
+    background: #3B82F6;
+    border-color: #3B82F6;
+}
+
+.checkbox-text {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Results Tabs Styling */
+.results-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+}
+
+.results-tab-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.results-tab-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.results-tab-btn.active {
+    background: #3B82F6;
+    color: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.results-tab-btn i {
+    font-size: 1rem;
+}
 </style>
 {% endblock %}
 
@@ -89,24 +361,85 @@ html.dark .title-action-btn.tags {
                             </div>
                         </div>
 
-                        <!-- Video Description Input -->
+                        <!-- Keyword Input (Optional) -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="ph ph-key"></i>
+                                Target Keyword (Optional)
+                            </label>
+                            <input type="text"
+                                   class="input-textarea"
+                                   id="keywordInput"
+                                   placeholder="e.g., best beginner deck 2025"
+                                   style="min-height: 45px; padding: 0.75rem;">
+                            <p class="input-helper">
+                                If provided, titles and descriptions will start with this exact keyword
+                            </p>
+                        </div>
+
+                        <!-- Video Concept Input -->
                         <div class="form-group">
                             <label class="form-label">
                                 <i class="ph ph-article"></i>
-                                Video Description or Script
+                                Video Concept or Script
                             </label>
                             <textarea class="input-textarea"
                                       id="videoInput"
-                                      placeholder="Describe your video content, paste your script, or outline your main points. The more detail you provide, the better titles we can generate..."
+                                      placeholder="Describe your video content, paste your script, or outline your main points. The more detail you provide, the better results..."
                                       maxlength="5000"
                                       onkeyup="updateCharCount()"></textarea>
                             <div class="char-count" id="charCount">0 / 5000</div>
                         </div>
 
-                        <!-- Generate Titles Button -->
-                        <button class="generate-btn" onclick="generateTitles()" id="generateBtn">
+                        <!-- Reference Description Section -->
+                        <div class="form-group">
+                            <div class="reference-section">
+                                <div class="reference-header">
+                                    <label class="form-label" style="margin-bottom: 0;">
+                                        <i class="ph ph-lightbulb"></i>
+                                        Reference Description
+                                    </label>
+                                    <button class="reference-toggle-btn" onclick="toggleReferenceSection()" id="referenceToggle">
+                                        <i class="ph ph-plus"></i> Add Reference
+                                    </button>
+                                </div>
+                                <div class="reference-content" id="referenceContent">
+                                    <textarea class="reference-textarea"
+                                              id="referenceDescription"
+                                              placeholder="Paste an existing description you want to use as a template or reference..."
+                                              maxlength="5000"
+                                              onkeyup="updateRefDescCharCount()"></textarea>
+                                    <div class="char-count" id="refDescCharCount">0 / 5000</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Generation Options -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="ph ph-check-square"></i>
+                                What to Generate
+                            </label>
+                            <div class="generation-options">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="generateTitlesCheck" checked>
+                                    <span class="checkbox-text">Titles (10 variations)</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="generateDescriptionCheck">
+                                    <span class="checkbox-text">Description</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="generateTagsCheck">
+                                    <span class="checkbox-text">Tags</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <button class="generate-btn" onclick="generateContent()" id="generateBtn">
                             <i class="ph ph-sparkle"></i>
-                            Generate 10 Titles
+                            Generate
                         </button>
 
                         <!-- Keywords Search Trends Section -->
@@ -175,7 +508,339 @@ function updateCharCount() {
     document.getElementById('charCount').textContent = `${count} / 5000`;
 }
 
-// Generate titles
+// Update reference description character count
+function updateRefDescCharCount() {
+    const input = document.getElementById('referenceDescription');
+    const count = input.value.length;
+    document.getElementById('refDescCharCount').textContent = `${count} / 5000`;
+}
+
+// Toggle reference section
+function toggleReferenceSection() {
+    const content = document.getElementById('referenceContent');
+    const toggle = document.getElementById('referenceToggle');
+
+    if (content.classList.contains('show')) {
+        content.classList.remove('show');
+        toggle.innerHTML = '<i class="ph ph-plus"></i> Add Reference';
+    } else {
+        content.classList.add('show');
+        toggle.innerHTML = '<i class="ph ph-minus"></i> Remove Reference';
+    }
+}
+
+// Generate content (titles and/or description and/or tags)
+async function generateContent() {
+    const input = document.getElementById('videoInput').value.trim();
+    const keyword = document.getElementById('keywordInput').value.trim();
+    const referenceDescription = document.getElementById('referenceDescription').value.trim();
+    const generateTitles = document.getElementById('generateTitlesCheck').checked;
+    const generateDescription = document.getElementById('generateDescriptionCheck').checked;
+    const generateTags = document.getElementById('generateTagsCheck').checked;
+
+    if (!input) {
+        showToast('Please enter your video description or script', 'error');
+        return;
+    }
+
+    if (!generateTitles && !generateDescription && !generateTags) {
+        showToast('Please select at least one option to generate', 'error');
+        return;
+    }
+
+    if (isGenerating) return;
+
+    isGenerating = true;
+    const generateBtn = document.getElementById('generateBtn');
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="ph ph-spinner"></i> Generating...';
+
+    // Hide tags section when regenerating
+    document.getElementById('tagsSection').style.display = 'none';
+    selectedTitle = null;
+
+    // Show loading state
+    let loadingParts = [];
+    if (generateTitles) loadingParts.push('titles');
+    if (generateDescription) loadingParts.push('description');
+    if (generateTags) loadingParts.push('tags');
+    const loadingText = loadingParts.join(', ').replace(/, ([^,]*)$/, ' and $1');
+
+    document.getElementById('resultsContainer').innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Creating Your Content</div>
+            <div class="loading-subtext">Generating ${loadingText}...</div>
+        </div>
+    `;
+
+    try {
+        let titlesData = null;
+        let descriptionData = null;
+        let tagsData = null;
+
+        // Prepare input with keyword enforcement if provided
+        let enhancedInput = input;
+        if (keyword) {
+            enhancedInput = `CRITICAL: You MUST start with this EXACT keyword: "${keyword}"
+
+VIDEO CONTENT:
+${input}`;
+        }
+
+        // Generate titles if requested
+        if (generateTitles) {
+            const titleResponse = await fetch('/api/generate-video-titles', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    input: enhancedInput,
+                    type: currentVideoType
+                })
+            });
+            titlesData = await titleResponse.json();
+
+            if (!titlesData.success) {
+                throw new Error(titlesData.error || 'Failed to generate titles');
+            }
+        }
+
+        // Generate description if requested
+        if (generateDescription) {
+            const descResponse = await fetch('/api/generate-video-description', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    input: enhancedInput,
+                    type: currentVideoType,
+                    reference_description: referenceDescription
+                })
+            });
+            descriptionData = await descResponse.json();
+
+            if (!descriptionData.success) {
+                throw new Error(descriptionData.error || 'Failed to generate description');
+            }
+        }
+
+        // Generate tags if requested
+        if (generateTags) {
+            const tagsResponse = await fetch('/api/generate-video-tags', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    input: enhancedInput
+                })
+            });
+            tagsData = await tagsResponse.json();
+
+            if (!tagsData.success) {
+                throw new Error(tagsData.error || 'Failed to generate tags');
+            }
+        }
+
+        // Display results
+        displayCombinedResults(titlesData, descriptionData, tagsData);
+        showToast('Content generated successfully!', 'success');
+
+    } catch (error) {
+        console.error('Error generating content:', error);
+        document.getElementById('resultsContainer').innerHTML = `
+            <div class="error-state">
+                <i class="ph ph-warning-circle error-icon"></i>
+                <div class="error-title">Generation Failed</div>
+                <div class="error-text">${error.message || 'Unable to generate content. Please try again.'}</div>
+            </div>
+        `;
+        showToast('Failed to generate content', 'error');
+    } finally {
+        isGenerating = false;
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="ph ph-sparkle"></i> Generate';
+    }
+}
+
+// Display combined results (titles and/or description and/or tags)
+function displayCombinedResults(titlesData, descriptionData, tagsData) {
+    let html = '';
+
+    // Check if all three are generated for tabs
+    const hasTitles = titlesData && titlesData.titles && titlesData.titles.length > 0;
+    const hasDescription = descriptionData && descriptionData.description;
+    const hasTags = tagsData && tagsData.tags && tagsData.tags.length > 0;
+    const showTabs = hasTitles && hasDescription && hasTags;
+
+    // Add tabs if all three are present
+    if (showTabs) {
+        html += `
+            <div class="results-tabs">
+                <button class="results-tab-btn active" onclick="switchTab('titles')">
+                    <i class="ph ph-sparkle"></i> Titles
+                </button>
+                <button class="results-tab-btn" onclick="switchTab('description')">
+                    <i class="ph ph-file-text"></i> Description
+                </button>
+                <button class="results-tab-btn" onclick="switchTab('tags')">
+                    <i class="ph ph-hash"></i> Tags
+                </button>
+            </div>
+        `;
+    }
+
+    // Display Titles if generated
+    if (hasTitles) {
+        currentTitles = titlesData.titles;
+
+        html += `
+            <div class="results-section tab-content-section" id="titlesSection" style="margin-bottom: 2rem; ${showTabs ? 'display: block;' : ''}">
+                <div class="results-header">
+                    <h3 class="results-title">
+                        <i class="ph ph-sparkle"></i>
+                        Generated Titles (${titlesData.titles.length})
+                    </h3>
+                    <div class="results-actions">
+                        <button class="action-btn" onclick="copyAllTitles()" title="Copy all titles">
+                            <i class="ph ph-copy"></i> Copy All
+                        </button>
+                    </div>
+                </div>
+                <div class="titles-content">
+                    <div class="titles-list">
+        `;
+
+        titlesData.titles.forEach((title, index) => {
+            html += `
+                <div class="title-item" id="title-item-${index}">
+                    <span class="title-number">${index + 1}</span>
+                    <span class="title-text" id="title-${index}">${escapeHtml(title)}</span>
+                    <div class="title-actions">
+                        <button class="title-action-btn copy" onclick="copyTitle(${index})" title="Copy title">
+                            <i class="ph ph-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Display Description if generated
+    if (hasDescription) {
+        html += `
+            <div class="results-section tab-content-section" id="descriptionSection" style="margin-bottom: 2rem; ${showTabs ? 'display: none;' : ''}">
+                <div class="results-header">
+                    <h3 class="results-title">
+                        <i class="ph ph-file-text"></i>
+                        Generated Description
+                    </h3>
+                    <div class="results-actions">
+                        <button class="action-btn" onclick="copyDescription()" title="Copy description">
+                            <i class="ph ph-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; padding: 1.25rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary);">
+                    <div style="color: var(--text-primary); line-height: 1.6; white-space: pre-wrap;" id="generatedDescription">${escapeHtml(descriptionData.description)}</div>
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.875rem;">
+                        ${descriptionData.description_character_count || descriptionData.description.length} characters
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Display Tags if generated
+    if (hasTags) {
+        currentTags = tagsData.tags;
+        const totalChars = tagsData.tags.join(', ').length;
+
+        html += `
+            <div class="results-section tab-content-section" id="tagsSection" style="${showTabs ? 'display: none;' : ''}">
+                <div class="results-header">
+                    <h3 class="results-title">
+                        <i class="ph ph-hash"></i>
+                        Generated Tags (${tagsData.tags.length})
+                    </h3>
+                    <div class="results-actions">
+                        <button class="action-btn" onclick="copyGeneratedTags()" title="Copy tags">
+                            <i class="ph ph-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                <div class="tags-display-container">
+                    <div class="tags-display-wrapper" id="generatedTagsList">
+        `;
+
+        tagsData.tags.forEach(tag => {
+            html += `
+                <span class="tag-badge">
+                    ${escapeHtml(tag)}
+                </span>
+            `;
+        });
+
+        html += `
+                    </div>
+                    <div class="tags-display-info">
+                        Total: ${totalChars} characters
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    document.getElementById('resultsContainer').innerHTML = html;
+}
+
+// Copy description
+function copyDescription() {
+    const desc = document.getElementById('generatedDescription')?.textContent;
+    if (desc) {
+        navigator.clipboard.writeText(desc).then(() => {
+            showToast('Description copied to clipboard!', 'success');
+        });
+    }
+}
+
+// Copy generated tags
+function copyGeneratedTags() {
+    if (currentTags && currentTags.length > 0) {
+        const tagsText = currentTags.join(', ');
+        navigator.clipboard.writeText(tagsText).then(() => {
+            showToast('Tags copied to clipboard!', 'success');
+        });
+    }
+}
+
+// Switch between result tabs
+function switchTab(tabName) {
+    // Hide all tab content sections
+    document.querySelectorAll('.tab-content-section').forEach(section => {
+        section.style.display = 'none';
+    });
+
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.results-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Show selected tab content
+    const sectionId = tabName + 'Section';
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.style.display = 'block';
+    }
+
+    // Add active class to clicked button
+    event.target.closest('.results-tab-btn').classList.add('active');
+}
+
+// Legacy function for backward compatibility
 async function generateTitles() {
     const input = document.getElementById('videoInput').value.trim();
 
