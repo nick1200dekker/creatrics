@@ -1085,18 +1085,29 @@ async function loadLatestAnalysisCard() {
 
 async function loadLatestAnalysis() {
     try {
+        // Hide setup section and show progress/loading section
+        const setupSection = document.getElementById('setupSection');
+        const progressSection = document.getElementById('progressSection');
+        const resultsSection = document.getElementById('resultsSection');
+
+        if (setupSection) setupSection.style.display = 'none';
+        if (progressSection) {
+            progressSection.style.display = 'block';
+            // Update progress text
+            const progressText = progressSection.querySelector('.progress-text');
+            const progressPercent = progressSection.querySelector('.progress-percent');
+            if (progressText) progressText.textContent = 'Loading analysis...';
+            if (progressPercent) progressPercent.textContent = '';
+        }
+        if (resultsSection) resultsSection.style.display = 'none';
+
         const response = await fetch('/api/competitors/latest-analysis');
         const data = await response.json();
 
         if (data.success && data.has_analysis) {
             const analysis = data.analysis;
 
-            // Hide setup and progress sections
-            const setupSection = document.getElementById('setupSection');
-            const progressSection = document.getElementById('progressSection');
-            const resultsSection = document.getElementById('resultsSection');
-
-            if (setupSection) setupSection.style.display = 'none';
+            // Hide progress and show results sections
             if (progressSection) progressSection.style.display = 'none';
             if (resultsSection) resultsSection.style.display = 'block';
 
