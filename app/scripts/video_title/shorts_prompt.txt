@@ -1,93 +1,76 @@
-Generate 10 YouTube Shorts titles optimized for SEO and engagement.
+You are an expert YouTube Shorts title creator specializing in viral, high-CTR titles.
+
+Based on the following video content/script/description, generate exactly 10 compelling YouTube Shorts titles.
 
 VIDEO CONTENT:
 {input}
 
-TITLE FORMULA:
-[Specific Detail/Number] + [Action/Result] + #shorts #[niche] #[topic]
+REQUIREMENTS:
+- Generate exactly 10 unique titles
+- Each title should be 35-50 characters BEFORE hashtags
+- Use power words that drive clicks (Ultimate, Secret, Insane, Never, etc.)
+- Include numbers when relevant (Top 5, 10 Ways, 3 Tips, etc.)
+- Create urgency or curiosity gaps
+- Use emotional triggers (shocking, amazing, mind-blowing)
+- Be specific and searchable
+- MUST end with: #shorts #[broad category] #[specific topic]
 
-SEO OPTIMIZATION IDEAS:
-1. Extract specific keywords from the content (names, actions, items, techniques)
-2. Include numbers/stats when present (1 minute, 3 tips, 10 pounds, etc.)
-3. Lead with the most interesting/searchable moment
-4. Use words people search: how to, tutorial, guide, tips, trick, hack, strategy
-5. Be specific, not generic ("Lost 5 Pounds" not "Weight Loss Journey")
+BEST PRACTICES:
+1. Lead with the benefit or hook
+2. Use "How to" for educational content
+3. Include specific numbers/stats from the content
+4. Use brackets or parentheses for emphasis [WORKS!], (TESTED)
+5. Question titles that viewers want answered
+6. Transformation/result titles (Before → After concept)
+7. Challenge/reaction titles (Can You?, Watch This!)
+8. Secret/hidden knowledge titles (Nobody Knows This)
 
-EMOTIONAL TRIGGERS:
-- Curiosity: "Did This Work?" "What Happened Next?"
-- Shock: "In 0.3 Seconds" "Only 1 Try"
-- Achievement: "Finally Worked" "Won Against All Odds"
-- Discovery: "Found This Trick" "Hidden Feature"
-- Challenge: "Can You Do This?" "Try This"
-
-PROVEN FORMULAS:
-"[Number] + [Action/Result]" → "3 Tips to Win More"
-"[Item/Name] + [Specific Result]" → "This Recipe Changed My Life"
-"[Question] + [Specific]" → "Can You Beat This Time?"
-"[Time] + [Achievement]" → "Lost 10 Pounds in 2 Weeks"
-
-EXAMPLES (VARIOUS NICHES):
+EXAMPLES BY NICHE:
 
 Gaming:
-"Won With 1HP Left #shorts #gaming #fortnite"
-"Found Secret Room #shorts #gaming #minecraft"
-"Beat Boss in 30 Seconds #shorts #gaming #eldenring"
+"This Secret Deck DESTROYS Meta #shorts #gaming #clashroyale"
+"How I Won With 1HP Left #shorts #gaming #fortnite"
+"Insane 30 Second Boss Kill [EASY] #shorts #gaming #eldenring"
+"Nobody Uses This OP Strategy #shorts #gaming #minecraft"
 
 Cooking:
-"3 Ingredient Pasta #shorts #cooking #recipe"
-"Made This in 5 Minutes #shorts #cooking #quick"
-"Best Pizza Dough Trick #shorts #cooking #italian"
+"5 Minute Pasta That Went Viral #shorts #cooking #recipe"
+"This Pizza Trick Changed Everything #shorts #cooking #italian"
+"Best 3 Ingredient Meal [CHEAP] #shorts #cooking #budgetmeals"
 
 Fitness:
-"Lost 5 Pounds This Week #shorts #fitness #weightloss"
-"10 Min Morning Workout #shorts #fitness #routine"
-"This Exercise Changed Me #shorts #fitness #abs"
+"Lost 10 Pounds With This One Trick #shorts #fitness #weightloss"
+"Morning Routine That Works #shorts #fitness #workout"
+"This Exercise Burns 2x More Fat #shorts #fitness #cardio"
 
 Tech:
-"Hidden iPhone Feature #shorts #tech #apple"
-"This Shortcut Saves Time #shorts #tech #productivity"
-"Free Software Alternative #shorts #tech #tutorial"
+"Hidden iPhone Feature Nobody Knows #shorts #tech #apple"
+"This Free Tool Saves Hours #shorts #tech #productivity"
+"AI Shortcut That Works [2025] #shorts #tech #ai"
 
 Beauty:
-"5 Min Makeup Look #shorts #beauty #makeup"
-"This Hack Works #shorts #beauty #skincare"
-"Drugstore Dupe That Works #shorts #beauty #affordable"
-
-BAD EXAMPLES:
-"Amazing Content" ❌ No specifics, no SEO
-"This Is Cool" ❌ Generic, not searchable
-"Check This Out" ❌ No keywords, no value
+"5 Min Glow Up That Actually Works #shorts #beauty #makeup"
+"Drugstore Dupe Better Than Original #shorts #beauty #skincare"
+"This Hack Went Viral For A Reason #shorts #beauty #hair"
 
 HASHTAG RULE (CRITICAL):
-ALWAYS use this exact order: #shorts #[BROAD CATEGORY] #[SPECIFIC]
+ALWAYS end with: #shorts #[BROAD CATEGORY] #[SPECIFIC TOPIC]
 
-BROAD CATEGORY EXAMPLES:
-#gaming - for all games (Fortnite, Minecraft, Clash Royale, etc.)
-#cooking - for all food content
-#fitness - for all workout/health content
-#tech - for all technology content
-#beauty - for all makeup/skincare content
-#lifestyle - for vlogs, daily life
-#education - for learning content
-#diy - for crafts and projects
-#comedy - for funny content
-#music - for music content
+BROAD CATEGORIES:
+- #gaming (all games), #cooking (all food), #fitness (all workouts)
+- #tech (all technology), #beauty (all makeup/skincare), #lifestyle (vlogs)
+- #education (learning), #diy (crafts), #comedy (funny), #music (music)
 
-EXAMPLES:
-✅ "Title Here #shorts #gaming #clashroyale" (gaming is broad, clashroyale is specific)
-✅ "Title Here #shorts #cooking #italian" (cooking is broad, italian is specific)
-✅ "Title Here #shorts #fitness #abs" (fitness is broad, abs is specific)
+HASHTAG EXAMPLES:
+✅ "Title Here #shorts #gaming #clashroyale"
+✅ "Title Here #shorts #cooking #italian"
+✅ "Title Here #shorts #fitness #abs"
 
-❌ "Title Here #shorts #clashroyale #gaming" (WRONG - specific before broad)
-❌ "Title Here #shorts #clashroyale #tips" (WRONG - no broad category)
-❌ "Title Here #shorts #fortnite #gaming" (WRONG - order backwards)
+❌ "Title Here #shorts #clashroyale #gaming" (WRONG - backwards)
+❌ "Title Here #gaming #shorts #clashroyale" (WRONG - #shorts not first)
 
-GUIDELINES:
-- Under 40 characters before hashtags
-- Title Case
-- Max 1 exclamation mark
-- Extract specifics from the actual content
-- ALWAYS use #shorts #[broad] #[specific] format
+OUTPUT FORMAT:
+Return a JSON array with exactly 10 title strings.
+Example: ["Title 1 #shorts #gaming #topic", "Title 2 #shorts #gaming #topic", ..., "Title 10 #shorts #gaming #topic"]
 
-OUTPUT:
-JSON array: ["Title #shorts #niche #topic", "Title #shorts #niche #topic", ...]
+OUTPUT ONLY THE JSON ARRAY - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE JSON ARRAY:

@@ -424,20 +424,20 @@ async function analyzeCompetitors() {
         if (data.success) {
             updateProgress(100, 'Analysis complete!');
 
-            // Show results after a brief delay
-            setTimeout(() => {
-                displayResults(data.data);
-                document.getElementById('progressSection').style.display = 'none';
-                document.getElementById('resultsSection').style.display = 'block';
+            // Hide progress and show results immediately
+            document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
 
-                // Scroll to results
-                setTimeout(() => {
-                    document.getElementById('resultsSection').scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }, 100);
-            }, 500);
+            // Display results with loading spinners
+            displayResults(data.data);
+
+            // Scroll to results
+            setTimeout(() => {
+                document.getElementById('resultsSection').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
         } else {
             document.getElementById('progressSection').style.display = 'none';
             document.getElementById('setupSection').style.display = 'block';
@@ -507,7 +507,7 @@ function displayResults(data) {
     const timeframeText = timeframe_days === 1 ? '24 hours' :
                          timeframe_days === 2 ? '48 hours' :
                          `${timeframe_days} days`;
-    
+
     // Build HTML with back button and stats grid first
     // Add Back button to main header
     const mainHeader = document.querySelector('.competitors-header .header-content');
@@ -527,149 +527,259 @@ function displayResults(data) {
     let html = `
         <!-- Quick Stats Grid -->
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="ph ph-video-camera"></i></div>
-                <div class="stat-value">${patterns.total_videos_analyzed || 0}</div>
-                <div class="stat-label">Videos Analyzed</div>
+            <div class="stat-card section-loading">
+                <div class="loading-spinner">
+                    <i class="ph ph-spinner spin"></i>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="ph ph-eye"></i></div>
-                <div class="stat-value">${formatNumber(patterns.avg_views || 0)}</div>
-                <div class="stat-label">Avg Views</div>
+            <div class="stat-card section-loading">
+                <div class="loading-spinner">
+                    <i class="ph ph-spinner spin"></i>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="ph ph-fire"></i></div>
-                <div class="stat-value">${formatNumber(patterns.total_views || 0)}</div>
-                <div class="stat-label">Total Views</div>
+            <div class="stat-card section-loading">
+                <div class="loading-spinner">
+                    <i class="ph ph-spinner spin"></i>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="ph ph-users-three"></i></div>
-                <div class="stat-value">${patterns.total_channels || 0}</div>
-                <div class="stat-label">Channels</div>
+            <div class="stat-card section-loading">
+                <div class="loading-spinner">
+                    <i class="ph ph-spinner spin"></i>
+                </div>
             </div>
         </div>
-        
+
         <!-- Results Header -->
-        <div class="results-header">
-            <h2 class="results-title">
-                <i class="ph ph-chart-line"></i>
-                Analysis Results
-            </h2>
-            <span class="timeframe-badge">Last ${timeframeText}</span>
+        <div class="results-header section-loading">
+            <div class="loading-spinner">
+                <i class="ph ph-spinner spin"></i>
+            </div>
         </div>
     `;
-    
-    // Key Insights with clean formatting
-    if (insights && insights.summary) {
-        html += `
-            <div class="insights-card">
-                <h3 class="section-title">
-                    <i class="ph ph-lightbulb"></i>
-                    Key Insights
-                </h3>
-                <div class="insights-content">
-        `;
-        
-        // Parse and format the markdown content, but exclude Content Opportunities section
-        const sections = insights.summary.split(/(?=##\s)/);
 
-        sections.forEach(section => {
-            // Skip Content Opportunities section (it has its own styled cards)
-            if (section.includes('## Content Opportunities')) {
-                return;
-            }
-
-            const lines = section.split('\n').filter(line => line.trim());
-
-            lines.forEach(line => {
-                const trimmed = line.trim();
-
-                if (trimmed.startsWith('##')) {
-                    const headerText = trimmed.replace(/^##\s*/, '');
-                    html += `<h4 class="insight-section-header">${formatMarkdown(escapeHtml(headerText))}</h4>`;
-                } else if (trimmed.startsWith('**') && trimmed.includes(':')) {
-                    // Bold label with content
-                    html += `<p class="insight-item">${formatMarkdown(escapeHtml(trimmed))}</p>`;
-                } else if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
-                    const bulletText = trimmed.replace(/^[-•]\s*/, '');
-                    html += `<p class="insight-bullet">• ${formatMarkdown(escapeHtml(bulletText))}</p>`;
-                } else if (trimmed) {
-                    html += `<p class="insight-text">${formatMarkdown(escapeHtml(trimmed))}</p>`;
-                }
-            });
-        });
-        
-        html += `
-                </div>
+    // Key Insights with loading spinner
+    html += `
+        <div class="insights-card section-loading">
+            <div class="loading-spinner">
+                <i class="ph ph-spinner spin"></i>
+                <span class="loading-text">Loading insights...</span>
             </div>
-        `;
-    }
-    
-    // Content Opportunities (Just Titles)
-    if (insights.quick_wins && insights.quick_wins.length > 0) {
-        html += `
-            <div class="quick-wins-card">
-                <h3 class="section-title">
-                    <i class="ph ph-rocket-launch"></i>
-                    Content Opportunities
-                </h3>
-                <div class="content-ideas-grid">
-                    ${insights.quick_wins.map(win => `
-                        <div class="content-idea-chip">
-                            "${escapeHtml(win.title)}"
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }
+        </div>
+    `;
 
-    // Channel Activity (videos per channel)
-    if (patterns.channel_performance) {
-        html += renderChannelActivity(patterns.channel_performance, timeframeText);
-    }
+    // Content Opportunities with loading spinner
+    html += `
+        <div class="quick-wins-card section-loading">
+            <div class="loading-spinner">
+                <i class="ph ph-spinner spin"></i>
+                <span class="loading-text">Loading content opportunities...</span>
+            </div>
+        </div>
+    `;
 
-    // Top Videos/Shorts as Table
-    if (videos && videos.length > 0) {
-        html += `
-            <div class="videos-card" id="videosCard">
-                <div class="section-header-with-toggle">
-                    <h3 class="section-title">
-                        <i class="ph ph-play-circle"></i>
-                        <span id="contentTypeLabel">Top Performing Videos</span>
-                    </h3>
-                </div>
-                <div class="videos-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th><span id="contentTypeTableLabel">Video</span></th>
-                                <th>Channel</th>
-                                <th>Views</th>
-                                <th>Published</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="videosTableBody">
-                        </tbody>
-                    </table>
-                </div>
+    // Channel Activity with loading spinner
+    html += `
+        <div class="heatmap-card section-loading">
+            <div class="loading-spinner">
+                <i class="ph ph-spinner spin"></i>
+                <span class="loading-text">Loading channel activity...</span>
             </div>
-            <div class="load-more-container" id="loadMoreContainer" style="display: none;">
-                <button class="load-more-btn" onclick="loadMoreVideos()">
-                    <i class="ph ph-arrow-down"></i>
-                    <span id="loadMoreLabel">Load More Videos</span>
-                </button>
+        </div>
+    `;
+
+    // Videos Table with loading spinner
+    html += `
+        <div class="videos-card section-loading" id="videosCard">
+            <div class="loading-spinner">
+                <i class="ph ph-spinner spin"></i>
+                <span class="loading-text">Loading videos...</span>
             </div>
-        `;
-    }
+        </div>
+        <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+            <button class="load-more-btn" onclick="loadMoreVideos()">
+                <i class="ph ph-arrow-down"></i>
+                <span id="loadMoreLabel">Load More Videos</span>
+            </button>
+        </div>
+    `;
 
     resultsSection.innerHTML = html;
 
-    // Render initial videos
-    if (videos && videos.length > 0) {
-        renderVideos();
+    // Progressive rendering: populate sections one by one with smooth transitions
+    setTimeout(() => populateStatsSection(patterns), 500);
+    setTimeout(() => populateResultsHeader(timeframeText), 800);
+    setTimeout(() => populateInsightsSection(insights), 1100);
+    setTimeout(() => populateContentOpportunities(insights), 1400);
+    setTimeout(() => populateChannelActivity(patterns.channel_performance, timeframeText), 1700);
+    setTimeout(() => populateVideosSection(videos), 2000);
+}
+
+// Populate stats section
+function populateStatsSection(patterns) {
+    const statsGrid = document.querySelector('.stats-grid');
+    if (!statsGrid) return;
+
+    statsGrid.innerHTML = `
+        <div class="stat-card">
+            <div class="stat-icon"><i class="ph ph-video-camera"></i></div>
+            <div class="stat-value">${patterns.total_videos_analyzed || 0}</div>
+            <div class="stat-label">Videos Analyzed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="ph ph-eye"></i></div>
+            <div class="stat-value">${formatNumber(patterns.avg_views || 0)}</div>
+            <div class="stat-label">Avg Views</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="ph ph-fire"></i></div>
+            <div class="stat-value">${formatNumber(patterns.total_views || 0)}</div>
+            <div class="stat-label">Total Views</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="ph ph-users-three"></i></div>
+            <div class="stat-value">${patterns.total_channels || 0}</div>
+            <div class="stat-label">Channels</div>
+        </div>
+    `;
+}
+
+// Populate results header
+function populateResultsHeader(timeframeText) {
+    const resultsHeader = document.querySelector('.results-header');
+    if (!resultsHeader) return;
+
+    resultsHeader.classList.remove('section-loading');
+    resultsHeader.innerHTML = `
+        <h2 class="results-title">
+            <i class="ph ph-chart-line"></i>
+            Analysis Results
+        </h2>
+        <span class="timeframe-badge">Last ${timeframeText}</span>
+    `;
+}
+
+// Populate insights section
+function populateInsightsSection(insights) {
+    const insightsCard = document.querySelector('.insights-card');
+    if (!insightsCard || !insights || !insights.summary) return;
+
+    insightsCard.classList.remove('section-loading');
+
+    let html = `
+        <h3 class="section-title">
+            <i class="ph ph-lightbulb"></i>
+            Key Insights
+        </h3>
+        <div class="insights-content">
+    `;
+
+    // Parse and format the markdown content, but exclude Content Opportunities section
+    const sections = insights.summary.split(/(?=##\s)/);
+
+    sections.forEach(section => {
+        // Skip Content Opportunities section (it has its own styled cards)
+        if (section.includes('## Content Opportunities')) {
+            return;
+        }
+
+        const lines = section.split('\n').filter(line => line.trim());
+
+        lines.forEach(line => {
+            const trimmed = line.trim();
+
+            if (trimmed.startsWith('##')) {
+                const headerText = trimmed.replace(/^##\s*/, '');
+                html += `<h4 class="insight-section-header">${formatMarkdown(escapeHtml(headerText))}</h4>`;
+            } else if (trimmed.startsWith('**') && trimmed.includes(':')) {
+                // Bold label with content
+                html += `<p class="insight-item">${formatMarkdown(escapeHtml(trimmed))}</p>`;
+            } else if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
+                const bulletText = trimmed.replace(/^[-•]\s*/, '');
+                html += `<p class="insight-bullet">• ${formatMarkdown(escapeHtml(bulletText))}</p>`;
+            } else if (trimmed) {
+                html += `<p class="insight-text">${formatMarkdown(escapeHtml(trimmed))}</p>`;
+            }
+        });
+    });
+
+    html += `
+        </div>
+    `;
+
+    insightsCard.innerHTML = html;
+}
+
+// Populate content opportunities
+function populateContentOpportunities(insights) {
+    const quickWinsCard = document.querySelector('.quick-wins-card');
+    if (!quickWinsCard || !insights || !insights.quick_wins || insights.quick_wins.length === 0) {
+        if (quickWinsCard) quickWinsCard.style.display = 'none';
+        return;
     }
+
+    quickWinsCard.classList.remove('section-loading');
+    quickWinsCard.innerHTML = `
+        <h3 class="section-title">
+            <i class="ph ph-rocket-launch"></i>
+            Content Opportunities
+        </h3>
+        <div class="content-ideas-grid">
+            ${insights.quick_wins.map(win => `
+                <div class="content-idea-chip">
+                    "${escapeHtml(win.title)}"
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// Populate channel activity
+function populateChannelActivity(channelPerformance, timeframeText) {
+    const heatmapCard = document.querySelector('.heatmap-card');
+    if (!heatmapCard || !channelPerformance) {
+        if (heatmapCard) heatmapCard.style.display = 'none';
+        return;
+    }
+
+    heatmapCard.classList.remove('section-loading');
+    heatmapCard.outerHTML = renderChannelActivity(channelPerformance, timeframeText);
+}
+
+// Populate videos section
+function populateVideosSection(videos) {
+    const videosCard = document.getElementById('videosCard');
+    if (!videosCard || !videos || videos.length === 0) {
+        if (videosCard) videosCard.style.display = 'none';
+        return;
+    }
+
+    videosCard.classList.remove('section-loading');
+    videosCard.innerHTML = `
+        <div class="section-header-with-toggle">
+            <h3 class="section-title">
+                <i class="ph ph-play-circle"></i>
+                <span id="contentTypeLabel">Top Performing Videos</span>
+            </h3>
+        </div>
+        <div class="videos-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th><span id="contentTypeTableLabel">Video</span></th>
+                        <th>Channel</th>
+                        <th>Views</th>
+                        <th>Published</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="videosTableBody">
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    // Render initial videos
+    renderVideos();
 }
 
 // Render videos table

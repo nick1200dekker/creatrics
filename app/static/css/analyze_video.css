@@ -567,6 +567,41 @@ html.dark .loading-spinner i {
     animation: spin 1s linear infinite;
 }
 
+/* Search Loading State - matching Optimize Video style */
+.search-loading-state {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    padding: 3rem 2rem;
+}
+
+.search-loading-state .loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.search-loading-state .loading-spinner i {
+    font-size: 3rem;
+    color: #3B82F6;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+html.dark .search-loading-state .loading-spinner i {
+    color: #60A5FA;
+}
+
+.search-loading-state .loading-text {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .analyze-header {

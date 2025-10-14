@@ -164,9 +164,9 @@ async function loadMyVideos() {
 
         const allVideos = data.videos || [];
 
-        // Separate videos and shorts
-        const regularVideos = allVideos.filter(v => !v.is_short);
-        const shorts = allVideos.filter(v => v.is_short);
+        // Separate videos and shorts, limit to 8 each
+        const regularVideos = allVideos.filter(v => !v.is_short).slice(0, 8);
+        const shorts = allVideos.filter(v => v.is_short).slice(0, 8);
 
         // Render regular videos
         if (regularVideos.length === 0) {

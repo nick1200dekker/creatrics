@@ -152,10 +152,23 @@ async function searchVideos() {
     }
 
     try {
-        // Show loading
+        // Show loading in button
         const searchBtn = document.querySelector('.search-btn');
         searchBtn.disabled = true;
         searchBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Searching...';
+
+        // Show loading state in results section
+        const resultsSection = document.getElementById('searchResults');
+        const resultsGrid = document.getElementById('searchResultsGrid');
+        resultsSection.style.display = 'block';
+        resultsGrid.innerHTML = `
+            <div class="search-loading-state">
+                <div class="loading-spinner">
+                    <i class="ph ph-spinner spin"></i>
+                    <span class="loading-text">Searching for videos...</span>
+                </div>
+            </div>
+        `;
 
         // Pass content type (videos or shorts) and sort order
         const response = await fetch(`/api/analyze-video/search?query=${encodeURIComponent(query)}&type=${currentContentType}&sort_by=${currentSortBy}`);
@@ -165,10 +178,12 @@ async function searchVideos() {
             displaySearchResults(data.videos);
         } else {
             alert(data.error || 'Search failed');
+            resultsSection.style.display = 'none';
         }
     } catch (error) {
         console.error('Error:', error);
         alert('Search failed. Please try again.');
+        document.getElementById('searchResults').style.display = 'none';
     } finally {
         // Reset button
         const searchBtn = document.querySelector('.search-btn');
@@ -250,6 +265,21 @@ function analyzeVideo(videoId, isShort = false) {
 // Load history
 async function loadHistory() {
     try {
+        // Show loading state
+        const historyGrid = document.getElementById('historyGrid');
+        const emptyHistory = document.getElementById('emptyHistory');
+
+        historyGrid.style.display = 'grid';
+        emptyHistory.style.display = 'none';
+        historyGrid.innerHTML = `
+            <div class="search-loading-state">
+                <div class="loading-spinner">
+                    <i class="ph ph-spinner spin"></i>
+                    <span class="loading-text">Loading history...</span>
+                </div>
+            </div>
+        `;
+
         const response = await fetch('/api/analyze-video/history');
         const data = await response.json();
 
@@ -258,6 +288,11 @@ async function loadHistory() {
         }
     } catch (error) {
         console.error('Error loading history:', error);
+        // Show empty state on error
+        const historyGrid = document.getElementById('historyGrid');
+        const emptyHistory = document.getElementById('emptyHistory');
+        historyGrid.style.display = 'none';
+        emptyHistory.style.display = 'flex';
     }
 }
 
