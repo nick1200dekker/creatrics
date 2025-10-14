@@ -72,19 +72,11 @@ class VideoDescriptionGenerator:
                     # Get current date for system prompt
                     now = datetime.now()
 
-                    # STEP 1: Research keywords (small AI call + free API calls)
-                    logger.info("Researching YouTube keywords for description...")
-                    keyword_researcher = KeywordResearcher()
-                    keyword_data = keyword_researcher.research_keywords(input_text, ai_provider)
-                    keyword_prompt = keyword_researcher.format_for_prompt(keyword_data)
-
                     # Get the appropriate prompt template
                     prompt_template = self.get_prompt_template(video_type, reference_description)
 
-                    # STEP 2: Format the prompt with user input AND keywords
-                    prompt = f"""{keyword_prompt}
-
-{prompt_template.format(input=input_text)}"""
+                    # Format the prompt with user input
+                    prompt = prompt_template.format(input=input_text)
 
                     # System prompt to ensure correct format
                     system_prompt = f"""You are a YouTube content strategist specializing in video descriptions.
@@ -95,14 +87,7 @@ class VideoDescriptionGenerator:
 
                     IMPORTANT: Use {now.year} for any year references, not past years like 2024.
 
-                    KEYWORD INTEGRATION (CRITICAL):
-                    - Researched keywords are provided - these are REAL searches people use on YouTube
-                    - MUST include 2-3 of the most relevant keywords in the FIRST 125 CHARACTERS
-                    - First 125 characters are shown in search results - make them keyword-rich AND compelling
-                    - Naturally incorporate remaining keywords throughout the description where they make sense
-                    - Do NOT force keywords where they don't fit naturally
-
-                    CRITICAL FORMATTING RULES:
+                    FORMATTING RULES:
                     - NO bold text or markdown formatting (no ** or ##)
                     - Do NOT include section headers like "HOOK:" or "OVERVIEW:"
                     - Use single asterisk (*) for bullet points only

@@ -62,15 +62,6 @@ class VideoTagsGenerator:
                     current_date = now.strftime("%B %d, %Y")
                     current_year = now.year
 
-                    # STEP 1: Research keywords (small AI call + free API calls)
-                    logger.info("Researching YouTube keywords for tags...")
-                    keyword_researcher = KeywordResearcher()
-                    keyword_data = keyword_researcher.research_keywords(input_text, ai_provider)
-                    keyword_prompt = keyword_researcher.format_for_prompt(keyword_data)
-
-                    # Get all researched keywords as a flat list for tags
-                    researched_keywords = keyword_researcher.get_all_keywords_flat(keyword_data)
-
                     # Get the prompt template
                     prompt_template = self.get_prompt_template()
 
@@ -86,17 +77,14 @@ IMPORTANT: These are your channel's keywords. Include 3-5 of these that are rele
 This helps with channel branding and ensures consistency across your content.
 Only use the ones that make sense for THIS video - don't force irrelevant ones."""
 
-                    # STEP 2: Format the prompt with user input, date AND keywords
-                    prompt = f"""{keyword_prompt}
-{channel_keywords_text}
+                    # Format the prompt with user input and channel keywords
+                    prompt = f"""{channel_keywords_text}
 
 {prompt_template.format(
     input=input_text,
     current_date=current_date,
     current_year=current_year
-)}
-
-IMPORTANT: Use these researched keywords as tags. They are actual YouTube searches."""
+)}"""
 
                     # System prompt to ensure correct format
                     system_prompt = f"""You are a YouTube SEO expert specializing in tag generation.
@@ -106,8 +94,7 @@ IMPORTANT: Use these researched keywords as tags. They are actual YouTube search
                     Focus on a mix of broad and specific tags.
                     Include trending and evergreen keywords when relevant.
                     The total character count should be between 400-500 characters.
-                    IMPORTANT: Use {now.year} for any year references, not past years.
-                    IMPORTANT: Prioritize the researched keywords provided - these are REAL searches people use."""
+                    IMPORTANT: Use {now.year} for any year references, not past years."""
 
                     # Generate using AI provider
                     response = ai_provider.create_completion(

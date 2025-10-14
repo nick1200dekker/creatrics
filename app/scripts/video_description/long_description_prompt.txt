@@ -12,9 +12,9 @@ CRITICAL RULES:
 
 ⚠️ FIRST 125 CHARACTERS ARE CRITICAL ⚠️
 The first 125 characters appear in YouTube search results and suggested videos. This is the MOST IMPORTANT part:
-- START with 2-3 PRIMARY KEYWORDS in the first 10 words (e.g., "Clash Royale card upgrade guide" NOT "Check out this video about")
+- START with relevant keywords naturally in the first sentence
 - Pack in specific, searchable terms that people type into YouTube
-- Include numbers/results if possible ("current meta deck" or "save 1000+ gold")
+- Include numbers/results if possible
 - Make it benefit-driven and specific
 - Do NOT waste these characters on greetings, intros, or generic phrases
 
@@ -83,17 +83,16 @@ AVOID THESE AI-SOUNDING PHRASES:
 
 WRITE NATURALLY - Sound like a real person talking to a friend:
 - Use contractions (I'm, you'll, don't, can't)
-- Be specific, not generic ("save 1000+ gold" not "save resources")
-- Reference actual game mechanics/specifics ("Arena 1 through Champions" not "all levels")
-- Make claims sound earned, not promotional ("I've tested 50+ decks" not "discover the best decks")
+- Be specific, not generic
+- Reference actual specifics from the video
+- Make claims sound earned, not promotional
 - Use personal language ("my top picks" not "the recommended choices")
 - Drop some personality (casual tone, slight humor if appropriate)
 
 SEO KEYWORD USAGE:
-- Primary keyword: Use in first 125 characters + 2 more times naturally
-- Secondary keywords: Sprinkle 2-3 related terms throughout
-- Use semantic variations (e.g., "Clash Royale decks" → "CR deck building" → "card combinations")
-- Front-load keywords in opening lines for maximum SEO impact
+- Use researched keywords naturally throughout
+- Don't force keywords - write for humans first
+- Front-load important terms in opening lines
 
 If reference description is provided, extract ONLY real social links and match the writing style.
 

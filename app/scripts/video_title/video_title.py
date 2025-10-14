@@ -64,30 +64,21 @@ class VideoTitleGenerator:
                     # Get current date for system prompt
                     now = datetime.now()
 
-                    # STEP 1: Research keywords (small AI call + free API calls)
-                    logger.info("Researching YouTube keywords...")
-                    keyword_researcher = KeywordResearcher()
-                    keyword_data = keyword_researcher.research_keywords(user_input, ai_provider)
-                    keyword_prompt = keyword_researcher.format_for_prompt(keyword_data)
-
                     # Get the appropriate prompt template
                     prompt_template = self.get_prompt_template(video_type)
                     if not prompt_template:
                         # Use fallback prompt
                         prompt_template = self.get_fallback_prompt(video_type)
 
-                    # STEP 2: Format the prompt with user input AND keywords
-                    prompt = f"""{keyword_prompt}
-
-{prompt_template.format(input=user_input)}"""
+                    # Format the prompt with user input
+                    prompt = prompt_template.format(input=user_input)
 
                     # System prompt to ensure correct format
                     system_prompt = f"""You are a YouTube title generation expert.
                     Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}. Always use current and up-to-date references.
                     Always return exactly 10 titles in a JSON array format.
                     For shorts, always include 3 hashtags at the end of each title.
-                    IMPORTANT: Use {now.year} for any year references, not past years like 2024.
-                    IMPORTANT: Use the researched keywords provided - these are REAL searches people use on YouTube."""
+                    IMPORTANT: Use {now.year} for any year references, not past years like 2024."""
 
                     # Log the complete prompt being sent
                     logger.info(f"=== COMPLETE PROMPT TO AI ({video_type}) ===")
@@ -113,7 +104,6 @@ class VideoTitleGenerator:
                         'success': True,
                         'titles': titles,
                         'used_ai': True,
-                        'keyword_data': keyword_data,  # Include keyword research data
                         'token_usage': {
                             'model': 'ai_provider',
                             'input_tokens': len(prompt.split()),  # Rough estimate
