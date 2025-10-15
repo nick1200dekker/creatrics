@@ -487,10 +487,86 @@ html.dark .keyword-card:hover {
 
 .keyword-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
     margin-bottom: 0.75rem;
+}
+
+.keyword-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.keyword-quality-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    color: #F59E0B;
+    cursor: help;
+    transition: color 0.2s ease;
+}
+
+.keyword-quality-icon:hover {
+    color: #D97706;
+}
+
+.keyword-quality-icon i {
+    font-size: 18px;
+}
+
+.keyword-quality-tooltip {
+    position: absolute;
+    top: calc(50% + 2px);
+    right: calc(100% + 12px);
+    transform: translateY(-50%);
+    min-width: 200px;
+    max-width: 300px;
+    padding: 0.625rem 0.875rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    white-space: normal;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+html.dark .keyword-quality-tooltip {
+    background: rgba(39, 39, 42, 0.95);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.keyword-quality-icon:hover .keyword-quality-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Tooltip arrow */
+.keyword-quality-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-left-color: var(--border-primary);
+}
+
+html.dark .keyword-quality-tooltip::after {
+    border-left-color: rgba(63, 63, 70, 0.8);
 }
 
 .keyword-text {
@@ -557,8 +633,9 @@ html.dark .keyword-quality-warning {
 
 .quality-warning i,
 .keyword-quality-warning i {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     flex-shrink: 0;
+    line-height: 1.5;
 }
 
 .quality-warning span,

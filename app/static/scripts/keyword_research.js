@@ -183,10 +183,10 @@ function displayMainAnalysis(keyword, analysis) {
 
         // Interest level
         const interestBadges = {
-            'high': '🔥 High Interest',
-            'medium': '📊 Medium Interest',
-            'low': '📉 Low Interest',
-            'very_low': '⚠️ Very Low Interest'
+            'high': 'High Interest',
+            'medium': 'Medium Interest',
+            'low': 'Low Interest',
+            'very_low': 'Very Low Interest'
         };
         document.getElementById('interestLevel').textContent = interestBadges[analysis.interest_level] || 'Unknown';
 
@@ -196,13 +196,13 @@ function displayMainAnalysis(keyword, analysis) {
         // Opportunity badge
         const opportunityBadge = document.getElementById('opportunityBadge');
         if (analysis.opportunity_score >= 70) {
-            opportunityBadge.textContent = '🔥 Excellent Opportunity';
+            opportunityBadge.textContent = 'Excellent Opportunity';
             opportunityBadge.className = 'opportunity-badge high';
         } else if (analysis.opportunity_score >= 50) {
-            opportunityBadge.textContent = '✓ Good Opportunity';
+            opportunityBadge.textContent = 'Good Opportunity';
             opportunityBadge.className = 'opportunity-badge medium';
         } else {
-            opportunityBadge.textContent = '⚠ Low Opportunity';
+            opportunityBadge.textContent = 'Low Opportunity';
             opportunityBadge.className = 'opportunity-badge low';
         }
 
@@ -210,7 +210,7 @@ function displayMainAnalysis(keyword, analysis) {
         const qualityWarningDiv = document.getElementById('qualityWarning');
         console.log('Quality warning check:', analysis.quality_warning);
         if (analysis.quality_warning) {
-            qualityWarningDiv.style.display = 'block';
+            qualityWarningDiv.style.display = 'flex';
             qualityWarningDiv.innerHTML = `
                 <i class="ph ph-warning"></i>
                 <span>${escapeHtml(analysis.quality_warning)}</span>
@@ -282,25 +282,27 @@ function createKeywordCard(keyword) {
 
     // Interest level label
     const interestLabels = {
-        'high': '🔥 High Interest',
-        'medium': '📊 Medium Interest',
-        'low': '📉 Low Interest',
-        'very_low': '⚠️ Very Low Interest'
+        'high': 'High Interest',
+        'medium': 'Medium Interest',
+        'low': 'Low Interest',
+        'very_low': 'Very Low Interest'
     };
 
-    // Add quality warning if present
-    const qualityWarningHtml = keyword.quality_warning ?
-        `<div class="keyword-quality-warning">
+    // Add quality warning icon in header if present (tooltip on hover)
+    const qualityWarningIcon = keyword.quality_warning ?
+        `<div class="keyword-quality-icon">
             <i class="ph ph-warning"></i>
-            <span>${escapeHtml(keyword.quality_warning)}</span>
+            <span class="keyword-quality-tooltip">${escapeHtml(keyword.quality_warning)}</span>
         </div>` : '';
 
     card.innerHTML = `
         <div class="keyword-header">
             <div class="keyword-text">${escapeHtml(keyword.keyword)}</div>
-            <div class="keyword-score ${scoreClass}">${keyword.opportunity_score}/100</div>
+            <div class="keyword-header-right">
+                ${qualityWarningIcon}
+                <div class="keyword-score ${scoreClass}">${keyword.opportunity_score}/100</div>
+            </div>
         </div>
-        ${qualityWarningHtml}
         <div class="keyword-stats">
             <div class="keyword-stat">
                 <span class="stat-label">Competition:</span>

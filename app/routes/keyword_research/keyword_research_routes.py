@@ -208,20 +208,24 @@ def analyze_keyword():
         elif suggestion_count >= 8:
             interest_score = min(100, interest_score + 3)
 
-        # Determine keyword quality based on relevance
+        # Calculate opportunity score
+        # Good opportunity = High interest + Low competition
+        opportunity_score = int((interest_score * 0.6) + (competition_score * 0.4))
+
+        # Determine keyword quality based on relevance and apply penalty
         keyword_quality = 'good'
         quality_warning = None
 
         if relevance_percentage < 40:
             keyword_quality = 'poor'
-            quality_warning = f'Low relevance: Only {relevance_percentage}% of videos match this keyword. Consider using a more focused search term.'
-        elif relevance_percentage < 60:
+            quality_warning = f'{relevance_percentage}% relevance. Try using a more specific keyword to get better results.'
+            # Apply heavy penalty for poor relevance
+            opportunity_score = max(0, opportunity_score - 30)
+        elif relevance_percentage < 50:
             keyword_quality = 'mixed'
-            quality_warning = f'Mixed results: {relevance_percentage}% relevance. This keyword may combine multiple unrelated topics.'
-
-        # Calculate opportunity score
-        # Good opportunity = High interest + Low competition
-        opportunity_score = int((interest_score * 0.6) + (competition_score * 0.4))
+            quality_warning = f'{relevance_percentage}% relevance. Try making the keyword more specific to improve match quality.'
+            # Apply moderate penalty for mixed relevance
+            opportunity_score = max(0, opportunity_score - 15)
 
         result = {
             'keyword': keyword,
@@ -391,16 +395,20 @@ def batch_analyze():
                 # Calculate opportunity score
                 opportunity_score = int((interest_score * 0.6) + (competition_score * 0.4))
 
-                # Determine keyword quality based on relevance
+                # Determine keyword quality based on relevance and apply penalty
                 keyword_quality = 'good'
                 quality_warning = None
 
                 if relevance_percentage < 40:
                     keyword_quality = 'poor'
-                    quality_warning = f'Low relevance: Only {relevance_percentage}% of videos match this keyword. Consider using a more focused search term.'
-                elif relevance_percentage < 60:
+                    quality_warning = f'{relevance_percentage}% relevance. Try using a more specific keyword to get better results.'
+                    # Apply heavy penalty for poor relevance
+                    opportunity_score = max(0, opportunity_score - 30)
+                elif relevance_percentage < 50:
                     keyword_quality = 'mixed'
-                    quality_warning = f'Mixed results: {relevance_percentage}% relevance. This keyword may combine multiple unrelated topics.'
+                    quality_warning = f'{relevance_percentage}% relevance. Try making the keyword more specific to improve match quality.'
+                    # Apply moderate penalty for mixed relevance
+                    opportunity_score = max(0, opportunity_score - 15)
 
                 results.append({
                     'keyword': keyword,
