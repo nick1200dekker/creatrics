@@ -164,9 +164,22 @@ def analyze_keyword():
         # Calculate relevance percentage
         relevance_percentage = int((matching_titles / total_analyzed * 100)) if total_analyzed > 0 else 0
 
-        # Calculate metrics
+        # Calculate metrics with outlier detection
         avg_recent_views = int(statistics.mean(recent_view_counts)) if recent_view_counts else 0
+        median_recent_views = int(statistics.median(recent_view_counts)) if recent_view_counts else 0
         recent_video_count = len(recent_view_counts)
+
+        # Detect outliers: if top video has 10x+ more views than median, it's likely official/viral content
+        outlier_detected = False
+        outlier_warning = None
+        if recent_view_counts and len(recent_view_counts) >= 3:
+            max_views = max(recent_view_counts)
+            if median_recent_views > 0 and max_views > median_recent_views * 10:
+                outlier_detected = True
+                outlier_warning = f"Outlier detected: Top video has {max_views:,} views while median is {median_recent_views:,}. Using median for more accurate creator opportunity."
+
+        # Use median instead of mean for more accurate representation (not skewed by outliers)
+        views_for_scoring = median_recent_views
 
         # Determine competition level
         if total_videos < 50000:
@@ -181,18 +194,19 @@ def analyze_keyword():
 
         # Determine search interest based on RECENT video performance (more reliable)
         # High views on recent content = people are actively searching
+        # Using MEDIAN views to avoid outlier skew from official/viral content
 
         # Base score on recent video performance
-        if avg_recent_views > 100000:  # 100K+ avg views on recent videos
+        if views_for_scoring > 100000:  # 100K+ median views on recent videos
             interest_level = 'high'
             interest_score = 80
-        elif avg_recent_views > 30000:  # 30K-100K avg views
+        elif views_for_scoring > 30000:  # 30K-100K median views
             interest_level = 'medium'
             interest_score = 55
-        elif avg_recent_views > 5000:   # 5K-30K avg views
+        elif views_for_scoring > 5000:   # 5K-30K median views
             interest_level = 'low'
             interest_score = 30
-        else:                            # < 5K avg views
+        else:                            # < 5K median views
             interest_level = 'very_low'
             interest_score = 10
 
@@ -232,9 +246,13 @@ def analyze_keyword():
             'total_videos': total_videos,
             'suggestion_count': suggestion_count,
             'avg_recent_views': avg_recent_views,
+            'median_recent_views': median_recent_views,
+            'views_used_for_scoring': views_for_scoring,
             'relevance_percentage': relevance_percentage,
             'keyword_quality': keyword_quality,
             'quality_warning': quality_warning,
+            'outlier_detected': outlier_detected,
+            'outlier_warning': outlier_warning,
             'recent_video_count': recent_video_count,
             'high_performing_videos': high_performing_videos,
             'opportunity_score': opportunity_score,
@@ -352,8 +370,21 @@ def batch_analyze():
                 # Calculate relevance percentage
                 relevance_percentage = int((matching_titles / total_analyzed * 100)) if total_analyzed > 0 else 0
 
-                # Calculate metrics
+                # Calculate metrics with outlier detection
                 avg_recent_views = int(statistics.mean(recent_view_counts)) if recent_view_counts else 0
+                median_recent_views = int(statistics.median(recent_view_counts)) if recent_view_counts else 0
+
+                # Detect outliers: if top video has 10x+ more views than median, it's likely official/viral content
+                outlier_detected = False
+                outlier_warning = None
+                if recent_view_counts and len(recent_view_counts) >= 3:
+                    max_views = max(recent_view_counts)
+                    if median_recent_views > 0 and max_views > median_recent_views * 10:
+                        outlier_detected = True
+                        outlier_warning = f"Outlier detected: Top video has {max_views:,} views while median is {median_recent_views:,}. Using median for more accurate creator opportunity."
+
+                # Use median instead of mean for more accurate representation (not skewed by outliers)
+                views_for_scoring = median_recent_views
 
                 # Determine competition level
                 if total_videos < 50000:
@@ -367,13 +398,14 @@ def batch_analyze():
                     competition_score = 20
 
                 # Determine search interest based on recent video performance
-                if avg_recent_views > 100000:
+                # Using MEDIAN views to avoid outlier skew from official/viral content
+                if views_for_scoring > 100000:
                     interest_level = 'high'
                     interest_score = 80
-                elif avg_recent_views > 30000:
+                elif views_for_scoring > 30000:
                     interest_level = 'medium'
                     interest_score = 55
-                elif avg_recent_views > 5000:
+                elif views_for_scoring > 5000:
                     interest_level = 'low'
                     interest_score = 30
                 else:
@@ -418,7 +450,11 @@ def batch_analyze():
                     'interest_level': interest_level,
                     'relevance_percentage': relevance_percentage,
                     'keyword_quality': keyword_quality,
-                    'quality_warning': quality_warning
+                    'quality_warning': quality_warning,
+                    'outlier_detected': outlier_detected,
+                    'outlier_warning': outlier_warning,
+                    'median_recent_views': median_recent_views,
+                    'avg_recent_views': avg_recent_views
                 })
 
             except Exception as e:
