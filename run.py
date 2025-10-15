@@ -130,6 +130,7 @@ from app.routes.hook_generator import bp as hook_generator_bp
 from app.routes.titles_hashtags import bp as titles_hashtags_bp
 from app.routes.trending_sounds import bp as trending_sounds_bp
 from app.routes.trend_finder import bp as trend_finder_bp
+from app.routes.tiktok_analytics import bp as tiktok_analytics_bp
 
 # Import Teams blueprint
 from app.routes.teams import teams_bp
@@ -164,6 +165,7 @@ app.register_blueprint(hook_generator_bp)
 app.register_blueprint(titles_hashtags_bp)
 app.register_blueprint(trending_sounds_bp)
 app.register_blueprint(trend_finder_bp)
+app.register_blueprint(tiktok_analytics_bp)
 app.register_blueprint(teams_bp)
 
 # Register Cron blueprint

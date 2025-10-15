@@ -543,6 +543,7 @@ html.dark .modal-content.loading-content {
 .loading-spinner i {
     font-size: 3rem;
     color: #3B82F6;
+    animation: spin 1s linear infinite;
 }
 
 html.dark .loading-spinner i {
@@ -567,8 +568,9 @@ html.dark .loading-spinner i {
     to { transform: rotate(360deg); }
 }
 
-.spin {
-    animation: spin 1s linear infinite;
+.spin,
+i.spin {
+    animation: spin 1s linear infinite !important;
 }
 
 /* Search Loading State - matching Optimize Video style */
