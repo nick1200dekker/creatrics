@@ -87,6 +87,7 @@ async function exploreKeyword(keyword = null) {
         // Check cache first
         if (analysisCache[keywordToExplore]) {
             mainAnalysis = analysisCache[keywordToExplore];
+            console.log('Using cached analysis for:', keywordToExplore, mainAnalysis);
         } else {
             const analysisResponse = await fetch('/keyword-research/api/analyze', {
                 method: 'POST',
@@ -204,6 +205,19 @@ function displayMainAnalysis(keyword, analysis) {
             opportunityBadge.textContent = '⚠ Low Opportunity';
             opportunityBadge.className = 'opportunity-badge low';
         }
+
+        // Show quality warning if present
+        const qualityWarningDiv = document.getElementById('qualityWarning');
+        console.log('Quality warning check:', analysis.quality_warning);
+        if (analysis.quality_warning) {
+            qualityWarningDiv.style.display = 'block';
+            qualityWarningDiv.innerHTML = `
+                <i class="ph ph-warning"></i>
+                <span>${escapeHtml(analysis.quality_warning)}</span>
+            `;
+        } else {
+            qualityWarningDiv.style.display = 'none';
+        }
     } else {
         // No analysis available
         document.getElementById('competitionLevel').textContent = '-';
@@ -211,6 +225,12 @@ function displayMainAnalysis(keyword, analysis) {
         document.getElementById('opportunityScore').textContent = '-';
         document.getElementById('opportunityBadge').textContent = 'Analyzing...';
         document.getElementById('opportunityBadge').className = 'opportunity-badge medium';
+
+        // Hide quality warning
+        const qualityWarningDiv = document.getElementById('qualityWarning');
+        if (qualityWarningDiv) {
+            qualityWarningDiv.style.display = 'none';
+        }
     }
 }
 
@@ -268,11 +288,19 @@ function createKeywordCard(keyword) {
         'very_low': '⚠️ Very Low Interest'
     };
 
+    // Add quality warning if present
+    const qualityWarningHtml = keyword.quality_warning ?
+        `<div class="keyword-quality-warning">
+            <i class="ph ph-warning"></i>
+            <span>${escapeHtml(keyword.quality_warning)}</span>
+        </div>` : '';
+
     card.innerHTML = `
         <div class="keyword-header">
             <div class="keyword-text">${escapeHtml(keyword.keyword)}</div>
             <div class="keyword-score ${scoreClass}">${keyword.opportunity_score}/100</div>
         </div>
+        ${qualityWarningHtml}
         <div class="keyword-stats">
             <div class="keyword-stat">
                 <span class="stat-label">Competition:</span>

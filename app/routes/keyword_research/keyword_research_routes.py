@@ -129,8 +129,25 @@ def analyze_keyword():
         recent_view_counts = []
         high_performing_videos = 0  # Videos with 50K+ views in last 30 days
 
+        # Keyword relevance detection
+        # Extract meaningful terms from keyword (ignore stop words)
+        stop_words = {'vs', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+        keyword_terms = [term.lower() for term in keyword.split() if term.lower() not in stop_words and len(term) > 2]
+
+        matching_titles = 0
+        total_analyzed = 0
+
         for video in recent_videos[:20]:
             if video.get('type') in ['video', 'shorts']:
+                # Check title relevance for quality score
+                title = video.get('title', '').lower()
+                if title:
+                    total_analyzed += 1
+                    # Count if title contains at least 50% of keyword terms
+                    matches = sum(1 for term in keyword_terms if term in title)
+                    if len(keyword_terms) > 0 and matches >= len(keyword_terms) * 0.5:
+                        matching_titles += 1
+
                 # Get view count
                 view_text = video.get('viewCount')
                 if view_text:
@@ -143,6 +160,9 @@ def analyze_keyword():
                             high_performing_videos += 1
                     except (ValueError, TypeError):
                         continue
+
+        # Calculate relevance percentage
+        relevance_percentage = int((matching_titles / total_analyzed * 100)) if total_analyzed > 0 else 0
 
         # Calculate metrics
         avg_recent_views = int(statistics.mean(recent_view_counts)) if recent_view_counts else 0
@@ -188,6 +208,17 @@ def analyze_keyword():
         elif suggestion_count >= 8:
             interest_score = min(100, interest_score + 3)
 
+        # Determine keyword quality based on relevance
+        keyword_quality = 'good'
+        quality_warning = None
+
+        if relevance_percentage < 40:
+            keyword_quality = 'poor'
+            quality_warning = f'Low relevance: Only {relevance_percentage}% of videos match this keyword. Consider using a more focused search term.'
+        elif relevance_percentage < 60:
+            keyword_quality = 'mixed'
+            quality_warning = f'Mixed results: {relevance_percentage}% relevance. This keyword may combine multiple unrelated topics.'
+
         # Calculate opportunity score
         # Good opportunity = High interest + Low competition
         opportunity_score = int((interest_score * 0.6) + (competition_score * 0.4))
@@ -197,6 +228,9 @@ def analyze_keyword():
             'total_videos': total_videos,
             'suggestion_count': suggestion_count,
             'avg_recent_views': avg_recent_views,
+            'relevance_percentage': relevance_percentage,
+            'keyword_quality': keyword_quality,
+            'quality_warning': quality_warning,
             'recent_video_count': recent_video_count,
             'high_performing_videos': high_performing_videos,
             'opportunity_score': opportunity_score,
@@ -272,8 +306,23 @@ def batch_analyze():
                 recent_view_counts = []
                 high_performing_videos = 0
 
+                # Keyword relevance detection
+                stop_words = {'vs', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+                keyword_terms = [term.lower() for term in keyword.split() if term.lower() not in stop_words and len(term) > 2]
+                matching_titles = 0
+                total_analyzed = 0
+
                 for video in videos[:20]:
                     if video.get('type') in ['video', 'shorts']:
+                        # Check title relevance for quality score
+                        title = video.get('title', '').lower()
+                        if title:
+                            total_analyzed += 1
+                            # Count if title contains at least 50% of keyword terms
+                            matches = sum(1 for term in keyword_terms if term in title)
+                            if len(keyword_terms) > 0 and matches >= len(keyword_terms) * 0.5:
+                                matching_titles += 1
+
                         # Check if video is recent (published in last 30 days)
                         publish_date_str = video.get('publishDate') or video.get('publishedAt', '')
                         if publish_date_str:
@@ -295,6 +344,9 @@ def batch_analyze():
                                             continue
                             except:
                                 continue
+
+                # Calculate relevance percentage
+                relevance_percentage = int((matching_titles / total_analyzed * 100)) if total_analyzed > 0 else 0
 
                 # Calculate metrics
                 avg_recent_views = int(statistics.mean(recent_view_counts)) if recent_view_counts else 0
@@ -339,12 +391,26 @@ def batch_analyze():
                 # Calculate opportunity score
                 opportunity_score = int((interest_score * 0.6) + (competition_score * 0.4))
 
+                # Determine keyword quality based on relevance
+                keyword_quality = 'good'
+                quality_warning = None
+
+                if relevance_percentage < 40:
+                    keyword_quality = 'poor'
+                    quality_warning = f'Low relevance: Only {relevance_percentage}% of videos match this keyword. Consider using a more focused search term.'
+                elif relevance_percentage < 60:
+                    keyword_quality = 'mixed'
+                    quality_warning = f'Mixed results: {relevance_percentage}% relevance. This keyword may combine multiple unrelated topics.'
+
                 results.append({
                     'keyword': keyword,
                     'total_videos': total_videos,
                     'opportunity_score': opportunity_score,
                     'competition_level': competition_level,
-                    'interest_level': interest_level
+                    'interest_level': interest_level,
+                    'relevance_percentage': relevance_percentage,
+                    'keyword_quality': keyword_quality,
+                    'quality_warning': quality_warning
                 })
 
             except Exception as e:

@@ -534,6 +534,38 @@ html.dark .keyword-card:hover {
     color: #EF4444;
 }
 
+/* Quality Warning Styles */
+.quality-warning,
+.keyword-quality-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: #F59E0B;
+}
+
+html.dark .quality-warning,
+html.dark .keyword-quality-warning {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.quality-warning i,
+.keyword-quality-warning i {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.quality-warning span,
+.keyword-quality-warning span {
+    line-height: 1.5;
+}
+
 .keyword-stats {
     display: flex;
     flex-direction: column;
