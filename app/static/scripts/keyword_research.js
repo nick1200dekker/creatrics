@@ -255,6 +255,12 @@ function displayResults(keyword, mainAnalysis, suggestions) {
     // Show results section
     document.getElementById('resultsSection').style.display = 'block';
 
+    // Hide AI insights card (only for AI mode)
+    document.getElementById('aiInsightsCard').style.display = 'none';
+
+    // Show current analysis card (for manual mode)
+    document.getElementById('currentAnalysis').style.display = 'block';
+
     // Display main keyword analysis
     displayMainAnalysis(keyword, mainAnalysis);
 
