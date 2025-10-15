@@ -299,8 +299,12 @@ html.dark .divider::after {
 }
 
 /* Results */
-.search-results,
+.search-results {
+    margin-bottom: 2rem;
+}
+
 .history-section {
+    margin-top: 4rem;
     margin-bottom: 2rem;
 }
 
