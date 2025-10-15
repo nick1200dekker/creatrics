@@ -30,6 +30,9 @@ html.dark .keyword-research-wrapper {
         rgba(59, 130, 246, 0.03) 0%,
         rgba(139, 92, 246, 0.03) 100%);
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 html.dark .research-header {
@@ -452,11 +455,16 @@ html.dark .section-header h3 i {
     margin: 0;
 }
 
-/* Keywords Grid */
+/* Keywords Grid - used for both cards and table */
 .keywords-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1rem;
+}
+
+/* When keywords-grid contains a table, it should span full width */
+.keywords-grid:has(.keywords-table-wrapper) {
+    display: block;
 }
 
 .keyword-card {
@@ -807,4 +815,379 @@ html.dark .example-chip:hover {
 .keyword-input:focus,
 .explore-button:focus {
     outline: none;
+}
+
+/* ============================================================================
+   AI EXPLORER MODE STYLES
+   ============================================================================ */
+
+/* Mode Toggle - moved to header */
+.mode-toggle {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-tertiary);
+    padding: 0.375rem;
+    border-radius: 8px;
+    width: fit-content;
+}
+
+.mode-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mode-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+}
+
+.mode-btn.active {
+    background: var(--bg-primary);
+    color: var(--brand-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+html.dark .mode-btn.active {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.mode-btn i {
+    font-size: 1rem;
+}
+
+/* AI Options */
+.ai-options {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.ai-option-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.keyword-count-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.keyword-count-select:hover {
+    border-color: var(--brand-primary);
+}
+
+.keyword-count-select:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* AI Insights Card */
+.ai-insights-card {
+    background: linear-gradient(135deg,
+        rgba(59, 130, 246, 0.05) 0%,
+        rgba(139, 92, 246, 0.05) 100%);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+html.dark .ai-insights-card {
+    background: linear-gradient(135deg,
+        rgba(59, 130, 246, 0.1) 0%,
+        rgba(139, 92, 246, 0.1) 100%);
+    border-color: rgba(63, 63, 70, 0.5);
+}
+
+.insights-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.insights-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.insights-header h3 i {
+    color: var(--brand-primary);
+    font-size: 1.25rem;
+}
+
+.insights-meta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.insights-badge {
+    padding: 0.375rem 0.75rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+html.dark .insights-badge {
+    background: rgba(63, 63, 70, 0.3);
+}
+
+.insights-badge i {
+    color: var(--brand-primary);
+}
+
+.insights-content {
+    margin-top: 1rem;
+}
+
+.insights-text {
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+}
+
+.insights-text p {
+    margin: 0 0 1rem 0;
+}
+
+.insights-text p:last-child {
+    margin-bottom: 0;
+}
+
+.insights-text strong {
+    color: var(--brand-primary);
+    font-weight: 600;
+}
+
+/* Keywords Table Styles */
+.keywords-table-wrapper {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+.keywords-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.keywords-table thead {
+    background: var(--bg-tertiary);
+}
+
+.keywords-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.keywords-table tbody tr {
+    border-bottom: 1px solid var(--border-primary);
+    transition: background-color 0.15s ease;
+}
+
+.keywords-table tbody tr:hover {
+    background: var(--bg-tertiary);
+}
+
+.keywords-table td {
+    padding: 1rem;
+    color: var(--text-primary);
+}
+
+.keyword-cell {
+    font-weight: 500;
+    font-size: 0.9375rem;
+}
+
+.score-cell {
+    text-align: center;
+}
+
+.opportunity-score-badge {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-radius: 6px;
+}
+
+.competition-badge,
+.interest-badge {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.competition-badge.competition-low {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22C55E;
+}
+
+.competition-badge.competition-medium {
+    background: rgba(251, 146, 60, 0.1);
+    color: #FB923C;
+}
+
+.competition-badge.competition-high {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+}
+
+.interest-badge.interest-low {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+}
+
+.interest-badge.interest-medium {
+    background: rgba(251, 146, 60, 0.1);
+    color: #FB923C;
+}
+
+.interest-badge.interest-high {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22C55E;
+}
+
+html.dark .keywords-table {
+    background: rgba(39, 39, 42, 0.6);
+}
+
+html.dark .keywords-table thead {
+    background: rgba(24, 24, 27, 0.6);
+}
+
+html.dark .keywords-table tbody tr {
+    border-bottom-color: rgba(63, 63, 70, 0.5);
+}
+
+html.dark .keywords-table tbody tr:hover {
+    background: rgba(63, 63, 70, 0.3);
+}
+
+/* AI Insights Section Styles */
+.insight-section {
+    margin-bottom: 1.5rem;
+}
+
+.insight-section:last-child {
+    margin-bottom: 0;
+}
+
+.insight-section h4 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+    letter-spacing: -0.01em;
+}
+
+.insight-section p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0 0 0.75rem 0;
+}
+
+.insight-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+.insight-section li {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.insight-section li::before {
+    content: '•';
+    position: absolute;
+    left: 0.5rem;
+    color: var(--brand-primary);
+    font-weight: bold;
+}
+
+.insight-section strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Responsive adjustments for AI mode */
+@media (max-width: 768px) {
+    .research-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .mode-toggle {
+        width: 100%;
+    }
+
+    .mode-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .insights-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .keywords-table th,
+    .keywords-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8125rem;
+    }
+
+    .keyword-cell {
+        font-size: 0.875rem;
+    }
 }

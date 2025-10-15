@@ -14,19 +14,29 @@
 {% block content %}
 <div class="content-panel">
     <div class="keyword-research-wrapper">
-        <!-- Header -->
+        <!-- Header with Toggle -->
         <div class="research-header">
             <h1 class="research-title">
                 <i class="ph ph-magnifying-glass"></i>
                 Keyword Research
             </h1>
+            <div class="mode-toggle">
+                <button class="mode-btn active" data-mode="manual" onclick="switchMode('manual')" id="manualBtn">
+                    <i class="ph ph-magnifying-glass"></i>
+                    Manual
+                </button>
+                <button class="mode-btn" data-mode="ai" onclick="switchMode('ai')" id="aiBtn">
+                    <i class="ph ph-magic-wand"></i>
+                    AI Explorer
+                </button>
+            </div>
         </div>
 
         <!-- Search Section -->
         <div class="search-section">
             <div class="search-box">
                 <div class="search-input-wrapper">
-                    <i class="ph ph-magnifying-glass search-icon"></i>
+                    <i class="ph ph-magnifying-glass search-icon" id="searchIcon"></i>
                     <input
                         type="text"
                         id="keywordInput"
@@ -36,9 +46,10 @@
                     >
                     <button id="exploreBtn" class="explore-button" onclick="exploreKeyword()">
                         <i class="ph ph-sparkle"></i>
-                        Explore
+                        <span id="exploreBtnText">Explore</span>
                     </button>
                 </div>
+
             </div>
 
             <!-- Breadcrumb Trail -->
@@ -57,6 +68,18 @@
 
         <!-- Results Section -->
         <div class="results-section" id="resultsSection" style="display: none;">
+
+            <!-- AI Insights (only shown in AI mode) -->
+            <div class="ai-insights-card" id="aiInsightsCard" style="display: none;">
+                <div class="insights-header">
+                    <h3>
+                        <i class="ph ph-lightbulb"></i>
+                        AI Insights
+                    </h3>
+                    <div class="insights-meta" id="insightsMeta"></div>
+                </div>
+                <div class="insights-content" id="insightsContent"></div>
+            </div>
 
             <!-- Current Keyword Analysis -->
             <div class="keyword-analysis-card" id="currentAnalysis">
@@ -105,11 +128,10 @@
             <!-- Related Keywords Section -->
             <div class="related-keywords-section">
                 <div class="section-header">
-                    <h3>
+                    <h3 id="keywordsTitle">
                         <i class="ph ph-lightbulb"></i>
                         Related Keywords
                     </h3>
-                    <p class="section-subtitle">Click any keyword to explore its variations</p>
                 </div>
 
                 <div class="keywords-grid" id="keywordsGrid">

@@ -7,6 +7,7 @@
 let currentKeyword = '';
 let keywordHistory = [];
 let analysisCache = {};
+let currentMode = 'manual'; // 'manual' or 'ai'
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -27,17 +28,35 @@ function quickExplore(keyword) {
 }
 
 /**
- * Main function to explore a keyword
+ * Main function to explore a keyword - supports both Manual and AI modes
  */
 async function exploreKeyword(keyword = null) {
-    // Get keyword from input or parameter
     const keywordToExplore = keyword || document.getElementById('keywordInput').value.trim();
 
     if (!keywordToExplore) {
-        showError('Please enter a keyword to explore');
+        showError('Please enter a ' + (currentMode === 'ai' ? 'topic' : 'keyword'));
         return;
     }
 
+    // Disable explore button
+    const exploreBtn = document.getElementById('exploreBtn');
+    exploreBtn.disabled = true;
+
+    if (currentMode === 'ai') {
+        exploreBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Generating...';
+        await exploreWithAI(keywordToExplore);
+    } else {
+        exploreBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Analyzing...';
+        await exploreManual(keywordToExplore);
+    }
+
+    exploreBtn.disabled = false;
+}
+
+/**
+ * Manual exploration (original functionality)
+ */
+async function exploreManual(keywordToExplore) {
     // Update current keyword
     currentKeyword = keywordToExplore;
 
@@ -53,11 +72,8 @@ async function exploreKeyword(keyword = null) {
     // Show loading state
     showLoading();
 
-    // Disable explore button
     const exploreBtn = document.getElementById('exploreBtn');
-    const originalBtnText = exploreBtn.innerHTML;
-    exploreBtn.disabled = true;
-    exploreBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Analyzing...';
+    const originalBtnText = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Explore</span>';
 
     try {
         // Fetch autocomplete suggestions
@@ -87,7 +103,6 @@ async function exploreKeyword(keyword = null) {
         // Check cache first
         if (analysisCache[keywordToExplore]) {
             mainAnalysis = analysisCache[keywordToExplore];
-            console.log('Using cached analysis for:', keywordToExplore, mainAnalysis);
         } else {
             const analysisResponse = await fetch('/keyword-research/api/analyze', {
                 method: 'POST',
@@ -135,13 +150,98 @@ async function exploreKeyword(keyword = null) {
         displayResults(keywordToExplore, mainAnalysis, analyzedSuggestions);
 
     } catch (error) {
-        console.error('Error exploring keyword:', error);
-        showError('Failed to analyze keyword. Please try again.');
+        console.error('Exploration error:', error);
+        showError(error.message || 'Failed to explore keyword');
+        document.getElementById('emptyState').style.display = 'block';
     } finally {
-        // Re-enable button
-        exploreBtn.disabled = false;
+        document.getElementById('loadingContainer').style.display = 'none';
         exploreBtn.innerHTML = originalBtnText;
     }
+}
+
+/**
+ * AI-powered keyword exploration
+ */
+async function exploreWithAI(topic) {
+    const count = 50; // Always generate 50 keywords
+
+    // Show loading with AI-specific message
+    document.getElementById('loadingContainer').style.display = 'flex';
+    document.querySelector('.loading-text').textContent = `AI is generating ${count} keywords for "${topic}"...`;
+    document.getElementById('emptyState').style.display = 'none';
+
+    try {
+        const response = await fetch('/keyword-research/api/ai-keyword-explore', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                topic: topic,
+                count: count
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate keywords');
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to generate keywords');
+        }
+
+        // Display AI results
+        displayAIResults(data);
+
+    } catch (error) {
+        console.error('AI exploration error:', error);
+        showError(error.message || 'Failed to explore topic with AI');
+        document.getElementById('emptyState').style.display = 'block';
+    } finally {
+        document.getElementById('loadingContainer').style.display = 'none';
+        const exploreBtn = document.getElementById('exploreBtn');
+        exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Generate & Analyze</span>';
+    }
+}
+
+// Removed - duplicate function moved to line 663
+
+/**
+ * Switch between Manual and AI Explorer mode
+ */
+function switchMode(mode) {
+    currentMode = mode;
+
+    // Update active button
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.mode === mode) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Update UI elements
+    const searchIcon = document.getElementById('searchIcon');
+    const keywordInput = document.getElementById('keywordInput');
+    const exploreBtnText = document.getElementById('exploreBtnText');
+
+    if (mode === 'ai') {
+        searchIcon.className = 'ph ph-magic-wand search-icon';
+        keywordInput.placeholder = 'Enter a topic (e.g., Fortnite, Yoga, AI Video Models)';
+        exploreBtnText.textContent = 'Generate & Analyze';
+    } else {
+        searchIcon.className = 'ph ph-magnifying-glass search-icon';
+        keywordInput.placeholder = 'Enter a keyword to research (e.g., clash royale, minecraft, cooking)';
+        exploreBtnText.textContent = 'Explore';
+    }
+
+    // Clear results
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+    keywordHistory = [];
+    updateBreadcrumb();
 }
 
 /**
@@ -398,3 +498,254 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+/**
+ * Switch between Manual and AI Explorer mode
+ */
+/**
+ * AI-powered keyword exploration
+ */
+async function exploreWithAI(topic) {
+    const count = 50; // Always generate 50 keywords
+
+    // Show loading with AI-specific message
+    document.getElementById('loadingContainer').style.display = 'flex';
+    document.querySelector('.loading-text').textContent = `AI is generating ${count} keywords for "${topic}"...`;
+    document.getElementById('emptyState').style.display = 'none';
+
+    try {
+        const response = await fetch('/keyword-research/api/ai-keyword-explore', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                topic: topic,
+                count: count
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate keywords');
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to generate keywords');
+        }
+
+        // Display AI results
+        displayAIResults(data);
+
+    } catch (error) {
+        console.error('AI exploration error:', error);
+        showError(error.message || 'Failed to explore topic with AI');
+        document.getElementById('emptyState').style.display = 'block';
+    } finally {
+        document.getElementById('loadingContainer').style.display = 'none';
+        const exploreBtn = document.getElementById('exploreBtn');
+        exploreBtn.disabled = false;
+        exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Generate & Analyze</span>';
+    }
+}
+
+/**
+ * Display AI exploration results
+ */
+function displayAIResults(data) {
+    // Hide empty state and loading
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('loadingContainer').style.display = 'none';
+
+    // Show results section
+    const resultsSection = document.getElementById('resultsSection');
+    resultsSection.style.display = 'block';
+
+    // Hide current analysis card (not relevant in AI mode)
+    document.getElementById('currentAnalysis').style.display = 'none';
+
+    // Show and populate AI insights card
+    const insightsCard = document.getElementById('aiInsightsCard');
+    insightsCard.style.display = 'block';
+
+    const insightsMeta = document.getElementById('insightsMeta');
+    insightsMeta.innerHTML = `
+        <span class="insights-badge">
+            <i class="ph ph-target"></i>
+            ${data.keywords_analyzed} keywords analyzed
+        </span>
+        <span class="insights-badge">
+            <i class="ph ph-brain"></i>
+            ${data.detected_context.domain}
+        </span>
+    `;
+
+    const insightsContent = document.getElementById('insightsContent');
+    insightsContent.innerHTML = formatInsights(data.insights);
+
+    // Update keywords grid with table
+    const keywordsGrid = document.getElementById('keywordsGrid');
+
+    // Update section header
+    const sectionHeader = document.getElementById('keywordsTitle');
+    sectionHeader.innerHTML = `
+        <i class="ph ph-lightbulb"></i>
+        Top ${data.results.length} Keyword Opportunities for "${data.topic}"
+    `;
+
+    // Create table
+    keywordsGrid.innerHTML = `
+        <div class="keywords-table-wrapper">
+            <table class="keywords-table">
+                <thead>
+                    <tr>
+                        <th>Keyword</th>
+                        <th>Score</th>
+                        <th>Competition</th>
+                        <th>Interest</th>
+                    </tr>
+                </thead>
+                <tbody id="keywordsTableBody">
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    // Populate table rows
+    const tbody = document.getElementById('keywordsTableBody');
+    data.results.forEach(keyword => {
+        const row = createKeywordTableRow(keyword);
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * Format AI insights text (convert to structured HTML)
+ */
+function formatInsights(text) {
+    if (!text) return '';
+
+    // Remove any leading markdown title (# Title)
+    text = text.replace(/^#\s+.*?\n/, '');
+
+    // Split by major sections (##)
+    const sections = text.split(/\n##\s+/);
+    let html = '';
+
+    sections.forEach((section, index) => {
+        const trimmed = section.trim();
+        if (!trimmed) return;
+
+        // Split into lines
+        const lines = trimmed.split('\n');
+        const title = lines[0].replace(/^##\s*/, '').trim();
+        const contentLines = lines.slice(1);
+
+        if (!title) return;
+
+        html += `<div class="insight-section">`;
+        html += `<h4>${title}</h4>`;
+
+        // Process content line by line
+        let inList = false;
+        let listHtml = '';
+
+        contentLines.forEach(line => {
+            line = line.trim();
+            if (!line) return;
+
+            // Check if it's a list item
+            if (line.startsWith('- ')) {
+                if (!inList) {
+                    inList = true;
+                    listHtml = '<ul>';
+                }
+                const content = line.substring(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                listHtml += `<li>${content}</li>`;
+            } else if (line.match(/^\d+\.\s+/)) {
+                if (!inList) {
+                    inList = true;
+                    listHtml = '<ul>';
+                }
+                const content = line.replace(/^\d+\.\s+/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                listHtml += `<li>${content}</li>`;
+            } else {
+                // Close list if we were in one
+                if (inList) {
+                    listHtml += '</ul>';
+                    html += listHtml;
+                    inList = false;
+                    listHtml = '';
+                }
+                // Regular paragraph
+                const content = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html += `<p>${content}</p>`;
+            }
+        });
+
+        // Close any open list
+        if (inList) {
+            listHtml += '</ul>';
+            html += listHtml;
+        }
+
+        html += `</div>`;
+    });
+
+    return html;
+}
+
+/**
+ * Create a table row for a keyword
+ */
+function createKeywordTableRow(keyword) {
+    const row = document.createElement('tr');
+    row.className = 'keyword-row';
+
+    // Determine competition class
+    let competitionClass = 'competition-low';
+    if (keyword.competition_level === 'high') competitionClass = 'competition-high';
+    else if (keyword.competition_level === 'medium') competitionClass = 'competition-medium';
+
+    // Determine interest class
+    let interestClass = 'interest-low';
+    if (keyword.interest_level === 'high') interestClass = 'interest-high';
+    else if (keyword.interest_level === 'medium') interestClass = 'interest-medium';
+
+    // Map interest levels to display text
+    const interestLabels = {
+        'high': 'High Interest',
+        'medium': 'Medium Interest',
+        'low': 'Low Interest',
+        'very_low': 'Very Low Interest'
+    };
+
+    // Map competition levels to display text
+    const competitionLabels = {
+        'low': 'Low Competition',
+        'medium': 'Medium Competition',
+        'high': 'High Competition'
+    };
+
+    row.innerHTML = `
+        <td class="keyword-cell">${keyword.keyword}</td>
+        <td class="score-cell">
+            <span class="opportunity-score-badge">${keyword.opportunity_score}/100</span>
+        </td>
+        <td class="competition-cell">
+            <span class="competition-badge ${competitionClass}">
+                ${competitionLabels[keyword.competition_level] || 'Unknown Competition'}
+            </span>
+        </td>
+        <td class="interest-cell">
+            <span class="interest-badge ${interestClass}">
+                ${interestLabels[keyword.interest_level] || 'Unknown Interest'}
+            </span>
+        </td>
+    `;
+
+    return row;
+}
+
+// Additional AI functions are defined above near switchMode()
