@@ -1139,7 +1139,8 @@
            workspace_info.permissions.titles_hashtags or
            workspace_info.permissions.trending_sounds or
            workspace_info.permissions.trend_finder or
-           workspace_info.permissions.tiktok_analytics %}
+           workspace_info.permissions.tiktok_analytics or
+           workspace_info.permissions.tiktok_competitors %}
 
         {% if has_tiktok_permissions %}
         <div class="nav-group" data-group="TikTok">
@@ -1184,6 +1185,15 @@
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-trend-up"></i>
                     <span>Trend Finder</span>
+                </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.tiktok_competitors %}
+                <a href="{{ url_for('tiktok_competitors.tiktok_competitors') }}"
+                   class="nav-subitem {% if request.endpoint and 'tiktok_competitors.' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-users-three"></i>
+                    <span>Competitors</span>
                 </a>
                 {% endif %}
 

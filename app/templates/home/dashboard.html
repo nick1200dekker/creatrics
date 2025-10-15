@@ -1271,21 +1271,6 @@ html.dark .optimize-video-card:hover {
             </div>
         </div>
 
-        <!-- NEW: Quick Actions Carousel Section -->
-        <div class="quick-actions-section" id="quick-actions-section" style="display: none;">
-            <div class="quick-actions-header">
-                <h2 class="quick-actions-title">What would you like to do today?</h2>
-                <p class="quick-actions-subtitle">Your personalized toolkit based on connected accounts</p>
-            </div>
-
-            <div class="carousel-container">
-                <div class="carousel-wrapper">
-                    <div class="carousel-track auto-scrolling" id="carousel-track">
-                        <!-- Action cards will be dynamically loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Analytics Section -->
         <div class="calendar-section" id="analytics-section" style="display: none;">
@@ -1650,6 +1635,7 @@ const platformFeatures = {
         { icon: 'ph-hash', title: 'Generate Hashtags', desc: 'Trending hashtags', url: '{{ url_for("titles_hashtags.titles_hashtags") }}' },
         { icon: 'ph-music-notes', title: 'Find Sounds', desc: 'Popular audio tracks', url: '{{ url_for("trending_sounds.trending_sounds") }}' },
         { icon: 'ph-trend-up', title: 'Discover Trends', desc: 'Viral content ideas', url: '{{ url_for("trend_finder.trend_finder") }}' },
+        { icon: 'ph-users-three', title: 'Analyze Competitors', desc: 'Track top creators', url: '{{ url_for("tiktok_competitors.tiktok_competitors") }}' },
         { icon: 'ph-chart-line-up', title: 'View Analytics', desc: 'Track performance', url: '{{ url_for("analytics.index", platform="tiktok") }}' }
     ],
     general: [

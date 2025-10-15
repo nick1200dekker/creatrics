@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% set check_auth = true %}
+{% block title %}TikTok Competitors - TikTok Tools - Creatrics{% endblock %}
+
+{% block seo_meta %}
+<meta name="description" content="Analyze competitor TikTok accounts and discover winning content strategies. Track top creators and learn from their success.">
+<meta name="keywords" content="tiktok, competitors, content creation, analytics">
+{% endblock %}
+
+{% block additional_styles %}
+{% include 'tiktok/base_styles.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="coming-soon-wrapper">
+    <!-- Header -->
+    <div class="coming-soon-header">
+        <h1 class="coming-soon-title">
+            <i class="ph ph-users-three"></i>
+            TikTok Competitors
+        </h1>
+    </div>
+
+    <!-- Content -->
+    <div class="coming-soon-content">
+        <div class="coming-soon-hero">
+            <div class="coming-soon-icon">
+                <i class="ph ph-users-three"></i>
+            </div>
+
+            <div class="coming-soon-badge">Coming Soon</div>
+
+            <h1>Analyze <span class="gradient-text">Top Competitors</span></h1>
+
+            <p>Track competitor accounts, analyze their content strategies, and discover what's working in your niche. Stay ahead by learning from the best.</p>
+
+            <div class="coming-soon-cta">
+                <a href="{{ url_for('home.dashboard') }}" class="btn-primary">
+                    <i class="ph ph-house"></i>
+                    Back to Dashboard
+                </a>
+                <a href="{{ url_for('tiktok_analytics.analytics') }}" class="btn-secondary">
+                    <i class="ph ph-chart-line"></i>
+                    View Analytics
+                </a>
+            </div>
+        </div>
+
+        <!-- Features Preview -->
+        <div class="features-preview">
+            <div class="feature-preview-card">
+                <h3><i class="ph ph-chart-line-up"></i>Performance Tracking</h3>
+                <p>Monitor competitor growth and engagement metrics.</p>
+            </div>
+            <div class="feature-preview-card">
+                <h3><i class="ph ph-video-camera"></i>Content Analysis</h3>
+                <p>Discover what content types perform best for competitors.</p>
+            </div>
+            <div class="feature-preview-card">
+                <h3><i class="ph ph-lightbulb"></i>Strategy Insights</h3>
+                <p>Learn from successful creators in your niche.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

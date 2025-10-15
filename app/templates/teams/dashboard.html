@@ -149,6 +149,10 @@
                         <input type="checkbox" id="perm_trend_finder" checked>
                         <label for="perm_trend_finder">Trend Finder</label>
                     </div>
+                    <div class="permission-item">
+                        <input type="checkbox" id="perm_tiktok_competitors" checked>
+                        <label for="perm_tiktok_competitors">Competitors</label>
+                    </div>
                     <!-- Analytics permission shared across all platforms (defined in YouTube section) -->
                 </div>
             </div>
@@ -307,7 +311,7 @@ function updateUIForWorkspace() {
                 const categories = {
                     'YouTube': ['video_script', 'video_title', 'thumbnail', 'analyze_video', 'optimize_video', 'keyword_research', 'competitors'],
                     'X (Twitter)': ['x_post_editor', 'reply_guy', 'clip_spaces', 'niche'],
-                    'TikTok': ['hook_generator', 'titles_hashtags', 'trending_sounds', 'trend_finder'],
+                    'TikTok': ['hook_generator', 'titles_hashtags', 'trending_sounds', 'trend_finder', 'tiktok_competitors'],
                     'Content Hub': ['brain_dump', 'mind_map', 'content_wiki', 'content_calendar'],
                     'Analytics': ['analytics']
                 };
@@ -461,6 +465,7 @@ async function sendInvite() {
         titles_hashtags: document.getElementById('perm_titles_hashtags').checked,
         trending_sounds: document.getElementById('perm_trending_sounds').checked,
         trend_finder: document.getElementById('perm_trend_finder').checked,
+        tiktok_competitors: document.getElementById('perm_tiktok_competitors').checked,
         // Content Hub
         brain_dump: document.getElementById('perm_brain_dump').checked,
         mind_map: document.getElementById('perm_mind_map').checked,
@@ -532,7 +537,8 @@ function editPermissions(memberId, permissions) {
                 { id: 'hook_generator', label: 'Hook Generator' },
                 { id: 'titles_hashtags', label: 'Titles & Hashtags' },
                 { id: 'trending_sounds', label: 'Trending Sounds' },
-                { id: 'trend_finder', label: 'Trend Finder' }
+                { id: 'trend_finder', label: 'Trend Finder' },
+                { id: 'tiktok_competitors', label: 'Competitors' }
             ]
         },
         {
@@ -596,6 +602,7 @@ async function savePermissions() {
         titles_hashtags: document.getElementById('modal_perm_titles_hashtags').checked,
         trending_sounds: document.getElementById('modal_perm_trending_sounds').checked,
         trend_finder: document.getElementById('modal_perm_trend_finder').checked,
+        tiktok_competitors: document.getElementById('modal_perm_tiktok_competitors').checked,
         // Content Hub
         brain_dump: document.getElementById('modal_perm_brain_dump').checked,
         mind_map: document.getElementById('modal_perm_mind_map').checked,
