@@ -27,7 +27,8 @@ class VideoDescriptionGenerator:
             current_dir = Path(__file__).parent
 
             # Build filename based on video type
-            if video_type == 'short':
+            # Handle both 'short' and 'shorts' for backwards compatibility
+            if video_type in ['short', 'shorts']:
                 prompt_file = current_dir / 'short_description_prompt.txt'
             else:
                 prompt_file = current_dir / 'long_description_prompt.txt'
@@ -82,7 +83,7 @@ class VideoDescriptionGenerator:
                     # System prompt to ensure correct format
                     system_prompt = f"""You are a YouTube content strategist specializing in video descriptions.
                     Create engaging descriptions that maximize viewer retention and discoverability.
-                    The description should be optimized for {'YouTube Shorts' if video_type == 'short' else 'long-form YouTube videos'}.
+                    The description should be optimized for {'YouTube Shorts' if video_type in ['short', 'shorts'] else 'long-form YouTube videos'}.
 
                     Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}. Always use current and up-to-date references.
 
