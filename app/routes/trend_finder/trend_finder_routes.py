@@ -40,6 +40,7 @@ def search_trends():
         data = request.get_json()
         keyword = data.get('keyword', '').strip()
         mode = data.get('mode', 'top')  # 'top' or 'video'
+        sort = data.get('sort', 'views')  # 'views' or 'date'
 
         if not keyword:
             return jsonify({'success': False, 'error': 'Keyword is required'}), 400
@@ -170,9 +171,9 @@ def search_trends():
         logger.info(f"Raw videos fetched: {len(all_videos)}")
 
         # Analyze videos (includes deduplication and filtering)
-        analysis_result = analyzer.analyze_videos(all_videos)
+        analysis_result = analyzer.analyze_videos(all_videos, sort_by=sort)
 
-        logger.info(f"After deduplication and filtering: {analysis_result['total_videos']} videos for '{keyword}' ({mode} mode)")
+        logger.info(f"After deduplication and filtering: {analysis_result['total_videos']} videos for '{keyword}' ({mode} mode, sort: {sort})")
 
         return jsonify({
             'success': True,

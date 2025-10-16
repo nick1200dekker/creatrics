@@ -116,6 +116,50 @@ html.dark .mode-btn.active {
     font-size: 1rem;
 }
 
+.sort-toggle {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-tertiary);
+    padding: 0.375rem;
+    border-radius: 8px;
+    width: fit-content;
+}
+
+.sort-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sort-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+}
+
+.sort-btn.active {
+    background: var(--bg-primary);
+    color: #3B82F6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+html.dark .sort-btn.active {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60A5FA;
+}
+
+.sort-btn i {
+    font-size: 1rem;
+}
+
 .search-box {
     max-width: 100%;
     margin: 0 auto;
@@ -489,12 +533,8 @@ html.dark .video-card:hover {
     flex-direction: column;
     justify-content: space-between;
     padding: 1rem;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.video-card:hover .video-overlay {
     opacity: 1;
+    transition: opacity 0.2s ease;
 }
 
 .play-icon {

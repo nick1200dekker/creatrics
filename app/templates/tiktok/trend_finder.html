@@ -52,29 +52,6 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Example Keywords -->
-            <div class="example-keywords">
-                <p class="example-label">Try these examples:</p>
-                <div class="example-chips">
-                    <button class="example-chip" onclick="quickSearch('Clash Royale')">
-                        <i class="ph ph-game-controller"></i>
-                        Clash Royale
-                    </button>
-                    <button class="example-chip" onclick="quickSearch('cooking')">
-                        <i class="ph ph-cooking-pot"></i>
-                        cooking
-                    </button>
-                    <button class="example-chip" onclick="quickSearch('fitness')">
-                        <i class="ph ph-barbell"></i>
-                        fitness
-                    </button>
-                    <button class="example-chip" onclick="quickSearch('AI')">
-                        <i class="ph ph-robot"></i>
-                        AI
-                    </button>
-                </div>
-            </div>
         </div>
 
         <!-- Loading State -->
@@ -133,6 +110,18 @@
             <div class="trend-summary">
                 <i class="ph ph-lightbulb"></i>
                 <div class="trend-summary-text" id="trendSummary">Loading trend analysis...</div>
+            </div>
+
+            <!-- Sort Toggle -->
+            <div class="sort-toggle" style="margin-bottom: 1.5rem; margin-left: auto;">
+                <button class="sort-btn active" onclick="setSortMode('views')" id="viewsSortBtn">
+                    <i class="ph ph-eye"></i>
+                    Views
+                </button>
+                <button class="sort-btn" onclick="setSortMode('date')" id="dateSortBtn">
+                    <i class="ph ph-calendar"></i>
+                    Date
+                </button>
             </div>
 
             <!-- Videos Grid -->

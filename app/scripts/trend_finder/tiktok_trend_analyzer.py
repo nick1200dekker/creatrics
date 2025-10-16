@@ -141,12 +141,13 @@ class TikTokTrendAnalyzer:
         else:  # Older than 7 days
             return 'mature'
 
-    def analyze_videos(self, videos: List[dict]) -> Dict:
+    def analyze_videos(self, videos: List[dict], sort_by: str = 'views') -> Dict:
         """
         Analyze a list of TikTok videos and return trend analysis
 
         Args:
             videos: List of video dicts from TikTok API (item_list format)
+            sort_by: Sort mode - 'views' (by playCount) or 'date' (by createTime)
 
         Returns:
             Dict with analysis results including:
@@ -244,8 +245,13 @@ class TikTokTrendAnalyzer:
         # Log filtering statistics
         logger.info(f"Filtering stats - Duplicates: {duplicate_count}, Zero views: {zero_view_count}, Kept: {len(analyzed_videos)}")
 
-        # Sort by upload date (newest first)
-        analyzed_videos.sort(key=lambda x: x['createTime'], reverse=True)
+        # Sort based on sort_by parameter
+        if sort_by == 'date':
+            # Sort by upload date (newest first)
+            analyzed_videos.sort(key=lambda x: x['createTime'], reverse=True)
+        else:
+            # Sort by views (highest first)
+            analyzed_videos.sort(key=lambda x: x['playCount'], reverse=True)
 
         # Calculate summary statistics
         avg_viral_potential = int(statistics.mean(viral_scores)) if viral_scores else 0

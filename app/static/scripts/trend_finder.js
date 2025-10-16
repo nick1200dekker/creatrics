@@ -5,6 +5,8 @@
 
 // Global state
 let currentSearchMode = 'top'; // 'top' or 'video'
+let currentSortMode = 'views'; // 'views' or 'date'
+let currentVideos = []; // Store current videos for re-sorting
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -25,6 +27,36 @@ function setSearchMode(mode) {
     // Update button states
     document.getElementById('topModeBtn').classList.toggle('active', mode === 'top');
     document.getElementById('videoModeBtn').classList.toggle('active', mode === 'video');
+}
+
+/**
+ * Set sort mode (views or date)
+ */
+function setSortMode(mode) {
+    currentSortMode = mode;
+
+    // Update button states
+    document.getElementById('viewsSortBtn').classList.toggle('active', mode === 'views');
+    document.getElementById('dateSortBtn').classList.toggle('active', mode === 'date');
+
+    // Re-sort and display current videos if we have any
+    if (currentVideos.length > 0) {
+        const sortedVideos = sortVideos(currentVideos, mode);
+        displayVideos(sortedVideos);
+    }
+}
+
+/**
+ * Sort videos by mode
+ */
+function sortVideos(videos, mode) {
+    const sorted = [...videos];
+    if (mode === 'date') {
+        sorted.sort((a, b) => b.createTime - a.createTime);
+    } else {
+        sorted.sort((a, b) => b.playCount - a.playCount);
+    }
+    return sorted;
 }
 
 /**
@@ -61,7 +93,8 @@ async function searchTrends() {
             },
             body: JSON.stringify({
                 keyword,
-                mode: currentSearchMode
+                mode: currentSearchMode,
+                sort: currentSortMode
             })
         });
 
@@ -107,8 +140,9 @@ function displayResults(result) {
     // Update trend summary
     document.getElementById('trendSummary').textContent = result.trend_summary;
 
-    // Display videos
-    displayVideos(result.analyzed_videos);
+    // Store and display videos
+    currentVideos = result.analyzed_videos;
+    displayVideos(currentVideos);
 
     // Scroll to results
     document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
