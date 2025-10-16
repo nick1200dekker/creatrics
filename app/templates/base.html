@@ -1135,12 +1135,12 @@
 
         <!-- TikTok Group - Only show if user has permissions for any TikTok feature -->
         {% set has_tiktok_permissions = not workspace_info or workspace_info.is_owner or
+           workspace_info.permissions.trend_finder or
+           workspace_info.permissions.tiktok_keyword_research or
+           workspace_info.permissions.tiktok_competitors or
            workspace_info.permissions.hook_generator or
            workspace_info.permissions.titles_hashtags or
-           workspace_info.permissions.trending_sounds or
-           workspace_info.permissions.trend_finder or
-           workspace_info.permissions.tiktok_analytics or
-           workspace_info.permissions.tiktok_competitors %}
+           workspace_info.permissions.tiktok_analytics %}
 
         {% if has_tiktok_permissions %}
         <div class="nav-group" data-group="TikTok">
@@ -1152,6 +1152,33 @@
                 <i class="ph ph-caret-right chevron"></i>
             </div>
             <div class="nav-group-items">
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.trend_finder %}
+                <a href="{{ url_for('trend_finder.trend_finder') }}"
+                   class="nav-subitem {% if request.endpoint and 'trend_finder.' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-trend-up"></i>
+                    <span>Trend Finder</span>
+                </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.tiktok_keyword_research %}
+                <a href="{{ url_for('tiktok_keyword_research.tiktok_keyword_research') }}"
+                   class="nav-subitem {% if request.endpoint and 'tiktok_keyword_research.' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <span>Keyword Research</span>
+                </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.tiktok_competitors %}
+                <a href="{{ url_for('tiktok_competitors.tiktok_competitors') }}"
+                   class="nav-subitem {% if request.endpoint and 'tiktok_competitors.' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-users-three"></i>
+                    <span>Competitors</span>
+                </a>
+                {% endif %}
+
                 {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.hook_generator %}
                 <a href="{{ url_for('hook_generator.hook_generator') }}"
                    class="nav-subitem {% if request.endpoint and 'hook_generator.' in request.endpoint %}active{% endif %}"
@@ -1167,33 +1194,6 @@
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-hash"></i>
                     <span>Titles & Hashtags</span>
-                </a>
-                {% endif %}
-
-                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.trending_sounds %}
-                <a href="{{ url_for('trending_sounds.trending_sounds') }}"
-                   class="nav-subitem {% if request.endpoint and 'trending_sounds.' in request.endpoint %}active{% endif %}"
-                   onclick="return BaseApp.checkGuestAccess(event, this)">
-                    <i class="ph ph-music-notes"></i>
-                    <span>Trending Sounds</span>
-                </a>
-                {% endif %}
-
-                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.trend_finder %}
-                <a href="{{ url_for('trend_finder.trend_finder') }}"
-                   class="nav-subitem {% if request.endpoint and 'trend_finder.' in request.endpoint %}active{% endif %}"
-                   onclick="return BaseApp.checkGuestAccess(event, this)">
-                    <i class="ph ph-trend-up"></i>
-                    <span>Trend Finder</span>
-                </a>
-                {% endif %}
-
-                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.tiktok_competitors %}
-                <a href="{{ url_for('tiktok_competitors.tiktok_competitors') }}"
-                   class="nav-subitem {% if request.endpoint and 'tiktok_competitors.' in request.endpoint %}active{% endif %}"
-                   onclick="return BaseApp.checkGuestAccess(event, this)">
-                    <i class="ph ph-users-three"></i>
-                    <span>Competitors</span>
                 </a>
                 {% endif %}
 

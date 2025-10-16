@@ -1,5 +1,5 @@
 """
-TikTok Trend Finder Routes
+TikTok Keyword Research Routes
 Analyzes TikTok search results to identify trending keywords based on viral potential
 """
 from flask import render_template, request, jsonify
@@ -9,7 +9,7 @@ from . import bp
 import logging
 import os
 import requests
-from app.scripts.trend_finder.tiktok_trend_analyzer import TikTokTrendAnalyzer
+from app.scripts.tiktok_keyword_research.tiktok_trend_analyzer import TikTokTrendAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -19,17 +19,17 @@ TIKTOK_API_HOST = 'tiktok-api23.p.rapidapi.com'
 
 @bp.route('/')
 @auth_required
-@require_permission('trend_finder')
-def trend_finder():
-    """Trend Finder - Spot challenges & content styles that are taking off"""
-    return render_template('tiktok/trend_finder.html',
-                         title='Trend Finder',
-                         description='Spot challenges & content styles that are taking off')
+@require_permission('tiktok_keyword_research')
+def tiktok_keyword_research():
+    """TikTok Keyword Research - Analyze keywords and viral potential"""
+    return render_template('tiktok/keyword_research.html',
+                         title='TikTok Keyword Research',
+                         description='Analyze keywords and viral potential')
 
 
 @bp.route('/api/search', methods=['POST'])
 @auth_required
-@require_permission('trend_finder')
+@require_permission('tiktok_keyword_research')
 def search_trends():
     """
     Search TikTok for a keyword and analyze trending videos

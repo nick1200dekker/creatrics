@@ -2,4 +2,4 @@ from flask import Blueprint
 
 bp = Blueprint('trend_finder', __name__, url_prefix='/trend-finder')
 
-from . import trend_finder_routes
+from . import routes

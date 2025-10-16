@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}TikTok Keyword Research | Creatrics{% endblock %}
+
+{% block seo_meta %}
+<meta name="description" content="Discover trending TikTok content and analyze viral potential based on video age and engagement metrics.">
+<meta name="keywords" content="TikTok trends, viral videos, trend analysis, TikTok SEO, content discovery">
+{% endblock %}
+
+{% block additional_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/trend_finder.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="content-panel">
+    <div class="trend-finder-wrapper">
+        <!-- Header -->
+        <div class="trend-header">
+            <h1 class="trend-title">
+                <i class="ph ph-magnifying-glass"></i>
+                TikTok Keyword Research
+            </h1>
+            <!-- Search Mode Toggle -->
+            <div class="search-mode-toggle">
+                <button class="mode-btn active" onclick="setSearchMode('top')" id="topModeBtn">
+                    <i class="ph ph-trophy"></i>
+                    Top Videos
+                </button>
+                <button class="mode-btn" onclick="setSearchMode('video')" id="videoModeBtn">
+                    <i class="ph ph-video"></i>
+                    All Videos
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+
+            <div class="search-box">
+                <div class="search-input-wrapper">
+                    <i class="ph ph-magnifying-glass search-icon"></i>
+                    <input
+                        type="text"
+                        id="keywordInput"
+                        class="keyword-input"
+                        placeholder="Enter a keyword (e.g., Clash Royale, cooking, fitness)"
+                        autocomplete="off"
+                    >
+                    <button id="searchBtn" class="search-button" onclick="searchTrends()">
+                        <i class="ph ph-sparkle"></i>
+                        <span>Analyze Trends</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-container" id="loadingContainer" style="display: none;">
+            <div class="loading-spinner">
+                <i class="ph ph-spinner spin"></i>
+                <p>Analyzing TikTok trends...</p>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">
+                <i class="ph ph-trend-up"></i>
+            </div>
+            <h3>Search for TikTok Trends</h3>
+            <p>Enter a keyword above to discover trending videos and analyze their viral potential</p>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <!-- Score Panel -->
+            <div class="score-panel">
+                <div class="score-card total">
+                    <div class="score-header">
+                        <div class="score-icon">
+                            <i class="ph ph-trophy"></i>
+                        </div>
+                        <div class="score-label">Total Score</div>
+                    </div>
+                    <div class="score-value" id="totalScoreValue">0</div>
+                    <div class="score-bar">
+                        <div class="score-bar-fill" id="totalScoreBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="score-card hot">
+                    <div class="score-header">
+                        <div class="score-icon">
+                            <i class="ph ph-flame"></i>
+                        </div>
+                        <div class="score-label">Hot Score</div>
+                    </div>
+                    <div class="score-value" id="hotScoreValue">0</div>
+                    <div class="score-bar">
+                        <div class="score-bar-fill" id="hotScoreBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="score-card engagement">
+                    <div class="score-header">
+                        <div class="score-icon">
+                            <i class="ph ph-rocket"></i>
+                        </div>
+                        <div class="score-label">Engagement Score</div>
+                    </div>
+                    <div class="score-value" id="engagementScoreValue">0</div>
+                    <div class="score-bar">
+                        <div class="score-bar-fill" id="engagementScoreBar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trend Summary -->
+            <div class="trend-summary">
+                <i class="ph ph-lightbulb"></i>
+                <div class="trend-summary-text" id="trendSummary">Loading trend analysis...</div>
+            </div>
+
+            <!-- Sort Toggle -->
+            <div class="sort-toggle" style="margin-bottom: 1.5rem; margin-left: auto;">
+                <button class="sort-btn active" onclick="setSortMode('views')" id="viewsSortBtn">
+                    <i class="ph ph-eye"></i>
+                    Views
+                </button>
+                <button class="sort-btn" onclick="setSortMode('date')" id="dateSortBtn">
+                    <i class="ph ph-calendar"></i>
+                    Date
+                </button>
+            </div>
+
+            <!-- Videos Grid -->
+            <div class="videos-grid" id="videosGrid">
+                <!-- Video cards will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='scripts/tiktok_keyword_research.js') }}"></script>
+{% endblock %}
