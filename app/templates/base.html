@@ -1013,7 +1013,7 @@
 
                 {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.competitors %}
                 <a href="{{ url_for('competitors.competitors') }}"
-                   class="nav-subitem {% if request.endpoint and 'competitors' in request.endpoint %}active{% endif %}"
+                   class="nav-subitem {% if request.endpoint and request.endpoint.startswith('competitors.') %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-users-three"></i>
                     <span>Competitors</span>

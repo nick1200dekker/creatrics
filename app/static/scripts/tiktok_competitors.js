@@ -252,6 +252,7 @@ async function addCompetitor() {
                 renderNicheLists();
             }
 
+            renderCompetitorsList();
             switchView('list');
         }
     } catch (error) {
@@ -769,11 +770,11 @@ async function searchAccounts() {
         const data = await response.json();
 
         if (data.success) {
-            searchResults = data.accounts || [];
+            searchResults = data.channels || [];
             renderSearchResults();
         }
     } catch (error) {
-        console.error('Error searching accounts:', error);
+        console.error('Error searching channels:', error);
     } finally {
         searchBtn.innerHTML = originalText;
         searchBtn.disabled = false;
@@ -793,7 +794,7 @@ function renderSearchResults() {
         searchEmptyState.style.display = 'block';
         searchEmptyState.innerHTML = `
             <i class="ph ph-magnifying-glass-minus empty-icon"></i>
-            <p class="empty-text">No accounts found. Try a different search query.</p>
+            <p class="empty-text">No channels found. Try a different search query.</p>
         `;
         return;
     }
@@ -802,18 +803,17 @@ function renderSearchResults() {
     searchResultsDiv.style.display = 'block';
 
     const existingSecUids = new Set(competitors.map(c => c.sec_uid));
-    const availableResults = searchResults.filter(r => !existingSecUids.has(r.sec_uid));
 
-    availableResults.sort((a, b) => (b.follower_count || 0) - (a.follower_count || 0));
+    resultsCount.textContent = `Found ${searchResults.length} channels`;
 
-    resultsCount.textContent = `Found ${availableResults.length} accounts`;
+    searchResultsGrid.innerHTML = searchResults.map(channel => {
+        const isAdded = existingSecUids.has(channel.sec_uid);
 
-    searchResultsGrid.innerHTML = availableResults.map(account => {
-        const avatarHTML = account.avatar ?
-            `<img src="${account.avatar}" alt="${escapeHtml(account.nickname || 'Account')}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="avatar-placeholder" style="display:none;">${(account.nickname || '?')[0].toUpperCase()}</div>` :
-            `<div class="avatar-placeholder">${(account.nickname || '?')[0].toUpperCase()}</div>`;
+        const avatarHTML = channel.avatar ?
+            `<img src="${channel.avatar}" alt="${escapeHtml(channel.nickname || 'Account')}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="avatar-placeholder" style="display:none;">${(channel.nickname || '?')[0].toUpperCase()}</div>` :
+            `<div class="avatar-placeholder">${(channel.nickname || '?')[0].toUpperCase()}</div>`;
 
-        const tiktokUrl = `https://www.tiktok.com/@${account.username}`;
+        const tiktokUrl = `https://www.tiktok.com/@${channel.username}`;
 
         return `
             <div class="search-result-card">
@@ -822,36 +822,38 @@ function renderSearchResults() {
                         ${avatarHTML}
                     </div>
                     <div class="competitor-info">
-                        <div class="competitor-title">${escapeHtml(account.nickname || 'Unknown Account')}</div>
-                        ${account.username ? `<div class="channel-handle">@${escapeHtml(account.username)}</div>` : ''}
+                        <div class="competitor-title">${escapeHtml(channel.nickname || 'Unknown Account')}</div>
+                        ${channel.username ? `<div class="channel-handle">@${escapeHtml(channel.username)}</div>` : ''}
                         <div class="competitor-stats">
                             <span class="stat">
                                 <i class="ph ph-users"></i>
-                                ${formatTikTokCount(account.follower_count)}
+                                ${formatTikTokCount(channel.follower_count)}
                             </span>
                         </div>
                     </div>
                 </div>
-                <button class="add-result-btn" onclick='event.stopPropagation(); addAccountFromSearch(${JSON.stringify(account).replace(/'/g, "&#39;").replace(/"/g, "&quot;")})' ${competitors.length >= 15 ? 'disabled' : ''}>
-                    <i class="ph ph-plus"></i>
-                    Add
+                <button class="add-result-btn ${isAdded ? 'added' : ''}"
+                        onclick='event.stopPropagation(); ${isAdded ? '' : `addChannelFromSearch(${JSON.stringify(channel).replace(/'/g, "&#39;").replace(/"/g, "&quot;")})`}'
+                        ${competitors.length >= 15 || isAdded ? 'disabled' : ''}>
+                    <i class="ph ${isAdded ? 'ph-check' : 'ph-plus'}"></i>
+                    ${isAdded ? 'Added' : 'Add'}
                 </button>
             </div>
         `;
     }).join('');
 
-    if (availableResults.length === 0) {
+    if (searchResults.filter(c => !existingSecUids.has(c.sec_uid)).length === 0) {
         searchResultsGrid.innerHTML = `
             <div class="empty-state">
                 <i class="ph ph-check-circle empty-icon"></i>
-                <p class="empty-text">All found accounts have already been added to this list.</p>
+                <p class="empty-text">All found channels have already been added to this list.</p>
             </div>
         `;
     }
 }
 
-// Add account from search results
-async function addAccountFromSearch(accountData) {
+// Add channel from search results
+async function addChannelFromSearch(channelData) {
     if (!currentListId || competitors.length >= 15) return;
 
     try {
@@ -860,7 +862,7 @@ async function addAccountFromSearch(accountData) {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 list_id: currentListId,
-                account_data: accountData
+                account_data: channelData
             })
         });
 
@@ -877,9 +879,12 @@ async function addAccountFromSearch(accountData) {
 
             renderCompetitorsList();
             renderSearchResults();
+        } else {
+            alert(data.error || 'Failed to add channel');
         }
     } catch (error) {
-        console.error('Error adding account from search:', error);
+        console.error('Error adding channel from search:', error);
+        alert('Failed to add channel');
     }
 }
 

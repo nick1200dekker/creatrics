@@ -117,44 +117,79 @@ def delete_niche_list(list_id):
 @auth_required
 @require_permission('tiktok_competitors')
 def search_accounts():
-    """Search for TikTok accounts"""
+    """Search for TikTok videos and show channels"""
     try:
         query = request.args.get('query', '').strip()
 
         if not query:
             return jsonify({'success': False, 'error': 'Search query is required'}), 400
 
-        tiktok_api = TikTokAPI()
-        
-        # Search for videos and extract unique users
-        search_result = tiktok_api.search_videos(query)
-        
-        if not search_result:
+        # Use the TikTok general search endpoint (same as Keyword Research)
+        import requests
+
+        api_key = os.getenv('RAPIDAPI_KEY', '16c9c09b8bmsh0f0d3ec2999f27ep115961jsn5f75604e8050')
+        headers = {
+            "x-rapidapi-key": api_key,
+            "x-rapidapi-host": "tiktok-api23.p.rapidapi.com"
+        }
+
+        url = "https://tiktok-api23.p.rapidapi.com/api/search/general"
+        params = {
+            "keyword": query,
+            "cursor": "0",
+            "search_id": "0"
+        }
+
+        response = requests.get(url, headers=headers, params=params, timeout=30)
+        response.raise_for_status()
+
+        data = response.json()
+
+        if data.get('status_code') != 0:
             return jsonify({'success': False, 'error': 'Search failed'}), 500
 
-        users = search_result.get('users', [])
-        
-        # Fetch full user info for each unique user
-        accounts = []
-        for user in users[:50]:  # Limit to 50 accounts
-            username = user.get('username')
-            if not username:
+        videos_data = data.get('data', [])
+
+        # Extract unique channels from videos
+        channels_dict = {}
+        for item in videos_data:
+            try:
+                author = item.get('author', {})
+                sec_uid = author.get('secUid')
+
+                if not sec_uid or sec_uid in channels_dict:
+                    continue
+
+                # Get author stats to show video count, followers etc
+                author_stats = item.get('authorStats', author.get('stats', {}))
+
+                channels_dict[sec_uid] = {
+                    'sec_uid': sec_uid,
+                    'username': author.get('uniqueId'),
+                    'nickname': author.get('nickname'),
+                    'avatar': author.get('avatarLarger'),
+                    'verified': author.get('verified', False),
+                    'follower_count': author_stats.get('followerCount', 0),
+                    'following_count': author_stats.get('followingCount', 0),
+                    'video_count': author_stats.get('videoCount', 0),
+                    'heart_count': author_stats.get('heartCount', 0)
+                }
+            except Exception as e:
+                logger.error(f"Error parsing channel: {e}")
                 continue
-            
-            user_info = tiktok_api.get_user_info(username)
-            if user_info and user_info.get('follower_count', 0) >= 1000:
-                accounts.append(user_info)
+
+        channels = list(channels_dict.values())
 
         # Sort by follower count
-        accounts.sort(key=lambda x: x.get('follower_count', 0), reverse=True)
+        channels.sort(key=lambda x: x.get('follower_count', 0), reverse=True)
 
         return jsonify({
             'success': True,
-            'accounts': accounts
+            'channels': channels
         })
 
     except Exception as e:
-        logger.error(f"Error searching TikTok accounts: {e}")
+        logger.error(f"Error searching TikTok videos: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @bp.route('/api/add', methods=['POST'])
