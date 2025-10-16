@@ -1631,11 +1631,11 @@ const platformFeatures = {
         { icon: 'ph-chart-line-up', title: 'Track Performance', desc: 'Monitor engagement', url: '{{ url_for("analytics.index", platform="x") }}' }
     ],
     tiktok: [
+        { icon: 'ph-trend-up', title: 'Discover Trends', desc: 'Viral content ideas', url: '{{ url_for("trend_finder.trend_finder") }}' },
+        { icon: 'ph-magnifying-glass', title: 'Keyword Research', desc: 'Analyze keywords', url: '{{ url_for("tiktok_keyword_research.tiktok_keyword_research") }}' },
+        { icon: 'ph-users-three', title: 'Analyze Competitors', desc: 'Track top creators', url: '{{ url_for("tiktok_competitors.tiktok_competitors") }}' },
         { icon: 'ph-fish-simple', title: 'Create Hooks', desc: 'Viral opening lines', url: '{{ url_for("hook_generator.hook_generator") }}' },
         { icon: 'ph-hash', title: 'Generate Hashtags', desc: 'Trending hashtags', url: '{{ url_for("titles_hashtags.titles_hashtags") }}' },
-        { icon: 'ph-music-notes', title: 'Find Sounds', desc: 'Popular audio tracks', url: '{{ url_for("trending_sounds.trending_sounds") }}' },
-        { icon: 'ph-trend-up', title: 'Discover Trends', desc: 'Viral content ideas', url: '{{ url_for("trend_finder.trend_finder") }}' },
-        { icon: 'ph-users-three', title: 'Analyze Competitors', desc: 'Track top creators', url: '{{ url_for("tiktok_competitors.tiktok_competitors") }}' },
         { icon: 'ph-chart-line-up', title: 'View Analytics', desc: 'Track performance', url: '{{ url_for("analytics.index", platform="tiktok") }}' }
     ],
     general: [
