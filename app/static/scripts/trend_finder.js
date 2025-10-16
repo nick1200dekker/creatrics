@@ -132,10 +132,15 @@ function displayResults(result) {
     // Show results section
     document.getElementById('resultsSection').style.display = 'block';
 
-    // Update meta statistics
-    document.getElementById('totalVideos').textContent = result.total_videos;
-    document.getElementById('avgScore').textContent = result.avg_viral_potential;
-    document.getElementById('viralCount').textContent = result.status_counts.viral || 0;
+    // Update score panel
+    document.getElementById('totalScoreValue').textContent = result.total_score || 0;
+    document.getElementById('totalScoreBar').style.width = `${result.total_score || 0}%`;
+
+    document.getElementById('hotScoreValue').textContent = result.hot_score || 0;
+    document.getElementById('hotScoreBar').style.width = `${result.hot_score || 0}%`;
+
+    document.getElementById('engagementScoreValue').textContent = result.engagement_score || 0;
+    document.getElementById('engagementScoreBar').style.width = `${result.engagement_score || 0}%`;
 
     // Update trend summary
     document.getElementById('trendSummary').textContent = result.trend_summary;

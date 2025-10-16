@@ -18,7 +18,7 @@
         <div class="trend-header">
             <h1 class="trend-title">
                 <i class="ph ph-trend-up"></i>
-                TikTok Trend Finder
+                Trend Finder
             </h1>
             <!-- Search Mode Toggle -->
             <div class="search-mode-toggle">
@@ -73,35 +73,44 @@
 
         <!-- Results Section -->
         <div class="results-section" id="resultsSection" style="display: none;">
-            <!-- Results Meta -->
-            <div class="results-meta">
-                <div class="meta-card">
-                    <div class="meta-icon videos">
-                        <i class="ph ph-video-camera"></i>
+            <!-- Score Panel -->
+            <div class="score-panel">
+                <div class="score-card total">
+                    <div class="score-header">
+                        <div class="score-icon">
+                            <i class="ph ph-trophy"></i>
+                        </div>
+                        <div class="score-label">Total Score</div>
                     </div>
-                    <div class="meta-content">
-                        <div class="meta-label">Videos Analyzed</div>
-                        <div class="meta-value" id="totalVideos">0</div>
-                    </div>
-                </div>
-
-                <div class="meta-card">
-                    <div class="meta-icon score">
-                        <i class="ph ph-chart-line"></i>
-                    </div>
-                    <div class="meta-content">
-                        <div class="meta-label">Avg Viral Score</div>
-                        <div class="meta-value" id="avgScore">0</div>
+                    <div class="score-value" id="totalScoreValue">0</div>
+                    <div class="score-bar">
+                        <div class="score-bar-fill" id="totalScoreBar" style="width: 0%"></div>
                     </div>
                 </div>
 
-                <div class="meta-card">
-                    <div class="meta-icon viral">
-                        <i class="ph ph-fire"></i>
+                <div class="score-card hot">
+                    <div class="score-header">
+                        <div class="score-icon">
+                            <i class="ph ph-flame"></i>
+                        </div>
+                        <div class="score-label">Hot Score</div>
                     </div>
-                    <div class="meta-content">
-                        <div class="meta-label">Viral Videos</div>
-                        <div class="meta-value" id="viralCount">0</div>
+                    <div class="score-value" id="hotScoreValue">0</div>
+                    <div class="score-bar">
+                        <div class="score-bar-fill" id="hotScoreBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="score-card engagement">
+                    <div class="score-header">
+                        <div class="score-icon">
+                            <i class="ph ph-rocket"></i>
+                        </div>
+                        <div class="score-label">Engagement Score</div>
+                    </div>
+                    <div class="score-value" id="engagementScoreValue">0</div>
+                    <div class="score-bar">
+                        <div class="score-bar-fill" id="engagementScoreBar" style="width: 0%"></div>
                     </div>
                 </div>
             </div>

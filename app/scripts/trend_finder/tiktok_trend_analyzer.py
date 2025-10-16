@@ -265,12 +265,71 @@ class TikTokTrendAnalyzer:
             'mature': sum(1 for v in analyzed_videos if v['trend_status'] == 'mature')
         }
 
+        # Calculate Hot Score (0-100) - based on videos posted within 7 days
+        videos_within_7_days = sum(1 for v in analyzed_videos if v['age_hours'] <= 168)  # 7 days = 168 hours
+        hot_score_percentage = (videos_within_7_days / len(analyzed_videos) * 100) if analyzed_videos else 0
+        hot_score = int(hot_score_percentage)
+
+        # Calculate Engagement Score (0-100) - based on average views with bonus points
+        avg_views = int(statistics.mean([v['playCount'] for v in analyzed_videos])) if analyzed_videos else 0
+
+        # Base score from average views (0-100 points)
+        # 1M+ avg = 100, 500k avg = 90, 100k avg = 70, 50k avg = 50, 10k avg = 30
+        if avg_views >= 1000000:
+            base_score = 100
+        elif avg_views >= 500000:
+            base_score = 90 + ((avg_views - 500000) / 500000) * 10  # 90-100
+        elif avg_views >= 100000:
+            base_score = 70 + ((avg_views - 100000) / 400000) * 20  # 70-90
+        elif avg_views >= 50000:
+            base_score = 50 + ((avg_views - 50000) / 50000) * 20   # 50-70
+        elif avg_views >= 10000:
+            base_score = 30 + ((avg_views - 10000) / 40000) * 20   # 30-50
+        elif avg_views >= 5000:
+            base_score = 15 + ((avg_views - 5000) / 5000) * 15     # 15-30
+        else:
+            base_score = (avg_views / 5000) * 15  # 0-15
+
+        # Bonus points ONLY for viral videos posted within 7 days
+        videos_100k_plus = sum(1 for v in analyzed_videos if v['playCount'] >= 100000)
+        videos_1m_plus = sum(1 for v in analyzed_videos if v['playCount'] >= 1000000)
+        videos_10m_plus = sum(1 for v in analyzed_videos if v['playCount'] >= 10000000)
+
+        # Count viral videos within 7 days only
+        videos_100k_recent = sum(1 for v in analyzed_videos if v['playCount'] >= 100000 and v['age_hours'] <= 168)
+        videos_1m_recent = sum(1 for v in analyzed_videos if v['playCount'] >= 1000000 and v['age_hours'] <= 168)
+        videos_10m_recent = sum(1 for v in analyzed_videos if v['playCount'] >= 10000000 and v['age_hours'] <= 168)
+
+        # Bonus points: Add extra points only for recent viral videos
+        total_videos = len(analyzed_videos)
+        bonus_points = 0
+
+        # 100k+ within 7 days: based on percentage
+        if videos_100k_recent > 0:
+            percentage = (videos_100k_recent / total_videos) * 100
+            bonus_points += min(5, int(percentage / 10))  # 10% = 1pt, 50% = 5pts
+
+        # 1M+ within 7 days: based on percentage
+        if videos_1m_recent > 0:
+            percentage = (videos_1m_recent / total_videos) * 100
+            bonus_points += min(7, int(percentage / 5))  # 5% = 1pt, 35% = 7pts
+
+        # 10M+ within 7 days: based on percentage
+        if videos_10m_recent > 0:
+            percentage = (videos_10m_recent / total_videos) * 100
+            bonus_points += min(8, int(percentage / 3))  # 3% = 1pt, 24% = 8pts
+
+        engagement_score = min(100, int(base_score + bonus_points))
+
+        # Calculate Total Score (0-100) - average of Hot Score and Engagement Score
+        total_score = int((hot_score + engagement_score) / 2)
+
         # Determine overall trend assessment
-        if status_counts['viral'] >= 3:
+        if total_score >= 70:
             trend_summary = 'High viral activity - Multiple videos are exploding right now!'
-        elif status_counts['trending'] >= 5:
+        elif total_score >= 50:
             trend_summary = 'Strong trending momentum - This topic is hot!'
-        elif status_counts['emerging'] >= 5:
+        elif total_score >= 30:
             trend_summary = 'Emerging trend - Early stage with potential'
         else:
             trend_summary = 'Established topic - Steady but mature content'
@@ -282,6 +341,14 @@ class TikTokTrendAnalyzer:
             'median_viral_potential': median_viral_potential,
             'status_counts': status_counts,
             'trend_summary': trend_summary,
+            'hot_score': hot_score,
+            'engagement_score': engagement_score,
+            'total_score': total_score,
+            'avg_views': avg_views,
+            'videos_within_7_days': videos_within_7_days,
+            'videos_100k_plus': videos_100k_plus,
+            'videos_1m_plus': videos_1m_plus,
+            'videos_10m_plus': videos_10m_plus,
             'top_hashtags': self.extract_top_hashtags(analyzed_videos),
             'analyzed_at': datetime.now().isoformat()
         }

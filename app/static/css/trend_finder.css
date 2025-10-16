@@ -356,88 +356,114 @@ html.dark .loading-spinner i {
     padding: 2rem;
 }
 
-/* Results Meta */
-.results-meta {
+/* Score Panel */
+.score-panel {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-.meta-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
+.score-card {
+    padding: 1.5rem;
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
-    border-radius: 10px;
+    border-radius: 12px;
     transition: all 0.2s ease;
 }
 
-html.dark .meta-card {
+html.dark .score-card {
     background: rgba(63, 63, 70, 0.5);
     border-color: rgba(82, 82, 91, 0.5);
 }
 
-.meta-card:hover {
+.score-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-    border-color: rgba(59, 130, 246, 0.3);
 }
 
-html.dark .meta-card:hover {
-    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
-    border-color: rgba(96, 165, 250, 0.4);
+.score-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
-.meta-icon {
-    width: 48px;
-    height: 48px;
+.score-icon {
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 10px;
     font-size: 1.5rem;
-    flex-shrink: 0;
 }
 
-.meta-icon.videos {
-    background: rgba(59, 130, 246, 0.1);
-    color: #3B82F6;
-}
-
-html.dark .meta-icon.videos {
-    color: #60A5FA;
-}
-
-.meta-icon.score {
+.score-card.total .score-icon {
     background: rgba(234, 179, 8, 0.1);
     color: #EAB308;
 }
 
-.meta-icon.viral {
+.score-card.hot .score-icon {
     background: rgba(239, 68, 68, 0.1);
     color: #EF4444;
 }
 
-.meta-content {
-    flex: 1;
-    min-width: 0;
+.score-card.engagement .score-icon {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
 }
 
-.meta-label {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
+html.dark .score-card.engagement .score-icon {
+    color: #60A5FA;
+}
+
+.score-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.25rem;
 }
 
-.meta-value {
-    font-size: 1.25rem;
+.score-value {
+    font-size: 2.5rem;
     font-weight: 700;
     color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.score-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.score-bar-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+    border-radius: 4px;
+}
+
+.score-card.total .score-bar-fill {
+    background: linear-gradient(90deg, #EAB308 0%, #F59E0B 100%);
+}
+
+.score-card.hot .score-bar-fill {
+    background: linear-gradient(90deg, #EF4444 0%, #DC2626 100%);
+}
+
+.score-card.engagement .score-bar-fill {
+    background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
+}
+
+.score-detail {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-top: 0.5rem;
 }
 
 /* Trend Summary */
@@ -544,9 +570,9 @@ html.dark .video-card:hover {
     transform: translate(-50%, -50%);
     width: 60px;
     height: 60px;
-    background: rgba(255, 255, 255, 0.95);
+    background: transparent;
     border-radius: 50%;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     font-size: 1.75rem;
@@ -559,8 +585,13 @@ html.dark .play-icon {
 }
 
 .video-card:hover .play-icon {
+    display: flex;
     transform: translate(-50%, -50%) scale(1.1);
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+html.dark .video-card:hover .play-icon {
+    background: rgba(255, 255, 255, 0.95);
 }
 
 .video-stats-overlay {
