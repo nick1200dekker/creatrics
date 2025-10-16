@@ -270,25 +270,39 @@ class TikTokTrendAnalyzer:
         hot_score_percentage = (videos_within_7_days / len(analyzed_videos) * 100) if analyzed_videos else 0
         hot_score = int(hot_score_percentage)
 
-        # Calculate Engagement Score (0-100) - based on average views with bonus points
-        avg_views = int(statistics.mean([v['playCount'] for v in analyzed_videos])) if analyzed_videos else 0
+        # Calculate Engagement Score (0-100) - based on views per day for videos within 7 days
+        videos_within_7_days_list = [v for v in analyzed_videos if v['age_hours'] <= 168]
 
-        # Base score from average views (0-100 points)
-        # 1M+ avg = 100, 500k avg = 90, 100k avg = 70, 50k avg = 50, 10k avg = 30
-        if avg_views >= 1000000:
-            base_score = 100
-        elif avg_views >= 500000:
-            base_score = 90 + ((avg_views - 500000) / 500000) * 10  # 90-100
-        elif avg_views >= 100000:
-            base_score = 70 + ((avg_views - 100000) / 400000) * 20  # 70-90
-        elif avg_views >= 50000:
-            base_score = 50 + ((avg_views - 50000) / 50000) * 20   # 50-70
-        elif avg_views >= 10000:
-            base_score = 30 + ((avg_views - 10000) / 40000) * 20   # 30-50
-        elif avg_views >= 5000:
-            base_score = 15 + ((avg_views - 5000) / 5000) * 15     # 15-30
+        # Calculate average views per day (views / days old)
+        if videos_within_7_days_list:
+            views_per_day_list = []
+            for v in videos_within_7_days_list:
+                days_old = max(v['age_hours'] / 24, 0.5)  # Minimum 0.5 days to avoid division issues
+                views_per_day = v['playCount'] / days_old
+                views_per_day_list.append(views_per_day)
+
+            avg_views_per_day = int(statistics.mean(views_per_day_list))
+            avg_views = avg_views_per_day  # Store for response
         else:
-            base_score = (avg_views / 5000) * 15  # 0-15
+            avg_views_per_day = 0
+            avg_views = 0
+
+        # Base score from average views per day (0-85 points) - strict scale
+        # 100k+ per day = 85, 50k per day = 70, 20k per day = 55, 10k per day = 40, 5k per day = 25
+        if avg_views_per_day >= 100000:
+            base_score = 85
+        elif avg_views_per_day >= 50000:
+            base_score = 70 + ((avg_views_per_day - 50000) / 50000) * 15  # 70-85
+        elif avg_views_per_day >= 20000:
+            base_score = 55 + ((avg_views_per_day - 20000) / 30000) * 15  # 55-70
+        elif avg_views_per_day >= 10000:
+            base_score = 40 + ((avg_views_per_day - 10000) / 10000) * 15  # 40-55
+        elif avg_views_per_day >= 5000:
+            base_score = 25 + ((avg_views_per_day - 5000) / 5000) * 15    # 25-40
+        elif avg_views_per_day >= 1000:
+            base_score = 10 + ((avg_views_per_day - 1000) / 4000) * 15    # 10-25
+        else:
+            base_score = (avg_views_per_day / 1000) * 10  # 0-10
 
         # Bonus points ONLY for viral videos posted within 7 days
         videos_100k_plus = sum(1 for v in analyzed_videos if v['playCount'] >= 100000)
@@ -324,15 +338,23 @@ class TikTokTrendAnalyzer:
         # Calculate Total Score (0-100) - average of Hot Score and Engagement Score
         total_score = int((hot_score + engagement_score) / 2)
 
-        # Determine overall trend assessment
-        if total_score >= 70:
-            trend_summary = 'High viral activity - Multiple videos are exploding right now!'
-        elif total_score >= 50:
-            trend_summary = 'Strong trending momentum - This topic is hot!'
-        elif total_score >= 30:
-            trend_summary = 'Emerging trend - Early stage with potential'
+        # Determine overall trend assessment based on both scores
+        if hot_score >= 70 and engagement_score >= 70:
+            trend_summary = 'Extremely hot - Fresh viral content!'
+        elif hot_score >= 50 and engagement_score >= 70:
+            trend_summary = 'Hot & engaging - Strong performance!'
+        elif hot_score >= 70 and engagement_score >= 50:
+            trend_summary = 'Very active - Lots of fresh content!'
+        elif engagement_score >= 80:
+            trend_summary = 'High engagement - Not super fresh'
+        elif hot_score >= 60:
+            trend_summary = 'Active niche - Good recent content'
+        elif engagement_score >= 60:
+            trend_summary = 'Good engagement - Decent views'
+        elif total_score >= 40:
+            trend_summary = 'Moderate - Steady activity'
         else:
-            trend_summary = 'Established topic - Steady but mature content'
+            trend_summary = 'Low activity - Cooling off'
 
         return {
             'analyzed_videos': analyzed_videos,
