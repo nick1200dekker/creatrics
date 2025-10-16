@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block additional_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/trend_finder.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tiktok_trend_finder.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -16,21 +16,97 @@
     <div class="trend-finder-wrapper">
         <!-- Header -->
         <div class="trend-header">
-            <h1 class="trend-title">
-                <i class="ph ph-trend-up"></i>
-                Trend Finder
-            </h1>
+            <div class="header-left">
+                <h1 class="trend-title">
+                    <i class="ph ph-trend-up"></i>
+                    Gaming Trend Finder
+                </h1>
+                <p class="trend-subtitle">Discover trending gaming keywords on TikTok</p>
+            </div>
+            <div class="header-right">
+                <button class="refresh-btn" id="refreshBtn" onclick="startAnalysis()">
+                    <i class="ph ph-arrow-clockwise"></i>
+                    Analyze Trends
+                </button>
+            </div>
         </div>
 
-        <!-- Coming Soon Message -->
-        <div class="empty-state">
+        <!-- Progress Section -->
+        <div class="progress-section" id="progressSection" style="display: none;">
+            <div class="progress-card">
+                <div class="progress-header">
+                    <div class="progress-icon">
+                        <i class="ph ph-trend-up spinning"></i>
+                    </div>
+                    <h3 class="progress-title">Analyzing Gaming Trends</h3>
+                    <p class="progress-subtitle">Fetching trending hashtags, filtering with AI, and analyzing each keyword...</p>
+                </div>
+                <div class="progress-body">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-info">
+                        <span class="progress-text" id="progressText">Starting analysis...</span>
+                        <span class="progress-percent" id="progressPercent">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="results-header">
+                <div class="results-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Hashtags</div>
+                        <div class="stat-value" id="totalHashtags">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Gaming Keywords</div>
+                        <div class="stat-value" id="gamingKeywords">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Analyzed</div>
+                        <div class="stat-value" id="analyzedCount">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-table-wrapper">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th class="rank-col">#</th>
+                            <th class="keyword-col">Keyword</th>
+                            <th class="score-col">Total Score</th>
+                            <th class="score-col">Hot Score</th>
+                            <th class="score-col">Engagement Score</th>
+                            <th class="videos-col">Videos</th>
+                            <th class="views-col">Avg Views/Day</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody">
+                        <!-- Results will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
             <div class="empty-icon">
                 <i class="ph ph-trend-up"></i>
             </div>
-            <h3>Trend Finder</h3>
-            <p>Discover trending content on TikTok</p>
-            <p style="margin-top: 1rem; color: var(--text-tertiary); font-size: 0.875rem;">Coming soon...</p>
+            <h3>Gaming Trend Finder</h3>
+            <p>Click "Analyze Trends" to discover the hottest gaming keywords on TikTok</p>
+            <p style="margin-top: 1rem; color: var(--text-tertiary); font-size: 0.875rem;">
+                This will analyze top 100 trending hashtags, filter gaming-related ones with AI, and score each keyword
+            </p>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='scripts/tiktok_trend_finder.js') }}"></script>
 {% endblock %}
