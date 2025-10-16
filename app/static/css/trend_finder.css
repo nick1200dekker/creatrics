@@ -564,34 +564,7 @@ html.dark .video-card:hover {
 }
 
 .play-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 60px;
-    height: 60px;
-    background: transparent;
-    border-radius: 50%;
     display: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.75rem;
-    color: #3B82F6;
-    transition: all 0.2s ease;
-}
-
-html.dark .play-icon {
-    color: #60A5FA;
-}
-
-.video-card:hover .play-icon {
-    display: flex;
-    transform: translate(-50%, -50%) scale(1.1);
-    background: rgba(255, 255, 255, 0.95);
-}
-
-html.dark .video-card:hover .play-icon {
-    background: rgba(255, 255, 255, 0.95);
 }
 
 .video-stats-overlay {
