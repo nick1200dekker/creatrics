@@ -15,10 +15,17 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 async function loadCachedAnalysis() {
     try {
+        // Show initial loading spinner
+        document.getElementById('initialLoading').style.display = 'flex';
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('resultsSection').style.display = 'none';
+        document.getElementById('progressSection').style.display = 'none';
+
         const response = await fetch('/tiktok-trend-finder/api/cached');
 
         if (!response.ok) {
             console.error('Failed to load cached analysis');
+            showEmptyState();
             return;
         }
 
@@ -27,10 +34,27 @@ async function loadCachedAnalysis() {
         if (data.success && data.cached) {
             // Display cached results
             displayResults(data);
+        } else {
+            // No cached data, show empty state
+            showEmptyState();
         }
     } catch (error) {
         console.error('Error loading cached analysis:', error);
+        showEmptyState();
+    } finally {
+        // Hide initial loading spinner
+        document.getElementById('initialLoading').style.display = 'none';
     }
+}
+
+/**
+ * Show empty state
+ */
+function showEmptyState() {
+    document.getElementById('initialLoading').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'flex';
 }
 
 /**
@@ -46,6 +70,7 @@ async function startAnalysis() {
     // Show progress, hide results and empty state
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('initialLoading').style.display = 'none';
     document.getElementById('progressSection').style.display = 'block';
 
     // Disable button
@@ -92,8 +117,7 @@ async function startAnalysis() {
         alert('Error: ' + error.message);
 
         // Show empty state again
-        document.getElementById('progressSection').style.display = 'none';
-        document.getElementById('emptyState').style.display = 'flex';
+        showEmptyState();
     } finally {
         // Re-enable button
         refreshBtn.disabled = false;
@@ -115,10 +139,18 @@ function updateProgress(percent, text) {
  * Display analysis results
  */
 function displayResults(data) {
-    // Hide progress and empty state, show results
+    // Hide progress, empty state, and initial loading
     document.getElementById('progressSection').style.display = 'none';
     document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('initialLoading').style.display = 'none';
+    
+    // Show results
     document.getElementById('resultsSection').style.display = 'block';
+
+    // Update stats
+    document.getElementById('totalKeywordsStat').textContent = data.total_keywords_fetched || 0;
+    document.getElementById('gamingKeywordsStat').textContent = data.gaming_keywords_found || 0;
+    document.getElementById('analyzedKeywordsStat').textContent = data.keywords_analyzed || 0;
 
     // Populate table
     const tbody = document.getElementById('resultsTableBody');
@@ -141,7 +173,7 @@ function displayResults(data) {
         // Keyword
         const keywordCell = document.createElement('td');
         keywordCell.className = 'keyword-col';
-        keywordCell.innerHTML = `<span class="keyword-tag">#${result.keyword}</span>`;
+        keywordCell.innerHTML = `<span class="keyword-tag">#${escapeHtml(result.keyword)}</span>`;
         row.appendChild(keywordCell);
 
         // Total Score
@@ -201,4 +233,14 @@ function createScoreBadge(score, type) {
  */
 function formatNumber(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }

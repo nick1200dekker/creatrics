@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Trend Finder - TikTok Trends | Creatrics{% endblock %}
+{% block title %}Trend Finder | Creatrics{% endblock %}
 
 {% block seo_meta %}
-<meta name="description" content="Discover trending TikTok content">
-<meta name="keywords" content="TikTok trends, trending content, viral trends">
+<meta name="description" content="Discover top gaming trends on TikTok with AI-powered keyword analysis.">
+<meta name="keywords" content="TikTok trends, gaming trends, viral hashtags, trend analysis">
 {% endblock %}
 
 {% block additional_styles %}
@@ -21,24 +21,33 @@
                     <i class="ph ph-trend-up"></i>
                     Trend Finder
                 </h1>
+                <p class="trend-subtitle">Discover top gaming trends with AI-powered analysis</p>
             </div>
             <div class="header-right">
                 <button class="refresh-btn" id="refreshBtn" onclick="startAnalysis()">
                     <i class="ph ph-arrow-clockwise"></i>
-                    Analyze Trends
+                    Refresh Analysis
                 </button>
             </div>
         </div>
 
-        <!-- Progress Section -->
+        <!-- Loading State (Initial Page Load) -->
+        <div class="loading-container" id="initialLoading" style="display: flex;">
+            <div class="loading-spinner">
+                <i class="ph ph-spinner"></i>
+                <p>Loading cached trends...</p>
+            </div>
+        </div>
+
+        <!-- Progress Section (During Analysis) -->
         <div class="progress-section" id="progressSection" style="display: none;">
             <div class="progress-card">
                 <div class="progress-header">
                     <div class="progress-icon">
-                        <i class="ph ph-trend-up spinning"></i>
+                        <i class="ph ph-gear spinning"></i>
                     </div>
-                    <h3 class="progress-title">Analyzing Trends</h3>
-                    <p class="progress-subtitle">Fetching trending hashtags, filtering with AI, and analyzing each keyword...</p>
+                    <h2 class="progress-title">Analyzing Trends</h2>
+                    <p class="progress-subtitle">Fetching and analyzing gaming keywords from TikTok</p>
                 </div>
                 <div class="progress-body">
                     <div class="progress-bar">
@@ -54,6 +63,23 @@
 
         <!-- Results Section -->
         <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="results-header">
+                <div class="results-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Keywords</div>
+                        <div class="stat-value" id="totalKeywordsStat">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Gaming Keywords</div>
+                        <div class="stat-value" id="gamingKeywordsStat">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Analyzed</div>
+                        <div class="stat-value" id="analyzedKeywordsStat">0</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="results-table-wrapper">
                 <table class="results-table">
                     <thead>
@@ -62,28 +88,27 @@
                             <th class="keyword-col">Keyword</th>
                             <th class="score-col">Total Score</th>
                             <th class="score-col">Hot Score</th>
-                            <th class="score-col">Engagement Score</th>
+                            <th class="score-col">Engagement</th>
                             <th class="videos-col">Videos</th>
-                            <th class="views-col">Avg Views/Day</th>
+                            <th class="views-col">Avg Views</th>
                         </tr>
                     </thead>
                     <tbody id="resultsTableBody">
-                        <!-- Results will be inserted here -->
+                        <tr>
+                            <td colspan="7" class="no-results">No results yet</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
         <!-- Empty State -->
-        <div class="empty-state" id="emptyState">
+        <div class="empty-state" id="emptyState" style="display: none;">
             <div class="empty-icon">
                 <i class="ph ph-trend-up"></i>
             </div>
-            <h3>Trend Finder</h3>
-            <p>Click "Analyze Trends" to discover the hottest gaming keywords on TikTok</p>
-            <p style="margin-top: 1rem; color: var(--text-tertiary); font-size: 0.875rem;">
-                This will analyze top 100 trending hashtags, filter gaming-related ones with AI, and score each keyword
-            </p>
+            <h3>Discover Gaming Trends</h3>
+            <p>Click "Refresh Analysis" to find the latest trending gaming keywords on TikTok</p>
         </div>
     </div>
 </div>
