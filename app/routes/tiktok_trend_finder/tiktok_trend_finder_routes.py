@@ -11,7 +11,10 @@ import os
 import requests
 from app.scripts.tiktok_keyword_research.tiktok_trend_analyzer import TikTokTrendAnalyzer
 from app.system.ai_provider.ai_provider import get_ai_provider
+from app.system.services.firebase_service import TikTokTrendFinderService
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +31,42 @@ def tiktok_trend_finder():
     return render_template('tiktok/trend_finder.html',
                          title='TikTok Trend Finder',
                          description='Find and analyze gaming trends')
+
+
+@bp.route('/api/cached', methods=['GET'])
+@auth_required
+@require_permission('tiktok_trend_finder')
+def get_cached_analysis():
+    """
+    Get the latest cached analysis from database
+    Available to all users
+    """
+    try:
+        cached_data = TikTokTrendFinderService.get_latest_analysis()
+
+        if cached_data:
+            # Convert Firestore timestamp to ISO string if needed
+            if 'updated_at' in cached_data and cached_data['updated_at']:
+                try:
+                    cached_data['updated_at'] = cached_data['updated_at'].isoformat()
+                except:
+                    pass
+
+            return jsonify({
+                'success': True,
+                'cached': True,
+                **cached_data
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'cached': False,
+                'message': 'No cached analysis available'
+            })
+
+    except Exception as e:
+        logger.error(f"Error getting cached analysis: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @bp.route('/api/analyze', methods=['POST'])
@@ -97,11 +136,12 @@ def analyze_trends():
                 'error': 'No gaming keywords found after AI filtering'
             }), 400
 
-        # STEP 3: Process keywords in parallel (5 at a time)
+        # STEP 3: Process keywords in parallel (2 at a time to avoid rate limits)
         results = []
 
-        # Use ThreadPoolExecutor for parallel processing
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        # Use ThreadPoolExecutor with reduced workers to avoid rate limiting
+        # RapidAPI has rate limits, so we process slower
+        with ThreadPoolExecutor(max_workers=2) as executor:
             # Submit all tasks
             future_to_keyword = {
                 executor.submit(analyze_single_keyword, keyword): keyword
@@ -116,6 +156,8 @@ def analyze_trends():
                     if result:
                         results.append(result)
                         logger.info(f"Completed '{keyword}': Total Score = {result['total_score']}")
+                    # Small delay between completing tasks to respect rate limits
+                    time.sleep(0.5)
                 except Exception as e:
                     logger.error(f"Error analyzing keyword '{keyword}': {e}")
 
@@ -124,13 +166,29 @@ def analyze_trends():
 
         logger.info(f"Analysis complete. Analyzed {len(results)} keywords")
 
-        return jsonify({
+        # Prepare response data
+        analyzed_at = datetime.utcnow().isoformat()
+        response_data = {
             'success': True,
             'total_keywords_fetched': len(all_hashtags),
             'gaming_keywords_found': len(gaming_keywords),
             'keywords_analyzed': len(results),
-            'results': results
-        })
+            'results': results,
+            'analyzed_at': analyzed_at
+        }
+
+        # Save to database (global, available to all users)
+        # Make a copy for DB that will have SERVER_TIMESTAMP added
+        try:
+            db_data = response_data.copy()
+            TikTokTrendFinderService.save_analysis(db_data)
+            logger.info("Saved analysis to database")
+        except Exception as e:
+            logger.error(f"Failed to save analysis to database: {e}")
+            # Don't fail the request if save fails
+
+        # Return response without Firestore Sentinel objects
+        return jsonify(response_data)
 
     except requests.exceptions.RequestException as e:
         logger.error(f"API request error: {e}")
@@ -166,6 +224,10 @@ def analyze_single_keyword(keyword: str) -> dict:
                 "cursor": cursor,
                 "search_id": search_id
             }
+
+            # Add delay between API calls to avoid rate limits
+            if page_num > 0:
+                time.sleep(0.3)  # 300ms delay between pages
 
             response = requests.get(
                 f"https://{TIKTOK_API_HOST}/api/search/general",

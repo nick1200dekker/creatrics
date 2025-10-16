@@ -396,3 +396,105 @@ class StorageService:
         except Exception as e:
             logger.error(f"Error deleting file {filename} for user {user_id}: {str(e)}")
             return False
+
+
+class TikTokTrendFinderService:
+    """
+    Service for global TikTok Trend Finder data
+    Stores analysis results that are shared across all users
+    """
+
+    COLLECTION_NAME = 'tiktok_trend_finder'
+    DOCUMENT_ID = 'latest_analysis'
+
+    @staticmethod
+    def save_analysis(analysis_data):
+        """
+        Save the latest trend analysis (replaces previous one)
+
+        Args:
+            analysis_data: Dict containing:
+                - total_keywords_fetched: int
+                - gaming_keywords_found: int
+                - keywords_analyzed: int
+                - results: list of keyword analysis results
+                - analyzed_at: ISO timestamp
+
+        Returns:
+            bool: True if successful
+        """
+        if not db:
+            logger.error("Firestore not initialized")
+            return False
+
+        try:
+            # Add server timestamp
+            analysis_data['updated_at'] = firestore.SERVER_TIMESTAMP
+
+            # Save to Firestore (overwrites previous document)
+            doc_ref = db.collection(TikTokTrendFinderService.COLLECTION_NAME).document(
+                TikTokTrendFinderService.DOCUMENT_ID
+            )
+            doc_ref.set(analysis_data)
+
+            logger.info(f"Saved TikTok Trend Finder analysis with {len(analysis_data.get('results', []))} keywords")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error saving TikTok Trend Finder analysis: {str(e)}")
+            return False
+
+    @staticmethod
+    def get_latest_analysis():
+        """
+        Get the latest trend analysis
+
+        Returns:
+            dict: Analysis data or None if not found
+        """
+        if not db:
+            logger.error("Firestore not initialized")
+            return None
+
+        try:
+            doc_ref = db.collection(TikTokTrendFinderService.COLLECTION_NAME).document(
+                TikTokTrendFinderService.DOCUMENT_ID
+            )
+            doc = doc_ref.get()
+
+            if doc.exists:
+                data = doc.to_dict()
+                logger.info(f"Retrieved TikTok Trend Finder analysis with {len(data.get('results', []))} keywords")
+                return data
+            else:
+                logger.info("No TikTok Trend Finder analysis found in database")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error getting TikTok Trend Finder analysis: {str(e)}")
+            return None
+
+    @staticmethod
+    def delete_analysis():
+        """
+        Delete the stored analysis
+
+        Returns:
+            bool: True if successful
+        """
+        if not db:
+            logger.error("Firestore not initialized")
+            return False
+
+        try:
+            doc_ref = db.collection(TikTokTrendFinderService.COLLECTION_NAME).document(
+                TikTokTrendFinderService.DOCUMENT_ID
+            )
+            doc_ref.delete()
+
+            logger.info("Deleted TikTok Trend Finder analysis")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error deleting TikTok Trend Finder analysis: {str(e)}")
+            return False

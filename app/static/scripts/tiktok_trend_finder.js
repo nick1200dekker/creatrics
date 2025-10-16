@@ -5,6 +5,34 @@
 
 let isAnalyzing = false;
 
+// Load cached data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadCachedAnalysis();
+});
+
+/**
+ * Load cached analysis from database
+ */
+async function loadCachedAnalysis() {
+    try {
+        const response = await fetch('/tiktok-trend-finder/api/cached');
+
+        if (!response.ok) {
+            console.error('Failed to load cached analysis');
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.cached) {
+            // Display cached results
+            displayResults(data);
+        }
+    } catch (error) {
+        console.error('Error loading cached analysis:', error);
+    }
+}
+
 /**
  * Start the trend analysis
  */
@@ -87,8 +115,9 @@ function updateProgress(percent, text) {
  * Display analysis results
  */
 function displayResults(data) {
-    // Hide progress, show results
+    // Hide progress and empty state, show results
     document.getElementById('progressSection').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'none';
     document.getElementById('resultsSection').style.display = 'block';
 
     // Update stats
