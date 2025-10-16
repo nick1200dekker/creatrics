@@ -1,645 +1,149 @@
 {% extends "base.html" %}
-{% set check_auth = true %}
-{% block title %}Trend Finder - TikTok Tools - Creatrics{% endblock %}
+
+{% block title %}Trend Finder - TikTok Trends | Creatrics{% endblock %}
 
 {% block seo_meta %}
-<meta name="description" content="Find trending TikTok content and analyze viral potential. Discover what's hot based on video age and engagement.">
-<meta name="keywords" content="tiktok trends, viral videos, trend analysis, content discovery">
+<meta name="description" content="Discover trending TikTok content and analyze viral potential based on video age and engagement metrics.">
+<meta name="keywords" content="TikTok trends, viral videos, trend analysis, TikTok SEO, content discovery">
 {% endblock %}
 
 {% block additional_styles %}
-{% include 'tiktok/base_styles.html' %}
-<style>
-    .trend-finder-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 2rem;
-    }
-
-    .trend-header {
-        text-align: center;
-        margin-bottom: 3rem;
-    }
-
-    .trend-header h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-    }
-
-    .trend-header h1 i {
-        color: var(--primary);
-    }
-
-    .trend-header p {
-        color: var(--text-secondary);
-        font-size: 1.1rem;
-    }
-
-    /* Search Section */
-    .search-section {
-        background: var(--card-bg);
-        border-radius: 16px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    .search-bar {
-        display: flex;
-        gap: 1rem;
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    .search-input-wrapper {
-        flex: 1;
-        position: relative;
-    }
-
-    .search-input-wrapper i {
-        position: absolute;
-        left: 1.25rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-secondary);
-        font-size: 1.25rem;
-    }
-
-    .search-input {
-        width: 100%;
-        padding: 1rem 1rem 1rem 3.5rem;
-        border: 2px solid var(--border);
-        border-radius: 12px;
-        font-size: 1rem;
-        transition: all 0.2s;
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: var(--primary);
-    }
-
-    .search-btn {
-        padding: 1rem 2rem;
-        background: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        white-space: nowrap;
-    }
-
-    .search-btn:hover {
-        background: var(--primary-dark);
-        transform: translateY(-2px);
-    }
-
-    .search-btn:disabled {
-        background: var(--text-secondary);
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .search-btn i.spin {
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    /* Search Mode Toggle */
-    .search-mode-toggle {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .mode-btn {
-        padding: 0.5rem 1.25rem;
-        background: var(--bg);
-        border: 2px solid var(--border);
-        border-radius: 8px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        color: var(--text-secondary);
-    }
-
-    .mode-btn:hover {
-        border-color: var(--primary);
-    }
-
-    .mode-btn.active {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
-    }
-
-    /* Example Keywords */
-    .example-keywords {
-        margin-top: 1.5rem;
-        text-align: center;
-    }
-
-    .example-keywords span {
-        color: var(--text-secondary);
-        margin-right: 0.75rem;
-    }
-
-    .keyword-chip {
-        display: inline-block;
-        padding: 0.5rem 1rem;
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        margin: 0.25rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        font-size: 0.9rem;
-    }
-
-    .keyword-chip:hover {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
-    }
-
-    /* Loading State */
-    .loading-container {
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 4rem 2rem;
-        text-align: center;
-    }
-
-    .loading-spinner {
-        width: 60px;
-        height: 60px;
-        border: 4px solid var(--border);
-        border-top-color: var(--primary);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 1.5rem;
-    }
-
-    .loading-text {
-        font-size: 1.1rem;
-        color: var(--text-secondary);
-    }
-
-    /* Results Section */
-    .results-section {
-        display: none;
-    }
-
-    .results-header {
-        margin-bottom: 2rem;
-    }
-
-    .results-meta {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 1rem;
-        background: var(--card-bg);
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-    }
-
-    .meta-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .meta-item i {
-        font-size: 1.5rem;
-        color: var(--primary);
-    }
-
-    .meta-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-
-    .meta-label {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-    }
-
-    .trend-summary {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .trend-summary i {
-        font-size: 2rem;
-    }
-
-    .trend-summary-text {
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-
-    /* Video Grid */
-    .videos-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1.25rem;
-        margin-bottom: 2rem;
-    }
-
-    .video-card {
-        background: var(--card-bg);
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        transition: all 0.3s;
-        cursor: pointer;
-    }
-
-    .video-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    }
-
-    .video-thumbnail {
-        position: relative;
-        width: 100%;
-        aspect-ratio: 9/16;
-        background: var(--bg);
-        overflow: hidden;
-        max-height: 400px;
-    }
-
-    .video-thumbnail img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .video-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7));
-        display: flex;
-        align-items: flex-end;
-        padding: 1rem;
-    }
-
-    .play-icon {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 60px;
-        height: 60px;
-        background: rgba(255,255,255,0.9);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        color: var(--primary);
-        transition: all 0.2s;
-    }
-
-    .video-card:hover .play-icon {
-        transform: translate(-50%, -50%) scale(1.1);
-        background: white;
-    }
-
-    .video-stats-overlay {
-        display: flex;
-        gap: 1rem;
-        color: white;
-        font-size: 0.9rem;
-    }
-
-    .stat-overlay {
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-
-    .video-content {
-        padding: 0.75rem;
-    }
-
-    .video-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 0.75rem;
-    }
-
-    .viral-score {
-        padding: 0.2rem 0.6rem;
-        border-radius: 16px;
-        font-weight: 700;
-        font-size: 0.8rem;
-        white-space: nowrap;
-    }
-
-    .viral-score.excellent {
-        background: #10b981;
-        color: white;
-    }
-
-    .viral-score.good {
-        background: #3b82f6;
-        color: white;
-    }
-
-    .viral-score.medium {
-        background: #f59e0b;
-        color: white;
-    }
-
-    .viral-score.low {
-        background: #6b7280;
-        color: white;
-    }
-
-    .trend-badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-
-    .trend-badge.viral {
-        background: #fecaca;
-        color: #dc2626;
-    }
-
-    .trend-badge.trending {
-        background: #fef3c7;
-        color: #d97706;
-    }
-
-    .trend-badge.emerging {
-        background: #dbeafe;
-        color: #2563eb;
-    }
-
-    .trend-badge.mature {
-        background: #e5e7eb;
-        color: #6b7280;
-    }
-
-    .video-desc {
-        font-size: 0.85rem;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-        line-height: 1.4;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .video-meta {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-    }
-
-    .video-meta-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .video-author {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .video-hashtags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-    }
-
-    .hashtag {
-        padding: 0.25rem 0.5rem;
-        background: var(--bg);
-        border-radius: 4px;
-        font-size: 0.75rem;
-        color: var(--primary);
-    }
-
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-    }
-
-    .empty-state i {
-        font-size: 4rem;
-        color: var(--text-secondary);
-        margin-bottom: 1rem;
-    }
-
-    .empty-state h3 {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .empty-state p {
-        color: var(--text-secondary);
-    }
-
-    /* Video Modal */
-    .video-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.9);
-        z-index: 9999;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem;
-    }
-
-    .video-modal-content {
-        position: relative;
-        max-width: 90vw;
-        max-height: 90vh;
-    }
-
-    .video-modal video {
-        max-width: 100%;
-        max-height: 80vh;
-        border-radius: 12px;
-    }
-
-    .modal-close {
-        position: absolute;
-        top: -3rem;
-        right: 0;
-        background: white;
-        border: none;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 1.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/trend_finder.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="trend-finder-container">
-    <!-- Header -->
-    <div class="trend-header">
-        <h1>
-            <i class="ph ph-trend-up"></i>
-            TikTok Trend Finder
-        </h1>
-        <p>Discover trending content and analyze viral potential in real-time</p>
-    </div>
-
-    <!-- Search Section -->
-    <div class="search-section">
-        <!-- Search Mode Toggle -->
-        <div class="search-mode-toggle">
-            <button class="mode-btn active" onclick="setSearchMode('top')" id="topModeBtn">
-                <i class="ph ph-trophy"></i> Top Videos
-            </button>
-            <button class="mode-btn" onclick="setSearchMode('video')" id="videoModeBtn">
-                <i class="ph ph-video"></i> All Videos
-            </button>
-        </div>
-
-        <div class="search-bar">
-            <div class="search-input-wrapper">
-                <i class="ph ph-magnifying-glass"></i>
-                <input
-                    type="text"
-                    id="keywordInput"
-                    class="search-input"
-                    placeholder="Enter a keyword (e.g., Clash Royale, cooking, fitness)"
-                >
+<div class="content-panel">
+    <div class="trend-finder-wrapper">
+        <!-- Header -->
+        <div class="trend-header">
+            <h1 class="trend-title">
+                <i class="ph ph-trend-up"></i>
+                TikTok Trend Finder
+            </h1>
+            <!-- Search Mode Toggle -->
+            <div class="search-mode-toggle">
+                <button class="mode-btn active" onclick="setSearchMode('top')" id="topModeBtn">
+                    <i class="ph ph-trophy"></i>
+                    Top Videos
+                </button>
+                <button class="mode-btn" onclick="setSearchMode('video')" id="videoModeBtn">
+                    <i class="ph ph-video"></i>
+                    All Videos
+                </button>
             </div>
-            <button id="searchBtn" class="search-btn" onclick="searchTrends()">
-                <i class="ph ph-sparkle"></i>
-                <span>Analyze Trends</span>
-            </button>
         </div>
 
-        <div class="example-keywords">
-            <span>Try:</span>
-            <div class="keyword-chip" onclick="quickSearch('Clash Royale')">Clash Royale</div>
-            <div class="keyword-chip" onclick="quickSearch('Cooking')">Cooking</div>
-            <div class="keyword-chip" onclick="quickSearch('Fitness')">Fitness</div>
-            <div class="keyword-chip" onclick="quickSearch('AI')">AI</div>
-        </div>
-    </div>
+        <!-- Search Section -->
+        <div class="search-section">
 
-    <!-- Empty State -->
-    <div id="emptyState" class="empty-state">
-        <i class="ph ph-magnifying-glass"></i>
-        <h3>Search for TikTok Trends</h3>
-        <p>Enter a keyword above to discover trending videos and analyze their viral potential</p>
-    </div>
-
-    <!-- Loading State -->
-    <div id="loadingContainer" class="loading-container">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Analyzing TikTok trends...</div>
-    </div>
-
-    <!-- Results Section -->
-    <div id="resultsSection" class="results-section">
-        <!-- Results Meta -->
-        <div class="results-meta">
-            <div class="meta-item">
-                <i class="ph ph-video-camera"></i>
-                <div>
-                    <div class="meta-value" id="totalVideos">0</div>
-                    <div class="meta-label">Videos Analyzed</div>
+            <div class="search-box">
+                <div class="search-input-wrapper">
+                    <i class="ph ph-magnifying-glass search-icon"></i>
+                    <input
+                        type="text"
+                        id="keywordInput"
+                        class="keyword-input"
+                        placeholder="Enter a keyword (e.g., Clash Royale, cooking, fitness)"
+                        autocomplete="off"
+                    >
+                    <button id="searchBtn" class="search-button" onclick="searchTrends()">
+                        <i class="ph ph-sparkle"></i>
+                        <span>Analyze Trends</span>
+                    </button>
                 </div>
             </div>
-            <div class="meta-item">
-                <i class="ph ph-chart-line"></i>
-                <div>
-                    <div class="meta-value" id="avgScore">0</div>
-                    <div class="meta-label">Avg Viral Score</div>
-                </div>
-            </div>
-            <div class="meta-item">
-                <i class="ph ph-fire"></i>
-                <div>
-                    <div class="meta-value" id="viralCount">0</div>
-                    <div class="meta-label">Viral Videos</div>
+
+            <!-- Example Keywords -->
+            <div class="example-keywords">
+                <p class="example-label">Try these examples:</p>
+                <div class="example-chips">
+                    <button class="example-chip" onclick="quickSearch('Clash Royale')">
+                        <i class="ph ph-game-controller"></i>
+                        Clash Royale
+                    </button>
+                    <button class="example-chip" onclick="quickSearch('cooking')">
+                        <i class="ph ph-cooking-pot"></i>
+                        cooking
+                    </button>
+                    <button class="example-chip" onclick="quickSearch('fitness')">
+                        <i class="ph ph-barbell"></i>
+                        fitness
+                    </button>
+                    <button class="example-chip" onclick="quickSearch('AI')">
+                        <i class="ph ph-robot"></i>
+                        AI
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Trend Summary -->
-        <div class="trend-summary">
-            <i class="ph ph-lightbulb"></i>
-            <div class="trend-summary-text" id="trendSummary">Loading...</div>
+        <!-- Loading State -->
+        <div class="loading-container" id="loadingContainer" style="display: none;">
+            <div class="loading-spinner">
+                <i class="ph ph-spinner spin"></i>
+                <p>Analyzing TikTok trends...</p>
+            </div>
         </div>
 
-        <!-- Videos Grid -->
-        <div id="videosGrid" class="videos-grid"></div>
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">
+                <i class="ph ph-trend-up"></i>
+            </div>
+            <h3>Search for TikTok Trends</h3>
+            <p>Enter a keyword above to discover trending videos and analyze their viral potential</p>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <!-- Results Meta -->
+            <div class="results-meta">
+                <div class="meta-card">
+                    <div class="meta-icon videos">
+                        <i class="ph ph-video-camera"></i>
+                    </div>
+                    <div class="meta-content">
+                        <div class="meta-label">Videos Analyzed</div>
+                        <div class="meta-value" id="totalVideos">0</div>
+                    </div>
+                </div>
+
+                <div class="meta-card">
+                    <div class="meta-icon score">
+                        <i class="ph ph-chart-line"></i>
+                    </div>
+                    <div class="meta-content">
+                        <div class="meta-label">Avg Viral Score</div>
+                        <div class="meta-value" id="avgScore">0</div>
+                    </div>
+                </div>
+
+                <div class="meta-card">
+                    <div class="meta-icon viral">
+                        <i class="ph ph-fire"></i>
+                    </div>
+                    <div class="meta-content">
+                        <div class="meta-label">Viral Videos</div>
+                        <div class="meta-value" id="viralCount">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trend Summary -->
+            <div class="trend-summary">
+                <i class="ph ph-lightbulb"></i>
+                <div class="trend-summary-text" id="trendSummary">Loading trend analysis...</div>
+            </div>
+
+            <!-- Videos Grid -->
+            <div class="videos-grid" id="videosGrid">
+                <!-- Video cards will be populated here -->
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Video Modal -->
-<div id="videoModal" class="video-modal" onclick="closeVideoModal(event)">
-    <div class="video-modal-content">
-        <button class="modal-close" onclick="closeVideoModal()">
-            <i class="ph ph-x"></i>
-        </button>
-        <video id="modalVideo" controls crossorigin="anonymous" playsinline preload="auto"></video>
-    </div>
-</div>
-
+{% block scripts %}
 <script src="{{ url_for('static', filename='scripts/trend_finder.js') }}"></script>
 {% endblock %}

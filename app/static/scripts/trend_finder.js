@@ -193,7 +193,6 @@ function createVideoCard(video) {
             <div class="video-meta">
                 <div class="video-meta-row">
                     <div class="video-author">
-                        <i class="ph ph-user-circle"></i>
                         <span>@${escapeHtml(video.author.uniqueId)}</span>
                     </div>
                     <span>${video.age_display}</span>
@@ -224,27 +223,6 @@ function openVideoModal(video) {
         window.open(tiktokUrl, '_blank');
     } else {
         alert('Video information not available');
-    }
-}
-
-/**
- * Close video modal
- */
-function closeVideoModal(event) {
-    // Only close if clicked outside content or on close button
-    if (!event || event.target.id === 'videoModal' || event.target.closest('.modal-close')) {
-        const modal = document.getElementById('videoModal');
-        const modalVideo = document.getElementById('modalVideo');
-
-        // Pause and reset video
-        modalVideo.pause();
-        modalVideo.src = '';
-
-        // Hide modal
-        modal.style.display = 'none';
-
-        // Restore body scroll
-        document.body.style.overflow = 'auto';
     }
 }
 
