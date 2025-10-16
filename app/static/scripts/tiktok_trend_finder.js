@@ -120,11 +120,6 @@ function displayResults(data) {
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('resultsSection').style.display = 'block';
 
-    // Update stats
-    document.getElementById('totalHashtags').textContent = data.total_keywords_fetched || 0;
-    document.getElementById('gamingKeywords').textContent = data.gaming_keywords_found || 0;
-    document.getElementById('analyzedCount').textContent = data.keywords_analyzed || 0;
-
     // Populate table
     const tbody = document.getElementById('resultsTableBody');
     tbody.innerHTML = '';

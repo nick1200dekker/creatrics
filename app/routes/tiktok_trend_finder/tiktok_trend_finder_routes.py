@@ -27,10 +27,10 @@ TIKTOK_API_HOST = 'tiktok-api23.p.rapidapi.com'
 @auth_required
 @require_permission('tiktok_trend_finder')
 def tiktok_trend_finder():
-    """TikTok Trend Finder - Find and analyze gaming trends"""
+    """TikTok Trend Finder - Find and analyze trends"""
     return render_template('tiktok/trend_finder.html',
                          title='TikTok Trend Finder',
-                         description='Find and analyze gaming trends')
+                         description='Find and analyze trends')
 
 
 @bp.route('/api/cached', methods=['GET'])
@@ -268,12 +268,18 @@ def analyze_single_keyword(keyword: str) -> dict:
         if all_videos:
             analysis_result = analyzer.analyze_videos(all_videos, sort_by='views')
 
+            # Filter out keywords with less than 35 videos analyzed
+            video_count = analysis_result.get('total_videos', 0)
+            if video_count < 35:
+                logger.info(f"Skipping '{keyword}': Only {video_count} videos (minimum 35 required)")
+                return None
+
             return {
                 'keyword': keyword,
                 'total_score': analysis_result.get('total_score', 0),
                 'hot_score': analysis_result.get('hot_score', 0),
                 'engagement_score': analysis_result.get('engagement_score', 0),
-                'video_count': analysis_result.get('total_videos', 0),
+                'video_count': video_count,
                 'avg_views': analysis_result.get('avg_views', 0)
             }
         else:
