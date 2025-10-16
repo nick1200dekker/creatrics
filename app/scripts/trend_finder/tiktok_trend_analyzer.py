@@ -244,8 +244,8 @@ class TikTokTrendAnalyzer:
         # Log filtering statistics
         logger.info(f"Filtering stats - Duplicates: {duplicate_count}, Zero views: {zero_view_count}, Kept: {len(analyzed_videos)}")
 
-        # Sort by viral potential (highest first)
-        analyzed_videos.sort(key=lambda x: x['viral_potential'], reverse=True)
+        # Sort by upload date (newest first)
+        analyzed_videos.sort(key=lambda x: x['createTime'], reverse=True)
 
         # Calculate summary statistics
         avg_viral_potential = int(statistics.mean(viral_scores)) if viral_scores else 0
