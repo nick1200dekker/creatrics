@@ -646,3 +646,28 @@ async function loadUnoptimizedVideos() {
         `;
     }
 }
+
+// Welcome Modal for New Users
+function checkAndShowWelcomeModal() {
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+
+    if (!hasSeenWelcome) {
+        const modal = document.getElementById('welcomeModal');
+        if (modal) {
+            setTimeout(() => {
+                modal.style.display = 'flex';
+            }, 500); // Show after 500ms delay for better UX
+        }
+    }
+}
+
+function closeWelcomeModal() {
+    const modal = document.getElementById('welcomeModal');
+    if (modal) {
+        modal.style.display = 'none';
+        localStorage.setItem('hasSeenWelcome', 'true');
+    }
+}
+
+// Check for new user on page load
+document.addEventListener('DOMContentLoaded', checkAndShowWelcomeModal);

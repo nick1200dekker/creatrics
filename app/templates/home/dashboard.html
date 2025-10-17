@@ -11,7 +11,74 @@
     <div class="dashboard-container">
         {% if g.user and not g.user.get('is_guest') %}
         <!-- Logged in user dashboard -->
-        
+
+        <!-- Welcome Modal for New Users -->
+        <div class="welcome-modal" id="welcomeModal" style="display: none;">
+            <div class="welcome-modal-backdrop"></div>
+            <div class="welcome-modal-content">
+                <div class="welcome-modal-header">
+                    <div class="welcome-icon">
+                        <i class="ph ph-rocket-launch"></i>
+                    </div>
+                    <h2>Welcome to Creatrics!</h2>
+                    <p class="welcome-subtitle">Your AI-Powered Content Creation Hub</p>
+                </div>
+
+                <div class="welcome-modal-body">
+                    <div class="welcome-message">
+                        <p>We're excited to have you here! Creatrics helps you create viral content across YouTube, X, and TikTok with powerful AI tools.</p>
+                    </div>
+
+                    <div class="welcome-steps">
+                        <div class="welcome-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Connect Your Accounts</h4>
+                                <p>Link your social media accounts to unlock analytics and personalized insights</p>
+                            </div>
+                        </div>
+                        <div class="welcome-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Explore AI Tools</h4>
+                                <p>Use our suite of AI-powered tools to create titles, scripts, thumbnails, and more</p>
+                            </div>
+                        </div>
+                        <div class="welcome-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Track Your Growth</h4>
+                                <p>Monitor your performance and optimize your content strategy with detailed analytics</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alpha-notice">
+                        <i class="ph ph-warning-circle"></i>
+                        <div>
+                            <strong>Alpha Version Notice</strong>
+                            <p>Creatrics is currently in alpha. You may encounter bugs or incomplete features. We appreciate your patience and feedback!</p>
+                        </div>
+                    </div>
+
+                    <div class="support-info">
+                        <i class="ph ph-envelope"></i>
+                        <div>
+                            <strong>Need Help?</strong>
+                            <p>Connect with us at <a href="mailto:support@creatrics.com">support@creatrics.com</a></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="welcome-modal-footer">
+                    <button class="welcome-close-btn" onclick="closeWelcomeModal()">
+                        <span>Get Started</span>
+                        <i class="ph ph-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Header with Welcome and Stats -->
         <div class="dashboard-header">
             <div class="welcome-content">
