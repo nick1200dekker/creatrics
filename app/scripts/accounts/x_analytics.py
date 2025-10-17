@@ -337,16 +337,19 @@ class XAnalytics:
         try:
             username = self.x_handle.lstrip('@')
             logger.info(f"Fetching replies for {username}")
-            
+
             # Track all replies
             all_replies = []
             cursor = None
             max_attempts = 3
-            
+
             # Initialize pagination safeguard variables
             prev_reply_count = 0
             pagination_no_progress_count = 0
-            
+
+            # Set 7 days cutoff for replies
+            one_week_ago = datetime.now() - timedelta(days=7)
+
             # Paginate through replies using cursor until we have 100 replies or no more results
             while len(all_replies) < 100:
                 remaining_attempts = max_attempts
@@ -401,10 +404,24 @@ class XAnalytics:
                                 is_by_user = current_post.get('author', {}).get('screen_name', '').lower() == username.lower()
                                 
                                 if is_by_user and is_reply and i > 0:
+                                    # Check if reply is within last 7 days
+                                    reply_date_str = current_post.get('created_at', '')
+                                    if reply_date_str:
+                                        try:
+                                            reply_date = datetime.strptime(reply_date_str, '%a %b %d %H:%M:%S %z %Y')
+                                            reply_date_local = reply_date.replace(tzinfo=None)
+
+                                            # Skip replies older than 7 days
+                                            if reply_date_local < one_week_ago:
+                                                logger.info(f"Reached replies older than 7 days, stopping")
+                                                return all_replies
+                                        except Exception as e:
+                                            logger.debug(f"Error parsing reply date: {e}")
+
                                     # This is a reply by our user
                                     # Find the original post it's replying to
                                     original_post = None
-                                    
+
                                     # Look for the original post in the timeline
                                     # It might be directly before our reply or elsewhere
                                     for j in range(i-1, -1, -1):
@@ -413,11 +430,11 @@ class XAnalytics:
                                         if potential_original.get('tweet_id') == current_post.get('in_reply_to_status_id_str'):
                                             original_post = potential_original
                                             break
-                                    
+
                                     # If we can't find the original post, use the previous post as a fallback
                                     if original_post is None and i > 0:
                                         original_post = timeline[i-1]
-                                        
+
                                     # Create the reply pair if we have an original post
                                     # Only include replies to main posts (not replies to replies)
                                     if original_post is not None and original_post.get('in_reply_to_status_id_str') is None:

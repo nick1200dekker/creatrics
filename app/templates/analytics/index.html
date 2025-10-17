@@ -48,14 +48,6 @@
             
             <!-- Right side controls -->
             <div style="display: flex; align-items: center; gap: 1rem;">
-                <!-- Refresh All Button -->
-                {% if x_connected or youtube_connected or tiktok_connected %}
-                <button id="refresh-all-btn" class="secondary-button" onclick="refreshAllData()" title="Refresh all connected accounts">
-                    <i class="ph ph-arrow-clockwise"></i>
-                    <span>Refresh All</span>
-                </button>
-                {% endif %}
-
                 <!-- Timeframe Selector -->
                 <div class="timeframe-selector">
                     <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">7 Days</button>
@@ -63,6 +55,14 @@
                     <button class="timeframe-btn" data-timeframe="90days" onclick="changeTimeframe('90days')">90 Days</button>
                     <button class="timeframe-btn" data-timeframe="6months" onclick="changeTimeframe('6months')">6 Months</button>
                 </div>
+
+                <!-- Refresh All Button -->
+                {% if x_connected or youtube_connected or tiktok_connected %}
+                <button id="refresh-all-btn" class="secondary-button" onclick="refreshAllData()" title="Refresh all connected accounts">
+                    <i class="ph ph-arrow-clockwise"></i>
+                    <span>Refresh All</span>
+                </button>
+                {% endif %}
             </div>
         </div>
 

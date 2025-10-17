@@ -971,9 +971,9 @@ def refresh_x_data():
         from app.scripts.accounts.x_analytics import fetch_x_analytics
         
         logger.info(f"Manual X analytics refresh requested for user {user_id}")
-        
-        # Fetch fresh data
-        result = fetch_x_analytics(user_id)
+
+        # Fetch fresh data (is_initial=False to only fetch last 7 days)
+        result = fetch_x_analytics(user_id, is_initial=False)
         
         if result:
             logger.info(f"X analytics refresh completed successfully for user {user_id}")
