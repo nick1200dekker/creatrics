@@ -415,7 +415,11 @@ function initializeAnalytics() {
                 tickAmount: getTickInterval(currentTimeframe)
             },
             yaxis: {
-                title: { text: 'Impressions', style: { color: getChartColors().title } },
+                title: {
+                    text: 'Impressions',
+                    style: { color: getChartColors().title },
+                    offsetX: 10  // Move title to the right to prevent cutoff
+                },
                 labels: {
                     style: { colors: getChartColors().text },
                     formatter: function(val) {
@@ -651,7 +655,11 @@ function initializeAnalytics() {
                 tickAmount: getTickInterval(currentTimeframe)
             },
             yaxis: {
-                title: { text: 'Number of Posts', style: { color: getChartColors().title } },
+                title: {
+                    text: 'Number of Posts',
+                    style: { color: getChartColors().title },
+                    offsetX: 10  // Move title to the right to prevent cutoff
+                },
                 labels: {
                     style: { colors: getChartColors().text },
                     formatter: function(val) {
@@ -667,7 +675,8 @@ function initializeAnalytics() {
                         return val + ' posts';
                     }
                 }
-            }
+            },
+            legend: { show: false }
         };
         
         if (charts.postsCount) {
