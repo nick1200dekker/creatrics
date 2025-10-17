@@ -518,13 +518,13 @@ class XAnalytics:
             is_initial: Whether this is the initial fetch (for 6 months of data)
         """
         logger.info(f"Fetching {'initial' if is_initial else 'updated'} X analytics data...")
-        
+
         # Get account info from X API
         account_info = self.get_account_info()
         if not account_info:
             logger.error("Failed to get account info")
             return None
-        
+
         # Get timeline data from X API
         if is_initial:
             # For initial fetch, get 6 months of data
@@ -532,15 +532,31 @@ class XAnalytics:
         else:
             # For daily updates, get recent posts
             timeline_data = self.get_timeline_data(max_posts=100)
-        
-        if not timeline_data:
-            logger.error("Failed to get timeline data")
-            return None
-        
+
+        # Store timeline data if we got it
+        if timeline_data:
+            # Store posts
+            if is_initial:
+                # Store all historical posts
+                self._store_all_posts(timeline_data)
+            else:
+                # Update recent posts only
+                self._update_recent_posts(timeline_data)
+
+            # Calculate and store metrics
+            metrics = self._calculate_metrics(account_info, timeline_data)
+            self._store_metrics(metrics)
+
+            # Calculate and store daily metrics
+            self._calculate_daily_metrics()
+        else:
+            logger.warning("Failed to get timeline data, but continuing to fetch replies")
+            metrics = None
+
         # Add a small delay before fetching replies to avoid rate limiting
         time.sleep(2)
-        
-        # Get replies data from X API
+
+        # Get replies data from X API - ALWAYS try to fetch replies, even if timeline failed
         replies_data = self.get_replies_data()
         if replies_data:
             logger.info(f"Fetched {len(replies_data)} replies")
@@ -548,28 +564,13 @@ class XAnalytics:
             self._store_replies(replies_data)
         else:
             logger.warning("No replies data fetched")
-        
-        # Store posts
-        if is_initial:
-            # Store all historical posts
-            self._store_all_posts(timeline_data)
-        else:
-            # Update recent posts only
-            self._update_recent_posts(timeline_data)
-        
-        # Calculate and store metrics
-        metrics = self._calculate_metrics(account_info, timeline_data)
-        self._store_metrics(metrics)
-        
-        # Calculate and store daily metrics
-        self._calculate_daily_metrics()
 
-        # Mark setup as complete if this was initial fetch
-        if is_initial:
+        # Mark setup as complete if this was initial fetch and we got at least some data
+        if is_initial and (timeline_data or replies_data):
             from app.system.services.firebase_service import UserService
             UserService.update_user(self.user_id, {'x_setup_complete': True})
 
-        return metrics
+        return metrics if timeline_data else {'error': 'Failed to fetch timeline, but replies may have been fetched'}
     
     def _calculate_metrics(self, account_info, all_posts):
         """Calculate metrics based on account info and posts data"""

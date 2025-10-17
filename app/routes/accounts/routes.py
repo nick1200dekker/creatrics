@@ -136,6 +136,37 @@ def connect_account():
         flash("Invalid platform specified", "error")
         return redirect(url_for('accounts.index'))
 
+@bp.route('/fetch-x-replies', methods=['POST'])
+@auth_required
+def fetch_x_replies():
+    """Manually fetch just X replies data"""
+    user_id = g.user.get('id')
+
+    try:
+        from app.scripts.accounts.x_analytics import XAnalytics
+
+        logger.info(f"Manually fetching X replies for user {user_id}")
+        analytics = XAnalytics(user_id)
+
+        # Fetch and store replies
+        replies_data = analytics.get_replies_data()
+        if replies_data:
+            logger.info(f"Fetched {len(replies_data)} replies")
+            analytics._store_replies(replies_data)
+            flash(f"Successfully fetched {len(replies_data)} replies!", "success")
+        else:
+            logger.warning("No replies data fetched")
+            flash("No replies found. Make sure you have replies on your X profile.", "warning")
+
+        return redirect(url_for('accounts.index'))
+
+    except Exception as e:
+        logger.error(f"Error fetching X replies: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        flash("Error fetching replies. Please try again.", "error")
+        return redirect(url_for('accounts.index'))
+
 @bp.route('/connection-status')
 @auth_required
 def connection_status():
