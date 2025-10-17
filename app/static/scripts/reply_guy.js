@@ -220,11 +220,11 @@
                     checkbox.setAttribute('data-initialized', 'true');
                     console.log('Initialized checkbox to:', shouldEnableBrandVoice);
 
-                    // Add change listener to save preference
+                    // Add change listener to save preference (only once)
                     checkbox.addEventListener('change', function(e) {
                         console.log('Brand voice checkbox change event fired! New value:', this.checked);
                         localStorage.setItem('preferBrandVoice', this.checked);
-                    });
+                    }, { once: false });
                 }
             } else {
                 checkbox.checked = false;
@@ -233,33 +233,34 @@
         });
 
         document.querySelectorAll('.brand-voice-toggle').forEach(toggle => {
+            // Remove any existing click handler first to prevent duplicates
+            const oldHandler = toggle._disabledClickHandler;
+            if (oldHandler) {
+                toggle.removeEventListener('click', oldHandler, true);
+            }
+
             if (hasData) {
                 toggle.classList.remove('disabled');
                 toggle.title = '';
-                // Ensure pointer events are enabled
-                toggle.style.pointerEvents = '';
+                toggle.style.removeProperty('pointer-events'); // Remove any inline style
                 console.log('Brand voice toggle enabled');
-
-                // Add a click handler to manually toggle if needed
-                toggle.addEventListener('click', function(e) {
-                    console.log('Toggle clicked!', e.target);
-                    const checkbox = this.querySelector('.brand-voice-checkbox');
-                    if (checkbox) {
-                        console.log('Checkbox before click - checked:', checkbox.checked, 'disabled:', checkbox.disabled);
-
-                        // If the click was on the label but not on the checkbox itself,
-                        // the label's 'for' attribute should handle it automatically.
-                        // But let's verify it's working
-                        if (e.target !== checkbox && !e.target.classList.contains('brand-voice-checkbox')) {
-                            // The click was on the label or slider, not the checkbox
-                            // The browser should automatically toggle the checkbox via the label's 'for' attribute
-                            console.log('Click was on label/slider, browser should auto-toggle checkbox');
-                        }
-                    }
-                }, { once: false });
             } else {
                 toggle.classList.add('disabled');
                 toggle.title = 'Connect your X account and ensure you have replies on your profile to enable brand voice';
+                toggle.style.pointerEvents = 'none'; // Explicitly disable pointer events
+
+                // Create and store the handler so we can remove it later
+                const disabledHandler = function(e) {
+                    if (this.classList.contains('disabled')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        console.log('Brand voice toggle is disabled - click prevented');
+                        return false;
+                    }
+                };
+                toggle._disabledClickHandler = disabledHandler;
+                toggle.addEventListener('click', disabledHandler, true);  // Use capture phase
             }
         });
 
@@ -430,6 +431,16 @@
         // Handle brand voice checkbox changes
         if (e.target.classList.contains('brand-voice-checkbox')) {
             const toggle = e.target.closest('.brand-voice-toggle');
+
+            // If the toggle is disabled, prevent the change
+            if (toggle && toggle.classList.contains('disabled')) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Brand voice checkbox change prevented - toggle is disabled');
+                e.target.checked = !e.target.checked; // Revert the change
+                return false;
+            }
+
             if (toggle && !toggle.classList.contains('disabled')) {
                 // Allow the checkbox to toggle normally
                 console.log('Brand voice toggled:', e.target.checked);

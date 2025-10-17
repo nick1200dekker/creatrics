@@ -1071,42 +1071,8 @@ html.dark .brand-voice-checkbox {
     /* Hidden checkbox doesn't need styling */
 }
 
-.brand-voice-checkbox:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-}
-
-.brand-voice-checkbox:checked {
-    background: #3B82F6;
-    border-color: #3B82F6;
-}
-
-.brand-voice-checkbox:disabled:checked {
-    background: #9ca3af;
-    border-color: #9ca3af;
-}
-
-.brand-voice-checkbox::before {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 14px;
-    height: 14px;
-    background: white;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.brand-voice-checkbox:checked::before {
-    transform: translateX(16px);
-    background: white;
-}
-
-.brand-voice-checkbox:disabled::before {
-    background: rgba(255, 255, 255, 0.8);
-}
+/* The checkbox is hidden with opacity: 0, so we don't need any visual styling for it */
+/* All visual elements are handled by .toggle-slider and .toggle-slider::after */
 
 .reply-textarea {
     background: var(--bg-primary);
