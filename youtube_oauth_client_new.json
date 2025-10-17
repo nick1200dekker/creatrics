@@ -1,0 +1,14 @@
+{
+  "web": {
+    "client_id": "28354986565-bjij3vl5391j6tc4p5up3hbdobqs4obt.apps.googleusercontent.com",
+    "project_id": "creatrix-475408",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_secret": "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",
+    "redirect_uris": [
+      "http://localhost:8080/accounts/youtube/callback",
+      "https://creatrics.com/accounts/youtube/callback"
+    ]
+  }
+}

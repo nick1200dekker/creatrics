@@ -112,6 +112,52 @@ html.dark .flash-message.success {
     color: #34D399;
 }
 
+/* Beta Warning */
+.beta-warning {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-left: 4px solid #F59E0B;
+    color: #92400E;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+html.dark .beta-warning {
+    background: linear-gradient(135deg, rgba(254, 243, 199, 0.15) 0%, rgba(253, 230, 138, 0.15) 100%);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #FCD34D;
+}
+
+.beta-warning i {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.beta-warning a {
+    color: #92400E;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+html.dark .beta-warning a {
+    color: #FCD34D;
+}
+
+.beta-warning a:hover {
+    color: #78350F;
+}
+
+html.dark .beta-warning a:hover {
+    color: #FDE68A;
+}
+
 /* Account Cards Grid */
 .accounts-grid {
     display: grid;
@@ -566,7 +612,19 @@ html.dark .info-text {
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        
+
+        <!-- Alpha Testing Warning for YouTube -->
+        {% if not youtube_connected %}
+        <div class="beta-warning">
+            <i class="ph ph-warning-circle"></i>
+            <div>
+                <strong>Alpha Testing - Limited Access</strong><br>
+                YouTube connection is currently in alpha testing. To get access, please email
+                <a href="mailto:support@creatrics.com">support@creatrics.com</a> with your email address.
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Account Cards -->
         <div class="accounts-grid">
             <!-- YouTube Account -->
@@ -597,16 +655,16 @@ html.dark .info-text {
                 {% else %}
                     <div class="form-group">
                         <label for="youtube_channel" class="form-label">Channel</label>
-                        <input type="text" 
-                               id="youtube_channel" 
-                               name="youtube_channel" 
-                               class="form-input" 
-                               placeholder="Press connect button" 
+                        <input type="text"
+                               id="youtube_channel"
+                               name="youtube_channel"
+                               class="form-input"
+                               placeholder="Press connect button"
                                disabled>
                     </div>
-                    
-                    <a href="{{ url_for('accounts.youtube_connect_redirect') }}" 
-                       class="action-button primary" 
+
+                    <a href="{{ url_for('accounts.youtube_connect_redirect') }}"
+                       class="action-button primary"
                        data-turbo="false">
                         <i class="ph ph-link"></i>
                         Connect with YouTube
@@ -713,8 +771,8 @@ html.dark .info-text {
         <div class="info-section">
             <h3 class="info-title">Why configure your accounts?</h3>
             <p class="info-text">
-                Configuring your social accounts allows CreatorPal to provide personalized content suggestions 
-                and analyze engagement metrics. For YouTube, connecting via the API gives you access to detailed 
+                Configuring your social accounts allows Creatrics to provide personalized content suggestions
+                and analyze engagement metrics. For YouTube, connecting via the API gives you access to detailed
                 analytics data including views, watch time, audience demographics, and more.
             </p>
         </div>
