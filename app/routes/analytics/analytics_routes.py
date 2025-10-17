@@ -1451,6 +1451,15 @@ def refresh_tiktok_data():
         # Sort all posts by date
         all_posts = sorted(existing_posts, key=lambda p: p.get('create_time', 0), reverse=True)
 
+        # Cleanup: Remove posts older than 6 months
+        six_months_ago = datetime.now() - timedelta(days=180)
+        posts_before_cleanup = len(all_posts)
+        all_posts = [post for post in all_posts if datetime.fromtimestamp(post.get('create_time', 0)) >= six_months_ago]
+        posts_deleted = posts_before_cleanup - len(all_posts)
+
+        if posts_deleted > 0:
+            logger.info(f"Cleaned up {posts_deleted} TikTok posts older than 6 months")
+
         # Calculate metrics from last 35 posts
         last_35_posts = all_posts[:35]
         engagement_rate = 0

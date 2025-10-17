@@ -814,12 +814,52 @@ class XAnalytics:
             logger.error(f"Error storing all posts in Firebase: {str(e)}")
     
     def _update_recent_posts(self, posts):
-        """Update only posts from the last 7 days"""
+        """Update only posts from the last 7 days and cleanup posts older than 6 months"""
         try:
             seven_days_ago = datetime.now() - timedelta(days=7)
+            six_months_ago = datetime.now() - timedelta(days=180)
             posts_collection = self.db.collection('users').document(self.user_id).collection('x_posts_individual')
-            
-            # Filter posts from last 7 days
+
+            # First, cleanup posts older than 6 months
+            logger.info(f"Checking for posts older than 6 months to delete")
+            all_posts_query = posts_collection.stream()
+            posts_to_delete = []
+
+            for doc in all_posts_query:
+                post_data = doc.to_dict()
+                created_at = post_data.get('created_at', '')
+                if created_at:
+                    try:
+                        post_date = datetime.strptime(created_at, '%a %b %d %H:%M:%S %z %Y')
+                        if post_date.replace(tzinfo=None) < six_months_ago:
+                            posts_to_delete.append(doc.id)
+                    except Exception as e:
+                        logger.debug(f"Error parsing date for cleanup: {e}")
+
+            # Delete old posts in batches
+            if posts_to_delete:
+                logger.info(f"Deleting {len(posts_to_delete)} posts older than 6 months")
+                batch = self.db.batch()
+                batch_count = 0
+
+                for post_id in posts_to_delete:
+                    doc_ref = posts_collection.document(post_id)
+                    batch.delete(doc_ref)
+                    batch_count += 1
+
+                    if batch_count >= 500:  # Firestore batch limit
+                        batch.commit()
+                        batch = self.db.batch()
+                        batch_count = 0
+
+                if batch_count > 0:
+                    batch.commit()
+
+                logger.info(f"Successfully deleted {len(posts_to_delete)} old posts")
+            else:
+                logger.info("No posts older than 6 months to delete")
+
+            # Filter posts from last 7 days for update
             recent_posts = []
             for post in posts:
                 created_at = post.get('created_at', '')
@@ -830,7 +870,7 @@ class XAnalytics:
                             recent_posts.append(post)
                     except Exception as e:
                         logger.debug(f"Error parsing date: {e}")
-            
+
             logger.info(f"Updating {len(recent_posts)} posts from last 7 days")
             
             if not recent_posts:
