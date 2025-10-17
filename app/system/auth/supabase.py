@@ -55,34 +55,28 @@ def verify_supabase_token(token):
         return None
         
     try:
-        # For simplicity, we'll decode without verification first to get the header
-        # This lets us extract the key ID (kid) to find the right public key
-        header = jwt.get_unverified_header(token)
-        
-        # In a production environment, you would fetch the public key from Supabase JWK endpoint
-        # based on the key ID (kid) in the token header.
-        # For now, we'll use the "verify_signature: False" option for development
-        
-        # Decode the token without verification (for development)
+        # Get Supabase configuration
+        config = get_supabase_config()
+
+        if not config['jwt_secret']:
+            logger.error("SUPABASE_JWT_SECRET not configured")
+            return None
+
+        # Decode and verify the token with signature verification
+        # Supabase tokens use "authenticated" as the audience claim
         payload = jwt.decode(
             token,
-            options={"verify_signature": False}
+            config['jwt_secret'],
+            algorithms=["HS256"],
+            audience="authenticated",
+            options={"verify_exp": True}
         )
-        
-        # In production, use this instead:
-        # config = get_supabase_config()
-        # payload = jwt.decode(
-        #     token,
-        #     config['jwt_secret'],
-        #     algorithms=["HS256"],
-        #     options={"verify_exp": True}
-        # )
-        
+
         # Check for required claims
         if not all(claim in payload for claim in ['sub', 'exp']):
             logger.warning("Token missing required claims")
             return None
-            
+
         return payload
     except jwt.ExpiredSignatureError:
         logger.warning("Token expired")
