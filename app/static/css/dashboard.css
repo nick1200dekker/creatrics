@@ -236,24 +236,43 @@ html.dark .dashboard-wrapper {
     padding: 1.5rem;
     position: relative;
     z-index: 1;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
-/* Header section with welcome - Increased height */
+/* Header section with welcome - Enhanced */
 .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
-    padding: 2rem;
-    min-height: 120px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
-    border-radius: 16px;
-    border: 1px solid rgba(59, 130, 246, 0.1);
+    padding: 1.75rem 2rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: hidden;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
 }
 
 html.dark .dashboard-header {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
-    border-color: rgba(59, 130, 246, 0.2);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border-color: rgba(59, 130, 246, 0.25);
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 1px 2px -1px rgba(0, 0, 0, 0.15);
 }
 
 .welcome-content {
@@ -278,55 +297,72 @@ html.dark .dashboard-header {
 
 .header-stats {
     display: flex;
-    gap: 2rem;
+    gap: 1.5rem;
     align-items: center;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
 }
 
 .header-stat {
     text-align: center;
+    padding: 1.25rem 1.75rem;
+    background: transparent;
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    min-width: 120px;
 }
 
-.header-stat:hover {
-    transform: translateY(-2px);
+html.dark .header-stat {
+    background: transparent;
+    border-color: rgba(63, 63, 70, 0.8);
 }
 
 .stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
+    font-size: 2rem;
+    font-weight: 800;
     color: var(--text-primary);
     line-height: 1;
+    margin-bottom: 0.5rem;
 }
 
 .stat-label {
     font-size: 0.75rem;
-    color: var(--text-tertiary);
+    color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: 0.25rem;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 /* Channels Grid */
 .channels-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
     max-width: 100%;
 }
 
+@supports (grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr))) {
+    .channels-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    }
+}
+
 /* Channel Card */
 .channel-card {
-    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
     position: relative;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 html.dark .channel-card {
-    background: linear-gradient(135deg, rgba(39, 39, 42, 0.8) 0%, rgba(39, 39, 42, 0.6) 100%);
-    border-color: rgba(63, 63, 70, 0.6);
+    background: rgba(39, 39, 42, 0.8);
+    border-color: rgba(63, 63, 70, 0.8);
     backdrop-filter: blur(10px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -395,12 +431,12 @@ html.dark .channel-icon.tiktok {
 }
 
 .view-analytics-btn {
-    padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
     color: #3B82F6;
     border: 1px solid rgba(59, 130, 246, 0.3);
-    border-radius: 8px;
-    font-size: 0.813rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;
@@ -411,36 +447,38 @@ html.dark .channel-icon.tiktok {
 
 html.dark .view-analytics-btn {
     color: #60A5FA;
-    border-color: rgba(96, 165, 250, 0.3);
-    background: linear-gradient(135deg, rgba(96, 165, 250, 0.12), rgba(167, 139, 250, 0.12));
+    border-color: rgba(96, 165, 250, 0.4);
 }
 
 /* Channel Metrics */
 .channel-metrics {
     padding: 1.5rem;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1rem;
 }
 
 .metric-item {
     text-align: center;
-    padding: 1rem 0.75rem;
-    border-radius: 10px;
+    padding: 1.125rem 0.875rem;
+    border-radius: 12px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
+    min-width: 0;
 }
 
 html.dark .metric-item {
-    background: rgba(63, 63, 70, 0.4);
-    border-color: rgba(82, 82, 91, 0.4);
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 .metric-value {
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-size: 1.5rem;
+    font-weight: 800;
     color: var(--text-primary);
     line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .metric-label {
@@ -450,22 +488,27 @@ html.dark .metric-item {
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* NEW: Quick Actions Section - Standalone with auto-scroll */
 .quick-actions-section {
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 2rem 0;
     margin-bottom: 2rem;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 html.dark .quick-actions-section {
-    background: rgba(39, 39, 42, 0.6);
-    border-color: rgba(63, 63, 70, 0.6);
+    background: rgba(39, 39, 42, 0.8);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .quick-actions-header {
@@ -519,83 +562,57 @@ html.dark .quick-actions-section {
 /* Action Cards - New Design */
 .action-card {
     flex-shrink: 0;
-    width: 240px;
+    width: 260px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    padding: 1.5rem;
+    border-radius: 16px;
+    padding: 1.75rem;
     text-decoration: none;
-    transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 html.dark .action-card {
-    background: rgba(63, 63, 70, 0.5);
-    border-color: rgba(82, 82, 91, 0.5);
-}
-
-.action-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, transparent, rgba(59, 130, 246, 0.05));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.action-card:hover::before {
-    opacity: 1;
-}
-
-.action-card:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-    border-color: rgba(59, 130, 246, 0.4);
-}
-
-html.dark .action-card:hover {
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-    border-color: rgba(96, 165, 250, 0.5);
+    background: rgba(63, 63, 70, 0.6);
+    border-color: rgba(82, 82, 91, 0.6);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .action-icon-wrapper {
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-    border-radius: 12px;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
     position: relative;
     z-index: 1;
 }
 
-.action-card:hover .action-icon-wrapper {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
-}
-
 .action-icon-wrapper i {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     color: #3B82F6;
 }
 
+html.dark .action-icon-wrapper i {
+    color: #60A5FA;
+}
+
 .action-card-title {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.0625rem;
+    font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.375rem;
+    margin-bottom: 0.5rem;
 }
 
 .action-card-desc {
-    font-size: 0.813rem;
+    font-size: 0.875rem;
     color: var(--text-tertiary);
-    line-height: 1.3;
+    line-height: 1.4;
 }
 
 
@@ -623,25 +640,18 @@ html.dark .platform-badge.tiktok { color: #FFFFFF; }
 
 /* Connect Channel Card */
 .connect-channel-card {
-    background: var(--bg-tertiary);
-    border: 2px dashed var(--border-primary);
-    opacity: 0.7;
+    background: var(--bg-primary);
+    border: 1px dashed var(--border-primary);
     display: flex;
     flex-direction: column;
     text-align: center;
-    padding: 2rem;
-    transition: all 0.3s ease;
+    padding: 2.5rem;
     height: 100%;
 }
 
 html.dark .connect-channel-card {
-    background: rgba(63, 63, 70, 0.3);
-    border-color: rgba(82, 82, 91, 0.5);
-}
-
-.connect-channel-card:hover {
-    opacity: 0.9;
-    border-color: rgba(59, 130, 246, 0.4);
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
 }
 
 .connect-content {
@@ -666,39 +676,36 @@ html.dark .connect-channel-card {
 }
 
 .connect-btn {
-    padding: 0.75rem 1.5rem;
+    padding: 0.875rem 1.75rem;
     background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     cursor: pointer;
-    transition: all 0.2s ease;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.625rem;
     margin-top: auto;
-}
-
-.connect-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 /* Calendar Section */
 .calendar-section {
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    padding: 1.5rem;
+    border-radius: 20px;
+    padding: 2rem;
     margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 html.dark .calendar-section {
-    background: rgba(39, 39, 42, 0.6);
-    border-color: rgba(63, 63, 70, 0.6);
+    background: rgba(39, 39, 42, 0.8);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .calendar-header {
@@ -719,24 +726,31 @@ html.dark .calendar-section {
 
 .calendar-header i {
     color: #3B82F6;
+    font-size: 1.375rem;
+}
+
+html.dark .calendar-header i {
+    color: #60A5FA;
 }
 
 .view-calendar-btn {
-    padding: 0.5rem 1rem;
-    background: transparent;
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
     color: #3B82F6;
     border: 1px solid rgba(59, 130, 246, 0.3);
-    border-radius: 6px;
-    font-size: 0.813rem;
-    font-weight: 500;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.view-calendar-btn:hover {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: #3B82F6;
+html.dark .view-calendar-btn {
+    color: #60A5FA;
+    border-color: rgba(96, 165, 250, 0.4);
 }
 
 .calendar-events {
@@ -749,19 +763,18 @@ html.dark .calendar-section {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 1rem;
+    padding: 1.125rem;
     background: var(--bg-secondary);
-    border-radius: 8px;
+    border-radius: 12px;
     border-left: 3px solid #3B82F6;
-    transition: all 0.2s ease;
+    border: 1px solid var(--border-primary);
+    border-left-width: 3px;
+    border-left-color: #3B82F6;
 }
 
 html.dark .calendar-event {
-    background: rgba(63, 63, 70, 0.3);
-}
-
-.calendar-event:hover {
-    transform: translateX(4px);
+    background: rgba(63, 63, 70, 0.5);
+    border-left-color: #60A5FA;
 }
 
 .event-date {
@@ -823,17 +836,17 @@ html.dark .status-ready { background: #064E3B; color: #6EE7B7; }
 
 .empty-calendar {
     text-align: center;
-    padding: 3rem 2rem;
-    background: var(--bg-tertiary);
-    border-radius: 12px;
-    border: 2px dashed var(--border-primary);
-    opacity: 0.7;
+    padding: 3.5rem 2rem;
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    border: 1px dashed var(--border-primary);
 }
 
 .empty-calendar > i {
-    font-size: 3rem;
+    font-size: 3.5rem;
     color: var(--text-tertiary);
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
+    opacity: 0.7;
 }
 
 .empty-calendar h4 {
@@ -850,28 +863,23 @@ html.dark .status-ready { background: #064E3B; color: #6EE7B7; }
 }
 
 .empty-calendar .plan-content-btn {
-    padding: 0.75rem 1.5rem;
+    padding: 0.875rem 1.75rem;
     background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     cursor: pointer;
-    transition: all 0.2s ease;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.625rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .empty-calendar .plan-content-btn i {
-    font-size: 1rem;
-}
-
-.empty-calendar .plan-content-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    font-size: 1.125rem;
 }
 
 html.dark .empty-calendar {
@@ -889,18 +897,15 @@ html.dark .empty-calendar {
 .suggestion-card {
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    transition: all 0.2s ease;
+    border-radius: 12px;
     cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 html.dark .suggestion-card {
-    background: rgba(39, 39, 42, 0.6);
-    border-color: rgba(63, 63, 70, 0.6);
-}
-
-.suggestion-card:hover {
-    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(39, 39, 42, 0.8);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .suggestion-collapsed {
@@ -1030,23 +1035,13 @@ html.dark .suggestion-content {
     background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
     border: none;
-}
-
-.btn-use:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .btn-copy {
     background: transparent;
     color: var(--text-secondary);
     border: 1px solid var(--border-primary);
-}
-
-.btn-copy:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    border-color: rgba(59, 130, 246, 0.3);
 }
 
 .suggestions-loading {
@@ -1428,8 +1423,8 @@ html.dark #mobile-menu-toggle:hover {
 
 /* Responsive */
 @media (max-width: 1200px) {
-    .channels-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .dashboard-header {
+        padding: 1.5rem;
     }
 }
 

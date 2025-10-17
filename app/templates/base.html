@@ -103,18 +103,18 @@
         --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
         /* Light mode colors */
-        --bg-primary: #F8FAFC;
+        --bg-primary: #F1F5F9;
         --bg-secondary: #FFFFFF;
-        --bg-tertiary: #F1F5F9;
-        --text-primary: #1E293B;
-        --text-secondary: #475569;
-        --text-tertiary: #64748B;
-        --border-primary: #E2E8F0;
-        --border-secondary: rgba(226, 232, 240, 0.8);
-        --hover-bg: #F1F5F9;
+        --bg-tertiary: #E2E8F0;
+        --text-primary: #0F172A;
+        --text-secondary: #334155;
+        --text-tertiary: #475569;
+        --border-primary: #CBD5E1;
+        --border-secondary: rgba(203, 213, 225, 0.8);
+        --hover-bg: #E2E8F0;
         --sidebar-bg: #FFFFFF;
-        --sidebar-text: #475569;
-        --sidebar-hover: #F8FAFC;
+        --sidebar-text: #334155;
+        --sidebar-hover: #F1F5F9;
     }
 
     /* Dark mode colors - balanced dark theme */
@@ -218,14 +218,14 @@
         left: 0;
         bottom: 0;
         z-index: 40;
-        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.03);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         display: flex;
         flex-direction: column;
         transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     html.dark .sidebar {
-        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
     }
     
     .logo-section {
@@ -328,12 +328,13 @@
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
         color: var(--accent-blue);
         font-weight: 600;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
     html.dark .nav-item.active {
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%);
         color: #60A5FA;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     }
     
     .nav-item.active::before {
@@ -544,21 +545,15 @@
         gap: 0.75rem;
         padding: 0.75rem;
         border-radius: 12px;
-        transition: all 0.2s ease;
         background: var(--bg-tertiary);
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         border: 1px solid var(--border-secondary);
     }
 
     html.dark .user-card {
         border-color: transparent;
         background: var(--bg-tertiary);
-    }
-    
-    .user-card:hover {
-        background: var(--bg-primary);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-        transform: translateY(-1px);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     }
     
     .guest-card {
@@ -575,7 +570,7 @@
         align-items: center;
         justify-content: center;
         margin: 0 auto 0.75rem;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
     
     .guest-avatar-large i {
@@ -614,26 +609,14 @@
     .guest-btn-primary {
         background: var(--accent-blue);
         color: white;
-        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
     }
-    
-    .guest-btn-primary:hover {
-        background: #2563EB;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-    }
-    
+
     .guest-btn-secondary {
         background: var(--bg-secondary);
         color: var(--sidebar-text);
         border: 1px solid var(--border-primary);
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .guest-btn-secondary:hover {
-        background: var(--bg-primary);
-        border-color: #CBD5E1;
-        transform: translateY(-1px);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
     
     .user-avatar {
@@ -647,7 +630,7 @@
         font-weight: 700;
         font-size: 1rem;
         color: white;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
     
     .user-info {
@@ -680,22 +663,12 @@
         border: none;
         border-radius: 8px;
         cursor: pointer;
-        transition: all 0.15s ease;
-        box-shadow: var(--shadow-md);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
         text-decoration: none;
         display: inline-block;
         user-select: none;
     }
-    
-    .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-lg);
-    }
-    
-    .btn-primary:active {
-        transform: translateY(0);
-    }
-    
+
     .btn-secondary {
         padding: 0.6rem 1.2rem;
         background: var(--bg-secondary);
@@ -705,22 +678,10 @@
         border: 1px solid var(--border-primary);
         border-radius: 8px;
         cursor: pointer;
-        transition: all 0.15s ease;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         text-decoration: none;
         display: inline-block;
         user-select: none;
-    }
-    
-    .btn-secondary:hover {
-        background: var(--bg-primary);
-        border-color: #CBD5E1;
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
-    }
-    
-    .btn-secondary:active {
-        transform: translateY(0);
     }
     
     /* Main Content */
@@ -745,7 +706,7 @@
         -webkit-backdrop-filter: blur(20px);
         border-radius: 16px;
         padding: 1.5rem;
-        box-shadow: var(--shadow-lg);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         border: 1px solid var(--border-secondary);
         position: relative;
     }
@@ -753,6 +714,7 @@
     html.dark .content-panel {
         border-color: transparent;
         background: var(--bg-secondary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
     
     /* Modal - ONLY BASIC STYLES */
@@ -781,7 +743,7 @@
         max-width: 420px;
         width: 90%;
         text-align: center;
-        box-shadow: var(--shadow-xl);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     }
     
     .guest-modal-icon {
@@ -856,7 +818,7 @@
         padding: 0.75rem 1rem;
         background: var(--bg-secondary);
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
         border: 1px solid var(--border-primary);
         display: flex;
         align-items: center;
