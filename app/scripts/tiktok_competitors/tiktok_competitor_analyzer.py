@@ -246,15 +246,43 @@ class TikTokCompetitorAnalyzer:
             # Prepare data summary for AI
             top_videos = videos[:15]
             video_summaries = []
+            hashtag_performance = {}
+
             for v in top_videos:
                 views = v.get('view_count', 0)
                 likes = v.get('like_count', 0)
                 account = v.get('account_nickname', 'Unknown')
                 is_overperformer = v.get('is_overperformer', False)
                 performance_ratio = v.get('performance_ratio', 0)
-                
+                desc = v.get('desc', 'No description')
+
+                # Extract hashtags from description and track their performance
+                hashtags = re.findall(r'#\w+', desc)
+                for tag in hashtags:
+                    if tag not in hashtag_performance:
+                        hashtag_performance[tag] = {'total_views': 0, 'count': 0, 'avg_views': 0}
+                    hashtag_performance[tag]['total_views'] += views
+                    hashtag_performance[tag]['count'] += 1
+
                 status = f" [OVERPERFORMER {performance_ratio:.1f}x avg]" if is_overperformer else ""
-                video_summaries.append(f"- '{v.get('desc', 'No description')}' by {account} ({views:,} views, {likes:,} likes){status}")
+                video_summaries.append(f"- '{desc}' by {account} ({views:,} views, {likes:,} likes){status}")
+
+            # Calculate average views per hashtag
+            for tag, data in hashtag_performance.items():
+                data['avg_views'] = data['total_views'] / data['count'] if data['count'] > 0 else 0
+
+            # Sort hashtags by average views (performance) then by frequency
+            top_hashtags = sorted(
+                hashtag_performance.items(),
+                key=lambda x: (x[1]['avg_views'], x[1]['count']),
+                reverse=True
+            )[:10]
+
+            # Format hashtag list with performance info
+            hashtag_list = ' '.join([
+                f"{tag} ({data['avg_views']:,.0f} avg views)"
+                for tag, data in top_hashtags
+            ])
             
             # Get top words
             top_words = ', '.join([w['word'] for w in patterns.get('top_desc_words', [])[:10]])
@@ -280,6 +308,8 @@ class TikTokCompetitorAnalyzer:
 
 **COMMON THEMES:** {top_words}
 
+**TOP HASHTAGS USED:** {hashtag_list}
+
 Provide analysis with these sections:
 
 ## Key Insights
@@ -302,10 +332,17 @@ List 4-5 hook patterns that capture attention. Format as one-liners with example
 Focus on attention-grabbing techniques, curiosity gaps, and emotional triggers.
 
 ## Content Opportunities
-List ONLY 8 video idea descriptions inspired by the analysis. Make them creative and specific to the niche. Format as:
-"[Video Idea 1]"
-"[Video Idea 2]"
-...continuing to 8 ideas
+Create 8 TikTok video titles with improved hooks based on the analyzed content. Each title MUST:
+- Start with an attention-grabbing hook
+- Include relevant hashtags from the top hashtags list above
+- Be inspired by the themes and patterns from the analyzed videos
+
+Format as:
+"[Hook/Title] #hashtag1 #hashtag2 #hashtag3"
+"[Hook/Title] #hashtag1 #hashtag2 #hashtag3"
+...continuing to 8 titles
+
+Example format: "The moment I realized this trick would change everything #gaming #tips #fyp"
 
 Keep it CONCISE and creative. Prioritize actionable creative insights over metrics."""
             
