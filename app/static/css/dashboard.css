@@ -247,9 +247,9 @@ html.dark .dashboard-wrapper {
     align-items: center;
     margin-bottom: 2rem;
     padding: 1.75rem 2rem;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(59, 130, 246, 0.08);
     border-radius: 20px;
-    border: 1px solid rgba(203, 213, 225, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.2);
     box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
@@ -264,7 +264,7 @@ html.dark .dashboard-wrapper {
     right: -10%;
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
+    background: none;
     border-radius: 50%;
     pointer-events: none;
 }
@@ -307,8 +307,8 @@ html.dark .dashboard-header {
 .header-stat {
     text-align: center;
     padding: 1.25rem 1.75rem;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(203, 213, 225, 0.8);
+    background: transparent;
+    border: 1px solid rgba(59, 130, 246, 0.2);
     border-radius: 16px;
     min-width: 120px;
 }
@@ -352,12 +352,12 @@ html.dark .header-stat {
 
 /* Channel Card */
 .channel-card {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(203, 213, 225, 0.8);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(59, 130, 246, 0.15);
     border-radius: 20px;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
 }
 
 html.dark .channel-card {
@@ -432,12 +432,12 @@ html.dark .channel-icon.tiktok {
 
 .view-analytics-btn {
     padding: 0.625rem 1.25rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
-    color: #3B82F6;
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    background: transparent;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-primary);
     border-radius: 10px;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
@@ -446,8 +446,8 @@ html.dark .channel-icon.tiktok {
 }
 
 html.dark .view-analytics-btn {
-    color: #60A5FA;
-    border-color: rgba(96, 165, 250, 0.4);
+    color: var(--text-tertiary);
+    border-color: rgba(63, 63, 70, 0.8);
 }
 
 /* Channel Metrics */
@@ -563,8 +563,8 @@ html.dark .quick-actions-section {
 .action-card {
     flex-shrink: 0;
     width: 260px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(203, 213, 225, 0.8);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
     border-radius: 16px;
     padding: 1.75rem;
     text-decoration: none;
@@ -694,12 +694,12 @@ html.dark .connect-channel-card {
 
 /* Calendar Section */
 .calendar-section {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(203, 213, 225, 0.8);
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(59, 130, 246, 0.15);
     border-radius: 20px;
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.06);
 }
 
 html.dark .calendar-section {

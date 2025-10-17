@@ -274,26 +274,11 @@
         transition: opacity 0.3s ease;
     }
 
-    .plan-card:hover::before {
-        opacity: 1;
-    }
-
     html.dark .plan-card {
         background: rgba(39, 39, 42, 0.8);
         border-color: rgba(63, 63, 70, 0.8);
         backdrop-filter: blur(12px);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-    }
-
-    .plan-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        border-color: rgba(59, 130, 246, 0.5);
-    }
-
-    html.dark .plan-card:hover {
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-        border-color: rgba(96, 165, 250, 0.6);
     }
 
     .plan-card.current {
@@ -483,21 +468,10 @@
         transition: all 0.3s ease;
     }
 
-    .feature-item:hover .feature-icon {
-        transform: scale(1.1) rotate(5deg);
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(96, 165, 250, 0.25) 100%);
-        border-color: rgba(59, 130, 246, 0.4);
-    }
-
     html.dark .feature-icon {
         color: #60A5FA;
         background: linear-gradient(135deg, rgba(96, 165, 250, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
         border-color: rgba(96, 165, 250, 0.3);
-    }
-
-    html.dark .feature-item:hover .feature-icon {
-        background: linear-gradient(135deg, rgba(96, 165, 250, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%);
-        border-color: rgba(96, 165, 250, 0.5);
     }
     
     .plan-button {
@@ -643,20 +617,6 @@
         transition: opacity 0.3s ease;
     }
 
-    .flex-card:hover::after {
-        opacity: 1;
-    }
-
-    .flex-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        border-color: rgba(59, 130, 246, 0.5);
-    }
-
-    html.dark .flex-card:hover {
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-        border-color: rgba(96, 165, 250, 0.6);
-    }
     
     .flex-amount {
         font-size: 1.5rem;
