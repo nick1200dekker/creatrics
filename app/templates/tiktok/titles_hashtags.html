@@ -3,313 +3,89 @@
 {% block title %}Titles & Hashtags - TikTok Tools - Creatrics{% endblock %}
 
 {% block seo_meta %}
-<meta name="description" content="Titles & Hashtags - Create captions with trending keywords & hashtags. Coming soon to Creatrics.">
-<meta name="keywords" content="tiktok titles, tiktok hashtags, trending hashtags, viral captions, tiktok seo">
+<meta name="description" content="Generate viral TikTok titles and hashtags with AI. Create engaging hooks and discover trending hashtags optimized for TikTok discoverability.">
+<meta name="keywords" content="tiktok titles, tiktok hashtags, trending hashtags, viral captions, tiktok seo, tiktok hooks">
 {% endblock %}
 
 {% block additional_styles %}
-<style>
-    /* Override base template padding */
-    .content-panel {
-        padding: 0 !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
-
-    /* Main wrapper */
-    .coming-soon-wrapper {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border-secondary);
-        overflow: hidden;
-        width: 100%;
-        min-height: calc(100vh - 60px);
-        transition: background-color 0.3s ease, border-color 0.3s ease;
-        position: relative;
-    }
-
-    html.dark .coming-soon-wrapper {
-        border-color: transparent;
-    }
-
-    /* Animated background gradient */
-    .coming-soon-wrapper::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
-        pointer-events: none;
-    }
-
-    /* Header */
-    .coming-soon-header {
-        padding: 1.5rem 2rem;
-        border-bottom: 1px solid var(--border-primary);
-        background: var(--bg-secondary);
-        transition: background-color 0.3s ease, border-color 0.3s ease;
-        position: relative;
-        z-index: 1;
-    }
-
-    .coming-soon-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .coming-soon-title i {
-        color: #3B82F6;
-    }
-
-    /* Content */
-    .coming-soon-content {
-        padding: 4rem 2rem;
-        text-align: center;
-        position: relative;
-        z-index: 1;
-    }
-
-    .coming-soon-hero {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-    .coming-soon-icon {
-        width: 120px;
-        height: 120px;
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-        border-radius: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 2rem;
-        box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.3);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .coming-soon-icon::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 100px;
-        height: 100px;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
-        pointer-events: none;
-    }
-
-    .coming-soon-icon i {
-        font-size: 3rem;
-        color: white;
-        position: relative;
-        z-index: 1;
-    }
-
-    .coming-soon-hero h1 {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-        line-height: 1.2;
-    }
-
-    .coming-soon-hero .gradient-text {
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .coming-soon-hero p {
-        font-size: 1.25rem;
-        color: var(--text-secondary);
-        margin-bottom: 2rem;
-        line-height: 1.6;
-    }
-
-    .coming-soon-badge {
-        display: inline-block;
-        background: rgba(59, 130, 246, 0.1);
-        color: #3B82F6;
-        padding: 0.5rem 1.5rem;
-        border-radius: 50px;
-        font-size: 0.875rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 2rem;
-        border: 1px solid rgba(59, 130, 246, 0.2);
-    }
-
-    html.dark .coming-soon-badge {
-        background: rgba(59, 130, 246, 0.2);
-        color: #60A5FA;
-        border-color: rgba(59, 130, 246, 0.3);
-    }
-
-    /* Features preview */
-    .features-preview {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        margin-top: 3rem;
-        max-width: 900px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .feature-preview-card {
-        background: var(--bg-tertiary);
-        border-radius: 16px;
-        padding: 1.5rem;
-        border: 1px solid var(--border-secondary);
-        transition: all 0.3s ease;
-        opacity: 0.7;
-    }
-
-    html.dark .feature-preview-card {
-        border-color: transparent;
-    }
-
-    .feature-preview-card h3 {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .feature-preview-card h3 i {
-        color: #3B82F6;
-        font-size: 1rem;
-    }
-
-    .feature-preview-card p {
-        font-size: 0.875rem;
-        color: var(--text-tertiary);
-        line-height: 1.5;
-        margin: 0;
-    }
-
-    /* CTA buttons */
-    .coming-soon-cta {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-        margin-top: 2rem;
-    }
-
-    .btn-primary, .btn-secondary {
-        padding: 0.875rem 2rem;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
-    }
-
-    .btn-secondary {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-primary);
-        box-shadow: var(--shadow-sm);
-    }
-
-    .btn-secondary:hover {
-        background: var(--bg-primary);
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
-    }
-
-    /* Responsive design */
-    @media (max-width: 768px) {
-        .features-preview {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tiktok_titles_hashtags.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="coming-soon-wrapper">
-    <!-- Header -->
-    <div class="coming-soon-header">
-        <h1 class="coming-soon-title">
-            <i class="ph ph-hash"></i>
-            Titles & Hashtags
-        </h1>
-    </div>
-
-    <!-- Content -->
-    <div class="coming-soon-content">
-        <div class="coming-soon-hero">
-            <div class="coming-soon-icon">
+<div class="content-panel">
+    <div class="generator-wrapper">
+        <!-- Header -->
+        <div class="generator-header">
+            <h1 class="generator-title">
                 <i class="ph ph-hash"></i>
-            </div>
-
-            <div class="coming-soon-badge">Coming Soon</div>
-
-            <h1>Trending <span class="gradient-text">Titles & Hashtags</span></h1>
-
-            <p>Create captivating titles and discover trending hashtags that boost your visibility. Optimize your captions with keywords that help your content get discovered.</p>
-
-            <div class="coming-soon-cta">
-                <a href="{{ url_for('home.dashboard') }}" class="btn-primary">
-                    <i class="ph ph-house"></i>
-                    Back to Dashboard
-                </a>
-                <a href="{{ url_for('trend_finder.trend_finder') }}" class="btn-secondary">
-                    <i class="ph ph-trend-up"></i>
-                    Discover Trends
-                </a>
-            </div>
+                TikTok Titles & Hashtags
+            </h1>
         </div>
 
-        <!-- Features Preview -->
-        <div class="features-preview">
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-text-aa"></i>Engaging Titles</h3>
-                <p>Generate catchy titles that boost engagement and encourage viewers to interact.</p>
-            </div>
+        <!-- Content Area -->
+        <div class="generator-content">
+            <div class="editor-grid">
+                <!-- Left Panel - Input -->
+                <div class="input-section">
+                    <div class="input-panel">
+                        <!-- Target Keywords Input -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="ph ph-key"></i>
+                                Target Keywords
+                                <div class="info-tooltip">
+                                    <i class="ph ph-info"></i>
+                                    <span class="tooltip-text">Enter one or more keywords (comma-separated). Titles will start with these keywords and include relevant hashtags.</span>
+                                </div>
+                            </label>
+                            <input type="text"
+                                   class="input-textarea"
+                                   id="keywordsInput"
+                                   placeholder="e.g., Battlefield 6, Gaming Tips, FPS Gameplay"
+                                   style="min-height: 45px; padding: 0.75rem;">
+                        </div>
 
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-hash"></i>Trending Hashtags</h3>
-                <p>Discover and use hashtags that are currently trending in your niche.</p>
-            </div>
+                        <!-- Video Concept Input -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="ph ph-article"></i>
+                                Video Concept or Script (Optional)
+                            </label>
+                            <textarea class="input-textarea"
+                                      id="videoInput"
+                                      placeholder="Describe your video content, paste your script, or outline your main points..."
+                                      maxlength="3000"
+                                      oninput="updateCharCount()"></textarea>
+                            <div class="char-count" id="charCount">0 / 3000</div>
+                        </div>
 
-            <div class="feature-preview-card">
-                <h3><i class="ph ph-magnifying-glass"></i>SEO Optimized</h3>
-                <p>Keywords and phrases that help your content appear in search results.</p>
+                        <!-- Generate Button -->
+                        <button class="generate-btn" onclick="generateTitles()" id="generateBtn">
+                            <i class="ph ph-sparkle"></i>
+                            Generate Titles & Hashtags
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Results -->
+                <div class="output-section">
+                    <div class="results-panel">
+                        <div id="resultsContainer">
+                            <!-- Empty State -->
+                            <div class="empty-results">
+                                <i class="ph ph-hash empty-icon"></i>
+                                <div class="empty-title">Ready to Create</div>
+                                <div class="empty-text">Your AI-generated TikTok titles and hashtags will appear here. Enter your target keywords and click generate.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='scripts/tiktok_titles_hashtags.js') }}"></script>
 {% endblock %}

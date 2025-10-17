@@ -114,16 +114,43 @@ def dashboard_data():
             try:
                 analytics_ref = db.collection('users').document(user_id).collection('x_analytics').document('latest')
                 analytics_doc = analytics_ref.get()
-                
+
                 if analytics_doc.exists:
                     x_analytics = analytics_doc.to_dict()
-                    
-                    # Extract key metrics for dashboard
+
+                    # Calculate metrics from last 30 days to match Analytics page default
+                    posts_collection = db.collection('users').document(user_id).collection('x_posts_individual')
+                    cutoff_date = datetime.now() - timedelta(days=30)
+                    cutoff_timestamp = cutoff_date.timestamp()
+
+                    # Calculate metrics from posts within last 30 days
+                    total_views = 0
+                    total_engagement = 0
+                    post_count = 0
+
+                    for doc in posts_collection.stream():
+                        post = doc.to_dict()
+                        if post.get('created_at_timestamp', 0) >= cutoff_timestamp:
+                            views = post.get('views', 0)
+                            engagement = (post.get('likes', 0) +
+                                        post.get('retweets', 0) +
+                                        post.get('replies', 0) +
+                                        post.get('bookmarks', 0))
+
+                            total_views += views
+                            total_engagement += engagement
+                            post_count += 1
+
+                    # Calculate averages
+                    avg_views = int(round(total_views / post_count)) if post_count > 0 else 0
+                    engagement_rate = (total_engagement / total_views * 100) if total_views > 0 else 0
+
+                    # Extract key metrics for dashboard (last 30 days)
                     response_data["x_analytics"] = {
                         'followers': x_analytics.get('followers_count', 0),
-                        'avg_views': int(round(x_analytics.get('rolling_avg_views', 0))),
-                        'engagement_rate': x_analytics.get('rolling_avg_engagement', 0),
-                        'engagement_rate_display': f"{x_analytics.get('rolling_avg_engagement', 0):.1f}%",
+                        'avg_views': avg_views,
+                        'engagement_rate': engagement_rate,
+                        'engagement_rate_display': f"{engagement_rate:.1f}%",
                         'followers_to_following_ratio': x_analytics.get('followers_to_following_ratio', 0),
                         'ratio_status': x_analytics.get('ratio_status', 'N/A')
                     }
@@ -135,16 +162,33 @@ def dashboard_data():
             try:
                 youtube_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
                 youtube_doc = youtube_ref.get()
-                
+
                 if youtube_doc.exists:
                     youtube_analytics = youtube_doc.to_dict()
-                    
-                    # Extract key metrics for dashboard
+
+                    # Calculate metrics from last 30 days of daily_data to match Analytics page
+                    daily_data = youtube_analytics.get('daily_data', [])
+
+                    # Filter for last 30 days
+                    cutoff_date = datetime.now() - timedelta(days=30)
+                    cutoff_date_str = cutoff_date.strftime('%Y-%m-%d')
+
+                    filtered_data = [
+                        day for day in daily_data
+                        if day.get('date', '') >= cutoff_date_str
+                    ]
+
+                    # Calculate totals from last 30 days
+                    total_views = sum(day.get('views', 0) for day in filtered_data)
+                    total_watch_time_minutes = sum(day.get('watch_time_minutes', 0) for day in filtered_data)
+                    total_subscribers_gained = sum(day.get('subscribers_gained', 0) for day in filtered_data)
+
+                    # Extract key metrics for dashboard (last 30 days)
                     response_data["youtube_analytics"] = {
-                        'views': youtube_analytics.get('views', 0),
-                        'subscribers_gained': youtube_analytics.get('subscribers_gained', 0),
-                        'watch_time_minutes': youtube_analytics.get('watch_time_minutes', 0),
-                        'watch_time_hours': round(youtube_analytics.get('watch_time_minutes', 0) / 60, 1),
+                        'views': total_views,
+                        'subscribers_gained': total_subscribers_gained,
+                        'watch_time_minutes': total_watch_time_minutes,
+                        'watch_time_hours': round(total_watch_time_minutes / 60, 1) if total_watch_time_minutes > 0 else 0,
                         'average_view_percentage': youtube_analytics.get('average_view_percentage', 0),
                         'engagement_rate': youtube_analytics.get('engagement_rate', 0)
                     }
@@ -160,16 +204,56 @@ def dashboard_data():
                 if tiktok_doc.exists:
                     tiktok_analytics = tiktok_doc.to_dict()
 
-                    # Extract key metrics for dashboard
+                    # Get posts from Firestore to calculate metrics from last 30 days
+                    posts_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('posts')
+                    posts_doc = posts_ref.get()
+
+                    engagement_rate = 0
+                    total_views_30 = 0
+                    total_likes_30 = 0
+
+                    if posts_doc.exists:
+                        posts_data = posts_doc.to_dict()
+                        all_posts = posts_data.get('posts', [])
+
+                        # Filter posts from last 30 days
+                        cutoff_date = datetime.now() - timedelta(days=30)
+                        cutoff_timestamp = cutoff_date.timestamp()
+
+                        # Calculate metrics from posts within last 30 days
+                        total_engagement_rate = 0
+                        posts_with_views = 0
+
+                        for post in all_posts:
+                            create_time = post.get('create_time', 0)
+                            if create_time >= cutoff_timestamp:
+                                views = post.get('views', 0)
+                                likes = post.get('likes', 0)
+                                comments = post.get('comments', 0)
+                                shares = post.get('shares', 0)
+
+                                total_views_30 += views
+                                total_likes_30 += likes
+
+                                if views > 0:
+                                    engagement = likes + comments + shares
+                                    post_engagement_rate = (engagement / views) * 100
+                                    total_engagement_rate += post_engagement_rate
+                                    posts_with_views += 1
+
+                        if posts_with_views > 0:
+                            engagement_rate = total_engagement_rate / posts_with_views
+
+                    # Extract key metrics for dashboard (last 30 days)
                     response_data["tiktok_analytics"] = {
                         'followers': tiktok_analytics.get('followers', 0),
-                        'likes': tiktok_analytics.get('likes', 0),
-                        'engagement_rate': tiktok_analytics.get('engagement_rate', 0),
-                        'total_views_35': tiktok_analytics.get('total_views_35', 0),
-                        'total_likes_35': tiktok_analytics.get('total_likes_35', 0),
+                        'likes': total_likes_30,  # Likes from last 30 days
+                        'engagement_rate': engagement_rate,
+                        'total_views_35': total_views_30,  # Actually last 30 days now
+                        'total_likes_35': total_likes_30,
                         'total_comments_35': tiktok_analytics.get('total_comments_35', 0),
                         'total_shares_35': tiktok_analytics.get('total_shares_35', 0),
-                        'post_count': tiktok_analytics.get('post_count', 0)
+                        'post_count': posts_with_views if posts_doc.exists else 0
                     }
             except Exception as e:
                 logger.error(f"Error fetching TikTok analytics: {str(e)}")
