@@ -250,7 +250,7 @@ def update_user_analytics(user_id, user_data):
     if user_data.get('tiktok_account'):
         try:
             logger.info(f"Updating TikTok analytics for user {user_id}")
-            from app.routes.tiktok_analytics.tiktok_analytics_routes import fetch_tiktok_analytics
+            from app.scripts.accounts.tiktok_analytics import fetch_tiktok_analytics
             fetch_tiktok_analytics(user_id)
             result['tiktok_updated'] = True
         except Exception as tt_error:

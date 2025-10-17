@@ -202,12 +202,16 @@
     function setBrandVoiceState(hasData) {
         state.hasBrandVoiceData = hasData;
 
+        console.log('Setting brand voice state:', hasData);
+
         // Load user preference from localStorage
         const userPrefersBrandVoice = localStorage.getItem('preferBrandVoice');
         const shouldEnableBrandVoice = userPrefersBrandVoice === null ? true : userPrefersBrandVoice === 'true';
 
         document.querySelectorAll('.brand-voice-checkbox').forEach(checkbox => {
             checkbox.disabled = !hasData;
+            console.log('Checkbox disabled:', checkbox.disabled, 'hasData:', hasData);
+
             // Auto-check if brand voice is available based on user preference
             if (hasData && !checkbox.hasAttribute('data-initialized')) {
                 checkbox.checked = shouldEnableBrandVoice;
@@ -215,6 +219,7 @@
 
                 // Add change listener to save preference
                 checkbox.addEventListener('change', function() {
+                    console.log('Brand voice preference changed to:', this.checked);
                     localStorage.setItem('preferBrandVoice', this.checked);
                 });
             } else if (!hasData) {
@@ -226,9 +231,12 @@
             if (hasData) {
                 toggle.classList.remove('disabled');
                 toggle.title = '';
+                // Ensure pointer events are enabled
+                toggle.style.pointerEvents = '';
+                console.log('Brand voice toggle enabled');
             } else {
                 toggle.classList.add('disabled');
-                toggle.title = 'Connect your Twitter account to enable brand voice';
+                toggle.title = 'Connect your X account and ensure you have replies on your profile to enable brand voice';
             }
         });
 
@@ -333,6 +341,7 @@
         // Delegated event listeners for dynamic content
         document.addEventListener('click', handleDelegatedClicks);
         document.addEventListener('input', handleDelegatedInputs);
+        document.addEventListener('change', handleDelegatedInputs);  // Also listen for change events (checkboxes)
     }
 
     function handleDelegatedClicks(e) {
