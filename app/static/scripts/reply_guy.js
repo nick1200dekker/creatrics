@@ -209,21 +209,26 @@
         const shouldEnableBrandVoice = userPrefersBrandVoice === null ? true : userPrefersBrandVoice === 'true';
 
         document.querySelectorAll('.brand-voice-checkbox').forEach(checkbox => {
+            const wasDisabled = checkbox.disabled;
             checkbox.disabled = !hasData;
-            console.log('Checkbox disabled:', checkbox.disabled, 'hasData:', hasData);
+            console.log('Checkbox:', checkbox.id, 'disabled:', checkbox.disabled, 'hasData:', hasData, 'was disabled:', wasDisabled);
 
             // Auto-check if brand voice is available based on user preference
-            if (hasData && !checkbox.hasAttribute('data-initialized')) {
-                checkbox.checked = shouldEnableBrandVoice;
-                checkbox.setAttribute('data-initialized', 'true');
+            if (hasData) {
+                if (!checkbox.hasAttribute('data-initialized')) {
+                    checkbox.checked = shouldEnableBrandVoice;
+                    checkbox.setAttribute('data-initialized', 'true');
+                    console.log('Initialized checkbox to:', shouldEnableBrandVoice);
 
-                // Add change listener to save preference
-                checkbox.addEventListener('change', function() {
-                    console.log('Brand voice preference changed to:', this.checked);
-                    localStorage.setItem('preferBrandVoice', this.checked);
-                });
-            } else if (!hasData) {
+                    // Add change listener to save preference
+                    checkbox.addEventListener('change', function(e) {
+                        console.log('Brand voice checkbox change event fired! New value:', this.checked);
+                        localStorage.setItem('preferBrandVoice', this.checked);
+                    });
+                }
+            } else {
                 checkbox.checked = false;
+                checkbox.removeAttribute('data-initialized');
             }
         });
 
@@ -234,6 +239,24 @@
                 // Ensure pointer events are enabled
                 toggle.style.pointerEvents = '';
                 console.log('Brand voice toggle enabled');
+
+                // Add a click handler to manually toggle if needed
+                toggle.addEventListener('click', function(e) {
+                    console.log('Toggle clicked!', e.target);
+                    const checkbox = this.querySelector('.brand-voice-checkbox');
+                    if (checkbox) {
+                        console.log('Checkbox before click - checked:', checkbox.checked, 'disabled:', checkbox.disabled);
+
+                        // If the click was on the label but not on the checkbox itself,
+                        // the label's 'for' attribute should handle it automatically.
+                        // But let's verify it's working
+                        if (e.target !== checkbox && !e.target.classList.contains('brand-voice-checkbox')) {
+                            // The click was on the label or slider, not the checkbox
+                            // The browser should automatically toggle the checkbox via the label's 'for' attribute
+                            console.log('Click was on label/slider, browser should auto-toggle checkbox');
+                        }
+                    }
+                }, { once: false });
             } else {
                 toggle.classList.add('disabled');
                 toggle.title = 'Connect your X account and ensure you have replies on your profile to enable brand voice';

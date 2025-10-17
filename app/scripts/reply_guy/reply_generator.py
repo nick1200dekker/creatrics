@@ -257,50 +257,44 @@ Reply:"""
     def has_brand_voice_data(self, user_id: str) -> bool:
         """Check if user has brand voice data available from X replies"""
         try:
-            # Check if user has X replies data
-            doc_ref = self.db.collection('users').document(str(user_id)).collection('x_replies').limit(1)
-            docs = list(doc_ref.stream())
+            # Check the specific 'data' document where replies are stored
+            doc_ref = self.db.collection('users').document(str(user_id)).collection('x_replies').document('data')
+            doc = doc_ref.get()
 
-            if not docs:
-                logger.info(f"No x_replies collection found for user {user_id}")
+            if not doc.exists:
+                logger.info(f"No x_replies/data document found for user {user_id}")
                 return False
 
             # Check if the document has meaningful reply data
-            replies_data = docs[0].to_dict()
+            replies_data = doc.to_dict()
             if not replies_data:
-                logger.info(f"x_replies document is empty for user {user_id}")
+                logger.info(f"x_replies/data document is empty for user {user_id}")
                 return False
 
-            # Check the main replies array structure first
+            logger.info(f"Found x_replies document for user {user_id}, keys: {list(replies_data.keys())}")
+
+            # Check the main replies array structure (current format)
             if 'replies' in replies_data and isinstance(replies_data['replies'], list):
-                for reply_item in replies_data['replies']:
+                replies_list = replies_data['replies']
+                logger.info(f"Found {len(replies_list)} reply items in replies array for user {user_id}")
+
+                for idx, reply_item in enumerate(replies_list[:5]):  # Check first 5 for debugging
+                    logger.info(f"Reply item {idx} structure: {list(reply_item.keys()) if isinstance(reply_item, dict) else type(reply_item)}")
                     if isinstance(reply_item, dict) and 'reply' in reply_item:
                         reply_info = reply_item['reply']
+                        logger.info(f"Reply info keys: {list(reply_info.keys()) if isinstance(reply_info, dict) else type(reply_info)}")
                         if isinstance(reply_info, dict) and 'text' in reply_info:
-                            if reply_info['text'] and len(reply_info['text'].strip()) > 5:
-                                logger.info(f"Found brand voice data (replies array) for user {user_id}")
+                            reply_text = reply_info['text']
+                            logger.info(f"Found reply text (length {len(str(reply_text))}): {str(reply_text)[:50]}...")
+                            if reply_text and len(str(reply_text).strip()) > 5:
+                                logger.info(f"✓ Found valid brand voice data for user {user_id}")
                                 return True
-
-            # Fallback: check for legacy structures
-            for key, value in replies_data.items():
-                if isinstance(value, dict) and 'reply' in value:
-                    reply_info = value['reply']
-                    if isinstance(reply_info, dict) and 'text' in reply_info:
-                        if reply_info['text'] and len(reply_info['text'].strip()) > 5:
-                            logger.info(f"Found brand voice data (legacy dict) for user {user_id}")
-                            return True
-                elif isinstance(value, list):
-                    for item in value:
-                        if isinstance(item, dict) and 'reply' in item:
-                            reply_info = item['reply']
-                            if isinstance(reply_info, dict) and 'text' in reply_info:
-                                if reply_info['text'] and len(reply_info['text'].strip()) > 5:
-                                    logger.info(f"Found brand voice data (legacy list) for user {user_id}")
-                                    return True
 
             logger.info(f"No meaningful reply text found in x_replies for user {user_id}")
             return False
 
         except Exception as e:
             logger.error(f"Error checking brand voice data: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             return False

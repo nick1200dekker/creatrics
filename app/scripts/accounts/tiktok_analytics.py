@@ -45,13 +45,16 @@ def fetch_tiktok_analytics(user_id):
         UserService.update_user(user_id, {'tiktok_sec_uid': sec_uid})
 
         # Fetch posts with pagination
-        one_week_ago = datetime.now() - timedelta(days=7)
-        recent_posts = []
+        # IMPORTANT: TikTok API returns OLD videos first with cursor="0"
+        # We need to go through ALL available cursors to reach recent videos
+        # Then filter by date at the end
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        all_posts = []
         cursor = "0"
         max_pages = 30
         page = 0
 
-        logger.info(f"Fetching TikTok posts (will filter to last 7 days)")
+        logger.info(f"Fetching all TikTok posts (API returns oldest first, need all pages for recent posts)")
 
         while page < max_pages:
             page += 1
@@ -66,31 +69,52 @@ def fetch_tiktok_analytics(user_id):
                     break
 
                 if retry < max_retries - 1:
-                    logger.warning(f"Retry {retry + 1}/{max_retries} for TikTok posts fetch")
+                    wait_time = (retry + 1) * 3  # 3s, 6s, 9s
+                    logger.warning(f"Failed to fetch page {page}, retrying in {wait_time}s (attempt {retry + 1}/{max_retries})")
                     import time
-                    time.sleep(2)
+                    time.sleep(wait_time)
 
-            if not posts_data or not posts_data.get('posts'):
+            if not posts_data:
+                logger.warning(f"Failed to fetch posts after {max_retries} retries, stopping pagination at page {page}")
                 break
 
             posts = posts_data.get('posts', [])
+            logger.info(f"Page {page}: Got {len(posts)} posts from API")
 
-            # Filter to recent posts
-            for post in posts:
-                create_time = post.get('create_time', 0)
-                post_date = datetime.fromtimestamp(create_time)
-
-                if post_date >= one_week_ago:
-                    recent_posts.append(post)
+            # Add all posts - will filter by date later
+            all_posts.extend(posts)
 
             # Check if we have more pages
             has_more = posts_data.get('has_more', False)
-            if not has_more:
+            if not has_more or not posts_data.get('cursor'):
+                logger.info(f"No more pages available")
                 break
 
-            cursor = posts_data.get('cursor', "0")
+            cursor = posts_data.get('cursor')
 
-        logger.info(f"Fetched {len(recent_posts)} recent TikTok posts")
+            # Add delay between pages to avoid rate limiting
+            import time
+            time.sleep(2)
+
+        logger.info(f"Completed pagination: Fetched {len(all_posts)} total posts")
+
+        # Filter to only posts from last 7 days
+        posts_before_filter = len(all_posts)
+        recent_posts = []
+        for post in all_posts:
+            create_time = post.get('create_time')
+            if create_time:
+                try:
+                    post_date = datetime.fromtimestamp(create_time)
+                    if post_date >= seven_days_ago:
+                        recent_posts.append(post)
+                except Exception as e:
+                    logger.error(f"Error parsing post date: {e}")
+                    recent_posts.append(post)
+            else:
+                recent_posts.append(post)
+
+        logger.info(f"Filtered to last 7 days: {posts_before_filter} total -> {len(recent_posts)} recent posts")
 
         # Initialize Firestore if needed
         if not firebase_admin._apps:

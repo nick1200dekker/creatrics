@@ -707,29 +707,33 @@ def get_custom_list_details():
 def check_brand_voice():
     """Check if user has brand voice data - cached"""
     try:
-        # Check session cache first
-        cache_key = 'brand_voice_available'
-        if cache_key in session:
-            cached_time = session.get('brand_voice_checked', 0)
-            if time.time() - cached_time < 300:  # 5 minutes cache
-                return jsonify({
-                    'success': True, 
-                    'has_brand_voice_data': session[cache_key]
-                })
-        
+        # Don't use cache for now - always check fresh to debug
+        # cache_key = 'brand_voice_available'
+        # if cache_key in session:
+        #     cached_time = session.get('brand_voice_checked', 0)
+        #     if time.time() - cached_time < 300:  # 5 minutes cache
+        #         return jsonify({
+        #             'success': True,
+        #             'has_brand_voice_data': session[cache_key]
+        #         })
+
         service = ReplyGuyService()
         user_id = get_workspace_user_id()
-        
+
+        logger.info(f"Checking brand voice for user {user_id}")
         has_data = service.has_brand_voice_data(user_id)
-        
+        logger.info(f"Brand voice check result for user {user_id}: {has_data}")
+
         # Cache result
-        session[cache_key] = has_data
-        session['brand_voice_checked'] = time.time()
-        
+        # session[cache_key] = has_data
+        # session['brand_voice_checked'] = time.time()
+
         return jsonify({'success': True, 'has_brand_voice_data': has_data})
-        
+
     except Exception as e:
         logger.error(f"Error checking brand voice: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return jsonify({'success': False, 'error': 'Internal server error', 'has_brand_voice_data': False}), 500
 
 # Health check endpoint
