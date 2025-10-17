@@ -486,14 +486,16 @@ html.dark .info-text {
 
 .super-powers-container {
     background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 2rem;
+    border-radius: 20px;
+    padding: 0;
     width: 90%;
-    max-width: 420px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 480px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-primary);
     transform: translateY(30px) scale(0.9);
     opacity: 0;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 }
 
 .super-powers-modal.visible .super-powers-container {
@@ -501,57 +503,198 @@ html.dark .info-text {
     opacity: 1;
 }
 
+/* Icon Area */
+.modal-icon-area {
+    position: relative;
+    padding: 3rem 2rem 2rem 2rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border-bottom: 1px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+html.dark .modal-icon-area {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+}
+
+.icon-wrapper {
+    position: relative;
+    z-index: 2;
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+}
+
+.icon-wrapper i {
+    font-size: 2.5rem;
+    color: white;
+}
+
+.pulse-ring {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    border: 2px solid #3B82F6;
+    opacity: 0;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.pulse-ring-delay {
+    animation-delay: 1s;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Modal Content */
 .modal-content {
+    padding: 2rem;
     text-align: center;
 }
 
-.modal-progress {
-    font-size: 1.125rem;
-    font-weight: 600;
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
-.modal-time {
-    font-size: 0.875rem;
+.modal-description {
+    font-size: 0.9375rem;
     color: var(--text-secondary);
-    margin-bottom: 1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
 }
 
-.progress-bar-container {
+/* Progress Section */
+.progress-section {
+    margin-bottom: 1.75rem;
+}
+
+.progress-bar-wrapper {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background: var(--border-primary);
-    border-radius: 4px;
+    border-radius: 10px;
     overflow: hidden;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .progress-bar {
     height: 100%;
     background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
-    border-radius: 4px;
+    border-radius: 10px;
     transition: width 0.3s ease;
     width: 0%;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
 
-.modal-loading {
+.progress-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.status-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    flex: 1;
+    text-align: left;
+}
+
+.status-percent {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #3B82F6;
+    font-variant-numeric: tabular-nums;
+}
+
+html.dark .status-percent {
+    color: #60A5FA;
+}
+
+/* Modal Info */
+.modal-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+html.dark .modal-info {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.15);
+}
+
+.modal-info i {
+    font-size: 1.25rem;
+    color: #3B82F6;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+html.dark .modal-info i {
+    color: #60A5FA;
+}
+
+.modal-info span {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Dismiss Button */
+.dismiss-button {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid var(--border-primary);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 
-.loading-spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border-primary);
-    border-top: 2px solid #3B82F6;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+.dismiss-button:hover {
+    background: var(--hover-bg);
+    transform: translateY(-1px);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.dismiss-button i {
+    font-size: 1rem;
+    transition: transform 0.2s ease;
+}
+
+.dismiss-button:hover i {
+    transform: translateX(3px);
 }
 
 @keyframes spin {
@@ -562,23 +705,32 @@ html.dark .info-text {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background: transparent;
+    background: rgba(0, 0, 0, 0.1);
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 1.25rem;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: 10px;
     transition: all 0.2s ease;
+    z-index: 10;
+}
+
+html.dark .modal-close-btn {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .modal-close-btn:hover {
-    background: var(--hover-bg);
+    background: rgba(0, 0, 0, 0.2);
     color: var(--text-primary);
+}
+
+html.dark .modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Responsive */
@@ -608,29 +760,60 @@ html.dark .info-text {
     {% if show_super_powers %}
     <div class="super-powers-modal" id="superPowersModal">
         <div class="super-powers-container">
-            <button class="modal-close-btn" onclick="closeSuperPowers()">
+            <button class="modal-close-btn" onclick="closeSuperPowers()" title="Close and continue in background">
                 <i class="ph ph-x"></i>
             </button>
-            <div class="modal-content">
-                <p class="modal-progress">
+
+            <!-- Icon/Animation Area -->
+            <div class="modal-icon-area">
+                <div class="icon-wrapper">
                     {% if request.args.get('platform') == 'youtube' %}
-                        YouTube Account setup in progress
+                        <i class="ph ph-youtube-logo"></i>
                     {% elif request.args.get('platform') == 'tiktok' %}
-                        TikTok Account setup in progress
+                        <i class="ph ph-tiktok-logo"></i>
                     {% else %}
-                        X Account setup in progress
+                        <i class="ph ph-x-logo"></i>
                     {% endif %}
+                </div>
+                <div class="pulse-ring"></div>
+                <div class="pulse-ring pulse-ring-delay"></div>
+            </div>
+
+            <div class="modal-content">
+                <h3 class="modal-title">
+                    {% if request.args.get('platform') == 'youtube' %}
+                        Setting Up YouTube
+                    {% elif request.args.get('platform') == 'tiktok' %}
+                        Setting Up TikTok
+                    {% else %}
+                        Setting Up X
+                    {% endif %}
+                </h3>
+
+                <p class="modal-description">
+                    We're fetching your content and analyzing your analytics. This usually takes 1-2 minutes.
                 </p>
-                <p class="modal-time">This will take approximately 1-2 minutes</p>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" id="progressBar"></div>
+
+                <!-- Progress Section -->
+                <div class="progress-section">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <div class="progress-status">
+                        <span id="loadingText" class="status-text">Pulling data from your account...</span>
+                        <span id="progressPercent" class="status-percent">0%</span>
+                    </div>
                 </div>
-                <div class="modal-loading">
-                    <div class="loading-spinner"></div>
-                    <span id="loadingText">Setting up your experience...</span>
+
+                <!-- Dismissible Info -->
+                <div class="modal-info">
+                    <i class="ph ph-info"></i>
+                    <span>You can close this and continue using the app. The setup will continue in the background.</span>
                 </div>
-                <button class="action-button primary" onclick="closeSuperPowers()">
-                    Got it!
+
+                <button class="dismiss-button" onclick="closeSuperPowers()">
+                    <span>Got it, continue in background</span>
+                    <i class="ph ph-arrow-right"></i>
                 </button>
             </div>
         </div>
@@ -746,7 +929,7 @@ html.dark .info-text {
                         </button>
                     </form>
                 {% else %}
-                    <form method="POST" action="{{ url_for('accounts.connect_account') }}">
+                    <form method="POST" action="{{ url_for('accounts.connect_account') }}" data-turbo="false">
                         <input type="hidden" name="platform" value="x">
 
                         <div class="form-group">
@@ -794,7 +977,7 @@ html.dark .info-text {
                         </button>
                     </form>
                 {% else %}
-                    <form method="POST" action="{{ url_for('accounts.connect_account') }}">
+                    <form method="POST" action="{{ url_for('accounts.connect_account') }}" data-turbo="false">
                         <input type="hidden" name="platform" value="tiktok">
                         
                         <div class="form-group">
@@ -870,8 +1053,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function startProgressBar() {
     const progressBar = document.getElementById('progressBar');
     const loadingText = document.getElementById('loadingText');
+    const progressPercent = document.getElementById('progressPercent');
 
-    if (!progressBar || !loadingText) return;
+    if (!progressBar || !loadingText || !progressPercent) return;
 
     // Get platform from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -906,6 +1090,7 @@ function startProgressBar() {
             }
 
             progressBar.style.width = progress + '%';
+            progressPercent.textContent = Math.round(progress) + '%';
         }
     }, interval);
 
@@ -920,6 +1105,7 @@ function startProgressBar() {
                     clearInterval(pollInterval);
                     progress = 100;
                     progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
                     loadingText.textContent = 'Setup complete!';
 
                     // Store for cleanup
