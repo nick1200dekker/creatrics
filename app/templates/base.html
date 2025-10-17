@@ -1163,7 +1163,7 @@
 
                 {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.tiktok_keyword_research %}
                 <a href="{{ url_for('tiktok_keyword_research.tiktok_keyword_research') }}"
-                   class="nav-subitem {% if request.endpoint and 'tiktok_keyword_research.' in request.endpoint %}active{% endif %}"
+                   class="nav-subitem {% if request.endpoint and request.endpoint.startswith('tiktok_keyword_research.') %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-magnifying-glass"></i>
                     <span>Keyword Research</span>
