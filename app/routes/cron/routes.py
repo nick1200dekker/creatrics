@@ -6,6 +6,8 @@ import logging
 import os
 from functools import wraps
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 # Setup logger
 logger = logging.getLogger('cron_routes')
@@ -205,6 +207,146 @@ def update_default_reply_lists():
         return jsonify({
             "status": "error",
             "job": "update_default_reply_lists",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }), 500
+
+def update_user_analytics(user_id, user_data):
+    """Update analytics for a single user (used in parallel processing)"""
+    from app.scripts.accounts.x_analytics import fetch_x_analytics
+    from app.scripts.accounts.youtube_analytics import fetch_youtube_analytics
+
+    result = {
+        'user_id': user_id,
+        'x_updated': False,
+        'youtube_updated': False,
+        'tiktok_updated': False,
+        'x_error': None,
+        'youtube_error': None,
+        'tiktok_error': None
+    }
+
+    # Update X Analytics if connected
+    if user_data.get('x_account'):
+        try:
+            logger.info(f"Updating X analytics for user {user_id}")
+            fetch_x_analytics(user_id, is_initial=False)
+            result['x_updated'] = True
+        except Exception as x_error:
+            logger.error(f"Failed to update X analytics for user {user_id}: {str(x_error)}")
+            result['x_error'] = str(x_error)
+
+    # Update YouTube Analytics if connected
+    if user_data.get('youtube_account'):
+        try:
+            logger.info(f"Updating YouTube analytics for user {user_id}")
+            fetch_youtube_analytics(user_id)
+            result['youtube_updated'] = True
+        except Exception as yt_error:
+            logger.error(f"Failed to update YouTube analytics for user {user_id}: {str(yt_error)}")
+            result['youtube_error'] = str(yt_error)
+
+    # Update TikTok Analytics if connected
+    if user_data.get('tiktok_account'):
+        try:
+            logger.info(f"Updating TikTok analytics for user {user_id}")
+            from app.routes.tiktok_analytics.tiktok_analytics_routes import fetch_tiktok_analytics
+            fetch_tiktok_analytics(user_id)
+            result['tiktok_updated'] = True
+        except Exception as tt_error:
+            logger.error(f"Failed to update TikTok analytics for user {user_id}: {str(tt_error)}")
+            result['tiktok_error'] = str(tt_error)
+
+    return result
+
+@bp.route('/update-all-users-analytics')
+@verify_cron_request
+def update_all_users_analytics():
+    """
+    Daily cron job to update analytics for all connected accounts (X, YouTube, TikTok)
+    Uses parallel processing to handle 100+ users efficiently
+    """
+    try:
+        logger.info("Starting parallel analytics update for all users")
+
+        # Get all users from Firestore
+        users_ref = db.collection('users')
+        users = users_ref.stream()
+
+        # Collect user data
+        users_data = []
+        for user_doc in users:
+            user_data = user_doc.to_dict()
+            # Only process users with at least one connected account
+            if user_data.get('x_account') or user_data.get('youtube_account') or user_data.get('tiktok_account'):
+                users_data.append((user_doc.id, user_data))
+
+        total_users = len(users_data)
+        logger.info(f"Found {total_users} users with connected accounts to update")
+
+        stats = {
+            'total_users': total_users,
+            'x_updated': 0,
+            'youtube_updated': 0,
+            'tiktok_updated': 0,
+            'x_errors': 0,
+            'youtube_errors': 0,
+            'tiktok_errors': 0
+        }
+
+        # Process users in parallel (max 10 concurrent workers to avoid API rate limits)
+        max_workers = min(10, total_users) if total_users > 0 else 1
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all tasks
+            future_to_user = {
+                executor.submit(update_user_analytics, user_id, user_data): user_id
+                for user_id, user_data in users_data
+            }
+
+            # Collect results as they complete
+            for future in as_completed(future_to_user):
+                try:
+                    result = future.result()
+
+                    if result['x_updated']:
+                        stats['x_updated'] += 1
+                    if result['x_error']:
+                        stats['x_errors'] += 1
+
+                    if result['youtube_updated']:
+                        stats['youtube_updated'] += 1
+                    if result['youtube_error']:
+                        stats['youtube_errors'] += 1
+
+                    if result['tiktok_updated']:
+                        stats['tiktok_updated'] += 1
+                    if result['tiktok_error']:
+                        stats['tiktok_errors'] += 1
+
+                except Exception as e:
+                    user_id = future_to_user[future]
+                    logger.error(f"Unexpected error processing user {user_id}: {str(e)}")
+
+        logger.info(f"Analytics update completed: {stats}")
+
+        return jsonify({
+            "status": "success",
+            "job": "update_all_users_analytics",
+            "timestamp": datetime.utcnow().isoformat(),
+            "stats": stats,
+            "message": f"Updated analytics for {stats['total_users']} users in parallel",
+            "performance": {
+                "concurrent_workers": max_workers,
+                "processing_mode": "parallel"
+            }
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Analytics update job failed: {e}")
+        return jsonify({
+            "status": "error",
+            "job": "update_all_users_analytics",
             "error": str(e),
             "timestamp": datetime.utcnow().isoformat()
         }), 500
