@@ -1072,6 +1072,11 @@ html.dark .preview-card {
     100% { transform: rotate(360deg); }
 }
 
+/* Optimize Videos Container */
+#optimize-videos-container {
+    background: transparent;
+}
+
 /* Optimize Videos Grid */
 .optimize-videos-grid {
     display: grid;
@@ -1153,7 +1158,11 @@ html.dark .optimize-video-card:hover {
     background: var(--bg-tertiary);
     border-radius: 12px;
     border: 2px dashed var(--border-primary);
-    opacity: 0.8;
+    opacity: 0.7;
+}
+
+html.dark .optimize-videos-empty {
+    background: rgba(63, 63, 70, 0.3);
 }
 
 .optimize-videos-empty i {

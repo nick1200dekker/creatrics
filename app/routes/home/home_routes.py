@@ -17,6 +17,14 @@ bp = Blueprint('home', __name__)
 @bp.route('/')
 def dashboard():
     """Main landing page - show the dashboard"""
+    # Handle both authenticated and unauthenticated users
+    if hasattr(g, 'user') and g.user and not g.user.get('is_guest'):
+        # Authenticated user - update login streak
+        try:
+            update_login_streak(g.user.get('id'))
+        except Exception as e:
+            logger.error(f"Error updating login streak: {e}")
+
     return render_template('home/dashboard.html')
 
 @bp.route('/dashboard')
@@ -452,22 +460,30 @@ def update_login_streak(user_id):
 
                 # If already logged in today, don't update streak
                 if last_login == today:
+                    logger.debug(f"User {user_id} already logged in today, streak: {current_streak}")
                     return current_streak
 
                 # If logged in yesterday, increment streak
                 if last_login == today - timedelta(days=1):
                     current_streak += 1
-                # If more than 1 day gap, reset streak
+                    logger.debug(f"User {user_id} logged in consecutively, incremented streak to {current_streak}")
+                # If more than 1 day gap, reset streak to 1
                 elif last_login < today - timedelta(days=1):
                     current_streak = 1
+                    logger.debug(f"User {user_id} broke streak, reset to 1 (last login: {last_login})")
+                # This should never happen, but handle edge case
                 else:
-                    current_streak = 1
+                    logger.warning(f"Unexpected date comparison for user {user_id}: last_login={last_login}, today={today}")
+                    # Don't change streak in this unexpected case
+                    pass
 
-            except ValueError:
+            except ValueError as e:
                 # Invalid date format, start fresh
+                logger.warning(f"Invalid date format for user {user_id}: {last_login_str}, error: {e}")
                 current_streak = 1
         else:
             # First time login
+            logger.debug(f"User {user_id} first time login, streak: 1")
             current_streak = 1
 
         # Update user data
