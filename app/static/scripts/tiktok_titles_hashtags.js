@@ -50,7 +50,7 @@ async function generateTitles() {
 
     try {
         // Call API to generate titles
-        const response = await fetch('/api/generate-tiktok-titles', {
+        const response = await fetch('/tiktok/titles-hashtags/api/generate-tiktok-titles', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
