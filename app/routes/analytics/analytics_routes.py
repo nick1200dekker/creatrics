@@ -1326,14 +1326,16 @@ def refresh_tiktok_data():
         sec_uid = user_info.get('sec_uid')
         UserService.update_user(user_id, {'tiktok_sec_uid': sec_uid})
 
-        # Fetch recent posts (last 7 days) with pagination (like X Analytics)
+        # Fetch posts with pagination
+        # TikTok API returns old posts first, so we need to go through all cursors
+        # then filter by date at the end
         one_week_ago = datetime.now() - timedelta(days=7)
         recent_posts = []
         cursor = "0"
-        max_pages = 5  # Limit for refresh
+        max_pages = 30  # Increased to ensure we get recent posts
         page = 0
 
-        logger.info(f"Fetching recent TikTok posts (last 7 days) for refresh")
+        logger.info(f"Fetching TikTok posts for refresh (will filter to last 7 days)")
 
         while page < max_pages:
             page += 1
@@ -1358,34 +1360,13 @@ def refresh_tiktok_data():
                 break
 
             posts = posts_data.get('posts', [])
-            page_posts = []
-            stopped_at_cutoff = False
+            logger.info(f"Page {page}: Got {len(posts)} posts from API")
 
-            for post in posts:
-                create_time = post.get('create_time')
-                if create_time:
-                    try:
-                        post_date = datetime.fromtimestamp(create_time)
-
-                        # Stop if we've reached posts older than 7 days
-                        if post_date < one_week_ago:
-                            logger.info(f"Reached posts older than 7 days, stopping refresh")
-                            stopped_at_cutoff = True
-                            break
-
-                        page_posts.append(post)
-                    except Exception as e:
-                        logger.error(f"Error parsing post date: {e}")
-                        page_posts.append(post)
-                else:
-                    page_posts.append(post)
-
-            recent_posts.extend(page_posts)
-
-            if stopped_at_cutoff:
-                break
+            # Add all posts - will filter by date at the end
+            recent_posts.extend(posts)
 
             if not posts_data.get('has_more', False) or not posts_data.get('cursor'):
+                logger.info(f"No more pages available")
                 break
 
             cursor = posts_data.get('cursor')
@@ -1394,7 +1375,26 @@ def refresh_tiktok_data():
             import time
             time.sleep(2)
 
-        logger.info(f"Fetched {len(recent_posts)} recent posts for refresh")
+        logger.info(f"Completed pagination: Fetched {len(recent_posts)} total posts")
+
+        # Filter to only posts from last 7 days
+        posts_before_filter = len(recent_posts)
+        filtered_posts = []
+        for post in recent_posts:
+            create_time = post.get('create_time')
+            if create_time:
+                try:
+                    post_date = datetime.fromtimestamp(create_time)
+                    if post_date >= one_week_ago:
+                        filtered_posts.append(post)
+                except Exception as e:
+                    logger.error(f"Error parsing post date: {e}")
+                    filtered_posts.append(post)
+            else:
+                filtered_posts.append(post)
+
+        recent_posts = filtered_posts
+        logger.info(f"Filtered to last 7 days: {posts_before_filter} total -> {len(recent_posts)} recent posts")
 
         # If no recent posts fetched (likely due to rate limiting), return cached data
         if len(recent_posts) == 0:

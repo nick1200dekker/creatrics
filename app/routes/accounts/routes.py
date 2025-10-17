@@ -387,35 +387,11 @@ def fetch_initial_tiktok_data(user_id, username):
             posts = posts_data.get('posts', [])
             logger.info(f"Page {page}: Got {len(posts)} posts from API")
 
-            # Filter posts by 6-month cutoff
-            page_posts = []
-            stopped_at_cutoff = False
-
-            for post in posts:
-                create_time = post.get('create_time')
-                if create_time:
-                    try:
-                        post_date = datetime.fromtimestamp(create_time)
-
-                        # Stop if we've reached posts older than 6 months
-                        if post_date < six_months_ago:
-                            logger.info(f"Reached posts older than 6 months (post from {post_date.strftime('%Y-%m-%d')}), stopping")
-                            stopped_at_cutoff = True
-                            break
-
-                        page_posts.append(post)
-                    except Exception as e:
-                        logger.error(f"Error parsing post date: {e}")
-                        page_posts.append(post)
-                else:
-                    page_posts.append(post)
-
-            all_posts.extend(page_posts)
-            logger.info(f"Page {page}: Added {len(page_posts)} posts within 6-month window (total now: {len(all_posts)})")
-
-            if stopped_at_cutoff:
-                logger.info(f"Stopped at 6-month cutoff")
-                break
+            # Add all posts - TikTok API returns old videos first with cursor="0"
+            # We need to go through ALL available cursors to reach recent videos
+            # Then filter by date at the end
+            all_posts.extend(posts)
+            logger.info(f"Page {page}: Added {len(posts)} posts (total now: {len(all_posts)})")
 
             # Check if there are more pages
             has_more = posts_data.get('has_more', False)
@@ -433,6 +409,25 @@ def fetch_initial_tiktok_data(user_id, username):
             time.sleep(2)
 
         logger.info(f"Completed pagination: Fetched {len(all_posts)} posts across {page} pages")
+
+        # Filter posts to only include those from last 6 months
+        posts_before_filter = len(all_posts)
+        filtered_posts = []
+        for post in all_posts:
+            create_time = post.get('create_time')
+            if create_time:
+                try:
+                    post_date = datetime.fromtimestamp(create_time)
+                    if post_date >= six_months_ago:
+                        filtered_posts.append(post)
+                except Exception as e:
+                    logger.error(f"Error parsing post date: {e}")
+                    filtered_posts.append(post)
+            else:
+                filtered_posts.append(post)
+
+        logger.info(f"Filtered posts: {posts_before_filter} total -> {len(filtered_posts)} within 6 months (removed {posts_before_filter - len(filtered_posts)} old posts)")
+        all_posts = filtered_posts
 
         # Sort posts by date (most recent first) and take last 35 for metrics calculation
         posts_sorted = sorted(all_posts, key=lambda p: p.get('create_time', 0), reverse=True)
