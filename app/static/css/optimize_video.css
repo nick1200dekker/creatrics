@@ -153,7 +153,6 @@ html.dark .secondary-button:hover:not(:disabled) {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1rem;
-    min-height: 400px;
     align-items: center;
     justify-items: center;
 }
@@ -313,7 +312,7 @@ html.dark .empty-state i {
 
 /* History Grid - matching analyze_video style */
 .history-section {
-    margin-top: 2rem;
+    margin-top: 1rem;
 }
 
 .history-grid {

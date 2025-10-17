@@ -236,11 +236,6 @@ async function loadMyVideos() {
                 <p>No YouTube Channel Connected</p>
                 <span>Connect your YouTube account in Social Accounts or <strong>use the URL option above</strong> to optimize any video</span>
             `;
-
-            // Automatically switch to URL mode to make it more discoverable
-            setTimeout(() => {
-                switchInputMode('url');
-            }, 500);
         } else {
             emptyState.innerHTML = `
                 <i class="ph ph-warning"></i>
