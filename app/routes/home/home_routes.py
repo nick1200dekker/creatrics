@@ -62,16 +62,39 @@ def dashboard_stats():
         # Get user stats
         credits = user_data.get('credits', 0)
         login_streak = user_data.get('login_streak', 0)
-        
+        has_seen_welcome = user_data.get('has_seen_welcome', False)
+
         return jsonify({
             'credits': credits,
             'login_streak': login_streak,
-            'subscription_plan': user_data.get('subscription_plan', 'Free Plan')
+            'subscription_plan': user_data.get('subscription_plan', 'Free Plan'),
+            'has_seen_welcome': has_seen_welcome
         })
         
     except Exception as e:
         logger.error(f"Error getting dashboard stats: {e}")
         return jsonify({"error": "Failed to load stats"}), 500
+
+@bp.route('/api/user/update-welcome-status', methods=['POST'])
+def update_welcome_status():
+    """Update user's welcome modal seen status"""
+    if not hasattr(g, 'user') or not g.user or g.user.get('is_guest'):
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        user_id = g.user.get('id')
+        data = request.get_json()
+        has_seen_welcome = data.get('has_seen_welcome', True)
+
+        UserService.update_user(user_id, {
+            'has_seen_welcome': has_seen_welcome
+        })
+
+        return jsonify({'success': True})
+
+    except Exception as e:
+        logger.error(f"Error updating welcome status: {e}")
+        return jsonify({"error": "Failed to update status"}), 500
 
 @bp.route('/api/dashboard-data')
 def dashboard_data():

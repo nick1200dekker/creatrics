@@ -7,77 +7,49 @@
 {% endblock %}
 
 {% block content %}
+<!-- Welcome Modal for New Users - Outside dashboard wrapper for fixed positioning -->
+{% if g.user and not g.user.get('is_guest') %}
+<div class="welcome-modal" id="welcomeModal">
+    <div class="welcome-modal-backdrop"></div>
+    <div class="welcome-modal-content">
+        <div class="modal-icon-area">
+            <div class="icon-wrapper">
+                <i class="ph ph-rocket-launch"></i>
+            </div>
+            <div class="pulse-ring"></div>
+            <div class="pulse-ring pulse-ring-delay"></div>
+        </div>
+
+        <div class="modal-content">
+            <h3 class="modal-title">Welcome to Creatrics!</h3>
+            <p class="modal-description">
+                Your AI-powered content creation hub.
+            </p>
+
+            <div class="info-section">
+                <p class="info-text">
+                    <i class="ph ph-hammer"></i>
+                    We're building hard for the best experience, but we're still in alpha. Expect some bugs!
+                </p>
+                <p class="info-text">
+                    <i class="ph ph-chat-circle-dots"></i>
+                    <span>Questions or feedback? Reach out: <span class="email-text">support@creatrics.com</span></span>
+                </p>
+            </div>
+
+            <button class="dismiss-button" onclick="closeWelcomeModal()">
+                <span>Let's Get Started</span>
+                <i class="ph ph-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="dashboard-wrapper">
     <div class="dashboard-container">
         {% if g.user and not g.user.get('is_guest') %}
         <!-- Logged in user dashboard -->
-
-        <!-- Welcome Modal for New Users -->
-        <div class="welcome-modal" id="welcomeModal" style="display: none;">
-            <div class="welcome-modal-backdrop"></div>
-            <div class="welcome-modal-content">
-                <div class="welcome-modal-header">
-                    <div class="welcome-icon">
-                        <i class="ph ph-rocket-launch"></i>
-                    </div>
-                    <h2>Welcome to Creatrics!</h2>
-                    <p class="welcome-subtitle">Your AI-Powered Content Creation Hub</p>
-                </div>
-
-                <div class="welcome-modal-body">
-                    <div class="welcome-message">
-                        <p>We're excited to have you here! Creatrics helps you create viral content across YouTube, X, and TikTok with powerful AI tools.</p>
-                    </div>
-
-                    <div class="welcome-steps">
-                        <div class="welcome-step">
-                            <div class="step-number">1</div>
-                            <div class="step-content">
-                                <h4>Connect Your Accounts</h4>
-                                <p>Link your social media accounts to unlock analytics and personalized insights</p>
-                            </div>
-                        </div>
-                        <div class="welcome-step">
-                            <div class="step-number">2</div>
-                            <div class="step-content">
-                                <h4>Explore AI Tools</h4>
-                                <p>Use our suite of AI-powered tools to create titles, scripts, thumbnails, and more</p>
-                            </div>
-                        </div>
-                        <div class="welcome-step">
-                            <div class="step-number">3</div>
-                            <div class="step-content">
-                                <h4>Track Your Growth</h4>
-                                <p>Monitor your performance and optimize your content strategy with detailed analytics</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="alpha-notice">
-                        <i class="ph ph-warning-circle"></i>
-                        <div>
-                            <strong>Alpha Version Notice</strong>
-                            <p>Creatrics is currently in alpha. You may encounter bugs or incomplete features. We appreciate your patience and feedback!</p>
-                        </div>
-                    </div>
-
-                    <div class="support-info">
-                        <i class="ph ph-envelope"></i>
-                        <div>
-                            <strong>Need Help?</strong>
-                            <p>Connect with us at <a href="mailto:support@creatrics.com">support@creatrics.com</a></p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="welcome-modal-footer">
-                    <button class="welcome-close-btn" onclick="closeWelcomeModal()">
-                        <span>Get Started</span>
-                        <i class="ph ph-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
 
         <!-- Header with Welcome and Stats -->
         <div class="dashboard-header">
@@ -442,5 +414,15 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+// Move modal to body level IMMEDIATELY to prevent shifting
+(function() {
+    const modal = document.getElementById('welcomeModal');
+    const container = document.getElementById('welcomeModalContainer');
+    if (modal && container) {
+        container.appendChild(modal);
+    }
+})();
+</script>
 <script src="{{ url_for('static', filename='scripts/dashboard.js') }}"></script>
 {% endblock %}

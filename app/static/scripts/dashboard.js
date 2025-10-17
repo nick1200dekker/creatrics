@@ -648,24 +648,44 @@ async function loadUnoptimizedVideos() {
 }
 
 // Welcome Modal for New Users
-function checkAndShowWelcomeModal() {
-    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+async function checkAndShowWelcomeModal() {
+    try {
+        // Fetch user data to check if they've seen the welcome modal
+        const response = await fetch('/api/dashboard-stats');
+        const data = await response.json();
 
-    if (!hasSeenWelcome) {
-        const modal = document.getElementById('welcomeModal');
-        if (modal) {
-            setTimeout(() => {
-                modal.style.display = 'flex';
-            }, 500); // Show after 500ms delay for better UX
+        const hasSeenWelcome = data.has_seen_welcome || false;
+
+        if (!hasSeenWelcome) {
+            const modal = document.getElementById('welcomeModal');
+            if (modal) {
+                setTimeout(() => {
+                    modal.classList.add('visible');
+                }, 500); // Show after 500ms delay for better UX
+            }
         }
+    } catch (error) {
+        console.error('Error checking welcome modal status:', error);
     }
 }
 
-function closeWelcomeModal() {
+async function closeWelcomeModal() {
     const modal = document.getElementById('welcomeModal');
     if (modal) {
-        modal.style.display = 'none';
-        localStorage.setItem('hasSeenWelcome', 'true');
+        modal.classList.remove('visible');
+
+        // Save to Firebase that user has seen the welcome modal
+        try {
+            await fetch('/api/user/update-welcome-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ has_seen_welcome: true })
+            });
+        } catch (error) {
+            console.error('Error saving welcome status:', error);
+        }
     }
 }
 
