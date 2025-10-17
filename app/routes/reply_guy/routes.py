@@ -121,11 +121,22 @@ def index():
         # Get user's current selected list and analysis
         current_selection = service.get_current_selection(user_id)
         current_analysis = None
-        
+
+        # If no selection exists, auto-select the first default list
+        if not current_selection and default_lists:
+            first_default_list = default_lists[0]
+            current_selection = {
+                'list_id': first_default_list['id'],
+                'list_type': 'default'
+            }
+            # Save this selection for the user
+            service.set_current_selection(user_id, first_default_list['id'], 'default')
+            logger.info(f"Auto-selected first default list: {first_default_list['id']}")
+
         if current_selection:
             # Only load analysis if we have a selection
             current_analysis = service.get_current_analysis(
-                user_id, 
+                user_id,
                 current_selection['list_id'],
                 current_selection['list_type']
             )

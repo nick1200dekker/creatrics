@@ -1013,11 +1013,12 @@ html.dark .toast {
 
 .modal-content {
     background: var(--bg-secondary);
-    border-radius: 12px;
+    border-radius: 20px;
     width: 90%;
-    max-width: 500px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-primary);
+    max-width: 480px;
+    padding: 0;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border: none;
     overflow: hidden;
     transform: scale(0.9);
     transition: transform 0.3s ease;
@@ -1027,27 +1028,7 @@ html.dark .toast {
     transform: scale(1);
 }
 
-html.dark .modal-content {
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-}
-
 /* Create List Modal - Specific Styling (matches Reply Guy) */
-#create-list-modal .modal-content {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-    width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-html.dark #create-list-modal .modal-content {
-    background: var(--bg-tertiary);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-}
-
 #create-list-modal .form-section {
     background: transparent;
     border: none;

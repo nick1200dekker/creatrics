@@ -195,26 +195,44 @@ html.dark .secondary-btn:hover {
     display: flex !important;
 }
 
-#create-list-modal .modal-content {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-    width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-html.dark #create-list-modal .modal-content {
-    background: var(--bg-tertiary);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-}
-
 #create-list-modal .form-section {
     background: transparent;
     border: none;
     padding: 1.5rem;
+}
+
+/* Create List Modal - Darker Input Fields */
+#create-list-modal .form-input {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: 0.6rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    height: 40px;
+    transition: all 0.2s ease;
+    width: 100%;
+    font-family: inherit;
+}
+
+html.dark #create-list-modal .form-input {
+    background: var(--bg-secondary);
+}
+
+#create-list-modal .form-input:focus {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+    background: var(--bg-secondary);
+}
+
+html.dark #create-list-modal .form-input:focus {
+    background: var(--bg-primary);
+}
+
+#create-list-modal .form-input::placeholder {
+    color: var(--text-tertiary);
 }
 
 .simple-form {
@@ -530,11 +548,11 @@ html.dark .tooltip {
 }
 
 .dropdown-trigger {
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 0.6rem 1rem;
-    color: #1f2937;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    padding: 0.625rem 1rem;
+    color: var(--text-primary);
     font-size: 0.875rem;
     width: 100%;
     cursor: pointer;
@@ -546,23 +564,28 @@ html.dark .tooltip {
 }
 
 html.dark .dropdown-trigger {
-    background: #3f3f46;
-    color: #fafafa;
-    border: 1px solid #52525b;
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 .dropdown-trigger:hover {
-    background: #e5e7eb;
-    border-color: var(--border-secondary);
+    background: var(--hover-bg);
+    border-color: rgba(59, 130, 246, 0.4);
 }
 
 html.dark .dropdown-trigger:hover {
-    background: #52525b;
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(96, 165, 250, 0.5);
 }
 
 .dropdown-trigger.active {
     border-color: #3B82F6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .dropdown-trigger.active {
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
 .dropdown-arrow {
@@ -605,25 +628,15 @@ html.dark .dropdown-menu {
     display: block;
 }
 
-.dropdown-group {
-    padding: 8px 0;
+/* Dropdown divider */
+.dropdown-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 0.25rem 0;
 }
 
-.dropdown-group:not(:last-child) {
-    border-bottom: 1px solid #e5e7eb;
-}
-
-html.dark .dropdown-group:not(:last-child) {
-    border-bottom: 1px solid #3f3f46;
-}
-
-.dropdown-group-label {
-    padding: 8px 16px 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #3B82F6;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+html.dark .dropdown-divider {
+    background: #52525b;
 }
 
 .dropdown-option {
@@ -657,13 +670,58 @@ html.dark .dropdown-option:hover {
 
 .dropdown-option.create-new {
     color: #3B82F6;
-    font-weight: 600;
-    border-top: 1px solid #e5e7eb;
-    margin-top: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-html.dark .dropdown-option.create-new {
-    border-top: 1px solid #3f3f46;
+.dropdown-option.create-new:hover {
+    background: #eff6ff;
+}
+
+html.dark .dropdown-option.create-new:hover {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.dropdown-option.create-new i {
+    font-size: 1rem;
+}
+
+/* Info Box */
+.info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.info-box i {
+    color: #3b82f6;
+    font-size: 1rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.info-text {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
 }
 
 /* Primary Button */
@@ -1296,7 +1354,7 @@ html.dark .form-section {
 }
 
 html.dark .form-input, html.dark .form-select {
-    background: var(--bg-secondary);
+    background: var(--bg-tertiary);
 }
 
 .form-input:focus, .form-select:focus {
@@ -1308,6 +1366,8 @@ html.dark .form-input, html.dark .form-select {
 
 html.dark .form-input:focus, html.dark .form-select:focus {
     background: var(--bg-primary);
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
 .form-input::placeholder {
@@ -1486,11 +1546,12 @@ html.dark .toast {
 
 .modal-content {
     background: var(--bg-secondary);
-    border-radius: 12px;
+    border-radius: 20px;
     width: 90%;
-    max-width: 500px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-primary);
+    max-width: 480px;
+    padding: 0;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border: none;
     overflow: hidden;
     transform: scale(0.9);
     transition: transform 0.3s ease;
@@ -1498,10 +1559,6 @@ html.dark .toast {
 
 .modal.show .modal-content {
     transform: scale(1);
-}
-
-html.dark .modal-content {
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
@@ -1517,6 +1574,9 @@ html.dark .modal-content {
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .modal-close {

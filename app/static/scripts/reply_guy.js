@@ -100,23 +100,34 @@
                 if (selectedOption) {
                     const selectedListText = document.getElementById('selected-list-text');
                     const selectedListTextEmpty = document.getElementById('selected-list-text-empty');
+                    const optionText = selectedOption.textContent.trim();
                     if (selectedListText) {
-                        selectedListText.textContent = selectedOption.querySelector('span').textContent;
+                        selectedListText.textContent = optionText;
                     }
                     if (selectedListTextEmpty) {
-                        selectedListTextEmpty.textContent = selectedOption.querySelector('span').textContent;
+                        selectedListTextEmpty.textContent = optionText;
                     }
                     selectedOption.classList.add('selected');
                 }
             }
         }
 
-        // If no list is selected, auto-select the first default list
+        // If no list is selected on page load, the dropdown text needs to be updated
+        // but we don't need to call selectList() since the backend already auto-selected it
         if (!state.selectedList) {
             const firstDefaultList = document.querySelector('.dropdown-option[data-type="default"]');
             if (firstDefaultList) {
-                console.log('Auto-selecting first default list on page load');
-                selectListOption(firstDefaultList);
+                console.log('Auto-selecting first default list UI on page load');
+                // Just update the UI, don't make an API call
+                const optionText = firstDefaultList.textContent.trim();
+                const selectedListText = document.getElementById('selected-list-text');
+                const selectedListTextEmpty = document.getElementById('selected-list-text-empty');
+                if (selectedListText) selectedListText.textContent = optionText;
+                if (selectedListTextEmpty) selectedListTextEmpty.textContent = optionText;
+
+                firstDefaultList.classList.add('selected');
+                state.selectedList = firstDefaultList.getAttribute('data-value');
+                state.selectedListType = firstDefaultList.getAttribute('data-type');
             } else {
                 // If no default lists, try custom lists
                 const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
@@ -446,23 +457,29 @@
             const menuId = triggerId === 'list-dropdown-trigger' ? 'list-dropdown-menu' : 'list-dropdown-menu-empty';
             const dropdownMenu = document.getElementById(menuId);
 
-            dropdownTrigger.onclick = (e) => {
+            // Remove old listener if exists
+            dropdownTrigger.replaceWith(dropdownTrigger.cloneNode(true));
+            const newTrigger = document.getElementById(triggerId);
+
+            newTrigger.addEventListener('click', (e) => {
                 e.stopPropagation();
                 toggleMainDropdown(triggerId, menuId);
-            };
+            });
         });
 
-        // Option selection
-        document.querySelectorAll('.dropdown-option:not(.create-new)').forEach(option => {
-            option.onclick = () => selectListOption(option);
-        });
-
-        // Close on outside click
+        // Use event delegation for dropdown options
         document.addEventListener('click', (e) => {
+            const option = e.target.closest('.dropdown-option:not(.create-new)');
+            if (option && (option.closest('#list-dropdown-menu') || option.closest('#list-dropdown-menu-empty'))) {
+                selectListOption(option);
+                return;
+            }
+
+            // Close on outside click
             if (!e.target.closest('.dropdown')) {
                 closeDropdowns();
             }
-        });
+        }, true);
     }
 
     function toggleMainDropdown(triggerId, menuId) {
@@ -529,7 +546,8 @@
         // Update both dropdown texts
         const selectedListText = document.getElementById('selected-list-text');
         const selectedListTextEmpty = document.getElementById('selected-list-text-empty');
-        const optionText = option.querySelector('span').textContent;
+        // Get text content directly from option (text is no longer wrapped in span)
+        const optionText = option.textContent.trim();
 
         if (selectedListText) selectedListText.textContent = optionText;
         if (selectedListTextEmpty) selectedListTextEmpty.textContent = optionText;
