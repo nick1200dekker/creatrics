@@ -466,18 +466,20 @@ html.dark .info-text {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0);
     z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(0px);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .super-powers-modal.visible {
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
     opacity: 1;
     pointer-events: auto;
 }
@@ -489,12 +491,14 @@ html.dark .info-text {
     width: 90%;
     max-width: 420px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    transform: translateY(20px) scale(0.95);
-    transition: transform 0.3s ease;
+    transform: translateY(30px) scale(0.9);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .super-powers-modal.visible .super-powers-container {
     transform: translateY(0) scale(1);
+    opacity: 1;
 }
 
 .modal-content {
@@ -855,11 +859,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const superPowersModal = document.getElementById('superPowersModal');
 
     if (superPowersModal) {
-        // Show modal with animation
+        // Show modal with animation after a brief delay to ensure smooth transition
         setTimeout(function() {
             superPowersModal.classList.add('visible');
             startProgressBar();
-        }, 100);
+        }, 200);
     }
 });
 
