@@ -566,7 +566,7 @@ class XAnalytics:
 
         # Mark setup as complete if this was initial fetch
         if is_initial:
-            from app.system.services.user_service import UserService
+            from app.system.services.firebase_service import UserService
             UserService.update_user(self.user_id, {'x_setup_complete': True})
 
         return metrics
