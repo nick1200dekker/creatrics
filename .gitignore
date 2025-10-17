@@ -4,7 +4,10 @@ firebase-credentials.json
 client_secret.json
 client_secrets.json
 youtube_oauth_client.json
+youtube_oauth_client_new.json
 youtube_client_secret.json
+*oauth*.json
+*client_secret*.json
 env/
 build/
 develop-eggs/
