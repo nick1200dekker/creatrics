@@ -31,10 +31,15 @@ def index():
     x_username = user_data.get('x_account', '') if user_data else ''
     youtube_channel = user_data.get('youtube_account', '') if user_data else ''
     tiktok_username = user_data.get('tiktok_account', '') if user_data else ''
-    
+
+    # Check setup completion status
+    x_setup_complete = user_data.get('x_setup_complete', True) if user_data else True
+    tiktok_setup_complete = user_data.get('tiktok_setup_complete', True) if user_data else True
+    youtube_setup_complete = user_data.get('youtube_setup_complete', True) if user_data else True
+
     # Check if we need to show super powers modal
     show_super_powers = request.args.get('show_super_powers', 'false').lower() == 'true'
-    
+
     return render_template(
         'accounts/index.html',
         x_connected=x_connected,
@@ -43,6 +48,9 @@ def index():
         x_username=x_username,
         youtube_channel=youtube_channel,
         tiktok_username=tiktok_username,
+        x_setup_complete=x_setup_complete,
+        tiktok_setup_complete=tiktok_setup_complete,
+        youtube_setup_complete=youtube_setup_complete,
         show_super_powers=show_super_powers,
         user_data=user_data
     )

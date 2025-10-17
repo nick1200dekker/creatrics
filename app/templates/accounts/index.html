@@ -851,7 +851,7 @@ html.dark .modal-close-btn:hover {
                     <h2 class="platform-name">YouTube Channel</h2>
                 </div>
                 
-                {% if youtube_connected %}
+                {% if youtube_connected and youtube_setup_complete %}
                     <div class="connection-status">
                         <div class="status-info">
                             <span class="status-label">Connected</span>
@@ -859,7 +859,7 @@ html.dark .modal-close-btn:hover {
                         </div>
                         <span class="status-badge">Active</span>
                     </div>
-                    
+
                     <form method="POST" action="{{ url_for('accounts.disconnect_account') }}">
                         <input type="hidden" name="platform" value="youtube">
                         <button type="submit" class="action-button secondary">
@@ -896,7 +896,7 @@ html.dark .modal-close-btn:hover {
                     <h2 class="platform-name">X Account</h2>
                 </div>
 
-                {% if x_connected %}
+                {% if x_connected and x_setup_complete %}
                     <div class="connection-status">
                         <div class="status-info">
                             <span class="status-label">Connected</span>
@@ -944,7 +944,7 @@ html.dark .modal-close-btn:hover {
                     <h2 class="platform-name">TikTok Account</h2>
                 </div>
                 
-                {% if tiktok_connected %}
+                {% if tiktok_connected and tiktok_setup_complete %}
                     <div class="connection-status">
                         <div class="status-info">
                             <span class="status-label">Connected</span>
@@ -952,7 +952,7 @@ html.dark .modal-close-btn:hover {
                         </div>
                         <span class="status-badge">Active</span>
                     </div>
-                    
+
                     <form method="POST" action="{{ url_for('accounts.disconnect_account') }}">
                         <input type="hidden" name="platform" value="tiktok">
                         <button type="submit" class="action-button secondary">
@@ -1006,14 +1006,26 @@ document.addEventListener('DOMContentLoaded', function() {
         Turbo.cache.clear();
     }
 
-    // Check if YouTube connection just happened and setup is not complete
-    {% if youtube_connected and user_data.get('youtube_setup_complete') == False %}
-        showModalForPlatform('youtube');
-    {% endif %}
-
-    // Handle form submission - show modal immediately, NO REFRESH!
+    // Check on page load if any platform is still being set up
     const connectXBtn = document.getElementById('connectXBtn');
     const connectTikTokBtn = document.getElementById('connectTikTokBtn');
+
+    // Check X setup status
+    {% if x_connected and user_data.get('x_setup_complete') == False %}
+        connectXBtn.classList.add('loading');
+        startBackgroundPolling('x');
+    {% endif %}
+
+    // Check TikTok setup status
+    {% if tiktok_connected and user_data.get('tiktok_setup_complete') == False %}
+        connectTikTokBtn.classList.add('loading');
+        startBackgroundPolling('tiktok');
+    {% endif %}
+
+    // Check YouTube setup status
+    {% if youtube_connected and user_data.get('youtube_setup_complete') == False %}
+        startBackgroundPolling('youtube');
+    {% endif %}
 
     function showModalForPlatform(platform) {
         const modal = document.getElementById('superPowersModal');
@@ -1173,6 +1185,24 @@ function startProgressBar(platformParam) {
     // Store timer IDs so we can clear them if modal is closed
     window.progressTimer = timer;
     window.pollTimer = pollInterval;
+}
+
+function startBackgroundPolling(platform) {
+    // Poll for completion without showing modal (for when user returns to page)
+    const pollInterval = setInterval(function() {
+        fetch(`/accounts/connection-status?platform=${platform}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.complete) {
+                    clearInterval(pollInterval);
+                    // Reload page to show updated UI
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking connection status:', error);
+            });
+    }, 2000); // Check every 2 seconds
 }
 
 function closeSuperPowers() {
