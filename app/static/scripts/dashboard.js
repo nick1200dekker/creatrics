@@ -268,9 +268,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('connect-tiktok').style.display = 'block';
         }
 
-        // Show Analytics section if at least one platform is connected
+        // Always show Analytics section (either with connected platforms or connect cards)
         const analyticsSection = document.getElementById('analytics-section');
-        if (analyticsSection && hasConnections) {
+        if (analyticsSection) {
             analyticsSection.style.display = 'block';
         }
 

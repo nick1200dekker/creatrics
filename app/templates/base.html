@@ -71,7 +71,9 @@
 
 <script>
     // Immediately apply dark mode to prevent flash
-    if (localStorage.getItem('darkMode') === 'true') {
+    // Dark mode is default unless explicitly disabled
+    const darkModeSetting = localStorage.getItem('darkMode');
+    if (darkModeSetting === null || darkModeSetting === 'true') {
         document.documentElement.classList.add('dark');
     }
 
@@ -1530,8 +1532,9 @@ restoreNavStates();
             },
             
             initDarkMode: function() {
-                // Check for saved dark mode preference or default to light mode
-                const darkMode = localStorage.getItem('darkMode') === 'true';
+                // Check for saved dark mode preference or default to dark mode
+                const darkModeSetting = localStorage.getItem('darkMode');
+                const darkMode = darkModeSetting === null || darkModeSetting === 'true';
 
                 if (darkMode) {
                     document.documentElement.classList.add('dark');
