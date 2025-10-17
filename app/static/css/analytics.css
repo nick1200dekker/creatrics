@@ -966,25 +966,28 @@ html.dark .pagination-info {
     .analytics-container {
         padding: 0.5rem;
     }
-    
+
     .analytics-header {
         flex-direction: column;
         gap: 1rem;
         padding: 1rem;
+        align-items: center;
     }
-    
+
     .metric-value {
         font-size: 1.5rem;
     }
-    
+
     .platform-selector {
         width: 100%;
         order: 2;
+        justify-content: center;
     }
-    
+
     .timeframe-selector {
         width: 100%;
         order: 3;
+        justify-content: center;
     }
     
     /* Stack all metrics vertically on mobile */

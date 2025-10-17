@@ -251,7 +251,6 @@
             <div class="drafts-empty">
                 <i class="ph ph-files"></i>
                 <div style="margin-bottom: 0.5rem; color: #6b7280;">No drafts yet</div>
-                <div style="font-size: 0.875rem;">Your saved drafts will appear here</div>
             </div>
         `;
         
