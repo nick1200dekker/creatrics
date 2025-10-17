@@ -247,9 +247,9 @@ html.dark .dashboard-wrapper {
     align-items: center;
     margin-bottom: 2rem;
     padding: 1.75rem 2rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    background: rgba(255, 255, 255, 0.8);
     border-radius: 20px;
-    border: 1px solid rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(203, 213, 225, 0.8);
     box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
@@ -264,7 +264,7 @@ html.dark .dashboard-wrapper {
     right: -10%;
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
 }
@@ -307,8 +307,8 @@ html.dark .dashboard-header {
 .header-stat {
     text-align: center;
     padding: 1.25rem 1.75rem;
-    background: transparent;
-    border: 1px solid var(--border-primary);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.8);
     border-radius: 16px;
     min-width: 120px;
 }
@@ -319,7 +319,7 @@ html.dark .header-stat {
 }
 
 .stat-value {
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: var(--text-primary);
     line-height: 1;
@@ -327,7 +327,7 @@ html.dark .header-stat {
 }
 
 .stat-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -352,8 +352,8 @@ html.dark .header-stat {
 
 /* Channel Card */
 .channel-card {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.8);
     border-radius: 20px;
     overflow: hidden;
     position: relative;
@@ -473,7 +473,7 @@ html.dark .metric-item {
 }
 
 .metric-value {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 800;
     color: var(--text-primary);
     line-height: 1;
@@ -482,7 +482,7 @@ html.dark .metric-item {
 }
 
 .metric-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-tertiary);
     margin-top: 0.5rem;
     font-weight: 500;
@@ -495,14 +495,14 @@ html.dark .metric-item {
 
 /* NEW: Quick Actions Section - Standalone with auto-scroll */
 .quick-actions-section {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(59, 130, 246, 0.15);
     border-radius: 20px;
     padding: 2rem 0;
     margin-bottom: 2rem;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.06);
 }
 
 html.dark .quick-actions-section {
@@ -563,8 +563,8 @@ html.dark .quick-actions-section {
 .action-card {
     flex-shrink: 0;
     width: 260px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.8);
     border-radius: 16px;
     padding: 1.75rem;
     text-decoration: none;
@@ -694,8 +694,8 @@ html.dark .connect-channel-card {
 
 /* Calendar Section */
 .calendar-section {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.8);
     border-radius: 20px;
     padding: 2rem;
     margin-bottom: 2rem;
