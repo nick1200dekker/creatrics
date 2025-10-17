@@ -8,6 +8,8 @@ from app.scripts.tiktok_competitors.tiktok_api import TikTokAPI
 from app.system.services.firebase_service import db
 from datetime import datetime, timezone
 import logging
+import os
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -152,16 +154,18 @@ def search_accounts():
 
         # Extract unique channels from videos
         channels_dict = {}
-        for item in videos_data:
+        for entry in videos_data:
             try:
+                # The response has a nested structure: data[i].item contains the actual video data
+                item = entry.get('item', {})
                 author = item.get('author', {})
                 sec_uid = author.get('secUid')
 
                 if not sec_uid or sec_uid in channels_dict:
                     continue
 
-                # Get author stats to show video count, followers etc
-                author_stats = item.get('authorStats', author.get('stats', {}))
+                # Get author stats from the item level
+                author_stats = item.get('authorStats', {})
 
                 channels_dict[sec_uid] = {
                     'sec_uid': sec_uid,
