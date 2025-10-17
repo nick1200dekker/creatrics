@@ -55,17 +55,20 @@ def connect_account():
     
     if platform == 'x':
         username = request.form.get('x_username', '').strip()
+        # Remove @ symbol if user included it
+        username = username.lstrip('@')
         if not username:
             flash("Please enter your X username", "error")
             return redirect(url_for('accounts.index'))
-        
+
         # Store X account in Firebase
         UserService.update_user(user_id, {'x_account': username})
         
         # Mark account as newly connected for initial fetch
         UserService.update_user(user_id, {
             'x_account': username,
-            'x_connected_at': datetime.now().isoformat()
+            'x_connected_at': datetime.now().isoformat(),
+            'x_setup_complete': False
         })
         
         # Start background process to fetch X analytics with 6 months of historical data
@@ -97,12 +100,17 @@ def connect_account():
         
     elif platform == 'tiktok':
         username = request.form.get('tiktok_username', '').strip()
+        # Remove @ symbol if user included it
+        username = username.lstrip('@')
         if not username:
             flash("Please enter your TikTok username", "error")
             return redirect(url_for('accounts.index'))
 
         # Store TikTok account in Firebase
-        UserService.update_user(user_id, {'tiktok_account': username})
+        UserService.update_user(user_id, {
+            'tiktok_account': username,
+            'tiktok_setup_complete': False
+        })
 
         # Start initial TikTok data fetch in background
         logger.info(f"Starting initial TikTok analytics fetch for user {user_id}")
@@ -116,6 +124,34 @@ def connect_account():
     else:
         flash("Invalid platform specified", "error")
         return redirect(url_for('accounts.index'))
+
+@bp.route('/connection-status')
+@auth_required
+def connection_status():
+    """Check the status of account connection setup"""
+    user_id = g.user.get('id')
+    platform = request.args.get('platform')
+
+    try:
+        user_data = UserService.get_user(user_id)
+
+        if platform == 'x':
+            is_complete = user_data.get('x_setup_complete', False)
+        elif platform == 'tiktok':
+            is_complete = user_data.get('tiktok_setup_complete', False)
+        elif platform == 'youtube':
+            is_complete = user_data.get('youtube_setup_complete', False)
+        else:
+            return jsonify({'error': 'Invalid platform'}), 400
+
+        return jsonify({
+            'complete': is_complete,
+            'platform': platform
+        })
+
+    except Exception as e:
+        logger.error(f"Error checking connection status: {str(e)}")
+        return jsonify({'error': 'Failed to check status'}), 500
 
 @bp.route('/disconnect', methods=['POST'])
 @auth_required
@@ -499,5 +535,10 @@ def fetch_initial_tiktok_data(user_id, username):
 
         logger.info(f"Successfully fetched and stored {len(all_posts)} TikTok posts for user {user_id}")
 
+        # Mark setup as complete
+        UserService.update_user(user_id, {'tiktok_setup_complete': True})
+
     except Exception as e:
         logger.error(f"Error fetching initial TikTok data: {str(e)}", exc_info=True)
+        # Mark setup as failed
+        UserService.update_user(user_id, {'tiktok_setup_complete': False})

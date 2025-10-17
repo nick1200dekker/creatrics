@@ -397,6 +397,30 @@ html.dark .action-button.primary:hover {
     border: 1px solid var(--border-primary);
 }
 
+.action-button.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.action-button .button-spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.action-button.loading .button-spinner {
+    display: block;
+}
+
+.action-button.loading .button-icon {
+    display: none;
+}
+
 .action-button.secondary:hover {
     background: var(--hover-bg);
     transform: translateY(-1px);
@@ -487,7 +511,24 @@ html.dark .info-text {
 .modal-time {
     font-size: 0.875rem;
     color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background: var(--border-primary);
+    border-radius: 4px;
+    overflow: hidden;
     margin-bottom: 1.5rem;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
 }
 
 .modal-loading {
@@ -576,10 +617,13 @@ html.dark .info-text {
                         X Account setup in progress
                     {% endif %}
                 </p>
-                <p class="modal-time">This will take approximately 5 minutes</p>
+                <p class="modal-time">This will take approximately 1-2 minutes</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
                 <div class="modal-loading">
                     <div class="loading-spinner"></div>
-                    <span>Setting up your experience...</span>
+                    <span id="loadingText">Setting up your experience...</span>
                 </div>
                 <button class="action-button primary" onclick="closeSuperPowers()">
                     Got it!
@@ -711,8 +755,9 @@ html.dark .info-text {
                                    required>
                         </div>
 
-                        <button type="submit" class="action-button primary">
-                            <i class="ph ph-link"></i>
+                        <button type="submit" class="action-button primary" id="connectXBtn">
+                            <div class="button-spinner"></div>
+                            <i class="ph ph-link button-icon"></i>
                             Configure Account
                         </button>
                     </form>
@@ -758,8 +803,9 @@ html.dark .info-text {
                                    required>
                         </div>
                         
-                        <button type="submit" class="action-button primary">
-                            <i class="ph ph-link"></i>
+                        <button type="submit" class="action-button primary" id="connectTikTokBtn">
+                            <div class="button-spinner"></div>
+                            <i class="ph ph-link button-icon"></i>
                             Configure Account
                         </button>
                     </form>
@@ -788,23 +834,127 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.Turbo) {
         Turbo.cache.clear();
     }
-    
+
+    // Handle form submission spinner
+    const connectXBtn = document.getElementById('connectXBtn');
+    const connectTikTokBtn = document.getElementById('connectTikTokBtn');
+
+    if (connectXBtn) {
+        connectXBtn.closest('form').addEventListener('submit', function(e) {
+            connectXBtn.classList.add('loading');
+        });
+    }
+
+    if (connectTikTokBtn) {
+        connectTikTokBtn.closest('form').addEventListener('submit', function(e) {
+            connectTikTokBtn.classList.add('loading');
+        });
+    }
+
     // Handle Super Powers modal
     const superPowersModal = document.getElementById('superPowersModal');
-    
+
     if (superPowersModal) {
         // Show modal with animation
         setTimeout(function() {
             superPowersModal.classList.add('visible');
+            startProgressBar();
         }, 100);
     }
 });
 
+function startProgressBar() {
+    const progressBar = document.getElementById('progressBar');
+    const loadingText = document.getElementById('loadingText');
+
+    if (!progressBar || !loadingText) return;
+
+    // Get platform from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const platform = urlParams.get('platform') || 'x';
+
+    let progress = 0;
+    const maxProgress = 95; // Don't go to 100% until we confirm completion
+    const duration = 120 * 1000; // 2 minutes estimate
+    const interval = 100; // Update every 100ms
+    const increment = (interval / duration) * 100;
+
+    const stages = [
+        { percent: 0, text: 'Pulling data from your account...' },
+        { percent: 25, text: 'Fetching your content...' },
+        { percent: 50, text: 'Analyzing engagement data...' },
+        { percent: 75, text: 'Processing metrics...' },
+        { percent: 90, text: 'Finalizing setup...' }
+    ];
+
+    // Progress bar update timer
+    const timer = setInterval(function() {
+        if (progress < maxProgress) {
+            progress += increment;
+            if (progress > maxProgress) progress = maxProgress;
+
+            // Update loading text based on progress
+            for (let i = stages.length - 1; i >= 0; i--) {
+                if (progress >= stages[i].percent) {
+                    loadingText.textContent = stages[i].text;
+                    break;
+                }
+            }
+
+            progressBar.style.width = progress + '%';
+        }
+    }, interval);
+
+    // Poll for completion status
+    const pollInterval = setInterval(function() {
+        fetch(`/accounts/connection-status?platform=${platform}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.complete) {
+                    // Setup is complete!
+                    clearInterval(timer);
+                    clearInterval(pollInterval);
+                    progress = 100;
+                    progressBar.style.width = '100%';
+                    loadingText.textContent = 'Setup complete!';
+
+                    // Store for cleanup
+                    window.progressTimer = null;
+                    window.pollTimer = null;
+
+                    // Auto-close modal after 1.5 seconds
+                    setTimeout(function() {
+                        closeSuperPowers();
+                    }, 1500);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking connection status:', error);
+            });
+    }, 2000); // Check every 2 seconds
+
+    // Store timer IDs so we can clear them if modal is closed
+    window.progressTimer = timer;
+    window.pollTimer = pollInterval;
+}
+
 function closeSuperPowers() {
     const modal = document.getElementById('superPowersModal');
     if (modal) {
+        // Clear progress timer if it exists
+        if (window.progressTimer) {
+            clearInterval(window.progressTimer);
+            window.progressTimer = null;
+        }
+
+        // Clear poll timer if it exists
+        if (window.pollTimer) {
+            clearInterval(window.pollTimer);
+            window.pollTimer = null;
+        }
+
         modal.classList.remove('visible');
-        
+
         // Remove modal after transition
         setTimeout(function() {
             modal.style.display = 'none';

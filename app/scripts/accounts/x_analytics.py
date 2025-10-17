@@ -563,7 +563,12 @@ class XAnalytics:
         
         # Calculate and store daily metrics
         self._calculate_daily_metrics()
-        
+
+        # Mark setup as complete if this was initial fetch
+        if is_initial:
+            from app.system.services.user_service import UserService
+            UserService.update_user(self.user_id, {'x_setup_complete': True})
+
         return metrics
     
     def _calculate_metrics(self, account_info, all_posts):
