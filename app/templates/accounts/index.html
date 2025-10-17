@@ -880,8 +880,10 @@ html.dark .modal-close-btn:hover {
 
                     <a href="{{ url_for('accounts.youtube_connect_redirect') }}"
                        class="action-button primary"
+                       id="connectYouTubeBtn"
                        data-turbo="false">
-                        <i class="ph ph-link"></i>
+                        <div class="button-spinner"></div>
+                        <i class="ph ph-link button-icon"></i>
                         Connect with YouTube
                     </a>
                 {% endif %}
@@ -1009,21 +1011,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check on page load if any platform is still being set up
     const connectXBtn = document.getElementById('connectXBtn');
     const connectTikTokBtn = document.getElementById('connectTikTokBtn');
+    const connectYouTubeBtn = document.getElementById('connectYouTubeBtn');
 
     // Check X setup status
     {% if x_connected and user_data.get('x_setup_complete') == False %}
-        connectXBtn.classList.add('loading');
+        if (connectXBtn) connectXBtn.classList.add('loading');
         startBackgroundPolling('x');
     {% endif %}
 
     // Check TikTok setup status
     {% if tiktok_connected and user_data.get('tiktok_setup_complete') == False %}
-        connectTikTokBtn.classList.add('loading');
+        if (connectTikTokBtn) connectTikTokBtn.classList.add('loading');
         startBackgroundPolling('tiktok');
     {% endif %}
 
     // Check YouTube setup status
     {% if youtube_connected and user_data.get('youtube_setup_complete') == False %}
+        if (connectYouTubeBtn) connectYouTubeBtn.classList.add('loading');
         startBackgroundPolling('youtube');
     {% endif %}
 
@@ -1218,8 +1222,10 @@ function closeSuperPowers() {
         // Show spinner on button to indicate background processing
         const connectXBtn = document.getElementById('connectXBtn');
         const connectTikTokBtn = document.getElementById('connectTikTokBtn');
+        const connectYouTubeBtn = document.getElementById('connectYouTubeBtn');
         if (connectXBtn) connectXBtn.classList.add('loading');
         if (connectTikTokBtn) connectTikTokBtn.classList.add('loading');
+        if (connectYouTubeBtn) connectYouTubeBtn.classList.add('loading');
 
         modal.classList.remove('visible');
 
