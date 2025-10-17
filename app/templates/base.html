@@ -1328,11 +1328,11 @@
         </button>
         <div class="user-card">
             <div class="user-avatar">
-                {{ g.user.get('data', {}).get('username', 'Creator')[0].upper() }}
+                {{ (g.user.get('data', {}).get('username') or 'Creator')[0].upper() }}
             </div>
             <div class="user-info">
                 <div class="user-name">
-                    {{ g.user.get('data', {}).get('username', 'Creator') }}
+                    {{ g.user.get('data', {}).get('username') or 'Creator' }}
                 </div>
                 <div class="user-plan" id="user-plan-display">
                     <span class="skeleton-plan"></span>
