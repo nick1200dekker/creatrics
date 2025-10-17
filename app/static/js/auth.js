@@ -283,17 +283,79 @@ const Auth = {
             console.error("Supabase client not initialized");
             return null;
         }
-        
+
         try {
             const { data, error } = await this.supabaseClient.auth.getSession();
-            
+
             if (error) throw error;
-            
+
             return data.session;
         } catch (error) {
             console.error("Get current session failed:", error);
             return null;
         }
+    },
+
+    /**
+     * Refresh the access token using Supabase refresh token
+     * @returns {Promise} Refreshed session promise
+     */
+    refreshToken: async function() {
+        if (!this.supabaseClient) {
+            console.error("Supabase client not initialized");
+            return null;
+        }
+
+        try {
+            const { data, error } = await this.supabaseClient.auth.refreshSession();
+
+            if (error) throw error;
+
+            if (data.session && data.session.access_token) {
+                console.log("Token refreshed successfully");
+                // Update server session with new token
+                await this.createServerSession(data.session.access_token);
+                return data.session;
+            }
+
+            return null;
+        } catch (error) {
+            console.error("Token refresh failed:", error);
+            return null;
+        }
+    },
+
+    /**
+     * Start automatic token refresh (checks every 5 minutes, refreshes if < 10 minutes remaining)
+     */
+    startTokenRefresh: function() {
+        // Check and refresh token every 5 minutes
+        const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+        const REFRESH_THRESHOLD = 10 * 60; // Refresh if less than 10 minutes remaining
+
+        setInterval(async () => {
+            try {
+                const session = await this.getCurrentSession();
+
+                if (session && session.expires_at) {
+                    const expiresAt = session.expires_at;
+                    const now = Math.floor(Date.now() / 1000);
+                    const timeUntilExpiry = expiresAt - now;
+
+                    console.log(`Token expires in ${Math.floor(timeUntilExpiry / 60)} minutes`);
+
+                    // Refresh if less than 10 minutes remaining
+                    if (timeUntilExpiry < REFRESH_THRESHOLD) {
+                        console.log("Token expiring soon, refreshing...");
+                        await this.refreshToken();
+                    }
+                }
+            } catch (error) {
+                console.error("Token refresh check failed:", error);
+            }
+        }, CHECK_INTERVAL);
+
+        console.log("Automatic token refresh started");
     },
     
     /**

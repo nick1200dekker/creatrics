@@ -1674,5 +1674,39 @@ restoreNavStates();
 <!-- Welcome Modal Container - At body level for absolute fixed positioning -->
 <div id="welcomeModalContainer"></div>
 
+<!-- Load Auth.js for authentication utilities -->
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+
+<!-- Initialize Supabase and Token Refresh -->
+<script>
+(function() {
+    // Only initialize for authenticated users
+    const isGuest = {{ (not g.user or g.user.get("is_guest")) | tojson }};
+
+    if (!isGuest) {
+        // Fetch Supabase config
+        fetch('/config/public-keys', {
+            method: 'GET',
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(config => {
+            if (config.supabase_url && config.supabase_key) {
+                // Initialize Supabase client
+                Auth.initSupabase(config.supabase_url, config.supabase_key);
+
+                // Start automatic token refresh
+                Auth.startTokenRefresh();
+
+                console.log('Token refresh enabled');
+            }
+        })
+        .catch(error => {
+            console.warn('Failed to initialize token refresh:', error);
+        });
+    }
+})();
+</script>
+
 {% block scripts %}{% endblock %}</body>
 </html>
