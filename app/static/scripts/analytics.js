@@ -335,7 +335,7 @@ function initializeAnalytics() {
         const container = document.getElementById('x-impressions-chart');
         if (!container) return;
         
-        container.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div></div>';
+        container.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
 
         fetch(`/analytics/x/impressions?timeframe=${currentTimeframe}`)
             .then(response => response.json())
@@ -460,7 +460,7 @@ function initializeAnalytics() {
         const container = document.getElementById('x-engagement-chart');
         if (!container) return;
         
-        container.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div></div>';
+        container.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
         
         fetch(`/analytics/x/engagement?timeframe=${currentTimeframe}`)
             .then(response => response.json())
@@ -610,6 +610,11 @@ function initializeAnalytics() {
     }
 
     function loadPostsCountChart() {
+        const container = document.getElementById('x-posts-count-chart');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
+
         fetch(`/analytics/x/posts-count?timeframe=${currentTimeframe}`)
             .then(response => response.json())
             .then(data => {
@@ -689,6 +694,11 @@ function initializeAnalytics() {
     }
 
     function loadFollowersChart() {
+        const container = document.getElementById('x-followers-chart');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
+
         fetch(`/analytics/x/followers-history?timeframe=${currentTimeframe}`)
             .then(response => response.json())
             .then(data => {
@@ -867,6 +877,12 @@ function initializeAnalytics() {
     }
     
     function loadYouTubeDailyData() {
+        // Show loading spinners for YouTube charts
+        const viewsChart = document.getElementById('youtube-views-chart');
+        const trafficChart = document.getElementById('youtube-traffic-chart');
+        if (viewsChart) viewsChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
+        if (trafficChart) trafficChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
+
         fetch(`/analytics/youtube/daily-views?timeframe=${currentTimeframe}`)
             .then(response => response.json())
             .then(data => {
@@ -874,11 +890,11 @@ function initializeAnalytics() {
                     showYouTubeError('No daily data available');
                     return;
                 }
-                
+
                 if (data.calculated_metrics) {
                     renderYouTubeMetrics(data.calculated_metrics);
                 }
-                
+
                 renderYouTubeChartsWithDailyData(data.daily_data, data.calculated_metrics);
                 loadYouTubeTopVideos();
             })
@@ -1101,6 +1117,14 @@ function initializeAnalytics() {
     }
 
     function loadTikTokCharts(timeframe = '30days') {
+        // Show loading spinners for TikTok charts
+        const viewsChart = document.getElementById('tiktok-views-chart');
+        const engagementChart = document.getElementById('tiktok-engagement-chart');
+        const frequencyChart = document.getElementById('tiktok-frequency-chart');
+        if (viewsChart) viewsChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
+        if (engagementChart) engagementChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
+        if (frequencyChart) frequencyChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
+
         fetch('/analytics/tiktok/posts')
             .then(response => response.json())
             .then(data => {
@@ -1714,7 +1738,7 @@ function initializeAnalytics() {
 
         const originalContent = refreshBtn.innerHTML;
         refreshBtn.disabled = true;
-        refreshBtn.innerHTML = '<div class="loading-spinner"></div><span>Refreshing...</span>';
+        refreshBtn.innerHTML = '<div class="loading-spinner"><i class="ph ph-spinner spin"></i></div><span>Refreshing...</span>';
 
         // Get connected platforms from the page
         const xConnected = document.getElementById('x-content') !== null;
@@ -1819,7 +1843,7 @@ function initializeAnalytics() {
         const originalContent = refreshBtn.innerHTML;
         
         refreshBtn.disabled = true;
-        refreshBtn.innerHTML = '<div class="loading-spinner"></div><span>Refreshing...</span>';
+        refreshBtn.innerHTML = '<div class="loading-spinner"><i class="ph ph-spinner spin"></i></div><span>Refreshing...</span>';
         
         fetch('/analytics/x/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
             .then(response => response.json())
@@ -1847,7 +1871,7 @@ function initializeAnalytics() {
         const originalContent = refreshBtn.innerHTML;
         
         refreshBtn.disabled = true;
-        refreshBtn.innerHTML = '<div class="loading-spinner"></div><span>Refreshing...</span>';
+        refreshBtn.innerHTML = '<div class="loading-spinner"><i class="ph ph-spinner spin"></i></div><span>Refreshing...</span>';
         
         fetch('/analytics/youtube/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
             .then(response => response.json())
@@ -1876,7 +1900,7 @@ function initializeAnalytics() {
         const originalContent = refreshBtn.innerHTML;
 
         refreshBtn.disabled = true;
-        refreshBtn.innerHTML = '<div class="loading-spinner"></div><span>Refreshing...</span>';
+        refreshBtn.innerHTML = '<div class="loading-spinner"><i class="ph ph-spinner spin"></i></div><span>Refreshing...</span>';
 
         fetch('/analytics/tiktok/refresh', {
             method: 'POST',

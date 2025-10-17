@@ -1181,26 +1181,32 @@ html.dark .copy-toast {
 
 /* View Toggle Buttons */
 .view-toggle {
-    display: inline-flex;
-    background: var(--bg-tertiary);
-    border-radius: 8px;
-    padding: 4px;
+    display: flex;
+    background: var(--bg-primary);
     border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 0.25rem;
+    gap: 0.25rem;
+}
+
+html.dark .view-toggle {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
 }
 
 .toggle-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
     white-space: nowrap;
 }
 
@@ -1210,19 +1216,17 @@ html.dark .copy-toast {
 
 .toggle-btn:hover {
     color: var(--text-primary);
-    background: var(--bg-secondary);
+    background: rgba(59, 130, 246, 0.1);
 }
 
 .toggle-btn.active {
-    background: var(--bg-primary);
-    color: #3B82F6;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    color: white;
+    background: #3B82F6;
 }
 
 html.dark .toggle-btn.active {
-    background: rgba(59, 130, 246, 0.15);
-    color: #60A5FA;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    color: #18181B;
+    background: #60A5FA;
 }
 
 /* URL Input Section */

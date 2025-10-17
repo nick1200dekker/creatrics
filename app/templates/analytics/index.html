@@ -23,12 +23,13 @@
     <div class="analytics-wrapper">
         <!-- Header -->
         <div class="analytics-header">
+            <!-- Left: Title -->
             <h1 class="analytics-title">
                 <i class="ph ph-chart-bar"></i>
                 <span>Analytics</span>
             </h1>
-            
-            <!-- Platform Selector (center) -->
+
+            <!-- Center: Platform Selector -->
             <div class="platform-selector">
                 <button class="platform-btn icon-only" data-platform="x"
                         onclick="{% if x_connected %}switchPlatform('x');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="X Analytics">
@@ -45,11 +46,11 @@
                     <span>TikTok</span>
                 </button>
             </div>
-            
-            <!-- Right side controls -->
-            <div style="display: flex; align-items: center; gap: 1rem;">
+
+            <!-- Right: Controls -->
+            <div style="display: flex; align-items: center; gap: 1rem; justify-content: flex-end;">
                 <!-- Refresh All Button -->
-                {% if x_connected or youtube_connected or tiktok_connected %}
+                {% if is_admin and (x_connected or youtube_connected or tiktok_connected) %}
                 <button id="refresh-all-btn" class="secondary-button" onclick="refreshAllData()" title="Refresh all connected accounts">
                     <i class="ph ph-arrow-clockwise"></i>
                     <span>Refresh All</span>
@@ -100,7 +101,9 @@
                         
                         <div id="x-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div class="loading-container">
-                                <div class="loading-spinner"></div>
+                                <div class="loading-spinner">
+                                    <i class="ph ph-spinner spin"></i>
+                                </div>
                                 <span class="ml-3">Loading metrics...</span>
                             </div>
                         </div>
@@ -203,7 +206,9 @@
                                 <tr>
                                     <td colspan="8" class="text-center">
                                         <div class="loading-container">
-                                            <div class="loading-spinner"></div>
+                                            <div class="loading-spinner">
+                                                <i class="ph ph-spinner spin"></i>
+                                            </div>
                                             <span class="ml-3">Loading posts...</span>
                                         </div>
                                     </td>
@@ -230,7 +235,9 @@
                         
                         <div id="youtube-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div class="loading-container">
-                                <div class="loading-spinner"></div>
+                                <div class="loading-spinner">
+                                    <i class="ph ph-spinner spin"></i>
+                                </div>
                                 <span class="ml-3">Loading metrics...</span>
                             </div>
                         </div>
@@ -249,7 +256,9 @@
                         </div>
                         <div id="youtube-views-chart" class="chart-container">
                             <div class="loading-container">
-                                <div class="loading-spinner"></div>
+                                <div class="loading-spinner">
+                                    <i class="ph ph-spinner spin"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -264,7 +273,9 @@
                         </div>
                         <div id="youtube-traffic-chart" class="chart-container">
                             <div class="loading-container">
-                                <div class="loading-spinner"></div>
+                                <div class="loading-spinner">
+                                    <i class="ph ph-spinner spin"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -293,7 +304,9 @@
                                 <tr>
                                     <td colspan="7" class="text-center">
                                         <div class="loading-container">
-                                            <div class="loading-spinner"></div>
+                                            <div class="loading-spinner">
+                                                <i class="ph ph-spinner spin"></i>
+                                            </div>
                                             <span class="ml-3">Loading videos...</span>
                                         </div>
                                     </td>
@@ -325,7 +338,9 @@
                         <!-- Fixed Grid Layout for TikTok Metrics -->
                         <div id="tiktok-metrics" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                             <div class="loading-container">
-                                <div class="loading-spinner"></div>
+                                <div class="loading-spinner">
+                                    <i class="ph ph-spinner spin"></i>
+                                </div>
                                 <span class="ml-3">Loading metrics...</span>
                             </div>
                         </div>
@@ -344,7 +359,9 @@
                         </div>
                         <div id="tiktok-views-chart" class="chart-container">
                             <div class="loading-container">
-                                <div class="loading-spinner"></div>
+                                <div class="loading-spinner">
+                                    <i class="ph ph-spinner spin"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -359,7 +376,9 @@
                         </div>
                         <div id="tiktok-engagement-chart" class="chart-container">
                             <div class="loading-container">
-                                <div class="loading-spinner"></div>
+                                <div class="loading-spinner">
+                                    <i class="ph ph-spinner spin"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -374,7 +393,9 @@
                         </div>
                         <div id="tiktok-frequency-chart" class="chart-container">
                             <div class="loading-container">
-                                <div class="loading-spinner"></div>
+                                <div class="loading-spinner">
+                                    <i class="ph ph-spinner spin"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -410,7 +431,9 @@
                                 <tr>
                                     <td colspan="9" class="text-center">
                                         <div class="loading-container">
-                                            <div class="loading-spinner"></div>
+                                            <div class="loading-spinner">
+                                                <i class="ph ph-spinner spin"></i>
+                                            </div>
                                             <span class="ml-3">Loading posts...</span>
                                         </div>
                                     </td>
