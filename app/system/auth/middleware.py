@@ -399,11 +399,11 @@ def auth_middleware():
                 g.user['data']['credits'] = user_data['credits']
                 g.user['credits'] = user_data['credits']
 
-            if 'name' in user_data and not g.user['data'].get('name'):
+            if 'name' in user_data:
                 g.user['data']['name'] = user_data['name']
                 g.user['name'] = user_data['name']
 
-            if 'username' in user_data and not g.user['data'].get('username'):
+            if 'username' in user_data:
                 g.user['data']['username'] = user_data['username']
                 g.user['username'] = user_data['username']
 
