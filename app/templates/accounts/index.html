@@ -756,8 +756,7 @@ html.dark .modal-close-btn:hover {
 
 {% block content %}
 <div class="accounts-wrapper">
-    <!-- Super Powers Modal -->
-    {% if show_super_powers %}
+    <!-- Super Powers Modal (always present, hidden by default) -->
     <div class="super-powers-modal" id="superPowersModal">
         <div class="super-powers-container">
             <button class="modal-close-btn" onclick="closeSuperPowers()" title="Close and continue in background">
@@ -767,28 +766,14 @@ html.dark .modal-close-btn:hover {
             <!-- Icon/Animation Area -->
             <div class="modal-icon-area">
                 <div class="icon-wrapper">
-                    {% if request.args.get('platform') == 'youtube' %}
-                        <i class="ph ph-youtube-logo"></i>
-                    {% elif request.args.get('platform') == 'tiktok' %}
-                        <i class="ph ph-tiktok-logo"></i>
-                    {% else %}
-                        <i class="ph ph-x-logo"></i>
-                    {% endif %}
+                    <i id="modalPlatformIcon" class="ph ph-x-logo"></i>
                 </div>
                 <div class="pulse-ring"></div>
                 <div class="pulse-ring pulse-ring-delay"></div>
             </div>
 
             <div class="modal-content">
-                <h3 class="modal-title">
-                    {% if request.args.get('platform') == 'youtube' %}
-                        Setting Up YouTube
-                    {% elif request.args.get('platform') == 'tiktok' %}
-                        Setting Up TikTok
-                    {% else %}
-                        Setting Up X
-                    {% endif %}
-                </h3>
+                <h3 id="modalPlatformTitle" class="modal-title">Setting Up X</h3>
 
                 <p class="modal-description">
                     We're fetching your content and analyzing your analytics. This usually takes 1-2 minutes.
@@ -818,8 +803,7 @@ html.dark .modal-close-btn:hover {
             </div>
         </div>
     </div>
-    {% endif %}
-    
+
     <!-- Header -->
     <div class="accounts-header">
         <div class="header-content">
@@ -1022,44 +1006,97 @@ document.addEventListener('DOMContentLoaded', function() {
         Turbo.cache.clear();
     }
 
-    // Handle form submission spinner
+    // Check if YouTube connection just happened and setup is not complete
+    {% if youtube_connected and user_data.get('youtube_setup_complete') == False %}
+        showModalForPlatform('youtube');
+    {% endif %}
+
+    // Handle form submission - show modal immediately, NO REFRESH!
     const connectXBtn = document.getElementById('connectXBtn');
     const connectTikTokBtn = document.getElementById('connectTikTokBtn');
 
+    function showModalForPlatform(platform) {
+        const modal = document.getElementById('superPowersModal');
+        const icon = document.getElementById('modalPlatformIcon');
+        const title = document.getElementById('modalPlatformTitle');
+
+        const configs = {
+            'x': { icon: 'x-logo', title: 'Setting Up X' },
+            'tiktok': { icon: 'tiktok-logo', title: 'Setting Up TikTok' },
+            'youtube': { icon: 'youtube-logo', title: 'Setting Up YouTube' }
+        };
+
+        const config = configs[platform];
+        if (icon) icon.className = `ph ph-${config.icon}`;
+        if (title) title.textContent = config.title;
+
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => {
+            modal.classList.add('visible');
+            startProgressBar(platform);
+        });
+    }
+
     if (connectXBtn) {
         connectXBtn.closest('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            const formData = new FormData(form);
+
             connectXBtn.classList.add('loading');
+
+            // Delay for smooth transition
+            setTimeout(() => {
+                // Show modal
+                showModalForPlatform('x');
+
+                // Submit via fetch - NO PAGE REDIRECT!
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                // Remove loading state from button
+                connectXBtn.classList.remove('loading');
+            }, 500);
         });
     }
 
     if (connectTikTokBtn) {
         connectTikTokBtn.closest('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            const formData = new FormData(form);
+
             connectTikTokBtn.classList.add('loading');
+
+            // Delay for smooth transition
+            setTimeout(() => {
+                // Show modal
+                showModalForPlatform('tiktok');
+
+                // Submit via fetch - NO PAGE REDIRECT!
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                // Remove loading state from button
+                connectTikTokBtn.classList.remove('loading');
+            }, 500);
         });
-    }
-
-    // Handle Super Powers modal
-    const superPowersModal = document.getElementById('superPowersModal');
-
-    if (superPowersModal) {
-        // Show modal with animation after a brief delay to ensure smooth transition
-        setTimeout(function() {
-            superPowersModal.classList.add('visible');
-            startProgressBar();
-        }, 200);
     }
 });
 
-function startProgressBar() {
+function startProgressBar(platformParam) {
     const progressBar = document.getElementById('progressBar');
     const loadingText = document.getElementById('loadingText');
     const progressPercent = document.getElementById('progressPercent');
 
     if (!progressBar || !loadingText || !progressPercent) return;
 
-    // Get platform from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const platform = urlParams.get('platform') || 'x';
+    // Use passed platform parameter
+    const platform = platformParam || 'x';
 
     let progress = 0;
     const maxProgress = 95; // Don't go to 100% until we confirm completion
@@ -1103,19 +1140,29 @@ function startProgressBar() {
                     // Setup is complete!
                     clearInterval(timer);
                     clearInterval(pollInterval);
-                    progress = 100;
-                    progressBar.style.width = '100%';
-                    progressPercent.textContent = '100%';
-                    loadingText.textContent = 'Setup complete!';
 
                     // Store for cleanup
                     window.progressTimer = null;
                     window.pollTimer = null;
 
-                    // Auto-close modal after 1.5 seconds
-                    setTimeout(function() {
-                        closeSuperPowers();
-                    }, 1500);
+                    // Check if modal is still visible
+                    const modal = document.getElementById('superPowersModal');
+                    const isModalVisible = modal && modal.classList.contains('visible');
+
+                    if (isModalVisible) {
+                        // Modal is open - show 100% and auto-close
+                        progress = 100;
+                        progressBar.style.width = '100%';
+                        progressPercent.textContent = '100%';
+                        loadingText.textContent = 'Setup complete!';
+
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        // Modal was closed manually - just reload immediately
+                        window.location.reload();
+                    }
                 }
             })
             .catch(error => {
@@ -1131,17 +1178,18 @@ function startProgressBar() {
 function closeSuperPowers() {
     const modal = document.getElementById('superPowersModal');
     if (modal) {
-        // Clear progress timer if it exists
+        // Clear progress timer (visual only)
         if (window.progressTimer) {
             clearInterval(window.progressTimer);
             window.progressTimer = null;
         }
 
-        // Clear poll timer if it exists
-        if (window.pollTimer) {
-            clearInterval(window.pollTimer);
-            window.pollTimer = null;
-        }
+        // Keep poll timer running in background - don't clear it!
+        // Show spinner on button to indicate background processing
+        const connectXBtn = document.getElementById('connectXBtn');
+        const connectTikTokBtn = document.getElementById('connectTikTokBtn');
+        if (connectXBtn) connectXBtn.classList.add('loading');
+        if (connectTikTokBtn) connectTikTokBtn.classList.add('loading');
 
         modal.classList.remove('visible');
 

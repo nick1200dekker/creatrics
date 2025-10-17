@@ -224,7 +224,8 @@ def youtube_callback():
             'youtube_account': channel_title,
             'youtube_channel_id': channel_id,
             'youtube_credentials': encrypted_creds,
-            'youtube_connected_at': datetime.datetime.now().isoformat()
+            'youtube_connected_at': datetime.datetime.now().isoformat(),
+            'youtube_setup_complete': False
         })
         
         # Clear session data
@@ -238,17 +239,21 @@ def youtube_callback():
                 logger.info(f"Fetching initial YouTube analytics for user {user_id}")
                 fetch_youtube_analytics(user_id)
                 logger.info(f"Initial YouTube analytics fetched successfully for user {user_id}")
+                # Mark setup as complete
+                UserService.update_user(user_id, {'youtube_setup_complete': True})
             except Exception as e:
                 logger.error(f"Error fetching initial YouTube analytics: {str(e)}")
-        
+                # Mark setup as complete even on error so modal closes
+                UserService.update_user(user_id, {'youtube_setup_complete': True})
+
         # Start analytics fetch in background
         thread = threading.Thread(target=fetch_initial_analytics)
         thread.daemon = True
         thread.start()
-        
+
         logger.info(f"Successfully connected YouTube channel: {channel_title}")
         flash(f"Successfully connected YouTube channel: {channel_title}", "success")
-        return redirect(url_for('accounts.index', show_super_powers='true', platform='youtube'))
+        return redirect(url_for('accounts.index'))
     
     except Exception as e:
         logger.error(f"Error in YouTube callback: {str(e)}")

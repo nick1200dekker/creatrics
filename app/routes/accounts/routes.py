@@ -43,7 +43,8 @@ def index():
         x_username=x_username,
         youtube_channel=youtube_channel,
         tiktok_username=tiktok_username,
-        show_super_powers=show_super_powers
+        show_super_powers=show_super_powers,
+        user_data=user_data
     )
 
 @bp.route('/connect', methods=['POST'])
@@ -95,8 +96,9 @@ def connect_account():
             logger.error(f"Error setting up X analytics: {str(e)}")
             logger.error(traceback.format_exc())
         
+        # Just redirect back without query params - modal will show via JavaScript
         flash(f"Successfully connected X account @{username}", "success")
-        return redirect(url_for('accounts.index', show_super_powers='true', platform='x'))
+        return redirect(url_for('accounts.index'))
         
     elif platform == 'tiktok':
         username = request.form.get('tiktok_username', '').strip()
@@ -118,8 +120,9 @@ def connect_account():
         bg_thread.daemon = True
         bg_thread.start()
 
+        # Just redirect back without query params - modal will show via JavaScript
         flash(f"Successfully connected TikTok account @{username}", "success")
-        return redirect(url_for('accounts.index', show_super_powers='true', platform='tiktok'))
+        return redirect(url_for('accounts.index'))
         
     else:
         flash("Invalid platform specified", "error")
@@ -380,6 +383,8 @@ def fetch_initial_tiktok_data(user_id, username):
 
         if not user_info:
             logger.error(f"Failed to fetch TikTok user info for {username}")
+            # Mark setup as complete (even though failed) so modal closes
+            UserService.update_user(user_id, {'tiktok_setup_complete': True})
             return
 
         # Store secUid
