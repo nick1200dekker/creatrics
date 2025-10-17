@@ -387,10 +387,7 @@
     .plan-price {
         font-size: 3rem;
         font-weight: 900;
-        background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #3B82F6;
         margin-bottom: 0.5rem;
         display: flex;
         align-items: baseline;
@@ -400,19 +397,17 @@
     }
 
     html.dark .plan-price {
-        background: linear-gradient(135deg, #60A5FA 0%, #A78BFA 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #60A5FA;
     }
 
     .plan-price .currency {
         font-size: 1.75rem;
-        background: linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #3B82F6;
         font-weight: 700;
+    }
+
+    html.dark .plan-price .currency {
+        color: #60A5FA;
     }
 
     .plan-price .period {
