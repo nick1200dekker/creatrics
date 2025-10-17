@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, redirect, url_for, jsonify, reques
 from app.system.auth.supabase import auth_required
 from app.system.auth.middleware import set_auth_cookie, clear_auth_cookie, verify_token, get_token_from_cookie, get_token_from_header, optional_auth, COOKIE_NAME, COOKIE_PATH, COOKIE_DOMAIN
 from app.system.services.firebase_service import UserService, StorageService
+from app.system.services.email_service import email_service
+from app.system.services.welcome_email_scheduler import welcome_scheduler
 from app.config import get_config
 import logging
 import jwt
@@ -202,7 +204,8 @@ def create_session():
 
         # Check if user exists in Firebase
         user = UserService.get_user(user_id)
-        
+        is_new_user = False
+
         if not user:
             # Create user from token data
             try:
@@ -213,11 +216,32 @@ def create_session():
                     'credits': 5  # Give new users 5 credits to start with
                 })
                 logger.info(f"User {user_id} created in Firebase during session creation")
+                is_new_user = True
             except Exception as create_error:
                 logger.error(f"Failed to create user in Firebase: {str(create_error)}")
                 # Continue anyway - we want the login to succeed
         else:
             logger.info(f"User {user_id} already exists in Firebase")
+
+        # Send welcome email for new users
+        if is_new_user and email:
+            # Check provider from app_metadata
+            provider = payload.get('app_metadata', {}).get('provider', 'email')
+
+            if provider == 'google' or provider == 'oauth':
+                # OAuth users (Google) - send welcome email immediately
+                try:
+                    logger.info(f"Sending immediate welcome email to OAuth user: {email}")
+                    email_service.send_welcome_email(email, username)
+                except Exception as email_error:
+                    logger.error(f"Failed to send welcome email to {email}: {str(email_error)}")
+            else:
+                # Email/password users - schedule welcome email after 10 minutes
+                try:
+                    logger.info(f"Scheduling delayed welcome email for email user: {email}")
+                    welcome_scheduler.schedule_welcome_email(email, username, delay_seconds=600)
+                except Exception as email_error:
+                    logger.error(f"Failed to schedule welcome email for {email}: {str(email_error)}")
         
         # Create response with session cookie
         response = make_response(jsonify({
