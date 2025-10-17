@@ -38,6 +38,11 @@ if not secret_key:
 
 app.config['SECRET_KEY'] = secret_key
 
+# Configure session lifetime
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)  # Sessions last 24 hours
+app.config['SESSION_PERMANENT'] = True
+
 # Make Supabase URL and key available to all templates
 @app.context_processor
 def inject_supabase_credentials():
