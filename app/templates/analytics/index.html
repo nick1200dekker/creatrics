@@ -46,12 +46,23 @@
                 </button>
             </div>
             
-            <!-- Timeframe Selector (right) -->
-            <div class="timeframe-selector">
-                <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">7 Days</button>
-                <button class="timeframe-btn active" data-timeframe="30days" onclick="changeTimeframe('30days')">30 Days</button>
-                <button class="timeframe-btn" data-timeframe="90days" onclick="changeTimeframe('90days')">90 Days</button>
-                <button class="timeframe-btn" data-timeframe="6months" onclick="changeTimeframe('6months')">6 Months</button>
+            <!-- Right side controls -->
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <!-- Refresh All Button -->
+                {% if x_connected or youtube_connected or tiktok_connected %}
+                <button id="refresh-all-btn" class="secondary-button" onclick="refreshAllData()" title="Refresh all connected accounts">
+                    <i class="ph ph-arrow-clockwise"></i>
+                    <span>Refresh All</span>
+                </button>
+                {% endif %}
+
+                <!-- Timeframe Selector -->
+                <div class="timeframe-selector">
+                    <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">7 Days</button>
+                    <button class="timeframe-btn active" data-timeframe="30days" onclick="changeTimeframe('30days')">30 Days</button>
+                    <button class="timeframe-btn" data-timeframe="90days" onclick="changeTimeframe('90days')">90 Days</button>
+                    <button class="timeframe-btn" data-timeframe="6months" onclick="changeTimeframe('6months')">6 Months</button>
+                </div>
             </div>
         </div>
 
@@ -85,10 +96,6 @@
                     <div class="p-4">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold">Overview</h2>
-                            <button id="x-refresh-btn" class="secondary-button" onclick="refreshXData()" title="Refresh X data">
-                                <i class="ph ph-arrow-clockwise"></i>
-                                <span>Refresh Data</span>
-                            </button>
                         </div>
                         
                         <div id="x-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -219,10 +226,6 @@
                     <div class="p-4">
                         <div class="flex items-center justify-between mb-4">
                             <h2 id="youtube-overview-title" class="text-lg font-semibold">Channel Overview</h2>
-                            <button id="youtube-refresh-btn" class="secondary-button" onclick="refreshYouTubeData()" title="Refresh YouTube data">
-                                <i class="ph ph-arrow-clockwise"></i>
-                                <span>Refresh Data</span>
-                            </button>
                         </div>
                         
                         <div id="youtube-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -311,10 +314,6 @@
                     <div class="p-4">
                         <div class="flex items-center justify-between mb-4">
                             <h2 id="tiktok-overview-title" class="text-lg font-semibold">Account Overview</h2>
-                            <button id="tiktok-refresh-btn" class="secondary-button" onclick="refreshTikTokData()" title="Refresh TikTok data">
-                                <i class="ph ph-arrow-clockwise"></i>
-                                <span>Refresh Data</span>
-                            </button>
                         </div>
 
                         <!-- Fixed Grid Layout for TikTok Metrics -->

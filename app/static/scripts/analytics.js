@@ -1696,9 +1696,115 @@ function initializeAnalytics() {
         }
     }
 
-    // Refresh functions
+    // Refresh all connected platforms
+    window.refreshAllData = function() {
+        const refreshBtn = document.getElementById('refresh-all-btn');
+        if (!refreshBtn) return;
+
+        const originalContent = refreshBtn.innerHTML;
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<div class="loading-spinner"></div><span>Refreshing...</span>';
+
+        // Get connected platforms from the page
+        const xConnected = document.getElementById('x-content') !== null;
+        const youtubeConnected = document.getElementById('youtube-content') !== null;
+        const tiktokConnected = document.getElementById('tiktok-content') !== null;
+
+        // Create array of promises for all connected platforms
+        const refreshPromises = [];
+        const platformsToRefresh = [];
+
+        if (xConnected) {
+            platformsToRefresh.push('X');
+            refreshPromises.push(
+                fetch('/analytics/x/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                }).then(r => r.json())
+            );
+        }
+
+        if (youtubeConnected) {
+            platformsToRefresh.push('YouTube');
+            refreshPromises.push(
+                fetch('/analytics/youtube/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                }).then(r => r.json())
+            );
+        }
+
+        if (tiktokConnected) {
+            platformsToRefresh.push('TikTok');
+            refreshPromises.push(
+                fetch('/analytics/tiktok/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                }).then(r => r.json())
+            );
+        }
+
+        // Wait for all refreshes to complete
+        Promise.all(refreshPromises)
+            .then(results => {
+                const allSuccessful = results.every(r => r.success);
+                const someSuccessful = results.some(r => r.success);
+
+                if (allSuccessful) {
+                    if (window.BaseApp && window.BaseApp.showToast) {
+                        window.BaseApp.showToast('All platforms refreshed successfully!', 'success');
+                    }
+
+                    // Reload all analytics after a short delay
+                    setTimeout(() => {
+                        if (xConnected) loadXAnalytics();
+                        if (youtubeConnected) loadYouTubeAnalytics();
+                        if (tiktokConnected) loadTikTokAnalytics();
+                    }, 1000);
+                } else if (someSuccessful) {
+                    const failedPlatforms = results
+                        .map((r, i) => r.success ? null : platformsToRefresh[i])
+                        .filter(p => p !== null);
+
+                    if (window.BaseApp && window.BaseApp.showToast) {
+                        window.BaseApp.showToast(
+                            `Some platforms failed to refresh: ${failedPlatforms.join(', ')}`,
+                            'warning'
+                        );
+                    }
+
+                    // Reload successful ones
+                    setTimeout(() => {
+                        results.forEach((r, i) => {
+                            if (r.success) {
+                                if (platformsToRefresh[i] === 'X') loadXAnalytics();
+                                if (platformsToRefresh[i] === 'YouTube') loadYouTubeAnalytics();
+                                if (platformsToRefresh[i] === 'TikTok') loadTikTokAnalytics();
+                            }
+                        });
+                    }, 1000);
+                } else {
+                    if (window.BaseApp && window.BaseApp.showToast) {
+                        window.BaseApp.showToast('Failed to refresh platforms', 'error');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing platforms:', error);
+                if (window.BaseApp && window.BaseApp.showToast) {
+                    window.BaseApp.showToast('Error refreshing platforms', 'error');
+                }
+            })
+            .finally(() => {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalContent;
+            });
+    };
+
+    // Individual refresh functions (kept for backwards compatibility)
     window.refreshXData = function() {
         const refreshBtn = document.getElementById('x-refresh-btn');
+        if (!refreshBtn) return;
         const originalContent = refreshBtn.innerHTML;
         
         refreshBtn.disabled = true;
@@ -1726,6 +1832,7 @@ function initializeAnalytics() {
     
     window.refreshYouTubeData = function() {
         const refreshBtn = document.getElementById('youtube-refresh-btn');
+        if (!refreshBtn) return;
         const originalContent = refreshBtn.innerHTML;
         
         refreshBtn.disabled = true;

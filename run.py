@@ -65,6 +65,7 @@ def inject_user_data():
     context['subscription_plan'] = 'Free Plan'
     context['workspace_info'] = None
     context['can_access_teams'] = False
+    context['is_admin'] = False
 
     # If authenticated, get actual plan
     if hasattr(g, 'user') and g.user:
@@ -77,6 +78,14 @@ def inject_user_data():
                 if user_data and 'subscription_plan' in user_data:
                     context['subscription_plan'] = user_data['subscription_plan']
                     app_logger.info(f"Context processor: using plan '{context['subscription_plan']}' from Firebase")
+
+                    # Check admin status based on subscription_plan
+                    normalized_plan = user_data['subscription_plan'].lower().strip() if user_data['subscription_plan'] else ''
+                    context['is_admin'] = normalized_plan in ['admin', 'admin plan', 'administrator']
+                    app_logger.info(f"Context processor: is_admin={context['is_admin']}, normalized_plan='{normalized_plan}'")
+                else:
+                    context['is_admin'] = False
+                    app_logger.info(f"Context processor: No user data or subscription plan, is_admin=False")
 
                 # Get workspace information
                 workspace_data = get_active_workspace_data()

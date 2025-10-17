@@ -23,10 +23,13 @@
                 </h1>
             </div>
             <div class="header-right">
+                <!-- is_admin = {{ is_admin }}, subscription_plan = {{ subscription_plan }} -->
+                {% if is_admin %}
                 <button class="refresh-btn" id="refreshBtn" onclick="startAnalysis()">
                     <i class="ph ph-arrow-clockwise"></i>
                     Refresh Analysis
                 </button>
+                {% endif %}
             </div>
         </div>
 
