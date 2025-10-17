@@ -1292,21 +1292,20 @@ function initializeAnalytics() {
             default: daysBack = 30;
         }
 
-        // Fill in all dates in timeframe with 0 for missing dates (keeps line connected)
+        // Only include dates that have posts - this keeps line connected between actual data points
         const chartData = [];
-        for (let i = daysBack; i >= 0; i--) {
-            const date = new Date(now);
-            date.setDate(date.getDate() - i);
-            // Use local date string instead of UTC to avoid timezone issues
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const dateStr = `${year}-${month}-${day}`;
+        const sortedDates = Object.keys(avgEngagementByDate).sort();
+
+        sortedDates.forEach(dateStr => {
             chartData.push({
                 x: new Date(dateStr).getTime(),
-                y: avgEngagementByDate[dateStr] || 0
+                y: avgEngagementByDate[dateStr]
             });
-        }
+        });
+
+        // Calculate min/max dates for x-axis range based on timeframe
+        const minDate = new Date(now);
+        minDate.setDate(minDate.getDate() - daysBack);
 
         const options = {
             ...getChartDefaults(),
@@ -1334,6 +1333,8 @@ function initializeAnalytics() {
             colors: ['#8B5CF6'],
             xaxis: {
                 type: 'datetime',
+                min: minDate.getTime(),
+                max: now.getTime(),
                 labels: {
                     format: 'MMM dd',
                     style: { colors: getChartColors().text, fontSize: '11px' },
@@ -1626,19 +1627,20 @@ function initializeAnalytics() {
         if (sortedPosts.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center py-8">No posts available</td>
+                    <td colspan="9" class="text-center py-8">No posts available</td>
                 </tr>
             `;
             return;
         }
 
-        tbody.innerHTML = sortedPosts.map(post => {
+        tbody.innerHTML = sortedPosts.map((post, index) => {
             const date = new Date(post.create_time * 1000);
             const formattedDate = date.toLocaleDateString();
             const truncatedDesc = post.desc.length > 80 ? post.desc.substring(0, 80) + '...' : post.desc;
 
             return `
                 <tr>
+                    <td>${index + 1}</td>
                     <td>
                         <div class="post-preview">${escapeHtml(truncatedDesc)}</div>
                     </td>

@@ -47,22 +47,11 @@
             </div>
             
             <!-- Right side controls -->
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <!-- Timeframe Selector -->
-                <div class="timeframe-selector">
-                    <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">7 Days</button>
-                    <button class="timeframe-btn active" data-timeframe="30days" onclick="changeTimeframe('30days')">30 Days</button>
-                    <button class="timeframe-btn" data-timeframe="90days" onclick="changeTimeframe('90days')">90 Days</button>
-                    <button class="timeframe-btn" data-timeframe="6months" onclick="changeTimeframe('6months')">6 Months</button>
-                </div>
-
-                <!-- Refresh All Button -->
-                {% if x_connected or youtube_connected or tiktok_connected %}
-                <button id="refresh-all-btn" class="secondary-button" onclick="refreshAllData()" title="Refresh all connected accounts">
-                    <i class="ph ph-arrow-clockwise"></i>
-                    <span>Refresh All</span>
-                </button>
-                {% endif %}
+            <div class="timeframe-selector">
+                <button class="timeframe-btn" data-timeframe="7days" onclick="changeTimeframe('7days')">7 Days</button>
+                <button class="timeframe-btn active" data-timeframe="30days" onclick="changeTimeframe('30days')">30 Days</button>
+                <button class="timeframe-btn" data-timeframe="90days" onclick="changeTimeframe('90days')">90 Days</button>
+                <button class="timeframe-btn" data-timeframe="6months" onclick="changeTimeframe('6months')">6 Months</button>
             </div>
         </div>
 
@@ -314,6 +303,12 @@
                     <div class="p-4">
                         <div class="flex items-center justify-between mb-4">
                             <h2 id="tiktok-overview-title" class="text-lg font-semibold">Account Overview</h2>
+                            {% if is_admin %}
+                            <button id="refresh-all-btn" class="secondary-button" onclick="refreshAllData()" title="Refresh all connected accounts">
+                                <i class="ph ph-arrow-clockwise"></i>
+                                <span>Refresh All</span>
+                            </button>
+                            {% endif %}
                         </div>
 
                         <!-- Fixed Grid Layout for TikTok Metrics -->
@@ -389,6 +384,7 @@
                         <table class="data-table" id="tiktok-posts-table">
                             <thead>
                                 <tr>
+                                    <th>#</th>
                                     <th>Post</th>
                                     <th>Date</th>
                                     <th>Views</th>
@@ -401,7 +397,7 @@
                             </thead>
                             <tbody id="tiktok-posts-tbody">
                                 <tr>
-                                    <td colspan="8" class="text-center">
+                                    <td colspan="9" class="text-center">
                                         <div class="loading-container">
                                             <div class="loading-spinner"></div>
                                             <span class="ml-3">Loading posts...</span>
