@@ -43,29 +43,40 @@ class ReplyGuyService:
             return []
 
     def get_default_list_accounts(self, list_id: str) -> List[str]:
-        """Get accounts for a default list"""
+        """Get accounts for a default list - Updated via Google Search 2025"""
         if list_id == 'content_creators':
-            # Big creator accounts across different niches
+            # Top engaging accounts across different niches (Google Search results 2025)
             return [
-                # Tech/Business
-                'elonmusk', 'sundarpichai', 'tim_cook', 'satyanadella', 'jeffweiner', 'reidhoffman',
-                'naval', 'balajis', 'pmarca', 'bgurley', 'chamath', 'jason', 'garyvee', 'dan_schulman',
+                # Tech/Business Leaders
+                'elonmusk', 'BillGates', 'sundarpichai', 'tim_cook', 'satyanadella', 'jeffweiner',
+                'reidhoffman', 'naval', 'balajis', 'pmarca', 'bgurley', 'chamath', 'jason', 'garyvee',
 
-                # Content Creators
-                'MrBeast', 'PewDiePie', 'KSI', 'LoganPaul', 'jakepaul', 'EmmaChamberlain', 'jamescharles',
-                'nikocadoavocado', 'mrbeastyt', 'dualipa', 'justinbieber', 'taylorswift13', 'selenagomez',
+                # AI & Tech Influencers
+                'AndrewYNg', 'demishassabis', 'feifeili', 'gdb', 'fchollet', 'alliekmiller',
+                'RowanCheung', 'jeremyphoward', 'KirkDBorne', 'LexFridman', 'RonVanLoon',
+
+                # Marketing & Business
+                'TheCoolestCool', 'KateBour', 'Mike_Stelzner', 'jaybaer', 'richpage', 'nealschaffer',
+
+                # Content Creators & YouTubers
+                'MrBeast', 'PewDiePie', 'KSI', 'LoganPaul', 'Pokimanelol', 'Valkyrae',
+                'Quackity', 'DrLupo', 'EmmaChamberlain', 'jamescharles',
+
+                # Music & Entertainment
+                'taylorswift13', 'justinbieber', 'rihanna', 'katyperry', 'ArianaGrande',
+                'selenagomez', 'Drake', 'TheWeeknd',
+
+                # Politicians & Public Figures
+                'BarackObama', 'narendramodi', 'POTUS',
 
                 # News/Media
-                'cnn', 'nytimes', 'washingtonpost', 'bbcnews', 'reuters', 'ap', 'nbcnews', 'abcnews',
-                'foxnews', 'wsj', 'usatoday', 'latimes', 'guardianUS', 'politico',
+                'cnn', 'nytimes', 'washingtonpost', 'bbcnews', 'reuters', 'ap', 'nbcnews',
 
                 # Finance/Crypto
-                'michael_saylor', 'cz_binance', 'SBF_FTX', 'cathiedwood', 'novogratz', 'APompliano',
-                'VitalikButerin', 'justinsuntron', 'brian_armstrong',
+                'michael_saylor', 'cz_binance', 'cathiedwood', 'APompliano', 'VitalikButerin',
 
                 # Sports
-                'stephencurry30', 'KingJames', 'Cristiano', 'TeamMessi', 'usainbolt', 'Ronaldinho',
-                'neymarjr', 'SerenaWilliams', 'tombrady', 'TheRealMikeT', 'FloydMayweather', 'espn'
+                'Cristiano', 'stephencurry30', 'KingJames', 'neymarjr', 'SerenaWilliams', 'espn'
             ]
         return []
     
