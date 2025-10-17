@@ -224,11 +224,30 @@ async function loadMyVideos() {
     } catch (error) {
         console.error('Error loading videos:', error);
         videosGrid.innerHTML = '';
-        emptyState.innerHTML = `
-            <i class="ph ph-warning"></i>
-            <p>Failed to load videos</p>
-            <span>${escapeHtml(error.message)}</span>
-        `;
+
+        // Check if error is about missing YouTube connection
+        const isNoChannelError = error.message.includes('No YouTube channel') ||
+                                 error.message.includes('not connected') ||
+                                 error.message.includes('channel connected');
+
+        if (isNoChannelError) {
+            emptyState.innerHTML = `
+                <i class="ph ph-youtube-logo"></i>
+                <p>No YouTube Channel Connected</p>
+                <span>Connect your YouTube account in Social Accounts or <strong>use the URL option above</strong> to optimize any video</span>
+            `;
+
+            // Automatically switch to URL mode to make it more discoverable
+            setTimeout(() => {
+                switchInputMode('url');
+            }, 500);
+        } else {
+            emptyState.innerHTML = `
+                <i class="ph ph-warning"></i>
+                <p>Failed to load videos</p>
+                <span>${escapeHtml(error.message)}</span>
+            `;
+        }
         emptyState.style.display = 'flex';
     }
 }
