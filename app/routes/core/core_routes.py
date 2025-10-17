@@ -195,7 +195,11 @@ def create_session():
             username = email.split('@')[0]
         if not username:
             username = f"user_{user_id[:8]}"
-            
+
+        # Extract first name only (for Google OAuth users with full names)
+        if username and ' ' in username:
+            username = username.split()[0]
+
         # Check if user exists in Firebase
         user = UserService.get_user(user_id)
         
@@ -441,7 +445,11 @@ def get_profile():
                 username = email.split('@')[0]
             if not username:
                 username = f"user_{user_id[:8]}"
-            
+
+            # Extract first name only (for Google OAuth users with full names)
+            if username and ' ' in username:
+                username = username.split()[0]
+
             logger.info(f"Using username: {username}")
             
             try:
