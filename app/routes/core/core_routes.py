@@ -185,9 +185,12 @@ def create_session():
         # Get user metadata
         user_metadata = payload.get('user_metadata', {})
         email = payload.get('email')
-        
-        # Get username
-        username = user_metadata.get('username')
+
+        # Get username - try multiple fields (Google OAuth uses full_name, email users use username)
+        username = (user_metadata.get('username') or
+                    user_metadata.get('full_name') or
+                    user_metadata.get('name') or
+                    user_metadata.get('display_name'))
         if not username and email:
             username = email.split('@')[0]
         if not username:
@@ -425,12 +428,15 @@ def get_profile():
             user_data = g.user.get('jwt_claims', {})
             user_metadata = user_data.get('user_metadata', {})
             email = user_data.get('email')
-            
+
             logger.debug(f"JWT claims: {user_data}")
             logger.debug(f"User metadata: {user_metadata}")
-            
-            # Get username
-            username = user_metadata.get('username')
+
+            # Get username - try multiple fields (Google OAuth uses full_name, email users use username)
+            username = (user_metadata.get('username') or
+                        user_metadata.get('full_name') or
+                        user_metadata.get('name') or
+                        user_metadata.get('display_name'))
             if not username and email:
                 username = email.split('@')[0]
             if not username:
