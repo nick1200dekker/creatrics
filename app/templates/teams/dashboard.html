@@ -72,6 +72,18 @@
                 </h3>
                 <div class="permissions-grid">
                     <div class="permission-item">
+                        <input type="checkbox" id="perm_keyword_research" checked>
+                        <label for="perm_keyword_research">Keyword Research</label>
+                    </div>
+                    <div class="permission-item">
+                        <input type="checkbox" id="perm_analyze_video" checked>
+                        <label for="perm_analyze_video">Analyze Video</label>
+                    </div>
+                    <div class="permission-item">
+                        <input type="checkbox" id="perm_competitors" checked>
+                        <label for="perm_competitors">Competitors</label>
+                    </div>
+                    <div class="permission-item">
                         <input type="checkbox" id="perm_video_script" checked>
                         <label for="perm_video_script">Video Script</label>
                     </div>
@@ -80,24 +92,12 @@
                         <label for="perm_video_title">Title & More</label>
                     </div>
                     <div class="permission-item">
-                        <input type="checkbox" id="perm_thumbnail" checked>
-                        <label for="perm_thumbnail">Thumbnail</label>
-                    </div>
-                    <div class="permission-item">
-                        <input type="checkbox" id="perm_analyze_video" checked>
-                        <label for="perm_analyze_video">Analyze Video</label>
-                    </div>
-                    <div class="permission-item">
                         <input type="checkbox" id="perm_optimize_video" checked>
                         <label for="perm_optimize_video">Optimize Video</label>
                     </div>
                     <div class="permission-item">
-                        <input type="checkbox" id="perm_keyword_research" checked>
-                        <label for="perm_keyword_research">Keyword Research</label>
-                    </div>
-                    <div class="permission-item">
-                        <input type="checkbox" id="perm_competitors" checked>
-                        <label for="perm_competitors">Competitors</label>
+                        <input type="checkbox" id="perm_thumbnail" checked>
+                        <label for="perm_thumbnail">Thumbnail</label>
                     </div>
                 </div>
             </div>
@@ -134,14 +134,6 @@
                 </h3>
                 <div class="permissions-grid">
                     <div class="permission-item">
-                        <input type="checkbox" id="perm_hook_generator" checked>
-                        <label for="perm_hook_generator">Hook Generator</label>
-                    </div>
-                    <div class="permission-item">
-                        <input type="checkbox" id="perm_titles_hashtags" checked>
-                        <label for="perm_titles_hashtags">Titles & Hashtags</label>
-                    </div>
-                    <div class="permission-item">
                         <input type="checkbox" id="perm_trend_finder" checked>
                         <label for="perm_trend_finder">Trend Finder</label>
                     </div>
@@ -152,6 +144,14 @@
                     <div class="permission-item">
                         <input type="checkbox" id="perm_tiktok_competitors" checked>
                         <label for="perm_tiktok_competitors">Competitors</label>
+                    </div>
+                    <div class="permission-item">
+                        <input type="checkbox" id="perm_hook_generator" checked>
+                        <label for="perm_hook_generator">Hook Generator</label>
+                    </div>
+                    <div class="permission-item">
+                        <input type="checkbox" id="perm_titles_hashtags" checked>
+                        <label for="perm_titles_hashtags">Titles & Hashtags</label>
                     </div>
                     <!-- Analytics permission shared across all platforms (defined in YouTube section) -->
                 </div>
@@ -309,7 +309,7 @@ function updateUIForWorkspace() {
 
                 // Define permission categories
                 const categories = {
-                    'YouTube': ['video_script', 'video_title', 'thumbnail', 'analyze_video', 'optimize_video', 'keyword_research', 'competitors'],
+                    'YouTube': ['keyword_research', 'analyze_video', 'competitors', 'video_script', 'video_title', 'optimize_video', 'thumbnail'],
                     'X (Twitter)': ['x_post_editor', 'reply_guy', 'clip_spaces', 'niche'],
                     'TikTok': ['trend_finder', 'tiktok_keyword_research', 'tiktok_competitors', 'hook_generator', 'titles_hashtags'],
                     'Content Hub': ['brain_dump', 'mind_map', 'content_wiki', 'content_calendar'],
@@ -511,13 +511,13 @@ function editPermissions(memberId, permissions) {
             name: 'YouTube',
             icon: 'ph-youtube-logo',
             features: [
+                { id: 'keyword_research', label: 'Keyword Research' },
+                { id: 'analyze_video', label: 'Analyze Video' },
+                { id: 'competitors', label: 'Competitors' },
                 { id: 'video_script', label: 'Video Script' },
                 { id: 'video_title', label: 'Title & More' },
-                { id: 'thumbnail', label: 'Thumbnail' },
-                { id: 'analyze_video', label: 'Analyze Video' },
                 { id: 'optimize_video', label: 'Optimize Video' },
-                { id: 'keyword_research', label: 'Keyword Research' },
-                { id: 'competitors', label: 'Competitors' }
+                { id: 'thumbnail', label: 'Thumbnail' }
             ]
         },
         {
@@ -534,11 +534,11 @@ function editPermissions(memberId, permissions) {
             name: 'TikTok',
             icon: 'ph-tiktok-logo',
             features: [
-                { id: 'hook_generator', label: 'Hook Generator' },
-                { id: 'titles_hashtags', label: 'Titles & Hashtags' },
                 { id: 'trend_finder', label: 'Trend Finder' },
                 { id: 'tiktok_keyword_research', label: 'Keyword Research' },
-                { id: 'tiktok_competitors', label: 'Competitors' }
+                { id: 'tiktok_competitors', label: 'Competitors' },
+                { id: 'hook_generator', label: 'Hook Generator' },
+                { id: 'titles_hashtags', label: 'Titles & Hashtags' }
             ]
         },
         {
