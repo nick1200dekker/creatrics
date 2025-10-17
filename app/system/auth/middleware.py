@@ -178,11 +178,18 @@ def auth_required(f):
         
         # Store user info in Flask global context
         g.user_id = payload.get('sub')
+        # Try multiple fields for username (Google OAuth uses full_name, email users use username)
+        user_metadata = payload.get('user_metadata', {})
+        username = (user_metadata.get('username') or
+                    user_metadata.get('full_name') or
+                    user_metadata.get('name') or
+                    user_metadata.get('display_name'))
+
         g.user = {
-            'id': payload.get('sub'), 
+            'id': payload.get('sub'),
             'data': {
                 'email': payload.get('email'),
-                'username': payload.get('user_metadata', {}).get('username')
+                'username': username
             },
             'jwt_claims': payload,
             'is_guest': False
@@ -217,11 +224,18 @@ def optional_auth(f):
             
             if payload:
                 g.user_id = payload.get('sub')
+                # Try multiple fields for username (Google OAuth uses full_name, email users use username)
+                user_metadata = payload.get('user_metadata', {})
+                username = (user_metadata.get('username') or
+                            user_metadata.get('full_name') or
+                            user_metadata.get('name') or
+                            user_metadata.get('display_name'))
+
                 g.user = {
-                    'id': payload.get('sub'), 
+                    'id': payload.get('sub'),
                     'data': {
                         'email': payload.get('email'),
-                        'username': payload.get('user_metadata', {}).get('username')
+                        'username': username
                     },
                     'jwt_claims': payload,
                     'is_guest': False
@@ -364,12 +378,19 @@ def auth_middleware():
     g.user_id = payload.get('sub')
 
     # Initialize basic user data from JWT
+    # Try multiple fields for username (Google OAuth uses full_name, email users use username)
+    user_metadata = payload.get('user_metadata', {})
+    username = (user_metadata.get('username') or
+                user_metadata.get('full_name') or
+                user_metadata.get('name') or
+                payload.get('user_metadata', {}).get('display_name'))
+
     g.user = {
         'id': payload.get('sub'),
         'data': {
             'email': payload.get('email'),
-            'username': payload.get('user_metadata', {}).get('username'),
-            'subscription_plan': payload.get('user_metadata', {}).get('subscription_plan', 'Free Plan')
+            'username': username,
+            'subscription_plan': user_metadata.get('subscription_plan', 'Free Plan')
         },
         'jwt_claims': payload,
         'is_guest': False
