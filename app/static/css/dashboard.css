@@ -1174,7 +1174,48 @@ html.dark .optimize-video-card:hover {
     color: var(--text-tertiary);
 }
 
+/* Mobile Menu Button Fix for Dark Mode */
+#mobile-menu-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 50;
+    padding: 0.5rem;
+    background: var(--bg-primary);
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#mobile-menu-toggle:hover {
+    background: var(--bg-secondary);
+    transform: scale(1.05);
+}
+
+#mobile-menu-toggle i {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    display: block;
+}
+
+html.dark #mobile-menu-toggle {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+}
+
+html.dark #mobile-menu-toggle:hover {
+    background: var(--bg-tertiary);
+}
+
 /* Responsive */
+@media (max-width: 1200px) {
+    .channels-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 1024px) {
     .channels-grid {
         grid-template-columns: 1fr;
@@ -1183,9 +1224,26 @@ html.dark .optimize-video-card:hover {
     .carousel-container {
         padding: 0 2rem;
     }
+
+    .dashboard-header {
+        padding: 1.5rem;
+    }
+
+    .welcome-title {
+        font-size: 1.75rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
 }
 
 @media (max-width: 768px) {
+    .dashboard-wrapper {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+
     .dashboard-container {
         padding: 1rem;
     }
@@ -1195,43 +1253,187 @@ html.dark .optimize-video-card:hover {
         gap: 1.5rem;
         text-align: center;
         min-height: auto;
-        padding: 1.5rem;
+        padding: 1.5rem 1rem;
+    }
+
+    .welcome-content {
+        width: 100%;
     }
 
     .welcome-title {
         font-size: 1.5rem;
     }
 
+    .welcome-subtitle {
+        font-size: 0.875rem;
+    }
+
     .header-stats {
         width: 100%;
         justify-content: space-around;
+        gap: 1rem;
+    }
+
+    .header-stat {
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.625rem;
     }
 
     .channels-grid {
         gap: 1rem;
     }
 
+    .channel-card {
+        padding: 1rem;
+    }
+
+    .channel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .channel-avatar {
+        width: 48px;
+        height: 48px;
+    }
+
+    .channel-info h3 {
+        font-size: 1rem;
+    }
+
     .channel-metrics {
         grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .metric-value {
+        font-size: 1.125rem;
+    }
+
+    .metric-label {
+        font-size: 0.625rem;
+    }
+
+    .guest-hero {
+        padding: 3rem 1.5rem;
     }
 
     .guest-hero h1 {
-        font-size: 2.5rem;
+        font-size: 2rem;
     }
 
     .guest-hero p {
-        font-size: 1.125rem;
+        font-size: 1rem;
     }
 
     .features-preview {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .feature-card {
+        padding: 1.5rem;
     }
 
     .carousel-container {
         padding: 0 1rem;
     }
 
+    .carousel-nav {
+        width: 32px;
+        height: 32px;
+    }
+
     .action-card {
-        width: 200px;
+        width: 180px;
+        padding: 1rem;
+    }
+
+    .action-card h4 {
+        font-size: 0.875rem;
+    }
+
+    .action-card p {
+        font-size: 0.75rem;
+    }
+
+    .suggestions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .suggestion-card {
+        padding: 1rem;
+    }
+
+    .optimize-videos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .optimize-video-card {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 0.75rem;
+    }
+
+    .dashboard-header {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .welcome-title {
+        font-size: 1.25rem;
+    }
+
+    .header-stats {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .header-stat {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .channel-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .carousel-container {
+        padding: 0 0.5rem;
+    }
+
+    .action-card {
+        width: 160px;
+    }
+
+    .guest-hero h1 {
+        font-size: 1.5rem;
+    }
+
+    .guest-hero .cta-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .guest-hero .cta-buttons .btn {
+        width: 100%;
     }
 }
