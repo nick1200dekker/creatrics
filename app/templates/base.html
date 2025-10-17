@@ -995,7 +995,7 @@
             <div class="nav-group-items">
                 {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.keyword_research %}
                 <a href="{{ url_for('keyword_research.keyword_research') }}"
-                   class="nav-subitem {% if request.endpoint and 'keyword_research' in request.endpoint %}active{% endif %}"
+                   class="nav-subitem {% if request.endpoint and request.endpoint.startswith('keyword_research.') %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-magnifying-glass"></i>
                     <span>Keyword Research</span>
