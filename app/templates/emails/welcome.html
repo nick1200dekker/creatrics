@@ -3,229 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Welcome to Creatrics</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <!--[if mso]>
-    <style type="text/css">
-        body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
-    </style>
-    <![endif]-->
     <style>
-        /* Base styles matching your app */
-        * {
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
-            background-color: #F8FAFC;
-            color: #1E293B;
-            line-height: 1.6;
-            padding: 2rem;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            background-color: #ffffff;
         }
 
         .container {
             max-width: 600px;
             margin: 0 auto;
-            background: #FFFFFF;
-            border-radius: 16px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border: 1px solid #E2E8F0;
-            overflow: hidden;
-        }
-
-        /* Header with gradient accent */
-        .header {
-            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-            background-color: #3B82F6;
-            height: 4px;
-        }
-
-        .content {
-            padding: 2.5rem;
-        }
-
-        /* Logo section */
-        .logo-section {
-            text-align: center;
-            margin-bottom: 2rem;
+            padding: 40px 20px;
         }
 
         .logo {
-            font-size: 2rem;
-            font-weight: 900;
-            color: #3B82F6;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.5rem;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 32px;
+            font-weight: 700;
+            color: #1E293B;
+            letter-spacing: 1px;
         }
 
-        .tagline {
-            color: #64748B;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        /* Main content */
-        .main-content {
-            margin-bottom: 2rem;
+        .content {
+            color: #333333;
+            line-height: 1.6;
         }
 
         h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
+            font-size: 22px;
+            margin-bottom: 20px;
             color: #1E293B;
-            margin-bottom: 1rem;
-            letter-spacing: -0.01em;
         }
 
         p {
-            color: #475569;
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
-            line-height: 1.7;
-        }
-
-        /* Features list */
-        .features-box {
-            background: linear-gradient(135deg, #DBEAFE 0%, #EDE9FE 100%);
-            background-color: #DBEAFE;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            border-left: 4px solid #3B82F6;
-        }
-
-        .features-box h3 {
-            color: #1E293B;
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-        }
-
-        .features-box ul {
-            margin: 0;
-            padding-left: 1.5rem;
-        }
-
-        .features-box li {
-            color: #475569;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-            line-height: 1.5;
-        }
-
-        /* Button */
-        .button {
-            background-color: #3B82F6 !important;
-            border: 2px solid #3B82F6;
-            color: #ffffff !important;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
             font-size: 16px;
-            font-weight: 600;
-            text-decoration: none;
-            padding: 16px 32px;
-            display: inline-block;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
-            -webkit-text-size-adjust: none;
+            margin-bottom: 20px;
+            color: #475569;
         }
 
-        .button:hover {
-            background-color: #2563EB !important;
+        .tips {
+            background-color: #FFFBEB;
+            border-left: 4px solid #F59E0B;
+            padding: 20px;
+            margin: 30px 0;
         }
 
-        /* Footer */
-        .footer {
-            border-top: 1px solid #E2E8F0;
-            padding-top: 2rem;
-            margin-top: 2rem;
+        .tips h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #92400E;
+        }
+
+        .tips ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .tips li {
+            margin-bottom: 10px;
+            color: #78350F;
+        }
+
+        .social {
             text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #E5E7EB;
         }
 
-        .footer p {
-            color: #64748B;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
+        .social h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #1E293B;
         }
 
-        /* Responsive */
-        @media (max-width: 640px) {
-            body {
-                padding: 1rem;
-            }
+        .social a {
+            display: inline-block;
+            margin: 0 10px;
+            text-decoration: none;
+            color: #475569;
+            font-weight: 500;
+        }
 
-            .content {
-                padding: 2rem 1.5rem;
-            }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #E5E7EB;
+            font-size: 14px;
+            color: #6B7280;
+        }
 
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            .logo {
-                font-size: 1.75rem;
-            }
+        .footer a {
+            color: #3B82F6;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header"></div>
         <div class="content">
-            <div class="logo-section">
-                <div class="logo">CREATRICS</div>
-                <div class="tagline">AI-Powered Content Creation</div>
+            <h1>Welcome to CREATRICS! 🎉</h1>
+
+            <p>Hey {{ name }}! 👋</p>
+
+            <p>We're thrilled to have you join CREATRICS! You now have access to powerful AI-driven content creation tools designed specifically for creators like you.</p>
+
+            <div class="tips">
+                <h2>💡 Quick Tips to Get Started:</h2>
+                <ul>
+                    <li><strong>Connect your accounts:</strong> Link YouTube, TikTok, and X for seamless analytics</li>
+                    <li><strong>Start with scripts:</strong> Our AI can generate engaging video scripts in any niche</li>
+                    <li><strong>Analyze competitors:</strong> Learn what's working in your niche</li>
+                    <li><strong>Need help?</strong> Reply to this email - we're here for you!</li>
+                </ul>
             </div>
 
-            <div class="main-content">
-                <h1>Welcome to Creatrics, {{ name }}! 🎉</h1>
-                <p>Thanks for joining the Creatrics community! We're thrilled to have you on board and can't wait to help you create amazing content.</p>
-
-                <div class="features-box">
-                    <h3>🚀 What you can do now:</h3>
-                    <ul>
-                        <li><strong>YouTube Scripts:</strong> Generate viral video scripts tailored to your niche</li>
-                        <li><strong>Social Media Posts:</strong> Create engaging content for X, TikTok, and more</li>
-                        <li><strong>Thumbnail Generator:</strong> Design eye-catching thumbnails that get clicks</li>
-                        <li><strong>Video Analysis:</strong> Analyze competitor videos and trending content</li>
-                        <li><strong>Keyword Research:</strong> Find high-opportunity keywords and topics</li>
-                        <li><strong>Analytics Dashboard:</strong> Track your content performance across platforms</li>
-                    </ul>
-                </div>
-
-                <p>Ready to start creating? Head over to your dashboard and explore all the tools we have to offer.</p>
-
-                <!-- Outlook-proof button -->
-                <div style="text-align: center; margin: 2rem 0;">
-                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto;">
-                        <tr>
-                            <td align="center" style="border-radius: 12px; background-color: #3B82F6;">
-                                <a href="https://creatrics.com/dashboard"
-                                   target="_blank"
-                                   class="button">
-                                    <span style="color: #ffffff !important; text-decoration: none;">Go to Dashboard</span>
-                                </a>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-
-                <p style="color: #64748B; font-size: 0.875rem; margin-top: 2rem;">
-                    <strong>Need help getting started?</strong><br>
-                    Reply to this email or check out our <a href="https://creatrics.com/help" style="color: #3B82F6; text-decoration: none;">Help Center</a> for guides and tutorials.
-                </p>
+            <div class="social">
+                <h2>Join Our Community 🌟</h2>
+                <a href="https://www.youtube.com/@Creatrics">YouTube</a> •
+                <a href="https://x.com/Creatrics_">X</a>
             </div>
 
             <div class="footer">
-                <p>Happy creating! 🎬</p>
-                <p style="margin-top: 1rem;">The Creatrics Team</p>
-                <p style="margin-top: 1.5rem; color: #94A3B8; font-size: 0.75rem;">© 2025 Creatrics. All rights reserved.</p>
+                <p>Questions? Just reply to this email - we'd love to hear from you! 💬</p>
+                <p>
+                    <a href="https://creatrics.com">Visit Website</a> •
+                    <a href="https://creatrics.com/help">Help Center</a>
+                </p>
+                <p>© 2025 Creatrics. All rights reserved.</p>
             </div>
         </div>
     </div>
