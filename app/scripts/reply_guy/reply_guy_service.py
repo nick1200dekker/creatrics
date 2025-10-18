@@ -47,7 +47,6 @@ class ReplyGuyService:
         if list_id == 'content_creators':
             return [
                 'elonmusk',
-                'TRobinsonNewEra',
                 'NBA',
                 'CNN',
                 'NoContextHumans',
@@ -296,8 +295,16 @@ class ReplyGuyService:
             logger.error(f"Error setting current selection: {str(e)}")
             return False
     
-    def get_current_analysis(self, user_id: str, list_id: str, list_type: str) -> Optional[Dict]:
-        """Get current analysis for a list with proper newline conversion and mention filtering"""
+    def get_current_analysis(self, user_id: str, list_id: str, list_type: str, limit: Optional[int] = None, offset: int = 0) -> Optional[Dict]:
+        """Get current analysis for a list with proper newline conversion and mention filtering
+
+        Args:
+            user_id: User ID
+            list_id: List ID
+            list_type: 'default' or 'custom'
+            limit: Max number of tweets to return (None = all tweets, for backwards compatibility)
+            offset: Starting index for pagination
+        """
         try:
             if list_type == 'default':
                 # For default lists, check the global default_list_analyses collection first
@@ -329,14 +336,22 @@ class ReplyGuyService:
                         if 'text' in tweet:
                             # Convert our standard marker to <br> tags for HTML display
                             tweet['text'] = tweet['text'].replace('_new_line_', '<br>')
-                    
-                    logger.info(f"Found {len(mention_filtered_tweets)} valid recent opportunities for default list {list_id}")
-                    
+
+                    # PAGINATION: Apply limit and offset if specified
+                    total_count = len(mention_filtered_tweets)
+                    if limit is not None:
+                        paginated_tweets = mention_filtered_tweets[offset:offset + limit]
+                        logger.info(f"Returning {len(paginated_tweets)} of {total_count} opportunities (offset={offset}, limit={limit}) for default list {list_id}")
+                    else:
+                        paginated_tweets = mention_filtered_tweets
+                        logger.info(f"Found {total_count} valid recent opportunities for default list {list_id}")
+
                     return {
                         'list_id': list_id,
                         'list_type': list_type,
                         'list_name': data.get('list_name', ''),
-                        'tweet_opportunities': mention_filtered_tweets,
+                        'tweet_opportunities': paginated_tweets,
+                        'total_count': total_count,  # Always include total for pagination
                         'timestamp': data.get('last_updated'),
                         'parameters': {
                             'time_range': '24h',
@@ -375,14 +390,22 @@ class ReplyGuyService:
                         if 'text' in tweet:
                             # Convert our standard marker to <br> tags for HTML display
                             tweet['text'] = tweet['text'].replace('_new_line_', '<br>')
-                    
-                    logger.info(f"Found {len(mention_filtered_tweets)} valid recent opportunities for custom list {list_id}")
-                    
+
+                    # PAGINATION: Apply limit and offset if specified
+                    total_count = len(mention_filtered_tweets)
+                    if limit is not None:
+                        paginated_tweets = mention_filtered_tweets[offset:offset + limit]
+                        logger.info(f"Returning {len(paginated_tweets)} of {total_count} opportunities (offset={offset}, limit={limit}) for custom list {list_id}")
+                    else:
+                        paginated_tweets = mention_filtered_tweets
+                        logger.info(f"Found {total_count} valid recent opportunities for custom list {list_id}")
+
                     return {
                         'list_id': list_id,
                         'list_type': list_type,
                         'list_name': data.get('list_name', ''),
-                        'tweet_opportunities': mention_filtered_tweets,
+                        'tweet_opportunities': paginated_tweets,
+                        'total_count': total_count,  # Always include total for pagination
                         'timestamp': data.get('timestamp'),
                         'parameters': data.get('parameters', {})
                     }

@@ -142,7 +142,7 @@
                         </div>
                     </div>
                     
-                    <div class="panel-content">
+                    <div class="panel-content" id="tweets-container">
                         {% for tweet in current_analysis.tweet_opportunities %}
                         <div class="tweet-opportunity" data-tweet-id="{{ tweet.tweet_id }}">
                             <div class="tweet-grid">
@@ -151,8 +151,8 @@
                                     <div class="tweet-author-info">
                                         <div class="tweet-avatar">
                                             {% if tweet.profile_image_url %}
-                                            <img src="{{ tweet.profile_image_url }}" alt="{{ tweet.author }}" 
-                                                 onload="this.classList.remove('error')" 
+                                            <img src="{{ tweet.profile_image_url }}" alt="{{ tweet.author }}"
+                                                 onload="this.classList.remove('error')"
                                                  onerror="this.classList.add('error')">
                                             <div class="fallback-avatar">
                                                 <i class="ph ph-user"></i>
@@ -165,7 +165,12 @@
                                         </div>
                                         <div class="tweet-author-details">
                                             <div class="tweet-author-name">{{ tweet.name or tweet.author }}</div>
-                                            <div class="tweet-author-username">@{{ tweet.author }}</div>
+                                            <div class="tweet-author-username">
+                                                @{{ tweet.author }}
+                                                {% if tweet.created_at %}
+                                                <span style="color: var(--text-tertiary); margin-left: 0.5rem;">· <span class="tweet-timestamp" data-timestamp="{{ tweet.created_at }}"></span></span>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     </div>
                                     
@@ -234,7 +239,7 @@
                                         <div class="style-selector">
                                             <div class="dropdown">
                                                 <div class="dropdown-trigger reply-style-trigger">
-                                                    <span class="selected-style-text">Supportive</span>
+                                                    <span class="selected-style-text">Creatrics</span>
                                                     <i class="ph ph-caret-down dropdown-arrow"></i>
                                                 </div>
                                                 <div class="dropdown-menu reply-style-menu">
@@ -272,6 +277,19 @@
                             </div>
                         </div>
                         {% endfor %}
+
+                        {% if current_analysis.total_count > current_analysis.tweet_opportunities|length %}
+                        <div class="load-more-container" style="text-align: center; padding: 2rem;">
+                            <button id="load-more-btn" class="primary-btn"
+                                    data-total="{{ current_analysis.total_count }}"
+                                    data-loaded="{{ current_analysis.tweet_opportunities|length }}"
+                                    data-list-id="{{ current_selection.list_id }}"
+                                    data-list-type="{{ current_selection.list_type }}">
+                                <i class="ph ph-arrow-down"></i>
+                                Load More ({{ current_analysis.total_count - current_analysis.tweet_opportunities|length }} remaining)
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
                     {% else %}
                     <div class="panel-header">

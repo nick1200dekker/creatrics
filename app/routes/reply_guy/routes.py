@@ -134,21 +134,27 @@ def index():
             logger.info(f"Auto-selected first default list: {first_default_list['id']}")
 
         if current_selection:
-            # Only load analysis if we have a selection
+            # PERFORMANCE: Only load first 100 tweets for initial page render
             current_analysis = service.get_current_analysis(
                 user_id,
                 current_selection['list_id'],
-                current_selection['list_type']
+                current_selection['list_type'],
+                limit=100,  # Only send first 100 to template
+                offset=0
             )
-            logger.info(f"Loaded analysis for {current_selection['list_type']} list {current_selection['list_id']}: {len(current_analysis.get('tweet_opportunities', [])) if current_analysis else 0} opportunities")
+            if current_analysis:
+                total = current_analysis.get('total_count', 0)
+                shown = len(current_analysis.get('tweet_opportunities', []))
+                logger.info(f"Loaded {shown} of {total} opportunities for {current_selection['list_type']} list {current_selection['list_id']}")
         
         # Get reply stats efficiently
         reply_stats = service.get_reply_stats(user_id)
         
         # Static reply styles (cache in memory)
         reply_styles = [
+            {"id": "creatrics", "name": "Creatrics"},
             {"id": "supportive", "name": "Supportive"},
-            {"id": "questioning", "name": "Questioning"}, 
+            {"id": "questioning", "name": "Questioning"},
             {"id": "valueadd", "name": "Value-Add"},
             {"id": "humorous", "name": "Humorous"},
             {"id": "contrarian", "name": "Contrarian"}
@@ -735,6 +741,50 @@ def check_brand_voice():
         import traceback
         logger.error(traceback.format_exc())
         return jsonify({'success': False, 'error': 'Internal server error', 'has_brand_voice_data': False}), 500
+
+@bp.route('/get-more-tweets', methods=['POST'])
+@auth_required
+@require_permission('reply_guy')
+@validate_request_data(required_fields=['list_id', 'list_type', 'offset'])
+def get_more_tweets():
+    """Get more tweets for pagination - uses backend sorting"""
+    try:
+        data = request.get_json()
+        list_id = data.get('list_id')
+        list_type = data.get('list_type')
+        offset = int(data.get('offset', 0))
+        limit = int(data.get('limit', 100))
+
+        service = ReplyGuyService()
+        user_id = get_workspace_user_id()
+
+        # Get analysis with pagination - backend does all the work!
+        analysis = service.get_current_analysis(
+            user_id,
+            list_id,
+            list_type,
+            limit=limit,
+            offset=offset
+        )
+
+        if not analysis or not analysis.get('tweet_opportunities'):
+            return jsonify({'success': False, 'error': 'No analysis found'}), 404
+
+        tweets_batch = analysis['tweet_opportunities']
+        total = analysis.get('total_count', len(tweets_batch))
+
+        return jsonify({
+            'success': True,
+            'tweets': tweets_batch,
+            'total': total,
+            'offset': offset,
+            'limit': limit,
+            'has_more': offset + limit < total
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching more tweets: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
 # Health check endpoint
 @bp.route('/health', methods=['GET'])

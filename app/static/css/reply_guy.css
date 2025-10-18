@@ -765,6 +765,16 @@ html.dark .primary-btn:hover:not(:disabled) {
     background: var(--bg-tertiary) !important;
     color: var(--text-secondary) !important;
     pointer-events: none !important;
+}
+
+/* Load More button - center content */
+.load-more-container {
+    text-align: center;
+}
+
+#load-more-btn {
+    justify-content: center;
+    margin: 0 auto;
     border: 1px solid var(--border-primary) !important;
     box-shadow: none !important;
 }

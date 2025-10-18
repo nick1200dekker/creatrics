@@ -123,24 +123,62 @@ COPY THEIR EXACT PATTERNS:
 
 OUTPUT ONLY THE REPLY TEXT:"""
         else:
-            # No brand voice version - standard instructions
-            return """Tweet by @{author}: {tweet_text}
+            # No brand voice version - enhanced with strategic reply best practices
+            return """CONTEXT: You're replying to a tweet to maximize engagement and visibility. This reply will appear in a high-traffic conversation thread.
 
-Generate a {style} reply.
+TWEET TO REPLY TO:
+@{author}: {tweet_text}
 
-Style Guidelines:
-- supportive: Encouraging and positive response
-- questioning: Ask a thoughtful question
-- valueadd: Add useful insight or information
-- humorous: Be briefly funny or witty
-- contrarian: Respectfully disagree or offer counter-perspective
+YOUR MISSION: Generate the BEST POSSIBLE {style} reply based on this tweet.
 
-Rules:
-1. Keep it VERY short (under 15 words)
-2. Sound human and casual
-3. Be engaging
+STYLE APPROACH:
+- Creatrics (default): Craft the absolute best strategic reply that maximizes engagement while adding genuine value
+- Supportive: Encouraging and builds on their point positively
+- Questioning: Ask a thought-provoking question that drives discussion
+- Value-Add: Provide useful insight, data, or perspective that enhances the conversation
+- Humorous: Add wit or humor that feels natural (not forced)
+- Contrarian: Respectfully challenge with a fresh perspective
 
-Reply:"""
+CRITICAL RULES - MUST NOT LOOK AI-GENERATED:
+1. BE HUMAN: Write like a real person, not an AI assistant
+   - Use casual language, contractions (you're, don't, can't)
+   - NO corporate speak or overly polite phrases
+   - NO "Great point!" or "I appreciate your perspective" - too formal
+   - Natural flow, not structured or templated
+
+2. TIMING & RECENCY:
+   - This is a FRESH tweet (you're in the golden 15-minute window)
+   - Early quality replies get 300% more visibility
+   - Make it count
+
+3. ADD UNIQUE VALUE:
+   - Insight, humor, or useful information only
+   - No generic agreement or obvious statements
+   - Ask yourself: "Would I actually post this?"
+
+4. LENGTH & ENGAGEMENT:
+   - 8-25 words is the sweet spot (not too short, not essay-length)
+   - Make people want to respond or engage
+   - Conversational, not preachy
+
+5. AVOID "REPLY GUY" TRAPS:
+   - Don't be overly familiar or presumptuous
+   - No unsolicited advice unless directly relevant
+   - Match the energy/tone of the original tweet
+
+6. AUTHENTICITY MARKERS:
+   - Occasional typos or informal grammar are GOOD (shows you're human)
+   - Use "nah" instead of "no", "ya" instead of "yes" when casual
+   - Real people use "lol", "fr", "tbh", "lowkey" naturally (when appropriate)
+   - Sentence fragments are fine ("Facts." "This." "Exactly.")
+
+7. PERSONALITY INDICATORS (pick 1-2 max):
+   - Light emoji use (1-2 max, only if it fits)
+   - Personal anecdotes ("had this happen to me")
+   - Rhetorical questions
+   - Brief reactions ("wild", "insane", "makes sense")
+
+OUTPUT ONLY THE REPLY TEXT (nothing else):"""
     
     def get_brand_voice_context(self, user_id: str) -> str:
         """Get brand voice context from user's X replies data - Enhanced version"""

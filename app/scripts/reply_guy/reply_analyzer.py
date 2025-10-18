@@ -331,10 +331,11 @@ class ReplyAnalyzer:
         return filtered_tweets
     
     def score_tweets(self, tweets: List[Dict], account_stats: Dict) -> List[Dict]:
-        """Score tweets based on reply opportunity factors"""
+        """Score tweets based on reply opportunity factors - TIME IS PRIORITY!"""
         now = datetime.now()
-        scored_tweets = []
-        
+        fresh_tweets = []  # < 1 hour old (golden window)
+        older_tweets = []  # > 1 hour old (use full algo)
+
         for tweet in tweets:
             try:
                 # Calculate time factor (recency)
@@ -342,15 +343,21 @@ class ReplyAnalyzer:
                     tweet.get('created_at', ''),
                     "%a %b %d %H:%M:%S %z %Y"
                 ).replace(tzinfo=None)
-                
+
                 hours_ago = (now - tweet_date).total_seconds() / 3600
-                
+
+                # CRITICAL: Tweets < 1 hour are ALWAYS prioritized (golden window)
+                # They go to a separate list and are sorted ONLY by time
+                if hours_ago < 1.0:
+                    tweet['hours_ago'] = hours_ago
+                    tweet['is_fresh'] = True
+                    tweet['score'] = 1000 - hours_ago  # Higher score for fresher tweets
+                    fresh_tweets.append(tweet)
+                    continue
+
+                # For older tweets (> 1 hour), use the full scoring algorithm
                 # Time factor calculation
-                if hours_ago < 0.25:  # Less than 15 minutes
-                    time_factor = 1.0
-                elif hours_ago < 1:  # Less than 1 hour
-                    time_factor = 0.9
-                elif hours_ago < 3:  # Less than 3 hours
+                if hours_ago < 3:  # Less than 3 hours
                     time_factor = 0.7
                 elif hours_ago < 6:  # Less than 6 hours
                     time_factor = 0.5
@@ -358,20 +365,20 @@ class ReplyAnalyzer:
                     time_factor = 0.3
                 else:  # More than 12 hours
                     time_factor = 0.1
-                
+
                 # Get engagement metrics
                 likes = self._safe_int(tweet.get('engagement', {}).get('likes', 0))
                 retweets = self._safe_int(tweet.get('engagement', {}).get('retweets', 0))
                 views = self._safe_int(tweet.get('engagement', {}).get('views', 0))
-                
+
                 # Calculate engagement rate
                 engagement_rate = 0
                 if views > 0:
                     engagement_rate = (likes + retweets) / views
-                
+
                 # Normalize engagement rate (0-1 scale)
                 normalized_engagement = min(engagement_rate * 20, 1.0)
-                
+
                 # Views factor
                 views_factor = 0.5  # Default
                 account = tweet.get('account')
@@ -379,7 +386,7 @@ class ReplyAnalyzer:
                     avg_views = account_stats[account].get('avg_views_per_tweet', 0)
                     if avg_views > 0:
                         views_factor = min(views / avg_views, 2.0) / 2
-                
+
                 # Creator factor
                 creator_factor = 0.5  # Default
                 if account and account in account_stats:
@@ -395,34 +402,44 @@ class ReplyAnalyzer:
                         creator_factor = 0.7
                     else:
                         creator_factor = 0.4
-                
-                # Calculate final score
+
+                # Calculate final score for older tweets
                 score = (
                     time_factor * 0.4 +
                     normalized_engagement * 0.3 +
                     views_factor * 0.2 +
                     creator_factor * 0.1
                 )
-                
-                # Add score to tweet
+
+                # Add metadata
                 tweet['score'] = score
+                tweet['is_fresh'] = False
+                tweet['hours_ago'] = hours_ago
                 tweet['score_factors'] = {
                     'time_factor': time_factor,
                     'engagement_rate': normalized_engagement,
                     'views_factor': views_factor,
                     'creator_factor': creator_factor
                 }
-                
-                scored_tweets.append(tweet)
-                
+
+                older_tweets.append(tweet)
+
             except Exception as e:
                 logger.error(f"Error scoring tweet: {str(e)}")
                 continue
-        
-        # Sort by score (highest first)
-        scored_tweets.sort(key=lambda x: x.get('score', 0), reverse=True)
-        
-        return scored_tweets
+
+        # Sort fresh tweets by time only (newest first)
+        fresh_tweets.sort(key=lambda x: x.get('hours_ago', 999))
+
+        # Sort older tweets by full algorithm score (highest first)
+        older_tweets.sort(key=lambda x: x.get('score', 0), reverse=True)
+
+        # CRITICAL: Fresh tweets ALWAYS come first, then older tweets
+        final_list = fresh_tweets + older_tweets
+
+        logger.info(f"Scored tweets: {len(fresh_tweets)} fresh (<1hr), {len(older_tweets)} older (>1hr)")
+
+        return final_list
     
     def calculate_account_performance(self, account_tweets: List[Dict]) -> Dict:
         """Calculate performance metrics for an account"""

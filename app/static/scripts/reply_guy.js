@@ -1648,4 +1648,117 @@
         }
     }, 2000);
 
+    // Format tweet timestamps
+    function formatTimestamp(dateString) {
+        try {
+            const tweetDate = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - tweetDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'now';
+            if (diffMins < 60) return `${diffMins}m`;
+            if (diffHours < 24) return `${diffHours}h`;
+            if (diffDays < 7) return `${diffDays}d`;
+
+            // Format as date for older tweets
+            return tweetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } catch (e) {
+            return '';
+        }
+    }
+
+    // Update all timestamps on page
+    function updateTimestamps() {
+        const timestamps = document.querySelectorAll('.tweet-timestamp');
+        timestamps.forEach(el => {
+            const timestamp = el.getAttribute('data-timestamp');
+            if (timestamp) {
+                el.textContent = formatTimestamp(timestamp);
+            }
+        });
+    }
+
+    // Update timestamps immediately and every minute
+    updateTimestamps();
+    setInterval(updateTimestamps, 60000);
+
+    // Pagination: Load More functionality with API
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', async function() {
+            const listId = this.getAttribute('data-list-id');
+            const listType = this.getAttribute('data-list-type');
+            const loaded = parseInt(this.getAttribute('data-loaded'));
+            const total = parseInt(this.getAttribute('data-total'));
+
+            // Disable button while loading
+            this.disabled = true;
+            this.innerHTML = '<i class="ph ph-spinner"></i> Loading...';
+
+            try {
+                const response = await fetch('/reply_guy/get-more-tweets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        list_id: listId,
+                        list_type: listType,
+                        offset: loaded,
+                        limit: 100
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.tweets) {
+                    const container = document.getElementById('tweets-container');
+
+                    // Render new tweets
+                    data.tweets.forEach(tweet => {
+                        const tweetHtml = renderTweetCard(tweet);
+                        container.insertAdjacentHTML('beforeend', tweetHtml);
+                    });
+
+                    // Update loaded count
+                    const newLoaded = loaded + data.tweets.length;
+                    this.setAttribute('data-loaded', newLoaded);
+
+                    // Update timestamps for new tweets
+                    updateTimestamps();
+
+                    // Check if more to load
+                    if (data.has_more) {
+                        const remaining = total - newLoaded;
+                        this.innerHTML = `<i class="ph ph-arrow-down"></i> Load More (${remaining} remaining)`;
+                        this.disabled = false;
+                    } else {
+                        this.parentElement.style.display = 'none';
+                    }
+
+                    console.log(`Loaded ${data.tweets.length} more tweets`);
+                } else {
+                    throw new Error(data.error || 'Failed to load tweets');
+                }
+            } catch (error) {
+                console.error('Error loading more tweets:', error);
+                this.innerHTML = '<i class="ph ph-warning"></i> Error - Try again';
+                this.disabled = false;
+            }
+        });
+    }
+
+    // Helper function to render tweet card HTML
+    function renderTweetCard(tweet) {
+        // This is a simplified version - you may need to match your exact template structure
+        return `
+            <div class="tweet-opportunity" data-tweet-id="${tweet.tweet_id}">
+                <div class="tweet-grid">
+                    <!-- Add full tweet HTML structure here -->
+                </div>
+            </div>
+        `;
+    }
+
 })();
