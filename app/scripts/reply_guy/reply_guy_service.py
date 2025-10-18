@@ -87,7 +87,21 @@ class ReplyGuyService:
                 'PopBase',
                 'pepe_fgm',
                 'DiscussingFilm',
-                'PopCrave'
+                'PopCrave',
+                'OddestHistory_',
+                'FAFO_TV',
+                'creepydotorg',
+                'CensoredMen',
+                'Morbidful',
+                'TheFigen_',
+                'scubaryan_',
+                'ayeejuju',
+                'stxrinsky',
+                'ImMeme0',
+                'invis4yo',
+                'LibertyCappy',
+                'interesting_aIl',
+                'crazyclips_'
             ]
         return []
     
