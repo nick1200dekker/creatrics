@@ -43,40 +43,28 @@ class ReplyGuyService:
             return []
 
     def get_default_list_accounts(self, list_id: str) -> List[str]:
-        """Get accounts for a default list - Updated via Google Search 2025"""
+        """Get accounts for a default list - Optimized for daily cronjob (20 accounts max)"""
         if list_id == 'content_creators':
-            # Top engaging accounts across different niches (Google Search results 2025)
+            # Curated list of highly-active accounts that post daily
+            # Limited to 20 accounts for faster processing in cronjobs
             return [
-                # Tech/Business Leaders
-                'elonmusk', 'BillGates', 'sundarpichai', 'tim_cook', 'satyanadella', 'jeffweiner',
-                'reidhoffman', 'naval', 'balajis', 'pmarca', 'bgurley', 'chamath', 'jason', 'garyvee',
+                # Tech/Business Leaders (very active)
+                'elonmusk', 'garyvee', 'naval', 'balajis', 'chamath',
 
-                # AI & Tech Influencers
-                'AndrewYNg', 'demishassabis', 'feifeili', 'gdb', 'fchollet', 'alliekmiller',
-                'RowanCheung', 'jeremyphoward', 'KirkDBorne', 'LexFridman', 'RonVanLoon',
+                # AI & Tech Influencers (daily posters)
+                'RowanCheung', 'LexFridman', 'AndrewYNg',
 
                 # Marketing & Business
-                'TheCoolestCool', 'KateBour', 'Mike_Stelzner', 'jaybaer', 'richpage', 'nealschaffer',
+                'TheCoolestCool', 'KateBour',
 
                 # Content Creators & YouTubers
-                'MrBeast', 'PewDiePie', 'KSI', 'LoganPaul', 'Pokimanelol', 'Valkyrae',
-                'Quackity', 'DrLupo', 'EmmaChamberlain', 'jamescharles',
+                'MrBeast', 'KSI', 'LoganPaul',
 
-                # Music & Entertainment
-                'taylorswift13', 'justinbieber', 'rihanna', 'katyperry', 'ArianaGrande',
-                'selenagomez', 'Drake', 'TheWeeknd',
+                # Finance/Crypto (very active)
+                'michael_saylor', 'APompliano', 'VitalikButerin',
 
-                # Politicians & Public Figures
-                'BarackObama', 'narendramodi', 'POTUS',
-
-                # News/Media
-                'cnn', 'nytimes', 'washingtonpost', 'bbcnews', 'reuters', 'ap', 'nbcnews',
-
-                # Finance/Crypto
-                'michael_saylor', 'cz_binance', 'cathiedwood', 'APompliano', 'VitalikButerin',
-
-                # Sports
-                'Cristiano', 'stephencurry30', 'KingJames', 'neymarjr', 'SerenaWilliams', 'espn'
+                # Tech News/Commentary
+                'pmarca', 'jason', 'bgurley', 'reidhoffman'
             ]
         return []
     

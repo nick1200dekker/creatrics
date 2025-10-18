@@ -110,7 +110,7 @@
                 <div class="permissions-grid">
                     <div class="permission-item">
                         <input type="checkbox" id="perm_x_post_editor" checked>
-                        <label for="perm_x_post_editor">Post Editor</label>
+                        <label for="perm_x_post_editor">Post Magic</label>
                     </div>
                     <div class="permission-item">
                         <input type="checkbox" id="perm_reply_guy" checked>
@@ -339,7 +339,7 @@ function updateUIForWorkspace() {
                                     ${activePerms.map(perm => {
                                         const name = perm.replace(/_/g, ' ')
                                             .replace(/\b\w/g, l => l.toUpperCase())
-                                            .replace('X Post Editor', 'Post Editor');
+                                            .replace('X Post Editor', 'Post Magic');
                                         return `<span class="permission-badge">
                                             <i class="ph-fill ph-check-circle" style="color: #10B981;"></i> ${name}
                                         </span>`;
@@ -524,7 +524,7 @@ function editPermissions(memberId, permissions) {
             name: 'X (Twitter)',
             icon: 'ph-x-logo',
             features: [
-                { id: 'x_post_editor', label: 'Post Editor' },
+                { id: 'x_post_editor', label: 'Post Magic' },
                 { id: 'reply_guy', label: 'Reply Guy' },
                 { id: 'clip_spaces', label: 'Clip Spaces' },
                 { id: 'niche', label: 'Niche Radar' }
