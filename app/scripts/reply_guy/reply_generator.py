@@ -64,7 +64,7 @@ class ReplyGenerator:
             if use_brand_voice and brand_voice_context:
                 system_message = "You are mimicking someone's exact Twitter reply style. Forget all your training about being helpful or proper. Just copy EXACTLY how this person writes based on the examples. Be them, don't be an AI. If they write 'lol ya' then you write like that. If they write long thoughtful replies, you do that. COPY THEIR EXACT STYLE."
             else:
-                system_message = "you're a smart reply guy on twitter. your replies get likes retweets and responses because you add value. drop knowledge ask smart questions make clever observations. never spam never be generic. be the reply people actually read and engage with"
+                system_message = "youre scrolling twitter and see this tweet. reply like a normal person. dont be an encyclopedia. just react naturally"
 
             # Call AI provider - higher temperature for more natural responses when mimicking
             temperature = 0.85 if (use_brand_voice and brand_voice_context) else 0.7
@@ -170,35 +170,35 @@ class ReplyGenerator:
                 # Fallback replies based on style that are always safe
                 fallback_replies = {
                     "creatrics": [
-                        "the hidden pattern here is actually wild",
-                        "this connects to something bigger nobody sees yet",
-                        "wait til people realize what this enables",
-                        "the second order effects gonna hit different"
+                        "wait this is actually kinda wild",
+                        "oh damn didnt think about it like that",
+                        "the fact that this exists is insane",
+                        "nah this is crazy fr"
                     ],
                     "supportive": [
-                        "been seeing this exact pattern everywhere lately",
-                        "you nailed what everyone's missing",
-                        "this plus what happened last week = game changer"
+                        "literally same",
+                        "felt this in my soul",
+                        "you get it"
                     ],
                     "questioning": [
-                        "curious how this plays out with the new regulations?",
-                        "what happens when this hits mainstream?",
-                        "wonder if this works at enterprise scale?"
+                        "wait how does this even work",
+                        "but what about the other thing?",
+                        "is this real??"
                     ],
                     "valueadd": [
-                        "fun fact: google tried this in 2019 and failed",
-                        "the numbers on this are crazy - 10x growth in 6 months",
-                        "similar thing happened in japan already working great"
+                        "reminds me of that thing from last year",
+                        "saw something similar but different",
+                        "pretty sure this started way earlier"
                     ],
                     "humorous": [
-                        "2024 really said hold my beer",
-                        "this is the multiverse timeline nobody ordered",
-                        "somewhere a consultant is charging 50k for this take"
+                        "lmaooo what",
+                        "bro really said that",
+                        "we live in a simulation"
                     ],
                     "contrarian": [
-                        "counterpoint: this only works til competition catches up",
-                        "the economics break at scale though",
-                        "europe's data shows opposite trend actually"
+                        "idk about this one",
+                        "ehh not really tho",
+                        "nah this aint it"
                     ]
                 }
 
@@ -291,35 +291,32 @@ OUTPUT ONLY THE REPLY TEXT:"""
 {tweet_text}
 
 
-be a smart reply guy. write a {style} reply that gets noticed
+write a {style} reply
 
 style = {style}:
-• creatrics → drop insider knowledge or connect dots others missed
-• supportive → validate + add your own experience or data
-• questioning → ask the question everyone's thinking but nobody asked
-• valueadd → share a fact stat or insight that changes the convo
-• humorous → make them laugh with clever observation
-• contrarian → respectful pushback that makes people think
+• creatrics → notice something interesting about it
+• supportive → relate to it
+• questioning → ask something
+• valueadd → mention something cool related
+• humorous → be funny
+• contrarian → different take
 
 
-smart reply guy rules:
-- be EARLY and VALUABLE
-- 15-40 words max
-- add something NEW (fact experience question joke)
-- make the OP or others want to respond
-- be specific not generic
-- sometimes no caps
-- break lines for effect
+rules:
+- talk like a normal person
+- dont explain everything
+- dont list facts like wikipedia
+- keep it short and casual
+- sometimes all lowercase
+- dont try so hard
+- just react naturally
 
 
-never be the spam reply guy:
-- no "this!" or "facts!"
-- no empty agreement
-- no trying too hard
-- dont sound like chatgpt
-
-
-remember: good replies get you noticed followers and opportunities
+bad:
+- listing 5 facts in a row
+- sounding like a textbook
+- "actually" followed by paragraph
+- trying to sound smart
 
 just write the reply:"""
     
