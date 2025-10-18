@@ -14,7 +14,6 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='scripts/reply_guy.js') }}"></script>
-<!-- Data element for initializing JS with server data -->
 <div id="reply-guy-data"
      {% if current_selection and current_selection.list_id %}
      data-selected-list-id="{{ current_selection.list_id }}"
@@ -22,7 +21,6 @@
      {% endif %}
      style="display: none;"></div>
 <script>
-// Legacy initialization for template variables
 (function() {
     {% if current_selection and current_selection.list_id %}
     // Template data will be picked up by reply_guy.js
@@ -250,7 +248,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Reply Panel -->
+                                <!-- Reply Panel with GIF Support -->
                                 <div class="reply-panel">
                                     <div class="reply-panel-header">
                                         <div class="style-selector">
@@ -282,14 +280,19 @@
                                     <div class="reply-footer">
                                         <div class="character-count">0/280</div>
                                         <div class="reply-actions">
-                                            <button class="action-btn generate generate-reply-btn">
+                                            <button class="action-btn generate generate-reply-btn" title="Generate AI reply">
                                                 <i class="ph ph-sparkle"></i>
                                             </button>
-                                            <button class="action-btn post post-reply-btn">
+                                            <button class="action-btn gif-suggest gif-suggest-btn" title="Add GIF">
+                                                <i class="ph ph-gif"></i>
+                                            </button>
+                                            <button class="action-btn post post-reply-btn" title="Post reply">
                                                 <i class="ph ph-paper-plane-right"></i>
                                             </button>
                                         </div>
                                     </div>
+                                    
+                                    <!-- GIF Panel will be dynamically created by JS -->
                                 </div>
                             </div>
                         </div>
@@ -429,6 +432,5 @@
         </div>
     </div>
 </div>
-
 
 {% endblock %}

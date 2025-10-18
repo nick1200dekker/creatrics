@@ -1,4 +1,4 @@
-// Reply Guy Application
+// Reply Guy Application - Complete with GIF Suggestions
 (function() {
     'use strict';
 
@@ -13,7 +13,8 @@
         currentDeletingListId: null,
         hasBrandVoiceData: false,
         ongoingUpdates: {},
-        isInitialized: false
+        isInitialized: false,
+        gifCache: new Map() // Cache GIF search results by query
     };
 
     // Initialize application
@@ -113,12 +114,10 @@
         }
 
         // If no list is selected on page load, the dropdown text needs to be updated
-        // but we don't need to call selectList() since the backend already auto-selected it
         if (!state.selectedList) {
             const firstDefaultList = document.querySelector('.dropdown-option[data-type="default"]');
             if (firstDefaultList) {
                 console.log('Auto-selecting first default list UI on page load');
-                // Just update the UI, don't make an API call
                 const optionText = firstDefaultList.textContent.trim();
                 const selectedListText = document.getElementById('selected-list-text');
                 const selectedListTextEmpty = document.getElementById('selected-list-text-empty');
@@ -129,7 +128,6 @@
                 state.selectedList = firstDefaultList.getAttribute('data-value');
                 state.selectedListType = firstDefaultList.getAttribute('data-type');
             } else {
-                // If no default lists, try custom lists
                 const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
                 if (firstCustomList) {
                     console.log('Auto-selecting first custom list on page load');
@@ -138,7 +136,7 @@
             }
         }
 
-        // Check if there are ongoing updates and refresh button state (deferred)
+        // Check if there are ongoing updates and refresh button state
         if (Object.keys(state.ongoingUpdates).length > 0) {
             console.log('Found ongoing updates, checking their status...');
             setTimeout(() => checkOngoingUpdatesStatus(), 500);
@@ -152,7 +150,6 @@
         const listIds = Object.keys(state.ongoingUpdates);
         if (listIds.length === 0) return;
 
-        // Check each ongoing update
         listIds.forEach(listId => {
             fetch('/reply-guy/check-update-status', {
                 method: 'POST',
@@ -162,11 +159,9 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success && !data.is_updating) {
-                    // Update completed, remove from ongoing updates
                     delete state.ongoingUpdates[listId];
                     saveOngoingUpdates();
 
-                    // If this is the currently selected list, refresh the page
                     if (listId === state.selectedList) {
                         showToast('Update completed! Refreshing...', 'success');
                         setTimeout(() => window.location.reload(), 1000);
@@ -179,7 +174,6 @@
             });
         });
 
-        // Continue checking every 5 seconds if there are still ongoing updates
         if (Object.keys(state.ongoingUpdates).length > 0) {
             setTimeout(checkOngoingUpdatesStatus, 5000);
         }
@@ -198,7 +192,6 @@
                 setBrandVoiceState(false);
             })
             .finally(() => {
-                // Hide loading section and show tweets after brand voice check completes
                 const loadingSection = document.getElementById('tweets-loading-section');
                 const tweetsSection = document.getElementById('tweets-section');
 
@@ -216,7 +209,6 @@
 
         console.log('Setting brand voice state:', hasData);
 
-        // Load user preference from localStorage
         const userPrefersBrandVoice = localStorage.getItem('preferBrandVoice');
         const shouldEnableBrandVoice = userPrefersBrandVoice === null ? true : userPrefersBrandVoice === 'true';
 
@@ -225,14 +217,12 @@
             checkbox.disabled = !hasData;
             console.log('Checkbox:', checkbox.id, 'disabled:', checkbox.disabled, 'hasData:', hasData, 'was disabled:', wasDisabled);
 
-            // Auto-check if brand voice is available based on user preference
             if (hasData) {
                 if (!checkbox.hasAttribute('data-initialized')) {
                     checkbox.checked = shouldEnableBrandVoice;
                     checkbox.setAttribute('data-initialized', 'true');
                     console.log('Initialized checkbox to:', shouldEnableBrandVoice);
 
-                    // Add change listener to save preference (only once)
                     checkbox.addEventListener('change', function(e) {
                         console.log('Brand voice checkbox change event fired! New value:', this.checked);
                         localStorage.setItem('preferBrandVoice', this.checked);
@@ -245,7 +235,6 @@
         });
 
         document.querySelectorAll('.brand-voice-toggle').forEach(toggle => {
-            // Remove any existing click handler first to prevent duplicates
             const oldHandler = toggle._disabledClickHandler;
             if (oldHandler) {
                 toggle.removeEventListener('click', oldHandler, true);
@@ -254,14 +243,13 @@
             if (hasData) {
                 toggle.classList.remove('disabled');
                 toggle.title = '';
-                toggle.style.removeProperty('pointer-events'); // Remove any inline style
+                toggle.style.removeProperty('pointer-events');
                 console.log('Brand voice toggle enabled');
             } else {
                 toggle.classList.add('disabled');
                 toggle.title = 'Connect your X account and ensure you have replies on your profile to enable brand voice';
-                toggle.style.pointerEvents = 'none'; // Explicitly disable pointer events
+                toggle.style.pointerEvents = 'none';
 
-                // Create and store the handler so we can remove it later
                 const disabledHandler = function(e) {
                     if (this.classList.contains('disabled')) {
                         e.preventDefault();
@@ -272,11 +260,10 @@
                     }
                 };
                 toggle._disabledClickHandler = disabledHandler;
-                toggle.addEventListener('click', disabledHandler, true);  // Use capture phase
+                toggle.addEventListener('click', disabledHandler, true);
             }
         });
 
-        // Handle global brand voice toggle specifically
         const globalToggle = document.querySelector('.brand-voice-toggle.global-brand-voice');
         const globalCheckbox = document.getElementById('global-brand-voice');
 
@@ -284,7 +271,6 @@
             if (hasData) {
                 globalToggle.classList.remove('disabled');
                 globalToggle.title = 'Use your brand voice for all replies';
-                // Add click handler for visual feedback
                 globalCheckbox.addEventListener('change', function() {
                     if (this.checked) {
                         globalToggle.classList.add('active');
@@ -303,7 +289,6 @@
 
     // Setup event listeners
     function setupEventListeners() {
-        // View toggle buttons
         const repliesViewBtn = document.getElementById('replies-view-btn');
         const listsViewBtn = document.getElementById('lists-view-btn');
 
@@ -315,7 +300,6 @@
             listsViewBtn.onclick = () => switchView('lists');
         }
 
-        // Update buttons (both regular and empty state)
         const updateBtn = document.getElementById('update-btn');
         const updateBtnEmpty = document.getElementById('update-btn-empty');
         if (updateBtn) {
@@ -325,20 +309,17 @@
             updateBtnEmpty.onclick = handleUpdate;
         }
 
-        // Create list button
         const createListBtn = document.getElementById('create-list-btn');
         if (createListBtn) {
             createListBtn.onclick = handleCreateList;
         }
 
-        // List type dropdown
         const newListType = document.getElementById('new-list-type');
         if (newListType) {
             newListType.onchange = handleListTypeChange;
-            handleListTypeChange(); // Initialize visibility
+            handleListTypeChange();
         }
 
-        // Simple form buttons
         const simpleCreateBtn = document.getElementById('simple-create-btn');
         if (simpleCreateBtn) {
             simpleCreateBtn.onclick = handleSimpleCreateList;
@@ -352,7 +333,6 @@
             closeCreateModal.onclick = hideCreatePanel;
         }
 
-        // Direct event listeners for create new list buttons
         const createNewListBtn = document.getElementById('create-new-list');
         const createNewListEmptyBtn = document.getElementById('create-new-list-empty');
 
@@ -374,10 +354,9 @@
             };
         }
 
-        // Delegated event listeners for dynamic content
         document.addEventListener('click', handleDelegatedClicks);
         document.addEventListener('input', handleDelegatedInputs);
-        document.addEventListener('change', handleDelegatedInputs);  // Also listen for change events (checkboxes)
+        document.addEventListener('change', handleDelegatedInputs);
     }
 
     function handleDelegatedClicks(e) {
@@ -400,6 +379,66 @@
             generateReply(tweetElement).finally(() => {
                 btn.disabled = false;
             });
+            return;
+        }
+
+        // GIF suggest button - NEW
+        if (e.target.closest('.gif-suggest-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.gif-suggest-btn');
+            const tweetElement = btn.closest('.tweet-opportunity');
+            toggleGifPanel(tweetElement);
+            return;
+        }
+
+        // GIF item selection - Download immediately on click
+        if (e.target.closest('.gif-item-reply')) {
+            e.preventDefault();
+            const gifItem = e.target.closest('.gif-item-reply');
+            const tweetElement = gifItem.closest('.tweet-opportunity');
+
+            // Download GIF immediately
+            const gifData = {
+                id: gifItem.getAttribute('data-gif-id'),
+                url: gifItem.getAttribute('data-gif-url'),
+                title: gifItem.getAttribute('data-gif-title')
+            };
+
+            // Download the GIF
+            downloadGif(gifData);
+
+            // Optional: Close the panel after download
+            const panel = tweetElement.querySelector('.gif-suggestion-panel');
+            if (panel) {
+                panel.classList.remove('show');
+            }
+            return;
+        }
+
+        // GIF download button - NEW
+        if (e.target.closest('.gif-download-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.gif-download-btn');
+            const tweetElement = btn.closest('.tweet-opportunity');
+            downloadSelectedGif(tweetElement);
+            return;
+        }
+
+        // GIF change button - NEW
+        if (e.target.closest('.gif-change-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.gif-change-btn');
+            const tweetElement = btn.closest('.tweet-opportunity');
+            showGifGrid(tweetElement);
+            return;
+        }
+
+        // GIF panel close - NEW
+        if (e.target.closest('.gif-panel-close')) {
+            e.preventDefault();
+            const btn = e.target.closest('.gif-panel-close');
+            const tweetElement = btn.closest('.tweet-opportunity');
+            hideGifPanel(tweetElement);
             return;
         }
 
@@ -440,21 +479,18 @@
             updateCharacterCount(e.target);
         }
 
-        // Handle brand voice checkbox changes
         if (e.target.classList.contains('brand-voice-checkbox')) {
             const toggle = e.target.closest('.brand-voice-toggle');
 
-            // If the toggle is disabled, prevent the change
             if (toggle && toggle.classList.contains('disabled')) {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('Brand voice checkbox change prevented - toggle is disabled');
-                e.target.checked = !e.target.checked; // Revert the change
+                e.target.checked = !e.target.checked;
                 return false;
             }
 
             if (toggle && !toggle.classList.contains('disabled')) {
-                // Sync all brand voice checkboxes to the same state
                 const newState = e.target.checked;
                 console.log('Brand voice toggled:', newState);
 
@@ -464,7 +500,6 @@
                     }
                 });
 
-                // Save preference to localStorage
                 localStorage.setItem('preferBrandVoice', newState.toString());
             }
         }
@@ -522,7 +557,6 @@
             const menuId = triggerId === 'list-dropdown-trigger' ? 'list-dropdown-menu' : 'list-dropdown-menu-empty';
             const dropdownMenu = document.getElementById(menuId);
 
-            // Remove old listener if exists
             dropdownTrigger.replaceWith(dropdownTrigger.cloneNode(true));
             const newTrigger = document.getElementById(triggerId);
 
@@ -532,7 +566,6 @@
             });
         });
 
-        // Use event delegation for dropdown options
         document.addEventListener('click', (e) => {
             const option = e.target.closest('.dropdown-option:not(.create-new)');
             if (option && (option.closest('#list-dropdown-menu') || option.closest('#list-dropdown-menu-empty'))) {
@@ -540,7 +573,6 @@
                 return;
             }
 
-            // Close on outside click
             if (!e.target.closest('.dropdown')) {
                 closeDropdowns();
             }
@@ -551,7 +583,6 @@
         const dropdownTrigger = document.getElementById(triggerId);
         const dropdownMenu = document.getElementById(menuId);
 
-        // Close other dropdown
         const otherTriggerId = triggerId === 'list-dropdown-trigger' ? 'list-dropdown-trigger-empty' : 'list-dropdown-trigger';
         const otherMenuId = otherTriggerId === 'list-dropdown-trigger' ? 'list-dropdown-menu' : 'list-dropdown-menu-empty';
         const otherTrigger = document.getElementById(otherTriggerId);
@@ -584,7 +615,6 @@
             if (menu) menu.classList.remove('active');
         });
 
-        // Close reply style dropdowns too
         document.querySelectorAll('.reply-style-trigger').forEach(trigger => {
             trigger.classList.remove('active');
         });
@@ -608,10 +638,8 @@
             optionElement: option
         });
 
-        // Update both dropdown texts
         const selectedListText = document.getElementById('selected-list-text');
         const selectedListTextEmpty = document.getElementById('selected-list-text-empty');
-        // Get text content directly from option (text is no longer wrapped in span)
         const optionText = option.textContent.trim();
 
         if (selectedListText) selectedListText.textContent = optionText;
@@ -643,7 +671,6 @@
         const trigger = dropdown.querySelector('.reply-style-trigger');
         const menu = dropdown.querySelector('.reply-style-menu');
 
-        // Close other reply style dropdowns
         document.querySelectorAll('.dropdown').forEach(otherDropdown => {
             if (otherDropdown !== dropdown) {
                 const otherTrigger = otherDropdown.querySelector('.reply-style-trigger');
@@ -684,7 +711,6 @@
 
     // API Functions
     function updateButtonVisibility() {
-        // Handle both regular and empty state update buttons
         const updateButtonContainer = document.getElementById('update-button-container');
         const updateBtn = document.getElementById('update-btn');
         const updateButtonContainerEmpty = document.getElementById('update-button-container-empty');
@@ -700,7 +726,6 @@
         });
 
         if (state.selectedListType === 'custom' && state.selectedList) {
-            // Show the appropriate update button
             if (updateButtonContainer) {
                 updateButtonContainer.style.display = 'block';
                 console.log('Showing regular update button for custom list');
@@ -712,7 +737,6 @@
 
             const isUpdating = state.selectedList in state.ongoingUpdates;
 
-            // Update both buttons if they exist
             [updateBtn, updateBtnEmpty].forEach(btn => {
                 if (btn) {
                     if (isUpdating) {
@@ -727,7 +751,6 @@
                 }
             });
         } else {
-            // Hide both update buttons
             if (updateButtonContainer) {
                 updateButtonContainer.style.display = 'none';
                 console.log('Hiding regular update button - not a custom list');
@@ -846,7 +869,7 @@
         });
     }
 
-    // Reply Functions
+    // Reply Functions - ENHANCED with GIF support
     function generateReply(tweetElement) {
         console.log('generateReply function called with:', tweetElement);
         if (!tweetElement) {
@@ -881,6 +904,7 @@
 
         const textarea = tweetElement.querySelector('.reply-textarea');
         const generateBtn = tweetElement.querySelector('.generate-reply-btn');
+        const gifBtn = tweetElement.querySelector('.gif-suggest-btn');
 
         if (generateBtn) {
             generateBtn.innerHTML = '<div class="loading-spinner"></div>';
@@ -900,7 +924,7 @@
                 author: author,
                 style: style,
                 use_brand_voice: useBrandVoice,
-                image_urls: imageUrls  // Send images to API
+                image_urls: imageUrls
             })
         })
         .then(response => response.json())
@@ -910,6 +934,20 @@
                     textarea.value = data.reply;
                     updateCharacterCount(textarea);
                 }
+
+                // Store GIF query for this tweet - NEW
+                if (data.gif_query) {
+                    tweetElement.setAttribute('data-gif-query', data.gif_query);
+                    
+                    // Add indicator to GIF button
+                    if (gifBtn) {
+                        gifBtn.classList.add('has-gif');
+                    }
+
+                    // Auto-load GIFs in background
+                    loadGifsForTweet(tweetElement, data.gif_query);
+                }
+
                 showToast('Reply generated successfully!', 'success');
             } else {
                 if (textarea) {
@@ -937,6 +975,301 @@
         });
     }
 
+    // NEW: Load GIFs for a tweet
+    function loadGifsForTweet(tweetElement, query) {
+        if (!query) return;
+
+        // Check cache first
+        if (state.gifCache.has(query)) {
+            const cachedGifs = state.gifCache.get(query);
+            tweetElement.setAttribute('data-gifs', JSON.stringify(cachedGifs));
+            return Promise.resolve(cachedGifs);
+        }
+
+        return fetch('/reply-guy/search-gifs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: query, limit: 8 })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.gifs) {
+                // Cache the results
+                state.gifCache.set(query, data.gifs);
+                tweetElement.setAttribute('data-gifs', JSON.stringify(data.gifs));
+                return data.gifs;
+            }
+            return [];
+        })
+        .catch(error => {
+            console.error('Error loading GIFs:', error);
+            return [];
+        });
+    }
+
+    // NEW: Toggle GIF panel
+    function toggleGifPanel(tweetElement) {
+        const panel = getOrCreateGifPanel(tweetElement);
+        
+        if (panel.classList.contains('show')) {
+            hideGifPanel(tweetElement);
+        } else {
+            showGifPanel(tweetElement);
+        }
+    }
+
+    // NEW: Show GIF panel
+    function showGifPanel(tweetElement) {
+        const panel = getOrCreateGifPanel(tweetElement);
+        const query = tweetElement.getAttribute('data-gif-query');
+        
+        if (!query) {
+            showToast('Generate a reply first to get GIF suggestions', 'info');
+            return;
+        }
+
+        panel.classList.add('show');
+        
+        // Check if we have cached GIFs
+        const cachedGifsJson = tweetElement.getAttribute('data-gifs');
+        if (cachedGifsJson) {
+            const gifs = JSON.parse(cachedGifsJson);
+            displayGifsInPanel(tweetElement, gifs);
+        } else {
+            // Load GIFs
+            showGifLoading(tweetElement);
+            loadGifsForTweet(tweetElement, query).then(gifs => {
+                if (gifs && gifs.length > 0) {
+                    displayGifsInPanel(tweetElement, gifs);
+                } else {
+                    showGifEmpty(tweetElement);
+                }
+            });
+        }
+    }
+
+    // NEW: Hide GIF panel
+    function hideGifPanel(tweetElement) {
+        const panel = tweetElement.querySelector('.gif-suggestion-panel');
+        if (panel) {
+            panel.classList.remove('show');
+        }
+    }
+
+    // NEW: Get or create GIF panel
+    function getOrCreateGifPanel(tweetElement) {
+        let panel = tweetElement.querySelector('.gif-suggestion-panel');
+        
+        if (!panel) {
+            const replyPanel = tweetElement.querySelector('.reply-panel');
+            panel = document.createElement('div');
+            panel.className = 'gif-suggestion-panel';
+            panel.innerHTML = `
+                <div class="gif-panel-header">
+                    <div class="gif-panel-title">
+                        <i class="ph ph-gif"></i>
+                        Suggested GIFs
+                    </div>
+                    <button class="gif-panel-close">
+                        <i class="ph ph-x"></i>
+                    </button>
+                </div>
+                <div class="gif-grid-container"></div>
+                <div class="gif-selected-info">
+                    <div class="gif-selected-preview">
+                        <img src="" alt="Selected GIF">
+                    </div>
+                    <div class="gif-selected-details">
+                        <div class="gif-selected-label">Selected GIF</div>
+                        <div class="gif-selected-title"></div>
+                    </div>
+                    <div class="gif-selected-actions">
+                        <button class="gif-change-btn">
+                            <i class="ph ph-arrows-clockwise"></i>
+                        </button>
+                        <button class="gif-download-btn">
+                            <i class="ph ph-download"></i>
+                            Download
+                        </button>
+                    </div>
+                </div>
+            `;
+            replyPanel.appendChild(panel);
+        }
+        
+        return panel;
+    }
+
+    // NEW: Display GIFs in panel
+    function displayGifsInPanel(tweetElement, gifs) {
+        const panel = tweetElement.querySelector('.gif-suggestion-panel');
+        const gridContainer = panel.querySelector('.gif-grid-container');
+        
+        gridContainer.innerHTML = gifs.map(gif => `
+            <div class="gif-item-reply" data-gif-id="${gif.id}" data-gif-url="${gif.url}" data-gif-preview="${gif.preview_url}" data-gif-title="${gif.title || 'GIF'}">
+                <img src="${gif.preview_url}" alt="${gif.title || 'GIF'}" loading="lazy">
+            </div>
+        `).join('');
+    }
+
+    // NEW: Show GIF loading state
+    function showGifLoading(tweetElement) {
+        const panel = tweetElement.querySelector('.gif-suggestion-panel');
+        const gridContainer = panel.querySelector('.gif-grid-container');
+        
+        gridContainer.innerHTML = `
+            <div class="gif-loading" style="grid-column: 1 / -1;">
+                <i class="ph ph-spinner"></i>
+                Loading GIFs...
+            </div>
+        `;
+    }
+
+    // NEW: Show GIF empty state
+    function showGifEmpty(tweetElement) {
+        const panel = tweetElement.querySelector('.gif-suggestion-panel');
+        const gridContainer = panel.querySelector('.gif-grid-container');
+        
+        gridContainer.innerHTML = `
+            <div class="gif-empty" style="grid-column: 1 / -1;">
+                <i class="ph ph-image" style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 0.5rem;"></i>
+                No GIFs found for this query
+            </div>
+        `;
+    }
+
+    // NEW: Select a GIF
+    function selectGif(tweetElement, gifItem) {
+        // Remove selection from all GIF items in this tweet
+        tweetElement.querySelectorAll('.gif-item-reply').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        // Mark this GIF as selected
+        gifItem.classList.add('selected');
+        
+        // Store selected GIF data
+        const gifData = {
+            id: gifItem.getAttribute('data-gif-id'),
+            url: gifItem.getAttribute('data-gif-url'),
+            preview_url: gifItem.getAttribute('data-gif-preview'),
+            title: gifItem.getAttribute('data-gif-title')
+        };
+        
+        tweetElement.setAttribute('data-selected-gif', JSON.stringify(gifData));
+        
+        // Show selected GIF info and hide grid
+        showSelectedGifInfo(tweetElement, gifData);
+    }
+
+    // NEW: Show selected GIF info
+    function showSelectedGifInfo(tweetElement, gifData) {
+        const panel = tweetElement.querySelector('.gif-suggestion-panel');
+        const gridContainer = panel.querySelector('.gif-grid-container');
+        const selectedInfo = panel.querySelector('.gif-selected-info');
+        
+        // Hide grid, show selected info
+        gridContainer.style.display = 'none';
+        selectedInfo.classList.add('show');
+        
+        // Update selected info
+        const preview = selectedInfo.querySelector('.gif-selected-preview img');
+        const title = selectedInfo.querySelector('.gif-selected-title');
+        
+        preview.src = gifData.preview_url;
+        title.textContent = gifData.title || 'GIF';
+    }
+
+    // NEW: Show GIF grid again (after selection)
+    function showGifGrid(tweetElement) {
+        const panel = tweetElement.querySelector('.gif-suggestion-panel');
+        const gridContainer = panel.querySelector('.gif-grid-container');
+        const selectedInfo = panel.querySelector('.gif-selected-info');
+        
+        // Show grid, hide selected info
+        gridContainer.style.display = 'grid';
+        selectedInfo.classList.remove('show');
+        
+        // Clear selection
+        tweetElement.removeAttribute('data-selected-gif');
+        tweetElement.querySelectorAll('.gif-item-reply').forEach(item => {
+            item.classList.remove('selected');
+        });
+    }
+
+    // Download GIF directly
+    function downloadGif(gifData) {
+        // Register share with Tenor
+        fetch('/gifs/api/register-share', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gif_id: gifData.id })
+        }).catch(err => console.error('Error registering share:', err));
+
+        // Download the GIF
+        fetch(gifData.url)
+            .then(response => response.blob())
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = `${gifData.title || 'gif'}-${gifData.id}.gif`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+
+                showToast('GIF downloaded! You can now add it to your reply.', 'success');
+            })
+            .catch(error => {
+                console.error('Download error:', error);
+                window.open(gifData.url, '_blank');
+                showToast('Opening GIF in new tab...', 'info');
+            });
+    }
+
+    // NEW: Download selected GIF
+    function downloadSelectedGif(tweetElement) {
+        const selectedGifJson = tweetElement.getAttribute('data-selected-gif');
+        
+        if (!selectedGifJson) {
+            showToast('No GIF selected', 'error');
+            return;
+        }
+        
+        const gifData = JSON.parse(selectedGifJson);
+        
+        // Register share with Tenor
+        fetch('/gifs/api/register-share', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gif_id: gifData.id })
+        }).catch(err => console.error('Error registering share:', err));
+        
+        // Download the GIF
+        fetch(gifData.url)
+            .then(response => response.blob())
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = `${gifData.title || 'gif'}-${gifData.id}.gif`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+                
+                showToast('GIF downloaded! You can now add it to your reply.', 'success');
+            })
+            .catch(error => {
+                console.error('Download error:', error);
+                window.open(gifData.url, '_blank');
+                showToast('Opening GIF in new tab...', 'info');
+            });
+    }
+
     function getSelectedStyle(tweetElement) {
         const styleDropdown = tweetElement.querySelector('.dropdown');
         const selectedOption = styleDropdown ? styleDropdown.querySelector('.reply-style-option.selected') : null;
@@ -944,13 +1277,11 @@
     }
 
     function getBrandVoiceState(tweetElement) {
-        // Check global brand voice toggle first
         const globalCheckbox = document.getElementById('global-brand-voice');
         if (globalCheckbox && !globalCheckbox.disabled) {
             return globalCheckbox.checked;
         }
 
-        // Fallback to individual checkbox (legacy)
         const checkbox = tweetElement.querySelector('.brand-voice-checkbox');
         return checkbox ? checkbox.checked : false;
     }
@@ -974,10 +1305,8 @@
 
         const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(replyText)}&in_reply_to=${tweetId}`;
 
-        // Open window
         window.open(tweetUrl, '_blank', 'noopener,noreferrer');
 
-        // Log the reply
         fetch('/reply-guy/log-reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1024,7 +1353,6 @@
             progressFill.style.width = newPercentage + '%';
             progressPercentage.textContent = newPercentage + '%';
 
-            // Update progress text with motivation
             const newProgressText = `You've posted <strong>${stats.total_replies}</strong> out of <strong>${stats.target}</strong> replies today. `;
             let motivationalText = '';
 
@@ -1079,11 +1407,9 @@
             if (data.success) {
                 showToast('List created successfully!', 'success');
 
-                // Clear form
                 if (nameInput) nameInput.value = '';
                 if (xListIdInput) xListIdInput.value = '';
 
-                // Reload page to show new list
                 setTimeout(() => window.location.reload(), 1000);
             } else {
                 showToast('Error creating list: ' + data.error, 'error');
@@ -1125,7 +1451,6 @@
 
     // Modal functions
     function setupModals() {
-        // Edit modal handlers
         const closeEditModal = document.getElementById('close-edit-modal');
         if (closeEditModal) {
             closeEditModal.onclick = () => hideModal('edit-list-modal');
@@ -1146,7 +1471,6 @@
             addAccountBtn.onclick = addAccountToList;
         }
 
-        // Delete modal handlers
         const closeDeleteModal = document.getElementById('close-delete-modal');
         if (closeDeleteModal) {
             closeDeleteModal.onclick = () => hideModal('delete-modal');
@@ -1162,7 +1486,6 @@
             confirmDeleteBtn.onclick = confirmDelete;
         }
 
-        // Close on outside click
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 hideModal(e.target.id);
@@ -1405,7 +1728,6 @@
     }
 
     function showToast(message, type = 'info') {
-        // Remove existing toast
         const existingToast = document.querySelector('.toast');
         if (existingToast) {
             existingToast.remove();
@@ -1426,10 +1748,8 @@
 
         document.body.appendChild(toast);
 
-        // Show toast
         setTimeout(() => toast.classList.add('show'), 100);
 
-        // Hide toast
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
@@ -1443,10 +1763,8 @@
         if (modal) {
             console.log('Modal found, applying styles');
 
-            // First add the show class
             modal.classList.add('show');
 
-            // Then force positioning with inline styles using setAttribute for maximum priority
             modal.setAttribute('style', `
                 display: flex !important;
                 align-items: flex-start !important;
@@ -1469,7 +1787,6 @@
                 overflow-y: auto !important;
             `);
 
-            // Also force modal-content positioning
             const modalContent = modal.querySelector('.modal-content');
             if (modalContent) {
                 modalContent.setAttribute('style', `
@@ -1482,7 +1799,6 @@
                 `);
             }
 
-            // Log computed styles to verify
             setTimeout(() => {
                 const computed = window.getComputedStyle(modal);
                 const modalContent = modal.querySelector('.modal-content');
@@ -1504,7 +1820,6 @@
                     });
                 }
 
-                // Check the actual position
                 const rect = modal.getBoundingClientRect();
                 const contentRect = modalContent ? modalContent.getBoundingClientRect() : null;
                 console.log('Modal position:', rect);
@@ -1521,10 +1836,8 @@
         const modal = document.getElementById('create-list-modal');
         if (modal) {
             modal.classList.remove('show');
-            // Clean up inline styles completely
             modal.removeAttribute('style');
         }
-        // Clear form
         const nameInput = document.getElementById('simple-list-name');
         const idInput = document.getElementById('simple-x-list-id');
         if (nameInput) nameInput.value = '';
@@ -1564,11 +1877,9 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Don't hide loading yet - we're going to run analysis
                 showLoading('Running analysis...', 'Finding reply opportunities in your new list...');
                 hideCreatePanel();
 
-                // Auto-run analysis on the newly created list
                 const listId = data.list.id;
                 fetch('/reply-guy/run-analysis', {
                     method: 'POST',
@@ -1584,7 +1895,6 @@
                     hideLoading();
                     if (analysisData.success) {
                         showToast('List created and analyzed successfully!', 'success');
-                        // Reload to show the new list and its opportunities
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
                         showToast('List created but analysis failed: ' + analysisData.error, 'warning');
@@ -1612,11 +1922,10 @@
     // Enhanced profile picture consistency handler
     function fixProfilePictureConsistency() {
         const profileMap = new Map();
-        const authorNameMap = new Map(); // Track author screen names
+        const authorNameMap = new Map();
 
         console.log('Starting profile picture consistency fix...');
 
-        // First pass: collect all profile pictures and author data
         document.querySelectorAll('.tweet-opportunity').forEach(tweet => {
             const authorNameEl = tweet.querySelector('.tweet-author-name');
             const authorUsernameEl = tweet.querySelector('.tweet-author-username');
@@ -1626,7 +1935,6 @@
                 const displayName = authorNameEl.textContent.trim();
                 const username = authorUsernameEl.textContent.replace('@', '').trim();
 
-                // Store mapping between username and display name
                 authorNameMap.set(username, displayName);
 
                 if (img && img.src && !img.src.includes('data:') && img.src !== window.location.href) {
@@ -1641,7 +1949,6 @@
 
         console.log(`Found ${profileMap.size} unique profiles`);
 
-        // Second pass: apply consistent profiles and fix missing ones
         document.querySelectorAll('.tweet-avatar').forEach(avatar => {
             const img = avatar.querySelector('img');
             const fallback = avatar.querySelector('.fallback-avatar');
@@ -1655,13 +1962,11 @@
                     const storedProfileUrl = profileMap.get(username);
 
                     if (img) {
-                        // If we have a stored profile URL and the current image is missing/broken
                         if (storedProfileUrl && (!img.src || img.src === window.location.href || img.src.includes('data:'))) {
                             console.log(`Fixing profile for @${username}`);
                             img.src = storedProfileUrl;
                         }
 
-                        // Enhanced image loading handlers
                         img.onload = function() {
                             this.style.display = 'block';
                             this.classList.remove('error');
@@ -1674,7 +1979,6 @@
                             this.classList.add('error');
                             if (fallback) {
                                 fallback.style.display = 'flex';
-                                // Try to generate a better fallback
                                 const firstLetter = username.charAt(0).toUpperCase();
                                 const icon = fallback.querySelector('i');
                                 if (icon) {
@@ -1686,12 +1990,10 @@
                             }
                         };
 
-                        // Trigger a recheck if the image seems broken
                         if (img.naturalWidth === 0 && img.complete) {
                             img.onerror();
                         }
                     } else if (!img && fallback) {
-                        // No image element at all, just show fallback
                         fallback.style.display = 'flex';
                         const firstLetter = username.charAt(0).toUpperCase();
                         const icon = fallback.querySelector('i');
@@ -1709,53 +2011,6 @@
         console.log('Profile picture consistency fix completed');
     }
 
-    // Initialize on DOM ready
-    document.addEventListener('DOMContentLoaded', init);
-
-    // Fix profile pictures after content loads - single deferred call
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(fixProfilePictureConsistency, 1000);
-    });
-
-    // Also run when new content might be loaded
-    const originalFetch = window.fetch;
-    window.fetch = function(...args) {
-        return originalFetch.apply(this, args).then(response => {
-            // Run profile fix after any fetch that might load new content
-            if (args[0] && (args[0].includes('reply-guy') || args[0].includes('analysis'))) {
-                setTimeout(fixProfilePictureConsistency, 1000);
-            }
-            return response;
-        });
-    };
-
-    // Debug: Test if buttons are clickable after page load
-    setTimeout(() => {
-        const generateBtns = document.querySelectorAll('.generate-reply-btn');
-        const tweetOpportunities = document.querySelectorAll('.tweet-opportunity');
-        const repliesPanel = document.getElementById('replies-panel');
-        const emptyState = document.querySelector('.empty-state');
-
-        console.log('=== DEBUG INFO ===');
-        console.log('Found generate buttons:', generateBtns.length);
-        console.log('Found tweet opportunities:', tweetOpportunities.length);
-        console.log('Replies panel visible:', repliesPanel ? !repliesPanel.classList.contains('hidden') : 'not found');
-        console.log('Empty state visible:', emptyState ? emptyState.style.display !== 'none' : 'not found');
-        console.log('Current selected list:', state.selectedList);
-
-        generateBtns.forEach((btn, index) => {
-            console.log(`Button ${index}:`, btn, 'Disabled:', btn.disabled);
-            // Test if button is actually clickable
-            btn.addEventListener('click', () => {
-                console.log(`Direct click on button ${index} detected!`);
-            });
-        });
-
-        if (generateBtns.length === 0) {
-            console.log('❌ No generate buttons found - you may need to select a list first');
-        }
-    }, 2000);
-
     // Format tweet timestamps
     function formatTimestamp(dateString) {
         try {
@@ -1771,14 +2026,12 @@
             if (diffHours < 24) return `${diffHours}h`;
             if (diffDays < 7) return `${diffDays}d`;
 
-            // Format as date for older tweets
             return tweetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         } catch (e) {
             return '';
         }
     }
 
-    // Update all timestamps on page
     function updateTimestamps() {
         const timestamps = document.querySelectorAll('.tweet-timestamp');
         timestamps.forEach(el => {
@@ -1788,6 +2041,14 @@
             }
         });
     }
+
+    // Initialize on DOM ready
+    document.addEventListener('DOMContentLoaded', init);
+
+    // Fix profile pictures after content loads
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(fixProfilePictureConsistency, 1000);
+    });
 
     // Update timestamps immediately and every minute
     updateTimestamps();
@@ -1802,12 +2063,11 @@
             const loaded = parseInt(this.getAttribute('data-loaded'));
             const total = parseInt(this.getAttribute('data-total'));
 
-            // Disable button while loading
             this.disabled = true;
             this.innerHTML = '<i class="ph ph-spinner"></i> Loading...';
 
             try {
-                const response = await fetch('/reply_guy/get-more-tweets', {
+                const response = await fetch('/reply-guy/get-more-tweets', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1823,20 +2083,16 @@
                 if (data.success && data.tweets) {
                     const container = document.getElementById('tweets-container');
 
-                    // Render new tweets
                     data.tweets.forEach(tweet => {
                         const tweetHtml = renderTweetCard(tweet);
                         container.insertAdjacentHTML('beforeend', tweetHtml);
                     });
 
-                    // Update loaded count
                     const newLoaded = loaded + data.tweets.length;
                     this.setAttribute('data-loaded', newLoaded);
 
-                    // Update timestamps for new tweets
                     updateTimestamps();
 
-                    // Check if more to load
                     if (data.has_more) {
                         const remaining = total - newLoaded;
                         this.innerHTML = `<i class="ph ph-arrow-down"></i> Load More (${remaining} remaining)`;
@@ -1857,9 +2113,7 @@
         });
     }
 
-    // Helper function to render tweet card HTML
     function renderTweetCard(tweet) {
-        // This is a simplified version - you may need to match your exact template structure
         return `
             <div class="tweet-opportunity" data-tweet-id="${tweet.tweet_id}">
                 <div class="tweet-grid">
@@ -1868,5 +2122,54 @@
             </div>
         `;
     }
+
+    // Debug info
+    setTimeout(() => {
+        const generateBtns = document.querySelectorAll('.generate-reply-btn');
+        const tweetOpportunities = document.querySelectorAll('.tweet-opportunity');
+        const repliesPanel = document.getElementById('replies-panel');
+        const emptyState = document.querySelector('.empty-state');
+
+        console.log('=== DEBUG INFO ===');
+        console.log('Found generate buttons:', generateBtns.length);
+        console.log('Found tweet opportunities:', tweetOpportunities.length);
+        console.log('Replies panel visible:', repliesPanel ? !repliesPanel.classList.contains('hidden') : 'not found');
+        console.log('Empty state visible:', emptyState ? emptyState.style.display !== 'none' : 'not found');
+        console.log('Current selected list:', state.selectedList);
+
+        generateBtns.forEach((btn, index) => {
+            console.log(`Button ${index}:`, btn, 'Disabled:', btn.disabled);
+            btn.addEventListener('click', () => {
+                console.log(`Direct click on button ${index} detected!`);
+            });
+        });
+
+        if (generateBtns.length === 0) {
+            console.log('❌ No generate buttons found - you may need to select a list first');
+        }
+    }, 2000);
+
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        return originalFetch.apply(this, args).then(response => {
+            if (args[0] && (args[0].includes('reply-guy') || args[0].includes('analysis'))) {
+                setTimeout(fixProfilePictureConsistency, 1000);
+            }
+            return response;
+        });
+    };
+
+    // Add spin animation style
+    const style = document.createElement('style');
+    style.textContent = `
+    .ph-spin {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    `;
+    document.head.appendChild(style);
 
 })();

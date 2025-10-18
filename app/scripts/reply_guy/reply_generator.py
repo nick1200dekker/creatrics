@@ -1,10 +1,10 @@
 """
-Reply Generator - Simplified version with basic newline handling
+Reply Generator - Enhanced version with GIF suggestions
 Generates AI-powered replies using user's brand voice from x_replies data
 """
 import os
 import logging
-from typing import Optional
+from typing import Optional, Dict
 from pathlib import Path
 
 from firebase_admin import firestore
@@ -13,15 +13,16 @@ from app.system.ai_provider.ai_provider import get_ai_provider
 logger = logging.getLogger(__name__)
 
 class ReplyGenerator:
-    """Generates AI-powered tweet replies"""
+    """Generates AI-powered tweet replies with GIF suggestions"""
     
     def __init__(self):
         self.db = firestore.client()
         # Get AI provider instead of PostEditor
         self.ai_provider = get_ai_provider()
     
-    def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str = 'supportive', use_brand_voice: bool = False, image_urls: list = None) -> Optional[str]:
-        """Generate AI reply to a tweet
+    def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str = 'supportive', 
+                      use_brand_voice: bool = False, image_urls: list = None) -> Optional[Dict]:
+        """Generate AI reply to a tweet with GIF suggestion
 
         Args:
             user_id: User ID
@@ -30,6 +31,9 @@ class ReplyGenerator:
             style: Reply style (creatrics, supportive, etc.)
             use_brand_voice: Whether to use user's brand voice
             image_urls: List of image URLs from the tweet (for vision analysis)
+            
+        Returns:
+            Dict with 'reply' text and 'gif_query' for suggested GIF, or None on error
         """
         try:
             # Get the prompt template
@@ -126,7 +130,6 @@ class ReplyGenerator:
             reply_text = response['content'].strip()
 
             # Clean up any AI prefixes/artifacts
-            # Remove common prefixes the AI might add despite instructions
             prefixes_to_remove = [
                 '<@reply>',
                 '@reply>',
@@ -233,12 +236,90 @@ class ReplyGenerator:
             if len(reply_text) < 5:
                 reply_text = "That's an interesting perspective"
 
-            logger.info(f"Generated reply for @{author}: {reply_text[:50]}...")
-            return reply_text
+            # Now generate GIF suggestion
+            gif_query = self.generate_gif_query(reply_text, tweet_text, style)
+
+            logger.info(f"Generated reply for @{author}: {reply_text[:50]}... | GIF query: {gif_query}")
+            
+            return {
+                'reply': reply_text,
+                'gif_query': gif_query
+            }
             
         except Exception as e:
             logger.error(f"Error generating reply: {str(e)}")
             raise Exception(f"Error generating reply: {str(e)}")
+    
+    def generate_gif_query(self, reply_text: str, tweet_text: str, style: str) -> Optional[str]:
+        """Generate a GIF search query based on the reply and tweet context
+        
+        Args:
+            reply_text: The generated reply text
+            tweet_text: The original tweet text
+            style: The reply style used
+            
+        Returns:
+            A 1-3 word GIF search query, or None
+        """
+        try:
+            # Create a simple prompt for GIF query generation
+            prompt = f"""Based on this tweet reply, suggest a 1-3 word search query for finding a relevant reaction GIF on Tenor.
+
+Tweet being replied to: {tweet_text[:200]}
+Reply: {reply_text}
+Style: {style}
+
+The GIF query should capture the emotion or reaction of the reply. Examples of good queries:
+- "excited clapping"
+- "mind blown"
+- "shocked"
+- "laughing"
+- "thinking"
+- "agree nodding"
+- "confused"
+- "celebration"
+
+Output ONLY the 1-3 word search query, nothing else."""
+
+            # Use AI provider with lower temperature for more predictable output
+            response = self.ai_provider.create_completion(
+                messages=[
+                    {"role": "system", "content": "You output only short GIF search queries, nothing else."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=50
+            )
+
+            gif_query = response['content'].strip()
+            
+            # Clean up the query
+            gif_query = gif_query.replace('"', '').replace("'", '').strip()
+            
+            # Validate - should be 1-3 words
+            words = gif_query.split()
+            if len(words) > 3:
+                gif_query = ' '.join(words[:3])
+            
+            # If empty or too generic, use style-based fallback
+            if not gif_query or len(gif_query) < 3:
+                fallback_queries = {
+                    'creatrics': 'mind blown',
+                    'supportive': 'thumbs up',
+                    'questioning': 'confused thinking',
+                    'valueadd': 'smart idea',
+                    'humorous': 'laughing',
+                    'contrarian': 'skeptical eyebrow'
+                }
+                gif_query = fallback_queries.get(style, 'reaction')
+            
+            logger.info(f"Generated GIF query: {gif_query}")
+            return gif_query
+            
+        except Exception as e:
+            logger.error(f"Error generating GIF query: {str(e)}")
+            # Return a safe fallback
+            return "reaction"
     
     def get_prompt_template(self, use_brand_voice: bool = False) -> str:
         """Get the prompt template for reply generation"""

@@ -1,5 +1,5 @@
 """
-Reply Guy Routes - Optimized version with improved performance and duplicate request prevention
+Reply Guy Routes - Optimized version with GIF suggestions support
 """
 from flask import render_template, request, jsonify, g, session
 import logging
@@ -14,6 +14,7 @@ from app.system.auth.middleware import auth_required
 from app.system.auth.permissions import require_permission, get_workspace_user_id
 from app.scripts.reply_guy.reply_guy_service import ReplyGuyService
 from app.system.credits.credits_manager import CreditsManager
+from app.scripts.reply_guy.tenor import TenorService
 
 logger = logging.getLogger(__name__)
 
@@ -381,17 +382,17 @@ def analyze():
 @bp.route('/generate-reply', methods=['POST'])
 @auth_required
 @require_permission('reply_guy')
-@validate_request_data(required_fields=['author'])  # Only author is required, tweet_text can be empty for image-only tweets
+@validate_request_data(required_fields=['author'])
 @debounce_requests(timeout=3)
 def generate_reply():
-    """Generate AI reply with rate limiting and validation"""
+    """Generate AI reply with GIF suggestion - rate limiting and validation"""
     try:
         data = request.get_json()
         tweet_text = data.get('tweet_text', '').strip()
         author = data.get('author', '').strip()
         style = data.get('style', 'supportive')
         use_brand_voice = data.get('use_brand_voice', False)
-        image_urls = data.get('image_urls', [])  # Get image URLs from request
+        image_urls = data.get('image_urls', [])
 
         # Additional validation - author is required, but tweet_text can be empty if there are images
         if not author:
@@ -400,7 +401,7 @@ def generate_reply():
         if not tweet_text and not image_urls:
             return jsonify({'success': False, 'error': 'Tweet must have either text or images'}), 400
         
-        if len(tweet_text) > 2000:  # Reasonable limit
+        if len(tweet_text) > 2000:
             return jsonify({'success': False, 'error': 'Tweet text too long'}), 400
         
         # Filter out mention tweets
@@ -415,7 +416,7 @@ def generate_reply():
         # Step 1: Estimate LLM cost from tweet text
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content=tweet_text,
-            model_name='claude-3-haiku-20240307'  # Use Claude Haiku for replies
+            model_name='claude-3-haiku-20240307'
         )
         
         required_credits = cost_estimate['final_cost']
@@ -436,23 +437,25 @@ def generate_reply():
                 'credits_required': True
             }), 402
         
-        # Generate reply (with image context if available)
+        # Generate reply with GIF suggestion (now returns dict with 'reply' and 'gif_query')
         service = ReplyGuyService()
-        reply_text = service.generate_reply(
+        result = service.generate_reply(
             user_id=user_id,
             tweet_text=tweet_text,
             author=author,
             style=style,
             use_brand_voice=use_brand_voice,
-            image_urls=image_urls  # Pass images for Claude Vision
+            image_urls=image_urls
         )
         
-        if not reply_text:
+        if not result or 'reply' not in result:
             return jsonify({'success': False, 'error': 'Failed to generate reply'}), 500
         
-        # Step 3: Deduct credits after successful generation (following video_tags pattern)
+        reply_text = result['reply']
+        gif_query = result.get('gif_query')
+        
+        # Step 3: Deduct credits after successful generation
         try:
-            # Estimate tokens more accurately (1 token ≈ 4 characters for Claude)
             input_tokens = max(100, len(tweet_text) // 4)
             output_tokens = max(50, len(reply_text) // 4)
             
@@ -470,13 +473,57 @@ def generate_reply():
                 
         except Exception as credit_error:
             logger.error(f"Error deducting credits: {str(credit_error)}")
-            # Don't fail the request if credit deduction fails
         
-        return jsonify({'success': True, 'reply': reply_text})
+        return jsonify({
+            'success': True, 
+            'reply': reply_text,
+            'gif_query': gif_query
+        })
             
     except Exception as e:
         logger.error(f"Error generating reply: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+
+@bp.route('/search-gifs', methods=['POST'])
+@auth_required
+@require_permission('reply_guy')
+@validate_request_data(required_fields=['query'])
+def search_gifs():
+    """Search for GIFs using Tenor API based on the suggested query"""
+    try:
+        data = request.get_json()
+        query = data.get('query', '').strip()
+        limit = int(data.get('limit', 8))
+        
+        if not query:
+            return jsonify({
+                'success': False,
+                'error': 'Query is required'
+            }), 400
+        
+        # Use Tenor service to search for GIFs
+        tenor_service = TenorService()
+        result = tenor_service.search_gifs(query, limit=limit)
+        
+        if result and result.get('gifs'):
+            return jsonify({
+                'success': True,
+                'gifs': result['gifs']
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'No GIFs found'
+            }), 404
+            
+    except Exception as e:
+        logger.error(f"Error searching GIFs: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error'
+        }), 500
+
 
 @bp.route('/log-reply', methods=['POST'])
 @auth_required
@@ -718,26 +765,12 @@ def get_custom_list_details():
 def check_brand_voice():
     """Check if user has brand voice data - cached"""
     try:
-        # Don't use cache for now - always check fresh to debug
-        # cache_key = 'brand_voice_available'
-        # if cache_key in session:
-        #     cached_time = session.get('brand_voice_checked', 0)
-        #     if time.time() - cached_time < 300:  # 5 minutes cache
-        #         return jsonify({
-        #             'success': True,
-        #             'has_brand_voice_data': session[cache_key]
-        #         })
-
         service = ReplyGuyService()
         user_id = get_workspace_user_id()
 
         logger.info(f"Checking brand voice for user {user_id}")
         has_data = service.has_brand_voice_data(user_id)
         logger.info(f"Brand voice check result for user {user_id}: {has_data}")
-
-        # Cache result
-        # session[cache_key] = has_data
-        # session['brand_voice_checked'] = time.time()
 
         return jsonify({'success': True, 'has_brand_voice_data': has_data})
 
