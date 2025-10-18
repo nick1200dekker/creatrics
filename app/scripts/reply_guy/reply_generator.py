@@ -4,7 +4,7 @@ Generates AI-powered replies using user's brand voice from x_replies data
 """
 import os
 import logging
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from pathlib import Path
 
 from firebase_admin import firestore
@@ -236,40 +236,40 @@ class ReplyGenerator:
             if len(reply_text) < 5:
                 reply_text = "That's an interesting perspective"
 
-            # Now generate GIF suggestion
-            gif_query = self.generate_gif_query(reply_text, tweet_text, style)
+            # Now generate GIF suggestions (multiple queries)
+            gif_queries = self.generate_gif_queries(reply_text, tweet_text, style)
 
-            logger.info(f"Generated reply for @{author}: {reply_text[:50]}... | GIF query: {gif_query}")
-            
+            logger.info(f"Generated reply for @{author}: {reply_text[:50]}... | GIF queries: {gif_queries}")
+
             return {
                 'reply': reply_text,
-                'gif_query': gif_query
+                'gif_queries': gif_queries  # Now returning multiple queries
             }
             
         except Exception as e:
             logger.error(f"Error generating reply: {str(e)}")
             raise Exception(f"Error generating reply: {str(e)}")
     
-    def generate_gif_query(self, reply_text: str, tweet_text: str, style: str) -> Optional[str]:
-        """Generate a GIF search query based on the reply and tweet context
-        
+    def generate_gif_queries(self, reply_text: str, tweet_text: str, style: str) -> List[str]:
+        """Generate multiple GIF search queries based on the reply and tweet context
+
         Args:
             reply_text: The generated reply text
             tweet_text: The original tweet text
             style: The reply style used
-            
+
         Returns:
-            A 1-3 word GIF search query, or None
+            A list of 1-3 word GIF search queries
         """
         try:
-            # Create a simple prompt for GIF query generation
-            prompt = f"""Based on this tweet reply, suggest a 1-3 word search query for finding a relevant reaction GIF on Tenor.
+            # Create a prompt for multiple GIF query generation
+            prompt = f"""Based on this tweet reply, suggest TWO different 1-3 word search queries for finding relevant reaction GIFs on Tenor.
 
 Tweet being replied to: {tweet_text[:200]}
 Reply: {reply_text}
 Style: {style}
 
-The GIF query should capture the emotion or reaction of the reply. Examples of good queries:
+The GIF queries should capture different emotions or reactions that match the reply. Examples:
 - "excited clapping"
 - "mind blown"
 - "shocked"
@@ -279,47 +279,60 @@ The GIF query should capture the emotion or reaction of the reply. Examples of g
 - "confused"
 - "celebration"
 
-Output ONLY the 1-3 word search query, nothing else."""
+Output ONLY the two search queries, one per line, nothing else."""
 
             # Use AI provider with lower temperature for more predictable output
             response = self.ai_provider.create_completion(
                 messages=[
-                    {"role": "system", "content": "You output only short GIF search queries, nothing else."},
+                    {"role": "system", "content": "You output only short GIF search queries, nothing else. Two queries, one per line."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.3,
+                temperature=0.5,
                 max_tokens=50
             )
 
-            gif_query = response['content'].strip()
-            
-            # Clean up the query
-            gif_query = gif_query.replace('"', '').replace("'", '').strip()
-            
-            # Validate - should be 1-3 words
-            words = gif_query.split()
-            if len(words) > 3:
-                gif_query = ' '.join(words[:3])
-            
-            # If empty or too generic, use style-based fallback
-            if not gif_query or len(gif_query) < 3:
-                fallback_queries = {
-                    'creatrics': 'mind blown',
-                    'supportive': 'thumbs up',
-                    'questioning': 'confused thinking',
-                    'valueadd': 'smart idea',
-                    'humorous': 'laughing',
-                    'contrarian': 'skeptical eyebrow'
-                }
-                gif_query = fallback_queries.get(style, 'reaction')
-            
-            logger.info(f"Generated GIF query: {gif_query}")
-            return gif_query
+            queries_text = response['content'].strip()
+
+            # Split into separate queries
+            queries = []
+            for line in queries_text.split('\n'):
+                query = line.replace('"', '').replace("'", '').strip()
+                if query:
+                    # Validate - should be 1-3 words
+                    words = query.split()
+                    if len(words) > 3:
+                        query = ' '.join(words[:3])
+                    if query and len(query) >= 3:
+                        queries.append(query)
+
+            # If we don't have 2 queries, add fallbacks
+            fallback_queries = {
+                'creatrics': ['mind blown', 'impressed wow'],
+                'supportive': ['thumbs up', 'agree nodding'],
+                'questioning': ['confused thinking', 'curious hmm'],
+                'valueadd': ['smart idea', 'brilliant genius'],
+                'humorous': ['laughing', 'funny lol'],
+                'contrarian': ['skeptical eyebrow', 'doubt press']
+            }
+
+            style_fallbacks = fallback_queries.get(style, ['reaction', 'thinking'])
+
+            # Ensure we have at least 2 queries
+            if len(queries) == 0:
+                queries = style_fallbacks
+            elif len(queries) == 1:
+                queries.append(style_fallbacks[0] if style_fallbacks[0] != queries[0] else style_fallbacks[1])
+
+            # Take only first 2 queries
+            queries = queries[:2]
+
+            logger.info(f"Generated GIF queries: {queries}")
+            return queries
             
         except Exception as e:
             logger.error(f"Error generating GIF query: {str(e)}")
-            # Return a safe fallback
-            return "reaction"
+            # Return safe fallbacks
+            return ["reaction", "thinking"]
     
     def get_prompt_template(self, use_brand_voice: bool = False) -> str:
         """Get the prompt template for reply generation"""

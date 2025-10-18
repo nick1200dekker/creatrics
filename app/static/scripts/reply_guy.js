@@ -163,7 +163,7 @@
                     saveOngoingUpdates();
 
                     if (listId === state.selectedList) {
-                        showToast('Update completed! Refreshing...', 'success');
+                        // showToast('Update completed! Refreshing...', 'success');
                         setTimeout(() => window.location.reload(), 1000);
                     }
                 }
@@ -382,14 +382,7 @@
             return;
         }
 
-        // GIF suggest button - NEW
-        if (e.target.closest('.gif-suggest-btn')) {
-            e.preventDefault();
-            const btn = e.target.closest('.gif-suggest-btn');
-            const tweetElement = btn.closest('.tweet-opportunity');
-            toggleGifPanel(tweetElement);
-            return;
-        }
+        // GIF suggest button removed - GIFs show automatically
 
         // GIF item selection - Download immediately on click
         if (e.target.closest('.gif-item-reply')) {
@@ -439,6 +432,24 @@
             const btn = e.target.closest('.gif-panel-close');
             const tweetElement = btn.closest('.tweet-opportunity');
             hideGifPanel(tweetElement);
+            return;
+        }
+
+        // GIF query navigation - Previous
+        if (e.target.closest('.gif-query-prev')) {
+            e.preventDefault();
+            const btn = e.target.closest('.gif-query-prev');
+            const tweetElement = btn.closest('.tweet-opportunity');
+            navigateGifQuery(tweetElement, -1);
+            return;
+        }
+
+        // GIF query navigation - Next
+        if (e.target.closest('.gif-query-next')) {
+            e.preventDefault();
+            const btn = e.target.closest('.gif-query-next');
+            const tweetElement = btn.closest('.tweet-opportunity');
+            navigateGifQuery(tweetElement, 1);
             return;
         }
 
@@ -790,10 +801,10 @@
                 updateButtonVisibility();
 
                 if (data.has_analysis && data.opportunities_count > 0) {
-                    showToast(`Found ${data.opportunities_count} opportunities! Refreshing...`, 'success');
+                    // showToast(`Found ${data.opportunities_count} opportunities! Refreshing...`, 'success');
                     setTimeout(() => window.location.reload(), 1000);
                 } else if (state.selectedListType === 'default') {
-                    showToast('Loading default list analysis...', 'info');
+                    // showToast('Loading default list analysis...', 'info');
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
                     const emptyMessage = document.getElementById('empty-message');
@@ -804,11 +815,11 @@
                     }
                 }
             } else {
-                showToast('Error selecting list: ' + data.error, 'error');
+                // showToast('Error selecting list: ' + data.error, 'error');
             }
         })
         .catch(error => {
-            showToast('Network error selecting list', 'error');
+            // showToast('Network error selecting list', 'error');
         });
     }
 
@@ -818,7 +829,7 @@
         }
 
         if (state.selectedList in state.ongoingUpdates) {
-            showToast('Update already in progress for this list', 'warning');
+            // showToast('Update already in progress for this list', 'warning');
             return;
         }
 
@@ -845,7 +856,7 @@
             saveOngoingUpdates();
 
             if (data.success) {
-                showToast('Analysis completed! Refreshing page...', 'success');
+                // showToast('Analysis completed! Refreshing page...', 'success');
                 setTimeout(() => window.location.reload(), 1500);
             } else {
                 if (data.is_updating) {
@@ -854,9 +865,9 @@
                         timestamp: Date.now()
                     };
                     saveOngoingUpdates();
-                    showToast('Update already in progress for this list', 'warning');
+                    // showToast('Update already in progress for this list', 'warning');
                 } else {
-                    showToast('Analysis failed: ' + data.error, 'error');
+                    // showToast('Analysis failed: ' + data.error, 'error');
                 }
                 updateButtonVisibility();
             }
@@ -864,7 +875,7 @@
         .catch(error => {
             delete state.ongoingUpdates[state.selectedList];
             saveOngoingUpdates();
-            showToast('Network error during analysis', 'error');
+            // showToast('Network error during analysis', 'error');
             updateButtonVisibility();
         });
     }
@@ -935,36 +946,63 @@
                     updateCharacterCount(textarea);
                 }
 
-                // Store GIF query for this tweet - NEW
-                if (data.gif_query) {
-                    tweetElement.setAttribute('data-gif-query', data.gif_query);
-                    
+                // Store GIF queries for this tweet (now multiple)
+                if (data.gif_queries && data.gif_queries.length > 0) {
+                    tweetElement.setAttribute('data-gif-queries', JSON.stringify(data.gif_queries));
+                    tweetElement.setAttribute('data-current-query-index', '0');
+
                     // Add indicator to GIF button
                     if (gifBtn) {
                         gifBtn.classList.add('has-gif');
                     }
 
-                    // Auto-load GIFs in background
-                    loadGifsForTweet(tweetElement, data.gif_query);
+                    // Auto-load GIFs for first query and show panel immediately
+                    const firstQuery = data.gif_queries[0];
+                    loadGifsForTweet(tweetElement, firstQuery).then(gifs => {
+                        if (gifs && gifs.length > 0) {
+                            // Automatically show the GIF panel with results
+                            const panel = getOrCreateGifPanel(tweetElement);
+                            panel.classList.add('show');
+                            displayGifsInPanel(tweetElement, gifs);
+                            updateGifPanelNavigation(tweetElement, 0, data.gif_queries);
+                        }
+                    });
+                } else if (data.gif_query) {
+                    // Fallback for single query (backward compatibility)
+                    tweetElement.setAttribute('data-gif-queries', JSON.stringify([data.gif_query]));
+                    tweetElement.setAttribute('data-current-query-index', '0');
+
+                    if (gifBtn) {
+                        gifBtn.classList.add('has-gif');
+                    }
+
+                    loadGifsForTweet(tweetElement, data.gif_query).then(gifs => {
+                        if (gifs && gifs.length > 0) {
+                            const panel = getOrCreateGifPanel(tweetElement);
+                            panel.classList.add('show');
+                            displayGifsInPanel(tweetElement, gifs);
+                            updateGifPanelNavigation(tweetElement, 0, [data.gif_query]);
+                        }
+                    });
                 }
 
-                showToast('Reply generated successfully!', 'success');
+                // showToast('Reply generated successfully!', 'success');
             } else {
                 if (textarea) {
                     textarea.value = data.credits_required ?
                         'Insufficient credits to generate reply.' :
                         'Error generating reply: ' + data.error;
                 }
-                showToast(data.credits_required ?
-                    'Insufficient credits. Please purchase more credits.' :
-                    'Error generating reply', 'error');
+                // showToast(data.credits_required ?
+                //     'Insufficient credits. Please purchase more credits.' :
+                //     'Error generating reply', 'error');
             }
         })
         .catch(error => {
             if (textarea) {
                 textarea.value = 'Network error generating reply.';
             }
-            showToast('Network error', 'error');
+            // showToast('Network error', 'error');
         })
         .finally(() => {
             if (generateBtn) {
@@ -1024,7 +1062,7 @@
         const query = tweetElement.getAttribute('data-gif-query');
         
         if (!query) {
-            showToast('Generate a reply first to get GIF suggestions', 'info');
+            // showToast('Generate a reply first to get GIF suggestions', 'info');
             return;
         }
 
@@ -1070,11 +1108,25 @@
                         <i class="ph ph-gif"></i>
                         Suggested GIFs
                     </div>
+                    <div class="gif-query-navigation" style="display: none;">
+                        <button class="gif-query-prev" title="Previous suggestion">
+                            <i class="ph ph-caret-left"></i>
+                        </button>
+                        <span class="gif-query-text"></span>
+                        <button class="gif-query-next" title="Next suggestion">
+                            <i class="ph ph-caret-right"></i>
+                        </button>
+                    </div>
                     <button class="gif-panel-close">
                         <i class="ph ph-x"></i>
                     </button>
                 </div>
                 <div class="gif-grid-container"></div>
+                <div class="gif-panel-footer">
+                    <a href="https://tenor.com" target="_blank" rel="noopener" class="tenor-attribution">
+                        <img src="https://www.gstatic.com/tenor/web/attribution/PB_tenor_logo_blue_horizontal.svg" alt="Powered by Tenor" height="16">
+                    </a>
+                </div>
                 <div class="gif-selected-info">
                     <div class="gif-selected-preview">
                         <img src="" alt="Selected GIF">
@@ -1197,6 +1249,56 @@
         });
     }
 
+    // Update GIF panel navigation display
+    function updateGifPanelNavigation(tweetElement, currentIndex, queries) {
+        const panel = tweetElement.querySelector('.gif-suggestion-panel');
+        if (!panel) return;
+
+        const nav = panel.querySelector('.gif-query-navigation');
+        const queryText = panel.querySelector('.gif-query-text');
+        const prevBtn = panel.querySelector('.gif-query-prev');
+        const nextBtn = panel.querySelector('.gif-query-next');
+
+        if (queries.length > 1) {
+            nav.style.display = 'flex';
+            queryText.textContent = queries[currentIndex];
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = currentIndex === queries.length - 1;
+        } else {
+            nav.style.display = 'none';
+        }
+    }
+
+    // Navigate between GIF queries
+    function navigateGifQuery(tweetElement, direction) {
+        const queriesJson = tweetElement.getAttribute('data-gif-queries');
+        if (!queriesJson) return;
+
+        const queries = JSON.parse(queriesJson);
+        const currentIndex = parseInt(tweetElement.getAttribute('data-current-query-index') || '0');
+        const newIndex = Math.max(0, Math.min(queries.length - 1, currentIndex + direction));
+
+        if (newIndex !== currentIndex) {
+            tweetElement.setAttribute('data-current-query-index', newIndex.toString());
+            const newQuery = queries[newIndex];
+
+            // Show loading state
+            showGifLoading(tweetElement);
+
+            // Load GIFs for new query (with rate limiting consideration)
+            setTimeout(() => {
+                loadGifsForTweet(tweetElement, newQuery).then(gifs => {
+                    if (gifs && gifs.length > 0) {
+                        displayGifsInPanel(tweetElement, gifs);
+                    } else {
+                        showGifEmpty(tweetElement);
+                    }
+                    updateGifPanelNavigation(tweetElement, newIndex, queries);
+                });
+            }, 200); // Small delay to respect Tenor's 1 RPS limit
+        }
+    }
+
     // Download GIF directly
     function downloadGif(gifData) {
         // Register share with Tenor
@@ -1220,12 +1322,12 @@
 
                 setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
 
-                showToast('GIF downloaded! You can now add it to your reply.', 'success');
+                // showToast('GIF downloaded! You can now add it to your reply.', 'success');
             })
             .catch(error => {
                 console.error('Download error:', error);
                 window.open(gifData.url, '_blank');
-                showToast('Opening GIF in new tab...', 'info');
+                // showToast('Opening GIF in new tab...', 'info');
             });
     }
 
@@ -1234,7 +1336,7 @@
         const selectedGifJson = tweetElement.getAttribute('data-selected-gif');
         
         if (!selectedGifJson) {
-            showToast('No GIF selected', 'error');
+            // showToast('No GIF selected', 'error');
             return;
         }
         
@@ -1261,12 +1363,12 @@
                 
                 setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
                 
-                showToast('GIF downloaded! You can now add it to your reply.', 'success');
+                // showToast('GIF downloaded! You can now add it to your reply.', 'success');
             })
             .catch(error => {
                 console.error('Download error:', error);
                 window.open(gifData.url, '_blank');
-                showToast('Opening GIF in new tab...', 'info');
+                // showToast('Opening GIF in new tab...', 'info');
             });
     }
 
@@ -1294,12 +1396,12 @@
         const replyText = textarea ? textarea.value.trim() : '';
 
         if (!replyText || replyText.includes('Error') || replyText.includes('Generating')) {
-            showToast('Please generate a valid reply first', 'error');
+            // showToast('Please generate a valid reply first', 'error');
             return;
         }
 
         if (replyText.length > 280) {
-            showToast('Reply exceeds 280 characters', 'error');
+            // showToast('Reply exceeds 280 characters', 'error');
             return;
         }
 
@@ -1319,7 +1421,7 @@
         .then(data => {
             if (data.success && data.stats) {
                 updateProgressBar(data.stats);
-                showToast('Reply logged successfully!', 'success');
+                // showToast('Reply logged successfully!', 'success');
             }
         })
         .catch(error => {
@@ -1381,12 +1483,12 @@
         const xListId = xListIdInput ? xListIdInput.value.trim() : '';
 
         if (!name) {
-            showToast('Please enter a list name', 'error');
+            // showToast('Please enter a list name', 'error');
             return;
         }
 
         if (type === 'x_list' && !xListId) {
-            showToast('Please enter an X List ID', 'error');
+            // showToast('Please enter an X List ID', 'error');
             return;
         }
 
@@ -1405,19 +1507,19 @@
         .then(data => {
             hideLoading();
             if (data.success) {
-                showToast('List created successfully!', 'success');
+                // showToast('List created successfully!', 'success');
 
                 if (nameInput) nameInput.value = '';
                 if (xListIdInput) xListIdInput.value = '';
 
                 setTimeout(() => window.location.reload(), 1000);
             } else {
-                showToast('Error creating list: ' + data.error, 'error');
+                // showToast('Error creating list: ' + data.error, 'error');
             }
         })
         .catch(error => {
             hideLoading();
-            showToast('Network error creating list', 'error');
+            // showToast('Network error creating list', 'error');
         });
     }
 
@@ -1437,15 +1539,15 @@
             hideLoading();
 
             if (data.success) {
-                showToast(`List refreshed! Found ${data.account_count} accounts.`, 'success');
+                // showToast(`List refreshed! Found ${data.account_count} accounts.`, 'success');
                 setTimeout(() => window.location.reload(), 1000);
             } else {
-                showToast('Error refreshing list: ' + data.error, 'error');
+                // showToast('Error refreshing list: ' + data.error, 'error');
             }
         })
         .catch(error => {
             hideLoading();
-            showToast('Network error refreshing list', 'error');
+            // showToast('Network error refreshing list', 'error');
         });
     }
 
@@ -1545,11 +1647,11 @@
 
                 showModal('edit-list-modal');
             } else {
-                showToast('Error loading list details: ' + data.error, 'error');
+                // showToast('Error loading list details: ' + data.error, 'error');
             }
         })
         .catch(error => {
-            showToast('Network error loading list details', 'error');
+            // showToast('Network error loading list details', 'error');
         });
     }
 
@@ -1597,7 +1699,7 @@
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
-                showToast('Error removing account: ' + data.error, 'error');
+                // showToast('Error removing account: ' + data.error, 'error');
             }
         });
     }
@@ -1607,7 +1709,7 @@
         const account = newAccountInput ? newAccountInput.value.trim() : '';
 
         if (!account) {
-            showToast('Please enter an account name', 'error');
+            // showToast('Please enter an account name', 'error');
             return;
         }
 
@@ -1634,13 +1736,13 @@
                     newAccountInput.value = '';
                 }
 
-                showToast('Account added successfully', 'success');
+                // showToast('Account added successfully', 'success');
             } else {
-                showToast('Error adding account: ' + data.error, 'error');
+                // showToast('Error adding account: ' + data.error, 'error');
             }
         })
         .catch(error => {
-            showToast('Network error adding account', 'error');
+            // showToast('Network error adding account', 'error');
         });
     }
 
@@ -1649,7 +1751,7 @@
         const newName = editListName ? editListName.value.trim() : '';
 
         if (!newName) {
-            showToast('Please enter a list name', 'error');
+            // showToast('Please enter a list name', 'error');
             return;
         }
 
@@ -1665,15 +1767,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showToast('List updated successfully!', 'success');
+                // showToast('List updated successfully!', 'success');
                 hideModal('edit-list-modal');
                 setTimeout(() => window.location.reload(), 1000);
             } else {
-                showToast('Error updating list: ' + data.error, 'error');
+                // showToast('Error updating list: ' + data.error, 'error');
             }
         })
         .catch(error => {
-            showToast('Network error updating list', 'error');
+            // showToast('Network error updating list', 'error');
         });
     }
 
@@ -1700,15 +1802,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showToast('List deleted successfully!', 'success');
+                // showToast('List deleted successfully!', 'success');
                 hideModal('delete-modal');
                 setTimeout(() => window.location.reload(), 1000);
             } else {
-                showToast('Error deleting list: ' + data.error, 'error');
+                // showToast('Error deleting list: ' + data.error, 'error');
             }
         })
         .catch(error => {
-            showToast('Network error deleting list', 'error');
+            // showToast('Network error deleting list', 'error');
         });
     }
 
@@ -1727,7 +1829,9 @@
         hideModal('loading-modal');
     }
 
+    // Commented out toast functionality
     function showToast(message, type = 'info') {
+        return; // Toast messages disabled
         const existingToast = document.querySelector('.toast');
         if (existingToast) {
             existingToast.remove();
@@ -1854,12 +1958,12 @@
         const xListId = idInput.value.trim();
 
         if (!name) {
-            showToast('Please enter a list name', 'error');
+            // showToast('Please enter a list name', 'error');
             return;
         }
 
         if (!xListId) {
-            showToast('Please enter an X List ID', 'error');
+            // showToast('Please enter an X List ID', 'error');
             return;
         }
 
@@ -1894,27 +1998,27 @@
                 .then(analysisData => {
                     hideLoading();
                     if (analysisData.success) {
-                        showToast('List created and analyzed successfully!', 'success');
+                        // showToast('List created and analyzed successfully!', 'success');
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
-                        showToast('List created but analysis failed: ' + analysisData.error, 'warning');
+                        // showToast('List created but analysis failed: ' + analysisData.error, 'warning');
                         setTimeout(() => window.location.reload(), 1000);
                     }
                 })
                 .catch(analysisError => {
                     hideLoading();
-                    showToast('List created but analysis failed', 'warning');
+                    // showToast('List created but analysis failed', 'warning');
                     console.error('Analysis error:', analysisError);
                     setTimeout(() => window.location.reload(), 1000);
                 });
             } else {
                 hideLoading();
-                showToast('Error creating list: ' + data.error, 'error');
+                // showToast('Error creating list: ' + data.error, 'error');
             }
         })
         .catch(error => {
             hideLoading();
-            showToast('Network error creating list', 'error');
+            // showToast('Network error creating list', 'error');
             console.error('Error:', error);
         });
     }

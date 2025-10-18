@@ -452,7 +452,7 @@ def generate_reply():
             return jsonify({'success': False, 'error': 'Failed to generate reply'}), 500
         
         reply_text = result['reply']
-        gif_query = result.get('gif_query')
+        gif_queries = result.get('gif_queries', [])
         
         # Step 3: Deduct credits after successful generation
         try:
@@ -475,9 +475,9 @@ def generate_reply():
             logger.error(f"Error deducting credits: {str(credit_error)}")
         
         return jsonify({
-            'success': True, 
+            'success': True,
             'reply': reply_text,
-            'gif_query': gif_query
+            'gif_queries': gif_queries  # Now returning multiple queries
         })
             
     except Exception as e:

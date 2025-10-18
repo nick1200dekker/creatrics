@@ -12,11 +12,10 @@ class TenorService:
     """Service for interacting with Tenor GIF API"""
 
     def __init__(self):
-        # Get API key from environment or use a working default
+        # Get API key from environment - REQUIRED
         self.api_key = os.getenv('TENOR_API_KEY')
         if not self.api_key:
-            # Use a valid API key
-            self.api_key = 'AIzaSyCJNKcn2rsj2RtCi0kQ_eAFSOmclbPT2VE'
+            logger.warning("TENOR_API_KEY not found in environment variables. GIF search will not work.")
         self.base_url = 'https://tenor.googleapis.com/v2'
 
     def search_gifs(self, query: str, limit: int = 8) -> Dict:
@@ -30,6 +29,9 @@ class TenorService:
         Returns:
             Dictionary containing GIF results or error
         """
+        if not self.api_key:
+            return {'gifs': [], 'error': 'Tenor API key not configured'}
+
         try:
             # Ensure limit is within bounds
             limit = min(max(1, limit), 50)
@@ -42,9 +44,6 @@ class TenorService:
                 'media_filter': 'minimal',  # Changed to minimal like in working example
                 'contentfilter': 'medium'  # Safe content only
             }
-
-            # Log the request for debugging
-            logger.info(f"Searching Tenor for: {query} with key: {self.api_key[:10]}...")
 
             response = requests.get(
                 f'{self.base_url}/search',
@@ -79,11 +78,10 @@ class TenorService:
                     if gif_url:
                         gifs.append(gif_data)
 
-                logger.info(f"Found {len(gifs)} GIFs for query: {query}")
                 return {'gifs': gifs}
 
             else:
-                logger.error(f"Tenor API error: {response.status_code}, Response: {response.text}")
+                logger.error(f"Tenor API error: {response.status_code}")
                 return {'gifs': [], 'error': f'API error: {response.status_code}'}
 
         except requests.exceptions.Timeout:
@@ -108,6 +106,9 @@ class TenorService:
         Returns:
             Dictionary containing trending GIF results or error
         """
+        if not self.api_key:
+            return {'gifs': [], 'error': 'Tenor API key not configured'}
+
         try:
             limit = min(max(1, limit), 50)
 
@@ -150,7 +151,7 @@ class TenorService:
                 return {'gifs': gifs}
 
             else:
-                logger.error(f"Tenor API error: {response.status_code}, Response: {response.text}")
+                logger.error(f"Tenor API error: {response.status_code}")
                 return {'gifs': [], 'error': f'API error: {response.status_code}'}
 
         except Exception as e:
