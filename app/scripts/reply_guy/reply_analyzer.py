@@ -78,8 +78,8 @@ class ReplyAnalyzer:
                         logger.info(f"Found {len(processed_tweets)} tweets for @{account}")
                         all_tweets.extend(processed_tweets)
 
-                # Rate limiting - reduced for faster processing
-                time.sleep(0.2)
+                # Rate limiting - increased to avoid 429 errors
+                time.sleep(2)
             
             logger.info(f"Total tweets collected: {len(all_tweets)}")
             

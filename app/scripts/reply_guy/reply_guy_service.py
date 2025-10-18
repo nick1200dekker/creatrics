@@ -43,28 +43,24 @@ class ReplyGuyService:
             return []
 
     def get_default_list_accounts(self, list_id: str) -> List[str]:
-        """Get accounts for a default list - Optimized for daily cronjob (20 accounts max)"""
+        """Get accounts for a default list - Custom curated list"""
         if list_id == 'content_creators':
-            # Curated list of highly-active accounts that post daily
-            # Limited to 20 accounts for faster processing in cronjobs
             return [
-                # Tech/Business Leaders (very active)
-                'elonmusk', 'garyvee', 'naval', 'balajis', 'chamath',
-
-                # AI & Tech Influencers (daily posters)
-                'RowanCheung', 'LexFridman', 'AndrewYNg',
-
-                # Marketing & Business
-                'TheCoolestCool', 'KateBour',
-
-                # Content Creators & YouTubers
-                'MrBeast', 'KSI', 'LoganPaul',
-
-                # Finance/Crypto (very active)
-                'michael_saylor', 'APompliano', 'VitalikButerin',
-
-                # Tech News/Commentary
-                'pmarca', 'jason', 'bgurley', 'reidhoffman'
+                'elonmusk',
+                'TRobinsonNewEra',
+                'NBA',
+                'CNN',
+                'NoContextHumans',
+                'InternetH0F',
+                'POTUS',
+                'WorldWideWob',
+                'TheHateCentral',
+                'FilmUpdates',
+                'AMAZlNGNATURE',
+                'WallStreetApes',
+                'DudespostingWs',
+                'saylor',
+                'Cobratate'
             ]
         return []
     
