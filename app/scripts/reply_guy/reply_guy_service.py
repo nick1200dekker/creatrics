@@ -488,24 +488,25 @@ class ReplyGuyService:
     
     # REPLY GENERATION
     
-    def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str, use_brand_voice: bool = False) -> Optional[str]:
-        """Generate AI reply with proper newline handling and mention filtering"""
+    def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str, use_brand_voice: bool = False, image_urls: list = None) -> Optional[str]:
+        """Generate AI reply with proper newline handling, mention filtering, and image context"""
         try:
             # Additional check to prevent generating replies to mention tweets
             tweet_text_stripped = tweet_text.strip()
             if tweet_text_stripped.startswith('@'):
                 logger.warning(f"Attempted to generate reply to mention tweet: {tweet_text_stripped[:50]}...")
                 return None
-            
+
             # The tweet_text comes from the frontend - convert _new_line_ back to actual newlines for the AI
             clean_tweet_text = tweet_text.replace('_new_line_', '\n')
-            
+
             return self.generator.generate_reply(
                 user_id=user_id,
                 tweet_text=clean_tweet_text,
-                author=author, 
+                author=author,
                 style=style,
-                use_brand_voice=use_brand_voice
+                use_brand_voice=use_brand_voice,
+                image_urls=image_urls or []
             )
             
         except Exception as e:

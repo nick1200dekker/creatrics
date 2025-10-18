@@ -845,7 +845,17 @@
         const author = authorElement ? authorElement.textContent.replace('@', '') : '';
         const style = getSelectedStyle(tweetElement);
         const useBrandVoice = getBrandVoiceState(tweetElement);
-        console.log('Author:', author, 'Style:', style, 'Brand voice:', useBrandVoice);
+
+        // Extract image URLs from tweet media
+        const imageUrls = [];
+        const tweetImages = tweetElement.querySelectorAll('.tweet-image');
+        tweetImages.forEach(img => {
+            if (img.src) {
+                imageUrls.push(img.src);
+            }
+        });
+
+        console.log('Author:', author, 'Style:', style, 'Brand voice:', useBrandVoice, 'Images:', imageUrls.length);
 
         const textarea = tweetElement.querySelector('.reply-textarea');
         const generateBtn = tweetElement.querySelector('.generate-reply-btn');
@@ -856,7 +866,7 @@
             generateBtn.classList.add('loading');
         }
         if (textarea) {
-            textarea.value = 'Generating reply...';
+            textarea.value = imageUrls.length > 0 ? 'Analyzing images and generating reply...' : 'Generating reply...';
         }
 
         console.log('Making API request to generate reply...');
@@ -867,7 +877,8 @@
                 tweet_text: tweetText,
                 author: author,
                 style: style,
-                use_brand_voice: useBrandVoice
+                use_brand_voice: useBrandVoice,
+                image_urls: imageUrls  // Send images to API
             })
         })
         .then(response => response.json())

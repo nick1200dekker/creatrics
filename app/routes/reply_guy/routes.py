@@ -391,6 +391,7 @@ def generate_reply():
         author = data.get('author', '').strip()
         style = data.get('style', 'supportive')
         use_brand_voice = data.get('use_brand_voice', False)
+        image_urls = data.get('image_urls', [])  # Get image URLs from request
         
         # Additional validation
         if not tweet_text or not author:
@@ -432,14 +433,15 @@ def generate_reply():
                 'credits_required': True
             }), 402
         
-        # Generate reply
+        # Generate reply (with image context if available)
         service = ReplyGuyService()
         reply_text = service.generate_reply(
             user_id=user_id,
-            tweet_text=tweet_text, 
+            tweet_text=tweet_text,
             author=author,
             style=style,
-            use_brand_voice=use_brand_voice
+            use_brand_voice=use_brand_voice,
+            image_urls=image_urls  # Pass images for Claude Vision
         )
         
         if not reply_text:

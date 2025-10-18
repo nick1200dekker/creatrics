@@ -20,8 +20,17 @@ class ReplyGenerator:
         # Get AI provider instead of PostEditor
         self.ai_provider = get_ai_provider()
     
-    def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str = 'supportive', use_brand_voice: bool = False) -> Optional[str]:
-        """Generate AI reply to a tweet"""
+    def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str = 'supportive', use_brand_voice: bool = False, image_urls: list = None) -> Optional[str]:
+        """Generate AI reply to a tweet
+
+        Args:
+            user_id: User ID
+            tweet_text: The tweet text to reply to
+            author: Tweet author username
+            style: Reply style (creatrics, supportive, etc.)
+            use_brand_voice: Whether to use user's brand voice
+            image_urls: List of image URLs from the tweet (for vision analysis)
+        """
         try:
             # Get the prompt template
             prompt_template = self.get_prompt_template(use_brand_voice)
@@ -37,7 +46,12 @@ class ReplyGenerator:
             
             # Convert _new_line_ back to actual newlines for the AI prompt
             clean_tweet_text = tweet_text.replace('_new_line_', '\n')
-            
+
+            # Add image context if images are present
+            if image_urls and len(image_urls) > 0:
+                image_context = f"\n\nIMAGES: This tweet contains {len(image_urls)} image(s). The images are shown above. Reference what you see in the images when crafting your reply to make it more relevant and engaging."
+                clean_tweet_text += image_context
+
             # Replace placeholders in prompt
             prompt = prompt_template.replace("{tweet_text}", clean_tweet_text)
             prompt = prompt.replace("{author}", author)
@@ -55,10 +69,55 @@ class ReplyGenerator:
             # Call AI provider - higher temperature for more natural responses when mimicking
             temperature = 0.85 if (use_brand_voice and brand_voice_context) else 0.7
 
+            # Build user message - include images if available
+            user_message_content = []
+
+            # Add images first if they exist (Claude Vision)
+            if image_urls and len(image_urls) > 0:
+                import requests
+                import base64
+
+                for img_url in image_urls[:4]:  # Limit to 4 images max
+                    try:
+                        # Download and encode image
+                        response = requests.get(img_url, timeout=10)
+                        response.raise_for_status()
+
+                        # Detect media type from content-type or URL
+                        content_type = response.headers.get('content-type', 'image/jpeg')
+                        if 'image/' not in content_type:
+                            content_type = 'image/jpeg'  # Default fallback
+
+                        # Encode to base64
+                        image_data = base64.standard_b64encode(response.content).decode('utf-8')
+
+                        # Claude API format for images
+                        user_message_content.append({
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": content_type,
+                                "data": image_data
+                            }
+                        })
+                        logger.info(f"Successfully loaded image from {img_url[:50]}...")
+                    except Exception as e:
+                        logger.error(f"Failed to load image {img_url}: {str(e)}")
+                        # Continue with other images
+
+            # Add text prompt
+            user_message_content.append({
+                "type": "text",
+                "text": prompt
+            })
+
+            # If only text (no images), use simple format for compatibility
+            user_message = user_message_content if image_urls else prompt
+
             response = self.ai_provider.create_completion(
                 messages=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": user_message}
                 ],
                 temperature=temperature,
                 max_tokens=2000
@@ -185,17 +244,31 @@ CRITICAL RULES - MUST NOT LOOK AI-GENERATED:
    - No unsolicited advice unless directly relevant
    - Match the energy/tone of the original tweet
 
-6. AUTHENTICITY MARKERS:
-   - Occasional typos or informal grammar are GOOD (shows you're human)
-   - Use "nah" instead of "no", "ya" instead of "yes" when casual
-   - Real people use "lol", "fr", "tbh", "lowkey" naturally (when appropriate)
-   - Sentence fragments are fine ("Facts." "This." "Exactly.")
+6. THE REPLY GUY LEAGUE - ADD REAL VALUE:
+   Your reply should do ONE of these:
 
-7. PERSONALITY INDICATORS (pick 1-2 max):
-   - Light emoji use (1-2 max, only if it fits)
-   - Personal anecdotes ("had this happen to me")
-   - Rhetorical questions
-   - Brief reactions ("wild", "insane", "makes sense")
+   ✓ Add insight/perspective others missed
+   ✓ Ask a thought-provoking question that drives discussion
+   ✓ Share a relevant experience/data point
+   ✓ Add humor that actually lands (not forced)
+   ✓ Build on their point with new angle
+
+   ✗ Don't just agree ("this!" "facts!" "real!")
+   ✗ Don't be generic ("great point!" "love this!")
+   ✗ Don't use cringe slang ("fr", "lowkey", "this hit different")
+
+7. WRITE NATURALLY BUT ADD VALUE:
+   - Be conversational but substantive
+   - 10-30 words is the sweet spot
+   - Focus on advancing the conversation
+   - Think: "Would this make someone reply to ME?"
+
+   Examples of GOOD value-adding replies:
+   * "The issue is most people conflate authority with expertise. Two very different things."
+   * "Curious how this plays out in decentralized systems though"
+   * "Seen this exact pattern in 3 different industries now"
+   * "The counterargument falls apart when you factor in timing"
+   * "This explains why [specific thing] keeps happening"
 
 CRITICAL OUTPUT INSTRUCTIONS:
 - Output ONLY the reply text that will be posted
@@ -283,25 +356,15 @@ OUTPUT THE REPLY NOW:"""
                                         if clean_text:
                                             reply_examples.append(clean_text)
 
-            # If we don't have enough reply examples, also check their posts
-            if len(reply_examples) < 5:
-                logger.info(f"Only {len(reply_examples)} reply examples found, checking posts too...")
-                posts_ref = self.db.collection('users').document(str(user_id)).collection('x_posts').document('timeline')
-                posts_doc = posts_ref.get()
-
-                if posts_doc.exists:
-                    posts_data = posts_doc.to_dict()
-                    if posts_data and 'posts' in posts_data:
-                        posts_list = posts_data['posts']
-                        if isinstance(posts_list, list):
-                            for post in posts_list[:10]:  # Get up to 10 posts
-                                if isinstance(post, dict) and 'text' in post:
-                                    post_text = post['text']
-                                    if post_text and len(post_text.strip()) > 10:
-                                        import re
-                                        clean_text = re.sub(r'https?://\S+', '', post_text).strip()
-                                        if clean_text and clean_text not in reply_examples:
-                                            reply_examples.append(clean_text)
+            # DON'T use regular posts - they're not replies!
+            # Only use actual reply examples to maintain authentic reply voice
+            # If we don't have enough, just use what we have rather than mixing in non-reply content
+            if len(reply_examples) < 3:
+                logger.warning(f"Only {len(reply_examples)} reply examples found for user {user_id}. Need more reply data for accurate brand voice.")
+                # Don't return empty - use what we have, even if limited
+                if not reply_examples:
+                    logger.info(f"No reply examples found - brand voice will not be used")
+                    return ""
 
             if not reply_examples:
                 logger.info(f"No meaningful examples found for user {user_id}")
@@ -311,13 +374,19 @@ OUTPUT THE REPLY NOW:"""
             reply_examples = reply_examples[:15]
 
             # Format brand voice context - focus on examples, not instructions
-            brand_voice_context = f"HERE ARE EXAMPLES OF HOW @{screen_name} ACTUALLY REPLIES:\n\n"
+            brand_voice_context = f"HERE ARE ACTUAL REPLIES FROM @{screen_name}:\n\n"
 
             # Just show the examples - let the AI figure out the patterns
             for i, reply in enumerate(reply_examples, 1):
-                brand_voice_context += f"Example {i}: {reply}\n"
+                brand_voice_context += f"{i}. {reply}\n"
 
-            brand_voice_context += "\nNow write a reply EXACTLY in this same style. Don't be an AI assistant, BE this person:"
+            brand_voice_context += f"\n✓ Copy @{screen_name}'s EXACT style:\n"
+            brand_voice_context += "- Same length (short/long)\n"
+            brand_voice_context += "- Same tone (casual/formal)\n"
+            brand_voice_context += "- Same words they actually use\n"
+            brand_voice_context += "- Same punctuation style\n"
+            brand_voice_context += "- Same capitalization\n\n"
+            brand_voice_context += "Write your reply now:"
 
             logger.info(f"Generated enhanced brand voice context for user {user_id} with {len(reply_examples)} examples")
             return brand_voice_context

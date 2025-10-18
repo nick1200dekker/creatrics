@@ -174,6 +174,10 @@ class ReplyAnalyzer:
         if raw_text.startswith('<@reply>'):
             raw_text = raw_text.replace('<@reply>', '', 1).strip()
 
+        # Remove t.co image/video URLs (we have actual media)
+        import re
+        raw_text = re.sub(r'https://t\.co/\w+', '', raw_text).strip()
+
         # Convert all newline variations to our standard marker
         # This handles: \n, \r\n, \r
         processed_text = raw_text.replace('\r\n', '_new_line_').replace('\r', '_new_line_').replace('\n', '_new_line_')
