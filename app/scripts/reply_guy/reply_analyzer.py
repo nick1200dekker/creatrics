@@ -166,10 +166,14 @@ class ReplyAnalyzer:
         """Process a tweet to extract and format necessary data with proper newline handling"""
         # Extract tweet ID
         tweet_id = self._extract_tweet_id(tweet)
-        
+
         # Proper newline handling - preserve original text structure
         raw_text = tweet.get('text', '')
-        
+
+        # Remove <@reply> prefix if present (Twitter API artifact)
+        if raw_text.startswith('<@reply>'):
+            raw_text = raw_text.replace('<@reply>', '', 1).strip()
+
         # Convert all newline variations to our standard marker
         # This handles: \n, \r\n, \r
         processed_text = raw_text.replace('\r\n', '_new_line_').replace('\r', '_new_line_').replace('\n', '_new_line_')
@@ -182,6 +186,7 @@ class ReplyAnalyzer:
             "engagement": {
                 "likes": self._safe_int(tweet.get('favorites', 0)),
                 "retweets": self._safe_int(tweet.get('retweets', 0)),
+                "replies": self._safe_int(tweet.get('replies', 0)),
                 "views": self._safe_int(tweet.get('views', 0))
             }
         }

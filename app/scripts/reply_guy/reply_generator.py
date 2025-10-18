@@ -63,13 +63,32 @@ class ReplyGenerator:
                 temperature=temperature,
                 max_tokens=2000
             )
-            
+
             reply_text = response['content'].strip()
-            
+
+            # Clean up any AI prefixes/artifacts
+            # Remove common prefixes the AI might add despite instructions
+            prefixes_to_remove = [
+                '<@reply>',
+                '@reply>',
+                'Reply:',
+                'Response:',
+                'Answer:',
+            ]
+
+            for prefix in prefixes_to_remove:
+                if reply_text.startswith(prefix):
+                    reply_text = reply_text[len(prefix):].strip()
+
+            # Remove surrounding quotes if present
+            if (reply_text.startswith('"') and reply_text.endswith('"')) or \
+               (reply_text.startswith("'") and reply_text.endswith("'")):
+                reply_text = reply_text[1:-1].strip()
+
             # Ensure reply doesn't exceed X's character limit
             if len(reply_text) > 280:
                 reply_text = reply_text[:277] + "..."
-            
+
             logger.info(f"Generated reply for @{author}: {reply_text[:50]}...")
             return reply_text
             
@@ -178,7 +197,22 @@ CRITICAL RULES - MUST NOT LOOK AI-GENERATED:
    - Rhetorical questions
    - Brief reactions ("wild", "insane", "makes sense")
 
-OUTPUT ONLY THE REPLY TEXT (nothing else):"""
+CRITICAL OUTPUT INSTRUCTIONS:
+- Output ONLY the reply text that will be posted
+- NO prefixes like "<@reply>" or "Reply:" or "Response:"
+- NO quotation marks around the reply
+- NO explanations or meta-commentary
+- Just the raw reply text ready to post directly
+
+Example of CORRECT output:
+that's wild, didn't expect those numbers
+
+Example of INCORRECT output:
+<@reply> that's wild, didn't expect those numbers
+Reply: that's wild, didn't expect those numbers
+"that's wild, didn't expect those numbers"
+
+OUTPUT THE REPLY NOW:"""
     
     def get_brand_voice_context(self, user_id: str) -> str:
         """Get brand voice context from user's X replies data - Enhanced version"""

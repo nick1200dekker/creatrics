@@ -1506,8 +1506,9 @@ html.dark .toast {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
-    align-items: center;
+    align-items: flex-start;  /* Changed from center to flex-start */
     justify-content: center;
+    padding-top: 8rem;  /* Position near the top where dropdown is */
     z-index: 9999;
     opacity: 0;
     visibility: hidden;
