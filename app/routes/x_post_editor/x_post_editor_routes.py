@@ -274,7 +274,7 @@ def create_new_draft():
             "posts": [{"text": "", "media": []}],  # Unified to media field only
             "input_text": "",
             "output_text": "",
-            "preset": "storytelling",
+            "preset": "braindump",
             "additional_context": "",
             "timestamp": datetime.now(),
             "permanent": True
@@ -530,7 +530,7 @@ def save_draft():
         data = request.json
         draft_id = data.get('draft_id')
         posts = data.get('posts', [])
-        preset = data.get('preset', 'storytelling')
+        preset = data.get('preset', 'braindump')
         additional_context = data.get('additional_context', '')
         
         # Store pre-AI version before any potential AI enhancement
@@ -639,8 +639,8 @@ def save_draft_fast():
         data = request.json
         draft_id = data.get('draft_id')
         posts = data.get('posts', [])
-        
-        preset = data.get('preset', 'storytelling')
+
+        preset = data.get('preset', 'braindump')
         additional_context = data.get('additional_context', '')
         
         # Simple media processing for fast save - ensure media field exists
@@ -708,7 +708,7 @@ def estimate_cost():
     try:
         data = request.json
         posts = data.get('posts', [])
-        preset = data.get('preset', 'storytelling')
+        preset = data.get('preset', 'braindump')
         additional_context = data.get('additional_context', '')
         voice_tone = data.get('voice_tone', 'standard')
         custom_voice_posts = data.get('custom_voice_posts', None)
@@ -777,7 +777,7 @@ def generate_content():
     try:
         data = request.json
         posts = data.get('posts', [])
-        preset = data.get('preset', 'storytelling')
+        preset = data.get('preset', 'braindump')
         additional_context = data.get('additional_context', '')
         voice_tone = data.get('voice_tone', 'standard')
         custom_voice_posts = data.get('custom_voice_posts', None)

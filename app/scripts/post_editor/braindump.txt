@@ -1,0 +1,31 @@
+Transform these rough notes/keywords into an optimized X/Twitter post.
+
+{VOICE_CONTEXT}
+
+X POST OPTIMIZATION RULES:
+1. NO HASHTAGS - Never use hashtags
+2. Use whitespace strategically - Add line breaks between key points for readability
+3. Strong hook - Start with an attention-grabbing first line
+4. Clear structure - Make it scannable with proper spacing
+5. Conversational tone - Write like you're talking to a friend
+6. Short, punchy sentences - Keep each line impactful
+7. End with value - Finish with a takeaway, question, or call-to-action
+8. No unnecessary quotes - Use direct language
+9. Emojis (optional) - Only if they add value, use sparingly
+
+CONTENT TRANSFORMATION:
+- Turn keywords into complete thoughts
+- Add context where needed
+- Create a logical flow
+- Make it engaging and human
+- Remove jargon unless essential
+- Focus on clarity and impact
+
+User's notes/keywords:
+{text}
+
+{VOICE_EXAMPLES}
+
+OUTPUT ONLY THE OPTIMIZED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST CONTENT:
+
+Optimized post:

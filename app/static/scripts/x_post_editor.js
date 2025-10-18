@@ -37,7 +37,7 @@
 
     // App state
     const state = {
-        enhancementPreset: 'storytelling',
+        enhancementPreset: 'braindump',
         additionalInstructions: '',
         postCount: 1,
         currentDraftId: null,
@@ -151,14 +151,13 @@
         let draftsHTML = '';
         drafts.forEach(draft => {
             const isActive = draft.id === state.currentDraftId;
-            // Extract preview from posts - only first line
+            // Extract preview from posts - truncate to ~40 chars
             let preview = '';
             if (draft.posts && draft.posts.length > 0) {
                 preview = draft.posts[0].text || '';
-                // Get only first line
-                const firstLineBreak = preview.indexOf('\n');
-                if (firstLineBreak !== -1) {
-                    preview = preview.substring(0, firstLineBreak).trim();
+                // Truncate to first 40 characters
+                if (preview.length > 40) {
+                    preview = preview.substring(0, 40).trim() + '...';
                 }
             }
 
@@ -166,7 +165,7 @@
                 <div class="draft-item ${isActive ? 'active' : ''}" data-id="${draft.id}">
                     <div class="draft-content">
                         <div class="draft-title">${draft.title || 'Untitled Draft'}</div>
-                        ${preview ? `<div class="draft-preview">${escapeHtml(preview.substring(0, 100))}</div>` : ''}
+                        ${preview ? `<div class="draft-preview">${escapeHtml(preview)}</div>` : ''}
                     </div>
                     <button class="draft-delete-btn" title="Delete Draft">
                         <i class="ph ph-trash"></i>
@@ -421,8 +420,9 @@
         const grammarTool = document.getElementById('grammar-tool');
         const storytellingTool = document.getElementById('storytelling-tool');
         const hookStoryPunchTool = document.getElementById('hook-story-punch-tool');
+        const braindumpTool = document.getElementById('braindump-tool');
         const mimicTool = document.getElementById('mimic-tool');
-        
+
         if (grammarTool) {
             grammarTool.onclick = () => {
                 resetToolsActive();
@@ -449,7 +449,16 @@
                 markAsChanged();
             };
         }
-        
+
+        if (braindumpTool) {
+            braindumpTool.onclick = () => {
+                resetToolsActive();
+                braindumpTool.classList.add('active');
+                state.enhancementPreset = 'braindump';
+                markAsChanged();
+            };
+        }
+
         if (mimicTool) {
             mimicTool.onclick = () => {
                 resetToolsActive();
@@ -1342,10 +1351,10 @@
         state.postCount = 0;
         state.hasUnsavedChanges = false;
         state.undoStack = [];
-        
+
         resetToolsActive();
-        document.getElementById('storytelling-tool')?.classList.add('active');
-        state.enhancementPreset = 'storytelling';
+        document.getElementById('braindump-tool')?.classList.add('active');
+        state.enhancementPreset = 'braindump';
         state.additionalInstructions = '';
         
         const contextButton = document.getElementById('context-button');
@@ -1399,6 +1408,8 @@
             document.getElementById('storytelling-tool')?.classList.add('active');
         } else if (state.enhancementPreset === 'hook_story_punch') {
             document.getElementById('hook-story-punch-tool')?.classList.add('active');
+        } else if (state.enhancementPreset === 'braindump') {
+            document.getElementById('braindump-tool')?.classList.add('active');
         } else if (state.enhancementPreset === 'mimic') {
             document.getElementById('mimic-tool')?.classList.add('active');
         }

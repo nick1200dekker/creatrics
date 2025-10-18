@@ -26,7 +26,7 @@ class PostEditor:
     """Enhanced PostEditor with multi-media support: Focus on content generation ONLY"""
     
     def __init__(self):
-        self.presets = ['grammar', 'storytelling', 'hook_story_punch', 'mimic']
+        self.presets = ['grammar', 'storytelling', 'hook_story_punch', 'braindump', 'mimic']
         
         # Define supported media types and their configurations
         self.supported_media_types = {
@@ -372,7 +372,7 @@ class PostEditor:
                 continue
             
             # Create context-aware prompt for thread posts (skip for presets with specific structure requirements)
-            if preset not in ['mimic', 'storytelling', 'hook_story_punch'] and len(posts) > 1:
+            if preset not in ['mimic', 'storytelling', 'hook_story_punch', 'braindump'] and len(posts) > 1:
                 if i == 0:
                     context_note = f"\n\nThis is the first post in a {len(posts)}-post thread. Set up the topic engagingly."
                 elif i == len(posts) - 1:
@@ -396,7 +396,7 @@ class PostEditor:
                         media_descriptions.append("image")
                 
                 if media_descriptions:
-                    if preset in ['mimic', 'storytelling', 'hook_story_punch']:
+                    if preset in ['mimic', 'storytelling', 'hook_story_punch', 'braindump']:
                         media_context = f"\n\nThis post includes the following media: {', '.join(media_descriptions)}."
                     else:
                         media_context = f"\n\nThis post includes the following media: {', '.join(media_descriptions)}. Consider referencing or complementing this media in your enhanced content."
@@ -412,6 +412,8 @@ class PostEditor:
                 # Set different system message based on preset
                 if preset == 'mimic':
                     system_message = "You are a style mimic specialist. You must COMPLETELY REWRITE the entire post from scratch to match the reference examples exactly. Do not make small edits - REWRITE EVERY SENTENCE using the exact style patterns from the examples. Transform the entire post to sound like the same person wrote it. Be extremely aggressive in your rewriting."
+                elif preset == 'braindump':
+                    system_message = "You are an expert X/Twitter content specialist. Transform rough notes, keywords, and braindumps into highly optimized X posts. Never use hashtags. Use strategic whitespace. Create strong hooks. Keep it conversational and impactful. Output only the final post - no explanations."
                 else:
                     system_message = "You are a helpful assistant that enhances social media posts for better engagement and clarity. Focus on improving this specific post while maintaining its core message."
                 
