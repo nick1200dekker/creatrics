@@ -155,44 +155,50 @@ html.dark .secondary-btn:hover {
     padding: 2rem;
 }
 
-/* Create List Modal */
+/* Create List Modal - Position at top of page */
 .modal#create-list-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    display: none;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding-top: 5rem !important;
+    z-index: 10000 !important;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    margin: 0 !important;
+    overflow-y: auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
 }
 
 .modal#create-list-modal.show {
-    opacity: 1;
-    visibility: visible;
-}
-
-#create-list-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 10000;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 5rem;
-}
-
-#create-list-modal.show {
     display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+}
+
+/* Ensure modal content is properly positioned and scaled */
+.modal#create-list-modal .modal-content {
+    position: relative !important;
+    margin: auto !important;
+    top: auto !important;
+    left: auto !important;
+    transform: scale(0.95) !important;
+}
+
+.modal#create-list-modal.show .modal-content {
+    transform: scale(1) !important;
 }
 
 #create-list-modal .form-section {
@@ -783,6 +789,46 @@ html.dark .primary-btn:hover:not(:disabled) {
 .panel-content {
     padding: 1.5rem;
     min-height: 400px;
+}
+
+/* Loading Section - matching Optimize Video styles */
+.loading-section {
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.loading-card {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.loading-icon {
+    font-size: 4rem;
+    color: #3B82F6;
+    margin-bottom: 0.25rem;  /* Much closer to text */
+}
+
+html.dark .loading-icon {
+    color: #60A5FA;
+}
+
+.loading-icon i {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+.loading-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+}
+
+.loading-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
 }
 
 /* Tweet Opportunities */
@@ -1506,9 +1552,9 @@ html.dark .toast {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
-    align-items: flex-start;  /* Changed from center to flex-start */
+    display: flex;
+    align-items: center;
     justify-content: center;
-    padding-top: 8rem;  /* Position near the top where dropdown is */
     z-index: 9999;
     opacity: 0;
     visibility: hidden;
@@ -1530,10 +1576,13 @@ html.dark .toast {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     border: none;
     overflow: hidden;
-    transform: scale(0.9);
+    transform: scale(0.95);
     transition: transform 0.3s ease;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
+#create-list-modal.show .modal-content,
 .modal.show .modal-content {
     transform: scale(1);
 }
@@ -1682,4 +1731,14 @@ html.dark #dark-mode-toggle .dark\:hidden {
 
 html.dark #dark-mode-toggle .hidden.dark\:block {
     display: block !important;
+}
+
+/* Override modal positioning for create-list-modal - MUST BE AFTER .modal class */
+#create-list-modal {
+    align-items: flex-start !important;
+    padding-top: 5rem !important;
+}
+
+#create-list-modal.show {
+    align-items: flex-start !important;
 }

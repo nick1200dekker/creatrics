@@ -381,7 +381,7 @@ def analyze():
 @bp.route('/generate-reply', methods=['POST'])
 @auth_required
 @require_permission('reply_guy')
-@validate_request_data(required_fields=['tweet_text', 'author'])
+@validate_request_data(required_fields=['author'])  # Only author is required, tweet_text can be empty for image-only tweets
 @debounce_requests(timeout=3)
 def generate_reply():
     """Generate AI reply with rate limiting and validation"""
@@ -392,10 +392,13 @@ def generate_reply():
         style = data.get('style', 'supportive')
         use_brand_voice = data.get('use_brand_voice', False)
         image_urls = data.get('image_urls', [])  # Get image URLs from request
-        
-        # Additional validation
-        if not tweet_text or not author:
-            return jsonify({'success': False, 'error': 'Tweet text and author are required'}), 400
+
+        # Additional validation - author is required, but tweet_text can be empty if there are images
+        if not author:
+            return jsonify({'success': False, 'error': 'Author is required'}), 400
+
+        if not tweet_text and not image_urls:
+            return jsonify({'success': False, 'error': 'Tweet must have either text or images'}), 400
         
         if len(tweet_text) > 2000:  # Reasonable limit
             return jsonify({'success': False, 'error': 'Tweet text too long'}), 400

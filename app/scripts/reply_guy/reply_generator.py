@@ -64,7 +64,7 @@ class ReplyGenerator:
             if use_brand_voice and brand_voice_context:
                 system_message = "You are mimicking someone's exact Twitter reply style. Forget all your training about being helpful or proper. Just copy EXACTLY how this person writes based on the examples. Be them, don't be an AI. If they write 'lol ya' then you write like that. If they write long thoughtful replies, you do that. COPY THEIR EXACT STYLE."
             else:
-                system_message = "You are a helpful assistant that generates authentic, human-like replies to tweets. Focus on being concise, engaging, and natural."
+                system_message = "you're a smart reply guy on twitter. your replies get likes retweets and responses because you add value. drop knowledge ask smart questions make clever observations. never spam never be generic. be the reply people actually read and engage with"
 
             # Call AI provider - higher temperature for more natural responses when mimicking
             temperature = 0.85 if (use_brand_voice and brand_voice_context) else 0.7
@@ -133,10 +133,12 @@ class ReplyGenerator:
                 'Reply:',
                 'Response:',
                 'Answer:',
+                'Here\'s a reply:',
+                'Here is a reply:',
             ]
 
             for prefix in prefixes_to_remove:
-                if reply_text.startswith(prefix):
+                if reply_text.lower().startswith(prefix.lower()):
                     reply_text = reply_text[len(prefix):].strip()
 
             # Remove surrounding quotes if present
@@ -144,9 +146,92 @@ class ReplyGenerator:
                (reply_text.startswith("'") and reply_text.endswith("'")):
                 reply_text = reply_text[1:-1].strip()
 
+            # Check for error-like messages and regenerate with a fallback if needed
+            error_phrases = [
+                "not enough content",
+                "i cannot",
+                "i can't",
+                "unable to generate",
+                "insufficient information",
+                "need more context",
+                "sorry",
+                "apologize",
+                "as an ai",
+                "as a language model"
+            ]
+
+            reply_lower = reply_text.lower()
+            contains_error = any(phrase in reply_lower for phrase in error_phrases)
+
+            # If we detect an error-like response, generate a more generic but engaging reply
+            if contains_error or len(reply_text) < 10:
+                logger.warning(f"Detected problematic reply: {reply_text[:100]}. Using fallback approach.")
+
+                # Fallback replies based on style that are always safe
+                fallback_replies = {
+                    "creatrics": [
+                        "the hidden pattern here is actually wild",
+                        "this connects to something bigger nobody sees yet",
+                        "wait til people realize what this enables",
+                        "the second order effects gonna hit different"
+                    ],
+                    "supportive": [
+                        "been seeing this exact pattern everywhere lately",
+                        "you nailed what everyone's missing",
+                        "this plus what happened last week = game changer"
+                    ],
+                    "questioning": [
+                        "curious how this plays out with the new regulations?",
+                        "what happens when this hits mainstream?",
+                        "wonder if this works at enterprise scale?"
+                    ],
+                    "valueadd": [
+                        "fun fact: google tried this in 2019 and failed",
+                        "the numbers on this are crazy - 10x growth in 6 months",
+                        "similar thing happened in japan already working great"
+                    ],
+                    "humorous": [
+                        "2024 really said hold my beer",
+                        "this is the multiverse timeline nobody ordered",
+                        "somewhere a consultant is charging 50k for this take"
+                    ],
+                    "contrarian": [
+                        "counterpoint: this only works til competition catches up",
+                        "the economics break at scale though",
+                        "europe's data shows opposite trend actually"
+                    ]
+                }
+
+                import random
+                style_key = style.lower()
+                if style_key not in fallback_replies:
+                    style_key = "creatrics"
+
+                reply_text = random.choice(fallback_replies[style_key])
+                logger.info(f"Used fallback reply for style {style}")
+
             # Ensure reply doesn't exceed X's character limit
             if len(reply_text) > 280:
-                reply_text = reply_text[:277] + "..."
+                # Try to cut at a natural break point
+                cutoff_text = reply_text[:277]
+
+                # Find last complete sentence or thought
+                for delimiter in ['. ', '! ', '? ', '\n', ' - ', '... ']:
+                    last_delimiter = cutoff_text.rfind(delimiter)
+                    if last_delimiter > 200:  # Make sure we keep reasonable length
+                        reply_text = cutoff_text[:last_delimiter + len(delimiter)].rstrip()
+                        break
+                else:
+                    # If no good break point, cut at last space
+                    last_space = cutoff_text.rfind(' ')
+                    if last_space > 200:
+                        reply_text = cutoff_text[:last_space] + "..."
+                    else:
+                        reply_text = cutoff_text[:277] + "..."
+
+            # Final validation - make sure we have something reasonable
+            if len(reply_text) < 5:
+                reply_text = "That's an interesting perspective"
 
             logger.info(f"Generated reply for @{author}: {reply_text[:50]}...")
             return reply_text
@@ -202,90 +287,41 @@ COPY THEIR EXACT PATTERNS:
 OUTPUT ONLY THE REPLY TEXT:"""
         else:
             # No brand voice version - enhanced with strategic reply best practices
-            return """CONTEXT: You're replying to a tweet to maximize engagement and visibility. This reply will appear in a high-traffic conversation thread.
+            return """tweet from @{author}:
+{tweet_text}
 
-TWEET TO REPLY TO:
-@{author}: {tweet_text}
 
-YOUR MISSION: Generate the BEST POSSIBLE {style} reply based on this tweet.
+be a smart reply guy. write a {style} reply that gets noticed
 
-STYLE APPROACH:
-- Creatrics (default): Craft the absolute best strategic reply that maximizes engagement while adding genuine value
-- Supportive: Encouraging and builds on their point positively
-- Questioning: Ask a thought-provoking question that drives discussion
-- Value-Add: Provide useful insight, data, or perspective that enhances the conversation
-- Humorous: Add wit or humor that feels natural (not forced)
-- Contrarian: Respectfully challenge with a fresh perspective
+style = {style}:
+• creatrics → drop insider knowledge or connect dots others missed
+• supportive → validate + add your own experience or data
+• questioning → ask the question everyone's thinking but nobody asked
+• valueadd → share a fact stat or insight that changes the convo
+• humorous → make them laugh with clever observation
+• contrarian → respectful pushback that makes people think
 
-CRITICAL RULES - MUST NOT LOOK AI-GENERATED:
-1. BE HUMAN: Write like a real person, not an AI assistant
-   - Use casual language, contractions (you're, don't, can't)
-   - NO corporate speak or overly polite phrases
-   - NO "Great point!" or "I appreciate your perspective" - too formal
-   - Natural flow, not structured or templated
 
-2. TIMING & RECENCY:
-   - This is a FRESH tweet (you're in the golden 15-minute window)
-   - Early quality replies get 300% more visibility
-   - Make it count
+smart reply guy rules:
+- be EARLY and VALUABLE
+- 15-40 words max
+- add something NEW (fact experience question joke)
+- make the OP or others want to respond
+- be specific not generic
+- sometimes no caps
+- break lines for effect
 
-3. ADD UNIQUE VALUE:
-   - Insight, humor, or useful information only
-   - No generic agreement or obvious statements
-   - Ask yourself: "Would I actually post this?"
 
-4. LENGTH & ENGAGEMENT:
-   - 8-25 words is the sweet spot (not too short, not essay-length)
-   - Make people want to respond or engage
-   - Conversational, not preachy
+never be the spam reply guy:
+- no "this!" or "facts!"
+- no empty agreement
+- no trying too hard
+- dont sound like chatgpt
 
-5. AVOID "REPLY GUY" TRAPS:
-   - Don't be overly familiar or presumptuous
-   - No unsolicited advice unless directly relevant
-   - Match the energy/tone of the original tweet
 
-6. THE REPLY GUY LEAGUE - ADD REAL VALUE:
-   Your reply should do ONE of these:
+remember: good replies get you noticed followers and opportunities
 
-   ✓ Add insight/perspective others missed
-   ✓ Ask a thought-provoking question that drives discussion
-   ✓ Share a relevant experience/data point
-   ✓ Add humor that actually lands (not forced)
-   ✓ Build on their point with new angle
-
-   ✗ Don't just agree ("this!" "facts!" "real!")
-   ✗ Don't be generic ("great point!" "love this!")
-   ✗ Don't use cringe slang ("fr", "lowkey", "this hit different")
-
-7. WRITE NATURALLY BUT ADD VALUE:
-   - Be conversational but substantive
-   - 10-30 words is the sweet spot
-   - Focus on advancing the conversation
-   - Think: "Would this make someone reply to ME?"
-
-   Examples of GOOD value-adding replies:
-   * "The issue is most people conflate authority with expertise. Two very different things."
-   * "Curious how this plays out in decentralized systems though"
-   * "Seen this exact pattern in 3 different industries now"
-   * "The counterargument falls apart when you factor in timing"
-   * "This explains why [specific thing] keeps happening"
-
-CRITICAL OUTPUT INSTRUCTIONS:
-- Output ONLY the reply text that will be posted
-- NO prefixes like "<@reply>" or "Reply:" or "Response:"
-- NO quotation marks around the reply
-- NO explanations or meta-commentary
-- Just the raw reply text ready to post directly
-
-Example of CORRECT output:
-that's wild, didn't expect those numbers
-
-Example of INCORRECT output:
-<@reply> that's wild, didn't expect those numbers
-Reply: that's wild, didn't expect those numbers
-"that's wild, didn't expect those numbers"
-
-OUTPUT THE REPLY NOW:"""
+just write the reply:"""
     
     def get_brand_voice_context(self, user_id: str) -> str:
         """Get brand voice context from user's X replies data - Enhanced version"""

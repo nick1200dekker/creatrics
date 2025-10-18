@@ -196,6 +196,18 @@
             .catch(error => {
                 console.error('Brand voice check failed:', error);
                 setBrandVoiceState(false);
+            })
+            .finally(() => {
+                // Hide loading section and show tweets after brand voice check completes
+                const loadingSection = document.getElementById('tweets-loading-section');
+                const tweetsSection = document.getElementById('tweets-section');
+
+                if (loadingSection) {
+                    loadingSection.style.display = 'none';
+                }
+                if (tweetsSection) {
+                    tweetsSection.style.display = 'block';
+                }
             });
     }
 
@@ -442,8 +454,18 @@
             }
 
             if (toggle && !toggle.classList.contains('disabled')) {
-                // Allow the checkbox to toggle normally
-                console.log('Brand voice toggled:', e.target.checked);
+                // Sync all brand voice checkboxes to the same state
+                const newState = e.target.checked;
+                console.log('Brand voice toggled:', newState);
+
+                document.querySelectorAll('.brand-voice-checkbox').forEach(checkbox => {
+                    if (!checkbox.disabled) {
+                        checkbox.checked = newState;
+                    }
+                });
+
+                // Save preference to localStorage
+                localStorage.setItem('preferBrandVoice', newState.toString());
             }
         }
     }
@@ -1416,9 +1438,82 @@
 
     // Functions for managing create list panel
     function showCreatePanel() {
+        console.log('showCreatePanel called');
         const modal = document.getElementById('create-list-modal');
         if (modal) {
+            console.log('Modal found, applying styles');
+
+            // First add the show class
             modal.classList.add('show');
+
+            // Then force positioning with inline styles using setAttribute for maximum priority
+            modal.setAttribute('style', `
+                display: flex !important;
+                align-items: flex-start !important;
+                justify-content: center !important;
+                padding-top: 5rem !important;
+                padding-bottom: 0 !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                background: rgba(0, 0, 0, 0.5) !important;
+                z-index: 10000 !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                overflow-y: auto !important;
+            `);
+
+            // Also force modal-content positioning
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.setAttribute('style', `
+                    margin-top: 0 !important;
+                    margin-bottom: auto !important;
+                    position: relative !important;
+                    transform: none !important;
+                    max-height: calc(100vh - 10rem) !important;
+                    overflow-y: auto !important;
+                `);
+            }
+
+            // Log computed styles to verify
+            setTimeout(() => {
+                const computed = window.getComputedStyle(modal);
+                const modalContent = modal.querySelector('.modal-content');
+                const contentComputed = modalContent ? window.getComputedStyle(modalContent) : null;
+
+                console.log('Modal final computed styles:', {
+                    display: computed.display,
+                    alignItems: computed.alignItems,
+                    justifyContent: computed.justifyContent,
+                    paddingTop: computed.paddingTop
+                });
+
+                if (contentComputed) {
+                    console.log('Modal content styles:', {
+                        marginTop: contentComputed.marginTop,
+                        marginBottom: contentComputed.marginBottom,
+                        transform: contentComputed.transform,
+                        position: contentComputed.position
+                    });
+                }
+
+                // Check the actual position
+                const rect = modal.getBoundingClientRect();
+                const contentRect = modalContent ? modalContent.getBoundingClientRect() : null;
+                console.log('Modal position:', rect);
+                if (contentRect) {
+                    console.log('Modal content position - top:', contentRect.top, 'height:', contentRect.height);
+                }
+            }, 100);
+        } else {
+            console.log('Modal not found!');
         }
     }
 
@@ -1426,6 +1521,8 @@
         const modal = document.getElementById('create-list-modal');
         if (modal) {
             modal.classList.remove('show');
+            // Clean up inline styles completely
+            modal.removeAttribute('style');
         }
         // Clear form
         const nameInput = document.getElementById('simple-list-name');

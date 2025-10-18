@@ -202,7 +202,7 @@ html.dark .drafts-list::-webkit-scrollbar-thumb:hover {
 .draft-item {
     background: var(--bg-tertiary);
     border-radius: 12px;
-    padding: 1rem;
+    padding: 0.875rem;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -212,8 +212,8 @@ html.dark .drafts-list::-webkit-scrollbar-thumb:hover {
     margin-bottom: 0.5rem;
     border: 2px solid transparent;
     position: relative;
-    min-height: 100px;
-    height: 100px;
+    min-height: 80px;
+    height: 80px;
 }
 
 html.dark .draft-item {

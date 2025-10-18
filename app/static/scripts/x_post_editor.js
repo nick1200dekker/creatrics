@@ -151,13 +151,13 @@
         let draftsHTML = '';
         drafts.forEach(draft => {
             const isActive = draft.id === state.currentDraftId;
-            // Extract preview from posts - truncate to ~40 chars
+            // Extract preview from posts - truncate to ~35 chars
             let preview = '';
             if (draft.posts && draft.posts.length > 0) {
                 preview = draft.posts[0].text || '';
-                // Truncate to first 40 characters
-                if (preview.length > 40) {
-                    preview = preview.substring(0, 40).trim() + '...';
+                // Truncate to first 35 characters
+                if (preview.length > 35) {
+                    preview = preview.substring(0, 35).trim() + '...';
                 }
             }
 

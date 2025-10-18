@@ -86,12 +86,11 @@
             <!-- Replies Panel -->
             <div id="replies-panel" class="replies-panel">
                 <div class="main-panel">
-                    {% if current_analysis and current_analysis.tweet_opportunities %}
                     <div class="panel-header">
                         <div class="panel-title-section">
                             <h3 class="panel-title">
                                 <i class="ph ph-chat-dots"></i>
-                                Reply Opportunities - {{ current_analysis.list_name }}
+                                Reply Opportunities{% if current_analysis and current_analysis.list_name %} - {{ current_analysis.list_name }}{% endif %}
                             </h3>
                             <div class="info-icon">
                                 <i class="ph ph-info"></i>
@@ -143,6 +142,20 @@
                     </div>
                     
                     <div class="panel-content" id="tweets-container">
+                        <!-- Loading Section -->
+                        <div class="loading-section" id="tweets-loading-section" style="display: flex;">
+                            <div class="loading-card">
+                                <div class="loading-icon">
+                                    <i class="ph ph-spinner spin"></i>
+                                </div>
+                                <h2 class="loading-title">Loading Reply Opportunities</h2>
+                                <p class="loading-subtitle">Finding the best tweets for you to engage with...</p>
+                            </div>
+                        </div>
+
+                        <!-- Tweets Section -->
+                        <div id="tweets-section" style="display: none;">
+                        {% if current_analysis and current_analysis.tweet_opportunities %}
                         {% for tweet in current_analysis.tweet_opportunities %}
                         <div class="tweet-opportunity" data-tweet-id="{{ tweet.tweet_id }}">
                             <div class="tweet-grid">
@@ -294,69 +307,17 @@
                             </button>
                         </div>
                         {% endif %}
-                    </div>
-                    {% else %}
-                    <div class="panel-header">
-                        <div class="panel-title-section">
-                            <h3 class="panel-title">
-                                <i class="ph ph-chat-dots"></i>
-                                Reply Opportunities
-                            </h3>
-                            <div class="info-icon">
-                                <i class="ph ph-info"></i>
-                                <div class="tooltip">
-                                    Default lists update automatically.<br>Custom lists require manual update.
-                                </div>
-                            </div>
+
+                        {% else %}
+                        <!-- Empty state -->
+                        <div class="empty-state" style="padding: 3rem; text-align: center;">
+                            <i class="ph ph-chat-circle-text" style="font-size: 3rem; color: var(--text-tertiary); opacity: 0.5;"></i>
+                            <h3 style="margin: 1rem 0 0.5rem 0; color: var(--text-primary);">No Reply Opportunities</h3>
+                            <p style="color: var(--text-secondary); margin: 0;">Select a list to find reply opportunities</p>
                         </div>
-                        
-                        <div class="panel-controls">
-                            <div id="update-button-container-empty" style="display: none;">
-                                <button id="update-btn-empty" class="primary-btn" disabled>
-                                    <i class="ph ph-arrows-clockwise"></i>
-                                    Update
-                                </button>
-                            </div>
-                            
-                            <div class="dropdown">
-                                <div class="dropdown-trigger" id="list-dropdown-trigger-empty">
-                                    <span id="selected-list-text-empty">Choose a list...</span>
-                                    <i class="ph ph-caret-down dropdown-arrow"></i>
-                                </div>
-                                <div class="dropdown-menu" id="list-dropdown-menu-empty">
-                                    {% if default_lists or custom_lists %}
-                                        {% for list in default_lists %}
-                                        <div class="dropdown-option" data-value="{{ list.id }}" data-type="default">
-                                            {{ list.name }}
-                                        </div>
-                                        {% endfor %}
-                                        {% for list in custom_lists %}
-                                        <div class="dropdown-option" data-value="{{ list.id }}" data-type="custom">
-                                            {{ list.name }}
-                                        </div>
-                                        {% endfor %}
-                                        <div class="dropdown-divider"></div>
-                                        <div class="dropdown-option create-new" id="create-new-list-empty">
-                                            <i class="ph ph-plus-circle"></i>
-                                            <span>Add X List</span>
-                                        </div>
-                                    {% else %}
-                                        <div class="dropdown-option create-new" id="create-new-list-empty">
-                                            <i class="ph ph-plus-circle"></i>
-                                            <span>Add X List</span>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+                        {% endif %}
+                        </div><!-- End tweets-section -->
                     </div>
-                    
-                    <div class="empty-state">
-                        <i class="ph ph-chat-dots empty-icon"></i>
-                        <div class="empty-title">No Reply Opportunities</div>
-                        <div class="empty-text" id="empty-message">Select a list to find reply opportunities.</div>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
