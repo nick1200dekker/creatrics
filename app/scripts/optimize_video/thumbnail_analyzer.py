@@ -137,7 +137,7 @@ Example bad fix: "Consider evaluating the color scheme for better brand consiste
                 usage = response.get('usage', {})
                 input_tokens = usage.get('input_tokens', 0)
                 output_tokens = usage.get('output_tokens', 0)
-                model_name = response.get('model', 'claude-3-5-sonnet-20241022')
+                model_name = response.get('model', None)  # Uses current AI provider model
 
                 if input_tokens > 0 or output_tokens > 0:
                     credits_manager.deduct_llm_credits(

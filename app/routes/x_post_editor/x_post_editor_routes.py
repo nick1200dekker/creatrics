@@ -738,10 +738,10 @@ def estimate_cost():
         if additional_context:
             combined_text += additional_context
 
-        # Estimate cost
+        # Estimate cost (uses current AI provider's model)
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content=combined_text,
-            model_name='claude-3-sonnet-20240229'
+            model_name=None  # Will use the current AI provider's model
         )
 
         required_credits = cost_estimate['final_cost']
@@ -815,7 +815,7 @@ def generate_content():
 
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content=combined_text,
-            model_name='claude-3-sonnet-20240229'
+            model_name=None  # Will use the current AI provider's model
         )
 
         required_credits = cost_estimate['final_cost']

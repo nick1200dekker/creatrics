@@ -210,7 +210,7 @@ def process_space_async(space_id, user_id):
         estimated_transcript_length = int(duration_minutes * 150)  # ~150 words per minute
         summary_cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content='x' * estimated_transcript_length,
-            model_name='gpt-4.1'
+            model_name=None  # Uses current AI provider model
         )
         
         total_estimated_cost = transcription_cost + summary_cost_estimate['final_cost']

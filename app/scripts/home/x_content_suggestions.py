@@ -209,14 +209,18 @@ class XContentSuggestions:
             )
 
             # Parse the response
-            suggestions = self._parse_suggestions(response.get('content', ''))
+            content = response.get('content', '')
+
+            # Check if content is empty (GPT-5 sometimes returns empty)
+            if not content or not content.strip():
+                logger.error(f"Empty response from AI provider: {response.get('provider', 'unknown')}")
+                raise ValueError(f"Empty response from {response.get('provider', 'unknown')} provider")
+
+            suggestions = self._parse_suggestions(content)
 
             if not suggestions or len(suggestions) < 5:
-                return {
-                    'success': False,
-                    'error': 'Unable to generate enough suggestions',
-                    'suggestions': []
-                }
+                logger.error(f"Not enough suggestions parsed. Got {len(suggestions)}, need 5")
+                raise ValueError(f"Only parsed {len(suggestions)} suggestions, need at least 5")
 
             # Save to cache
             self.save_suggestions_to_cache(user_id, suggestions[:5])
@@ -293,11 +297,11 @@ Return ONLY the JSON array, no other text."""
         return prompt
 
     def _parse_suggestions(self, ai_response: str) -> List[Dict]:
-        """Parse AI response into structured suggestions"""
-        try:
-            import json
-            import re
+        """Parse AI response into structured suggestions - raises exceptions for fallback"""
+        import json
+        import re
 
+        try:
             # Try to extract JSON from response
             # Remove markdown code blocks if present
             cleaned = ai_response.strip()
@@ -311,7 +315,7 @@ Return ONLY the JSON array, no other text."""
             # Validate structure
             if not isinstance(suggestions, list):
                 logger.error("Response is not a list")
-                return []
+                raise ValueError("AI response is not a list of suggestions")
 
             validated_suggestions = []
             for suggestion in suggestions:
@@ -324,10 +328,10 @@ Return ONLY the JSON array, no other text."""
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON response: {e}")
             logger.error(f"Response was: {ai_response}")
-            return []
+            raise  # Re-raise to trigger fallback
         except Exception as e:
             logger.error(f"Error parsing suggestions: {e}")
-            return []
+            raise  # Re-raise to trigger fallback
 
     def has_sufficient_data(self, user_id: str) -> bool:
         """Check if user has enough posts for suggestions"""

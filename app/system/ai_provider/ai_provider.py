@@ -1,7 +1,7 @@
 """
 AI Provider Manager - Centralized management for multiple LLM providers
 Simplified version with one model per provider
-Updated with Google Gemini 2.5 Pro Preview and latest models and pricing as of June 2025
+Updated with latest models and pricing as of October 2025
 """
 import os
 import logging
@@ -23,78 +23,132 @@ class AIProviderManager:
     """Manages AI provider connections and model configurations"""
     
     # One model per provider with pricing (in credits where 1 credit = 1 cent)
-    # Pricing updated as of June 2025
+    # Pricing updated as of October 2025
     PROVIDER_CONFIGS = {
         AIProvider.OPENAI: {
-            'model_name': 'gpt-4.1',  # Latest GPT-4.1 model
-            'display_name': 'gpt-4.1',
-            'input_cost_per_token': 0.0002,    # $2.00 / 1M tokens
-            'output_cost_per_token': 0.0008,   # $8.00 / 1M tokens
-            'context_window': 1000000,  # 1M tokens
+            'model_name': 'gpt-5-chat-latest',  # GPT-5 main (non-reasoning) chat model
+            'display_name': 'gpt-5-chat',
+            'input_cost_per_token': 0.00000125,    # $1.25 / 1M tokens
+            'output_cost_per_token': 0.00001,      # $10.00 / 1M tokens
+            'input_cost_cached': 0.000000125,      # $0.125 / 1M tokens (cached)
+            'context_window': 200000,  # 200K tokens
             'supports_vision': True,
             'supports_functions': True
         },
         AIProvider.DEEPSEEK: {
-            'model_name': 'deepseek-chat',  # Points to DeepSeek-V3
-            'display_name': 'deepseek-chat',
-            'input_cost_per_token': 0.000027,   # $0.27 / 1M tokens (cache miss)
-            'output_cost_per_token': 0.00011,   # $1.10 / 1M tokens
-            'input_cost_cached': 0.000007,      # $0.07 / 1M tokens (cache hit)
-            'context_window': 64000,  # 64K tokens
+            'model_name': 'deepseek-chat',  # DeepSeek-V3.2-Exp (October 2025)
+            'display_name': 'deepseek-v3.2-exp',
+            'input_cost_per_token': 0.00000028,   # $0.28 / 1M tokens (cache miss)
+            'output_cost_per_token': 0.00000042,   # $0.42 / 1M tokens
+            'input_cost_cached': 0.000000028,     # $0.028 / 1M tokens (cache hit)
+            'context_window': 128000,  # 128K tokens
+            'max_output_tokens': 8192,  # 8K max output
             'supports_vision': False,
-            'supports_functions': True
+            'supports_functions': True,
+            'supports_json_output': True,
+            'supports_chat_prefix': True,  # Chat Prefix Completion (Beta)
+            'supports_fim': True  # FIM Completion (Beta)
         },
         AIProvider.CLAUDE: {
             'model_name': 'claude-sonnet-4-5-20250929',
             'display_name': 'claude-sonnet-4.5',
-            'input_cost_per_token': 0.0003,    # $3.00 / 1M tokens
-            'output_cost_per_token': 0.0015,   # $15.00 / 1M tokens
+            'input_cost_per_token': 0.000003,    # $3.00 / 1M tokens
+            'output_cost_per_token': 0.000015,   # $15.00 / 1M tokens
             'context_window': 200000,  # 200K tokens
             'supports_vision': True,
             'supports_functions': False,  # Claude doesn't support function calling same way
             'supports_extended_thinking': True  # Hybrid reasoning model
         },
-        AIProvider.GOOGLE: {  # Google Gemini 2.5 Pro Preview configuration - FINAL CORRECT PRICING
-            'model_name': 'gemini-2.5-pro-preview-05-06',  # Latest preview version
-            'display_name': 'gemini-2.5-pro-preview',
-            # FINAL CORRECT PRICING: Based on official Google pricing where 1 credit = $0.01
-            'input_cost_per_token': 0.000125,      # $1.25/1M tokens ÷ $0.01 = 0.125 credits per 1K tokens
-            'output_cost_per_token': 0.001,        # $10.00/1M tokens ÷ $0.01 = 1 credit per 1K tokens  
-            'input_cost_long_context': 0.00025,    # $2.50/1M tokens ÷ $0.01 = 0.25 credits per 1K tokens
-            'output_cost_long_context': 0.0015,    # $15.00/1M tokens ÷ $0.01 = 1.5 credits per 1K tokens
-            'long_context_threshold': 200000,   # 200K tokens threshold
-            'context_window': 1000000,  # 1M tokens (2M coming soon)
+        AIProvider.GOOGLE: {  # Google Gemini 2.5 Pro configuration (October 2025)
+            'model_name': 'gemini-2.5-pro',  # Latest stable version
+            'display_name': 'gemini-2.5-pro',
+            # Pricing based on official Google rates (October 2025)
+            'input_cost_per_token': 0.00000125,      # $1.25/1M tokens (≤200K tokens)
+            'output_cost_per_token': 0.00001,        # $10.00/1M tokens (≤200K tokens)
+            'input_cost_long_context': 0.0000025,    # $2.50/1M tokens (>200K tokens)
+            'output_cost_long_context': 0.000015,    # $15.00/1M tokens (>200K tokens)
+            'input_cost_cached': 0.000000125,        # $0.125/1M tokens (≤200K, cached)
+            'input_cost_cached_long': 0.00000025,    # $0.25/1M tokens (>200K, cached)
+            'long_context_threshold': 200000,        # 200K tokens threshold
+            'context_window': 1048576,               # 1,048,576 input tokens
+            'max_output_tokens': 65536,              # 65,536 output tokens
             'supports_vision': True,
             'supports_functions': True,
-            'supports_thinking': True,  # Thinking model with reasoning capabilities
-            'supports_multimodal': True  # Text, images, audio, video
+            'supports_thinking': True,                # Thinking model with reasoning
+            'supports_multimodal': True,              # Audio, images, video, text, PDF
+            'supports_grounding': True,               # Google Search & Maps grounding
+            'supports_caching': True,                 # Context caching support
+            'supports_structured_output': True        # Structured output support
         }
     }
     
     def __init__(self):
-        self.provider = self._get_provider()
+        # Get the primary provider from environment (default to Claude)
+        primary_provider = self._get_provider_from_env()
+
+        # Define fallback chain based on primary provider
+        # Always: Primary → Claude → OpenAI → Google → DeepSeek
+        all_providers = [AIProvider.CLAUDE, AIProvider.OPENAI, AIProvider.GOOGLE, AIProvider.DEEPSEEK]
+
+        # Build fallback chain with primary provider first, then others
+        self.fallback_chain = [primary_provider]
+        for provider in all_providers:
+            if provider != primary_provider:
+                self.fallback_chain.append(provider)
+
+        self.current_provider_index = 0
+        # Start with the primary provider
+        self.provider = primary_provider
         self.config = self.PROVIDER_CONFIGS[self.provider]
         self._client = None
         
-    def _get_provider(self) -> AIProvider:
-        """Get the configured AI provider from environment"""
-        provider_str = os.environ.get('AI_PROVIDER', 'openai').lower()
-        
+    def _get_provider_from_env(self) -> AIProvider:
+        """Get the primary AI provider from environment variable"""
+        provider_str = os.environ.get('AI_PROVIDER', 'claude').lower()
+
         # Map string to enum
         provider_map = {
+            'claude': AIProvider.CLAUDE,
             'openai': AIProvider.OPENAI,
             'deepseek': AIProvider.DEEPSEEK,
-            'claude': AIProvider.CLAUDE,
-            'google': AIProvider.GOOGLE,  # NEW: Added Google mapping
+            'google': AIProvider.GOOGLE,
             'gemini': AIProvider.GOOGLE,  # Alternative name for Google
         }
-        
+
         if provider_str not in provider_map:
-            logger.warning(f"Unknown AI provider: {provider_str}, defaulting to OpenAI")
-            return AIProvider.OPENAI
-            
+            logger.warning(f"Unknown AI provider: {provider_str}, defaulting to Claude")
+            return AIProvider.CLAUDE
+
         return provider_map[provider_str]
-    
+
+    def _get_provider(self) -> AIProvider:
+        """Get the current provider (kept for backward compatibility)"""
+        return self.provider
+
+    def _switch_to_next_provider(self) -> bool:
+        """Switch to the next provider in the fallback chain
+        Returns True if successful, False if no more providers available"""
+        self.current_provider_index += 1
+
+        if self.current_provider_index >= len(self.fallback_chain):
+            logger.error("All AI providers in fallback chain have failed")
+            return False
+
+        # Switch to next provider
+        self.provider = self.fallback_chain[self.current_provider_index]
+        self.config = self.PROVIDER_CONFIGS[self.provider]
+        self._client = None  # Reset client to force reinitialization
+
+        logger.info(f"Switching to fallback provider: {self.provider.value}")
+        return True
+
+    def _reset_to_primary_provider(self):
+        """Reset to the primary provider from environment"""
+        self.current_provider_index = 0
+        self.provider = self.fallback_chain[0]  # Primary from AI_PROVIDER env
+        self.config = self.PROVIDER_CONFIGS[self.provider]
+        self._client = None
+
     @property
     def default_model(self) -> str:
         """Get the display name of the current provider's model"""
@@ -165,32 +219,85 @@ class AIProviderManager:
             logger.error(f"Error initializing {self.provider} client: {e}")
             return None
     
-    def create_completion(self, messages: List[Dict[str, str]], 
+    def create_completion(self, messages: List[Dict[str, str]],
                          temperature: float = 0.7,
                          max_tokens: int = 4096,  # INCREASED: Default was too low for Google Gemini
                          **kwargs) -> Dict[str, Any]:
         """
-        Create a completion using the configured provider
+        Create a completion using the configured provider with automatic fallback
         Returns unified response format regardless of provider
+        Fallback chain: Primary → next providers in chain
         """
-        client = self.get_client()
-        if not client:
-            raise ValueError(f"Failed to initialize client for provider: {self.provider}")
-            
+        # Reset to primary provider if this is a new request after all providers failed
+        if self.current_provider_index >= len(self.fallback_chain):
+            self._reset_to_primary_provider()
+
+        max_retries = len(self.fallback_chain)
+        last_error = None
+
+        for attempt in range(max_retries):
+            try:
+                client = self.get_client()
+                if not client:
+                    logger.error(f"Failed to initialize client for provider: {self.provider.value}")
+                    if not self._switch_to_next_provider():
+                        raise ValueError(f"All providers failed. Last error: {last_error}")
+                    continue
+
+                # Try to create completion with current provider
+                return self._create_completion_internal(client, messages, temperature, max_tokens, **kwargs)
+
+            except Exception as e:
+                last_error = str(e)
+                logger.error(f"Provider {self.provider.value} failed: {last_error}")
+
+                # If this is not the last provider, try the next one
+                if attempt < max_retries - 1 and self._switch_to_next_provider():
+                    logger.info(f"Retrying with {self.provider.value}...")
+                    continue
+                else:
+                    # All providers have failed
+                    raise ValueError(f"All AI providers failed. Last error: {last_error}")
+
+        # This should never be reached, but just in case
+        raise ValueError(f"Failed to get response from any provider. Last error: {last_error}")
+
+    def _create_completion_internal(self, client, messages: List[Dict[str, str]],
+                                   temperature: float = 0.7,
+                                   max_tokens: int = 4096,
+                                   **kwargs) -> Dict[str, Any]:
+        """
+        Internal method to create completion with a specific client
+        """
         try:
             if self.provider in [AIProvider.OPENAI, AIProvider.DEEPSEEK]:
                 # OpenAI-compatible API
-                response = client.chat.completions.create(
-                    model=self.api_model_name,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
+                api_kwargs = {
+                    'model': self.api_model_name,
+                    'messages': messages,
                     **kwargs
-                )
-                
+                }
+
+                # All OpenAI models and DeepSeek use standard chat API
+                api_kwargs['temperature'] = temperature
+                api_kwargs['max_tokens'] = max_tokens
+
+                logger.debug(f"OpenAI request: model={api_kwargs['model']}, params={list(api_kwargs.keys())}")
+                response = client.chat.completions.create(**api_kwargs)
+
+                # Validate response has content
+                content = response.choices[0].message.content
+                logger.debug(f"OpenAI response content length: {len(content) if content else 0}")
+
+                if content is None or (isinstance(content, str) and not content.strip()):
+                    # Log the full response for debugging
+                    logger.error(f"Empty OpenAI response. Finish reason: {response.choices[0].finish_reason if response.choices else 'unknown'}")
+                    logger.error(f"Response object: {response}")
+                    raise ValueError(f"Empty response from {self.provider.value} (HTTP 200 but no content)")
+
                 # Return unified format
                 return {
-                    'content': response.choices[0].message.content,
+                    'content': content,
                     'model': self.default_model,
                     'usage': {
                         'input_tokens': response.usage.prompt_tokens if hasattr(response, 'usage') else 0,
@@ -231,10 +338,15 @@ class AIProviderManager:
                     kwargs_claude['system'] = system_message
 
                 response = client.messages.create(**kwargs_claude)
-                
+
+                # Validate response has content
+                content = response.content[0].text if response.content else ''
+                if not content or not content.strip():
+                    raise ValueError(f"Empty response from {self.provider.value} (HTTP 200 but no content)")
+
                 # Return unified format
                 return {
-                    'content': response.content[0].text if response.content else '',
+                    'content': content,
                     'model': self.default_model,
                     'usage': {
                         'input_tokens': response.usage.input_tokens if hasattr(response, 'usage') else 0,
@@ -257,20 +369,36 @@ class AIProviderManager:
                     if msg['role'] == 'system':
                         system_instruction = msg['content']
                     elif msg['role'] == 'user':
-                        formatted_messages.append(msg['content'])
+                        # Handle both string and list content (for potential image inputs)
+                        if isinstance(msg['content'], list):
+                            # Extract text parts from list content
+                            text_parts = []
+                            for part in msg['content']:
+                                if isinstance(part, dict) and part.get('type') == 'text':
+                                    text_parts.append(part.get('text', ''))
+                                elif isinstance(part, str):
+                                    text_parts.append(part)
+                            formatted_messages.append(' '.join(text_parts))
+                        else:
+                            formatted_messages.append(msg['content'])
                     elif msg['role'] == 'assistant':
                         # For chat history, we need to track both user and assistant messages
                         # For now, we'll concatenate them as context
-                        formatted_messages.append(f"Assistant: {msg['content']}")
-                
+                        if isinstance(msg['content'], str):
+                            formatted_messages.append(f"Assistant: {msg['content']}")
+
                 # Combine all messages into a single prompt for simplicity
                 # In production, you'd want to use the chat interface for proper conversation handling
-                combined_content = '\n'.join(formatted_messages)
+                combined_content = '\n'.join(str(m) for m in formatted_messages if m)
                 
                 # Create generation config
+                # Force higher max_output_tokens for Google Gemini to prevent truncation
+                # Use requested tokens but ensure minimum of 4096 to avoid truncation
+                google_max_tokens = max(max_tokens, 4096) if max_tokens else 8192
+                # Don't limit by config max, let Google handle its own limits
                 config = types.GenerateContentConfig(
                     temperature=temperature,
-                    max_output_tokens=max_tokens,
+                    max_output_tokens=google_max_tokens,
                     system_instruction=system_instruction if system_instruction else None
                 )
                 
@@ -322,12 +450,23 @@ class AIProviderManager:
                     logger.error(f"Error extracting text from Google Gemini response: {e}")
                     response_text = "[Error processing response]"
                 
+                # Validate response has actual content (not error placeholders)
+                if response_text in ["[Error processing response]", "[No response generated]", "[Response truncated due to max tokens limit]"]:
+                    raise ValueError(f"Invalid response from Google Gemini: {response_text}")
+
+                if not response_text or not response_text.strip():
+                    raise ValueError(f"Empty response from {self.provider.value} (HTTP 200 but no content)")
+
                 # Extract usage information if available
                 usage_metadata = getattr(response, 'usage_metadata', None)
                 input_tokens = usage_metadata.prompt_token_count if usage_metadata else 0
                 output_tokens = usage_metadata.candidates_token_count if usage_metadata else 0
                 total_tokens = usage_metadata.total_token_count if usage_metadata else 0
-                
+
+                # Log token usage for debugging
+                if usage_metadata:
+                    logger.info(f"Google Gemini token usage - Input: {input_tokens}, Output: {output_tokens}, Total: {total_tokens}")
+
                 # Return unified format
                 return {
                     'content': response_text,  # FIXED: Now guaranteed to be a string
@@ -372,19 +511,63 @@ class AIProviderManager:
             logger.error(f"Error converting URL to base64: {str(e)}")
             raise
     
-    def create_vision_completion(self, messages_with_images: List[Dict[str, Any]], 
+    def create_vision_completion(self, messages_with_images: List[Dict[str, Any]],
                                **kwargs) -> Dict[str, Any]:
         """
-        Create a completion with image inputs
-        Only works with providers that support vision
+        Create a completion with image inputs with automatic fallback
+        Falls back to next vision-capable provider if current fails
+        Fallback chain: Primary → next vision-capable providers
+        """
+        # Reset to primary provider if this is a new request after all providers failed
+        if self.current_provider_index >= len(self.fallback_chain):
+            self._reset_to_primary_provider()
+
+        max_retries = len(self.fallback_chain)
+        last_error = None
+
+        for attempt in range(max_retries):
+            # Skip providers that don't support vision
+            while not self.config.get('supports_vision', False):
+                logger.info(f"Provider {self.provider.value} doesn't support vision, skipping...")
+                if not self._switch_to_next_provider():
+                    raise ValueError(f"No vision-capable providers available. Last error: {last_error}")
+
+            try:
+                client = self.get_client()
+                if not client:
+                    logger.error(f"Failed to initialize client for provider: {self.provider.value}")
+                    if not self._switch_to_next_provider():
+                        raise ValueError(f"All vision providers failed. Last error: {last_error}")
+                    continue
+
+                # Try vision completion with current provider
+                return self._create_vision_completion_internal(client, messages_with_images, **kwargs)
+
+            except Exception as e:
+                last_error = str(e)
+                logger.error(f"Vision provider {self.provider.value} failed: {last_error}")
+
+                # If this is not the last provider, try the next one
+                if attempt < max_retries - 1 and self._switch_to_next_provider():
+                    logger.info(f"Retrying vision with {self.provider.value}...")
+                    continue
+                else:
+                    # All providers have failed
+                    raise ValueError(f"All vision-capable AI providers failed. Last error: {last_error}")
+
+        raise ValueError(f"Failed to get vision response from any provider. Last error: {last_error}")
+
+    def _create_vision_completion_internal(self, client, messages_with_images: List[Dict[str, Any]],
+                               **kwargs) -> Dict[str, Any]:
+        """
+        Internal method to create vision completion with a specific client
         """
         if not self.config['supports_vision']:
             raise ValueError(f"Provider {self.provider.value} does not support vision inputs")
-            
         # For vision, we need to format messages differently based on provider
         if self.provider == AIProvider.OPENAI:
-            # OpenAI format is already correct
-            return self.create_completion(messages_with_images, **kwargs)
+            # OpenAI format - use GPT-5 vision capabilities
+            return self._create_completion_internal(client, messages_with_images, **kwargs)
             
         elif self.provider == AIProvider.CLAUDE:
             # Claude needs special handling for images
@@ -517,7 +700,7 @@ class AIProviderManager:
                         # Handle multi-part content with images
                         for part in msg['content']:
                             if part['type'] == 'text':
-                                content_parts.append(types.Part.from_text(part['text']))
+                                content_parts.append(part['text'])  # Just add text directly
                             elif part['type'] == 'image_url':
                                 # Handle base64 image data
                                 image_data = part['image_url']['url']
@@ -532,11 +715,17 @@ class AIProviderManager:
                                         mime_type=mime_type
                                     ))
                     else:
-                        content_parts.append(types.Part.from_text(msg['content']))
+                        content_parts.append(msg['content'])  # Just add text directly
             
             # Create generation config
+            # Extract max_tokens from kwargs and ensure proper value for Google
+            max_tokens = kwargs.pop('max_tokens', 8192)
+            # Force minimum of 4096 tokens to prevent truncation
+            google_max_tokens = max(max_tokens, 4096)
+
             config = types.GenerateContentConfig(
                 system_instruction=system_instruction if system_instruction else None,
+                max_output_tokens=google_max_tokens,
                 **kwargs
             )
             
@@ -614,14 +803,14 @@ class AIProviderManager:
         return max(1, len(text) // 4)
     
     def calculate_cost(self, input_tokens: int, output_tokens: int, use_cached_rate: bool = False) -> float:
-        """Calculate cost in credits for given token usage"""
+        """Calculate cost in credits for given token usage (1 credit = $0.01)"""
         if self.provider == AIProvider.DEEPSEEK and use_cached_rate and 'input_cost_cached' in self.config:
             # Use cached rate for DeepSeek if available
             input_cost = input_tokens * self.config['input_cost_cached']
         elif self.provider == AIProvider.GOOGLE:  # NEW: Google Gemini dynamic pricing based on context length
             # Check if this is a long context request (>200K tokens)
             long_context_threshold = self.config.get('long_context_threshold', 200000)
-            
+
             if input_tokens > long_context_threshold:
                 # Use long context pricing
                 input_cost = input_tokens * self.config['input_cost_long_context']
@@ -630,14 +819,18 @@ class AIProviderManager:
                 # Use standard pricing
                 input_cost = input_tokens * self.config['input_cost_per_token']
                 output_cost = output_tokens * self.config['output_cost_per_token']
-            
-            return round(input_cost + output_cost, 4)
+
+            # Convert dollars to credits (1 credit = $0.01)
+            total_dollars = input_cost + output_cost
+            return round(total_dollars / 0.01, 4)
         else:
             input_cost = input_tokens * self.config['input_cost_per_token']
-            
+
         output_cost = output_tokens * self.config['output_cost_per_token']
-        
-        return round(input_cost + output_cost, 4)
+
+        # Convert dollars to credits (1 credit = $0.01)
+        total_dollars = input_cost + output_cost
+        return round(total_dollars / 0.01, 4)
     
     def get_model_pricing(self) -> Dict[str, Any]:
         """Get current model's pricing information"""

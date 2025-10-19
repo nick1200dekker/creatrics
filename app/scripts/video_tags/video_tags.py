@@ -113,15 +113,18 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
                     # Optimize tags to fit within 400-500 characters
                     optimized_tags = self.optimize_tags_length(tags)
 
+                    # Get actual token usage from AI provider response
+                    token_usage = response.get('usage', {}) if isinstance(response, dict) else {}
+
                     return {
                         'success': True,
                         'tags': optimized_tags,
                         'used_ai': True,
                         'total_characters': sum(len(tag) for tag in optimized_tags) + (len(optimized_tags) - 1) * 2,  # Include commas
                         'token_usage': {
-                            'model': 'ai_provider',
-                            'input_tokens': len(prompt.split()),  # Rough estimate
-                            'output_tokens': len(' '.join(tags).split())  # Rough estimate
+                            'model': response.get('model', 'ai_provider') if isinstance(response, dict) else 'ai_provider',
+                            'input_tokens': token_usage.get('input_tokens', 0),
+                            'output_tokens': token_usage.get('output_tokens', 0)
                         }
                     }
 

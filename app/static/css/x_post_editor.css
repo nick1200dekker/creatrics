@@ -1421,26 +1421,40 @@ html.dark .loading {
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    color: var(--text-tertiary);
+    text-align: center;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-html.dark .drafts-loading {
-    color: #a1a1aa;
+.drafts-loading-spinner {
+    font-size: 1.5rem;
+    color: #3B82F6;
 }
 
-.drafts-loading-spinner,
+html.dark .drafts-loading-spinner {
+    color: #60A5FA;
+}
+
+.drafts-loading-spinner i {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+.drafts-loading div:last-child {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    margin: 0;
+}
+
 .spinner {
     width: 24px;
     height: 24px;
     border: 2px solid #e5e7eb;
     border-radius: 50%;
     border-top-color: #3B82F6;
-    animation: spin 0.8s linear infinite;
+    animation: spin 1s linear infinite;
 }
 
-html.dark .drafts-loading-spinner,
 html.dark .spinner {
     border-color: rgba(96, 165, 250, 0.2);
     border-top-color: #60A5FA;
@@ -1545,7 +1559,7 @@ html.dark .load-more-btn:disabled:hover {
     border: 2px solid var(--border-primary);
     border-radius: 50%;
     border-top-color: #3B82F6;
-    animation: spin 0.8s linear infinite;
+    animation: spin 1s linear infinite;
 }
 
 html.dark .load-more-spinner .spinner {

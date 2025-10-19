@@ -41,7 +41,7 @@ def generate_tiktok_titles():
         input_text = f"{keywords}\n{video_input}" if video_input else keywords
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content=input_text,
-            model_name='claude-3-sonnet-20240229'
+            model_name=None  # Uses current AI provider model
         )
 
         required_credits = cost_estimate['final_cost']
@@ -81,9 +81,9 @@ def generate_tiktok_titles():
             if token_usage.get('input_tokens', 0) > 0:
                 deduction_result = credits_manager.deduct_llm_credits(
                     user_id=user_id,
-                    model_name=token_usage.get('model', 'claude-3-sonnet-20240229'),
-                    input_tokens=token_usage.get('input_tokens', 100),
-                    output_tokens=token_usage.get('output_tokens', 200),
+                    model_name=token_usage.get('model', None),  # Uses current AI provider model
+                    input_tokens=token_usage.get('input_tokens', 0),
+                    output_tokens=token_usage.get('output_tokens', 0),
                     description="TikTok Title & Hashtags Generation"
                 )
 

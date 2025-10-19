@@ -114,7 +114,7 @@ def get_min_llm_cost(model_name=None):
             ai_provider = get_ai_provider()
             model_name = ai_provider.default_model
         except:
-            model_name = 'claude-sonnet-4'  # Fallback
+            model_name = 'claude-sonnet-4.5'  # Fallback to Claude if AI provider fails
 
     return calculate_llm_cost(model_name, 50, 50)  # Estimate for small requests
 

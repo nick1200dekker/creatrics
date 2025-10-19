@@ -216,14 +216,17 @@ Write ONLY the spoken script text now:"""
                         # Return as clean script text
                         script = clean_content if clean_content else 'Generated script content'
 
+                    # Get actual token usage from AI provider response
+                    token_usage = response.get('usage', {}) if isinstance(response, dict) else {}
+
                     return {
                         'success': True,
                         'script': script,
                         'used_ai': True,
                         'token_usage': {
-                            'model': 'ai_provider',
-                            'input_tokens': len(simple_prompt.split()),
-                            'output_tokens': len(response_content.split())
+                            'model': response.get('model', 'ai_provider') if isinstance(response, dict) else 'ai_provider',
+                            'input_tokens': token_usage.get('input_tokens', 0),
+                            'output_tokens': token_usage.get('output_tokens', 0)
                         }
                     }
 

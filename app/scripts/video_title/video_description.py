@@ -119,15 +119,18 @@ class VideoDescriptionGenerator:
                     if len(description) > self.max_description_length:
                         description = description[:self.max_description_length-3] + "..."
 
+                    # Get actual token usage from AI provider response
+                    token_usage = response.get('usage', {}) if isinstance(response, dict) else {}
+
                     return {
                         'success': True,
                         'description': description,
                         'used_ai': True,
                         'character_count': len(description),
                         'token_usage': {
-                            'model': 'ai_provider',
-                            'input_tokens': len(prompt.split()),  # Rough estimate
-                            'output_tokens': len(description.split())  # Rough estimate
+                            'model': response.get('model', 'ai_provider') if isinstance(response, dict) else 'ai_provider',
+                            'input_tokens': token_usage.get('input_tokens', 0),
+                            'output_tokens': token_usage.get('output_tokens', 0)
                         }
                     }
 

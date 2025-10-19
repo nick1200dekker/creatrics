@@ -1271,8 +1271,52 @@ html.dark .preview-card {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Loading Spinner - Consistent with other pages */
+.loading-icon {
+    font-size: 1.5rem;
+    color: #3B82F6;
+}
+
+html.dark .loading-icon {
+    color: #60A5FA;
+}
+
+.loading-icon i {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+.loading-spinner {
+    font-size: 1.5rem;
+    color: #3B82F6;
+}
+
+html.dark .loading-spinner {
+    color: #60A5FA;
+}
+
+.loading-spinner i {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+/* Small spinner for inline use */
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e5e7eb;
+    border-radius: 50%;
+    border-top-color: #3B82F6;
+    animation: spin 1s linear infinite;
+}
+
+html.dark .spinner {
+    border-color: rgba(96, 165, 250, 0.2);
+    border-top-color: #60A5FA;
 }
 
 /* Optimize Videos Container */

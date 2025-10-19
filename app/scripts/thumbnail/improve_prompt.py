@@ -155,11 +155,33 @@ def improve_editing_prompt(prompt_text, image_base64=None, mime_type='image/jpeg
         
         # Extract improved prompt from unified response
         improved_prompt = response['content'].strip()
-        
+
+        # Get token usage from response
+        token_usage = response.get('usage', {})
+
         logger.info(f"Improved editing prompt using {response['provider']}: {improved_prompt[:50]}...")
-        return improved_prompt
-        
+
+        # Return both prompt and token usage
+        return {
+            'improved_prompt': improved_prompt,
+            'token_usage': {
+                'model': response.get('model', 'ai_provider'),
+                'input_tokens': token_usage.get('input_tokens', 0),
+                'output_tokens': token_usage.get('output_tokens', 0),
+                'provider': response.get('provider', 'unknown')
+            }
+        }
+
     except Exception as e:
         logger.error(f"Error improving prompt: {str(e)}")
         logger.error(traceback.format_exc())
-        return prompt_text
+        # Return in same format for consistency
+        return {
+            'improved_prompt': prompt_text,
+            'token_usage': {
+                'model': 'fallback',
+                'input_tokens': 0,
+                'output_tokens': 0,
+                'provider': 'error'
+            }
+        }

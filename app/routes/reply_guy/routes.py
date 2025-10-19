@@ -416,7 +416,7 @@ def generate_reply():
         # Step 1: Estimate LLM cost from tweet text
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content=tweet_text,
-            model_name='claude-3-haiku-20240307'
+            model_name=None  # Uses current AI provider model
         )
         
         required_credits = cost_estimate['final_cost']
@@ -456,12 +456,27 @@ def generate_reply():
         
         # Step 3: Deduct credits after successful generation
         try:
-            input_tokens = max(100, len(tweet_text) // 4)
-            output_tokens = max(50, len(reply_text) // 4)
-            
+            # Use actual token counts from the AI response
+            token_usage = result.get('token_usage', {})
+            input_tokens = token_usage.get('input_tokens', 0)
+            output_tokens = token_usage.get('output_tokens', 0)
+
+            # Log actual vs estimated for comparison
+            estimated_input = max(100, len(tweet_text) // 4)
+            estimated_output = max(50, len(reply_text) // 4)
+
+            logger.info(f"Token usage comparison - Actual: {input_tokens}in/{output_tokens}out, "
+                       f"Estimated would be: {estimated_input}in/{estimated_output}out")
+
+            # Fallback to estimation only if we don't have actual counts
+            if input_tokens == 0 and output_tokens == 0:
+                logger.warning("No token usage data from AI, using estimation")
+                input_tokens = estimated_input
+                output_tokens = estimated_output
+
             deduction_result = credits_manager.deduct_llm_credits(
                 user_id=user_id,
-                model_name='claude-3-haiku-20240307',
+                model_name=token_usage.get('model', None),  # Uses actual model from response
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 description=f"Reply Guy reply to @{author}",

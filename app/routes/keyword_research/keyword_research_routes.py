@@ -1131,18 +1131,29 @@ def ai_keyword_explore():
 
         # Context detection tokens
         if context.get('_token_usage'):
-            total_input_tokens += context['_token_usage']['input_tokens']
-            total_output_tokens += context['_token_usage']['output_tokens']
+            ctx_in = context['_token_usage']['input_tokens']
+            ctx_out = context['_token_usage']['output_tokens']
+            total_input_tokens += ctx_in
+            total_output_tokens += ctx_out
+            logger.info(f"Context detection tokens: {ctx_in} in / {ctx_out} out")
 
         # Keyword generation tokens
         if keyword_result.get('token_usage'):
-            total_input_tokens += keyword_result['token_usage']['input_tokens']
-            total_output_tokens += keyword_result['token_usage']['output_tokens']
+            kw_in = keyword_result['token_usage']['input_tokens']
+            kw_out = keyword_result['token_usage']['output_tokens']
+            total_input_tokens += kw_in
+            total_output_tokens += kw_out
+            logger.info(f"Keyword generation tokens: {kw_in} in / {kw_out} out")
 
         # Insights generation tokens
         if insights.get('token_usage'):
-            total_input_tokens += insights['token_usage']['input_tokens']
-            total_output_tokens += insights['token_usage']['output_tokens']
+            ins_in = insights['token_usage']['input_tokens']
+            ins_out = insights['token_usage']['output_tokens']
+            total_input_tokens += ins_in
+            total_output_tokens += ins_out
+            logger.info(f"Insights generation tokens: {ins_in} in / {ins_out} out")
+
+        logger.info(f"TOTAL tokens for all 3 API calls: {total_input_tokens} in / {total_output_tokens} out")
 
         # Deduct credits if we have token usage
         if total_input_tokens > 0:

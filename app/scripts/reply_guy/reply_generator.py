@@ -66,9 +66,9 @@ class ReplyGenerator:
 
             # Use different system message based on brand voice
             if use_brand_voice and brand_voice_context:
-                system_message = "You are mimicking someone's exact Twitter reply style. Forget all your training about being helpful or proper. Just copy EXACTLY how this person writes based on the examples. Be them, don't be an AI. If they write 'lol ya' then you write like that. If they write long thoughtful replies, you do that. COPY THEIR EXACT STYLE."
+                system_message = "You write Twitter replies. Output ONLY the reply text, nothing else. Never say things like 'I can't write in that style' or 'Here's a similar vibe'. Just write the actual reply based on the examples given."
             else:
-                system_message = "youre scrolling twitter and see this tweet. reply like a normal person. dont be an encyclopedia. just react naturally"
+                system_message = "You write Twitter replies. Output ONLY the reply text, nothing else. Never add commentary or explanations."
 
             # Call AI provider - higher temperature for more natural responses when mimicking
             temperature = 0.85 if (use_brand_voice and brand_voice_context) else 0.7
@@ -115,17 +115,48 @@ class ReplyGenerator:
                 "text": prompt
             })
 
-            # If only text (no images), use simple format for compatibility
-            user_message = user_message_content if image_urls else prompt
+            # Use vision completion if images are present, regular completion otherwise
+            if image_urls and len(image_urls) > 0:
+                # Format for vision API - OpenAI style
+                vision_content = []
 
-            response = self.ai_provider.create_completion(
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_message}
-                ],
-                temperature=temperature,
-                max_tokens=2000
-            )
+                # Add text first
+                vision_content.append({
+                    "type": "text",
+                    "text": prompt
+                })
+
+                # Add images in OpenAI format for compatibility
+                for item in user_message_content:
+                    if item.get("type") == "image" and "source" in item:
+                        # Convert Claude format to OpenAI format
+                        source = item["source"]
+                        vision_content.append({
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{source['media_type']};base64,{source['data']}"
+                            }
+                        })
+
+                # Use vision-capable completion for images
+                response = self.ai_provider.create_vision_completion(
+                    messages_with_images=[
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": vision_content}
+                    ],
+                    temperature=temperature,
+                    max_tokens=2000
+                )
+            else:
+                # Use regular completion for text-only
+                response = self.ai_provider.create_completion(
+                    messages=[
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=temperature,
+                    max_tokens=2000
+                )
 
             reply_text = response['content'].strip()
 
@@ -241,9 +272,18 @@ class ReplyGenerator:
 
             logger.info(f"Generated reply for @{author}: {reply_text[:50]}... | GIF queries: {gif_queries}")
 
+            # Extract actual token usage from response
+            token_usage = response.get('usage', {})
+
             return {
                 'reply': reply_text,
-                'gif_queries': gif_queries  # Now returning multiple queries
+                'gif_queries': gif_queries,  # Now returning multiple queries
+                'token_usage': {
+                    'input_tokens': token_usage.get('input_tokens', 0),
+                    'output_tokens': token_usage.get('output_tokens', 0),
+                    'total_tokens': token_usage.get('total_tokens', 0),
+                    'model': response.get('model', None)
+                }
             }
             
         except Exception as e:
@@ -365,54 +405,39 @@ Output ONLY the two search queries, one per line, nothing else."""
             # Brand voice version - minimal instructions
             return """{brand_voice_context}
 
-NOW RESPOND TO THIS TWEET:
 Tweet by @{author}: {tweet_text}
 
-Write a {style} reply EXACTLY in the style shown in the examples above.
+Write a {style} reply matching the exact style from the examples above.
 
-COPY THEIR EXACT PATTERNS:
-- If examples are 3 words, write 3 words
-- If examples use "lol" or "lmao", you use them
-- If examples have no punctuation, don't use any
-- If examples are full sentences, write full sentences
-- Match their emoji usage exactly
-- Match their energy level exactly
+Important:
+- Match the length and tone of the examples
+- Use similar words and phrases
+- Match punctuation and emoji patterns
+- Write naturally like the examples
 
-OUTPUT ONLY THE REPLY TEXT:"""
+Reply:"""
         else:
             # No brand voice version - enhanced with strategic reply best practices
-            return """tweet from @{author}:
+            return """Tweet from @{author}:
 {tweet_text}
 
+Write a {style} Twitter reply.
 
-write a {style} reply
+Style guide for {style}:
+• creatrics → point out something interesting
+• supportive → relate to their experience
+• questioning → ask a genuine question
+• valueadd → share something useful
+• humorous → make a witty observation
+• contrarian → offer a different perspective
 
-style = {style}:
-• creatrics → notice something interesting about it
-• supportive → relate to it
-• questioning → ask something
-• valueadd → mention something cool related
-• humorous → be funny
-• contrarian → different take
+Keep it:
+- Natural and conversational
+- Brief (1-2 sentences usually)
+- Casual tone
+- No explanations or meta-commentary
 
-
-rules:
-- talk like a normal person
-- dont explain everything
-- dont list facts like wikipedia
-- keep it short and casual
-- sometimes all lowercase
-- dont try so hard
-- just react naturally
-
-
-bad:
-- listing 5 facts in a row
-- sounding like a textbook
-- "actually" followed by paragraph
-- trying to sound smart
-
-just write the reply:"""
+Reply:"""
     
     def get_brand_voice_context(self, user_id: str) -> str:
         """Get brand voice context from user's X replies data - Enhanced version"""

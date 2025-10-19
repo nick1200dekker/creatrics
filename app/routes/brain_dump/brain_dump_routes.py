@@ -918,7 +918,7 @@ def modify_note_with_ai():
         data = request.json or {}
         content = data.get('content', '').strip()
         prompt = data.get('prompt', '').strip()
-        model = data.get('model', 'gpt-4o-mini')
+        model = data.get('model', None)  # Uses current AI provider model
 
         if not content:
             return jsonify({

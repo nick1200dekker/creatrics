@@ -741,9 +741,9 @@ def analyze_competitors():
             if token_usage.get('input_tokens', 0) > 0:
                 credits_manager.deduct_llm_credits(
                     user_id=user_id,
-                    model_name=token_usage.get('model', 'claude-3-sonnet-20240229'),
-                    input_tokens=token_usage.get('input_tokens', 100),
-                    output_tokens=token_usage.get('output_tokens', 300),
+                    model_name=token_usage.get('model', None),  # Uses current AI provider model
+                    input_tokens=token_usage.get('input_tokens', 0),
+                    output_tokens=token_usage.get('output_tokens', 0),
                     description="Competitor Analysis"
                 )
 

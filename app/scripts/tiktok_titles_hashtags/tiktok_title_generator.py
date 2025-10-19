@@ -91,14 +91,17 @@ Use {now.year} for any year references."""
                     response_content = response.get('content', '') if isinstance(response, dict) else str(response)
                     titles = self._parse_ai_response(response_content)
 
+                    # Get actual token usage from AI provider response
+                    token_usage = response.get('usage', {}) if isinstance(response, dict) else {}
+
                     return {
                         'success': True,
                         'titles': titles,
                         'used_ai': True,
                         'token_usage': {
-                            'model': 'ai_provider',
-                            'input_tokens': len(prompt.split()),
-                            'output_tokens': len(' '.join(titles).split())
+                            'model': response.get('model', 'ai_provider') if isinstance(response, dict) else 'ai_provider',
+                            'input_tokens': token_usage.get('input_tokens', 0),
+                            'output_tokens': token_usage.get('output_tokens', 0)
                         }
                     }
 

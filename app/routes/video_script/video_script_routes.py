@@ -42,7 +42,7 @@ def generate_video_script():
         # Step 1: Check credits before generation
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content=concept,
-            model_name='claude-3-sonnet-20240229'  # Default model
+            model_name=None  # Uses current AI provider model  # Default model
         )
 
         # Scripts cost more than titles (more output)
@@ -86,9 +86,9 @@ def generate_video_script():
             if token_usage.get('input_tokens', 0) > 0:
                 deduction_result = credits_manager.deduct_llm_credits(
                     user_id=user_id,
-                    model_name=token_usage.get('model', 'claude-3-sonnet-20240229'),
-                    input_tokens=token_usage.get('input_tokens', 200),
-                    output_tokens=token_usage.get('output_tokens', 1000),
+                    model_name=token_usage.get('model', None),  # Uses current AI provider model
+                    input_tokens=token_usage.get('input_tokens', 0),
+                    output_tokens=token_usage.get('output_tokens', 0),
                     description=f"Video Script Generation ({video_type}/{script_format})"
                 )
 

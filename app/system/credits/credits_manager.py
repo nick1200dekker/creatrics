@@ -295,8 +295,9 @@ class CreditsManager:
     def deduct_credits(self, user_id, amount, description, feature_id=None):
         """Deduct credits with proper floating point precision handling"""
         try:
-            # Round to 2 decimal places
-            amount = round(amount, 2)
+            # Round to 4 decimal places for better precision with small amounts
+            # Minimum charge of 0.0001 credits to avoid free API calls
+            amount = max(0.0001, round(amount, 4))
             current_credits = self.get_user_credits(user_id)
             
             if current_credits < amount:

@@ -374,7 +374,7 @@ def improve_prompt():
         if all_images_with_types and len(all_images_with_types) > 0:
             # Pass all images to the prompt improver
             logger.info(f"Sending {len(all_images_with_types)} image(s) to prompt improver")
-            improved_prompt = improve_editing_prompt(prompt, None, None, model, all_images_with_types)
+            result = improve_editing_prompt(prompt, None, None, model, all_images_with_types)
             image_context = f"with {len(all_images_with_types)} image(s)"
         elif all_images and len(all_images) > 0:
             # Legacy format without mime type - convert to new format
@@ -385,31 +385,67 @@ def improve_prompt():
                     'mimeType': 'image/jpeg'
                 })
             logger.info(f"Converting {len(all_images)} legacy image(s) to new format")
-            improved_prompt = improve_editing_prompt(prompt, None, None, model, converted_images)
+            result = improve_editing_prompt(prompt, None, None, model, converted_images)
             image_context = f"with {len(all_images)} image(s)"
         elif image_data:
             # Backward compatibility - single image
-            improved_prompt = improve_editing_prompt(prompt, image_data, 'image/jpeg', model)
+            result = improve_editing_prompt(prompt, image_data, 'image/jpeg', model)
             image_context = "with image"
         else:
-            improved_prompt = improve_editing_prompt(prompt, None, None, model)
+            result = improve_editing_prompt(prompt, None, None, model)
             image_context = ""
 
-        # Deduct credits after successful improvement
-        deduction_result = credits_manager.deduct_credits(
-            user_id=user_id,
-            amount=required_credits,
-            description=f"Prompt improvement {image_context}".strip(),
-            feature_id="thumbnail_prompt_improver"
-        )
+        # Handle both old string return and new dict return formats
+        if isinstance(result, dict):
+            improved_prompt = result.get('improved_prompt', prompt)
+            token_usage = result.get('token_usage', {})
 
-        if not deduction_result.get('success'):
-            logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+            # Calculate actual credits from token usage if available
+            if token_usage.get('input_tokens', 0) > 0 or token_usage.get('output_tokens', 0) > 0:
+                actual_credits = credits_manager.deduct_llm_credits(
+                    user_id=user_id,
+                    input_tokens=token_usage.get('input_tokens', 0),
+                    output_tokens=token_usage.get('output_tokens', 0),
+                    model_name=token_usage.get('model', 'ai_provider'),
+                    description=f"Prompt improvement {image_context}".strip(),
+                    feature_id="thumbnail_prompt_improver"
+                )
+
+                if actual_credits.get('success'):
+                    credits_used = actual_credits.get('credits_deducted', required_credits)
+                else:
+                    # Fall back to fixed credits if token-based deduction fails
+                    deduction_result = credits_manager.deduct_credits(
+                        user_id=user_id,
+                        amount=required_credits,
+                        description=f"Prompt improvement {image_context}".strip(),
+                        feature_id="thumbnail_prompt_improver"
+                    )
+                    credits_used = required_credits
+            else:
+                # No token usage data, use fixed credits
+                deduction_result = credits_manager.deduct_credits(
+                    user_id=user_id,
+                    amount=required_credits,
+                    description=f"Prompt improvement {image_context}".strip(),
+                    feature_id="thumbnail_prompt_improver"
+                )
+                credits_used = required_credits
+        else:
+            # Old string format (backward compatibility)
+            improved_prompt = result
+            deduction_result = credits_manager.deduct_credits(
+                user_id=user_id,
+                amount=required_credits,
+                description=f"Prompt improvement {image_context}".strip(),
+                feature_id="thumbnail_prompt_improver"
+            )
+            credits_used = required_credits
 
         return jsonify({
             'success': True,
             'improved_prompt': improved_prompt,
-            'credits_used': required_credits
+            'credits_used': credits_used
         })
 
     except Exception as e:

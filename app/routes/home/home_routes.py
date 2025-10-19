@@ -451,6 +451,27 @@ def get_x_content_suggestions():
         if not result.get('success'):
             return jsonify(result), 400
 
+        # Deduct credits if AI was used (not from cache)
+        if not result.get('cached', False):
+            token_usage = result.get('token_usage', {})
+
+            # Only deduct if we have real token usage
+            if token_usage.get('input_tokens', 0) > 0:
+                from app.system.credits.credits_manager import CreditsManager
+                credits_manager = CreditsManager()
+
+                deduction_result = credits_manager.deduct_llm_credits(
+                    user_id=user_id,
+                    model_name=token_usage.get('model', None),
+                    input_tokens=token_usage.get('input_tokens', 0),
+                    output_tokens=token_usage.get('output_tokens', 0),
+                    description="X Content Suggestions Generation",
+                    feature_id="x_content_suggestions"
+                )
+
+                if not deduction_result['success']:
+                    logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+
         return jsonify(result)
 
     except Exception as e:

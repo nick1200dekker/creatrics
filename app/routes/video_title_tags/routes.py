@@ -47,7 +47,7 @@ def generate_video_titles():
         # Step 1: Check credits before generation
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content=user_input,
-            model_name='claude-3-sonnet-20240229'  # Default model
+            model_name=None  # Uses current AI provider model  # Default model
         )
 
         required_credits = cost_estimate['final_cost']
@@ -88,9 +88,9 @@ def generate_video_titles():
             if token_usage.get('input_tokens', 0) > 0:
                 deduction_result = credits_manager.deduct_llm_credits(
                     user_id=user_id,
-                    model_name=token_usage.get('model', 'claude-3-sonnet-20240229'),
-                    input_tokens=token_usage.get('input_tokens', 100),
-                    output_tokens=token_usage.get('output_tokens', 200),
+                    model_name=token_usage.get('model', None),  # Uses current AI provider model
+                    input_tokens=token_usage.get('input_tokens', 0),
+                    output_tokens=token_usage.get('output_tokens', 0),
                     description=f"Video Title Generation ({video_type}) - 10 titles"
                 )
 
@@ -135,7 +135,7 @@ def generate_video_tags():
         # Step 1: Check credits before generation
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content=input_text,
-            model_name='claude-3-sonnet-20240229'  # Default model
+            model_name=None  # Uses current AI provider model  # Default model
         )
 
         # Tags cost less than scripts (shorter output)
@@ -176,9 +176,9 @@ def generate_video_tags():
             if token_usage.get('input_tokens', 0) > 0:
                 deduction_result = credits_manager.deduct_llm_credits(
                     user_id=user_id,
-                    model_name=token_usage.get('model', 'claude-3-sonnet-20240229'),
-                    input_tokens=token_usage.get('input_tokens', 100),
-                    output_tokens=token_usage.get('output_tokens', 300),
+                    model_name=token_usage.get('model', None),  # Uses current AI provider model
+                    input_tokens=token_usage.get('input_tokens', 0),
+                    output_tokens=token_usage.get('output_tokens', 0),
                     description="Video Tags Generation"
                 )
 
@@ -229,7 +229,7 @@ def generate_video_description():
         # Step 1: Check credits before generation
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content=user_input,
-            model_name='claude-3-sonnet-20240229'  # Default model
+            model_name=None  # Uses current AI provider model  # Default model
         )
 
         # Description costs more than titles (longer output)
@@ -273,9 +273,9 @@ def generate_video_description():
             if token_usage.get('input_tokens', 0) > 0:
                 deduction_result = credits_manager.deduct_llm_credits(
                     user_id=user_id,
-                    model_name=token_usage.get('model', 'claude-3-sonnet-20240229'),
-                    input_tokens=token_usage.get('input_tokens', 100),
-                    output_tokens=token_usage.get('output_tokens', 500),
+                    model_name=token_usage.get('model', None),  # Uses current AI provider model
+                    input_tokens=token_usage.get('input_tokens', 0),
+                    output_tokens=token_usage.get('output_tokens', 0),
                     description=f"Video Description Generation ({video_type})"
                 )
 
