@@ -14,6 +14,7 @@ import logging
 import os
 from datetime import datetime, timedelta
 from app.system.auth.supabase import verify_supabase_token
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 logger = logging.getLogger('auth_middleware')
 
@@ -436,9 +437,9 @@ def auth_middleware():
             # Check if user is a team member with active status
             if db:
                 membership_query = db.collection('team_members') \
-                    .where('member_id', '==', g.user_id) \
-                    .where('owner_id', '==', workspace_id) \
-                    .where('status', '==', 'active') \
+                    .where(filter=FieldFilter('member_id', '==', g.user_id)) \
+                    .where(filter=FieldFilter('owner_id', '==', workspace_id)) \
+                    .where(filter=FieldFilter('status', '==', 'active')) \
                     .limit(1).get()
 
                 membership_list = list(membership_query)
