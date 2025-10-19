@@ -1,0 +1,6 @@
+Based on this video transcript, please: {prompt}
+
+Video Transcript:
+{transcript}
+
+Your response:

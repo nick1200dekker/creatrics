@@ -199,7 +199,7 @@ html.dark .progress-card {
     width: 64px;
     height: 64px;
     margin: 0 auto 1rem;
-    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     border-radius: 16px;
     display: flex;
     align-items: center;
@@ -207,7 +207,7 @@ html.dark .progress-card {
 }
 
 html.dark .progress-icon {
-    background: linear-gradient(135deg, #60A5FA 0%, #A78BFA 100%);
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
 }
 
 .progress-icon i {

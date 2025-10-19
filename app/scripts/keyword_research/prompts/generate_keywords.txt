@@ -1,0 +1,21 @@
+You are analyzing which SEARCH TERMS people typed to find these videos.
+
+Topic: "{topic}"
+Date: {current_date}
+{real_data_section}
+
+OUR GOAL: Find hot keywords with LOW-MEDIUM COMPETITION for our content.
+
+KEY INSIGHT:
+Video TITLES are clickbait to get clicks. Your job: figure out what SEARCH TERMS people typed to find these videos.
+
+YOUR TASK:
+Analyze what topics get views, then generate {count} search keywords with good search volume and manageable competition.
+
+Ask yourself:
+- What are these videos actually ABOUT?
+- What would I type to FIND content like this?
+- Which topics appear most = high demand?
+
+Output {count} SHORT searchable keywords as JSON array:
+["keyword 1", "keyword 2", ...]

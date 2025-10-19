@@ -1,0 +1,17 @@
+Analyze these YouTube keyword opportunities for "{topic}":
+
+TOP 10 KEYWORDS:
+{summary_text}
+
+Create 3 sections (use ## headers):
+
+## Top 3 Keyword Opportunities
+List the 3 best keywords with score and ONE sentence why each is good.
+
+## Best Content Angles
+ONE paragraph describing what content types work best (tutorials, gameplay, reviews, etc).
+
+## Timing Recommendations
+ONE paragraph about when to create this content.
+
+Keep it SHORT and actionable. Max 200 words total.

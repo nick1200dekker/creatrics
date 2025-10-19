@@ -127,6 +127,8 @@ def analyze_trends():
 
         # STEP 2: Filter gaming-related keywords using AI
         logger.info("Filtering gaming-related keywords with AI")
+        # Import AI processor from scripts
+        from app.scripts.tiktok_trend_finder.tiktok_ai_processor import filter_gaming_keywords_ai
         gaming_keywords = filter_gaming_keywords_ai(all_hashtags)
         logger.info(f"AI filtered to {len(gaming_keywords)} gaming keywords")
 
@@ -291,56 +293,4 @@ def analyze_single_keyword(keyword: str) -> dict:
         return None
 
 
-def filter_gaming_keywords_ai(keywords: list) -> list:
-    """
-    Use AI to filter gaming-related keywords from the list
-    Uses the unified AI provider system (same as YouTube Keyword Research)
-    """
-    try:
-        # Create prompt for AI
-        keywords_text = "\n".join(keywords)
-        prompt = f"""You are analyzing TikTok hashtag keywords to identify which ones are gaming-related.
-
-Here is the list of keywords:
-{keywords_text}
-
-Instructions:
-- Only return keywords that are directly related to gaming (video games, game titles, gaming culture, gaming creators, esports, etc.)
-- Do NOT change or modify the keywords in any way
-- Return ONLY the gaming-related keywords, one per line
-- Do NOT include explanations, numbering, or any other text
-- If a keyword is not gaming-related, exclude it from your response
-
-Gaming-related keywords:"""
-
-        # Use unified AI provider system (same as YouTube Keyword Research)
-        ai_provider = get_ai_provider()
-
-        logger.info(f"Using {ai_provider.provider.value} for AI filtering")
-
-        # Create completion using unified interface
-        response = ai_provider.create_completion(
-            messages=[
-                {"role": "system", "content": "You are a gaming content expert."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=1000
-        )
-
-        # Parse response - split by newlines and filter empty
-        response_text = response.get('content', '')
-        gaming_keywords = [k.strip() for k in response_text.split('\n') if k.strip()]
-
-        # Validate keywords are from original list (no modifications)
-        valid_keywords = [k for k in gaming_keywords if k in keywords]
-
-        logger.info(f"AI filtered: {len(keywords)} -> {len(valid_keywords)} gaming keywords")
-
-        return valid_keywords
-
-    except Exception as e:
-        logger.error(f"Error filtering with AI: {e}")
-        # Fallback: return all keywords if AI fails
-        logger.warning("AI filtering failed, returning all keywords as fallback")
-        return keywords
+# Note: filter_gaming_keywords_ai moved to app/scripts/tiktok_trend_finder/tiktok_ai_processor.py

@@ -1,0 +1,13 @@
+You are analyzing TikTok hashtag keywords to identify which ones are gaming-related.
+
+Here is the list of keywords:
+{keywords_text}
+
+Instructions:
+- Only return keywords that are directly related to gaming (video games, game titles, gaming culture, gaming creators, esports, etc.)
+- Do NOT change or modify the keywords in any way
+- Return ONLY the gaming-related keywords, one per line
+- Do NOT include explanations, numbering, or any other text
+- If a keyword is not gaming-related, exclude it from your response
+
+Gaming-related keywords:

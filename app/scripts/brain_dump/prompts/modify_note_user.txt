@@ -1,0 +1,6 @@
+Please modify the following note according to this request: "{prompt}"
+
+Original Note Content:
+{content}
+
+Modified Note Content:

@@ -920,130 +920,18 @@ def modify_note_with_ai():
         prompt = data.get('prompt', '').strip()
         model = data.get('model', None)  # Uses current AI provider model
 
-        if not content:
-            return jsonify({
-                'status': 'error',
-                'error': 'No content provided'
-            }), 400
-
-        if not prompt:
-            return jsonify({
-                'status': 'error',
-                'error': 'No modification prompt provided'
-            }), 400
-
-        # Initialize credits manager
-        from app.system.credits.credits_manager import CreditsManager
-        credits_manager = CreditsManager()
         user_id = get_workspace_user_id()
 
-        # Get AI provider to determine model
-        from app.system.ai_provider.ai_provider import get_ai_provider
-        ai_provider = get_ai_provider()
-        model_name = ai_provider.default_model
+        # Use the AI processor from scripts
+        from app.scripts.brain_dump.note_ai_processor import modify_note_with_ai as process_modification
+        result = process_modification(content, prompt, user_id, model)
 
-        # Step 1: Check credits before generation
-        combined_text = f"{prompt}\n{content}"
-        cost_estimate = credits_manager.estimate_llm_cost_from_text(
-            text_content=combined_text,
-            model_name=model_name
-        )
+        if result['status'] == 'error':
+            if result.get('error_type') == 'insufficient_credits':
+                return jsonify(result), 402
+            return jsonify(result), 400
 
-        # Note modification typically requires moderate output
-        required_credits = cost_estimate['final_cost'] * 2  # Multiply by 2 for output
-        current_credits = credits_manager.get_user_credits(user_id)
-        credit_check = credits_manager.check_sufficient_credits(
-            user_id=user_id,
-            required_credits=required_credits
-        )
-
-        # Check for sufficient credits - strict enforcement
-        if not credit_check.get('sufficient', False):
-            return jsonify({
-                "status": "error",
-                "error": f"Insufficient credits. Required: {required_credits:.2f}, Available: {current_credits:.2f}",
-                "error_type": "insufficient_credits",
-                "current_credits": current_credits,
-                "required_credits": required_credits
-            }), 402
-
-        # Create the AI prompt
-        system_prompt = """You are an AI assistant helping to modify and improve notes.
-        Follow the user's modification request exactly.
-        Return only the modified content without any explanations or metadata.
-        Preserve the overall structure and meaning unless explicitly asked to change it.
-        If the content contains HTML formatting (links, bold, code blocks, etc.), preserve them.
-        Maintain any existing HTML tags like <a>, <strong>, <code>, <pre>, <br>, <p>, etc."""
-
-        user_prompt = f"""Please modify the following note according to this request: "{prompt}"
-
-        Original Note Content:
-        {content}
-
-        Modified Note Content:"""
-
-        # Generate the modified content using the configured AI provider
-        response = ai_provider.create_completion(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=2000
-        )
-
-        # Get the content - handle both dict and string responses
-        if isinstance(response, dict):
-            modified_content = response.get('content', '')
-            # Try to get token usage if available
-            token_usage = response.get('usage', {})
-        else:
-            modified_content = str(response)
-            token_usage = {}
-
-        if not modified_content:
-            return jsonify({
-                'status': 'error',
-                'error': 'Failed to generate modified content'
-            }), 500
-
-        # Step 2: Deduct credits after successful generation
-        try:
-            # Use actual token usage if available, otherwise estimate
-            input_tokens = token_usage.get('prompt_tokens', len(combined_text.split()) * 1.3)  # Rough estimate
-            output_tokens = token_usage.get('completion_tokens', len(modified_content.split()) * 1.3)  # Rough estimate
-            
-            deduction_result = credits_manager.deduct_llm_credits(
-                user_id=user_id,
-                model_name=model_name,
-                input_tokens=int(input_tokens),
-                output_tokens=int(output_tokens),
-                description=f"Brain Dump AI Modification: {prompt[:50]}{'...' if len(prompt) > 50 else ''}",
-                feature_id="brain_dump_ai_modify"
-            )
-
-            if not deduction_result['success']:
-                logger.error(f"Failed to deduct credits for user {user_id}: {deduction_result.get('message')}")
-                # Don't fail the request, just log the error
-            else:
-                logger.info(f"Credits deducted for Brain Dump AI modification: {deduction_result.get('credits_deducted', 0)} credits")
-
-        except Exception as credit_error:
-            logger.error(f"Error deducting credits: {credit_error}")
-            # Don't fail the request for credit errors
-
-        # Clean up the response
-        modified_content = modified_content.strip()
-
-        # Get the actual credits deducted for response
-        credits_deducted = deduction_result.get('credits_deducted', 0) if 'deduction_result' in locals() else 0
-
-        return jsonify({
-            'status': 'success',
-            'modified_content': modified_content,
-            'original_prompt': prompt,
-            'credits_used': credits_deducted
-        })
+        return jsonify(result)
 
     except Exception as e:
         logger.error(f"Error modifying note with AI: {e}")
@@ -1061,128 +949,18 @@ def process_transcript_with_ai():
         transcript = data.get('transcript', '').strip()
         prompt = data.get('prompt', '').strip()
 
-        if not transcript:
-            return jsonify({
-                'status': 'error',
-                'error': 'No transcript provided'
-            }), 400
-
-        if not prompt:
-            return jsonify({
-                'status': 'error',
-                'error': 'No prompt provided'
-            }), 400
-
-        # Initialize credits manager
-        from app.system.credits.credits_manager import CreditsManager
-        credits_manager = CreditsManager()
         user_id = get_workspace_user_id()
 
-        # Get AI provider to determine model
-        from app.system.ai_provider.ai_provider import get_ai_provider
-        ai_provider = get_ai_provider()
-        model_name = ai_provider.default_model
+        # Use the AI processor from scripts
+        from app.scripts.brain_dump.note_ai_processor import process_transcript_with_ai as process_transcript
+        result = process_transcript(transcript, prompt, user_id)
 
-        # Step 1: Check credits before generation
-        combined_text = f"{prompt}\n{transcript}"
-        cost_estimate = credits_manager.estimate_llm_cost_from_text(
-            text_content=combined_text,
-            model_name=model_name
-        )
+        if result['status'] == 'error':
+            if result.get('error_type') == 'insufficient_credits':
+                return jsonify(result), 402
+            return jsonify(result), 400
 
-        # Transcript processing typically requires significant output
-        required_credits = cost_estimate['final_cost'] * 2  # Multiply by 2 for output
-        current_credits = credits_manager.get_user_credits(user_id)
-        credit_check = credits_manager.check_sufficient_credits(
-            user_id=user_id,
-            required_credits=required_credits
-        )
-
-        # Check for sufficient credits - strict enforcement
-        if not credit_check.get('sufficient', False):
-            return jsonify({
-                "status": "error",
-                "error": f"Insufficient credits. Required: {required_credits:.2f}, Available: {current_credits:.2f}",
-                "error_type": "insufficient_credits",
-                "current_credits": current_credits,
-                "required_credits": required_credits
-            }), 402
-
-        # Create the AI prompt
-        system_prompt = """You are an AI assistant helping creators analyze and transform video transcripts.
-        Follow the user's request exactly and provide helpful, actionable content.
-        Be creative and engaging in your responses.
-        IMPORTANT: Do not use any markdown formatting like **, ##, ###, *, -, or other special formatting characters.
-        Write in plain text only with clear paragraphs separated by line breaks.
-        Do not use bold, italics, headers, or bullet point symbols.
-        Just write natural, readable text."""
-
-        user_prompt = f"""Based on this video transcript, please: {prompt}
-
-Video Transcript:
-{transcript}
-
-Your response:"""
-
-        # Generate the response using the configured AI provider
-        response = ai_provider.create_completion(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=2000
-        )
-
-        # Get the content - handle both dict and string responses
-        if isinstance(response, dict):
-            result_content = response.get('content', '')
-            token_usage = response.get('usage', {})
-        else:
-            result_content = str(response)
-            token_usage = {}
-
-        if not result_content:
-            return jsonify({
-                'status': 'error',
-                'error': 'Failed to process transcript'
-            }), 500
-
-        # Step 2: Deduct credits after successful generation
-        try:
-            # Use actual token usage if available, otherwise estimate
-            input_tokens = token_usage.get('prompt_tokens', len(combined_text.split()) * 1.3)
-            output_tokens = token_usage.get('completion_tokens', len(result_content.split()) * 1.3)
-
-            deduction_result = credits_manager.deduct_llm_credits(
-                user_id=user_id,
-                model_name=model_name,
-                input_tokens=int(input_tokens),
-                output_tokens=int(output_tokens),
-                description=f"Video Transcript AI Processing: {prompt[:50]}{'...' if len(prompt) > 50 else ''}",
-                feature_id="video_transcript_ai_process"
-            )
-
-            if not deduction_result['success']:
-                logger.error(f"Failed to deduct credits for user {user_id}: {deduction_result.get('message')}")
-            else:
-                logger.info(f"Credits deducted for transcript processing: {deduction_result.get('credits_deducted', 0)} credits")
-
-        except Exception as credit_error:
-            logger.error(f"Error deducting credits: {credit_error}")
-
-        # Clean up the response
-        result_content = result_content.strip()
-
-        # Get the actual credits deducted for response
-        credits_deducted = deduction_result.get('credits_deducted', 0) if 'deduction_result' in locals() else 0
-
-        return jsonify({
-            'status': 'success',
-            'result': result_content,
-            'prompt': prompt,
-            'credits_used': credits_deducted
-        })
+        return jsonify(result)
 
     except Exception as e:
         logger.error(f"Error processing transcript with AI: {e}")
