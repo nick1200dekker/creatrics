@@ -144,7 +144,7 @@ class AudioEditor {
         this.loadingIndicator.className = 'audio-loading-indicator';
         this.loadingIndicator.innerHTML = `
             <div class="audio-spinner">
-                <i class="ph ph-circle-notch ph-spin"></i>
+                <i class="ph ph-spinner spin"></i>
             </div>
             <div class="audio-loading-text">Loading audio...</div>
         `;

@@ -602,7 +602,7 @@ function updateSaveStatus(status) {
 
     if (status === 'saving') {
         saveStatusEl.classList.add('saving');
-        iconEl.className = 'ph ph-circle-notch';
+        iconEl.className = 'ph ph-spinner spin';
         saveStatusTextEl.textContent = 'Saving...';
     } else if (status === 'saved') {
         saveStatusEl.classList.add('saved');

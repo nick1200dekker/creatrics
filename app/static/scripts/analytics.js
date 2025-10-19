@@ -244,7 +244,9 @@ function initializeAnalytics() {
     
     // X Analytics functions
     function loadXAnalytics() {
-        fetch(`/analytics/x/overview?timeframe=${currentTimeframe}`)
+        fetch(`/analytics/x/overview?timeframe=${currentTimeframe}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -337,7 +339,9 @@ function initializeAnalytics() {
         
         container.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
 
-        fetch(`/analytics/x/impressions?timeframe=${currentTimeframe}`)
+        fetch(`/analytics/x/impressions?timeframe=${currentTimeframe}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (!data.error) {
@@ -462,7 +466,9 @@ function initializeAnalytics() {
         
         container.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
         
-        fetch(`/analytics/x/engagement?timeframe=${currentTimeframe}`)
+        fetch(`/analytics/x/engagement?timeframe=${currentTimeframe}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (!data.error) {
@@ -615,7 +621,9 @@ function initializeAnalytics() {
 
         container.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
 
-        fetch(`/analytics/x/posts-count?timeframe=${currentTimeframe}`)
+        fetch(`/analytics/x/posts-count?timeframe=${currentTimeframe}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (!data.error) renderPostsCountChart(data.posts_count_data);
@@ -699,7 +707,9 @@ function initializeAnalytics() {
 
         container.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
 
-        fetch(`/analytics/x/followers-history?timeframe=${currentTimeframe}`)
+        fetch(`/analytics/x/followers-history?timeframe=${currentTimeframe}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (!data.error) renderFollowersChart(data.followers_data);
@@ -791,7 +801,9 @@ function initializeAnalytics() {
         xPostsData.currentFilter = filter;
         xPostsData.currentPage = 1;
 
-        fetch(`/analytics/x/posts-paginated?page=1&per_page=${xPostsData.itemsPerPage}&filter=${filter}`)
+        fetch(`/analytics/x/posts-paginated?page=1&per_page=${xPostsData.itemsPerPage}&filter=${filter}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (!data.error) {
@@ -843,7 +855,9 @@ function initializeAnalytics() {
         if (page < 1) return;
         xPostsData.currentPage = page;
         
-        fetch(`/analytics/x/posts-paginated?page=${page}&per_page=${xPostsData.itemsPerPage}&filter=${xPostsData.currentFilter}`)
+        fetch(`/analytics/x/posts-paginated?page=${page}&per_page=${xPostsData.itemsPerPage}&filter=${xPostsData.currentFilter}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (!data.error) {
@@ -883,7 +897,9 @@ function initializeAnalytics() {
         if (viewsChart) viewsChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
         if (trafficChart) trafficChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
 
-        fetch(`/analytics/youtube/daily-views?timeframe=${currentTimeframe}`)
+        fetch(`/analytics/youtube/daily-views?timeframe=${currentTimeframe}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -905,7 +921,9 @@ function initializeAnalytics() {
     }
     
     function loadYouTubeTopVideos() {
-        fetch(`/analytics/youtube/top-videos?timeframe=${currentTimeframe}`)
+        fetch(`/analytics/youtube/top-videos?timeframe=${currentTimeframe}`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (!data.error) renderYouTubeVideos(data.top_videos || []);
@@ -1086,7 +1104,9 @@ function initializeAnalytics() {
         console.log(`Loading TikTok analytics with timeframe: ${timeframe}`);
 
         // Load overview metrics
-        fetch('/analytics/tiktok/overview')
+        fetch('/analytics/tiktok/overview', {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -1125,7 +1145,9 @@ function initializeAnalytics() {
         if (engagementChart) engagementChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
         if (frequencyChart) frequencyChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
 
-        fetch('/analytics/tiktok/posts')
+        fetch('/analytics/tiktok/posts', {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -1521,7 +1543,9 @@ function initializeAnalytics() {
         const totalLikes = data.likes || 0;
 
         // Fetch posts and calculate metrics based on timeframe
-        fetch('/analytics/tiktok/posts')
+        fetch('/analytics/tiktok/posts', {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(postsData => {
                 const allPosts = postsData.posts || [];
@@ -1628,7 +1652,9 @@ function initializeAnalytics() {
     window.loadTikTokPosts = function(filter = 'recent') {
         const timeframe = currentTimeframe || '30days';
 
-        fetch(`/analytics/tiktok/posts`)
+        fetch(`/analytics/tiktok/posts`, {
+            credentials: 'include'
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -1754,7 +1780,8 @@ function initializeAnalytics() {
             refreshPromises.push(
                 fetch('/analytics/x/refresh', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
                 }).then(r => r.json())
             );
         }
@@ -1764,7 +1791,8 @@ function initializeAnalytics() {
             refreshPromises.push(
                 fetch('/analytics/youtube/refresh', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
                 }).then(r => r.json())
             );
         }
@@ -1774,7 +1802,8 @@ function initializeAnalytics() {
             refreshPromises.push(
                 fetch('/analytics/tiktok/refresh', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
                 }).then(r => r.json())
             );
         }
@@ -1845,7 +1874,7 @@ function initializeAnalytics() {
         refreshBtn.disabled = true;
         refreshBtn.innerHTML = '<div class="loading-spinner"><i class="ph ph-spinner spin"></i></div><span>Refreshing...</span>';
         
-        fetch('/analytics/x/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        fetch('/analytics/x/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1873,7 +1902,7 @@ function initializeAnalytics() {
         refreshBtn.disabled = true;
         refreshBtn.innerHTML = '<div class="loading-spinner"><i class="ph ph-spinner spin"></i></div><span>Refreshing...</span>';
         
-        fetch('/analytics/youtube/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        fetch('/analytics/youtube/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1904,7 +1933,8 @@ function initializeAnalytics() {
 
         fetch('/analytics/tiktok/refresh', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
         })
             .then(response => response.json())
             .then(data => {

@@ -290,9 +290,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Show loading state initially
         eventsContainer.innerHTML = `
-            <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
-                <i class="ph ph-circle-notch" style="font-size: 2rem; animation: spin 1s linear infinite;"></i>
-                <p style="margin-top: 1rem;">Loading calendar events...</p>
+            <div style="text-align: center; padding: 2rem;">
+                <div class="loading-spinner" style="font-size: 1.5rem; color: #3B82F6; margin-bottom: 1rem;">
+                    <i class="ph ph-spinner" style="animation: spin 1s linear infinite; display: inline-block;"></i>
+                </div>
+                <p style="color: var(--text-tertiary);">Loading calendar events...</p>
             </div>
         `;
 
@@ -394,9 +396,11 @@ async function loadXSuggestions(forceRefresh = false) {
     }
 
     suggestionsContainer.innerHTML = `
-        <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
-            <i class="ph ph-circle-notch" style="font-size: 2rem; display: block; margin: 0 auto; animation: spin 1s linear infinite;"></i>
-            <p style="margin-top: 1rem;">Loading suggestions...</p>
+        <div style="text-align: center; padding: 2rem;">
+            <div class="loading-spinner" style="font-size: 1.5rem; color: #3B82F6; margin: 0 auto 1rem;">
+                <i class="ph ph-spinner" style="animation: spin 1s linear infinite; display: inline-block;"></i>
+            </div>
+            <p style="color: var(--text-tertiary);">Loading suggestions...</p>
         </div>
     `;
 
@@ -591,9 +595,11 @@ async function loadUnoptimizedVideos() {
     section.style.display = 'block';
 
     container.innerHTML = `
-        <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
-            <i class="ph ph-circle-notch" style="font-size: 2rem; display: block; margin: 0 auto; animation: spin 1s linear infinite;"></i>
-            <p style="margin-top: 1rem;">Loading videos...</p>
+        <div style="text-align: center; padding: 2rem;">
+            <div class="loading-spinner" style="font-size: 1.5rem; color: #3B82F6; margin: 0 auto 1rem;">
+                <i class="ph ph-spinner" style="animation: spin 1s linear infinite; display: inline-block;"></i>
+            </div>
+            <p style="color: var(--text-tertiary);">Loading videos...</p>
         </div>
     `;
 

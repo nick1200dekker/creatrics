@@ -19,10 +19,17 @@ const Auth = {
             console.error("Supabase credentials not provided");
             return false;
         }
-        
+
         try {
-            this.supabaseClient = supabase.createClient(url, key);
-            console.log("Supabase client initialized");
+            // Initialize with automatic session persistence and refresh
+            this.supabaseClient = supabase.createClient(url, key, {
+                auth: {
+                    autoRefreshToken: true,  // Automatically refresh tokens
+                    persistSession: true,    // Persist session to localStorage
+                    detectSessionInUrl: true // Detect auth redirects
+                }
+            });
+            console.log("Supabase client initialized with automatic token refresh");
             return true;
         } catch (error) {
             console.error("Failed to initialize Supabase client:", error);
@@ -309,15 +316,29 @@ const Auth = {
         try {
             const { data, error } = await this.supabaseClient.auth.refreshSession();
 
-            if (error) throw error;
+            if (error) {
+                console.error("Token refresh error:", error);
+                // If refresh fails, user needs to re-authenticate
+                if (error.message && error.message.includes('refresh_token_not_found')) {
+                    console.warn("No refresh token found, redirecting to login");
+                    window.location.href = '/auth/login?reason=session_expired';
+                }
+                throw error;
+            }
 
             if (data.session && data.session.access_token) {
-                console.log("Token refreshed successfully");
+                console.log("Token refreshed successfully, expires at:", new Date(data.session.expires_at * 1000).toLocaleTimeString());
                 // Update server session with new token
-                await this.createServerSession(data.session.access_token);
+                try {
+                    await this.createServerSession(data.session.access_token);
+                } catch (sessionError) {
+                    console.error("Failed to update server session after token refresh:", sessionError);
+                    // Continue even if server session update fails - the token is still valid
+                }
                 return data.session;
             }
 
+            console.warn("Token refresh returned no session");
             return null;
         } catch (error) {
             console.error("Token refresh failed:", error);
@@ -326,13 +347,36 @@ const Auth = {
     },
 
     /**
-     * Start automatic token refresh (checks every 5 minutes, refreshes if < 10 minutes remaining)
+     * Start automatic token refresh (checks every 2 minutes, refreshes if < 30 minutes remaining)
      */
     startTokenRefresh: function() {
-        // Check and refresh token every 5 minutes
-        const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
-        const REFRESH_THRESHOLD = 10 * 60; // Refresh if less than 10 minutes remaining
+        // Check and refresh token every 2 minutes (more frequent checks)
+        const CHECK_INTERVAL = 2 * 60 * 1000; // 2 minutes
+        const REFRESH_THRESHOLD = 30 * 60; // Refresh if less than 30 minutes remaining (half of 1 hour)
 
+        // Set up Supabase auth state listener for automatic refresh
+        if (this.supabaseClient) {
+            this.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                console.log('Auth state changed:', event);
+
+                if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+                    // Update server session when token is refreshed
+                    if (session && session.access_token) {
+                        console.log('Updating server session with new token');
+                        try {
+                            await this.createServerSession(session.access_token);
+                        } catch (error) {
+                            console.error('Failed to update server session:', error);
+                        }
+                    }
+                } else if (event === 'SIGNED_OUT') {
+                    console.log('User signed out');
+                    window.location.href = '/auth/login?reason=session_expired';
+                }
+            });
+        }
+
+        // Periodic check as backup
         setInterval(async () => {
             try {
                 const session = await this.getCurrentSession();
@@ -344,10 +388,13 @@ const Auth = {
 
                     console.log(`Token expires in ${Math.floor(timeUntilExpiry / 60)} minutes`);
 
-                    // Refresh if less than 10 minutes remaining
-                    if (timeUntilExpiry < REFRESH_THRESHOLD) {
+                    // Refresh if less than 30 minutes remaining
+                    if (timeUntilExpiry < REFRESH_THRESHOLD && timeUntilExpiry > 0) {
                         console.log("Token expiring soon, refreshing...");
                         await this.refreshToken();
+                    } else if (timeUntilExpiry <= 0) {
+                        console.warn("Token has expired, redirecting to login");
+                        window.location.href = '/auth/login?reason=session_expired';
                     }
                 }
             } catch (error) {
@@ -355,7 +402,7 @@ const Auth = {
             }
         }, CHECK_INTERVAL);
 
-        console.log("Automatic token refresh started");
+        console.log("Automatic token refresh started (checks every 2 minutes, refreshes at 30 min threshold)");
     },
     
     /**

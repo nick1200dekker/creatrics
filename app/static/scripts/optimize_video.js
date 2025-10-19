@@ -151,7 +151,7 @@ async function loadMyVideos() {
 
     try {
         // Show loading state
-        videosGrid.innerHTML = '<div class="empty-state"><i class="ph ph-spinner spin"></i><p>Loading your videos...</p></div>';
+        videosGrid.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="loading-icon" style="font-size: 2rem; color: #3B82F6; margin-bottom: 1rem;"><i class="ph ph-spinner" style="animation: spin 1s linear infinite; display: inline-block;"></i></div><p style="color: var(--text-tertiary); margin: 0;">Loading your videos...</p></div>';
         emptyState.style.display = 'none';
         shortsSection.style.display = 'none';
 

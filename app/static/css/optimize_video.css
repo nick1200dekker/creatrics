@@ -281,20 +281,30 @@ html.dark .video-meta .stat i {
     text-align: center;
 }
 
-.empty-state i {
+.empty-state i:not(.ph-spinner) {
     font-size: 4rem;
     color: var(--text-tertiary);
     opacity: 0.3;
     margin-bottom: 1rem;
 }
 
-html.dark .empty-state i {
+html.dark .empty-state i:not(.ph-spinner) {
     color: #60A5FA;
     opacity: 0.2;
 }
 
-.empty-state i.spin {
+/* Ensure spinners have proper color even in empty state */
+.empty-state i.ph-spinner {
+    font-size: 2rem;
+    color: #3B82F6;
+    opacity: 1;
+    margin-bottom: 1rem;
     animation: spin 1s linear infinite;
+}
+
+html.dark .empty-state i.ph-spinner {
+    color: #60A5FA;
+    opacity: 1;
 }
 
 .empty-state p {
@@ -396,7 +406,7 @@ html.dark .history-item:hover {
 }
 
 .loading-icon {
-    font-size: 4rem;
+    font-size: 3rem;
     color: #3B82F6;
     margin-bottom: 1.5rem;
 }

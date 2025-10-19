@@ -774,7 +774,7 @@ function updateSaveStatus(status) {
             statusText.textContent = 'Typing...';
             break;
         case 'saving':
-            statusIcon.className = 'ph ph-circle-notch';
+            statusIcon.className = 'ph ph-spinner spin';
             statusText.textContent = 'Saving...';
             break;
         case 'saved':
