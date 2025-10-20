@@ -15,6 +15,19 @@ from app.system.ai_provider.ai_provider import get_ai_provider
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
+
 class TikTokHookGenerator:
     """TikTok Hook Generator with AI support"""
 
@@ -24,15 +37,7 @@ class TikTokHookGenerator:
     def get_prompt_template(self) -> str:
         """Get the prompt template for hook generation"""
         try:
-            current_dir = Path(__file__).parent
-            prompt_file = current_dir / 'hooks_prompt.txt'
-
-            if not prompt_file.exists():
-                logger.error(f"Prompt file not found: {prompt_file}")
-                return None
-
-            with open(prompt_file, 'r', encoding='utf-8') as f:
-                return f.read()
+            return load_prompt('generate_hooks.txt')
         except Exception as e:
             logger.error(f"Error reading prompt template: {e}")
             return None
@@ -66,13 +71,12 @@ class TikTokHookGenerator:
                     # Get current date for system prompt
                     now = datetime.now()
 
-                    # System prompt to ensure correct format
-                    system_prompt = f"""You are a TikTok content expert specializing in viral hooks.
-                    Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}.
-                    Always return exactly 10 powerful hooks in a JSON array format.
-                    Each hook should be attention-grabbing, concise, and designed to stop scrollers.
-                    Focus on creating curiosity, emotion, or intrigue within the first 3 seconds.
-                    IMPORTANT: Use {now.year} for any year references, not past years like 2024."""
+                    # Load system prompt from file and format it
+                    system_prompt_template = load_prompt('system.txt')
+                    system_prompt = system_prompt_template.format(
+                        current_date=now.strftime('%B %d, %Y'),
+                        current_year=now.year
+                    )
 
                     # Generate using AI provider
                     response = ai_provider.create_completion(
@@ -222,15 +226,4 @@ class TikTokHookGenerator:
 
     def get_fallback_prompt(self) -> str:
         """Get fallback prompt if file is not found"""
-        return """Generate 10 powerful TikTok video hooks for the following content:
-        {content}
-
-        Each hook should:
-        - Be under 10 words (ideally 3-7 words)
-        - Create immediate curiosity or intrigue
-        - Stop scrollers in their tracks
-        - Use proven viral patterns (POV, Wait for it, This changed, Nobody talks about, etc.)
-        - Be relevant to the content
-        - Create an open loop that makes viewers want to keep watching
-
-        Return ONLY a JSON array with 10 hooks, nothing else."""
+        return load_prompt('fallback.txt')

@@ -10,6 +10,19 @@ from typing import Dict, List, Optional
 from pathlib import Path
 from app.system.ai_provider.ai_provider import get_ai_provider
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -23,17 +36,10 @@ class VideoScriptGenerator:
     def get_prompt_template(self, video_type: str, script_format: str) -> str:
         """Get the prompt template for script generation"""
         try:
-            current_dir = Path(__file__).parent
-            prompt_file = current_dir / f'{video_type}_{script_format}_prompt.txt'
-
-            if not prompt_file.exists():
-                logger.error(f"Prompt file not found: {prompt_file}")
-                return None
-
-            with open(prompt_file, 'r', encoding='utf-8') as f:
-                return f.read()
+            # Use new naming convention: {format}_{type}.txt (e.g., full_long.txt, bullet_short.txt)
+            return load_prompt(f'{script_format}_{video_type}.txt')
         except Exception as e:
-            logger.error(f"Error reading prompt template: {e}")
+            logger.error(f"Error reading prompt template for {script_format}_{video_type}: {e}")
             return None
 
     def generate_script(self, concept: str, video_type: str = 'long',
@@ -93,70 +99,41 @@ class VideoScriptGenerator:
                         else:
                             duration_str = f"{duration}-minute YouTube video" if not best_effort else "YouTube video (you decide the appropriate length based on content depth)"
 
-                        # Create inline prompts as before
+                        # Load prompts from files
                         if script_format == 'bullet':
                             if video_type == 'short':
                                 duration_instruction = f"- This is a VERY SHORT video ({duration} seconds only). Write 5-8 key points." if not best_effort else "- Determine the appropriate length (15-60 seconds)."
-
-                                simple_prompt = f"""Write simple talking points for a {duration_str} based on this content:
-
-{concept}
-
-CRITICAL REQUIREMENTS:
-{duration_instruction}
-- Write ONLY the key points to cover, one per line.
-- NO bullet symbols or formatting.
-- Instead of full sentences, provide short, high-level TOPICS or SUBJECTS to talk about. These should be concise cues for a YouTuber to expand on while recording.
-
-Write ONLY the talking points now:"""
+                                prompt_template = load_prompt('bullet_short.txt')
+                                simple_prompt = prompt_template.format(
+                                    duration_str=duration_str,
+                                    concept=concept,
+                                    duration_instruction=duration_instruction
+                                )
                             else:
                                 duration_instruction = f"- The video should be approximately {duration} minutes long." if not best_effort else "- Determine the appropriate video length based on content."
-
-                                simple_prompt = f"""Write talking points for a {duration_str} based on this content:
-
-{concept}
-
-CRITICAL REQUIREMENTS:
-{duration_instruction}
-- Write key points to cover, one per line.
-- NO bullet symbols or formatting.
-- Instead of full sentences, provide short, high-level TOPICS or SUBJECTS to talk about. These should be concise cues for a YouTuber to expand on while recording.
-
-Write ONLY the talking points now:"""
+                                prompt_template = load_prompt('bullet_long.txt')
+                                simple_prompt = prompt_template.format(
+                                    duration_str=duration_str,
+                                    concept=concept,
+                                    duration_instruction=duration_instruction
+                                )
                         else:
                             if video_type == 'short':
                                 duration_instruction = f"- This script must be EXACTLY {duration} seconds when read aloud (about {duration * 2} words)." if not best_effort else "- Determine the appropriate length based on the content (15-60 seconds)."
-
-                                simple_prompt = f"""Write a complete script for a {duration_str} based on this content:
-
-{concept}
-
-CRITICAL REQUIREMENTS:
-{duration_instruction}
-- Each sentence MUST be on a new line.
-- Write ONLY the words to be spoken - no formatting, no headers, no timestamps.
-- Just pure flowing text for the video.
-
-Write ONLY the spoken script text now:"""
+                                prompt_template = load_prompt('full_short.txt')
+                                simple_prompt = prompt_template.format(
+                                    duration_str=duration_str,
+                                    concept=concept,
+                                    duration_instruction=duration_instruction
+                                )
                             else:
                                 duration_instruction = f"- The script should be approximately {duration} minutes when read aloud (about {duration * 150} words)." if not best_effort else "- Determine the appropriate video length based on content (3-20 minutes)."
-
-                                simple_prompt = f"""Write a complete script for a {duration_str} based on this information:
-
-{concept}
-
-CRITICAL REQUIREMENTS:
-{duration_instruction}
-- Each sentence MUST be on a new line.
-- Write ONLY the words to be spoken - no headers, no timestamps, no formatting.
-- NO section titles like "INTRO" or "CONCLUSION".
-- NO markdown formatting (no ##, **, __, etc.).
-- NO brackets, parentheses with notes, or stage directions.
-- Just write flowing, conversational text as if reading from a teleprompter.
-- Use ALL the specific details provided above.
-- Start directly with the opening words and flow naturally throughout.
-
-Write ONLY the spoken script text now:"""
+                                prompt_template = load_prompt('full_long.txt')
+                                simple_prompt = prompt_template.format(
+                                    duration_str=duration_str,
+                                    concept=concept,
+                                    duration_instruction=duration_instruction
+                                )
 
                     # Calculate appropriate max tokens based on duration
                     if video_type == 'short':

@@ -12,6 +12,19 @@ from pathlib import Path
 from app.system.ai_provider.ai_provider import get_ai_provider
 from app.scripts.keyword_research import KeywordResearcher
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -27,15 +40,7 @@ class VideoTagsGenerator:
     def get_prompt_template(self) -> str:
         """Get the prompt template for video tags generation"""
         try:
-            current_dir = Path(__file__).parent
-            prompt_file = current_dir / 'tags_prompt.txt'
-
-            if not prompt_file.exists():
-                logger.error(f"Prompt file not found: {prompt_file}")
-                return self.get_fallback_prompt()
-
-            with open(prompt_file, 'r', encoding='utf-8') as f:
-                return f.read()
+            return load_prompt('tags_prompt.txt')
         except Exception as e:
             logger.error(f"Error reading prompt template: {e}")
             return self.get_fallback_prompt()
@@ -87,14 +92,11 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
 )}"""
 
                     # System prompt to ensure correct format
-                    system_prompt = f"""You are a YouTube SEO expert specializing in tag generation.
-                    Current date: {now.strftime('%B %d, %Y')}. Always use current and up-to-date references.
-                    Generate relevant tags that will help the video rank well in YouTube search.
-                    Return tags as a comma-separated list.
-                    Focus on a mix of broad and specific tags.
-                    Include trending and evergreen keywords when relevant.
-                    The total character count should be between 400-500 characters.
-                    IMPORTANT: Use {now.year} for any year references, not past years."""
+                    system_prompt_template = load_prompt('generate_tags_system.txt')
+                    system_prompt = system_prompt_template.format(
+                        current_date=now.strftime('%B %d, %Y'),
+                        current_year=now.year
+                    )
 
                     # Generate using AI provider
                     response = ai_provider.create_completion(

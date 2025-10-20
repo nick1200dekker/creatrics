@@ -1,9 +1,9 @@
-Write a complete script for a {duration}-minute YouTube video based on this information:
+Write a complete script for a {duration_str} based on this information:
 
 {concept}
 
 CRITICAL REQUIREMENTS:
-- The script should be approximately {duration} minutes when read aloud (about {duration_words} words).
+{duration_instruction}
 - Each sentence MUST be on a new line.
 - Write ONLY the words to be spoken - no headers, no timestamps, no formatting.
 - NO section titles like "INTRO" or "CONCLUSION".
@@ -13,4 +13,4 @@ CRITICAL REQUIREMENTS:
 - Use ALL the specific details provided above.
 - Start directly with the opening words and flow naturally throughout.
 
-OUTPUT ONLY THE SPOKEN SCRIPT TEXT - NO EXPLANATIONS, NO COMMENTARY, NO HEADERS, NO FORMATTING. JUST THE SCRIPT:
+Write ONLY the spoken script text now:

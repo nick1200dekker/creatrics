@@ -15,6 +15,19 @@ from typing import Optional, Dict, List
 from dotenv import load_dotenv
 from app.system.ai_provider.ai_provider import get_ai_provider
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -50,17 +63,9 @@ class PostEditor:
     def get_default_prompt(self, preset: str) -> str:
         """Get the default prompt for a preset from the defaults directory."""
         try:
-            current_dir = Path(__file__).parent
-            prompt_file = current_dir / f'{preset}.txt'
-            
-            if not prompt_file.exists():
-                logger.error(f"Prompt file not found: {prompt_file}")
-                return None
-                
-            with open(prompt_file, 'r', encoding='utf-8') as f:
-                return f.read()
+            return load_prompt(f'{preset}.txt')
         except Exception as e:
-            logger.error(f"Error reading default prompt: {e}")
+            logger.error(f"Error reading prompt for preset '{preset}': {e}")
             return None
 
     def get_media_type_from_mime(self, mime_type: str) -> str:

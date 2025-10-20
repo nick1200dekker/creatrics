@@ -1,0 +1,40 @@
+Analyze this YouTube video. Keep it SHORT and bullet-point focused.
+
+Title: {title}
+Views: {view_count} | Likes: {like_count}
+
+Full Video Transcript: {full_transcript}
+
+Provide analysis in this EXACT format. Use simple bullet points (just dashes), NO bold text, NO extra symbols like ** or ###.
+
+## Hook Strategy
+- What hook/opening does this use
+- Why it works (1 sentence max)
+
+## Title Strategy
+- Key element 1 that makes it clickable
+- Key element 2 that makes it clickable
+- Key element 3 that makes it clickable (optional)
+
+## Content Insights
+- Quick observation 1 about pacing/structure/engagement
+- Quick observation 2
+- Quick observation 3
+- Quick observation 4 (optional)
+
+## SEO Analysis
+- What's working well (1-2 items)
+- What could improve (1 item)
+
+## Quick Wins
+- Actionable takeaway 1
+- Actionable takeaway 2
+- Actionable takeaway 3
+
+IMPORTANT RULES:
+- Keep UNDER 250 words total
+- Use ONLY simple dashes for bullets (-)
+- NO bold markers like ** or __
+- NO extra symbols or emojis
+- Each bullet should be ONE short sentence
+- Be direct and scannable

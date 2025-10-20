@@ -3,6 +3,7 @@ Thumbnail Analyzer using Claude Vision
 Analyzes YouTube thumbnails for optimization recommendations
 """
 import logging
+from pathlib import Path
 import requests
 import base64
 from typing import Dict
@@ -10,6 +11,19 @@ from datetime import datetime
 from app.system.ai_provider.ai_provider import get_ai_provider
 from app.system.credits.credits_manager import CreditsManager
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 logger = logging.getLogger(__name__)
 
 class ThumbnailAnalyzer:
@@ -50,40 +64,12 @@ class ThumbnailAnalyzer:
 
             # Prepare prompt for Claude Vision
             now = datetime.now()
-            prompt = f"""Analyze this YouTube thumbnail for: "{video_title}"
-
-Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}.
-
-IMPORTANT: Viewers decide to click in 0.3 seconds. 70% watch on mobile. Be ruthlessly concise.
-
-Give ONLY these 3 sections:
-
-**Quick Verdict** (1-2 sentences max)
-Overall impression and estimated CTR potential (Low/Medium/High)
-
-**What Works** (2-3 bullet points max)
-- Be specific: "Yellow text with black outline = max contrast" not "good colors"
-- Focus on what drives clicks: emotion, benefit, curiosity
-
-**Fix These Now** (Top 3 changes only, ordered by impact)
-1. Most critical fix (what will increase clicks most)
-2. Second priority
-3. Third priority
-
-Rules:
-- NO ratings or star systems
-- NO section headers like "Visual Impact" or "Color Scheme"
-- NO long explanations
-- Each bullet: max 10 words
-- Think: "Will this change increase clicks?" If no, don't mention it
-- Focus on mobile readability (70% of views)
-- Faces with clear emotions beat everything else
-- Less text = better (max 3-5 words on thumbnail)
-- High contrast colors are non-negotiable
-
-Example good fix: "Make text 40% larger for mobile"
-Example bad fix: "Consider evaluating the color scheme for better brand consistency"
-"""
+            prompt_template = load_prompt('analyze_thumbnail.txt')
+            prompt = prompt_template.format(
+                video_title=video_title,
+                current_date=now.strftime('%B %d, %Y'),
+                current_year=now.year
+            )
 
             # Use vision-capable model for analysis
             try:

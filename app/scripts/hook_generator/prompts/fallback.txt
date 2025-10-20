@@ -1,0 +1,12 @@
+Generate 10 powerful TikTok video hooks for the following content:
+{content}
+
+Each hook should:
+- Be under 10 words (ideally 3-7 words)
+- Create immediate curiosity or intrigue
+- Stop scrollers in their tracks
+- Use proven viral patterns (POV, Wait for it, This changed, Nobody talks about, etc.)
+- Be relevant to the content
+- Create an open loop that makes viewers want to keep watching
+
+Return ONLY a JSON array with 10 hooks, nothing else.

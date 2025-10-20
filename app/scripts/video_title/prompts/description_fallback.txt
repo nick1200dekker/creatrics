@@ -1,0 +1,12 @@
+Generate a YouTube {video_type_text} description for:
+        {{input}}
+
+        Requirements:
+        - Make the first 125 characters compelling (shown in search)
+        - Include relevant keywords naturally
+        - {format_instruction}
+        - Use single asterisk (*) for bullet points only
+        - Maximum 3 hashtags at the end
+        - Include a clear call-to-action
+        - Keep the total length under 5000 characters
+        {reference_section}

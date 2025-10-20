@@ -1,0 +1,13 @@
+You are analyzing a Twitter Space conversation. Please provide a concise summary of the following transcript, highlighting:
+1. The key points discussed
+2. Any important announcements or decisions made
+3. Interactions between participants (if notable)
+
+Transcript with segments:
+{ai_text}
+
+Format your summary in markdown with simple formatting. Use bold for important points and names.
+Keep it relatively brief but informative. Do not use teal/blue colors in your summary - only use bold white text for emphasis.
+Avoid using lines, dividers, or excessive spacing between paragraphs.
+
+IMPORTANT: Use a single heading with the Twitter Space title at the top. DO NOT include a redundant "Main Topics & Key Points Discussed" heading.

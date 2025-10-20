@@ -8,6 +8,7 @@ import uuid
 import base64
 import requests
 import logging
+from pathlib import Path
 from datetime import datetime
 from firebase_admin import storage as firebase_storage
 from firebase_admin import firestore
@@ -17,6 +18,19 @@ import traceback
 from dotenv import load_dotenv
 import fal_client
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 # Load environment variables
 load_dotenv()
 

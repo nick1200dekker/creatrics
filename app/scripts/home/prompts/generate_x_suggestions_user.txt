@@ -1,0 +1,47 @@
+Analyze the following X posts from a content creator and generate 5 highly engaging content suggestions they should post today.
+
+{posts_context}
+
+Based on these posts, identify:
+1. The creator's niche and main topics
+2. Their EXACT writing style (tone, formatting, sentence structure, paragraph breaks, emoji usage, capitalization patterns)
+3. What type of content gets the most engagement
+4. Patterns in their successful posts
+
+CRITICAL: You must PERFECTLY MIMIC their writing style. Study:
+- How they structure sentences (short vs long)
+- How they use line breaks and spacing
+- Their punctuation patterns
+- Their emoji placement and frequency
+- Their capitalization style
+- Their energy level and tone
+- Their use of questions, statements, or calls-to-action
+
+Now generate EXACTLY 5 content suggestions that:
+- Match their EXACT writing style (this is most important)
+- Stay within their niche but explore fresh angles/ideas
+- Are timely and relevant for TODAY
+- Have viral potential based on their past performance
+- Are specific enough to post immediately (not just topics)
+- Cover different aspects/angles within their niche
+- Sound EXACTLY like they wrote it themselves
+
+Each suggestion should feel like it came directly from this creator - same voice, same rhythm, same formatting.
+
+Format your response as a JSON array with exactly 5 objects, each containing:
+- "title": A catchy 3-5 word title for the suggestion
+- "content": The actual post text (ready to publish, 100-280 characters)
+- "reason": Why this will perform well (1 sentence)
+- "hook_type": The type of hook used (question/stat/story/hot_take/thread)
+
+Example format:
+[
+  {{
+    "title": "Growth Mindset Insight",
+    "content": "Most people want results without the struggle.\n\nBut the struggle IS the result.\n\nIt's where you build the character needed to keep what you earn.",
+    "reason": "Philosophical insights matching your tone perform well with your audience",
+    "hook_type": "hot_take"
+  }}
+]
+
+Return ONLY the JSON array, no other text.

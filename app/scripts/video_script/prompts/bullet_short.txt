@@ -1,11 +1,11 @@
-Write simple talking points for a {duration}-second YouTube Short based on this content:
+Write simple talking points for a {duration_str} based on this content:
 
 {concept}
 
 CRITICAL REQUIREMENTS:
-- This is a VERY SHORT video ({duration} seconds only). Write 5-8 key points.
+{duration_instruction}
 - Write ONLY the key points to cover, one per line.
 - NO bullet symbols or formatting.
 - Instead of full sentences, provide short, high-level TOPICS or SUBJECTS to talk about. These should be concise cues for a YouTuber to expand on while recording.
 
-OUTPUT ONLY THE TALKING POINTS - NO EXPLANATIONS, NO COMMENTARY, NO FORMATTING. JUST THE TALKING POINTS:
+Write ONLY the talking points now:

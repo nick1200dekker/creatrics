@@ -15,6 +15,19 @@ from app.scripts.keyword_research import KeywordResearcher
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
+
 class VideoDescriptionGenerator:
     """Video Description Generator with AI support"""
 
@@ -24,21 +37,14 @@ class VideoDescriptionGenerator:
     def get_prompt_template(self, video_type: str, reference_description: str = "") -> str:
         """Get the prompt template for description generation"""
         try:
-            current_dir = Path(__file__).parent
-
             # Build filename based on video type
             # Handle both 'short' and 'shorts' for backwards compatibility
             if video_type in ['short', 'shorts']:
-                prompt_file = current_dir / 'short_description_prompt.txt'
+                filename = 'short_description_prompt.txt'
             else:
-                prompt_file = current_dir / 'long_description_prompt.txt'
+                filename = 'long_description_prompt.txt'
 
-            if not prompt_file.exists():
-                logger.error(f"Prompt file not found: {prompt_file}")
-                return self.get_fallback_prompt(video_type, reference_description, style_analysis)
-
-            with open(prompt_file, 'r', encoding='utf-8') as f:
-                template = f.read()
+            template = load_prompt(filename)
 
             # Add reference description context if provided
             if reference_description:
@@ -48,7 +54,7 @@ class VideoDescriptionGenerator:
 
         except Exception as e:
             logger.error(f"Error reading prompt template: {e}")
-            return self.get_fallback_prompt(video_type, reference_description, style_analysis)
+            return self.get_fallback_prompt(video_type, reference_description, {})
 
     def generate_description(self, input_text: str, video_type: str = 'long',
                            reference_description: str = "", user_id: str = None, keyword: str = "") -> Dict:
@@ -80,26 +86,20 @@ class VideoDescriptionGenerator:
                     # Format the prompt with user input
                     prompt = prompt_template.format(input=input_text)
 
-                    # System prompt to ensure correct format
-                    system_prompt = f"""You are a YouTube content strategist specializing in video descriptions.
-                    Create engaging descriptions that maximize viewer retention and discoverability.
-                    The description should be optimized for {'YouTube Shorts' if video_type in ['short', 'shorts'] else 'long-form YouTube videos'}.
+                    # Load and format system prompt
+                    system_prompt_template = load_prompt('description_system.txt')
+                    video_type_text = 'YouTube Shorts' if video_type in ['short', 'shorts'] else 'long-form YouTube videos'
+                    keyword_instruction = f'PRIMARY KEYWORD: Start the description naturally with this keyword or phrase: "{keyword}". Capitalize it appropriately (brand names, proper nouns, etc.).' if keyword else ''
+                    reference_instruction = "If a reference description is provided, extract and reuse the social media links, contact info, and match the overall style and tone." if reference_description else ""
 
-                    Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}. Always use current and up-to-date references.
-
-                    IMPORTANT: Use {now.year} for any year references, not past years like 2024.
-
-                    {f'PRIMARY KEYWORD: Start the description naturally with this keyword or phrase: "{keyword}". Capitalize it appropriately (brand names, proper nouns, etc.).' if keyword else ''}
-
-                    FORMATTING RULES:
-                    - NO bold text or markdown formatting (no ** or ##)
-                    - Do NOT include section headers like "HOOK:" or "OVERVIEW:"
-                    - Use single asterisk (*) for bullet points only
-                    - Maximum 3 hashtags at the end
-                    - Keep total length under {self.max_description_length} characters
-                    - Write naturally without formatting marks or labels
-
-                    {"If a reference description is provided, extract and reuse the social media links, contact info, and match the overall style and tone." if reference_description else ""}"""
+                    system_prompt = system_prompt_template.format(
+                        video_type_text=video_type_text,
+                        current_date=now.strftime('%B %d, %Y'),
+                        current_year=now.year,
+                        keyword_instruction=keyword_instruction,
+                        max_length=self.max_description_length,
+                        reference_instruction=reference_instruction
+                    )
 
                     # Generate using AI provider
                     response = ai_provider.create_completion(
@@ -375,22 +375,18 @@ class VideoDescriptionGenerator:
     def get_fallback_prompt(self, video_type: str, reference_description: str = "", style_analysis: Dict = None) -> str:
         """Get fallback prompt if file is not found"""
 
-        base_prompt = f"""Generate a YouTube {'Shorts' if video_type == 'short' else 'video'} description for:
-        {{input}}
+        video_type_text = 'Shorts' if video_type == 'short' else 'video'
+        format_instruction = 'Keep it brief and punchy for Shorts' if video_type == 'short' else 'Be comprehensive but scannable'
 
-        Requirements:
-        - Make the first 125 characters compelling (shown in search)
-        - Include relevant keywords naturally
-        - {'Keep it brief and punchy for Shorts' if video_type == 'short' else 'Be comprehensive but scannable'}
-        - Use single asterisk (*) for bullet points only
-        - Maximum 3 hashtags at the end
-        - Include a clear call-to-action
-        - Keep the total length under 5000 characters
-        """
-
+        reference_section = ""
         if reference_description:
-            base_prompt += f"\n\nUse this reference description for style and to extract social links:\n{reference_description}"
+            reference_section = f"\n\nUse this reference description for style and to extract social links:\n{reference_description}"
             if style_analysis:
-                base_prompt += f"\n\nStyle Analysis:\n{self.create_style_instructions(style_analysis)}"
+                reference_section += f"\n\nStyle Analysis:\n{self.create_style_instructions(style_analysis)}"
 
-        return base_prompt
+        fallback_template = load_prompt('description_fallback.txt')
+        return fallback_template.format(
+            video_type_text=video_type_text,
+            format_instruction=format_instruction,
+            reference_section=reference_section
+        )

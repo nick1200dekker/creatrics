@@ -16,6 +16,19 @@ from app.scripts.keyword_research import KeywordResearcher
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
+
 class VideoTitleGenerator:
     """Video Title Generator with AI support"""
 
@@ -25,15 +38,7 @@ class VideoTitleGenerator:
     def get_prompt_template(self, video_type: str) -> str:
         """Get the prompt template for video title generation"""
         try:
-            current_dir = Path(__file__).parent
-            prompt_file = current_dir / f'{video_type}_prompt.txt'
-
-            if not prompt_file.exists():
-                logger.error(f"Prompt file not found: {prompt_file}")
-                return None
-
-            with open(prompt_file, 'r', encoding='utf-8') as f:
-                return f.read()
+            return load_prompt(f'{video_type}_prompt.txt')
         except Exception as e:
             logger.error(f"Error reading prompt template: {e}")
             return None
@@ -73,12 +78,12 @@ class VideoTitleGenerator:
                     # Format the prompt with user input
                     prompt = prompt_template.format(input=user_input)
 
-                    # System prompt to ensure correct format
-                    system_prompt = f"""You are a YouTube title generation expert.
-                    Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}. Always use current and up-to-date references.
-                    Always return exactly 10 titles in a JSON array format.
-                    For shorts, always include 3 hashtags at the end of each title.
-                    IMPORTANT: Use {now.year} for any year references, not past years like 2024."""
+                    # Load system prompt from file and format it
+                    system_prompt_template = load_prompt('system.txt')
+                    system_prompt = system_prompt_template.format(
+                        current_date=now.strftime('%B %d, %Y'),
+                        current_year=now.year
+                    )
 
                     # Log the complete prompt being sent
                     logger.info(f"=== COMPLETE PROMPT TO AI ({video_type}) ===")

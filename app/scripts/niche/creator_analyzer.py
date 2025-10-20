@@ -6,11 +6,25 @@ import os
 import requests
 import time
 import logging
+from pathlib import Path
 import re
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Any
 from app.system.ai_provider.ai_provider import get_ai_provider
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 logger = logging.getLogger(__name__)
 
 class CreatorAnalyzer:
@@ -31,13 +45,8 @@ class CreatorAnalyzer:
     def _load_prompt_template(self):
         """Load prompt template from prompt.txt file"""
         try:
-            prompt_file_path = os.path.join(os.path.dirname(__file__), 'prompt.txt')
-            with open(prompt_file_path, 'r', encoding='utf-8') as f:
-                self.prompt_template = f.read()
-            logger.info("Prompt template loaded successfully from prompt.txt")
-        except FileNotFoundError:
-            logger.error("prompt.txt file not found in the same directory as the script")
-            raise FileNotFoundError("prompt.txt file is required in the same directory as the script")
+            self.prompt_template = load_prompt('prompt.txt')
+            logger.info("Prompt template loaded successfully from prompts/prompt.txt")
         except Exception as e:
             logger.error(f"Error loading prompt template: {e}")
             raise

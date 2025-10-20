@@ -3,12 +3,26 @@ TikTok Competitor Analyzer
 Analyzes competitor TikTok accounts and generates insights
 """
 import logging
+from pathlib import Path
 import re
 from typing import List, Dict, Optional
 from datetime import datetime
 from app.scripts.tiktok_competitors.tiktok_api import TikTokAPI
 from app.system.ai_provider.ai_provider import get_ai_provider
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 logger = logging.getLogger(__name__)
 
 class TikTokCompetitorAnalyzer:
@@ -301,55 +315,18 @@ class TikTokCompetitorAnalyzer:
                     f"{account_name} ({stats['avg_views']:,.0f} avg views, {stats['video_count']} videos)"
                 )
             
-            prompt = f"""Analyze TikTok competitor data from the last {days} days and provide creative, actionable insights focused on content themes and strategies.
+            system_prompt_template = load_prompt('analyze_insights_system.txt')
+            system_prompt = system_prompt_template.format(
+                current_date=datetime.now().strftime('%B %d, %Y')
+            )
 
-**TOP PERFORMING VIDEOS:**
-{chr(10).join(video_summaries)}
-
-**COMMON THEMES:** {top_words}
-
-**TOP HASHTAGS USED:** {hashtag_list}
-
-Provide analysis with these sections:
-
-## Key Insights
-3-5 SHORT bullet points about content themes and creative patterns that resonate with audiences. Focus on:
-- What types of content ideas, formats, or angles are working
-- Creative approaches that stand out (unique formats, hooks, trends)
-- Audience preferences and interests you can identify
-Avoid listing view counts or performance metrics. Focus on the "why" behind what works.
-
-## What Content Works
-Identify 2-3 creative patterns or content themes. Format as:
-• [Content theme or format] (example: "POV storytelling") resonates because [why it appeals to viewers' interests/emotions/curiosity].
-
-Focus on creative insights and viewer psychology, not numbers.
-
-## Hook Strategies
-List 4-5 hook patterns that capture attention. Format as one-liners with examples:
-• [Pattern] — Example: "[concrete example]"
-
-Focus on attention-grabbing techniques, curiosity gaps, and emotional triggers.
-
-## Content Opportunities
-Create 8 TikTok video titles with improved hooks based on the analyzed content. Each title MUST:
-- Start with an attention-grabbing hook
-- Include relevant hashtags from the top hashtags list above
-- Be inspired by the themes and patterns from the analyzed videos
-
-Format as:
-"[Hook/Title] #hashtag1 #hashtag2 #hashtag3"
-"[Hook/Title] #hashtag1 #hashtag2 #hashtag3"
-...continuing to 8 titles
-
-Example format: "The moment I realized this trick would change everything #gaming #tips #fyp"
-
-Keep it CONCISE and creative. Prioritize actionable creative insights over metrics."""
-            
-            system_prompt = f"""You are a creative TikTok strategist focused on content ideas and storytelling. Current date: {datetime.now().strftime('%B %d, %Y')}.
-
-Analyze what makes content compelling from a creative perspective. Focus on themes, angles, formats, and viewer psychology rather than pure performance metrics. Be concise and actionable.
-IMPORTANT: Minimize references to view counts and performance ratios. Focus on creative insights."""
+            user_prompt_template = load_prompt('analyze_insights_user.txt')
+            prompt = user_prompt_template.format(
+                days=days,
+                video_summaries=chr(10).join(video_summaries),
+                top_words=top_words,
+                hashtag_list=hashtag_list
+            )
             
             response = ai_provider.create_completion(
                 messages=[

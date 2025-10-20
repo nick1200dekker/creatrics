@@ -3,10 +3,24 @@ X Content Suggestions Module
 Analyzes user's last 25 X posts and generates personalized content suggestions
 """
 import logging
+from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime
 from app.system.ai_provider.ai_provider import get_ai_provider
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -193,11 +207,12 @@ class XContentSuggestions:
             ai_provider = get_ai_provider()
 
             # Generate suggestions
+            system_prompt = load_prompt('generate_x_suggestions_system.txt')
             response = ai_provider.create_completion(
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert X (Twitter) content strategist who analyzes posting patterns and generates viral content ideas."
+                        "content": system_prompt
                     },
                     {
                         "role": "user",
@@ -246,55 +261,8 @@ class XContentSuggestions:
 
     def _build_analysis_prompt(self, posts_context: str) -> str:
         """Build the AI prompt for content analysis"""
-        prompt = f"""Analyze the following X posts from a content creator and generate 5 highly engaging content suggestions they should post today.
-
-{posts_context}
-
-Based on these posts, identify:
-1. The creator's niche and main topics
-2. Their EXACT writing style (tone, formatting, sentence structure, paragraph breaks, emoji usage, capitalization patterns)
-3. What type of content gets the most engagement
-4. Patterns in their successful posts
-
-CRITICAL: You must PERFECTLY MIMIC their writing style. Study:
-- How they structure sentences (short vs long)
-- How they use line breaks and spacing
-- Their punctuation patterns
-- Their emoji placement and frequency
-- Their capitalization style
-- Their energy level and tone
-- Their use of questions, statements, or calls-to-action
-
-Now generate EXACTLY 5 content suggestions that:
-- Match their EXACT writing style (this is most important)
-- Stay within their niche but explore fresh angles/ideas
-- Are timely and relevant for TODAY
-- Have viral potential based on their past performance
-- Are specific enough to post immediately (not just topics)
-- Cover different aspects/angles within their niche
-- Sound EXACTLY like they wrote it themselves
-
-Each suggestion should feel like it came directly from this creator - same voice, same rhythm, same formatting.
-
-Format your response as a JSON array with exactly 5 objects, each containing:
-- "title": A catchy 3-5 word title for the suggestion
-- "content": The actual post text (ready to publish, 100-280 characters)
-- "reason": Why this will perform well (1 sentence)
-- "hook_type": The type of hook used (question/stat/story/hot_take/thread)
-
-Example format:
-[
-  {{
-    "title": "Growth Mindset Insight",
-    "content": "Most people want results without the struggle.\n\nBut the struggle IS the result.\n\nIt's where you build the character needed to keep what you earn.",
-    "reason": "Philosophical insights matching your tone perform well with your audience",
-    "hook_type": "hot_take"
-  }}
-]
-
-Return ONLY the JSON array, no other text."""
-
-        return prompt
+        user_prompt_template = load_prompt('generate_x_suggestions_user.txt')
+        return user_prompt_template.format(posts_context=posts_context)
 
     def _parse_suggestions(self, ai_response: str) -> List[Dict]:
         """Parse AI response into structured suggestions - raises exceptions for fallback"""

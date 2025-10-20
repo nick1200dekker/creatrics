@@ -3,12 +3,26 @@ Competitor Analyzer
 Analyzes competitor channels and generates insights
 """
 import logging
+from pathlib import Path
 import re
 from typing import List, Dict, Optional
 from datetime import datetime
 from app.scripts.competitors.youtube_api import YouTubeAPI
 from app.system.ai_provider.ai_provider import get_ai_provider
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 logger = logging.getLogger(__name__)
 
 class CompetitorAnalyzer:
@@ -380,46 +394,17 @@ class CompetitorAnalyzer:
                     f"{channel_name} ({stats['avg_views']:,.0f} avg views, {stats['video_count']} videos)"
                 )
             
-            prompt = f"""Analyze YouTube competitor data from the last {days} days and provide creative, actionable insights focused on content themes and strategies.
+            system_prompt_template = load_prompt('analyze_insights_system.txt')
+            system_prompt = system_prompt_template.format(
+                current_date=datetime.now().strftime('%B %d, %Y')
+            )
 
-**TOP PERFORMING VIDEOS:**
-{chr(10).join(video_summaries)}
-
-**COMMON THEMES:** {top_words}
-
-Provide analysis with these sections:
-
-## Key Insights
-3-5 SHORT bullet points about content themes and creative patterns that resonate with audiences. Focus on:
-- What types of content ideas, formats, or angles are working
-- Creative approaches that stand out (unique formats, storytelling styles, hooks)
-- Audience preferences and interests you can identify
-Avoid listing view counts or performance metrics. Focus on the "why" behind what works.
-
-## What Content Works
-Identify 2-3 creative patterns or content themes. Format as:
-• [Content theme or format] (example: "Challenge-based narratives") resonates because [why it appeals to viewers' interests/emotions/curiosity].
-
-Focus on creative insights and viewer psychology, not numbers.
-
-## Title Strategies
-List 4-5 title patterns that capture attention. Format as one-liners with examples:
-• [Pattern] — Example: "[concrete title example]"
-
-Focus on hooks, curiosity gaps, and emotional triggers rather than formulas.
-
-## Content Opportunities
-List ONLY 8 video title ideas inspired by the analysis. Make them creative and specific to the niche. Format as:
-"[Video Title 1]"
-"[Video Title 2]"
-...continuing to 8 titles
-
-Keep it CONCISE and creative. Prioritize actionable creative insights over metrics."""
-
-            system_prompt = f"""You are a creative YouTube strategist focused on content ideas and storytelling. Current date: {datetime.now().strftime('%B %d, %Y')}.
-
-Analyze what makes content compelling from a creative perspective. Focus on themes, angles, formats, and viewer psychology rather than pure performance metrics. Be concise and actionable.
-IMPORTANT: Minimize references to view counts and performance ratios. Focus on creative insights."""
+            user_prompt_template = load_prompt('analyze_insights_user.txt')
+            prompt = user_prompt_template.format(
+                days=days,
+                video_summaries=chr(10).join(video_summaries),
+                top_words=top_words
+            )
 
             response = ai_provider.create_completion(
                 messages=[

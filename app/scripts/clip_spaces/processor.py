@@ -7,7 +7,21 @@ import requests
 from app.system.ai_provider.ai_provider import get_ai_provider
 import time
 import logging
+from pathlib import Path
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 logger = logging.getLogger(__name__)
 
 class SpaceProcessor:
@@ -30,24 +44,10 @@ class SpaceProcessor:
         # Get AI provider instead of OpenAI client
         self.ai_provider = get_ai_provider()
         
-        # Load prompt templates
-        self.highlight_prompt_template = self._load_prompt_template('highlight_prompt.txt')
-        self.quotes_prompt_template = self._load_prompt_template('quotes_prompt.txt')
-    
-    def _load_prompt_template(self, filename):
-        """Load prompt template from specified file"""
-        prompt_file_path = os.path.join(os.path.dirname(__file__), filename)
-        try:
-            with open(prompt_file_path, 'r', encoding='utf-8') as f:
-                return f.read()
-        except FileNotFoundError:
-            logger.error(f"{filename} not found at {prompt_file_path}")
-            # Fallback to a basic prompt if file not found
-            return "Extract key moments from the conversation: {segments_text}"
-        except Exception as e:
-            logger.error(f"Error loading {filename}: {e}")
-            return "Extract key moments from the conversation: {segments_text}"
-    
+        # Load prompt templates from prompts/ directory
+        self.highlight_prompt_template = load_prompt('highlight_prompt.txt')
+        self.quotes_prompt_template = load_prompt('quotes_prompt.txt')
+
     def update_status(self, message, progress=None):
         """Update processing status"""
         if self.status_callback:
@@ -409,25 +409,14 @@ class SpaceProcessor:
             for seg in structured_segments
         ])
         
-        prompt = f"""You are analyzing a Twitter Space conversation. Please provide a concise summary of the following transcript, highlighting:
-1. The key points discussed
-2. Any important announcements or decisions made
-3. Interactions between participants (if notable)
+        system_prompt = load_prompt('summary_system.txt')
+        user_prompt_template = load_prompt('summary_user.txt')
+        user_prompt = user_prompt_template.format(ai_text=ai_text)
 
-Transcript with segments:
-{ai_text}
-
-Format your summary in markdown with simple formatting. Use bold for important points and names.
-Keep it relatively brief but informative. Do not use teal/blue colors in your summary - only use bold white text for emphasis.
-Avoid using lines, dividers, or excessive spacing between paragraphs.
-
-IMPORTANT: Use a single heading with the Twitter Space title at the top. DO NOT include a redundant "Main Topics & Key Points Discussed" heading.
-"""
-        
         response = self.ai_provider.create_completion(
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that summarizes Twitter Spaces conversations. Use simple, clean formatting with bold white text for headings and important points."},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
             max_tokens=4096
         )

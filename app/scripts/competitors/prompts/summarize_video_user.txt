@@ -1,0 +1,17 @@
+Summarize this YouTube video in 3-4 SHORT paragraphs with clear breaks between them.
+
+Structure:
+- Paragraph 1: Main topic and what the video is about (2-3 sentences)
+- Paragraph 2: Key points, strategies, or insights discussed (2-3 sentences)
+- Paragraph 3: Specific examples or demonstrations shown (2-3 sentences)
+- Paragraph 4 (optional): Value for viewers and takeaway (1-2 sentences)
+
+IMPORTANT:
+- Put a blank line between each paragraph
+- Keep each paragraph short and scannable
+- Write in a clear, direct style
+
+Full Video Transcript:
+{transcript_text}
+
+Write the summary now with proper paragraph breaks.

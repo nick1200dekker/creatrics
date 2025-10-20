@@ -10,6 +10,19 @@ from pathlib import Path
 from firebase_admin import firestore
 from app.system.ai_provider.ai_provider import get_ai_provider
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 logger = logging.getLogger(__name__)
 
 class ReplyGenerator:
@@ -303,28 +316,18 @@ class ReplyGenerator:
         """
         try:
             # Create a prompt for multiple GIF query generation
-            prompt = f"""Based on this tweet reply, suggest TWO different 1-3 word search queries for finding relevant reaction GIFs on Tenor.
-
-Tweet being replied to: {tweet_text[:200]}
-Reply: {reply_text}
-Style: {style}
-
-The GIF queries should capture different emotions or reactions that match the reply. Examples:
-- "excited clapping"
-- "mind blown"
-- "shocked"
-- "laughing"
-- "thinking"
-- "agree nodding"
-- "confused"
-- "celebration"
-
-Output ONLY the two search queries, one per line, nothing else."""
+            system_prompt = load_prompt('generate_gif_queries_system.txt')
+            user_prompt_template = load_prompt('generate_gif_queries_user.txt')
+            prompt = user_prompt_template.format(
+                tweet_text=tweet_text[:200],
+                reply_text=reply_text,
+                style=style
+            )
 
             # Use AI provider with lower temperature for more predictable output
             response = self.ai_provider.create_completion(
                 messages=[
-                    {"role": "system", "content": "You output only short GIF search queries, nothing else. Two queries, one per line."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.5,
@@ -377,67 +380,15 @@ Output ONLY the two search queries, one per line, nothing else."""
     def get_prompt_template(self, use_brand_voice: bool = False) -> str:
         """Get the prompt template for reply generation"""
         try:
-            # First, try to get prompt from same directory as this file
-            current_dir = Path(__file__).parent
-            prompt_file = current_dir / 'prompt.txt'
-
-            if prompt_file.exists():
-                with open(prompt_file, 'r', encoding='utf-8') as f:
-                    logger.info("Using prompt from prompt.txt in same directory")
-                    return f.read()
-
-            # Second, try to get custom prompt from defaults directory
-            current_dir = Path(__file__).parent.parent.parent
-            prompt_file = current_dir / 'defaults' / 'prompts' / 'reply_generator.txt'
-
-            if prompt_file.exists():
-                with open(prompt_file, 'r', encoding='utf-8') as f:
-                    logger.info("Using prompt from defaults/prompts/reply_generator.txt")
-                    return f.read()
+            # Try to load from prompts directory
+            logger.info("Loading prompt from prompts/prompt.txt")
+            return load_prompt('prompt.txt')
         except Exception as e:
             logger.error(f"Error reading prompt file: {str(e)}")
 
-        # Fallback to built-in prompt - different for brand voice vs no brand voice
+        # Fallback: use prompt.txt from prompts directory
         logger.info("Using built-in fallback prompt")
-
-        # Check if brand voice will be used
-        if use_brand_voice:
-            # Brand voice version - minimal instructions
-            return """{brand_voice_context}
-
-Tweet by @{author}: {tweet_text}
-
-Write a {style} reply matching the exact style from the examples above.
-
-Important:
-- Match the length and tone of the examples
-- Use similar words and phrases
-- Match punctuation and emoji patterns
-- Write naturally like the examples
-
-Reply:"""
-        else:
-            # No brand voice version - enhanced with strategic reply best practices
-            return """Tweet from @{author}:
-{tweet_text}
-
-Write a {style} Twitter reply.
-
-Style guide for {style}:
-• creatrics → point out something interesting
-• supportive → relate to their experience
-• questioning → ask a genuine question
-• valueadd → share something useful
-• humorous → make a witty observation
-• contrarian → offer a different perspective
-
-Keep it:
-- Natural and conversational
-- Brief (1-2 sentences usually)
-- Casual tone
-- No explanations or meta-commentary
-
-Reply:"""
+        return load_prompt('prompt.txt')
     
     def get_brand_voice_context(self, user_id: str) -> str:
         """Get brand voice context from user's X replies data - Enhanced version"""
@@ -525,20 +476,17 @@ Reply:"""
             # Limit to most recent 15 high-quality examples to save tokens
             reply_examples = reply_examples[:15]
 
-            # Format brand voice context - focus on examples, not instructions
-            brand_voice_context = f"HERE ARE ACTUAL REPLIES FROM @{screen_name}:\n\n"
-
-            # Just show the examples - let the AI figure out the patterns
+            # Format reply examples as numbered list
+            reply_examples_text = ""
             for i, reply in enumerate(reply_examples, 1):
-                brand_voice_context += f"{i}. {reply}\n"
+                reply_examples_text += f"{i}. {reply}\n"
 
-            brand_voice_context += f"\n✓ Copy @{screen_name}'s EXACT style:\n"
-            brand_voice_context += "- Same length (short/long)\n"
-            brand_voice_context += "- Same tone (casual/formal)\n"
-            brand_voice_context += "- Same words they actually use\n"
-            brand_voice_context += "- Same punctuation style\n"
-            brand_voice_context += "- Same capitalization\n\n"
-            brand_voice_context += "Write your reply now:"
+            # Load brand voice context template
+            brand_voice_template = load_prompt('brand_voice_context.txt')
+            brand_voice_context = brand_voice_template.format(
+                screen_name=screen_name,
+                reply_examples=reply_examples_text
+            )
 
             logger.info(f"Generated enhanced brand voice context for user {user_id} with {len(reply_examples)} examples")
             return brand_voice_context

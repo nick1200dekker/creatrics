@@ -4,6 +4,7 @@ Optimizes user's own YouTube videos with AI recommendations
 """
 import os
 import logging
+from pathlib import Path
 import requests
 from typing import Dict, Any
 from datetime import datetime
@@ -14,6 +15,19 @@ from app.scripts.video_title.video_description import VideoDescriptionGenerator
 from app.scripts.video_tags.video_tags import VideoTagsGenerator
 from app.scripts.optimize_video.thumbnail_analyzer import ThumbnailAnalyzer
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 logger = logging.getLogger(__name__)
 
 class VideoOptimizer:
@@ -321,44 +335,28 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                 return {'error': 'AI provider not available'}
 
             # Build analysis prompt
-            prompt = f"""Analyze this YouTube video and provide optimization recommendations.
-
-CURRENT METADATA:
-Title: {current_title}
-Description: {current_description[:500]}
-Tags: {', '.join(current_tags[:15])}
-
-VIDEO STATS:
-Views: {video_info.get('viewCount', 0)}
-Likes: {video_info.get('likeCount', 0)}
-Comments: {video_info.get('commentCount', 0)}
-
-TRANSCRIPT PREVIEW:
-{transcript[:1500]}
-
-OPTIMIZED SUGGESTIONS:
-New Title: {optimized_title}
-New Description: {optimized_description[:300]}...
-New Tags: {', '.join(optimized_tags[:15])}
-
-THUMBNAIL ANALYSIS:
-{thumbnail_analysis.get('analysis', 'No thumbnail analysis available')}
-
-Provide specific recommendations in these areas:
-1. Title Optimization - Compare current vs optimized
-2. Description Improvements - Key changes needed
-3. Tags Strategy - SEO improvements
-4. Thumbnail Recommendations - Visual improvements
-5. Content Insights - What's working and what could improve
-
-Format as clear, actionable bullet points for each section."""
-
             now = datetime.now()
-            system_prompt = f"""You are a YouTube optimization expert. Provide specific, actionable recommendations
-            to improve video performance. Focus on SEO, engagement, and discoverability.
 
-            Current date: {now.strftime('%B %d, %Y')}. Current year: {now.year}.
-            IMPORTANT: Use {now.year} for any year references, not past years like 2024."""
+            system_prompt_template = load_prompt('generate_recommendations_system.txt')
+            system_prompt = system_prompt_template.format(
+                current_date=now.strftime('%B %d, %Y'),
+                current_year=now.year
+            )
+
+            user_prompt_template = load_prompt('generate_recommendations_user.txt')
+            prompt = user_prompt_template.format(
+                current_title=current_title,
+                current_description=current_description[:500],
+                current_tags=', '.join(current_tags[:15]),
+                view_count=video_info.get('viewCount', 0),
+                like_count=video_info.get('likeCount', 0),
+                comment_count=video_info.get('commentCount', 0),
+                transcript_preview=transcript[:1500],
+                optimized_title=optimized_title,
+                optimized_description_preview=f"{optimized_description[:300]}...",
+                optimized_tags=', '.join(optimized_tags[:15]),
+                thumbnail_analysis=thumbnail_analysis.get('analysis', 'No thumbnail analysis available')
+            )
 
             response = ai_provider.create_completion(
                 messages=[

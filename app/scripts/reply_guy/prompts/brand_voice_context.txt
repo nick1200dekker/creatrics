@@ -1,0 +1,12 @@
+HERE ARE ACTUAL REPLIES FROM @{screen_name}:
+
+{reply_examples}
+
+✓ Copy @{screen_name}'s EXACT style:
+- Same length (short/long)
+- Same tone (casual/formal)
+- Same words they actually use
+- Same punctuation style
+- Same capitalization
+
+Write your reply now:

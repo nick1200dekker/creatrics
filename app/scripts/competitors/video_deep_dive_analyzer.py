@@ -6,11 +6,25 @@ import os
 import re
 import requests
 import logging
+from pathlib import Path
 from typing import Dict, Any
 from datetime import datetime
 from app.system.ai_provider.ai_provider import get_ai_provider
 from app.system.credits.credits_manager import CreditsManager
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 logger = logging.getLogger(__name__)
 
 class VideoDeepDiveAnalyzer:
@@ -235,48 +249,14 @@ class VideoDeepDiveAnalyzer:
             # Use full transcript for complete analysis
             full_transcript = transcript_text if transcript_text else "No transcript available"
 
-            prompt = f"""Analyze this YouTube video. Keep it SHORT and bullet-point focused.
-
-Title: {title}
-Views: {view_count:,} | Likes: {like_count:,}
-
-Full Video Transcript: {full_transcript}
-
-Provide analysis in this EXACT format. Use simple bullet points (just dashes), NO bold text, NO extra symbols like ** or ###.
-
-## Hook Strategy
-- What hook/opening does this use
-- Why it works (1 sentence max)
-
-## Title Strategy
-- Key element 1 that makes it clickable
-- Key element 2 that makes it clickable
-- Key element 3 that makes it clickable (optional)
-
-## Content Insights
-- Quick observation 1 about pacing/structure/engagement
-- Quick observation 2
-- Quick observation 3
-- Quick observation 4 (optional)
-
-## SEO Analysis
-- What's working well (1-2 items)
-- What could improve (1 item)
-
-## Quick Wins
-- Actionable takeaway 1
-- Actionable takeaway 2
-- Actionable takeaway 3
-
-IMPORTANT RULES:
-- Keep UNDER 250 words total
-- Use ONLY simple dashes for bullets (-)
-- NO bold markers like ** or __
-- NO extra symbols or emojis
-- Each bullet should be ONE short sentence
-- Be direct and scannable"""
-
-            system_prompt = "You are a YouTube analyst. Provide SHORT bullet points in plain text format. Do NOT use markdown bold (**), do NOT use extra formatting. Simple dashes only for bullets."
+            system_prompt = load_prompt('analyze_video_system.txt')
+            user_prompt_template = load_prompt('analyze_video_user.txt')
+            prompt = user_prompt_template.format(
+                title=title,
+                view_count=f"{view_count:,}",
+                like_count=f"{like_count:,}",
+                full_transcript=full_transcript
+            )
 
             # Call AI - increased max_tokens to handle longer transcripts
             response = ai_provider.create_completion(
@@ -319,27 +299,13 @@ IMPORTANT RULES:
             ai_provider = get_ai_provider()
 
             # Use full transcript for comprehensive summary
-            prompt = f"""Summarize this YouTube video in 3-4 SHORT paragraphs with clear breaks between them.
-
-Structure:
-- Paragraph 1: Main topic and what the video is about (2-3 sentences)
-- Paragraph 2: Key points, strategies, or insights discussed (2-3 sentences)
-- Paragraph 3: Specific examples or demonstrations shown (2-3 sentences)
-- Paragraph 4 (optional): Value for viewers and takeaway (1-2 sentences)
-
-IMPORTANT:
-- Put a blank line between each paragraph
-- Keep each paragraph short and scannable
-- Write in a clear, direct style
-
-Full Video Transcript:
-{transcript_text}
-
-Write the summary now with proper paragraph breaks."""
+            system_prompt = load_prompt('summarize_video_system.txt')
+            user_prompt_template = load_prompt('summarize_video_user.txt')
+            prompt = user_prompt_template.format(transcript_text=transcript_text)
 
             response = ai_provider.create_completion(
                 messages=[
-                    {"role": "system", "content": "You are a YouTube video analyst. Create well-structured summaries with clear paragraph breaks. Always separate paragraphs with blank lines for readability."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.5,

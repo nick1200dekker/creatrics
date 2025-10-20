@@ -7,8 +7,22 @@ import os
 import re
 import requests
 import logging
+from pathlib import Path
 from typing import Dict, List
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 logger = logging.getLogger(__name__)
 
 
@@ -36,49 +50,14 @@ class KeywordResearcher:
         now = datetime.now()
         current_year = now.year
 
-        prompt = f"""Extract exactly 3 DIVERSE YouTube search terms from this content.
+        system_prompt_template = load_prompt('extract_topics_system.txt')
+        system_prompt = system_prompt_template.format(current_year=current_year)
 
-IMPORTANT: Current year is {current_year}. Use {current_year} in search terms, NOT 2024 or past years.
-
-Content: {content_preview}
-
-Return ONLY 3 search terms, one per line (NO numbering, NO bullet points):
-
-Line 1: THE BROADEST POSSIBLE MAIN TOPIC (remove ALL descriptors, just the core brand/game/product/subject)
-   Rules for Line 1:
-   - If about a game/app: Just the game name (e.g., "Clash Royale" NOT "Clash Royale Evolutions")
-   - If about a product: Just product name (e.g., "iPhone 16" NOT "iPhone 16 Pro")
-   - If about a topic: Just the topic (e.g., "Pasta" NOT "Pasta Recipe")
-   - Maximum 1-3 words
-   - NO descriptors, NO modifiers, NO features
-
-Line 2: Main topic from Line 1 + add ONE specific modifier based on content
-
-Line 3: Main topic from Line 1 + add DIFFERENT modifier
-
-CRITICAL: Lines 2 and 3 should ADD to Line 1, not repeat specifics already in the content.
-
-Correct Examples:
-Clash Royale
-Clash Royale Evolutions
-Clash Royale Best Deck
-
-Pokemon TCG
-Pokemon TCG Meta Decks
-Pokemon TCG Tutorial
-
-iPhone 16
-iPhone 16 Pro Review
-iPhone 16 vs Samsung
-
-❌ WRONG (Line 1 too specific):
-Clash Royale Evolutions  ← Should be just "Clash Royale"
-Pokemon TCG Meta  ← Should be just "Pokemon TCG"
-iPhone 16 Pro  ← Should be just "iPhone 16"
-
-Now extract 3 DIVERSE search terms:"""
-
-        system_prompt = f"You extract YouTube search keywords. Current year: {current_year}. Always use current year in keywords."
+        user_prompt_template = load_prompt('extract_topics_user.txt')
+        prompt = user_prompt_template.format(
+            current_year=current_year,
+            content_preview=content_preview
+        )
 
         try:
             response = ai_provider.create_completion(

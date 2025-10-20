@@ -1,0 +1,27 @@
+Generate 10 viral TikTok titles based on these target keywords:
+
+{keywords_formatted}
+
+{video_context}
+
+IMPORTANT: Use trending TikTok title patterns:
+- Use curiosity-driven hooks (e.g., "This moment...", "When I realized...", "POV:", "The time when...")
+- Include emotional triggers (shock, surprise, relatability)
+- Keep it conversational and authentic
+- Use current slang and trends when appropriate
+
+Requirements for EACH title:
+1. MUST start with one of the target keywords (properly capitalized for brands/proper nouns)
+2. Include an engaging hook that creates curiosity or emotion
+3. End with exactly 3 relevant hashtags (no more, no less)
+4. Keep total length under 150 characters
+5. Make it feel natural and TikTok-native
+
+Format: "[Keyword] [Hook] #hashtag1 #hashtag2 #hashtag3"
+
+Examples:
+- "Battlefield 6 The moment that made everyone stop scrolling #battlefield #battlefield6 #gaming"
+- "Gaming Tips This trick pros don't want you to know #gamingtips #protips #gaming"
+- "FPS Gameplay POV: You just discovered the meta weapon #fps #gameplay #gaming"
+
+Return ONLY a JSON array of 10 titles, nothing else.

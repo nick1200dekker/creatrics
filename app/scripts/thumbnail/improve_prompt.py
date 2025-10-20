@@ -10,6 +10,19 @@ from pathlib import Path
 from dotenv import load_dotenv
 from app.system.ai_provider.ai_provider import get_ai_provider
 
+
+# Get prompts directory
+PROMPTS_DIR = Path(__file__).parent / 'prompts'
+
+def load_prompt(filename: str) -> str:
+    """Load a prompt from text file"""
+    try:
+        prompt_path = PROMPTS_DIR / filename
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        logger.error(f"Error loading prompt {filename}: {e}")
+        raise
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -19,15 +32,9 @@ load_dotenv()
 
 def get_prompt_template():
     """Get the image editor prompt template from prompt.txt file"""
-    # Get the directory where this script is located
-    script_dir = Path(__file__).parent
-    prompt_file = script_dir / "prompt.txt"
-    
-    # Read the prompt template from file
-    with open(prompt_file, 'r', encoding='utf-8') as f:
-        template = f.read().strip()
-        
-    logger.info(f"Loaded prompt template from {prompt_file}")
+    # Load the prompt template from prompts directory
+    template = load_prompt('prompt.txt')
+    logger.info("Loaded prompt template from prompts/prompt.txt")
     return template
 
 def improve_editing_prompt(prompt_text, image_base64=None, mime_type='image/jpeg', model='nano-banana', all_images_with_types=None):

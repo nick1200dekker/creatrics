@@ -1,0 +1,17 @@
+Based on this tweet reply, suggest TWO different 1-3 word search queries for finding relevant reaction GIFs on Tenor.
+
+Tweet being replied to: {tweet_text}
+Reply: {reply_text}
+Style: {style}
+
+The GIF queries should capture different emotions or reactions that match the reply. Examples:
+- "excited clapping"
+- "mind blown"
+- "shocked"
+- "laughing"
+- "thinking"
+- "agree nodding"
+- "confused"
+- "celebration"
+
+Output ONLY the two search queries, one per line, nothing else.

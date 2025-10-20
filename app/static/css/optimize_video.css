@@ -398,6 +398,10 @@ html.dark .history-item:hover {
 .loading-section {
     padding: 4rem 2rem;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
 }
 
 .loading-card {
