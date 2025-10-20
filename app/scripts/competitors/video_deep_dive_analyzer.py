@@ -47,6 +47,28 @@ class VideoDeepDiveAnalyzer:
             Dict with analysis results
         """
         try:
+            # Pre-flight credit check
+            credits_manager = CreditsManager()
+            # Estimate: summary (500 output) + analysis (800 output) + transcripts as input
+            # Using conservative estimate: 5000 input + 1300 output tokens
+            cost_estimate = credits_manager.estimate_llm_cost_from_text(
+                text_content="video analysis" * 500,  # Rough estimation for transcript size
+                model_name=None
+            )
+            required_credits = cost_estimate['final_cost']
+
+            credit_check = credits_manager.check_sufficient_credits(
+                user_id=user_id,
+                required_credits=required_credits
+            )
+
+            if not credit_check.get('sufficient', False):
+                return {
+                    'success': False,
+                    'error': 'Insufficient credits',
+                    'error_type': 'insufficient_credits'
+                }
+
             # Fetch video/short info
             if is_short:
                 video_info = self._fetch_short_info(video_id)
@@ -61,6 +83,14 @@ class VideoDeepDiveAnalyzer:
 
             # Generate summary from transcript
             summary = self._generate_summary(transcript_text, user_id)
+
+            # Return early if summary generation failed due to credits
+            if summary == "Summary not available.":
+                return {
+                    'success': False,
+                    'error': 'Insufficient credits',
+                    'error_type': 'insufficient_credits'
+                }
 
             # Analyze with AI
             analysis_result = self._analyze_with_ai(video_info, transcript_text, user_id)
@@ -273,13 +303,21 @@ class VideoDeepDiveAnalyzer:
 
             # Deduct credits
             credits_manager = CreditsManager()
-            credits_manager.deduct_llm_credits(
+            deduction_result = credits_manager.deduct_llm_credits(
                 user_id=user_id,
                 model_name=response.get('model', 'unknown'),
                 input_tokens=usage.get('input_tokens', 0),
                 output_tokens=usage.get('output_tokens', 0),
                 description=f"Video Deep Dive Analysis - {title[:50]}"
             )
+
+            if not deduction_result.get('success', False):
+                logger.error(f"Failed to deduct credits for video analysis: {deduction_result.get('error')}")
+                return {
+                    'success': False,
+                    'error': 'Insufficient credits',
+                    'error_type': 'insufficient_credits'
+                }
 
             return {
                 'success': True,
@@ -317,13 +355,17 @@ class VideoDeepDiveAnalyzer:
 
             # Deduct credits
             credits_manager = CreditsManager()
-            credits_manager.deduct_llm_credits(
+            deduction_result = credits_manager.deduct_llm_credits(
                 user_id=user_id,
                 model_name=response.get('model', 'unknown'),
                 input_tokens=usage.get('input_tokens', 0),
                 output_tokens=usage.get('output_tokens', 0),
                 description="Video Summary Generation"
             )
+
+            if not deduction_result.get('success', False):
+                logger.error(f"Failed to deduct credits for summary generation: {deduction_result.get('error')}")
+                return "Summary not available."
 
             return summary.strip()
 

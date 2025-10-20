@@ -711,7 +711,7 @@
             });
             
             const data = await response.json();
-            
+
             if (data.success) {
                 const postItems = document.querySelectorAll('.post-item');
                 data.enhanced_posts.forEach((enhancedText, index) => {
@@ -723,11 +723,16 @@
                         }
                     }
                 });
-                
+
                 markAsChanged();
                 updateStatusMessage('Enhanced successfully');
                 showToast('Content enhanced! ✨', 'success');
             } else {
+                // Check for insufficient credits
+                if (data.error_type === 'insufficient_credits') {
+                    showInsufficientCreditsModal();
+                    return;
+                }
                 showToast('Enhancement failed: ' + data.error, 'error');
             }
         } catch (error) {
@@ -1750,5 +1755,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.CreatorPal && window.CreatorPal.PostEditor && document.getElementById('grammar-tool')) {
         window.CreatorPal.PostEditor.initialize();
     }
-    
+
 });
+
+/**
+ * Show insufficient credits modal
+ */
+function showInsufficientCreditsModal() {
+    // Create modal overlay
+    const modalHTML = `
+        <div class="insufficient-credits-modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+            <div class="insufficient-credits-card" style="max-width: 500px; margin: auto;">
+                <div class="credit-icon-wrapper">
+                    <i class="ph ph-coins"></i>
+                </div>
+                <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    You don't have enough credits to use this feature.
+                </p>
+                <a href="/payment" class="upgrade-plan-btn">
+                    <i class="ph ph-crown"></i>
+                    Upgrade Plan
+                </a>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Close on click outside
+    document.querySelector('.insufficient-credits-modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.remove();
+        }
+    });
+}

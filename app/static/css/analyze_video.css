@@ -544,6 +544,7 @@ html.dark .modal-content.loading-content {
     font-size: 3rem;
     color: #3B82F6;
     animation: spin 1s linear infinite;
+    display: inline-block;
 }
 
 html.dark .loading-spinner i {

@@ -80,12 +80,11 @@
                             <div class="credit-icon-wrapper">
                                 <i class="ph ph-coins"></i>
                             </div>
-                            <div class="credits-title">Insufficient Credits</div>
-                            <div class="credits-description">
-                                You need <strong>${data.required_credits?.toFixed(2) || '0.00'}</strong> credits but only have
-                                <strong>${data.current_credits?.toFixed(2) || '0.00'}</strong> credits.
-                            </div>
-                            <a href="/payment" class="upgrade-btn-primary">
+                            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                                You don't have enough credits to use this feature.
+                            </p>
+                            <a href="/payment" class="upgrade-plan-btn">
                                 <i class="ph ph-crown"></i>
                                 Upgrade Plan
                             </a>

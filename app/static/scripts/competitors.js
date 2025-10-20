@@ -461,6 +461,27 @@ async function analyzeCompetitors() {
                 });
             }, 100);
         } else {
+            // Check for insufficient credits
+            if (data.error_type === 'insufficient_credits') {
+                document.getElementById('progressSection').style.display = 'none';
+                document.getElementById('resultsSection').style.display = 'block';
+                document.getElementById('resultsSection').innerHTML = `
+                    <div class="insufficient-credits-card" style="max-width: 500px; margin: 3rem auto;">
+                        <div class="credit-icon-wrapper">
+                            <i class="ph ph-coins"></i>
+                        </div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                            You don't have enough credits to use this feature.
+                        </p>
+                        <a href="/payment" class="upgrade-plan-btn">
+                            <i class="ph ph-crown"></i>
+                            Upgrade Plan
+                        </a>
+                    </div>
+                `;
+                return;
+            }
             document.getElementById('progressSection').style.display = 'none';
             document.getElementById('setupSection').style.display = 'block';
         }

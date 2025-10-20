@@ -46,6 +46,73 @@ def video_deep_dive(video_id):
 
         if not result.get('success'):
             error_msg = result.get('error', 'Analysis failed')
+            error_type = result.get('error_type', '')
+
+            # Handle insufficient credits
+            if error_type == 'insufficient_credits':
+                return f"""
+                    <html>
+                    <head>
+                        <style>
+                            body {{
+                                font-family: 'Inter', Arial, sans-serif;
+                                padding: 40px;
+                                text-align: center;
+                                background: #18181b;
+                                color: #fafafa;
+                            }}
+                            .error-container {{
+                                max-width: 600px;
+                                margin: 0 auto;
+                                padding: 40px;
+                                background: rgba(245, 158, 11, 0.05);
+                                border: 2px solid #F59E0B;
+                                border-radius: 12px;
+                            }}
+                            .icon {{
+                                width: 64px;
+                                height: 64px;
+                                margin: 0 auto 24px;
+                                background: rgba(245, 158, 11, 0.1);
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 32px;
+                            }}
+                            h1 {{ color: #fafafa; margin-bottom: 12px; }}
+                            p {{ margin-bottom: 30px; line-height: 1.6; color: #d4d4d8; }}
+                            button {{
+                                padding: 12px 24px;
+                                background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 16px;
+                                font-weight: 600;
+                                margin: 0 10px;
+                            }}
+                            button:hover {{ background: linear-gradient(135deg, #D97706 0%, #B45309 100%); }}
+                            .back-btn {{
+                                background: rgba(255, 255, 255, 0.1);
+                                border: 1px solid rgba(255, 255, 255, 0.2);
+                            }}
+                            .back-btn:hover {{ background: rgba(255, 255, 255, 0.15); }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class="error-container">
+                            <div class="icon">💳</div>
+                            <h1>Insufficient Credits</h1>
+                            <p>You don't have enough credits to analyze this video.</p>
+                            <button onclick="window.location.href='/payment'">Upgrade Plan</button>
+                            <button class="back-btn" onclick="window.history.back()">← Go Back</button>
+                        </div>
+                    </body>
+                    </html>
+                """, 402
+
             # Check if it's an API overload error
             if '529' in str(error_msg) or 'overloaded' in str(error_msg).lower():
                 error_display = "Claude AI is currently experiencing high demand. Please try again in a few moments."

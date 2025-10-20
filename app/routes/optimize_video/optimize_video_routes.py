@@ -8,6 +8,7 @@ from app.system.auth.middleware import auth_required
 from app.system.auth.permissions import get_workspace_user_id, require_permission
 from app.scripts.optimize_video.video_optimizer import VideoOptimizer
 from app.system.services.firebase_service import db
+from app.system.credits.credits_manager import CreditsManager
 from datetime import datetime, timezone
 import logging
 import os
@@ -256,6 +257,26 @@ def optimize_video_analysis(video_id):
                 'data': stored_data
             })
 
+        # Check credits before optimization (estimates ~5000 tokens)
+        credits_manager = CreditsManager()
+        cost_estimate = credits_manager.estimate_llm_cost_from_text(
+            text_content="video optimization" * 500,  # Rough estimate for video optimization
+            model_name=None
+        )
+
+        required_credits = cost_estimate['final_cost']
+        credit_check = credits_manager.check_sufficient_credits(
+            user_id=user_id,
+            required_credits=required_credits
+        )
+
+        if not credit_check.get('sufficient', False):
+            return jsonify({
+                "success": False,
+                "error": "Insufficient credits",
+                "error_type": "insufficient_credits"
+            }), 402
+
         # Perform new optimization
         optimizer = VideoOptimizer()
         result = optimizer.optimize_video(video_id, user_id)
@@ -283,6 +304,25 @@ def optimize_video_analysis(video_id):
 
         optimization_ref.set(optimization_data)
         logger.info(f"Saved video optimization to Firebase for user {user_id}: {video_id}")
+
+        # Deduct credits for AI usage
+        token_usage = result.get('token_usage', {})
+        if token_usage.get('input_tokens', 0) > 0:
+            deduction_result = credits_manager.deduct_llm_credits(
+                user_id=user_id,
+                model_name=token_usage.get('model', None),
+                input_tokens=token_usage.get('input_tokens', 0),
+                output_tokens=token_usage.get('output_tokens', 0),
+                description=f"Video Optimization - {video_id}"
+            )
+
+            if not deduction_result['success']:
+                logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Credit deduction failed',
+                    'error_type': 'insufficient_credits'
+                }), 402
 
         return jsonify({
             'success': True,

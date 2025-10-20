@@ -98,10 +98,8 @@ def modify_note_with_ai(content: str, prompt: str, user_id: str, model: str = No
         if not credit_check.get('sufficient', False):
             return {
                 "status": "error",
-                "error": f"Insufficient credits. Required: {required_credits:.2f}, Available: {current_credits:.2f}",
-                "error_type": "insufficient_credits",
-                "current_credits": current_credits,
-                "required_credits": required_credits
+                "error": "Insufficient credits",
+                "error_type": "insufficient_credits"
             }
 
         # Load prompts from files
@@ -208,10 +206,8 @@ def process_transcript_with_ai(transcript: str, prompt: str, user_id: str, model
         if not credit_check.get('sufficient', False):
             return {
                 "status": "error",
-                "error": f"Insufficient credits. Required: {required_credits:.2f}, Available: {current_credits:.2f}",
-                "error_type": "insufficient_credits",
-                "current_credits": current_credits,
-                "required_credits": required_credits
+                "error": "Insufficient credits",
+                "error_type": "insufficient_credits"
             }
 
         # Load prompts from files

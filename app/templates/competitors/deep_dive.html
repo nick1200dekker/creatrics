@@ -834,12 +834,16 @@ async function processTranscriptWithAI() {
             })
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to process transcript');
-        }
-
         const data = await response.json();
+
+        // Handle insufficient credits
+        if (!response.ok) {
+            if (data.error_type === 'insufficient_credits') {
+                showInsufficientCreditsError();
+                return;
+            }
+            throw new Error(data.error || 'Failed to process transcript');
+        }
 
         if (data.status === 'success' && data.result) {
             // Show result panel
@@ -860,6 +864,37 @@ async function processTranscriptWithAI() {
         aiBtn.disabled = false;
         aiBtn.innerHTML = originalBtnContent;
     }
+}
+
+function showInsufficientCreditsError() {
+    const resultPanel = document.getElementById('aiResultPanel');
+    const resultContent = document.getElementById('aiResultContent');
+    const aiBtn = document.getElementById('transcriptAIBtn');
+
+    // Re-enable button
+    aiBtn.disabled = false;
+    aiBtn.innerHTML = '<i class="ph ph-magic-wand"></i> <span>Apply</span>';
+
+    // Show result panel with insufficient credits message
+    resultPanel.style.display = 'block';
+    resultContent.innerHTML = `
+        <div class="insufficient-credits-card">
+            <div class="credit-icon-wrapper">
+                <i class="ph ph-coin" style="font-size: 2rem; color: #F59E0B;"></i>
+            </div>
+            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                You don't have enough credits to use this feature.
+            </p>
+            <a href="/payment" class="upgrade-plan-btn">
+                <i class="ph ph-arrow-up"></i>
+                Upgrade Plan
+            </a>
+        </div>
+    `;
+
+    // Scroll to result
+    resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function copyAIResult() {

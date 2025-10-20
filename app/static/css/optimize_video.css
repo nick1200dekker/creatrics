@@ -1543,3 +1543,57 @@ html.dark .confirm-modal-btn-cancel {
 .confirm-modal-btn-confirm:active {
     transform: translateY(0);
 }
+
+/* Insufficient Credits Card */
+.insufficient-credits-card {
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-tertiary);
+    border: 2px solid #F59E0B;
+    border-radius: 12px;
+}
+
+html.dark .insufficient-credits-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: #F59E0B;
+}
+
+.credit-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 50%;
+}
+
+.credit-icon-wrapper i {
+    font-size: 2rem;
+    color: #F59E0B;
+}
+
+.upgrade-plan-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.upgrade-plan-btn:hover {
+    background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    transform: translateY(-1px);
+}
+
+.upgrade-plan-btn:active {
+    transform: translateY(0);
+}

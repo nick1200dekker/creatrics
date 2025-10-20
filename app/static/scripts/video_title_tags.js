@@ -155,6 +155,10 @@ async function generateContent() {
             titlesData = await titleResponse.json();
 
             if (!titlesData.success) {
+                if (titlesData.error_type === 'insufficient_credits') {
+                    showInsufficientCreditsError();
+                    return;
+                }
                 throw new Error(titlesData.error || 'Failed to generate titles');
             }
         }
@@ -174,6 +178,10 @@ async function generateContent() {
             descriptionData = await descResponse.json();
 
             if (!descriptionData.success) {
+                if (descriptionData.error_type === 'insufficient_credits') {
+                    showInsufficientCreditsError();
+                    return;
+                }
                 throw new Error(descriptionData.error || 'Failed to generate description');
             }
         }
@@ -191,6 +199,10 @@ async function generateContent() {
             tagsData = await tagsResponse.json();
 
             if (!tagsData.success) {
+                if (tagsData.error_type === 'insufficient_credits') {
+                    showInsufficientCreditsError();
+                    return;
+                }
                 throw new Error(tagsData.error || 'Failed to generate tags');
             }
         }
@@ -476,4 +488,25 @@ function escapeHtml(text) {
         "'": '&#039;'
     };
     return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+/**
+ * Show insufficient credits error
+ */
+function showInsufficientCreditsError() {
+    document.getElementById('resultsContainer').innerHTML = `
+        <div class="insufficient-credits-card">
+            <div class="credit-icon-wrapper">
+                <i class="ph ph-coins"></i>
+            </div>
+            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                You don't have enough credits to use this feature.
+            </p>
+            <a href="/payment" class="upgrade-plan-btn">
+                <i class="ph ph-crown"></i>
+                Upgrade Plan
+            </a>
+        </div>
+    `;
 }

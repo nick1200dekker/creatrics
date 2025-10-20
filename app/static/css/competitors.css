@@ -2637,3 +2637,42 @@ html.dark .content-toggle .toggle-btn.active {
 .spin {
     animation: spin 1s linear infinite;
 }
+/* Insufficient Credits Card */
+.insufficient-credits-card {
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-tertiary);
+    border: 2px solid #F59E0B;
+    border-radius: 12px;
+}
+
+.credit-icon-wrapper {
+    margin-bottom: 1rem;
+}
+
+.credit-icon-wrapper i {
+    font-size: 3rem;
+    color: #F59E0B;
+}
+
+.upgrade-plan-btn {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    margin-top: 1rem;
+}
+
+.upgrade-plan-btn:hover {
+    background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}

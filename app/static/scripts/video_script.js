@@ -187,6 +187,25 @@
                 displayScript(data.script);
                 showToast('Script generated successfully!', 'success');
             } else {
+                // Check for insufficient credits
+                if (data.error_type === 'insufficient_credits') {
+                    document.getElementById('resultsContainer').innerHTML = `
+                        <div class="insufficient-credits-card">
+                            <div class="credit-icon-wrapper">
+                                <i class="ph ph-coins"></i>
+                            </div>
+                            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                                You don't have enough credits to use this feature.
+                            </p>
+                            <a href="/payment" class="upgrade-plan-btn">
+                                <i class="ph ph-crown"></i>
+                                Upgrade Plan
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
                 throw new Error(data.error || 'Failed to generate script');
             }
         } catch (error) {

@@ -55,10 +55,8 @@ def generate_tiktok_titles():
         if not credit_check.get('sufficient', False):
             return jsonify({
                 "success": False,
-                "error": f"Insufficient credits. Required: {required_credits:.2f}, Available: {current_credits:.2f}",
-                "error_type": "insufficient_credits",
-                "current_credits": current_credits,
-                "required_credits": required_credits
+                "error": "Insufficient credits",
+                "error_type": "insufficient_credits"
             }), 402
 
         # Step 2: Generate titles
@@ -89,6 +87,11 @@ def generate_tiktok_titles():
 
                 if not deduction_result['success']:
                     logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+                    return jsonify({
+                        'success': False,
+                        'error': 'Credit deduction failed',
+                        'error_type': 'insufficient_credits'
+                    }), 402
 
         return jsonify({
             'success': True,
