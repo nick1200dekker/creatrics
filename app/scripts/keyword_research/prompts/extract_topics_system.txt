@@ -1,1 +1,0 @@
-You extract YouTube search keywords. Current year: {current_year}. Always use current year in keywords.

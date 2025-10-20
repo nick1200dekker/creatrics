@@ -113,6 +113,7 @@ def before_request_middleware():
 
 # Import consolidated blueprints
 from app.routes.core.core_routes import bp as core_bp
+from app.routes.core.prompts_routes import prompts_bp
 from app.routes.home.home_routes import bp as home_bp
 from app.routes.payment import bp as payment_bp
 
@@ -156,6 +157,7 @@ from app.routes.cron import bp as cron_bp
 
 # Register blueprints
 app.register_blueprint(core_bp)
+app.register_blueprint(prompts_bp)
 app.register_blueprint(home_bp)
 app.register_blueprint(payment_bp)
 app.register_blueprint(thumbnail_bp)

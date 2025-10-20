@@ -14,14 +14,46 @@ from app.system.ai_provider.ai_provider import get_ai_provider
 # Get prompts directory
 PROMPTS_DIR = Path(__file__).parent / 'prompts'
 
-def load_prompt(filename: str) -> str:
-    """Load a prompt from text file"""
+def load_prompt(filename: str, section: str = None) -> str:
+    """Load a prompt from text file, optionally extracting a specific section"""
     try:
         prompt_path = PROMPTS_DIR / filename
         with open(prompt_path, 'r', encoding='utf-8') as f:
-            return f.read().strip()
+            content = f.read()
+
+        # If no section specified, return full content
+        if not section:
+            return content.strip()
+
+        # Extract specific section
+        section_marker = f"############# {section} #############"
+        if section_marker not in content:
+            logger.error(f"Section '{section}' not found in {filename}")
+            raise ValueError(f"Section '{section}' not found")
+
+        # Find the start of this section
+        start_idx = content.find(section_marker)
+        if start_idx == -1:
+            raise ValueError(f"Section '{section}' not found")
+
+        # Skip past the section marker and newline
+        content_start = start_idx + len(section_marker)
+        if content_start < len(content) and content[content_start] == '\n':
+            content_start += 1
+
+        # Find the next section marker (if any)
+        next_section = content.find("\n#############", content_start)
+
+        if next_section == -1:
+            # This is the last section
+            section_content = content[content_start:]
+        else:
+            # Extract until next section
+            section_content = content[content_start:next_section]
+
+        return section_content.strip()
     except Exception as e:
-        logger.error(f"Error loading prompt {filename}: {e}")
+        logger.error(f"Error loading prompt {filename}, section {section}: {e}")
         raise
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -36,8 +68,8 @@ class VideoScriptGenerator:
     def get_prompt_template(self, video_type: str, script_format: str) -> str:
         """Get the prompt template for script generation"""
         try:
-            # Use new naming convention: {format}_{type}.txt (e.g., full_long.txt, bullet_short.txt)
-            return load_prompt(f'{script_format}_{video_type}.txt')
+            # Use new naming convention: {format}_{type} (e.g., full_long, bullet_short)
+            return load_prompt('prompts.txt', f'{script_format}_{video_type}')
         except Exception as e:
             logger.error(f"Error reading prompt template for {script_format}_{video_type}: {e}")
             return None
@@ -103,7 +135,7 @@ class VideoScriptGenerator:
                         if script_format == 'bullet':
                             if video_type == 'short':
                                 duration_instruction = f"- This is a VERY SHORT video ({duration} seconds only). Write 5-8 key points." if not best_effort else "- Determine the appropriate length (15-60 seconds)."
-                                prompt_template = load_prompt('bullet_short.txt')
+                                prompt_template = load_prompt('prompts.txt', 'bullet_short')
                                 simple_prompt = prompt_template.format(
                                     duration_str=duration_str,
                                     concept=concept,
@@ -111,7 +143,7 @@ class VideoScriptGenerator:
                                 )
                             else:
                                 duration_instruction = f"- The video should be approximately {duration} minutes long." if not best_effort else "- Determine the appropriate video length based on content."
-                                prompt_template = load_prompt('bullet_long.txt')
+                                prompt_template = load_prompt('prompts.txt', 'bullet_long')
                                 simple_prompt = prompt_template.format(
                                     duration_str=duration_str,
                                     concept=concept,
@@ -120,7 +152,7 @@ class VideoScriptGenerator:
                         else:
                             if video_type == 'short':
                                 duration_instruction = f"- This script must be EXACTLY {duration} seconds when read aloud (about {duration * 2} words)." if not best_effort else "- Determine the appropriate length based on the content (15-60 seconds)."
-                                prompt_template = load_prompt('full_short.txt')
+                                prompt_template = load_prompt('prompts.txt', 'full_short')
                                 simple_prompt = prompt_template.format(
                                     duration_str=duration_str,
                                     concept=concept,
@@ -128,7 +160,7 @@ class VideoScriptGenerator:
                                 )
                             else:
                                 duration_instruction = f"- The script should be approximately {duration} minutes when read aloud (about {duration * 150} words)." if not best_effort else "- Determine the appropriate video length based on content (3-20 minutes)."
-                                prompt_template = load_prompt('full_long.txt')
+                                prompt_template = load_prompt('prompts.txt', 'full_long')
                                 simple_prompt = prompt_template.format(
                                     duration_str=duration_str,
                                     concept=concept,

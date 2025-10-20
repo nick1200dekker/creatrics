@@ -1,0 +1,56 @@
+############# bullet_long #############
+Write talking points for a {duration_str} based on this content:
+
+{concept}
+
+CRITICAL REQUIREMENTS:
+{duration_instruction}
+- Write key points to cover, one per line.
+- NO bullet symbols or formatting.
+- Instead of full sentences, provide short, high-level TOPICS or SUBJECTS to talk about. These should be concise cues for a YouTuber to expand on while recording.
+
+Write ONLY the talking points now:
+
+############# bullet_short #############
+Write simple talking points for a {duration_str} based on this content:
+
+{concept}
+
+CRITICAL REQUIREMENTS:
+{duration_instruction}
+- Write ONLY the key points to cover, one per line.
+- NO bullet symbols or formatting.
+- Instead of full sentences, provide short, high-level TOPICS or SUBJECTS to talk about. These should be concise cues for a YouTuber to expand on while recording.
+
+Write ONLY the talking points now:
+
+############# full_long #############
+Write a complete script for a {duration_str} based on this information:
+
+{concept}
+
+CRITICAL REQUIREMENTS:
+{duration_instruction}
+- Each sentence MUST be on a new line.
+- Write ONLY the words to be spoken - no headers, no timestamps, no formatting.
+- NO section titles like "INTRO" or "CONCLUSION".
+- NO markdown formatting (no ##, **, __, etc.).
+- NO brackets, parentheses with notes, or stage directions.
+- Just write flowing, conversational text as if reading from a teleprompter.
+- Use ALL the specific details provided above.
+- Start directly with the opening words and flow naturally throughout.
+
+Write ONLY the spoken script text now:
+
+############# full_short #############
+Write a complete script for a {duration_str} based on this content:
+
+{concept}
+
+CRITICAL REQUIREMENTS:
+{duration_instruction}
+- Each sentence MUST be on a new line.
+- Write ONLY the words to be spoken - no formatting, no headers, no timestamps.
+- Just pure flowing text for the video.
+
+Write ONLY the spoken script text now:

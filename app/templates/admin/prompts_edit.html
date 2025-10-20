@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ filename }} - Prompts{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <div style="margin-bottom: 1.5rem;">
+            <a href="{{ url_for('prompts.view_folder', folder_name=folder_name) }}" style="color: #3B82F6; text-decoration: none; font-weight: 500; font-size: 0.875rem;">
+                ← Back to {{ folder_name }}
+            </a>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1 class="welcome-title" style="margin-bottom: 0.25rem;">{{ filename }}</h1>
+                <p style="color: var(--text-tertiary); font-size: 0.875rem;">{{ folder_name }}</p>
+            </div>
+            <button onclick="savePrompt()" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 0.875rem 1.75rem; border-radius: 12px; border: none; font-weight: 600; font-size: 0.9375rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.625rem; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                💾 Save Changes
+            </button>
+        </div>
+
+        <div id="save-status" style="display: none; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;"></div>
+
+        {% if has_sections %}
+        <!-- Tabbed interface for sections -->
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 20px; overflow: hidden; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);">
+            <div style="border-bottom: 1px solid var(--border-primary); background: var(--bg-secondary);">
+                <nav style="display: flex; overflow-x: auto;" aria-label="Tabs">
+                    {% for section in sections %}
+                    <button onclick="switchTab('{{ section.name }}')"
+                            id="tab-{{ loop.index0 }}"
+                            class="tab-button"
+                            style="white-space: nowrap; padding: 1rem 1.5rem; border-bottom: 2px solid {% if loop.first %}#3B82F6{% else %}transparent{% endif %}; font-weight: 500; font-size: 0.875rem; color: {% if loop.first %}#3B82F6{% else %}var(--text-secondary){% endif %}; background: transparent; cursor: pointer; transition: all 0.2s ease;">
+                        {{ section.name }}
+                    </button>
+                    {% endfor %}
+                    <button onclick="switchTab('raw')"
+                            id="tab-raw"
+                            class="tab-button"
+                            style="white-space: nowrap; padding: 1rem 1.5rem; border-bottom: 2px solid transparent; font-weight: 500; font-size: 0.875rem; color: var(--text-secondary); background: transparent; cursor: pointer; transition: all 0.2s ease;">
+                        📄 Raw View
+                    </button>
+                </nav>
+            </div>
+
+            <div style="padding: 1.5rem;">
+                {% for section in sections %}
+                <div id="section-{{ loop.index0 }}" class="section-content" style="{% if not loop.first %}display: none;{% endif %}">
+                    <div style="margin-bottom: 1rem;">
+                        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">{{ section.name }}</h3>
+                        <p style="font-size: 0.875rem; color: var(--text-tertiary);">Edit this section below. Changes are saved to the entire file.</p>
+                    </div>
+                    <textarea id="editor-{{ loop.index0 }}"
+                              class="section-editor"
+                              data-section="{{ section.name }}"
+                              style="width: 100%; min-height: 400px; padding: 1rem; border: 1px solid var(--border-primary); border-radius: 12px; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.875rem; background: var(--bg-secondary); color: var(--text-primary); resize: vertical;">{{ section.content }}</textarea>
+                </div>
+                {% endfor %}
+
+                <!-- Raw view -->
+                <div id="section-raw" class="section-content" style="display: none;">
+                    <div style="margin-bottom: 1rem;">
+                        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Raw File Content</h3>
+                        <p style="font-size: 0.875rem; color: var(--text-tertiary);">View and edit the entire file with section markers.</p>
+                    </div>
+                    <textarea id="editor-raw"
+                              style="width: 100%; min-height: 400px; padding: 1rem; border: 1px solid var(--border-primary); border-radius: 12px; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.875rem; background: var(--bg-secondary); color: var(--text-primary); resize: vertical;">{{ content }}</textarea>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Simple editor for non-sectioned files -->
+        <div style="background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 20px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);">
+            <textarea id="editor-simple"
+                      style="width: 100%; min-height: 400px; padding: 1rem; border: 1px solid var(--border-primary); border-radius: 12px; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.875rem; background: var(--bg-secondary); color: var(--text-primary); resize: vertical;">{{ content }}</textarea>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 12px;">
+            <p style="font-size: 0.875rem; color: var(--text-primary);">
+                <strong style="color: #EAB308;">⚠️ Important:</strong> Changes take effect immediately without restart. Be careful when editing prompts used in production.
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+.tab-button:hover {
+    color: var(--text-primary) !important;
+    border-bottom-color: var(--border-primary) !important;
+}
+
+.tab-button.active {
+    color: #3B82F6 !important;
+    border-bottom-color: #3B82F6 !important;
+}
+
+html.dark .tab-button.active {
+    color: #60A5FA !important;
+    border-bottom-color: #60A5FA !important;
+}
+</style>
+
+<script>
+let currentTab = 0;
+const hasSections = {{ 'true' if has_sections else 'false' }};
+const sectionCount = {{ sections|length if has_sections else 0 }};
+
+function switchTab(tabId) {
+    if (tabId === 'raw') {
+        // Switch to raw view
+        document.querySelectorAll('.section-content').forEach(el => el.style.display = 'none');
+        document.getElementById('section-raw').style.display = 'block';
+
+        document.querySelectorAll('.tab-button').forEach(el => {
+            el.style.borderBottomColor = 'transparent';
+            el.style.color = 'var(--text-secondary)';
+            el.classList.remove('active');
+        });
+        const rawTab = document.getElementById('tab-raw');
+        rawTab.style.borderBottomColor = '#3B82F6';
+        rawTab.style.color = '#3B82F6';
+        rawTab.classList.add('active');
+
+        // Sync raw view with section editors
+        syncToRaw();
+    } else {
+        // Find tab index
+        const tabs = Array.from(document.querySelectorAll('.tab-button'));
+        const tabIndex = tabs.findIndex(btn => btn.textContent.trim() === tabId);
+
+        if (tabIndex === -1) return;
+
+        // Hide all sections
+        document.querySelectorAll('.section-content').forEach(el => el.style.display = 'none');
+        document.getElementById(`section-${tabIndex}`).style.display = 'block';
+
+        // Update tab styles
+        document.querySelectorAll('.tab-button').forEach(el => {
+            el.style.borderBottomColor = 'transparent';
+            el.style.color = 'var(--text-secondary)';
+            el.classList.remove('active');
+        });
+        const activeTab = document.getElementById(`tab-${tabIndex}`);
+        activeTab.style.borderBottomColor = '#3B82F6';
+        activeTab.style.color = '#3B82F6';
+        activeTab.classList.add('active');
+    }
+}
+
+function syncToRaw() {
+    if (!hasSections) return;
+
+    let rawContent = '';
+    for (let i = 0; i < sectionCount; i++) {
+        const editor = document.getElementById(`editor-${i}`);
+        const sectionName = editor.getAttribute('data-section');
+        rawContent += `############# ${sectionName} #############\n`;
+        rawContent += editor.value.trim() + '\n';
+        if (i < sectionCount - 1) rawContent += '\n';
+    }
+
+    document.getElementById('editor-raw').value = rawContent;
+}
+
+function syncFromRaw() {
+    if (!hasSections) return;
+
+    const rawContent = document.getElementById('editor-raw').value;
+    const sections = rawContent.split(/############# (.*?) #############\n/);
+
+    // sections[0] is empty, then alternates between name and content
+    for (let i = 0; i < sectionCount; i++) {
+        const sectionIndex = (i * 2) + 1;
+        if (sections[sectionIndex + 1]) {
+            document.getElementById(`editor-${i}`).value = sections[sectionIndex + 1].trim();
+        }
+    }
+}
+
+function savePrompt() {
+    let content;
+
+    if (hasSections) {
+        // Check if we're in raw view
+        const rawSection = document.getElementById('section-raw');
+        if (rawSection.style.display !== 'none') {
+            content = document.getElementById('editor-raw').value;
+        } else {
+            syncToRaw();
+            content = document.getElementById('editor-raw').value;
+        }
+    } else {
+        content = document.getElementById('editor-simple').value;
+    }
+
+    const statusEl = document.getElementById('save-status');
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(59, 130, 246, 0.1)';
+    statusEl.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+    statusEl.style.color = 'var(--text-primary)';
+    statusEl.textContent = 'Saving...';
+
+    fetch('{{ url_for("prompts.save_file") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            folder_name: '{{ folder_name }}',
+            filename: '{{ filename }}',
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusEl.style.background = 'rgba(16, 185, 129, 0.1)';
+            statusEl.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+            statusEl.textContent = '✓ ' + data.message + ' (Changes are live immediately!)';
+        } else {
+            statusEl.style.background = 'rgba(239, 68, 68, 0.1)';
+            statusEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+            statusEl.textContent = '✗ Error: ' + (data.error || 'Failed to save');
+        }
+
+        setTimeout(() => {
+            statusEl.style.display = 'none';
+        }, 5000);
+    })
+    .catch(error => {
+        statusEl.style.background = 'rgba(239, 68, 68, 0.1)';
+        statusEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+        statusEl.textContent = '✗ Error: ' + error.message;
+    });
+}
+
+// Auto-sync when switching from raw view
+if (hasSections) {
+    document.getElementById('editor-raw').addEventListener('input', () => {
+        const rawSection = document.getElementById('section-raw');
+        if (rawSection.style.display !== 'none') {
+            syncFromRaw();
+        }
+    });
+}
+
+// Keyboard shortcut: Ctrl+S / Cmd+S to save
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        savePrompt();
+    }
+});
+</script>
+{% endblock %}

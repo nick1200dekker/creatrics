@@ -13,14 +13,46 @@ logger = logging.getLogger(__name__)
 PROMPTS_DIR = Path(__file__).parent / 'prompts'
 
 
-def load_prompt(filename: str) -> str:
-    """Load a prompt from text file"""
+def load_prompt(filename: str, section: str = None) -> str:
+    """Load a prompt from text file, optionally extracting a specific section"""
     try:
         prompt_path = PROMPTS_DIR / filename
         with open(prompt_path, 'r', encoding='utf-8') as f:
-            return f.read().strip()
+            content_data = f.read()
+
+        # If no section specified, return full content
+        if not section:
+            return content_data.strip()
+
+        # Extract specific section
+        section_marker = f"############# {section} #############"
+        if section_marker not in content_data:
+            logger.error(f"Section '{section}' not found in {filename}")
+            raise ValueError(f"Section '{section}' not found")
+
+        # Find the start of this section
+        start_idx = content_data.find(section_marker)
+        if start_idx == -1:
+            raise ValueError(f"Section '{section}' not found")
+
+        # Skip past the section marker and newline
+        content_start = start_idx + len(section_marker)
+        if content_start < len(content_data) and content_data[content_start] == '\n':
+            content_start += 1
+
+        # Find the next section marker (if any)
+        next_section = content_data.find("\n#############", content_start)
+
+        if next_section == -1:
+            # This is the last section
+            section_content = content_data[content_start:]
+        else:
+            # Extract until next section
+            section_content = content_data[content_start:next_section]
+
+        return section_content.strip()
     except Exception as e:
-        logger.error(f"Error loading prompt {filename}: {e}")
+        logger.error(f"Error loading prompt {filename}, section {section}: {e}")
         raise
 
 
@@ -73,8 +105,8 @@ def modify_note_with_ai(content: str, prompt: str, user_id: str, model: str = No
             }
 
         # Load prompts from files
-        system_prompt = load_prompt('modify_note_system.txt')
-        user_prompt_template = load_prompt('modify_note_user.txt')
+        system_prompt = load_prompt('prompts.txt', 'MODIFY_NOTE_SYSTEM')
+        user_prompt_template = load_prompt('prompts.txt', 'MODIFY_NOTE_USER')
         user_prompt = user_prompt_template.format(prompt=prompt, content=content)
 
         # Generate the modified content
@@ -183,8 +215,8 @@ def process_transcript_with_ai(transcript: str, prompt: str, user_id: str, model
             }
 
         # Load prompts from files
-        system_prompt = load_prompt('process_transcript_system.txt')
-        user_prompt_template = load_prompt('process_transcript_user.txt')
+        system_prompt = load_prompt('prompts.txt', 'PROCESS_TRANSCRIPT_SYSTEM')
+        user_prompt_template = load_prompt('prompts.txt', 'PROCESS_TRANSCRIPT_USER')
         user_prompt = user_prompt_template.format(prompt=prompt, transcript=transcript)
 
         # Generate the response

@@ -14,14 +14,46 @@ from typing import Dict, List
 # Get prompts directory
 PROMPTS_DIR = Path(__file__).parent / 'prompts'
 
-def load_prompt(filename: str) -> str:
-    """Load a prompt from text file"""
+def load_prompt(filename: str, section: str = None) -> str:
+    """Load a prompt from text file, optionally extracting a specific section"""
     try:
         prompt_path = PROMPTS_DIR / filename
         with open(prompt_path, 'r', encoding='utf-8') as f:
-            return f.read().strip()
+            content = f.read()
+
+        # If no section specified, return full content
+        if not section:
+            return content.strip()
+
+        # Extract specific section
+        section_marker = f"############# {section} #############"
+        if section_marker not in content:
+            logger.error(f"Section '{section}' not found in {filename}")
+            raise ValueError(f"Section '{section}' not found")
+
+        # Find the start of this section
+        start_idx = content.find(section_marker)
+        if start_idx == -1:
+            raise ValueError(f"Section '{section}' not found")
+
+        # Skip past the section marker and newline
+        content_start = start_idx + len(section_marker)
+        if content_start < len(content) and content[content_start] == '\n':
+            content_start += 1
+
+        # Find the next section marker (if any)
+        next_section = content.find("\n#############", content_start)
+
+        if next_section == -1:
+            # This is the last section
+            section_content = content[content_start:]
+        else:
+            # Extract until next section
+            section_content = content[content_start:next_section]
+
+        return section_content.strip()
     except Exception as e:
-        logger.error(f"Error loading prompt {filename}: {e}")
+        logger.error(f"Error loading prompt {filename}, section {section}: {e}")
         raise
 logger = logging.getLogger(__name__)
 
@@ -50,10 +82,10 @@ class KeywordResearcher:
         now = datetime.now()
         current_year = now.year
 
-        system_prompt_template = load_prompt('extract_topics_system.txt')
+        system_prompt_template = load_prompt('keyword_researcher_prompts.txt', 'EXTRACT_TOPICS_SYSTEM')
         system_prompt = system_prompt_template.format(current_year=current_year)
 
-        user_prompt_template = load_prompt('extract_topics_user.txt')
+        user_prompt_template = load_prompt('keyword_researcher_prompts.txt', 'EXTRACT_TOPICS_USER')
         prompt = user_prompt_template.format(
             current_year=current_year,
             content_preview=content_preview

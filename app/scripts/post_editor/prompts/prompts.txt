@@ -1,0 +1,216 @@
+############# braindump #############
+Transform these rough notes/keywords into an optimized X/Twitter post.
+
+{VOICE_CONTEXT}
+
+X POST OPTIMIZATION RULES:
+1. NO HASHTAGS - Never use hashtags
+2. Use whitespace strategically - Add line breaks between key points for readability
+3. Strong hook - Start with an attention-grabbing first line
+4. Clear structure - Make it scannable with proper spacing
+5. Conversational tone - Write like you're talking to a friend
+6. Short, punchy sentences - Keep each line impactful
+7. End with value - Finish with a takeaway, question, or call-to-action
+8. No unnecessary quotes - Use direct language
+9. Emojis (optional) - Only if they add value, use sparingly
+
+CONTENT TRANSFORMATION:
+- Turn keywords into complete thoughts
+- Add context where needed
+- Create a logical flow
+- Make it engaging and human
+- Remove jargon unless essential
+- Focus on clarity and impact
+
+User's notes/keywords:
+{text}
+
+{VOICE_EXAMPLES}
+
+OUTPUT ONLY THE OPTIMIZED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST CONTENT:
+
+Optimized post:
+
+############# grammar #############
+Only fix critical grammar issues that affect understanding. Keep the original style and tone intact.
+
+{VOICE_CONTEXT}
+
+Focus on:
+- Fix only major grammar errors that impact clarity
+- Add whitespace only if text is a dense block without breaks
+- Keep the original voice and personality
+- Preserve informal language and creative formatting
+- Maintain original punctuation unless it causes confusion
+- Keep emojis and hashtags exactly as they are
+- Preserve line breaks and formatting structure
+
+Original text:
+{text}
+
+OUTPUT ONLY THE IMPROVED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST CONTENT:
+
+Improved version:
+
+############# hook_story_punch #############
+Transform this post into a clean, engaging social media post using the Hook-Story-Punch framework:
+
+{VOICE_CONTEXT}
+
+HOOK (First Line):
+- Start with your strongest point
+- Create instant curiosity
+- Use questions or bold claims
+- Make them want more
+
+STORY (Middle):
+- Break complex ideas into simple lines
+- Use whitespace for impact
+- Build clear progression
+- Keep momentum strong
+- Add meaningful emojis
+
+PUNCH (Ending):
+- End with impact
+- Ask engaging questions
+- Drive interaction
+- Keep it natural
+
+FORMATTING:
+- Short, impactful lines (max 2 lines per thought)
+- Strategic whitespace
+- Emojis to enhance key points
+- Never use hashtags
+- Keep bullet points simple (•)
+- Never use markdown formatting (**, ##, etc)
+- Match original length
+- Preserve @mentions
+
+Examples:
+
+INPUT:
+The "Punchline First" Formula - How to Instantly Hook Your Audience. Struggling to make your writing or storytelling land? The secret is the "Punchline First" approach—start strong, hook your audience, and then take them on the journey.
+
+The Big Mistake: Most people bury their best content at the end, losing their audience before they get to the good part. Here's how to fix it with examples and practical tips.
+
+OUTPUT:
+Most storytellers make this fatal mistake
+
+They bury the best part at the end
+When everyone stopped listening
+
+Example:
+So I was at this restaurant...
+(2 minutes of buildup)
+...and then Shaq walked in!
+
+Too late
+Your audience is gone
+
+The simple fix?
+
+Start with "I met Shaq last night"
+Then tell the story
+
+More real examples 🔥
+
+Bad: "I've been thinking about productivity..."
+Good: "Waking up early won't make you productive"
+
+Bad: "Let me introduce myself..."
+Good: "I made $50K from one tweet"
+
+Bad: "Today we'll discuss leadership..."
+Good: "The best leaders don't actually lead"
+
+The formula:
+• Hook with your best point
+• Create instant curiosity
+• Tell the full story
+
+Never save your best for last
+Your first line is everything
+
+Original text:
+{text}
+
+{VOICE_EXAMPLES}
+
+OUTPUT ONLY THE TRANSFORMED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS, NO META-COMMENTS LIKE "STYLE ANALYSIS" OR "COMPLETE REWRITE". JUST THE FINAL POST CONTENT:
+
+Transformed version:
+
+############# mimic #############
+YOU MUST COMPLETELY REWRITE THE ENTIRE POST FROM SCRATCH. Do not edit the original - REWRITE EVERY SINGLE SENTENCE to match the reference examples exactly. Make it sound like the SAME PERSON wrote it.
+
+{VOICE_CONTEXT}
+
+MANDATORY STYLE COPYING:
+1. Copy the EXACT grammar mistakes from examples (completly, anouncement, etc.)
+2. Copy the EXACT contractions (dont, cant, ive, etc.)
+3. Copy the EXACT sentence starters ("man", "but", "so i", etc.)
+4. Copy the EXACT casual/formal level
+5. Copy the EXACT punctuation style
+6. Copy the EXACT vocabulary level
+7. Copy the EXACT line break patterns
+8. Copy the EXACT tone and energy
+
+FORBIDDEN:
+- Do NOT fix grammar if examples have always the same mistakes
+- Do NOT make sentences more formal if examples are casual
+- Do NOT add sophisticated words if examples use simple ones
+- Do NOT improve anything - ONLY copy the style
+
+Original text:
+{text}
+
+Reference Examples
+{VOICE_EXAMPLES}
+
+COMPLETELY REWRITE THE ENTIRE POST FROM SCRATCH. Do not keep any original phrasing - TRANSFORM EVERY SENTENCE to match the reference examples exactly. Make it sound like the reference author wrote it.
+
+OUTPUT ONLY THE REWRITTEN POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST CONTENT:
+
+############# storytelling #############
+Transform this post into a clean, engaging social media post using powerful storytelling hooks.
+
+{VOICE_CONTEXT}
+
+FORMATTING:
+- Short, impactful sentences
+- Use line breaks for rhythm
+- Remove unnecessary quotes
+- Keep only essential details
+- Use simple, direct language
+- Add whitespace between thoughts
+- End with a clear call-to-action
+- Keep original emojis in their context
+- Match the original post length (don't make longer or shorter)
+- If original post is short, keep it short
+- If original post is a thread, keep it as a thread
+- Never use markdown formatting (**, ##, etc.)
+
+STORYTELLING HOOKS:
+1. Open with emotion:
+   - Use a spoken line that triggers feelings
+   - Start with one powerful emotion word
+   - Choose words that relate to feelings
+
+2. Create instant connection:
+   - "What would you do if..." questions
+   - Open with extreme action
+   - Use casual tone for contrast
+
+3. Hook with surprise:
+   - Make unexpected pivots
+   - Start with the end result
+   - Mix extreme with casual
+
+Original post:
+{text}
+
+{VOICE_EXAMPLES}
+
+OUTPUT ONLY THE TRANSFORMED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST CONTENT:
+
+Transformed version:

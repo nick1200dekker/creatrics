@@ -1269,9 +1269,24 @@
     
     <!-- Admin Section -->
     <div class="admin-section" id="admin-section" style="display: none;">
-        <!-- Admin features can be added here -->
+        <div class="nav-group" data-group="Admin">
+            <div class="nav-group-header" onclick="toggleNavGroup(this)">
+                <div class="left-content">
+                    <i class="ph ph-shield-star"></i>
+                    <span>Admin</span>
+                </div>
+                <i class="ph ph-caret-right chevron"></i>
+            </div>
+            <div class="nav-group-items">
+                <a href="{{ url_for('prompts.index') }}"
+                   class="nav-subitem {% if request.endpoint and 'prompts' in request.endpoint %}active{% endif %}">
+                    <i class="ph ph-file-text"></i>
+                    <span>AI Prompts</span>
+                </a>
+            </div>
+        </div>
     </div>
-    
+
     <!-- User Section -->
     <div class="user-section" id="user-section">
         <!-- Workspace Indicator (if in team workspace) -->

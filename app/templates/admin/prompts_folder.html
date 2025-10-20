@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}{{ folder_name }} - Prompts{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <div style="margin-bottom: 1.5rem;">
+            <a href="{{ url_for('prompts.index') }}" style="color: #3B82F6; text-decoration: none; font-weight: 500; font-size: 0.875rem;">
+                ← Back to all folders
+            </a>
+        </div>
+
+        <div class="dashboard-header">
+            <div class="welcome-content">
+                <h1 class="welcome-title">{{ folder_name }}</h1>
+                <p class="welcome-subtitle">Prompt files in this folder</p>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for file in files %}
+            <div style="background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 20px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                    <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary);">{{ file.filename }}</h3>
+                    <a href="{{ url_for('prompts.edit_file', folder_name=folder_name, filename=file.filename) }}"
+                       style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; padding: 0.625rem 1.25rem; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">
+                        ✏️ Edit
+                    </a>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.875rem; color: var(--text-tertiary);">📄 {{ file.line_count }} lines</span>
+                    {% if file.has_sections %}
+                    <span style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #10B981; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 12px;">
+                        {{ file.sections|length }} sections
+                    </span>
+                    {% endif %}
+                </div>
+
+                {% if file.has_sections %}
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-primary);">
+                    <p style="font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.75rem;">Sections:</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        {% for section in file.sections %}
+                        <span style="background: var(--bg-tertiary); border: 1px solid var(--border-primary); color: var(--text-primary); padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.813rem; font-weight: 500;">
+                            {{ section }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if not files %}
+        <div style="text-align: center; padding: 3.5rem 2rem; background: var(--bg-secondary); border-radius: 16px; border: 1px dashed var(--border-primary);">
+            <p style="color: var(--text-tertiary);">No prompt files found in this folder.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -21,14 +21,46 @@ RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY', '16c9c09b8bmsh0f0d3ec2999f27ep115961jsn
 RAPIDAPI_HOST = 'yt-api.p.rapidapi.com'
 
 
-def load_prompt(filename: str) -> str:
-    """Load a prompt from text file"""
+def load_prompt(filename: str, section: str = None) -> str:
+    """Load a prompt from text file, optionally extracting a specific section"""
     try:
         prompt_path = PROMPTS_DIR / filename
         with open(prompt_path, 'r', encoding='utf-8') as f:
-            return f.read().strip()
+            content = f.read()
+
+        # If no section specified, return full content
+        if not section:
+            return content.strip()
+
+        # Extract specific section
+        section_marker = f"############# {section} #############"
+        if section_marker not in content:
+            logger.error(f"Section '{section}' not found in {filename}")
+            raise ValueError(f"Section '{section}' not found")
+
+        # Find the start of this section
+        start_idx = content.find(section_marker)
+        if start_idx == -1:
+            raise ValueError(f"Section '{section}' not found")
+
+        # Skip past the section marker and newline
+        content_start = start_idx + len(section_marker)
+        if content_start < len(content) and content[content_start] == '\n':
+            content_start += 1
+
+        # Find the next section marker (if any)
+        next_section = content.find("\n#############", content_start)
+
+        if next_section == -1:
+            # This is the last section
+            section_content = content[content_start:]
+        else:
+            # Extract until next section
+            section_content = content[content_start:next_section]
+
+        return section_content.strip()
     except Exception as e:
-        logger.error(f"Error loading prompt {filename}: {e}")
+        logger.error(f"Error loading prompt {filename}, section {section}: {e}")
         raise
 
 
@@ -141,8 +173,8 @@ Here are ALL REAL top-performing videos for this topic (from last month, {total_
 {video_samples_text}"""
 
         # Load prompts from files
-        system_prompt = load_prompt('detect_topic_context_system.txt')
-        user_prompt_template = load_prompt('detect_topic_context.txt')
+        system_prompt = load_prompt('keyword_ai_processor_prompts.txt', 'DETECT_TOPIC_CONTEXT_SYSTEM')
+        user_prompt_template = load_prompt('keyword_ai_processor_prompts.txt', 'DETECT_TOPIC_CONTEXT_USER')
         user_prompt = user_prompt_template.format(
             current_date=current_date,
             topic=topic,
@@ -226,10 +258,10 @@ HERE IS THE REAL DATA - Top performing videos for "{topic}" from the last month:
 {video_samples_text}"""
 
         # Load prompts from files
-        system_prompt_template = load_prompt('generate_keywords_system.txt')
+        system_prompt_template = load_prompt('keyword_ai_processor_prompts.txt', 'GENERATE_KEYWORDS_SYSTEM')
         system_prompt = system_prompt_template.format(current_date=current_date)
 
-        user_prompt_template = load_prompt('generate_keywords.txt')
+        user_prompt_template = load_prompt('keyword_ai_processor_prompts.txt', 'GENERATE_KEYWORDS_USER')
         user_prompt = user_prompt_template.format(
             topic=topic,
             current_date=current_date,
@@ -314,10 +346,10 @@ def generate_ai_insights(results: list, topic: str, context: dict) -> dict:
         summary_text = "\n".join(summary)
 
         # Load prompts from files
-        system_prompt_template = load_prompt('generate_insights_system.txt')
+        system_prompt_template = load_prompt('keyword_ai_processor_prompts.txt', 'GENERATE_INSIGHTS_SYSTEM')
         system_prompt = system_prompt_template.format(current_date=current_date)
 
-        user_prompt_template = load_prompt('generate_insights.txt')
+        user_prompt_template = load_prompt('keyword_ai_processor_prompts.txt', 'GENERATE_INSIGHTS_USER')
         user_prompt = user_prompt_template.format(
             topic=topic,
             summary_text=summary_text

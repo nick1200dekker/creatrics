@@ -1,3 +1,7 @@
+############# SYSTEM_PROMPT #############
+You are a gaming content expert.
+
+############# USER_PROMPT #############
 You are analyzing TikTok hashtag keywords to identify which ones are gaming-related.
 
 Here is the list of keywords:

@@ -18,14 +18,46 @@ logger = logging.getLogger(__name__)
 # Get prompts directory
 PROMPTS_DIR = Path(__file__).parent / 'prompts'
 
-def load_prompt(filename: str) -> str:
-    """Load a prompt from text file"""
+def load_prompt(filename: str, section: str = None) -> str:
+    """Load a prompt from text file, optionally extracting a specific section"""
     try:
         prompt_path = PROMPTS_DIR / filename
         with open(prompt_path, 'r', encoding='utf-8') as f:
-            return f.read().strip()
+            content = f.read()
+
+        # If no section specified, return full content
+        if not section:
+            return content.strip()
+
+        # Extract specific section
+        section_marker = f"############# {section} #############"
+        if section_marker not in content:
+            logger.error(f"Section '{section}' not found in {filename}")
+            raise ValueError(f"Section '{section}' not found")
+
+        # Find the start of this section
+        start_idx = content.find(section_marker)
+        if start_idx == -1:
+            raise ValueError(f"Section '{section}' not found")
+
+        # Skip past the section marker and newline
+        content_start = start_idx + len(section_marker)
+        if content_start < len(content) and content[content_start] == '\n':
+            content_start += 1
+
+        # Find the next section marker (if any)
+        next_section = content.find("\n#############", content_start)
+
+        if next_section == -1:
+            # This is the last section
+            section_content = content[content_start:]
+        else:
+            # Extract until next section
+            section_content = content[content_start:next_section]
+
+        return section_content.strip()
     except Exception as e:
-        logger.error(f"Error loading prompt {filename}: {e}")
+        logger.error(f"Error loading prompt {filename}, section {section}: {e}")
         raise
 
 class VideoDescriptionGenerator:
@@ -37,14 +69,14 @@ class VideoDescriptionGenerator:
     def get_prompt_template(self, video_type: str, reference_description: str = "") -> str:
         """Get the prompt template for description generation"""
         try:
-            # Build filename based on video type
+            # Map video_type to section names
             # Handle both 'short' and 'shorts' for backwards compatibility
             if video_type in ['short', 'shorts']:
-                filename = 'short_description_prompt.txt'
+                section = 'SHORT_DESCRIPTION_PROMPT'
             else:
-                filename = 'long_description_prompt.txt'
+                section = 'LONG_DESCRIPTION_PROMPT'
 
-            template = load_prompt(filename)
+            template = load_prompt('video_description_prompts.txt', section)
 
             # Add reference description context if provided
             if reference_description:
@@ -54,7 +86,7 @@ class VideoDescriptionGenerator:
 
         except Exception as e:
             logger.error(f"Error reading prompt template: {e}")
-            return self.get_fallback_prompt(video_type, reference_description, {})
+            raise
 
     def generate_description(self, input_text: str, video_type: str = 'long',
                            reference_description: str = "", user_id: str = None, keyword: str = "") -> Dict:
@@ -87,7 +119,7 @@ class VideoDescriptionGenerator:
                     prompt = prompt_template.format(input=input_text)
 
                     # Load and format system prompt
-                    system_prompt_template = load_prompt('description_system.txt')
+                    system_prompt_template = load_prompt('video_description_prompts.txt', 'SYSTEM_PROMPT')
                     video_type_text = 'YouTube Shorts' if video_type in ['short', 'shorts'] else 'long-form YouTube videos'
                     keyword_instruction = f'PRIMARY KEYWORD: Start the description naturally with this keyword or phrase: "{keyword}". Capitalize it appropriately (brand names, proper nouns, etc.).' if keyword else ''
                     reference_instruction = "If a reference description is provided, extract and reuse the social media links, contact info, and match the overall style and tone." if reference_description else ""
@@ -372,21 +404,3 @@ class VideoDescriptionGenerator:
 
         return '\n'.join(description_parts)
 
-    def get_fallback_prompt(self, video_type: str, reference_description: str = "", style_analysis: Dict = None) -> str:
-        """Get fallback prompt if file is not found"""
-
-        video_type_text = 'Shorts' if video_type == 'short' else 'video'
-        format_instruction = 'Keep it brief and punchy for Shorts' if video_type == 'short' else 'Be comprehensive but scannable'
-
-        reference_section = ""
-        if reference_description:
-            reference_section = f"\n\nUse this reference description for style and to extract social links:\n{reference_description}"
-            if style_analysis:
-                reference_section += f"\n\nStyle Analysis:\n{self.create_style_instructions(style_analysis)}"
-
-        fallback_template = load_prompt('description_fallback.txt')
-        return fallback_template.format(
-            video_type_text=video_type_text,
-            format_instruction=format_instruction,
-            reference_section=reference_section
-        )

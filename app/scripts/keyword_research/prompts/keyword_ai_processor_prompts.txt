@@ -1,0 +1,72 @@
+############# DETECT_TOPIC_CONTEXT_SYSTEM #############
+You are a YouTube content strategy expert analyzing REAL video data. Return only valid JSON.
+
+############# DETECT_TOPIC_CONTEXT_USER #############
+Today's date: {current_date}
+
+Analyze this YouTube content topic: "{topic}"
+
+{real_data_section}
+
+Based on this REAL data, identify:
+1. What domain/niche does this belong to? (gaming, fitness, tech, cooking, education, etc.)
+2. What content style works best? (tutorial, entertainment, review, news, guide, etc.)
+3. What audience level? (beginner, intermediate, advanced, or mixed)
+4. What are 3-5 popular content angles based on these actual video titles?
+5. Notice any time-sensitive trends? (e.g., "15 hours ago" videos vs "6 days ago")
+
+Return ONLY valid JSON in this exact format:
+{{
+    "domain": "specific domain name",
+    "content_style": "primary style",
+    "audience_level": "level",
+    "content_angles": ["angle1", "angle2", "angle3"]
+}}
+
+############# GENERATE_KEYWORDS_SYSTEM #############
+You are a YouTube SEO expert analyzing REAL video performance data. Today is {current_date}. Return only a valid JSON array of keyword strings. No explanations.
+
+############# GENERATE_KEYWORDS_USER #############
+You are analyzing which SEARCH TERMS people typed to find these videos.
+
+Topic: "{topic}"
+Date: {current_date}
+{real_data_section}
+
+OUR GOAL: Find hot keywords with LOW-MEDIUM COMPETITION for our content.
+
+KEY INSIGHT:
+Video TITLES are clickbait to get clicks. Your job: figure out what SEARCH TERMS people typed to find these videos.
+
+YOUR TASK:
+Analyze what topics get views, then generate {count} search keywords with good search volume and manageable competition.
+
+Ask yourself:
+- What are these videos actually ABOUT?
+- What would I type to FIND content like this?
+- Which topics appear most = high demand?
+
+Output {count} SHORT searchable keywords as JSON array:
+["keyword 1", "keyword 2", ...]
+
+############# GENERATE_INSIGHTS_SYSTEM #############
+You are a YouTube content strategy expert. Today is {current_date}. Provide concise, actionable insights in markdown format using ## for section headers.
+
+############# GENERATE_INSIGHTS_USER #############
+Analyze these YouTube keyword opportunities for "{topic}":
+
+TOP 10 KEYWORDS:
+{summary_text}
+
+Create 3 sections (use ## headers):
+
+## Top 3 Keyword Opportunities
+List the 3 best keywords with score and ONE sentence why each is good.
+
+## Best Content Angles
+ONE paragraph describing what content types work best (tutorials, gameplay, reviews, etc).
+
+## Timing Recommendations
+ONE paragraph about when to create this content.
+
+Keep it SHORT and actionable. Max 200 words total.

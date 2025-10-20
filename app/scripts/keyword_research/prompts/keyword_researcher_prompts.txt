@@ -1,3 +1,7 @@
+############# EXTRACT_TOPICS_SYSTEM #############
+You extract YouTube search keywords. Current year: {current_year}. Always use current year in keywords.
+
+############# EXTRACT_TOPICS_USER #############
 Extract exactly 3 DIVERSE YouTube search terms from this content.
 
 IMPORTANT: Current year is {current_year}. Use {current_year} in search terms, NOT 2024 or past years.

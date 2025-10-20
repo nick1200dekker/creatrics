@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Prompts Manager{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div class="welcome-content">
+                <h1 class="welcome-title">AI Prompts Manager</h1>
+                <p class="welcome-subtitle">Manage and edit all AI prompts across your tools</p>
+            </div>
+        </div>
+
+        <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 1rem; margin-bottom: 2rem;">
+            <p style="color: var(--text-primary); font-size: 0.875rem;">
+                <strong style="color: #3B82F6;">💡 Note:</strong> Changes take effect immediately - no restart required!
+            </p>
+        </div>
+
+        <div class="channels-grid">
+            {% for folder in folders %}
+            <a href="{{ url_for('prompts.view_folder', folder_name=folder.name) }}"
+               style="display: block; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 20px; padding: 1.5rem; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);">
+                <div style="display: flex; align-items: center; justify-content: between; margin-bottom: 0.5rem;">
+                    <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); flex: 1;">{{ folder.name }}</h3>
+                    <span style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); color: #3B82F6; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 12px;">
+                        {{ folder.file_count }} file{% if folder.file_count != 1 %}s{% endif %}
+                    </span>
+                </div>
+                <p style="font-size: 0.875rem; color: var(--text-tertiary);">
+                    📁 Click to view prompts
+                </p>
+            </a>
+            {% endfor %}
+        </div>
+
+        {% if not folders %}
+        <div style="text-align: center; padding: 3.5rem 2rem; background: var(--bg-secondary); border-radius: 16px; border: 1px dashed var(--border-primary);">
+            <p style="color: var(--text-tertiary);">No prompt folders found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

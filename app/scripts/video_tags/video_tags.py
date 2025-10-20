@@ -16,14 +16,46 @@ from app.scripts.keyword_research import KeywordResearcher
 # Get prompts directory
 PROMPTS_DIR = Path(__file__).parent / 'prompts'
 
-def load_prompt(filename: str) -> str:
-    """Load a prompt from text file"""
+def load_prompt(filename: str, section: str = None) -> str:
+    """Load a prompt from text file, optionally extracting a specific section"""
     try:
         prompt_path = PROMPTS_DIR / filename
         with open(prompt_path, 'r', encoding='utf-8') as f:
-            return f.read().strip()
+            content = f.read()
+
+        # If no section specified, return full content
+        if not section:
+            return content.strip()
+
+        # Extract specific section
+        section_marker = f"############# {section} #############"
+        if section_marker not in content:
+            logger.error(f"Section '{section}' not found in {filename}")
+            raise ValueError(f"Section '{section}' not found")
+
+        # Find the start of this section
+        start_idx = content.find(section_marker)
+        if start_idx == -1:
+            raise ValueError(f"Section '{section}' not found")
+
+        # Skip past the section marker and newline
+        content_start = start_idx + len(section_marker)
+        if content_start < len(content) and content[content_start] == '\n':
+            content_start += 1
+
+        # Find the next section marker (if any)
+        next_section = content.find("\n#############", content_start)
+
+        if next_section == -1:
+            # This is the last section
+            section_content = content[content_start:]
+        else:
+            # Extract until next section
+            section_content = content[content_start:next_section]
+
+        return section_content.strip()
     except Exception as e:
-        logger.error(f"Error loading prompt {filename}: {e}")
+        logger.error(f"Error loading prompt {filename}, section {section}: {e}")
         raise
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -40,7 +72,7 @@ class VideoTagsGenerator:
     def get_prompt_template(self) -> str:
         """Get the prompt template for video tags generation"""
         try:
-            return load_prompt('tags_prompt.txt')
+            return load_prompt('prompts.txt', 'USER_PROMPT')
         except Exception as e:
             logger.error(f"Error reading prompt template: {e}")
             return self.get_fallback_prompt()
@@ -92,7 +124,7 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
 )}"""
 
                     # System prompt to ensure correct format
-                    system_prompt_template = load_prompt('generate_tags_system.txt')
+                    system_prompt_template = load_prompt('prompts.txt', 'SYSTEM_PROMPT')
                     system_prompt = system_prompt_template.format(
                         current_date=now.strftime('%B %d, %Y'),
                         current_year=now.year
