@@ -691,17 +691,29 @@ def ai_keyword_explore():
 
         logger.info(f"AI keyword explore requested for topic: '{topic}' with {keyword_count} keywords")
 
-        # Estimate cost (3 AI calls: context detection + keyword generation + insights)
-        cost_estimate = credits_manager.estimate_llm_cost_from_text(
-            text_content=topic * 50,  # Rough estimate for 50 keywords
-            model_name=None  # Use default model
-        )
-        # Multiply by 3 for the 3 AI operations
-        estimated_credits = cost_estimate['final_cost'] * 3
+        # Estimate cost more accurately (3 AI calls typically use ~7000 input + ~700 output tokens)
+        # Context detection: ~3000 input, ~80 output
+        # Keyword generation: ~3000 input, ~450 output
+        # Insights generation: ~1000 input, ~170 output
+        # Total: ~7000 input, ~700 output
+        estimated_input_tokens = 7000
+        estimated_output_tokens = 700
 
-        # Check credits
+        # Get the AI provider to calculate actual cost
+        ai_provider = get_ai_provider()
+        config = ai_provider.config  # Config is stored as instance variable
+
+        # Calculate estimated cost in credits (1 credit = $0.01)
+        input_cost = estimated_input_tokens * config.get('input_cost_per_token', 0.000001)
+        output_cost = estimated_output_tokens * config.get('output_cost_per_token', 0.00001)
+        estimated_credits = (input_cost + output_cost) * 100  # Convert to credits
+
+        logger.info(f"Estimated credits needed: {estimated_credits:.2f} (based on ~{estimated_input_tokens} input + {estimated_output_tokens} output tokens)")
+
+        # Check credits BEFORE making any AI calls
         credit_check = credits_manager.check_sufficient_credits(user_id, estimated_credits)
         if not credit_check.get('sufficient', False):
+            logger.warning(f"Insufficient credits for user {user_id}. Required: {estimated_credits:.2f}, Available: {credit_check['current_credits']:.2f}")
             return jsonify({
                 'success': False,
                 'error': f"Insufficient credits. Required: ~{estimated_credits:.2f}, Available: {credit_check['current_credits']:.2f}",
@@ -790,7 +802,7 @@ def ai_keyword_explore():
 
         logger.info(f"TOTAL tokens for all 3 API calls: {total_input_tokens} in / {total_output_tokens} out")
 
-        # Deduct credits if we have token usage
+        # Deduct credits - MUST succeed or we don't return results
         if total_input_tokens > 0:
             ai_provider = get_ai_provider()
             deduction_result = credits_manager.deduct_llm_credits(
@@ -803,7 +815,13 @@ def ai_keyword_explore():
             )
 
             if not deduction_result['success']:
+                # CRITICAL: If deduction fails, DO NOT return results
                 logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+                return jsonify({
+                    'success': False,
+                    'error': f"Credit deduction failed: {deduction_result.get('message')}",
+                    'error_type': 'credit_deduction_failed'
+                }), 402
 
         # Clean up internal token usage from context before returning
         context_copy = {k: v for k, v in context.items() if not k.startswith('_')}

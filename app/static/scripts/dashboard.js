@@ -466,13 +466,11 @@ async function loadXSuggestions(forceRefresh = false) {
 
     } catch (error) {
         console.error('Error loading X suggestions:', error);
-        suggestionsContainer.innerHTML = `
-            <div class="suggestions-error">
-                <i class="ph ph-warning-circle" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
-                <strong>Unable to load suggestions</strong>
-                <p style="margin-top: 0.5rem; font-size: 0.875rem;">${error.message}</p>
-            </div>
-        `;
+
+        // Hide the entire section when there's an error (e.g., no credits, API error)
+        if (suggestionsSection) {
+            suggestionsSection.style.display = 'none';
+        }
     } finally {
         // Re-enable refresh button
         if (refreshBtn) {

@@ -8,6 +8,9 @@ from typing import Dict, List, Optional
 from datetime import datetime
 from app.system.ai_provider.ai_provider import get_ai_provider
 
+# Configure logging FIRST
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Get prompts directory
 PROMPTS_DIR = Path(__file__).parent / 'prompts'
@@ -16,8 +19,16 @@ def load_prompt(filename: str, section: str = None) -> str:
     """Load a prompt from text file, optionally extracting a specific section"""
     try:
         prompt_path = PROMPTS_DIR / filename
+        logger.info(f"Loading prompt from: {prompt_path}")
+
+        if not prompt_path.exists():
+            logger.error(f"Prompt file not found: {prompt_path}")
+            raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
+
         with open(prompt_path, 'r', encoding='utf-8') as f:
             content = f.read()
+
+        logger.info(f"Loaded prompt file, length: {len(content)} chars")
 
         # If no section specified, return full content
         if not section:
@@ -27,26 +38,35 @@ def load_prompt(filename: str, section: str = None) -> str:
         section_marker = f"############# {section} #############"
         if section_marker not in content:
             logger.error(f"Section '{section}' not found in {filename}")
+            logger.error(f"Available content preview: {content[:200]}")
             raise ValueError(f"Section '{section}' not found")
 
-        # Split by section markers and find the requested section
+        # Split content by the section marker pattern
+        # The content after "############# SECTION_NAME #############" is in the NEXT part
         parts = content.split("#############")
+        logger.info(f"Split into {len(parts)} parts")
+
         for i, part in enumerate(parts):
+            part_preview = part.strip()[:50] if part.strip() else "(empty)"
+            logger.info(f"Part {i}: {part_preview}")
+
             if section in part:
-                # Get content after this marker and before next marker
-                section_content = part.split("\n", 1)[1] if "\n" in part else ""
-                # Find where next section starts
+                logger.info(f"Found section '{section}' in part {i}")
+
+                # The actual content is in the NEXT part
                 if i + 1 < len(parts):
-                    section_content = section_content.split(f"\n#############")[0]
-                return section_content.strip()
+                    next_part = parts[i + 1].strip()
+                    logger.info(f"Getting content from next part (part {i+1}), length: {len(next_part)} chars")
+                    logger.info(f"Content preview: {next_part[:100]}")
+                    return next_part
+                else:
+                    logger.error(f"Section '{section}' found but no content part after it")
+                    return ""
 
         raise ValueError(f"Section '{section}' not found")
     except Exception as e:
         logger.error(f"Error loading prompt {filename}, section {section}: {e}")
         raise
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 
 class XContentSuggestions:
