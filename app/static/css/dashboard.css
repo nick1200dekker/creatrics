@@ -1693,3 +1693,137 @@ html.dark #mobile-menu-toggle:hover {
         width: 100%;
     }
 }
+
+/* Mission & Vision Section */
+.mission-vision-section {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border-radius: 24px;
+    padding: 3rem;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+html.dark .mission-vision-section {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.mission-vision-content {
+    text-align: center;
+}
+
+.mission-vision-icon {
+    font-size: 4rem;
+    color: #3B82F6;
+    margin-bottom: 1.5rem;
+}
+
+html.dark .mission-vision-icon {
+    color: #60A5FA;
+}
+
+.mission-vision-content h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 2.5rem;
+}
+
+.mission-vision-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.mission-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: left;
+    transition: all 0.3s ease;
+}
+
+html.dark .mission-card {
+    background: rgba(39, 39, 42, 0.7);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.mission-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.mission-card .card-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    font-size: 1.75rem;
+    color: #3B82F6;
+}
+
+html.dark .mission-card .card-icon {
+    color: #60A5FA;
+}
+
+.mission-card h3 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.875rem;
+}
+
+.mission-card p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .mission-vision-section {
+        padding: 2rem 1.5rem;
+    }
+
+    .mission-vision-content h2 {
+        font-size: 1.875rem;
+        margin-bottom: 2rem;
+    }
+
+    .mission-vision-cards {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .mission-card {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .mission-vision-section {
+        padding: 1.5rem 1rem;
+    }
+
+    .mission-vision-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .mission-vision-content h2 {
+        font-size: 1.5rem;
+    }
+
+    .mission-card h3 {
+        font-size: 1.125rem;
+    }
+
+    .mission-card p {
+        font-size: 0.875rem;
+    }
+}
