@@ -73,14 +73,29 @@ function saveReferenceDescription() {
     }
 }
 
+// Toggle generation card selection
+function toggleGenerationCard(card, type) {
+    card.classList.toggle('active');
+
+    // Show/hide reference description section based on Description card selection
+    if (type === 'description') {
+        const referenceSection = document.getElementById('referenceDescriptionSection');
+        if (card.classList.contains('active')) {
+            referenceSection.style.display = 'block';
+        } else {
+            referenceSection.style.display = 'none';
+        }
+    }
+}
+
 // Main generate function
 async function generateContent() {
     const input = document.getElementById('videoInput').value.trim();
     const keyword = document.getElementById('keywordInput').value.trim();
     const referenceDescription = document.getElementById('referenceDescription').value.trim();
-    const generateTitles = document.getElementById('generateTitlesCheck').checked;
-    const generateDescription = document.getElementById('generateDescriptionCheck').checked;
-    const generateTags = document.getElementById('generateTagsCheck').checked;
+    const generateTitles = document.getElementById('titlesCard').classList.contains('active');
+    const generateDescription = document.getElementById('descriptionCard').classList.contains('active');
+    const generateTags = document.getElementById('tagsCard').classList.contains('active');
 
     // Validation
     if (!input) {

@@ -50,20 +50,24 @@ def index():
 
 @prompts_bp.route('/folder/<folder_name>')
 def view_folder(folder_name):
-    """View all prompt files in a folder"""
+    """View prompt files in a folder or redirect if only one file"""
     try:
         folder_path = SCRIPTS_DIR / folder_name / 'prompts'
 
         if not folder_path.exists():
             return jsonify({'error': 'Folder not found'}), 404
 
-        prompt_files = []
         txt_files = sorted(folder_path.glob('*.txt'))
+
+        if not txt_files:
+            return jsonify({'error': 'No prompt files found in folder'}), 404
 
         # If only one file, redirect directly to edit page
         if len(txt_files) == 1:
             return redirect(url_for('prompts.edit_file', folder_name=folder_name, filename=txt_files[0].name))
 
+        # Multiple files - show folder view with list
+        prompt_files = []
         for txt_file in txt_files:
             with open(txt_file, 'r', encoding='utf-8') as f:
                 content = f.read()

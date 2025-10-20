@@ -50,7 +50,7 @@
                         <div class="form-group">
                             <label class="form-label">
                                 <i class="ph ph-key"></i>
-                                Target Keyword (Optional)
+                                Target Keyword
                                 <div class="info-tooltip">
                                     <i class="ph ph-info"></i>
                                     <span class="tooltip-text">If provided, titles and descriptions will start with this exact keyword</span>
@@ -67,7 +67,7 @@
                         <div class="form-group">
                             <label class="form-label">
                                 <i class="ph ph-article"></i>
-                                Video Concept or Script
+                                Video Concept/ Script
                             </label>
                             <textarea class="input-textarea"
                                       id="videoInput"
@@ -77,8 +77,30 @@
                             <div class="char-count" id="charCount">0 / 5000</div>
                         </div>
 
-                        <!-- Reference Description Section -->
+                        <!-- Generation Options -->
                         <div class="form-group">
+                            <label class="form-label">
+                                <i class="ph ph-check-square"></i>
+                                What to Generate
+                            </label>
+                            <div class="generation-grid">
+                                <div class="generation-card active" onclick="toggleGenerationCard(this, 'titles')" id="titlesCard">
+                                    <i class="ph ph-text-aa"></i>
+                                    <span>Titles</span>
+                                </div>
+                                <div class="generation-card" onclick="toggleGenerationCard(this, 'description')" id="descriptionCard">
+                                    <i class="ph ph-article"></i>
+                                    <span>Description</span>
+                                </div>
+                                <div class="generation-card" onclick="toggleGenerationCard(this, 'tags')" id="tagsCard">
+                                    <i class="ph ph-hash"></i>
+                                    <span>Tags</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reference Description Section (Only shown when Description is selected) -->
+                        <div class="form-group" id="referenceDescriptionSection" style="display: none;">
                             <div class="reference-section">
                                 <div class="reference-header">
                                     <label class="form-label" style="margin-bottom: 0;">
@@ -107,31 +129,6 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Generation Options -->
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="ph ph-check-square"></i>
-                                What to Generate
-                            </label>
-                            <div class="generation-options">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="generateTitlesCheck" checked>
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-text">Titles</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="generateDescriptionCheck">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-text">Description</span>
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="generateTagsCheck">
-                                    <span class="checkbox-custom"></span>
-                                    <span class="checkbox-text">Tags</span>
-                                </label>
                             </div>
                         </div>
 

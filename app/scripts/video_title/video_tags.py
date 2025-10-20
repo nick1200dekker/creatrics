@@ -13,7 +13,7 @@ from app.system.ai_provider.ai_provider import get_ai_provider
 from app.scripts.keyword_research import KeywordResearcher
 
 
-# Get prompts directory
+# Get prompts directory (now in video_title folder)
 PROMPTS_DIR = Path(__file__).parent / 'prompts'
 
 def load_prompt(filename: str, section: str = None) -> str:
@@ -72,7 +72,7 @@ class VideoTagsGenerator:
     def get_prompt_template(self) -> str:
         """Get the prompt template for video tags generation"""
         try:
-            return load_prompt('prompts.txt', 'USER_PROMPT')
+            return load_prompt('video_tags_prompts.txt', 'USER_PROMPT')
         except Exception as e:
             logger.error(f"Error reading prompt template: {e}")
             return self.get_fallback_prompt()
@@ -124,7 +124,7 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
 )}"""
 
                     # System prompt to ensure correct format
-                    system_prompt_template = load_prompt('prompts.txt', 'SYSTEM_PROMPT')
+                    system_prompt_template = load_prompt('video_tags_prompts.txt', 'SYSTEM_PROMPT')
                     system_prompt = system_prompt_template.format(
                         current_date=now.strftime('%B %d, %Y'),
                         current_year=now.year

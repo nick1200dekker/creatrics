@@ -12,7 +12,7 @@ from app.system.ai_provider.ai_provider import get_ai_provider
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_title.video_title import VideoTitleGenerator
 from app.scripts.video_title.video_description import VideoDescriptionGenerator
-from app.scripts.video_tags.video_tags import VideoTagsGenerator
+from app.scripts.video_title.video_tags import VideoTagsGenerator
 from app.scripts.optimize_video.thumbnail_analyzer import ThumbnailAnalyzer
 
 

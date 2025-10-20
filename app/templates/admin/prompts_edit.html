@@ -332,12 +332,7 @@
     }
 
     .warning-banner strong {
-        color: #EAB308;
         font-weight: 600;
-    }
-
-    html.dark .warning-banner strong {
-        color: #FCD34D;
     }
 
     /* Responsive */
@@ -383,7 +378,7 @@
                 <h1>{{ filename }}</h1>
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <a href="{{ url_for('prompts.view_folder', folder_name=folder_name) }}" class="back-link">
+                <a href="{{ url_for('prompts.index') }}" class="back-link">
                     <i class="ph ph-arrow-left"></i>
                     Back
                 </a>
@@ -452,7 +447,7 @@
         <div class="warning-banner">
             <i class="ph ph-warning"></i>
             <p>
-                <strong>⚠️ Important:</strong> Changes take effect immediately without restart. Be careful when editing prompts used in production.
+                <strong>Important:</strong> Changes take effect immediately without restart. Be careful when editing prompts used in production.
             </p>
         </div>
     </div>

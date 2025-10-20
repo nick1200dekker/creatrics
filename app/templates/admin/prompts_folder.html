@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}{{ folder_name }} - Prompts{% endblock %}
+
+{% block content %}
+<style>
+    /* Override base template styles */
+    .content-panel {
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Main wrapper */
+    .prompts-wrapper {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-secondary);
+        overflow: hidden;
+        width: 100%;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .prompts-wrapper {
+        border-color: transparent;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Header section */
+    .prompts-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-primary);
+        background: linear-gradient(135deg,
+            rgba(59, 130, 246, 0.03) 0%,
+            rgba(139, 92, 246, 0.03) 100%);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    html.dark .prompts-header {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+        border-bottom-color: rgba(63, 63, 70, 0.5);
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+
+    .back-link:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .prompts-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    /* Files container */
+    .files-container {
+        padding: 1.5rem;
+    }
+
+    .files-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    /* File card */
+    .file-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+        transition: all 0.3s ease;
+    }
+
+    html.dark .file-card {
+        background: rgba(39, 39, 42, 0.8);
+        border-color: rgba(63, 63, 70, 0.8);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .file-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+    }
+
+    html.dark .file-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .file-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .file-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .edit-btn {
+        padding: 0.625rem 1.25rem;
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        border: none;
+        cursor: pointer;
+    }
+
+    .edit-btn:hover {
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .file-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.875rem;
+        color: var(--text-tertiary);
+    }
+
+    .meta-item i {
+        font-size: 1rem;
+    }
+
+    .sections-badge {
+        padding: 0.25rem 0.75rem;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #10B981;
+    }
+
+    html.dark .sections-badge {
+        background: rgba(16, 185, 129, 0.15);
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    /* Sections list */
+    .sections-wrapper {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-primary);
+    }
+
+    html.dark .sections-wrapper {
+        border-top-color: rgba(63, 63, 70, 0.5);
+    }
+
+    .sections-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 0.75rem;
+    }
+
+    .sections-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .section-tag {
+        padding: 0.5rem 0.75rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        font-size: 0.813rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    html.dark .section-tag {
+        background: rgba(63, 63, 70, 0.5);
+        border-color: rgba(82, 82, 91, 0.5);
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 3.5rem 2rem;
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        border: 1px dashed var(--border-primary);
+    }
+
+    html.dark .empty-state {
+        background: rgba(39, 39, 42, 0.6);
+        border-color: rgba(63, 63, 70, 0.6);
+    }
+
+    .empty-state i {
+        font-size: 3.5rem;
+        color: var(--text-tertiary);
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    html.dark .empty-state i {
+        color: #60A5FA;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        color: var(--text-tertiary);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .prompts-header {
+            padding: 1rem;
+        }
+
+        .prompts-title {
+            font-size: 1.25rem;
+        }
+
+        .files-container {
+            padding: 1rem;
+        }
+
+        .file-card {
+            padding: 1.25rem;
+        }
+
+        .file-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .edit-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .file-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+    }
+</style>
+
+<div class="prompts-wrapper">
+    <!-- Header -->
+    <div class="prompts-header">
+        <h1 class="prompts-title">{{ folder_name }}</h1>
+        <a href="{{ url_for('prompts.index') }}" class="back-link">
+            <i class="ph ph-arrow-left"></i>
+            Back
+        </a>
+    </div>
+
+    <!-- Files List -->
+    <div class="files-container">
+        <div class="files-list">
+            {% for file in files %}
+            <div class="file-card">
+                <div class="file-card-header">
+                    <h3 class="file-name">{{ file.filename }}</h3>
+                    <a href="{{ url_for('prompts.edit_file', folder_name=folder_name, filename=file.filename) }}"
+                       class="edit-btn">
+                        <i class="ph ph-pencil-simple"></i>
+                        Edit
+                    </a>
+                </div>
+
+                <div class="file-meta">
+                    <span class="meta-item">
+                        <i class="ph ph-file-text"></i>
+                        {{ file.line_count }} lines
+                    </span>
+                    {% if file.has_sections %}
+                    <span class="sections-badge">
+                        {{ file.sections|length }} sections
+                    </span>
+                    {% endif %}
+                </div>
+
+                {% if file.has_sections %}
+                <div class="sections-wrapper">
+                    <p class="sections-label">Sections:</p>
+                    <div class="sections-list">
+                        {% for section in file.sections %}
+                        <span class="section-tag">{{ section }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if not files %}
+        <div class="empty-state">
+            <i class="ph ph-file-x"></i>
+            <p>No prompt files found in this folder.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -4,7 +4,7 @@ from app.system.auth.middleware import auth_required
 from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_title.video_title import VideoTitleGenerator
-from app.scripts.video_tags.video_tags import VideoTagsGenerator
+from app.scripts.video_title.video_tags import VideoTagsGenerator
 from app.scripts.video_title.video_description import VideoDescriptionGenerator
 import logging
 

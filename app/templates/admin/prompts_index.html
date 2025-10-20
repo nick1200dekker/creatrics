@@ -95,14 +95,20 @@
     }
 
     .info-banner p {
-        color: white;
         font-size: 0.875rem;
         margin: 0;
     }
 
-    .info-banner strong {
+    html.dark .info-banner p {
         color: white;
+    }
+
+    .info-banner strong {
         font-weight: 600;
+    }
+
+    html.dark .info-banner strong {
+        color: white;
     }
 
     /* Folders grid */
@@ -265,7 +271,7 @@
     <div class="info-banner">
         <i class="ph ph-info"></i>
         <p>
-            <strong>💡 Note:</strong> Changes take effect immediately - no restart required!
+            <strong>Note:</strong> Changes take effect immediately - no restart required!
         </p>
     </div>
 
