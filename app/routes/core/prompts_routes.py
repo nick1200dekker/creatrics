@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, g, redirect, url_for
 from pathlib import Path
 import logging
 
@@ -7,6 +7,20 @@ logger = logging.getLogger(__name__)
 prompts_bp = Blueprint('prompts', __name__, url_prefix='/admin/prompts')
 
 SCRIPTS_DIR = Path(__file__).parent.parent.parent / 'scripts'
+
+def check_admin_access():
+    """Check if user has admin access"""
+    if not hasattr(g, 'user') or not g.user:
+        return False
+
+    subscription_plan = g.user.get('subscription_plan', '').lower().strip()
+    return subscription_plan in ['admin', 'admin plan', 'administrator']
+
+@prompts_bp.before_request
+def require_admin():
+    """Require admin access for all routes in this blueprint"""
+    if not check_admin_access():
+        return redirect(url_for('home.dashboard'))
 
 @prompts_bp.route('/')
 def index():

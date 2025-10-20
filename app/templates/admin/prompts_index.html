@@ -3,41 +3,299 @@
 {% block title %}Prompts Manager{% endblock %}
 
 {% block content %}
-<div class="dashboard-wrapper">
-    <div class="dashboard-container">
-        <div class="dashboard-header">
-            <div class="welcome-content">
-                <h1 class="welcome-title">AI Prompts Manager</h1>
-                <p class="welcome-subtitle">Manage and edit all AI prompts across your tools</p>
-            </div>
-        </div>
+<style>
+    /* Override base template styles */
+    .content-panel {
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
 
-        <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 1rem; margin-bottom: 2rem;">
-            <p style="color: var(--text-primary); font-size: 0.875rem;">
-                <strong style="color: #3B82F6;">💡 Note:</strong> Changes take effect immediately - no restart required!
-            </p>
-        </div>
+    /* Main wrapper - matches dashboard and analytics */
+    .prompts-wrapper {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-secondary);
+        overflow: hidden;
+        width: 100%;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
 
-        <div class="channels-grid">
+    html.dark .prompts-wrapper {
+        border-color: transparent;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Header section */
+    .prompts-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-primary);
+        background: linear-gradient(135deg,
+            rgba(59, 130, 246, 0.03) 0%,
+            rgba(139, 92, 246, 0.03) 100%);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .prompts-header {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+        border-bottom-color: rgba(63, 63, 70, 0.5);
+    }
+
+    .prompts-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .prompts-title i {
+        color: #3B82F6;
+    }
+
+    html.dark .prompts-title i {
+        color: #60A5FA;
+    }
+
+    .prompts-subtitle {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    /* Info banner */
+    .info-banner {
+        margin: 1.5rem;
+        padding: 1rem 1.25rem;
+        background: rgba(59, 130, 246, 0.08);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    html.dark .info-banner {
+        background: rgba(59, 130, 246, 0.12);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .info-banner i {
+        color: #3B82F6;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    html.dark .info-banner i {
+        color: #60A5FA;
+    }
+
+    .info-banner p {
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .info-banner strong {
+        color: #3B82F6;
+        font-weight: 600;
+    }
+
+    html.dark .info-banner strong {
+        color: #60A5FA;
+    }
+
+    /* Folders grid */
+    .folders-container {
+        padding: 1.5rem;
+    }
+
+    .folders-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* Folder card - matches channel card style */
+    .folder-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: 20px;
+        padding: 1.5rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+        display: block;
+        position: relative;
+        overflow: hidden;
+    }
+
+    html.dark .folder-card {
+        background: rgba(39, 39, 42, 0.8);
+        border-color: rgba(63, 63, 70, 0.8);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .folder-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    html.dark .folder-card:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        border-color: rgba(96, 165, 250, 0.4);
+    }
+
+    .folder-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+
+    .folder-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        flex: 1;
+        margin: 0;
+    }
+
+    .file-count-badge {
+        padding: 0.25rem 0.75rem;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #3B82F6;
+        white-space: nowrap;
+    }
+
+    html.dark .file-count-badge {
+        background: rgba(96, 165, 250, 0.15);
+        border-color: rgba(96, 165, 250, 0.3);
+        color: #60A5FA;
+    }
+
+    .folder-description {
+        font-size: 0.875rem;
+        color: var(--text-tertiary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+    }
+
+    .folder-description i {
+        font-size: 1rem;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 3.5rem 2rem;
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        border: 1px dashed var(--border-primary);
+        margin: 1.5rem;
+    }
+
+    html.dark .empty-state {
+        background: rgba(39, 39, 42, 0.6);
+        border-color: rgba(63, 63, 70, 0.6);
+    }
+
+    .empty-state i {
+        font-size: 3.5rem;
+        color: var(--text-tertiary);
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    html.dark .empty-state i {
+        color: #60A5FA;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        color: var(--text-tertiary);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .prompts-header {
+            padding: 1rem;
+        }
+
+        .prompts-title {
+            font-size: 1.25rem;
+        }
+
+        .folders-container {
+            padding: 1rem;
+        }
+
+        .folders-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .info-banner {
+            margin: 1rem;
+            padding: 0.875rem 1rem;
+        }
+    }
+</style>
+
+<div class="prompts-wrapper">
+    <!-- Header -->
+    <div class="prompts-header">
+        <h1 class="prompts-title">
+            <i class="ph ph-file-text"></i>
+            AI Prompts Manager
+        </h1>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="info-banner">
+        <i class="ph ph-info"></i>
+        <p>
+            <strong>💡 Note:</strong> Changes take effect immediately - no restart required!
+        </p>
+    </div>
+
+    <!-- Folders Grid -->
+    <div class="folders-container">
+        <div class="folders-grid">
             {% for folder in folders %}
-            <a href="{{ url_for('prompts.view_folder', folder_name=folder.name) }}"
-               style="display: block; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 20px; padding: 1.5rem; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);">
-                <div style="display: flex; align-items: center; justify-content: between; margin-bottom: 0.5rem;">
-                    <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); flex: 1;">{{ folder.name }}</h3>
-                    <span style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); color: #3B82F6; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 12px;">
+            <a href="{{ url_for('prompts.view_folder', folder_name=folder.name) }}" class="folder-card">
+                <div class="folder-card-header">
+                    <h3 class="folder-name">{{ folder.name }}</h3>
+                    <span class="file-count-badge">
                         {{ folder.file_count }} file{% if folder.file_count != 1 %}s{% endif %}
                     </span>
                 </div>
-                <p style="font-size: 0.875rem; color: var(--text-tertiary);">
-                    📁 Click to view prompts
+                <p class="folder-description">
+                    <i class="ph ph-folder-open"></i>
+                    Click to view prompts
                 </p>
             </a>
             {% endfor %}
         </div>
 
         {% if not folders %}
-        <div style="text-align: center; padding: 3.5rem 2rem; background: var(--bg-secondary); border-radius: 16px; border: 1px dashed var(--border-primary);">
-            <p style="color: var(--text-tertiary);">No prompt folders found.</p>
+        <div class="empty-state">
+            <i class="ph ph-folder-notch-open"></i>
+            <p>No prompt folders found.</p>
         </div>
         {% endif %}
     </div>

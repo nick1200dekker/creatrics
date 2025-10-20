@@ -3,105 +3,459 @@
 {% block title %}Edit {{ filename }} - Prompts{% endblock %}
 
 {% block content %}
-<div class="dashboard-wrapper">
-    <div class="dashboard-container">
-        <div style="margin-bottom: 1.5rem;">
-            <a href="{{ url_for('prompts.view_folder', folder_name=folder_name) }}" style="color: #3B82F6; text-decoration: none; font-weight: 500; font-size: 0.875rem;">
-                ← Back to {{ folder_name }}
-            </a>
-        </div>
+<style>
+    /* Override base template styles */
+    .content-panel {
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
 
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-            <div>
-                <h1 class="welcome-title" style="margin-bottom: 0.25rem;">{{ filename }}</h1>
-                <p style="color: var(--text-tertiary); font-size: 0.875rem;">{{ folder_name }}</p>
+    /* Main wrapper */
+    .prompts-wrapper {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-secondary);
+        overflow: hidden;
+        width: 100%;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .prompts-wrapper {
+        border-color: transparent;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Header section */
+    .prompts-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-primary);
+        background: linear-gradient(135deg,
+            rgba(59, 130, 246, 0.03) 0%,
+            rgba(139, 92, 246, 0.03) 100%);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .prompts-header {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+        border-bottom-color: rgba(63, 63, 70, 0.5);
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        color: #3B82F6;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    html.dark .back-link {
+        color: #60A5FA;
+    }
+
+    .back-link:hover {
+        gap: 0.5rem;
+    }
+
+    .header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-info h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .save-btn {
+        padding: 0.875rem 1.75rem;
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .save-btn:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .save-btn:active {
+        transform: translateY(0);
+    }
+
+    /* Save status */
+    .save-status {
+        margin: 1rem 1.5rem 0;
+        padding: 1rem;
+        border-radius: 12px;
+        display: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .save-status.success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #10B981;
+    }
+
+    .save-status.error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #EF4444;
+    }
+
+    .save-status.saving {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        color: #3B82F6;
+    }
+
+    html.dark .save-status.error {
+        color: #f87171;
+    }
+
+    html.dark .save-status.success {
+        color: #6EE7B7;
+    }
+
+    html.dark .save-status.saving {
+        color: #60A5FA;
+    }
+
+    /* Editor container */
+    .editor-container {
+        padding: 1.5rem;
+    }
+
+    /* Tabs for sections */
+    .tabs-wrapper {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+    }
+
+    html.dark .tabs-wrapper {
+        background: rgba(39, 39, 42, 0.8);
+        border-color: rgba(63, 63, 70, 0.8);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .tabs-header {
+        border-bottom: 1px solid var(--border-primary);
+        background: var(--bg-secondary);
+        display: flex;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    html.dark .tabs-header {
+        background: rgba(39, 39, 42, 0.6);
+        border-bottom-color: rgba(63, 63, 70, 0.5);
+    }
+
+    .tabs-header::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .tabs-header::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .tabs-header::-webkit-scrollbar-thumb {
+        background: var(--border-primary);
+        border-radius: 2px;
+    }
+
+    .tab-button {
+        white-space: nowrap;
+        padding: 1rem 1.5rem;
+        border: none;
+        background: transparent;
+        border-bottom: 2px solid transparent;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .tab-button:hover {
+        color: var(--text-primary);
+        border-bottom-color: var(--border-primary);
+    }
+
+    .tab-button.active {
+        color: #3B82F6;
+        border-bottom-color: #3B82F6;
+    }
+
+    html.dark .tab-button.active {
+        color: #60A5FA;
+        border-bottom-color: #60A5FA;
+    }
+
+    .tabs-content {
+        padding: 1.5rem;
+    }
+
+    .section-content {
+        display: none;
+    }
+
+    .section-content.active {
+        display: block;
+    }
+
+    .section-header {
+        margin-bottom: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .section-description {
+        font-size: 0.875rem;
+        color: var(--text-tertiary);
+        margin: 0;
+    }
+
+    /* Editor textarea */
+    .editor-textarea {
+        width: 100%;
+        min-height: 400px;
+        padding: 1rem;
+        border: 1px solid var(--border-primary);
+        border-radius: 12px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 0.875rem;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        resize: vertical;
+        transition: all 0.2s ease;
+    }
+
+    html.dark .editor-textarea {
+        background: rgba(39, 39, 42, 0.6);
+        border-color: rgba(63, 63, 70, 0.6);
+    }
+
+    .editor-textarea:focus {
+        outline: none;
+        border-color: #3B82F6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    html.dark .editor-textarea:focus {
+        border-color: #60A5FA;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    }
+
+    /* Simple editor (no sections) */
+    .simple-editor {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+    }
+
+    html.dark .simple-editor {
+        background: rgba(39, 39, 42, 0.8);
+        border-color: rgba(63, 63, 70, 0.8);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Warning banner */
+    .warning-banner {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: rgba(234, 179, 8, 0.1);
+        border: 1px solid rgba(234, 179, 8, 0.3);
+        border-radius: 12px;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    html.dark .warning-banner {
+        background: rgba(234, 179, 8, 0.15);
+        border-color: rgba(234, 179, 8, 0.4);
+    }
+
+    .warning-banner i {
+        color: #EAB308;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        margin-top: 0.125rem;
+    }
+
+    html.dark .warning-banner i {
+        color: #FCD34D;
+    }
+
+    .warning-banner p {
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .warning-banner strong {
+        color: #EAB308;
+        font-weight: 600;
+    }
+
+    html.dark .warning-banner strong {
+        color: #FCD34D;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .prompts-header {
+            padding: 1rem;
+        }
+
+        .header-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-info h1 {
+            font-size: 1.25rem;
+        }
+
+        .save-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .editor-container {
+            padding: 1rem;
+        }
+
+        .tabs-content {
+            padding: 1rem;
+        }
+
+        .editor-textarea {
+            min-height: 300px;
+            font-size: 0.813rem;
+        }
+    }
+</style>
+
+<div class="prompts-wrapper">
+    <!-- Header -->
+    <div class="prompts-header">
+        <div class="header-row">
+            <div class="header-info">
+                <h1>{{ filename }}</h1>
             </div>
-            <button onclick="savePrompt()" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 0.875rem 1.75rem; border-radius: 12px; border: none; font-weight: 600; font-size: 0.9375rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.625rem; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                💾 Save Changes
-            </button>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <a href="{{ url_for('prompts.view_folder', folder_name=folder_name) }}" class="back-link" style="margin-bottom: 0; padding: 0.875rem 1.75rem; background: transparent; border: 1px solid var(--border-primary); border-radius: 12px; font-size: 0.9375rem;">
+                    <i class="ph ph-arrow-left"></i>
+                    Back
+                </a>
+                <button onclick="savePrompt()" class="save-btn">
+                    <i class="ph ph-floppy-disk"></i>
+                    Save Changes
+                </button>
+            </div>
         </div>
+    </div>
 
-        <div id="save-status" style="display: none; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;"></div>
+    <!-- Save Status -->
+    <div id="save-status" class="save-status"></div>
 
+    <!-- Editor -->
+    <div class="editor-container">
         {% if has_sections %}
         <!-- Tabbed interface for sections -->
-        <div style="background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 20px; overflow: hidden; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);">
-            <div style="border-bottom: 1px solid var(--border-primary); background: var(--bg-secondary);">
-                <nav style="display: flex; overflow-x: auto;" aria-label="Tabs">
-                    {% for section in sections %}
-                    <button onclick="switchTab('{{ section.name }}')"
-                            id="tab-{{ loop.index0 }}"
-                            class="tab-button"
-                            style="white-space: nowrap; padding: 1rem 1.5rem; border-bottom: 2px solid {% if loop.first %}#3B82F6{% else %}transparent{% endif %}; font-weight: 500; font-size: 0.875rem; color: {% if loop.first %}#3B82F6{% else %}var(--text-secondary){% endif %}; background: transparent; cursor: pointer; transition: all 0.2s ease;">
-                        {{ section.name }}
-                    </button>
-                    {% endfor %}
-                    <button onclick="switchTab('raw')"
-                            id="tab-raw"
-                            class="tab-button"
-                            style="white-space: nowrap; padding: 1rem 1.5rem; border-bottom: 2px solid transparent; font-weight: 500; font-size: 0.875rem; color: var(--text-secondary); background: transparent; cursor: pointer; transition: all 0.2s ease;">
-                        📄 Raw View
-                    </button>
-                </nav>
+        <div class="tabs-wrapper">
+            <div class="tabs-header">
+                {% for section in sections %}
+                <button onclick="switchTab('{{ section.name }}')"
+                        id="tab-{{ loop.index0 }}"
+                        class="tab-button {% if loop.first %}active{% endif %}">
+                    {{ section.name }}
+                </button>
+                {% endfor %}
+                <button onclick="switchTab('raw')"
+                        id="tab-raw"
+                        class="tab-button">
+                    <i class="ph ph-file-text"></i> Raw View
+                </button>
             </div>
 
-            <div style="padding: 1.5rem;">
+            <div class="tabs-content">
                 {% for section in sections %}
-                <div id="section-{{ loop.index0 }}" class="section-content" style="{% if not loop.first %}display: none;{% endif %}">
-                    <div style="margin-bottom: 1rem;">
-                        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">{{ section.name }}</h3>
-                        <p style="font-size: 0.875rem; color: var(--text-tertiary);">Edit this section below. Changes are saved to the entire file.</p>
+                <div id="section-{{ loop.index0 }}" class="section-content {% if loop.first %}active{% endif %}">
+                    <div class="section-header">
+                        <h3 class="section-title">{{ section.name }}</h3>
+                        <p class="section-description">Edit this section below. Changes are saved to the entire file.</p>
                     </div>
                     <textarea id="editor-{{ loop.index0 }}"
-                              class="section-editor"
-                              data-section="{{ section.name }}"
-                              style="width: 100%; min-height: 400px; padding: 1rem; border: 1px solid var(--border-primary); border-radius: 12px; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.875rem; background: var(--bg-secondary); color: var(--text-primary); resize: vertical;">{{ section.content }}</textarea>
+                              class="editor-textarea section-editor"
+                              data-section="{{ section.name }}">{{ section.content }}</textarea>
                 </div>
                 {% endfor %}
 
                 <!-- Raw view -->
-                <div id="section-raw" class="section-content" style="display: none;">
-                    <div style="margin-bottom: 1rem;">
-                        <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Raw File Content</h3>
-                        <p style="font-size: 0.875rem; color: var(--text-tertiary);">View and edit the entire file with section markers.</p>
+                <div id="section-raw" class="section-content">
+                    <div class="section-header">
+                        <h3 class="section-title">Raw File Content</h3>
+                        <p class="section-description">View and edit the entire file with section markers.</p>
                     </div>
-                    <textarea id="editor-raw"
-                              style="width: 100%; min-height: 400px; padding: 1rem; border: 1px solid var(--border-primary); border-radius: 12px; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.875rem; background: var(--bg-secondary); color: var(--text-primary); resize: vertical;">{{ content }}</textarea>
+                    <textarea id="editor-raw" class="editor-textarea">{{ content }}</textarea>
                 </div>
             </div>
         </div>
         {% else %}
         <!-- Simple editor for non-sectioned files -->
-        <div style="background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 20px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);">
-            <textarea id="editor-simple"
-                      style="width: 100%; min-height: 400px; padding: 1rem; border: 1px solid var(--border-primary); border-radius: 12px; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.875rem; background: var(--bg-secondary); color: var(--text-primary); resize: vertical;">{{ content }}</textarea>
+        <div class="simple-editor">
+            <textarea id="editor-simple" class="editor-textarea">{{ content }}</textarea>
         </div>
         {% endif %}
 
-        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 12px;">
-            <p style="font-size: 0.875rem; color: var(--text-primary);">
-                <strong style="color: #EAB308;">⚠️ Important:</strong> Changes take effect immediately without restart. Be careful when editing prompts used in production.
+        <!-- Warning banner -->
+        <div class="warning-banner">
+            <i class="ph ph-warning"></i>
+            <p>
+                <strong>⚠️ Important:</strong> Changes take effect immediately without restart. Be careful when editing prompts used in production.
             </p>
         </div>
     </div>
 </div>
-
-<style>
-.tab-button:hover {
-    color: var(--text-primary) !important;
-    border-bottom-color: var(--border-primary) !important;
-}
-
-.tab-button.active {
-    color: #3B82F6 !important;
-    border-bottom-color: #3B82F6 !important;
-}
-
-html.dark .tab-button.active {
-    color: #60A5FA !important;
-    border-bottom-color: #60A5FA !important;
-}
-</style>
 
 <script>
 let currentTab = 0;
@@ -111,18 +465,11 @@ const sectionCount = {{ sections|length if has_sections else 0 }};
 function switchTab(tabId) {
     if (tabId === 'raw') {
         // Switch to raw view
-        document.querySelectorAll('.section-content').forEach(el => el.style.display = 'none');
-        document.getElementById('section-raw').style.display = 'block';
+        document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+        document.getElementById('section-raw').classList.add('active');
 
-        document.querySelectorAll('.tab-button').forEach(el => {
-            el.style.borderBottomColor = 'transparent';
-            el.style.color = 'var(--text-secondary)';
-            el.classList.remove('active');
-        });
-        const rawTab = document.getElementById('tab-raw');
-        rawTab.style.borderBottomColor = '#3B82F6';
-        rawTab.style.color = '#3B82F6';
-        rawTab.classList.add('active');
+        document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-raw').classList.add('active');
 
         // Sync raw view with section editors
         syncToRaw();
@@ -134,19 +481,12 @@ function switchTab(tabId) {
         if (tabIndex === -1) return;
 
         // Hide all sections
-        document.querySelectorAll('.section-content').forEach(el => el.style.display = 'none');
-        document.getElementById(`section-${tabIndex}`).style.display = 'block';
+        document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(`section-${tabIndex}`).classList.add('active');
 
         // Update tab styles
-        document.querySelectorAll('.tab-button').forEach(el => {
-            el.style.borderBottomColor = 'transparent';
-            el.style.color = 'var(--text-secondary)';
-            el.classList.remove('active');
-        });
-        const activeTab = document.getElementById(`tab-${tabIndex}`);
-        activeTab.style.borderBottomColor = '#3B82F6';
-        activeTab.style.color = '#3B82F6';
-        activeTab.classList.add('active');
+        document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+        document.getElementById(`tab-${tabIndex}`).classList.add('active');
     }
 }
 
@@ -186,7 +526,7 @@ function savePrompt() {
     if (hasSections) {
         // Check if we're in raw view
         const rawSection = document.getElementById('section-raw');
-        if (rawSection.style.display !== 'none') {
+        if (rawSection.classList.contains('active')) {
             content = document.getElementById('editor-raw').value;
         } else {
             syncToRaw();
@@ -198,9 +538,7 @@ function savePrompt() {
 
     const statusEl = document.getElementById('save-status');
     statusEl.style.display = 'block';
-    statusEl.style.background = 'rgba(59, 130, 246, 0.1)';
-    statusEl.style.border = '1px solid rgba(59, 130, 246, 0.3)';
-    statusEl.style.color = 'var(--text-primary)';
+    statusEl.className = 'save-status saving';
     statusEl.textContent = 'Saving...';
 
     fetch('{{ url_for("prompts.save_file") }}', {
@@ -217,12 +555,10 @@ function savePrompt() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            statusEl.style.background = 'rgba(16, 185, 129, 0.1)';
-            statusEl.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+            statusEl.className = 'save-status success';
             statusEl.textContent = '✓ ' + data.message + ' (Changes are live immediately!)';
         } else {
-            statusEl.style.background = 'rgba(239, 68, 68, 0.1)';
-            statusEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+            statusEl.className = 'save-status error';
             statusEl.textContent = '✗ Error: ' + (data.error || 'Failed to save');
         }
 
@@ -231,8 +567,7 @@ function savePrompt() {
         }, 5000);
     })
     .catch(error => {
-        statusEl.style.background = 'rgba(239, 68, 68, 0.1)';
-        statusEl.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+        statusEl.className = 'save-status error';
         statusEl.textContent = '✗ Error: ' + error.message;
     });
 }
@@ -241,7 +576,7 @@ function savePrompt() {
 if (hasSections) {
     document.getElementById('editor-raw').addEventListener('input', () => {
         const rawSection = document.getElementById('section-raw');
-        if (rawSection.style.display !== 'none') {
+        if (rawSection.classList.contains('active')) {
             syncFromRaw();
         }
     });
