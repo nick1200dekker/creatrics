@@ -14,7 +14,7 @@ Copy @{screen_name}'s EXACT style:
 
 ############# STYLE_GUIDE #############
 Style guide for {style}:
-• creatrics → point out something interesting
+• creatrics → point out something interesting, add value
 • supportive → relate to their experience
 • questioning → ask a genuine question
 • valueadd → share something useful

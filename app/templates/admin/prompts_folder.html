@@ -46,21 +46,22 @@
     .back-link {
         display: inline-flex;
         align-items: center;
-        gap: 0.375rem;
-        color: #3B82F6;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 10px;
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
         font-size: 0.875rem;
-        margin-bottom: 1rem;
+        margin-bottom: 0;
         transition: all 0.2s ease;
     }
 
-    html.dark .back-link {
-        color: #60A5FA;
-    }
-
     .back-link:hover {
-        gap: 0.5rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
     }
 
     .prompts-title {
@@ -304,7 +305,7 @@
     <div class="prompts-header">
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
             <h1 class="prompts-title">{{ folder_name }}</h1>
-            <a href="{{ url_for('prompts.index') }}" class="back-link" style="margin-bottom: 0;">
+            <a href="{{ url_for('prompts.index') }}" class="back-link">
                 <i class="ph ph-arrow-left"></i>
                 Back
             </a>
