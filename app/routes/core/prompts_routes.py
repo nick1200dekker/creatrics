@@ -58,7 +58,13 @@ def view_folder(folder_name):
             return jsonify({'error': 'Folder not found'}), 404
 
         prompt_files = []
-        for txt_file in sorted(folder_path.glob('*.txt')):
+        txt_files = sorted(folder_path.glob('*.txt'))
+
+        # If only one file, redirect directly to edit page
+        if len(txt_files) == 1:
+            return redirect(url_for('prompts.edit_file', folder_name=folder_name, filename=txt_files[0].name))
+
+        for txt_file in txt_files:
             with open(txt_file, 'r', encoding='utf-8') as f:
                 content = f.read()
 
