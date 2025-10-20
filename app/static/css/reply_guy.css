@@ -223,18 +223,24 @@ html.dark .secondary-btn:hover {
 }
 
 html.dark #create-list-modal .form-input {
-    background: var(--bg-secondary);
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+    color: #E4E4E7;
 }
 
 #create-list-modal .form-input:focus {
     border-color: #3B82F6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     outline: none;
-    background: var(--bg-secondary);
+    background: white;
+    color: #18181B;
 }
 
 html.dark #create-list-modal .form-input:focus {
-    background: var(--bg-primary);
+    background: rgba(39, 39, 42, 0.8);
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    color: #FAFAFA;
 }
 
 #create-list-modal .form-input::placeholder {
@@ -765,12 +771,14 @@ html.dark .primary-btn:hover:not(:disabled) {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
 }
 
 .primary-btn.processing {
     background: var(--bg-tertiary) !important;
     color: var(--text-secondary) !important;
     pointer-events: none !important;
+    box-shadow: none !important;
 }
 
 /* Load More button - center content */

@@ -1470,6 +1470,11 @@ html.dark .analysis-options {
     margin-bottom: 1.25rem;
 }
 
+.timeframe-selector .view-toggle {
+    width: fit-content;
+    max-width: 100%;
+}
+
 .option-label {
     display: block;
     font-size: 0.875rem;

@@ -689,8 +689,11 @@
                     time_range: selectedTimeRange
                 })
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(response => {
+                const status = response.status;
+                return response.json().then(data => ({ status, data }));
+            })
+            .then(({ status, data }) => {
                 console.log('Analysis response:', data);
 
                 if (data.success) {
@@ -700,7 +703,13 @@
                     console.log('Analysis failed to start:', data.error);
                     setAnalyzingState(false);
                     window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
-                    showToast(data.error || 'Error starting analysis', 'error');
+
+                    // Handle insufficient credits error
+                    if (data.error_type === 'insufficient_credits' || status === 402) {
+                        showInsufficientCreditsPanel();
+                    } else {
+                        showToast(data.error || 'Error starting analysis', 'error');
+                    }
                 }
             })
             .catch(error => {
@@ -873,7 +882,13 @@
                     console.log('Analysis failed to start:', data.error);
                     setAnalyzingState(false);
                     window.CreatorPal.NicheRadar.StateManager.clearProcessingState();
-                    showToast(data.error || 'Error starting analysis', 'error');
+
+                    // Handle insufficient credits error
+                    if (data.error_type === 'insufficient_credits' || response.status === 402) {
+                        showInsufficientCreditsPanel();
+                    } else {
+                        showToast(data.error || 'Error starting analysis', 'error');
+                    }
                 }
             } catch (error) {
                 console.error('Analysis start error:', error);
@@ -1135,6 +1150,28 @@
                 }
                 button.disabled = false;
                 button.removeAttribute('data-original-content');
+            }
+        }
+
+        function showInsufficientCreditsPanel() {
+            // Clear the hot timeline area and show insufficient credits message
+            const hotTimeline = document.querySelector('.hot-timeline');
+            if (hotTimeline) {
+                hotTimeline.innerHTML = `
+                    <div class="insufficient-credits-card" style="max-width: 500px; margin: 3rem auto;">
+                        <div class="credit-icon-wrapper">
+                            <i class="ph ph-coins"></i>
+                        </div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                            You don't have enough credits to use this feature.
+                        </p>
+                        <a href="/payment" class="upgrade-plan-btn">
+                            <i class="ph ph-crown"></i>
+                            Upgrade Plan
+                        </a>
+                    </div>
+                `;
             }
         }
 

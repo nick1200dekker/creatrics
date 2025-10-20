@@ -107,6 +107,21 @@
                     Full Video Transcript
                 </h3>
 
+                <!-- AI Insufficient Credits Warning (separate from result panel) -->
+                <div id="aiInsufficientCreditsWarning" style="display: none; margin-bottom: 1rem; text-align: center; padding: 1.5rem; background: rgba(245, 158, 11, 0.05); border: 2px solid #F59E0B; border-radius: 8px;">
+                    <div style="width: 40px; height: 40px; margin: 0 auto 0.75rem; background: rgba(245, 158, 11, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="ph ph-coins" style="font-size: 1.25rem; color: #F59E0B;"></i>
+                    </div>
+                    <h4 style="color: var(--text-primary); margin: 0 0 0.5rem 0; font-size: 1rem; font-weight: 600;">Insufficient Credits</h4>
+                    <p style="color: var(--text-secondary); margin: 0 0 1rem 0; font-size: 0.875rem;">
+                        You don't have enough credits to use this feature.
+                    </p>
+                    <a href="/payment" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.875rem; transition: all 0.2s ease;">
+                        <i class="ph ph-crown"></i>
+                        Upgrade Plan
+                    </a>
+                </div>
+
                 <!-- AI Agent Panel -->
                 <div class="ai-agent-section">
                     <button class="ai-toggle-btn" onclick="toggleTranscriptAI()" id="transcriptAIToggle">
@@ -867,34 +882,20 @@ async function processTranscriptWithAI() {
 }
 
 function showInsufficientCreditsError() {
+    const warningPanel = document.getElementById('aiInsufficientCreditsWarning');
     const resultPanel = document.getElementById('aiResultPanel');
-    const resultContent = document.getElementById('aiResultContent');
     const aiBtn = document.getElementById('transcriptAIBtn');
 
     // Re-enable button
     aiBtn.disabled = false;
     aiBtn.innerHTML = '<i class="ph ph-magic-wand"></i> <span>Apply</span>';
 
-    // Show result panel with insufficient credits message
-    resultPanel.style.display = 'block';
-    resultContent.innerHTML = `
-        <div class="insufficient-credits-card">
-            <div class="credit-icon-wrapper">
-                <i class="ph ph-coin" style="font-size: 2rem; color: #F59E0B;"></i>
-            </div>
-            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-                You don't have enough credits to use this feature.
-            </p>
-            <a href="/payment" class="upgrade-plan-btn">
-                <i class="ph ph-arrow-up"></i>
-                Upgrade Plan
-            </a>
-        </div>
-    `;
+    // Hide result panel, show warning panel
+    resultPanel.style.display = 'none';
+    warningPanel.style.display = 'block';
 
-    // Scroll to result
-    resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Scroll to warning
+    warningPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function copyAIResult() {

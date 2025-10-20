@@ -351,8 +351,10 @@ async function removeCompetitor(docId) {
 // Set timeframe
 function setTimeframe(days) {
     selectedTimeframe = days;
-    
-    document.querySelectorAll('.timeframe-btn').forEach(btn => {
+
+    // Query both old and new class names for compatibility
+    const selector = '.timeframe-selector .toggle-btn';
+    document.querySelectorAll(selector).forEach(btn => {
         btn.classList.remove('active');
         if (btn.getAttribute('data-days') === days) {
             btn.classList.add('active');

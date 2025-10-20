@@ -686,7 +686,8 @@ html.dark .insufficient-credits-card {
     max-width: 350px;
 }
 
-.upgrade-btn-primary {
+.upgrade-btn-primary,
+.upgrade-plan-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -702,11 +703,16 @@ html.dark .insufficient-credits-card {
     cursor: pointer;
 }
 
-.upgrade-btn-primary:hover {
+.upgrade-btn-primary:hover,
+.upgrade-plan-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
     color: white;
     text-decoration: none;
+}
+
+.upgrade-plan-btn i {
+    font-size: 1.1rem;
 }
 
 /* Toast Notification */

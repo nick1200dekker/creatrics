@@ -304,16 +304,16 @@ def analyze_creators():
     try:
         user_id = get_workspace_user_id()
         data = request.get_json() if request.is_json else request.form
-        
+
         list_name = data.get('list_name')
         time_range = data.get('time_range', '24h')
-        
+
         if not list_name:
             return jsonify({
-                'success': False, 
+                'success': False,
                 'error': 'List name is required'
             }), 400
-        
+
         # Check if user already has an analysis running
         current_status = get_analysis_status(user_id)
         if current_status['status'] == 'processing':
@@ -321,41 +321,56 @@ def analyze_creators():
                 'success': False,
                 'error': f'Analysis already in progress for list: {current_status.get("list_name", "unknown")}'
             }), 400
-        
+
         # Verify the list exists and has creators
         creators = tracker_service.get_list_creators(user_id, list_name)
         if not creators:
             return jsonify({
-                'success': False, 
+                'success': False,
                 'error': f'List "{list_name}" not found or has no creators'
             }), 400
-        
+
+        # CHECK CREDITS BEFORE STARTING - Estimate ~300 tweets analysis
+        estimated_tweets = min(len(creators) * 50, 300)
+        credit_check = creator_analyzer.estimate_and_check_ai_credits(user_id, estimated_tweets)
+
+        if not credit_check.get('success', False) or not credit_check.get('sufficient_credits', False):
+            logger.warning(f"Insufficient credits for user {user_id} - needs {credit_check.get('estimated_credits', 0)}, has {credit_check.get('current_credits', 0)}")
+            return jsonify({
+                'success': False,
+                'error': 'insufficient_credits',
+                'error_type': 'insufficient_credits',
+                'message': 'Insufficient credits to run analysis',
+                'estimated_credits': credit_check.get('estimated_credits', 0),
+                'current_credits': credit_check.get('current_credits', 0)
+            }), 402
+
         # Clear any old status for this user
         clear_analysis_status(user_id)
-        
+
         # Set initial status
         update_analysis_status(user_id, list_name, 'processing', 'Initializing analysis...', 0)
-        
+
         # Start analysis in background thread
         thread = threading.Thread(
-            target=analyze_creators_async, 
+            target=analyze_creators_async,
             args=(user_id, list_name, time_range)
         )
         thread.daemon = True
         thread.start()
-        
+
         logger.info(f"Started analysis for user {user_id}, list {list_name}, time_range {time_range}")
-        
+
         return jsonify({
-            'success': True, 
+            'success': True,
             'message': 'Analysis started',
             'list_name': list_name
         })
-            
+
     except Exception as e:
         logger.error(f"Error starting analysis: {str(e)}")
         return jsonify({
-            'success': False, 
+            'success': False,
             'error': 'Internal server error'
         }), 500
 

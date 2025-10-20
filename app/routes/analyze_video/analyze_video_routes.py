@@ -447,6 +447,52 @@ def extract_video_id():
         logger.error(f"Error extracting video ID: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@bp.route('/api/analyze-video/pre-check/<video_id>', methods=['GET'])
+@auth_required
+@require_permission('analyze_video')
+def pre_check_analysis(video_id):
+    """Pre-check if analysis can proceed (exists in history OR has sufficient credits)"""
+    try:
+        user_id = get_workspace_user_id()
+        is_short = request.args.get('is_short', 'false').lower() == 'true'
+
+        # Check if analysis already exists in Firebase
+        history_ref = db.collection('users').document(user_id).collection('video_analyses').document(video_id)
+        existing_doc = history_ref.get()
+
+        if existing_doc.exists:
+            # Analysis exists - can proceed
+            return jsonify({'success': True, 'can_proceed': True, 'reason': 'exists'})
+
+        # Check credits before analysis
+        from app.system.credits.credits_manager import CreditsManager
+        credits_manager = CreditsManager()
+
+        # Estimate cost (conservative)
+        cost_estimate = credits_manager.estimate_llm_cost_from_text(
+            text_content="video analysis" * 500,
+            model_name=None
+        )
+        required_credits = cost_estimate['final_cost']
+
+        credit_check = credits_manager.check_sufficient_credits(
+            user_id=user_id,
+            required_credits=required_credits
+        )
+
+        if not credit_check.get('sufficient', False):
+            return jsonify({
+                'success': True,
+                'can_proceed': False,
+                'reason': 'insufficient_credits'
+            })
+
+        return jsonify({'success': True, 'can_proceed': True, 'reason': 'sufficient_credits'})
+
+    except Exception as e:
+        logger.error(f"Error in pre-check: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @bp.route('/api/analyze-video/history', methods=['GET'])
 @auth_required
 @require_permission('analyze_video')

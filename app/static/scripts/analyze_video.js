@@ -232,7 +232,7 @@ function displaySearchResults(videos) {
 }
 
 // Analyze video with card-specific loader
-function analyzeVideoWithLoader(cardElement, videoId, isShort = false) {
+async function analyzeVideoWithLoader(cardElement, videoId, isShort = false) {
     // Grey out all other cards
     const allCards = document.querySelectorAll('.video-card');
     allCards.forEach(card => {
@@ -250,16 +250,88 @@ function analyzeVideoWithLoader(cardElement, videoId, isShort = false) {
         contentDiv.style.display = 'none';
     }
 
-    // Navigate to analysis
-    const queryParam = isShort ? '?is_short=true' : '';
-    window.location.href = `/analyze-video/video/${videoId}${queryParam}`;
+    try {
+        // Pre-check before navigating
+        const response = await fetch(`/api/analyze-video/pre-check/${videoId}?is_short=${isShort}`);
+        const data = await response.json();
+
+        if (data.success && !data.can_proceed && data.reason === 'insufficient_credits') {
+            // Reset cards
+            resetAllCards();
+            // Show insufficient credits inline
+            showInsufficientCreditsInline();
+            return;
+        }
+
+        // Navigate to analysis
+        const queryParam = isShort ? '?is_short=true' : '';
+        window.location.href = `/analyze-video/video/${videoId}${queryParam}`;
+    } catch (error) {
+        console.error('Error:', error);
+        resetAllCards();
+        alert('Failed to check analysis. Please try again.');
+    }
 }
 
 // Analyze video (fallback for direct calls)
-function analyzeVideo(videoId, isShort = false) {
+async function analyzeVideo(videoId, isShort = false) {
     showLoading();
-    const queryParam = isShort ? '?is_short=true' : '';
-    window.location.href = `/analyze-video/video/${videoId}${queryParam}`;
+
+    try {
+        // Pre-check before navigating
+        const response = await fetch(`/api/analyze-video/pre-check/${videoId}?is_short=${isShort}`);
+        const data = await response.json();
+
+        if (data.success && !data.can_proceed && data.reason === 'insufficient_credits') {
+            hideLoading();
+            showInsufficientCreditsInline();
+            return;
+        }
+
+        // Navigate to analysis
+        const queryParam = isShort ? '?is_short=true' : '';
+        window.location.href = `/analyze-video/video/${videoId}${queryParam}`;
+    } catch (error) {
+        hideLoading();
+        console.error('Error:', error);
+        alert('Failed to check analysis. Please try again.');
+    }
+}
+
+// Show insufficient credits inline
+function showInsufficientCreditsInline() {
+    // Hide search results if visible
+    const searchResults = document.getElementById('searchResults');
+    if (searchResults) {
+        searchResults.style.display = 'none';
+    }
+
+    // Show in history section
+    const historyGrid = document.getElementById('historyGrid');
+    const emptyHistory = document.getElementById('emptyHistory');
+
+    if (historyGrid && emptyHistory) {
+        historyGrid.style.display = 'none';
+        emptyHistory.style.display = 'flex';
+        emptyHistory.innerHTML = `
+            <div class="insufficient-credits-card" style="max-width: 500px; margin: 3rem auto;">
+                <div class="credit-icon-wrapper">
+                    <i class="ph ph-coins"></i>
+                </div>
+                <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    You don't have enough credits to use this feature.
+                </p>
+                <a href="/payment" class="upgrade-plan-btn">
+                    <i class="ph ph-crown"></i>
+                    Upgrade Plan
+                </a>
+            </div>
+        `;
+
+        // Scroll to it
+        emptyHistory.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 }
 
 // Load history
