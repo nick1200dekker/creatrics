@@ -658,11 +658,18 @@ html.dark .insufficient-credits-card {
 }
 
 .credit-icon-wrapper {
-    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.5rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 50%;
 }
 
 .credit-icon-wrapper i {
-    font-size: 3.5rem;
+    font-size: 2rem;
     color: #F59E0B;
     animation: pulse 2s infinite;
 }

@@ -327,10 +327,9 @@
                             <div class="credit-icon-wrapper">
                                 <i class="ph ph-coins"></i>
                             </div>
-                            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
-                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-                                You need <strong>${data.required_credits}</strong> credits but only have
-                                <strong>${data.current_credits?.toFixed(2)}</strong> credits.
+                            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.25rem; font-weight: 700;">Insufficient Credits</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
+                                You don't have enough credits to use this feature.
                             </p>
                             <a href="/payment" class="upgrade-plan-btn">
                                 <i class="ph ph-crown"></i>
@@ -763,7 +762,27 @@
                 updateCharCount();
                 showToast('Prompt improved!', 'success');
             } else {
-                showToast(data.error || 'Failed to improve prompt', 'error');
+                // Check if it's an insufficient credits error
+                if (data.error_type === 'insufficient_credits') {
+                    const resultContainer = document.getElementById('resultContainer');
+                    resultContainer.innerHTML = `
+                        <div class="insufficient-credits-card">
+                            <div class="credit-icon-wrapper">
+                                <i class="ph ph-coins"></i>
+                            </div>
+                            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.25rem; font-weight: 700;">Insufficient Credits</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
+                                You don't have enough credits to use this feature.
+                            </p>
+                            <a href="/payment" class="upgrade-plan-btn">
+                                <i class="ph ph-crown"></i>
+                                Upgrade Plan
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    showToast(data.error || 'Failed to improve prompt', 'error');
+                }
             }
         } catch (error) {
             console.error('Error improving prompt:', error);

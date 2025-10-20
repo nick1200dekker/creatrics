@@ -1245,39 +1245,56 @@ html.dark #create-list-modal .form-input:focus {
 }
 
 html.dark .insufficient-credits-card {
-    background: rgba(63, 63, 70, 0.5);
+    background: rgba(39, 39, 42, 0.6);
     border-color: #F59E0B;
 }
 
+/* Override hot-timeline h3 styles for insufficient credits heading */
+.insufficient-credits-card h3 {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+}
+
 .credit-icon-wrapper {
-    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 50%;
 }
 
 .credit-icon-wrapper i {
-    font-size: 3rem;
+    font-size: 2rem;
     color: #F59E0B;
 }
 
 .upgrade-plan-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
     background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
     color: white;
+    text-decoration: none;
     border: none;
-    padding: 0.75rem 2rem;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    margin-top: 1rem;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
 }
 
 .upgrade-plan-btn:hover {
     background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    transform: translateY(-1px);
+}
+
+.upgrade-plan-btn:active {
+    transform: translateY(0);
 }
 
 .upgrade-plan-btn i {
