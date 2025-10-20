@@ -26,7 +26,24 @@ function resetAllCards() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    loadHistory();
+    // Check for error parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+
+    console.log('Page loaded, checking for error parameter:', error);
+    console.log('Full URL:', window.location.href);
+
+    if (error === 'insufficient_credits') {
+        console.log('Insufficient credits detected - showing error panel');
+        // Show insufficient credits error inline
+        showInsufficientCreditsInline();
+        // Clear the error parameter from URL without reloading
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+        console.log('No error parameter found, loading history normally');
+        loadHistory();
+    }
+
     // Hide loading modal on page load (in case user navigated back)
     hideLoading();
     // Reset all video cards
@@ -300,19 +317,30 @@ async function analyzeVideo(videoId, isShort = false) {
 
 // Show insufficient credits inline
 function showInsufficientCreditsInline() {
+    console.log('showInsufficientCreditsInline called');
+
     // Hide search results if visible
     const searchResults = document.getElementById('searchResults');
     if (searchResults) {
+        console.log('Hiding search results');
         searchResults.style.display = 'none';
     }
 
-    // Show in history section
+    // Show in history section or create new section above it
+    const historySection = document.querySelector('.history-section');
     const historyGrid = document.getElementById('historyGrid');
     const emptyHistory = document.getElementById('emptyHistory');
 
+    console.log('Elements found:', {
+        historySection: !!historySection,
+        historyGrid: !!historyGrid,
+        emptyHistory: !!emptyHistory
+    });
+
     if (historyGrid && emptyHistory) {
+        console.log('Setting up insufficient credits panel');
         historyGrid.style.display = 'none';
-        emptyHistory.style.display = 'flex';
+        emptyHistory.style.display = 'block';
         emptyHistory.innerHTML = `
             <div class="insufficient-credits-card" style="max-width: 500px; margin: 3rem auto;">
                 <div class="credit-icon-wrapper">
@@ -329,8 +357,13 @@ function showInsufficientCreditsInline() {
             </div>
         `;
 
-        // Scroll to it
-        emptyHistory.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Scroll to history section (where the error is now shown)
+        if (historySection) {
+            console.log('Scrolling to history section');
+            historySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    } else {
+        console.error('Could not find required elements to show insufficient credits panel');
     }
 }
 

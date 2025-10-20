@@ -1543,8 +1543,7 @@ restoreNavStates();
                             });
                             
                             if (response.ok) {
-                                this.showToast('Logged out successfully', 'success');
-                                setTimeout(() => window.location.href = '/', 1000);
+                                window.location.href = '/';
                             }
                         } catch (error) {
                             this.showToast('Logout failed', 'error');

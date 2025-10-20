@@ -1827,3 +1827,191 @@ html.dark .mission-card .card-icon {
         font-size: 0.875rem;
     }
 }
+
+/* Social Section - Minimal & Clean */
+.social-section {
+    text-align: center;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+}
+
+.social-heading {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.social-links {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.social-link {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+html.dark .social-link {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
+.social-link i {
+    font-size: 1.5rem;
+}
+
+.social-link:hover {
+    background: #3B82F6;
+    border-color: #3B82F6;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Pricing Section - Minimal & Clean */
+.pricing-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+html.dark .pricing-section {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.pricing-section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+}
+
+.pricing-options {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.pricing-option {
+    text-align: center;
+}
+
+.pricing-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.pricing-label {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+}
+
+.pricing-divider {
+    width: 1px;
+    height: 50px;
+    background: var(--border-primary);
+}
+
+html.dark .pricing-divider {
+    background: rgba(63, 63, 70, 0.6);
+}
+
+/* Footer - Minimal & Clean */
+.home-footer {
+    text-align: center;
+    padding: 2.5rem 2rem;
+    border-top: 1px solid var(--border-primary);
+}
+
+html.dark .home-footer {
+    border-color: rgba(63, 63, 70, 0.4);
+}
+
+.home-footer p {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    margin: 0 0 1rem 0;
+}
+
+.footer-email {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-email:hover {
+    color: #3B82F6;
+}
+
+/* Responsive for new sections */
+@media (max-width: 768px) {
+    .social-section {
+        padding: 2.5rem 1.5rem;
+    }
+
+    .pricing-section {
+        padding: 2rem 1.5rem;
+    }
+
+    .pricing-section h2 {
+        font-size: 1.375rem;
+    }
+
+    .pricing-options {
+        gap: 2rem;
+    }
+
+    .home-footer {
+        padding: 2rem 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .social-section {
+        padding: 2rem 1rem;
+    }
+
+    .pricing-section {
+        padding: 1.5rem 1rem;
+    }
+
+    .pricing-section h2 {
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .pricing-options {
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .pricing-divider {
+        width: 50px;
+        height: 1px;
+    }
+
+    .home-footer {
+        padding: 1.5rem 1rem;
+    }
+}

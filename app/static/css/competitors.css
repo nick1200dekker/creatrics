@@ -2651,6 +2651,26 @@ html.dark .content-toggle .toggle-btn.active {
     border-radius: 12px;
 }
 
+html.dark .insufficient-credits-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: #F59E0B;
+}
+
+/* AI Insufficient Credits Panel - positioned above transcript, below apply button */
+.ai-insufficient-credits-panel {
+    margin-bottom: 1rem;
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-tertiary);
+    border: 2px solid #F59E0B;
+    border-radius: 12px;
+}
+
+html.dark .ai-insufficient-credits-panel {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: #F59E0B;
+}
+
 .credit-icon-wrapper {
     margin-bottom: 1rem;
 }

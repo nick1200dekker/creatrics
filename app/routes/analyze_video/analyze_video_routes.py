@@ -101,6 +101,31 @@ def video_analysis(video_id):
                                  video_id=video_id,
                                  back_url=url_for('analyze_video.analyze_video'))
 
+        # Check credits BEFORE calling the analyzer
+        from app.system.credits.credits_manager import CreditsManager
+        credits_manager = CreditsManager()
+
+        # Estimate cost (conservative)
+        cost_estimate = credits_manager.estimate_llm_cost_from_text(
+            text_content="video analysis" * 500,
+            model_name=None
+        )
+        required_credits = cost_estimate['final_cost']
+
+        logger.info(f"Checking credits for user {user_id}, required: {required_credits}")
+
+        credit_check = credits_manager.check_sufficient_credits(
+            user_id=user_id,
+            required_credits=required_credits
+        )
+
+        logger.info(f"Credit check result in video_analysis route: {credit_check}")
+
+        if not credit_check.get('sufficient', False):
+            # Redirect back to main page with error parameter
+            logger.warning(f"Insufficient credits - redirecting user {user_id} back to main page")
+            return redirect(url_for('analyze_video.analyze_video') + '?error=insufficient_credits')
+
         # Use the analyzer to perform deep dive
         analyzer = VideoDeepDiveAnalyzer()
         result = analyzer.analyze_video(video_id, user_id, is_short=is_short)
@@ -109,70 +134,9 @@ def video_analysis(video_id):
             error_msg = result.get('error', 'Analysis failed')
             error_type = result.get('error_type', '')
 
-            # Handle insufficient credits
+            # Handle insufficient credits - redirect back to main page
             if error_type == 'insufficient_credits':
-                return f"""
-                    <html>
-                    <head>
-                        <style>
-                            body {{
-                                font-family: 'Inter', Arial, sans-serif;
-                                padding: 40px;
-                                text-align: center;
-                                background: #18181b;
-                                color: #fafafa;
-                            }}
-                            .error-container {{
-                                max-width: 600px;
-                                margin: 0 auto;
-                                padding: 40px;
-                                background: rgba(245, 158, 11, 0.05);
-                                border: 2px solid #F59E0B;
-                                border-radius: 12px;
-                            }}
-                            .icon {{
-                                width: 64px;
-                                height: 64px;
-                                margin: 0 auto 24px;
-                                background: rgba(245, 158, 11, 0.1);
-                                border-radius: 50%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-size: 32px;
-                            }}
-                            h1 {{ color: #fafafa; margin-bottom: 12px; }}
-                            p {{ margin-bottom: 30px; line-height: 1.6; color: #d4d4d8; }}
-                            button {{
-                                padding: 12px 24px;
-                                background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-                                color: white;
-                                border: none;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-size: 16px;
-                                font-weight: 600;
-                                margin: 0 10px;
-                            }}
-                            button:hover {{ background: linear-gradient(135deg, #D97706 0%, #B45309 100%); }}
-                            .back-btn {{
-                                background: rgba(255, 255, 255, 0.1);
-                                border: 1px solid rgba(255, 255, 255, 0.2);
-                            }}
-                            .back-btn:hover {{ background: rgba(255, 255, 255, 0.15); }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class="error-container">
-                            <div class="icon">💳</div>
-                            <h1>Insufficient Credits</h1>
-                            <p>You don't have enough credits to analyze this video.</p>
-                            <button onclick="window.location.href='/payment'">Upgrade Plan</button>
-                            <button class="back-btn" onclick="window.history.back()">← Go Back</button>
-                        </div>
-                    </body>
-                    </html>
-                """, 402
+                return redirect(url_for('analyze_video.analyze_video') + '?error=insufficient_credits')
 
             if '529' in str(error_msg) or 'overloaded' in str(error_msg).lower():
                 error_display = "AI service is currently experiencing high demand. Please try again in a few moments."
@@ -456,12 +420,15 @@ def pre_check_analysis(video_id):
         user_id = get_workspace_user_id()
         is_short = request.args.get('is_short', 'false').lower() == 'true'
 
+        logger.info(f"Pre-check for video {video_id}, user {user_id}, is_short: {is_short}")
+
         # Check if analysis already exists in Firebase
         history_ref = db.collection('users').document(user_id).collection('video_analyses').document(video_id)
         existing_doc = history_ref.get()
 
         if existing_doc.exists:
             # Analysis exists - can proceed
+            logger.info(f"Video {video_id} already exists in history - allowing")
             return jsonify({'success': True, 'can_proceed': True, 'reason': 'exists'})
 
         # Check credits before analysis
@@ -475,18 +442,24 @@ def pre_check_analysis(video_id):
         )
         required_credits = cost_estimate['final_cost']
 
+        logger.info(f"Required credits for video analysis: {required_credits}")
+
         credit_check = credits_manager.check_sufficient_credits(
             user_id=user_id,
             required_credits=required_credits
         )
 
+        logger.info(f"Credit check result: {credit_check}")
+
         if not credit_check.get('sufficient', False):
+            logger.warning(f"Insufficient credits for user {user_id} to analyze video {video_id}")
             return jsonify({
                 'success': True,
                 'can_proceed': False,
                 'reason': 'insufficient_credits'
             })
 
+        logger.info(f"Sufficient credits - allowing video analysis for {video_id}")
         return jsonify({'success': True, 'can_proceed': True, 'reason': 'sufficient_credits'})
 
     except Exception as e:
