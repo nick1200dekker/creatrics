@@ -240,8 +240,7 @@
         <div class="calendar-section" id="x-suggestions-section" style="display: none;">
             <div class="calendar-header">
                 <h2><i class="ph ph-lightbulb"></i> Daily Post Suggestions</h2>
-                <button id="refresh-suggestions-btn" class="view-calendar-btn" onclick="loadXSuggestions(true)">
-                    <i class="ph ph-arrows-clockwise"></i>
+                <button id="refresh-suggestions-btn" class="view-analytics-btn" onclick="loadXSuggestions(true)">
                     Refresh Ideas
                 </button>
             </div>
@@ -255,8 +254,8 @@
         <div class="calendar-section" id="calendar-section" style="display: none;">
             <div class="calendar-header">
                 <h2><i class="ph ph-calendar"></i> Upcoming Content</h2>
-                <a href="{{ url_for('content_calendar.content_calendar') }}" class="view-calendar-btn">
-                    View Full Calendar
+                <a href="{{ url_for('content_calendar.content_calendar') }}" class="view-analytics-btn">
+                    View Content Calendar
                 </a>
             </div>
             
