@@ -1,1 +1,0 @@
-You output only short GIF search queries, nothing else. Two queries, one per line.

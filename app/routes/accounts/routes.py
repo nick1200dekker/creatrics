@@ -5,7 +5,7 @@ from google.cloud import firestore
 import firebase_admin
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Setup logger
 logger = logging.getLogger('accounts_routes')
@@ -13,10 +13,127 @@ logger = logging.getLogger('accounts_routes')
 # Create accounts blueprint
 bp = Blueprint('accounts', __name__, url_prefix='/accounts')
 
+# Track if we've checked for incomplete setups on startup
+_startup_check_done = False
+
+def check_incomplete_setups():
+    """Check for incomplete setups on server startup and resume them"""
+    global _startup_check_done
+
+    if _startup_check_done:
+        return
+
+    _startup_check_done = True
+
+    try:
+        logger.info("[SETUP] Checking for incomplete setups on startup...")
+
+        # Initialize Firestore if needed
+        if not firebase_admin._apps:
+            try:
+                firebase_admin.initialize_app()
+            except ValueError:
+                pass
+
+        db = firestore.client()
+        users_ref = db.collection('users')
+
+        # Check for incomplete X setups
+        x_query = users_ref.where('x_setup_complete', '==', False).where('x_account', '!=', '')
+        x_incomplete_users = []
+
+        for doc in x_query.stream():
+            user_data = doc.to_dict()
+            user_id = doc.id
+
+            # Check if connection was started recently (within last 24 hours)
+            connected_at = user_data.get('x_connected_at')
+            if connected_at:
+                try:
+                    connected_time = datetime.fromisoformat(connected_at)
+                    if datetime.now() - connected_time < timedelta(hours=24):
+                        x_incomplete_users.append(user_id)
+                except:
+                    pass
+
+        if x_incomplete_users:
+            logger.info(f"[X_SETUP] Found {len(x_incomplete_users)} incomplete X setups to resume")
+            for user_id in x_incomplete_users:
+                logger.info(f"[X_SETUP] Resuming X setup for user {user_id}")
+                resume_x_setup(user_id)
+        else:
+            logger.info("[X_SETUP] No incomplete X setups found")
+
+        # Check for incomplete TikTok setups
+        tiktok_query = users_ref.where('tiktok_setup_complete', '==', False).where('tiktok_account', '!=', '')
+        tiktok_incomplete_users = []
+
+        for doc in tiktok_query.stream():
+            user_data = doc.to_dict()
+            user_id = doc.id
+            tiktok_incomplete_users.append(user_id)
+
+        if tiktok_incomplete_users:
+            logger.info(f"[SETUP] Found {len(tiktok_incomplete_users)} incomplete TikTok setups to resume")
+            for user_id in tiktok_incomplete_users:
+                logger.info(f"[SETUP] Resuming TikTok setup for user {user_id}")
+                resume_tiktok_setup(user_id)
+        else:
+            logger.info("[SETUP] No incomplete TikTok setups found")
+
+    except Exception as e:
+        logger.error(f"[SETUP] Error checking incomplete setups: {str(e)}")
+
+def resume_x_setup(user_id):
+    """Resume X analytics fetch for a user"""
+    from app.scripts.accounts.x_analytics import fetch_x_analytics
+
+    def fetch_analytics_bg():
+        try:
+            logger.info(f"[X_SETUP] Resuming X analytics fetch for user {user_id}")
+            fetch_x_analytics(user_id, is_initial=True)
+            logger.info(f"[X_SETUP] Completed resumed X analytics fetch for user {user_id}")
+        except Exception as e:
+            import traceback
+            logger.error(f"[X_SETUP] Error in resumed X analytics fetch for user {user_id}: {str(e)}")
+            logger.error(traceback.format_exc())
+            # Mark setup as complete even on error so UI isn't stuck
+            try:
+                UserService.update_user(user_id, {'x_setup_complete': True})
+                logger.info(f"[X_SETUP] Marked setup as complete after error for user {user_id}")
+            except:
+                pass
+
+    bg_thread = threading.Thread(target=fetch_analytics_bg)
+    bg_thread.daemon = True
+    bg_thread.start()
+
+def resume_tiktok_setup(user_id):
+    """Resume TikTok analytics fetch for a user"""
+    try:
+        user_data = UserService.get_user(user_id)
+        username = user_data.get('tiktok_account')
+
+        if not username:
+            logger.error(f"[SETUP] No TikTok username found for user {user_id}")
+            return
+
+        logger.info(f"[SETUP] Resuming TikTok setup for user {user_id}, username: {username}")
+
+        bg_thread = threading.Thread(target=fetch_initial_tiktok_data, args=(user_id, username))
+        bg_thread.daemon = True
+        bg_thread.start()
+
+    except Exception as e:
+        logger.error(f"[SETUP] Error resuming TikTok setup: {str(e)}")
+
 @bp.route('/', methods=['GET'])
 @auth_required
 def index():
     """Render accounts connection page"""
+    # Check for incomplete setups on first request
+    check_incomplete_setups()
+
     user_id = g.user.get('id')
     
     # Fetch user data from Firebase
@@ -87,13 +204,19 @@ def connect_account():
             def fetch_analytics_bg():
                 try:
                     # Initial fetch with 6 months of historical data
-                    logger.info(f"Starting initial X analytics fetch for user {user_id} with 6 months of data")
+                    logger.info(f"[X_SETUP] Starting initial X analytics fetch for user {user_id} with 6 months of data")
                     fetch_x_analytics(user_id, is_initial=True)
-                    logger.info(f"Completed initial X analytics fetch for user {user_id}")
+                    logger.info(f"[X_SETUP] Completed initial X analytics fetch for user {user_id}")
                 except Exception as e:
                     import traceback
-                    logger.error(f"Error fetching initial X analytics: {str(e)}")
+                    logger.error(f"[X_SETUP] Error fetching initial X analytics for user {user_id}: {str(e)}")
                     logger.error(traceback.format_exc())
+                    # Mark setup as complete even on error so UI isn't stuck
+                    try:
+                        UserService.update_user(user_id, {'x_setup_complete': True})
+                        logger.info(f"[X_SETUP] Marked setup as complete after error for user {user_id}")
+                    except:
+                        pass
 
             bg_thread = threading.Thread(target=fetch_analytics_bg)
             bg_thread.daemon = True
@@ -194,6 +317,47 @@ def connection_status():
     except Exception as e:
         logger.error(f"Error checking connection status: {str(e)}")
         return jsonify({'error': 'Failed to check status'}), 500
+
+@bp.route('/force-complete-setup', methods=['POST', 'GET'])
+@auth_required
+def force_complete_setup():
+    """Force mark setup as complete (for when it gets stuck)"""
+    user_id = g.user.get('id')
+
+    # Support both POST form data and GET query params
+    if request.method == 'POST':
+        platform = request.form.get('platform')
+    else:
+        platform = request.args.get('platform')
+
+    try:
+        if platform == 'x':
+            UserService.update_user(user_id, {'x_setup_complete': True})
+            logger.info(f"[X_SETUP] Manually marked X setup as complete for user {user_id}")
+            message = 'X setup marked as complete'
+        elif platform == 'tiktok':
+            UserService.update_user(user_id, {'tiktok_setup_complete': True})
+            logger.info(f"Manually marked TikTok setup as complete for user {user_id}")
+            message = 'TikTok setup marked as complete'
+        elif platform == 'youtube':
+            UserService.update_user(user_id, {'youtube_setup_complete': True})
+            logger.info(f"Manually marked YouTube setup as complete for user {user_id}")
+            message = 'YouTube setup marked as complete'
+        else:
+            return jsonify({'error': 'Invalid platform'}), 400
+
+        if request.method == 'GET':
+            flash(message, 'success')
+            return redirect(url_for('accounts.index'))
+
+        return jsonify({'success': True})
+
+    except Exception as e:
+        logger.error(f"Error force completing setup: {str(e)}")
+        if request.method == 'GET':
+            flash(f'Error: {str(e)}', 'error')
+            return redirect(url_for('accounts.index'))
+        return jsonify({'error': 'Failed to complete setup'}), 500
 
 @bp.route('/disconnect', methods=['POST'])
 @auth_required

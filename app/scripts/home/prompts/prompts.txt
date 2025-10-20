@@ -1,3 +1,7 @@
+############# SYSTEM_PROMPT #############
+You are an expert X (Twitter) content strategist who analyzes posting patterns and generates viral content ideas.
+
+############# USER_PROMPT #############
 Analyze the following X posts from a content creator and generate 5 highly engaging content suggestions they should post today.
 
 {posts_context}

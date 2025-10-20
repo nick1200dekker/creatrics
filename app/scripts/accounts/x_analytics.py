@@ -180,15 +180,17 @@ class XAnalytics:
         one_week_ago = datetime.now() - timedelta(days=7)
         target_posts = max_posts if max_posts else (1000 if is_initial else 200)  # 200 for refresh to ensure we get a full week
 
-        logger.info(f"Fetching {'initial historical' if is_initial else 'last 7 days'} timeline data for {username}")
+        logger.info(f"[X_SETUP] Fetching {'initial historical' if is_initial else 'last 7 days'} timeline data for @{username} (target: {target_posts} posts)")
 
+        page_num = 0
         # We need to paginate until we have enough posts or reach the time cutoff
         while len(all_posts) < target_posts:
+            page_num += 1
             # Try up to 2 times for each page (initial attempt + 1 retry)
             max_attempts = 2
             for attempt in range(max_attempts):
                 try:
-                    logger.info(f"Fetching timeline page for {username} (attempt {attempt+1}/{max_attempts})")
+                    logger.info(f"[X_SETUP] Fetching timeline page {page_num} for @{username} (attempt {attempt+1}/{max_attempts}, posts so far: {len(all_posts)})")
                     
                     # Add cursor parameter if we have one
                     if cursor:
@@ -227,12 +229,12 @@ class XAnalytics:
 
                                 # For initial fetch: stop at 6 months
                                 if is_initial and tweet_date_local < six_months_ago:
-                                    logger.info(f"Reached posts older than 6 months, stopping")
+                                    logger.info(f"[X_SETUP] Reached posts older than 6 months (page {page_num}), stopping with {len(all_posts)} posts")
                                     return all_posts
 
                                 # For refresh: stop at 7 days
                                 if not is_initial and tweet_date_local < one_week_ago:
-                                    logger.info(f"Reached posts older than 7 days, stopping refresh")
+                                    logger.info(f"[X_SETUP] Reached posts older than 7 days, stopping refresh with {len(all_posts)} posts")
                                     return all_posts
 
                             except Exception as e:
@@ -253,17 +255,17 @@ class XAnalytics:
                         if not tweet.get('retweeted', False):
                             all_posts.append(tweet)
                     
-                    logger.info(f"Fetched {len(tweets)} tweets, now have {len(all_posts)} total non-RT posts")
-                    
+                    logger.info(f"[X_SETUP] Page {page_num}: Fetched {len(tweets)} tweets, now have {len(all_posts)} total non-RT posts")
+
                     # Check if we need to fetch more pages
                     if 'next_cursor' in data and len(all_posts) < target_posts:
                         cursor = data['next_cursor']
-                        logger.info(f"Found next cursor, will fetch next page")
+                        logger.info(f"[X_SETUP] Found next cursor, will fetch page {page_num + 1}")
                         # Success for this page, break the retry loop
                         break
                     else:
                         # No more pages or we have enough posts
-                        logger.info(f"No more pages or have enough posts, returning {len(all_posts)} posts")
+                        logger.info(f"[X_SETUP] No more pages or have enough posts, returning {len(all_posts)} posts")
                         return all_posts
                     
                 except Exception as e:
@@ -517,15 +519,18 @@ class XAnalytics:
         Args:
             is_initial: Whether this is the initial fetch (for 6 months of data)
         """
-        logger.info(f"Fetching {'initial' if is_initial else 'updated'} X analytics data...")
+        logger.info(f"[X_SETUP] Fetching {'initial' if is_initial else 'updated'} X analytics data for user {self.user_id}")
 
         # Get account info from X API
+        logger.info(f"[X_SETUP] Step 1/5: Fetching account info for @{self.x_handle}")
         account_info = self.get_account_info()
         if not account_info:
-            logger.error("Failed to get account info")
+            logger.error(f"[X_SETUP] Failed to get account info for @{self.x_handle}")
             return None
+        logger.info(f"[X_SETUP] Step 1/5 Complete: Got account info (followers: {account_info.get('sub_count', 'N/A')})")
 
         # Get timeline data from X API
+        logger.info(f"[X_SETUP] Step 2/5: Fetching timeline data for @{self.x_handle}")
         if is_initial:
             # For initial fetch, get 6 months of data
             timeline_data = self.get_timeline_data(is_initial=True)
@@ -535,40 +540,48 @@ class XAnalytics:
 
         # Store timeline data if we got it
         if timeline_data:
+            logger.info(f"[X_SETUP] Step 2/5 Complete: Fetched {len(timeline_data)} posts")
+
             # Store posts
+            logger.info(f"[X_SETUP] Step 3/5: Storing posts in Firebase")
             if is_initial:
                 # Store all historical posts
                 self._store_all_posts(timeline_data)
             else:
                 # Update recent posts only
                 self._update_recent_posts(timeline_data)
+            logger.info(f"[X_SETUP] Step 3/5 Complete: Posts stored in Firebase")
 
             # Calculate and store metrics
+            logger.info(f"[X_SETUP] Step 4/5: Calculating and storing metrics")
             metrics = self._calculate_metrics(account_info, timeline_data)
             self._store_metrics(metrics)
 
             # Calculate and store daily metrics
             self._calculate_daily_metrics()
+            logger.info(f"[X_SETUP] Step 4/5 Complete: Metrics calculated and stored")
         else:
-            logger.warning("Failed to get timeline data, but continuing to fetch replies")
+            logger.warning(f"[X_SETUP] Failed to get timeline data, but continuing to fetch replies")
             metrics = None
 
         # Add a small delay before fetching replies to avoid rate limiting
         time.sleep(2)
 
         # Get replies data from X API - ALWAYS try to fetch replies, even if timeline failed
+        logger.info(f"[X_SETUP] Step 5/5: Fetching replies for @{self.x_handle}")
         replies_data = self.get_replies_data()
         if replies_data:
-            logger.info(f"Fetched {len(replies_data)} replies")
+            logger.info(f"[X_SETUP] Step 5/5 Complete: Fetched {len(replies_data)} replies")
             # Store replies in Firebase
             self._store_replies(replies_data)
         else:
-            logger.warning("No replies data fetched")
+            logger.warning(f"[X_SETUP] No replies data fetched for @{self.x_handle}")
 
         # Mark setup as complete if this was initial fetch and we got at least some data
         if is_initial and (timeline_data or replies_data):
             from app.system.services.firebase_service import UserService
             UserService.update_user(self.user_id, {'x_setup_complete': True})
+            logger.info(f"[X_SETUP] Setup marked as complete for user {self.user_id}")
 
         return metrics if timeline_data else {'error': 'Failed to fetch timeline, but replies may have been fetched'}
     
@@ -751,7 +764,7 @@ class XAnalytics:
         try:
             # Ensure we're only storing non-retweets
             filtered_posts = [post for post in posts if not post.get('retweeted', False)]
-            logger.info(f"Storing {len(filtered_posts)} non-retweet posts")
+            logger.info(f"[X_SETUP] Storing {len(filtered_posts)} non-retweet posts in Firebase")
             
             # Get posts collection reference
             posts_collection = self.db.collection('users').document(self.user_id).collection('x_posts_individual')
@@ -759,7 +772,8 @@ class XAnalytics:
             # Store each post as individual document
             batch = self.db.batch()
             batch_count = 0
-            
+            posts_stored = 0
+
             for post in filtered_posts:
                 # Extract media URL if available
                 media_url = self._extract_media_url(post)
@@ -798,20 +812,21 @@ class XAnalytics:
                     doc_ref = posts_collection.document(doc_id)
                     batch.set(doc_ref, post_data, merge=True)
                     batch_count += 1
-                    
+                    posts_stored += 1
+
                     # Commit batch every 100 documents
                     if batch_count >= 100:
                         batch.commit()
                         batch = self.db.batch()
                         batch_count = 0
-                        logger.info(f"Committed batch of 100 posts")
-            
+                        logger.info(f"[X_SETUP] Committed batch of 100 posts ({posts_stored} of {len(filtered_posts)} total)")
+
             # Commit remaining batch
             if batch_count > 0:
                 batch.commit()
-                logger.info(f"Committed final batch of {batch_count} posts")
-            
-            logger.info(f"Stored {len(filtered_posts)} posts for user {self.user_id}")
+                logger.info(f"[X_SETUP] Committed final batch of {batch_count} posts")
+
+            logger.info(f"[X_SETUP] Successfully stored {len(filtered_posts)} posts for user {self.user_id}")
             
             # Also update the timeline document for backward compatibility
             self._store_posts(filtered_posts[:100])  # Store most recent 100 in timeline doc
@@ -953,7 +968,7 @@ class XAnalytics:
 
             # Get posts from last 180 days (6 months) for daily metrics
             cutoff_date = datetime.now() - timedelta(days=180)
-            logger.info(f"Calculating daily metrics with cutoff date: {cutoff_date.strftime('%Y-%m-%d')}")
+            logger.info(f"[X_SETUP] Calculating daily metrics with cutoff date: {cutoff_date.strftime('%Y-%m-%d')}")
 
             # Query posts (we'll filter by date in memory since Firestore doesn't support timestamp queries well)
             all_posts = posts_collection.stream()
@@ -1021,16 +1036,16 @@ class XAnalytics:
                         date_parse_errors += 1
                         logger.debug(f"Error processing post date: {e}")
 
-            logger.info(f"Processed {posts_processed} total posts")
-            logger.info(f"Posts within {cutoff_date.strftime('%Y-%m-%d')} cutoff: {posts_within_cutoff}")
-            logger.info(f"Date parse errors: {date_parse_errors}")
-            logger.info(f"Unique days with posts: {len(daily_data)}")
+            logger.info(f"[X_SETUP] Processed {posts_processed} total posts")
+            logger.info(f"[X_SETUP] Posts within {cutoff_date.strftime('%Y-%m-%d')} cutoff: {posts_within_cutoff}")
+            if date_parse_errors > 0:
+                logger.warning(f"[X_SETUP] Date parse errors: {date_parse_errors}")
+            logger.info(f"[X_SETUP] Unique days with posts: {len(daily_data)}")
 
             # Log date range if we have data
             if daily_data:
                 sorted_dates = sorted(daily_data.keys())
-                logger.info(f"Date range: {sorted_dates[0]} to {sorted_dates[-1]}")
-                logger.info(f"Days with posts: {', '.join(sorted_dates)}")
+                logger.info(f"[X_SETUP] Date range: {sorted_dates[0]} to {sorted_dates[-1]}")
             
             # Calculate engagement rates and averages
             for date_key, data in daily_data.items():
@@ -1052,8 +1067,8 @@ class XAnalytics:
                 'last_updated': datetime.now().isoformat(),
                 'metrics': daily_data
             })
-            
-            logger.info(f"Calculated and stored daily metrics for {len(daily_data)} days")
+
+            logger.info(f"[X_SETUP] Calculated and stored daily metrics for {len(daily_data)} days")
             
         except Exception as e:
             logger.error(f"Error calculating daily metrics: {str(e)}")

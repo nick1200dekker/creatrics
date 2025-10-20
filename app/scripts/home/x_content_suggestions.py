@@ -12,14 +12,37 @@ from app.system.ai_provider.ai_provider import get_ai_provider
 # Get prompts directory
 PROMPTS_DIR = Path(__file__).parent / 'prompts'
 
-def load_prompt(filename: str) -> str:
-    """Load a prompt from text file"""
+def load_prompt(filename: str, section: str = None) -> str:
+    """Load a prompt from text file, optionally extracting a specific section"""
     try:
         prompt_path = PROMPTS_DIR / filename
         with open(prompt_path, 'r', encoding='utf-8') as f:
-            return f.read().strip()
+            content = f.read()
+
+        # If no section specified, return full content
+        if not section:
+            return content.strip()
+
+        # Extract specific section
+        section_marker = f"############# {section} #############"
+        if section_marker not in content:
+            logger.error(f"Section '{section}' not found in {filename}")
+            raise ValueError(f"Section '{section}' not found")
+
+        # Split by section markers and find the requested section
+        parts = content.split("#############")
+        for i, part in enumerate(parts):
+            if section in part:
+                # Get content after this marker and before next marker
+                section_content = part.split("\n", 1)[1] if "\n" in part else ""
+                # Find where next section starts
+                if i + 1 < len(parts):
+                    section_content = section_content.split(f"\n#############")[0]
+                return section_content.strip()
+
+        raise ValueError(f"Section '{section}' not found")
     except Exception as e:
-        logger.error(f"Error loading prompt {filename}: {e}")
+        logger.error(f"Error loading prompt {filename}, section {section}: {e}")
         raise
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -207,7 +230,7 @@ class XContentSuggestions:
             ai_provider = get_ai_provider()
 
             # Generate suggestions
-            system_prompt = load_prompt('generate_x_suggestions_system.txt')
+            system_prompt = load_prompt('prompts.txt', 'SYSTEM_PROMPT')
             response = ai_provider.create_completion(
                 messages=[
                     {
@@ -261,7 +284,7 @@ class XContentSuggestions:
 
     def _build_analysis_prompt(self, posts_context: str) -> str:
         """Build the AI prompt for content analysis"""
-        user_prompt_template = load_prompt('generate_x_suggestions_user.txt')
+        user_prompt_template = load_prompt('prompts.txt', 'USER_PROMPT')
         return user_prompt_template.format(posts_context=posts_context)
 
     def _parse_suggestions(self, ai_response: str) -> List[Dict]:

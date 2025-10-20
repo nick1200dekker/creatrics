@@ -1,7 +1,0 @@
-Style guide for {style}:
-• creatrics → point out something interesting
-• supportive → relate to their experience
-• questioning → ask a genuine question
-• valueadd → share something useful
-• humorous → make a witty observation
-• contrarian → offer a different perspective

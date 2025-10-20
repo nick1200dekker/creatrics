@@ -14,14 +14,46 @@ from app.system.ai_provider.ai_provider import get_ai_provider
 # Get prompts directory
 PROMPTS_DIR = Path(__file__).parent / 'prompts'
 
-def load_prompt(filename: str) -> str:
-    """Load a prompt from text file"""
+def load_prompt(filename: str, section: str = None) -> str:
+    """Load a prompt from text file, optionally extracting a specific section"""
     try:
         prompt_path = PROMPTS_DIR / filename
         with open(prompt_path, 'r', encoding='utf-8') as f:
-            return f.read().strip()
+            content = f.read()
+
+        # If no section specified, return full content
+        if not section:
+            return content.strip()
+
+        # Extract specific section
+        section_marker = f"############# {section} #############"
+        if section_marker not in content:
+            logger.error(f"Section '{section}' not found in {filename}")
+            raise ValueError(f"Section '{section}' not found")
+
+        # Find the start of this section
+        start_idx = content.find(section_marker)
+        if start_idx == -1:
+            raise ValueError(f"Section '{section}' not found")
+
+        # Skip past the section marker and newline
+        content_start = start_idx + len(section_marker)
+        if content_start < len(content) and content[content_start] == '\n':
+            content_start += 1
+
+        # Find the next section marker (if any)
+        next_section = content.find("\n#############", content_start)
+
+        if next_section == -1:
+            # This is the last section
+            section_content = content[content_start:]
+        else:
+            # Extract until next section
+            section_content = content[content_start:next_section]
+
+        return section_content.strip()
     except Exception as e:
-        logger.error(f"Error loading prompt {filename}: {e}")
+        logger.error(f"Error loading prompt {filename}, section {section}: {e}")
         raise
 logger = logging.getLogger(__name__)
 
@@ -69,12 +101,33 @@ class ReplyGenerator:
                 image_context = f"\n\nIMAGES: This tweet contains {len(image_urls)} image(s). The images are shown above. Reference what you see in the images when crafting your reply to make it more relevant and engaging."
                 clean_tweet_text += image_context
 
+            # Load and prepare style guide
+            style_guide_template = load_prompt('prompts.txt', 'STYLE_GUIDE')
+            style_guide = style_guide_template.replace("{style}", style)
+
             # Replace placeholders in prompt
+            # Determine match instruction based on brand voice
+            if use_brand_voice and brand_voice_context:
+                match_instruction = " matching the exact style shown in the examples above"
+                # Add spacing after brand voice context
+                brand_voice_context = brand_voice_context + "\n\n"
+                # When brand voice is enabled, style guide comes after (less emphasis)
+                style_guide = "\n" + style_guide + "\n\n"
+            else:
+                match_instruction = " following the style guide below"
+                # No brand voice, so style guide is primary
+                style_guide = style_guide + "\n\n"
+
             prompt = prompt_template.replace("{tweet_text}", clean_tweet_text)
             prompt = prompt.replace("{author}", author)
             prompt = prompt.replace("{style}", style)
             prompt = prompt.replace("{brand_voice_context}", brand_voice_context)
-            
+            prompt = prompt.replace("{style_guide}", style_guide)
+            prompt = prompt.replace("{match_instruction}", match_instruction)
+
+            # Strip leading/trailing whitespace to avoid empty content blocks
+            prompt = prompt.strip()
+
             logger.debug(f"Generated prompt for reply to @{author}")
 
             # Use different system message based on brand voice
@@ -127,6 +180,19 @@ class ReplyGenerator:
                 "type": "text",
                 "text": prompt
             })
+
+            # Print what will be sent to AI (excluding base64 image data)
+            print("=" * 80)
+            print("SENDING TO AI PROVIDER:")
+            print("=" * 80)
+            print(f"SYSTEM MESSAGE: {system_message}")
+            print("USER MESSAGE:")
+            for item in user_message_content:
+                if item.get('type') == 'image':
+                    print("  [IMAGE - base64 data omitted]")
+                elif item.get('type') == 'text':
+                    print(f"  TEXT: {item.get('text')}")
+            print("=" * 80)
 
             # Use vision completion if images are present, regular completion otherwise
             if image_urls and len(image_urls) > 0:
@@ -316,8 +382,8 @@ class ReplyGenerator:
         """
         try:
             # Create a prompt for multiple GIF query generation
-            system_prompt = load_prompt('generate_gif_queries_system.txt')
-            user_prompt_template = load_prompt('generate_gif_queries_user.txt')
+            system_prompt = load_prompt('prompts.txt', 'GIF_QUERY_SYSTEM')
+            user_prompt_template = load_prompt('prompts.txt', 'GIF_QUERY_USER')
             prompt = user_prompt_template.format(
                 tweet_text=tweet_text[:200],
                 reply_text=reply_text,
@@ -380,15 +446,15 @@ class ReplyGenerator:
     def get_prompt_template(self, use_brand_voice: bool = False) -> str:
         """Get the prompt template for reply generation"""
         try:
-            # Try to load from prompts directory
-            logger.info("Loading prompt from prompts/prompt.txt")
-            return load_prompt('prompt.txt')
+            # Load the main reply prompt (same for both with/without brand voice)
+            logger.info("Loading prompt from prompts/prompts.txt section: MAIN_REPLY_PROMPT")
+            return load_prompt('prompts.txt', 'MAIN_REPLY_PROMPT')
         except Exception as e:
             logger.error(f"Error reading prompt file: {str(e)}")
 
-        # Fallback: use prompt.txt from prompts directory
-        logger.info("Using built-in fallback prompt")
-        return load_prompt('prompt.txt')
+        # Fallback: use prompts.txt from prompts directory
+        logger.info("Using built-in fallback prompt: MAIN_REPLY_PROMPT")
+        return load_prompt('prompts.txt', 'MAIN_REPLY_PROMPT')
     
     def get_brand_voice_context(self, user_id: str) -> str:
         """Get brand voice context from user's X replies data - Enhanced version"""
@@ -482,7 +548,7 @@ class ReplyGenerator:
                 reply_examples_text += f"{i}. {reply}\n"
 
             # Load brand voice context template
-            brand_voice_template = load_prompt('brand_voice_context.txt')
+            brand_voice_template = load_prompt('prompts.txt', 'BRAND_VOICE_CONTEXT')
             brand_voice_context = brand_voice_template.format(
                 screen_name=screen_name,
                 reply_examples=reply_examples_text
