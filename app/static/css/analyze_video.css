@@ -475,26 +475,26 @@ html.dark .video-card-meta .stat i {
     text-align: center;
 }
 
-.empty-state i {
+.empty-state > i {
     font-size: 4rem;
     color: var(--text-tertiary);
     opacity: 0.3;
     margin-bottom: 1rem;
 }
 
-html.dark .empty-state i {
+html.dark .empty-state > i {
     color: #60A5FA;
     opacity: 0.2;
 }
 
-.empty-state p {
+.empty-state > p {
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-secondary);
     margin: 0 0 0.25rem 0;
 }
 
-.empty-state span {
+.empty-state > span {
     font-size: 0.875rem;
     color: var(--text-tertiary);
     line-height: 1.5;
@@ -663,6 +663,8 @@ html.dark .search-loading-state .loading-spinner i {
     background: var(--bg-tertiary);
     border: 2px solid #F59E0B;
     border-radius: 12px;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 html.dark .insufficient-credits-card {
@@ -670,33 +672,51 @@ html.dark .insufficient-credits-card {
     border-color: #F59E0B;
 }
 
+/* Override empty-state flex when it contains insufficient credits card */
+.empty-state .insufficient-credits-card {
+    /* Reset any inherited flex/column styles */
+    display: block;
+    width: 100%;
+}
+
 .credit-icon-wrapper {
-    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 50%;
 }
 
 .credit-icon-wrapper i {
-    font-size: 3rem;
+    font-size: 2rem;
     color: #F59E0B;
 }
 
 .upgrade-plan-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
     background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
     color: white;
+    text-decoration: none;
     border: none;
-    padding: 0.75rem 2rem;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    margin-top: 1rem;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
 }
 
 .upgrade-plan-btn:hover {
     background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    transform: translateY(-1px);
+}
+
+.upgrade-plan-btn:active {
+    transform: translateY(0);
 }

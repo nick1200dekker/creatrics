@@ -342,12 +342,12 @@ function showInsufficientCreditsInline() {
         historyGrid.style.display = 'none';
         emptyHistory.style.display = 'block';
         emptyHistory.innerHTML = `
-            <div class="insufficient-credits-card" style="max-width: 500px; margin: 3rem auto;">
+            <div class="insufficient-credits-card">
                 <div class="credit-icon-wrapper">
                     <i class="ph ph-coins"></i>
                 </div>
-                <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Insufficient Credits</h3>
-                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.25rem; font-weight: 700;">Insufficient Credits</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
                     You don't have enough credits to use this feature.
                 </p>
                 <a href="/payment" class="upgrade-plan-btn">
