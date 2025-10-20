@@ -443,11 +443,24 @@ html.dark .channel-icon.tiktok {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    transition: all 0.2s ease;
 }
 
 html.dark .view-analytics-btn {
     color: var(--text-tertiary);
     border-color: rgba(63, 63, 70, 0.8);
+}
+
+.view-analytics-btn:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #3B82F6;
+}
+
+html.dark .view-analytics-btn:hover {
+    background: rgba(96, 165, 250, 0.1);
+    border-color: rgba(96, 165, 250, 0.4);
+    color: #60A5FA;
 }
 
 /* Channel Metrics */
@@ -735,22 +748,35 @@ html.dark .calendar-header i {
 
 .view-calendar-btn {
     padding: 0.625rem 1.25rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
-    color: #3B82F6;
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    background: transparent;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-primary);
     border-radius: 10px;
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    transition: all 0.2s ease;
 }
 
 html.dark .view-calendar-btn {
-    color: #60A5FA;
+    color: var(--text-tertiary);
+    border-color: rgba(63, 63, 70, 0.8);
+}
+
+.view-calendar-btn:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #3B82F6;
+}
+
+html.dark .view-calendar-btn:hover {
+    background: rgba(96, 165, 250, 0.1);
     border-color: rgba(96, 165, 250, 0.4);
+    color: #60A5FA;
 }
 
 .calendar-events {
