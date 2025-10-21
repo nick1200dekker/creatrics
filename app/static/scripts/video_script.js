@@ -159,7 +159,7 @@
         // Show loading state
         document.getElementById('resultsContainer').innerHTML = `
             <div class="loading-container">
-                <div class="loading-spinner"></div>
+                <div class="loading-spinner"><i class="ph ph-spinner"></i></div>
                 <div class="loading-text">Creating Your Script</div>
                 <div class="loading-subtext">Our AI is crafting your video script based on your concept. This may take a moment...</div>
             </div>

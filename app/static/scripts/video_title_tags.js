@@ -125,7 +125,7 @@ async function generateContent() {
     // Show loading state
     document.getElementById('resultsContainer').innerHTML = `
         <div class="loading-container">
-            <div class="loading-spinner"></div>
+            <div class="loading-spinner"><i class="ph ph-spinner"></i></div>
             <div class="loading-text">Creating Your Content</div>
             <div class="loading-subtext">Generating ${loadingText}...</div>
         </div>

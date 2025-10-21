@@ -49,7 +49,7 @@
         // Show loading state
         document.getElementById('resultsContainer').innerHTML = `
             <div class="loading-container">
-                <div class="loading-spinner"></div>
+                <div class="loading-spinner"><i class="ph ph-spinner"></i></div>
                 <div class="loading-text">Creating Powerful Hooks</div>
                 <div class="loading-subtext">Analyzing your content to generate attention-grabbing hooks that keep viewers watching...</div>
             </div>

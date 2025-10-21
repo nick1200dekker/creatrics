@@ -952,17 +952,19 @@ html.dark .empty-icon {
 }
 
 .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border-primary);
-    border-top-color: #3B82F6;
-    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-spinner i {
+    font-size: 2.5rem;
+    color: #3B82F6;
     animation: spin 1s linear infinite;
 }
 
-html.dark .loading-spinner {
-    border-color: rgba(96, 165, 250, 0.2);
-    border-top-color: #60A5FA;
+html.dark .loading-spinner i {
+    color: #60A5FA;
 }
 
 @keyframes spin {
