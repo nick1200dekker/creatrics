@@ -811,7 +811,7 @@ html.dark .primary-btn:hover:not(:disabled) {
 }
 
 .loading-icon {
-    font-size: 2rem;
+    font-size: 4rem;
     color: #3B82F6;
     margin-bottom: 0.5rem;
 }
@@ -826,14 +826,14 @@ html.dark .loading-icon {
 }
 
 .loading-title {
-    font-size: 1.5rem;
+    font-size: 1.125rem;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0.5rem 0 0.5rem 0;
 }
 
 .loading-subtitle {
-    font-size: 1rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
     margin: 0;
     line-height: 1.5;

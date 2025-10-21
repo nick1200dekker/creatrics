@@ -177,21 +177,36 @@
         }
 
         function setAnalyzingState(analyzing, statusMessage = '') {
-            // Update all analyze buttons
-            document.querySelectorAll('[id^="analyze-button"]').forEach(button => {
-                window.NicheRadarState.isAnalyzing = analyzing;
+            console.log('Setting analyzing state:', analyzing, statusMessage);
+            window.NicheRadarState.isAnalyzing = analyzing;
 
-                if (analyzing) {
-                    button.classList.add('processing');
+            const progressSection = document.getElementById('progressSection');
+            const analyticsPanel = document.getElementById('analytics-panel');
+
+            if (analyzing) {
+                // Hide analytics panel and show progress section
+                if (analyticsPanel) analyticsPanel.style.display = 'none';
+                if (progressSection) progressSection.style.display = 'block';
+
+                // Also update buttons for consistency
+                document.querySelectorAll('[id^="analyze-button"]').forEach(button => {
                     button.disabled = true;
-                    button.innerHTML = '<div class="loading-spinner"></div><span>Analyzing...</span>';
-                } else {
-                    button.classList.remove('processing');
+                    button.classList.add('processing');
+                });
+            } else {
+                // Hide progress section and show analytics panel
+                if (progressSection) progressSection.style.display = 'none';
+                if (analyticsPanel) analyticsPanel.style.display = 'block';
+
+                // Reset buttons
+                document.querySelectorAll('[id^="analyze-button"]').forEach(button => {
                     button.disabled = false;
+                    button.classList.remove('processing');
                     button.innerHTML = '<i class="ph ph-arrows-clockwise"></i><span>Analyze</span>';
-                }
-            });
-            console.log('Button state updated:', analyzing ? 'analyzing' : 'normal');
+                });
+            }
+
+            console.log('UI state updated:', analyzing ? 'analyzing (progress shown)' : 'normal (analytics shown)');
         }
 
         // Define all event handlers

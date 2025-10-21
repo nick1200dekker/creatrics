@@ -394,46 +394,104 @@ html.dark .history-item:hover {
     color: var(--text-tertiary);
 }
 
-/* Loading Section */
-.loading-section {
-    padding: 4rem 2rem;
-    text-align: center;
+/* Progress Section - matching Competitor Analysis */
+.progress-section {
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 400px;
+    width: 100%;
 }
 
-.loading-card {
-    max-width: 400px;
+.progress-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    max-width: 600px;
+    width: 90%;
+    text-align: center;
+    transition: all 0.2s ease;
     margin: 0 auto;
 }
 
-.loading-icon {
-    font-size: 3rem;
-    color: #3B82F6;
-    margin-bottom: 1.5rem;
+html.dark .progress-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+    backdrop-filter: blur(10px);
 }
 
-html.dark .loading-icon {
-    color: #60A5FA;
+.progress-header {
+    margin-bottom: 0;
 }
 
-.loading-icon i {
+.progress-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    border-radius: 50%;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+html.dark .progress-icon {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 4px 16px rgba(96, 165, 250, 0.4);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 24px rgba(59, 130, 246, 0.5);
+    }
+}
+
+@keyframes pulse-dark {
+    0%, 100% {
+        box-shadow: 0 4px 16px rgba(96, 165, 250, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 24px rgba(96, 165, 250, 0.6);
+    }
+}
+
+html.dark .progress-icon {
+    animation: pulse-dark 2s ease-in-out infinite;
+}
+
+.progress-icon i {
+    font-size: 2.5rem;
+    color: white;
     animation: spin 1s linear infinite;
-    display: inline-block;
 }
 
-.loading-title {
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.progress-title {
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-primary);
     margin: 0 0 0.5rem 0;
 }
 
-.loading-subtitle {
-    font-size: 1rem;
-    color: var(--text-tertiary);
+.progress-subtitle {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
     margin: 0;
 }
 

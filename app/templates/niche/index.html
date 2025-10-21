@@ -24,6 +24,19 @@
 
         <!-- Content Area -->
         <div class="niche-radar-content">
+            <!-- Progress Section (hidden by default, shown during analysis) -->
+            <div class="progress-section" id="progressSection" style="display: none;">
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <div class="progress-icon">
+                            <i class="ph ph-spinner spin"></i>
+                        </div>
+                        <h2 class="progress-title">Analyzing Your Niche</h2>
+                        <p class="progress-subtitle">This may take a moment while we analyze trending content...</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Analytics Panel - Always Visible -->
             <div id="analytics-panel" class="analytics-panel" style="display: block !important;">
                 {% if latest_analysis %}

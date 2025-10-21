@@ -59,18 +59,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // If analysis started less than 2 minutes ago, show loading
         if (currentTime - analysisStartTime < 120000) {
             console.log('Ongoing analysis detected for video:', videoId);
-            showLoading();
+
+            // Hide sections and show progress
+            document.getElementById('searchResults').style.display = 'none';
+            document.getElementById('historySection').style.display = 'none';
+            document.getElementById('progressSection').style.display = 'block';
 
             // Poll for completion
             checkAnalysisStatus(videoId, analysisData.isShort);
         } else {
             // Analysis timed out, clear it
             sessionStorage.removeItem('analyzing_video');
-            hideLoading();
         }
-    } else {
-        // No ongoing analysis, hide loading modal
-        hideLoading();
     }
 
     // Load history normally
@@ -514,14 +514,17 @@ function displayHistory(history) {
     }).join('');
 }
 
-// Show loading modal
+// Show loading - now uses progress section instead of modal
 function showLoading() {
-    document.getElementById('loadingModal').style.display = 'flex';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('historySection').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'block';
 }
 
-// Hide loading modal
+// Hide loading - hide progress section and show history
 function hideLoading() {
-    document.getElementById('loadingModal').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'none';
+    document.getElementById('historySection').style.display = 'block';
 }
 
 // Check if analysis is complete by polling the history
