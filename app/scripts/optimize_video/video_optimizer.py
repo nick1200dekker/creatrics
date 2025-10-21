@@ -170,12 +170,15 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
 
             # Analyze thumbnail with Claude Vision (skip for shorts)
             thumbnail_analysis = {}
+            thumbnail_token_usage = {}
             if not is_short:
                 thumbnail_analysis = self.thumbnail_analyzer.analyze_thumbnail(
                     thumbnail_url,
                     current_title,
                     user_id
                 )
+                # Get thumbnail token usage if available
+                thumbnail_token_usage = thumbnail_analysis.get('token_usage', {})
 
             # Generate overall recommendations
             recommendations = self._generate_recommendations(
@@ -191,6 +194,47 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                 user_id,
                 user_subscription
             )
+
+            # Get recommendations token usage
+            recommendations_token_usage = recommendations.get('token_usage', {})
+
+            # Collect all token usage for credit deduction
+            all_token_usages = []
+
+            # Add title generation tokens
+            if title_result.get('token_usage', {}).get('input_tokens', 0) > 0:
+                all_token_usages.append({
+                    'operation': 'Title Generation',
+                    **title_result.get('token_usage', {})
+                })
+
+            # Add description generation tokens
+            if description_result.get('token_usage', {}).get('input_tokens', 0) > 0:
+                all_token_usages.append({
+                    'operation': 'Description Generation',
+                    **description_result.get('token_usage', {})
+                })
+
+            # Add tags generation tokens
+            if tags_result.get('token_usage', {}).get('input_tokens', 0) > 0:
+                all_token_usages.append({
+                    'operation': 'Tags Generation',
+                    **tags_result.get('token_usage', {})
+                })
+
+            # Add thumbnail analysis tokens
+            if thumbnail_token_usage.get('input_tokens', 0) > 0:
+                all_token_usages.append({
+                    'operation': 'Thumbnail Analysis',
+                    **thumbnail_token_usage
+                })
+
+            # Add recommendations tokens
+            if recommendations_token_usage.get('input_tokens', 0) > 0:
+                all_token_usages.append({
+                    'operation': 'SEO Recommendations',
+                    **recommendations_token_usage
+                })
 
             # Prepare response
             return {
@@ -212,7 +256,8 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                 'optimized_description': optimized_description,
                 'optimized_tags': optimized_tags,
                 'thumbnail_analysis': thumbnail_analysis.get('analysis', ''),
-                'recommendations': recommendations
+                'recommendations': recommendations,
+                'all_token_usages': all_token_usages  # Return all token usages for credit deduction
             }
 
         except Exception as e:
@@ -375,28 +420,20 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
 
             recommendations_text = response.get('content', '') if isinstance(response, dict) else str(response)
 
-            # Deduct credits based on actual token usage
-            credits_manager = CreditsManager()
+            # Get token usage from response (don't deduct here - will be handled centrally)
             usage = response.get('usage', {})
-            input_tokens = usage.get('input_tokens', 0)
-            output_tokens = usage.get('output_tokens', 0)
-            model_name = response.get('model', None)  # Uses current AI provider model
-
-            if input_tokens > 0 or output_tokens > 0:
-                credits_manager.deduct_llm_credits(
-                    user_id,
-                    model_name,
-                    input_tokens,
-                    output_tokens,
-                    'Video optimization recommendations',
-                    feature_id='optimize_video',
-                    provider_enum=response.get('provider_enum')
-                )
+            token_usage = {
+                'model': response.get('model', None),
+                'input_tokens': usage.get('input_tokens', 0),
+                'output_tokens': usage.get('output_tokens', 0),
+                'provider_enum': response.get('provider_enum')
+            }
 
             return {
                 'overview': recommendations_text,
                 'title_comparison': f"Current: {current_title}\nOptimized: {optimized_title}",
-                'has_improvements': True
+                'has_improvements': True,
+                'token_usage': token_usage
             }
 
         except Exception as e:

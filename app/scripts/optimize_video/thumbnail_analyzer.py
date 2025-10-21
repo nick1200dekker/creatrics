@@ -121,29 +121,20 @@ class ThumbnailAnalyzer:
                 analysis_text = response.get('content', '') if isinstance(response, dict) else str(response)
                 logger.info(f"Thumbnail analysis result length: {len(analysis_text)} characters")
 
-                # Deduct credits based on actual token usage
-                credits_manager = CreditsManager()
+                # Get token usage from response (don't deduct here - will be handled centrally)
                 usage = response.get('usage', {})
-                input_tokens = usage.get('input_tokens', 0)
-                output_tokens = usage.get('output_tokens', 0)
-                model_name = response.get('model', None)  # Uses current AI provider model
-
-                if input_tokens > 0 or output_tokens > 0:
-                    credits_manager.deduct_llm_credits(
-                        user_id,
-                        model_name,
-                        input_tokens,
-                        output_tokens,
-                        'Thumbnail analysis (vision)',
-                        feature_id='optimize_video',
-                        provider_enum=response.get('provider_enum')
-                    )
-                    logger.info(f"Credits deducted for thumbnail analysis: {input_tokens} in / {output_tokens} out tokens")
+                token_usage = {
+                    'model': response.get('model', None),
+                    'input_tokens': usage.get('input_tokens', 0),
+                    'output_tokens': usage.get('output_tokens', 0),
+                    'provider_enum': response.get('provider_enum')
+                }
 
                 return {
                     'success': True,
                     'analysis': analysis_text,
-                    'thumbnail_url': thumbnail_url
+                    'thumbnail_url': thumbnail_url,
+                    'token_usage': token_usage
                 }
 
             except Exception as e:

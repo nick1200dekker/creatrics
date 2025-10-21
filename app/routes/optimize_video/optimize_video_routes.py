@@ -306,25 +306,37 @@ def optimize_video_analysis(video_id):
         optimization_ref.set(optimization_data)
         logger.info(f"Saved video optimization to Firebase for user {user_id}: {video_id}")
 
-        # Deduct credits for AI usage
-        token_usage = result.get('token_usage', {})
-        if token_usage.get('input_tokens', 0) > 0:
-            deduction_result = credits_manager.deduct_llm_credits(
-                user_id=user_id,
-                model_name=token_usage.get('model', None),
-                input_tokens=token_usage.get('input_tokens', 0),
-                output_tokens=token_usage.get('output_tokens', 0),
-                description=f"Video Optimization - {video_id}",
-                provider_enum=token_usage.get('provider_enum')
-            )
+        # Deduct credits for ALL AI operations
+        all_token_usages = result.get('all_token_usages', [])
+        if all_token_usages:
+            logger.info(f"Deducting credits for {len(all_token_usages)} AI operations")
 
-            if not deduction_result['success']:
-                logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
-                return jsonify({
-                    'success': False,
-                    'error': 'Credit deduction failed',
-                    'error_type': 'insufficient_credits'
-                }), 402
+            for token_usage in all_token_usages:
+                operation_name = token_usage.get('operation', 'Unknown')
+                input_tokens = token_usage.get('input_tokens', 0)
+                output_tokens = token_usage.get('output_tokens', 0)
+
+                if input_tokens > 0 or output_tokens > 0:
+                    logger.info(f"Deducting credits for {operation_name}: {input_tokens} input, {output_tokens} output tokens")
+
+                    deduction_result = credits_manager.deduct_llm_credits(
+                        user_id=user_id,
+                        model_name=token_usage.get('model', None),
+                        input_tokens=input_tokens,
+                        output_tokens=output_tokens,
+                        description=f"Video Optimization - {operation_name} - {video_id}",
+                        provider_enum=token_usage.get('provider_enum')
+                    )
+
+                    if not deduction_result['success']:
+                        logger.error(f"Failed to deduct credits for {operation_name}: {deduction_result.get('message')}")
+                        return jsonify({
+                            'success': False,
+                            'error': f'Credit deduction failed for {operation_name}',
+                            'error_type': 'insufficient_credits'
+                        }), 402
+        else:
+            logger.warning(f"No token usage information found for video {video_id}")
 
         return jsonify({
             'success': True,
