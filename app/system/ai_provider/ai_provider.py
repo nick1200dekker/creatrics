@@ -7,8 +7,10 @@ import os
 import logging
 import requests
 import base64
+import json
 from typing import Optional, Dict, Any, List
 from enum import Enum
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +84,19 @@ class AIProviderManager:
         }
     }
     
-    def __init__(self):
-        # Get the primary provider from environment (default to Claude)
-        primary_provider = self._get_provider_from_env()
+    def __init__(self, script_name: Optional[str] = None, user_subscription: Optional[str] = None):
+        """
+        Initialize AI Provider Manager with optional script-specific and user-specific preferences
+
+        Args:
+            script_name: Name of the script/feature requesting AI (e.g., 'video_title', 'hook_generator')
+            user_subscription: User's subscription plan (e.g., 'free', 'premium', 'admin')
+        """
+        self.script_name = script_name
+        self.user_subscription = user_subscription
+
+        # Get the primary provider based on preferences and user plan
+        primary_provider = self._get_primary_provider()
 
         # Define fallback chain based on primary provider
         # Always: Primary → Claude → OpenAI → Google → DeepSeek
@@ -102,8 +114,70 @@ class AIProviderManager:
         self.config = self.PROVIDER_CONFIGS[self.provider]
         self._client = None
         
+    def _load_preferences(self) -> Dict[str, Any]:
+        """Load AI provider preferences from JSON file"""
+        try:
+            # Get project root (4 levels up from this file)
+            config_dir = Path(__file__).parent.parent.parent.parent / 'config'
+            prefs_file = config_dir / 'ai_provider_preferences.json'
+
+            if prefs_file.exists():
+                with open(prefs_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except Exception as e:
+            logger.debug(f"Could not load AI provider preferences: {e}")
+
+        return {
+            'free_users_deepseek': False,
+            'script_preferences': {}
+        }
+
+    def _get_primary_provider(self) -> AIProvider:
+        """
+        Get the primary AI provider based on:
+        1. User subscription plan (free users may be forced to DeepSeek)
+        2. Script-specific preferences from admin config
+        3. Environment variable
+        4. Default to Claude
+        """
+        preferences = self._load_preferences()
+
+        # Map string to enum
+        provider_map = {
+            'claude': AIProvider.CLAUDE,
+            'openai': AIProvider.OPENAI,
+            'deepseek': AIProvider.DEEPSEEK,
+            'google': AIProvider.GOOGLE,
+            'gemini': AIProvider.GOOGLE,  # Alternative name for Google
+        }
+
+        # 1. Check if free users should be forced to DeepSeek
+        if preferences.get('free_users_deepseek', False):
+            is_free_user = self.user_subscription and self.user_subscription.lower() in ['free', 'free plan', '']
+            if is_free_user:
+                logger.info(f"Free user detected - forcing DeepSeek provider")
+                return AIProvider.DEEPSEEK
+
+        # 2. Check script-specific preferences
+        if self.script_name:
+            script_prefs = preferences.get('script_preferences', {})
+            if self.script_name in script_prefs:
+                preferred_provider = script_prefs[self.script_name]
+                if preferred_provider in provider_map:
+                    logger.info(f"Using preferred provider for {self.script_name}: {preferred_provider}")
+                    return provider_map[preferred_provider]
+
+        # 3. Fall back to environment variable
+        provider_str = os.environ.get('AI_PROVIDER', 'claude').lower()
+        if provider_str in provider_map:
+            return provider_map[provider_str]
+
+        # 4. Default to Claude
+        logger.warning(f"Unknown AI provider configuration, defaulting to Claude")
+        return AIProvider.CLAUDE
+
     def _get_provider_from_env(self) -> AIProvider:
-        """Get the primary AI provider from environment variable"""
+        """Get the primary AI provider from environment variable (legacy method)"""
         provider_str = os.environ.get('AI_PROVIDER', 'claude').lower()
 
         # Map string to enum
@@ -858,11 +932,29 @@ class AIProviderManager:
             
         return pricing
 
-# Singleton instance
+# Singleton instance (kept for backward compatibility)
 _ai_provider_manager = None
 
-def get_ai_provider() -> AIProviderManager:
-    """Get the singleton AI provider manager instance"""
+def get_ai_provider(script_name: Optional[str] = None, user_subscription: Optional[str] = None) -> AIProviderManager:
+    """
+    Get an AI provider manager instance
+
+    Args:
+        script_name: Name of the script/feature requesting AI (e.g., 'video_title', 'hook_generator')
+        user_subscription: User's subscription plan (e.g., 'free', 'premium', 'admin')
+
+    Returns:
+        AIProviderManager instance configured for the specific script and user
+
+    Note:
+        If script_name or user_subscription is provided, a new instance is created.
+        Otherwise, returns the singleton instance for backward compatibility.
+    """
+    # If specific configuration is requested, create a new instance
+    if script_name is not None or user_subscription is not None:
+        return AIProviderManager(script_name=script_name, user_subscription=user_subscription)
+
+    # Otherwise use singleton for backward compatibility
     global _ai_provider_manager
     if _ai_provider_manager is None:
         _ai_provider_manager = AIProviderManager()

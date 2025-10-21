@@ -62,7 +62,10 @@ def improve_editing_prompt(prompt_text, image_base64=None, mime_type='image/jpeg
         template = get_prompt_template()
 
         # Get AI provider
-        ai_provider = get_ai_provider()
+        ai_provider = get_ai_provider(
+                script_name='thumbnail/improve_prompt',
+                user_subscription=user_subscription
+            )
 
         # Add model context to the template
         model_name = "Canvas Editor (nano-banana)" if model == "nano-banana" else "Photo Editor (seeddream)"

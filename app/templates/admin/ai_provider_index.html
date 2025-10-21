@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+
+{% block title %}AI Provider Manager{% endblock %}
+
+{% block content %}
+<style>
+    /* Override base template styles */
+    .content-panel {
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Main wrapper - matches AI Prompts Manager */
+    .ai-provider-wrapper {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-secondary);
+        overflow: hidden;
+        width: 100%;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .ai-provider-wrapper {
+        border-color: transparent;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Header section */
+    .ai-provider-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-primary);
+        background: linear-gradient(135deg,
+            rgba(59, 130, 246, 0.03) 0%,
+            rgba(139, 92, 246, 0.03) 100%);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    html.dark .ai-provider-header {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+        border-bottom-color: rgba(63, 63, 70, 0.5);
+    }
+
+    .ai-provider-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .ai-provider-title i {
+        color: #3B82F6;
+    }
+
+    html.dark .ai-provider-title i {
+        color: #60A5FA;
+    }
+
+    .ai-provider-subtitle {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    /* Free users toggle section */
+    .free-users-section {
+        margin: 1.5rem;
+        padding: 1.25rem;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: 12px;
+    }
+
+    html.dark .free-users-section {
+        background: rgba(39, 39, 42, 0.8);
+        border-color: rgba(63, 63, 70, 0.8);
+    }
+
+    .free-users-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+
+    .free-users-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .free-users-title i {
+        color: #3B82F6;
+    }
+
+    html.dark .free-users-title i {
+        color: #60A5FA;
+    }
+
+    .free-users-description {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 26px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.3s;
+        border-radius: 34px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+        background-color: #3B82F6;
+    }
+
+    input:checked + .toggle-slider:before {
+        transform: translateX(22px);
+    }
+
+    html.dark input:checked + .toggle-slider {
+        background-color: #3B82F6;
+    }
+
+    /* Scripts grid */
+    .scripts-container {
+        padding: 1.5rem;
+    }
+
+    .scripts-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .scripts-header h2 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .scripts-header h2 i {
+        color: #3B82F6;
+    }
+
+    html.dark .scripts-header h2 i {
+        color: #60A5FA;
+    }
+
+    .scripts-header p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .scripts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 1.25rem;
+    }
+
+    /* Script card */
+    .script-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    html.dark .script-card {
+        background: rgba(39, 39, 42, 0.6);
+        border-color: rgba(63, 63, 70, 0.6);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .script-card:hover {
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-1px);
+    }
+
+    html.dark .script-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        border-color: rgba(96, 165, 250, 0.3);
+    }
+
+    .script-card-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    html.dark .script-card-header {
+        border-bottom-color: rgba(63, 63, 70, 0.5);
+    }
+
+    .script-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 0.25rem 0;
+        line-height: 1.3;
+    }
+
+    .script-path {
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+        font-family: 'Courier New', monospace;
+        margin: 0;
+        opacity: 0.7;
+    }
+
+    .provider-selector-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+
+    /* Provider buttons grid */
+    .provider-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.625rem;
+    }
+
+    .provider-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.625rem;
+        background: var(--bg-secondary);
+        border: 1.5px solid var(--border-primary);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-align: center;
+    }
+
+    html.dark .provider-btn {
+        background: rgba(24, 24, 27, 0.4);
+        border-color: rgba(63, 63, 70, 0.5);
+    }
+
+    .provider-btn:hover {
+        border-color: rgba(59, 130, 246, 0.5);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);
+    }
+
+    html.dark .provider-btn:hover {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .provider-btn.active {
+        border-color: #3B82F6;
+        background: rgba(59, 130, 246, 0.1);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+    }
+
+    html.dark .provider-btn.active {
+        border-color: #3B82F6;
+        background: rgba(59, 130, 246, 0.15);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3);
+    }
+
+    .provider-logo {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        object-fit: contain;
+        background: white;
+        padding: 3px;
+    }
+
+    html.dark .provider-logo {
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .provider-name {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.2;
+    }
+
+    .provider-model {
+        font-size: 0.65rem;
+        color: var(--text-tertiary);
+        font-family: 'Courier New', monospace;
+        line-height: 1.2;
+    }
+
+    .provider-meta {
+        display: flex;
+        gap: 0.5rem;
+        font-size: 0.65rem;
+        color: var(--text-tertiary);
+    }
+
+    /* Success message */
+    .success-message {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #10B981;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        display: none;
+        align-items: center;
+        gap: 0.75rem;
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .success-message.show {
+        display: flex;
+    }
+
+    .success-message i {
+        font-size: 1.25rem;
+    }
+
+    /* Info banner */
+    .info-banner {
+        margin: 1.5rem;
+        padding: 1rem 1.25rem;
+        background: rgba(59, 130, 246, 0.08);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    html.dark .info-banner {
+        background: rgba(59, 130, 246, 0.12);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .info-banner i {
+        color: #3B82F6;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    html.dark .info-banner i {
+        color: #60A5FA;
+    }
+
+    .info-banner p {
+        font-size: 0.875rem;
+        margin: 0;
+        color: var(--text-primary);
+    }
+
+    .info-banner strong {
+        font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .ai-provider-header {
+            padding: 1rem;
+        }
+
+        .ai-provider-title {
+            font-size: 1.25rem;
+        }
+
+        .scripts-container {
+            padding: 1rem;
+        }
+
+        .scripts-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .provider-buttons {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="ai-provider-wrapper">
+    <!-- Header -->
+    <div class="ai-provider-header">
+        <h1 class="ai-provider-title">
+            <i class="ph ph-brain"></i>
+            AI Provider Manager
+        </h1>
+    </div>
+
+    <!-- Free Users Toggle -->
+    <div class="free-users-section">
+        <div class="free-users-header">
+            <div>
+                <h3 class="free-users-title">
+                    <i class="ph ph-users"></i>
+                    Free Users Settings
+                </h3>
+                <p class="free-users-description">Force all free users to use DeepSeek (most cost-effective)</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="freeUsersToggle" {% if preferences.free_users_deepseek %}checked{% endif %}>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Scripts Grid -->
+    <div class="scripts-container">
+        <div class="scripts-header">
+            <h2>
+                <i class="ph ph-code"></i>
+                Script Preferences
+            </h2>
+            <p>Select the preferred AI model for each script feature</p>
+        </div>
+
+        <div class="scripts-grid">
+            {% for script_key, script in scripts.items() %}
+            <div class="script-card" data-script="{{ script_key }}">
+                <div class="script-card-header">
+                    <div>
+                        <h3 class="script-name">{{ script.display_name }}</h3>
+                        <div class="script-path">/{{ script.path }}</div>
+                    </div>
+                </div>
+
+                <label class="provider-selector-label">Preferred Model:</label>
+
+                <div class="provider-buttons">
+                    {% for provider_key, provider in providers.items() %}
+                    <button class="provider-btn {% if preferences.script_preferences.get(script_key) == provider_key %}active{% elif not preferences.script_preferences.get(script_key) and provider_key == 'claude' %}active{% endif %}"
+                            data-provider="{{ provider_key }}"
+                            onclick="selectProvider('{{ script_key }}', '{{ provider_key }}')">
+                        {% if provider.logo_url %}
+                        <img src="{{ provider.logo_url }}" alt="{{ provider.name }}" class="provider-logo" onerror="this.style.display='none'">
+                        {% else %}
+                        <i class="ph ph-brain" style="font-size: 32px; color: var(--text-primary);"></i>
+                        {% endif %}
+                        <div class="provider-name">{{ provider.name }}</div>
+                        <div class="provider-model">{{ provider.model }}</div>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if not scripts %}
+        <div class="empty-state">
+            <i class="ph ph-warning"></i>
+            <p>No AI-powered scripts found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Success Message -->
+<div class="success-message" id="successMessage">
+    <i class="ph ph-check-circle"></i>
+    <span id="successMessageText">Settings saved successfully!</span>
+</div>
+
+<script>
+// Show success message
+function showSuccess(message) {
+    const successMsg = document.getElementById('successMessage');
+    const successText = document.getElementById('successMessageText');
+    successText.textContent = message;
+    successMsg.classList.add('show');
+    setTimeout(() => {
+        successMsg.classList.remove('show');
+    }, 3000);
+}
+
+// Select provider for a script
+async function selectProvider(scriptKey, providerKey) {
+    try {
+        // Update UI immediately
+        const card = document.querySelector(`[data-script="${scriptKey}"]`);
+        const buttons = card.querySelectorAll('.provider-btn');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.provider === providerKey) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Save to server
+        const response = await fetch('/admin/ai-provider/preferences/script', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                script_name: scriptKey,
+                provider: providerKey
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showSuccess(`Updated to use ${providerKey.charAt(0).toUpperCase() + providerKey.slice(1)}`);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error updating preference:', error);
+        alert('Failed to update preference');
+    }
+}
+
+// Toggle free users setting
+document.getElementById('freeUsersToggle').addEventListener('change', async function(e) {
+    const enabled = e.target.checked;
+
+    try {
+        const response = await fetch('/admin/ai-provider/preferences/free-users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ enabled: enabled })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const status = enabled ? 'enabled' : 'disabled';
+            showSuccess(`Free users DeepSeek mode ${status}`);
+        } else {
+            alert('Error: ' + data.error);
+            e.target.checked = !enabled; // Revert toggle
+        }
+    } catch (error) {
+        console.error('Error updating free users setting:', error);
+        alert('Failed to update setting');
+        e.target.checked = !enabled; // Revert toggle
+    }
+});
+</script>
+{% endblock %}

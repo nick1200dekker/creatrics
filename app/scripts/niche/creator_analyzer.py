@@ -59,7 +59,10 @@ class CreatorAnalyzer:
             credits_manager = CreditsManager()
             
             # Use AI provider's default model for estimation
-            ai_provider = get_ai_provider()
+            ai_provider = get_ai_provider(
+                script_name='niche/creator_analyzer',
+                user_subscription=user_subscription
+            )
             model_name = ai_provider.default_model
             
             # Estimate cost from text content
@@ -203,7 +206,7 @@ class CreatorAnalyzer:
             logger.error(f"Error in analyze_creators: {str(e)}")
             return None
 
-    def generate_timeline_analysis(self, tweets: List[Dict], user_id: str) -> str:
+    def generate_timeline_analysis(self, tweets: List[Dict], user_id: str, user_subscription: str = None) -> str:
         """Generate AI-powered timeline analysis and content suggestions"""
         try:
             if not tweets:
@@ -221,7 +224,10 @@ class CreatorAnalyzer:
             prompt = self.prompt_template.format(tweets_data=tweets_data)
 
             # Get AI provider and generate content
-            ai_provider = get_ai_provider()
+            ai_provider = get_ai_provider(
+                script_name='niche/creator_analyzer',
+                user_subscription=user_subscription
+            )
             
             response = ai_provider.create_completion(
                 messages=[

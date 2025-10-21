@@ -1,0 +1,7 @@
+{
+  "free_users_deepseek": false,
+  "script_preferences": {
+    "reply_guy/reply_generator": "google",
+    "post_editor/post_editor": "openai"
+  }
+}

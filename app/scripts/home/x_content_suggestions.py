@@ -247,7 +247,10 @@ class XContentSuggestions:
             prompt = self._build_analysis_prompt(posts_context)
 
             # Get AI provider
-            ai_provider = get_ai_provider()
+            ai_provider = get_ai_provider(
+                script_name='home/x_content_suggestions',
+                user_subscription=user_subscription
+            )
 
             # Generate suggestions
             system_prompt = load_prompt('prompts.txt', 'SYSTEM_PROMPT')

@@ -67,7 +67,7 @@ class TikTokTitleGenerator:
         pass
 
     def generate_titles(self, keywords: str, video_input: str = '',
-                       user_id: str = None) -> Dict:
+                       user_id: str = None, user_subscription: str = None) -> Dict:
         """
         Generate TikTok titles with hooks and hashtags
 
@@ -91,7 +91,10 @@ class TikTokTitleGenerator:
                 }
 
             # Get AI provider
-            ai_provider = get_ai_provider()
+            ai_provider = get_ai_provider(
+                script_name='tiktok_titles_hashtags/tiktok_title_generator',
+                user_subscription=user_subscription
+            )
 
             if ai_provider:
                 try:

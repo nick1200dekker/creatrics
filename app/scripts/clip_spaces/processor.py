@@ -57,7 +57,7 @@ def load_prompt(filename: str, section: str = None) -> str:
 logger = logging.getLogger(__name__)
 
 class SpaceProcessor:
-    def __init__(self, space_id, user_id, status_callback=None):
+    def __init__(self, space_id, user_id, status_callback=None, user_subscription=None):
         """Initialize the Space processor"""
         self.space_id = space_id
         self.user_id = user_id
@@ -74,7 +74,10 @@ class SpaceProcessor:
             logger.error("ElevenLabs API key not found")
         
         # Get AI provider instead of OpenAI client
-        self.ai_provider = get_ai_provider()
+        self.ai_provider = get_ai_provider(
+                script_name='clip_spaces/processor',
+                user_subscription=user_subscription
+            )
         
         # Load prompt templates from prompts/ directory
         self.highlight_prompt_template = load_prompt('prompts.txt', 'HIGHLIGHT_PROMPT')

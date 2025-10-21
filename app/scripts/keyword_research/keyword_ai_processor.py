@@ -147,7 +147,10 @@ def detect_topic_context(topic: str) -> dict:
     Uses REAL YouTube data to inform the analysis
     """
     try:
-        ai_provider = get_ai_provider()
+        ai_provider = get_ai_provider(
+                script_name='keyword_research/keyword_ai_processor',
+                user_subscription=user_subscription
+            )
 
         # Get current date for context
         current_date = datetime.now().strftime("%B %d, %Y")
@@ -229,7 +232,10 @@ def generate_keywords_with_ai(topic: str, context: dict, count: int = 100) -> di
     Returns dict with keywords list and token_usage
     """
     try:
-        ai_provider = get_ai_provider()
+        ai_provider = get_ai_provider(
+                script_name='keyword_research/keyword_ai_processor',
+                user_subscription=user_subscription
+            )
 
         # Get current date for context
         current_date = datetime.now().strftime("%B %d, %Y")
@@ -326,12 +332,18 @@ HERE IS THE REAL DATA - Top performing videos for "{topic}" from the last month:
         return {'keywords': [], 'token_usage': None}
 
 
-def generate_ai_insights(results: list, topic: str, context: dict) -> dict:
+def generate_ai_insights(results: list, topic: str, context: dict, user_subscription: str = None) -> dict:
     """
     Generate AI-powered insights from keyword analysis results
+
+    Args:
+        user_subscription: User's subscription plan for AI provider selection
     """
     try:
-        ai_provider = get_ai_provider()
+        ai_provider = get_ai_provider(
+                script_name='keyword_research/keyword_ai_processor',
+                user_subscription=user_subscription
+            )
 
         # Get current date for context
         current_date = datetime.now().strftime("%B %d, %Y")

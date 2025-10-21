@@ -75,7 +75,8 @@ class VideoScriptGenerator:
             return None
 
     def generate_script(self, concept: str, video_type: str = 'long',
-                       script_format: str = 'full', duration: int = None, user_id: str = None) -> Dict:
+                       script_format: str = 'full', duration: int = None, user_id: str = None,
+                       user_subscription: str = None) -> Dict:
         """
         Generate video script using AI
 
@@ -85,6 +86,7 @@ class VideoScriptGenerator:
             script_format: Either 'full' or 'bullet'
             duration: Target duration (minutes for long, seconds for short)
             user_id: User ID for tracking
+            user_subscription: User's subscription plan for AI provider selection
 
         Returns:
             Dict with success status and generated script
@@ -98,7 +100,10 @@ class VideoScriptGenerator:
                 prompt_template = None
 
             # Get AI provider
-            ai_provider = get_ai_provider()
+            ai_provider = get_ai_provider(
+                script_name='video_script/video_script',
+                user_subscription=user_subscription
+            )
 
             if ai_provider:
                 try:

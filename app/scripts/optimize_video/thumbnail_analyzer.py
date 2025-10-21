@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class ThumbnailAnalyzer:
     """Analyzes video thumbnails using Claude Vision"""
 
-    def analyze_thumbnail(self, thumbnail_url: str, video_title: str, user_id: str) -> Dict:
+    def analyze_thumbnail(self, thumbnail_url: str, video_title: str, user_id: str, user_subscription: str = None) -> Dict:
         """
         Analyze a thumbnail using Claude Vision
 
@@ -45,7 +45,10 @@ class ThumbnailAnalyzer:
             logger.info(f"Starting thumbnail analysis for video: {video_title}")
             logger.info(f"Thumbnail URL: {thumbnail_url}")
 
-            ai_provider = get_ai_provider()
+            ai_provider = get_ai_provider(
+                script_name='optimize_video/thumbnail_analyzer',
+                user_subscription=user_subscription
+            )
             if not ai_provider:
                 logger.error("AI provider not available for thumbnail analysis")
                 return {'success': False, 'error': 'AI provider not available'}

@@ -349,15 +349,18 @@ class PostEditor:
             logger.error(f"Error during media cleanup: {e}")
             return 0
 
-    def generate(self, posts: list, preset: str, additional_context: Optional[str] = None, 
+    def generate(self, posts: list, preset: str, additional_context: Optional[str] = None,
                  user_id: Optional[str] = None, voice_tone: str = 'standard',
-                 custom_voice_posts: Optional[str] = None) -> dict:
+                 custom_voice_posts: Optional[str] = None, user_subscription: Optional[str] = None) -> dict:
         """
         Generate improved content for all posts in a thread based on the selected preset.
-        
+
         CLEAN: This method ONLY handles content generation.
         Credit operations are handled by the caller using CreditsManager.
-        
+
+        Args:
+            user_subscription: User's subscription plan for AI provider selection
+
         Returns:
             dict: Result with enhanced posts and token usage for billing
         """
@@ -397,7 +400,10 @@ class PostEditor:
         total_output_tokens = 0
         
         # Get AI provider
-        ai_provider = get_ai_provider()
+        ai_provider = get_ai_provider(
+                script_name='post_editor/post_editor',
+                user_subscription=user_subscription
+            )
         
         # Process each post individually for better thread handling
         for i, post in enumerate(posts):

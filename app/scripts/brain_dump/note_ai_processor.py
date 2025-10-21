@@ -78,7 +78,10 @@ def modify_note_with_ai(content: str, prompt: str, user_id: str, model: str = No
 
         # Initialize credits manager and AI provider
         credits_manager = CreditsManager()
-        ai_provider = get_ai_provider()
+        ai_provider = get_ai_provider(
+                script_name='brain_dump/note_ai_processor',
+                user_subscription=user_subscription
+            )
         model_name = model or ai_provider.default_model
 
         # Step 1: Check credits before generation
@@ -186,7 +189,10 @@ def process_transcript_with_ai(transcript: str, prompt: str, user_id: str, model
 
         # Initialize credits manager and AI provider
         credits_manager = CreditsManager()
-        ai_provider = get_ai_provider()
+        ai_provider = get_ai_provider(
+                script_name='brain_dump/note_ai_processor',
+                user_subscription=user_subscription
+            )
         model_name = model or ai_provider.default_model
 
         # Step 1: Check credits before generation

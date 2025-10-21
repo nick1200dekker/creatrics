@@ -41,13 +41,14 @@ class VideoOptimizer:
         self.tags_generator = VideoTagsGenerator()
         self.thumbnail_analyzer = ThumbnailAnalyzer()
 
-    def optimize_video(self, video_id: str, user_id: str) -> Dict[str, Any]:
+    def optimize_video(self, video_id: str, user_id: str, user_subscription: str = None) -> Dict[str, Any]:
         """
         Optimize a video with AI-powered recommendations
 
         Args:
             video_id: YouTube video ID
             user_id: User ID for credit deduction
+            user_subscription: User's subscription plan for AI provider selection
 
         Returns:
             Dict with optimization results
@@ -330,7 +331,10 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
     ) -> Dict:
         """Generate overall video optimization recommendations"""
         try:
-            ai_provider = get_ai_provider()
+            ai_provider = get_ai_provider(
+                script_name='optimize_video/video_optimizer',
+                user_subscription=user_subscription
+            )
             if not ai_provider:
                 return {'error': 'AI provider not available'}
 

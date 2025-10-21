@@ -55,7 +55,7 @@ def load_prompt(filename: str, section: str = None) -> str:
         raise
 
 
-def filter_gaming_keywords_ai(keywords: list) -> list:
+def filter_gaming_keywords_ai(keywords: list, user_subscription: str = None) -> list:
     """
     Use AI to filter gaming-related keywords from the list
     Uses the unified AI provider system (same as YouTube Keyword Research)
@@ -70,7 +70,10 @@ def filter_gaming_keywords_ai(keywords: list) -> list:
         user_prompt = user_prompt_template.format(keywords_text=keywords_text)
 
         # Use unified AI provider system
-        ai_provider = get_ai_provider()
+        ai_provider = get_ai_provider(
+                script_name='tiktok_trend_finder/tiktok_ai_processor',
+                user_subscription=user_subscription
+            )
 
         logger.info(f"Using {ai_provider.provider.value} for AI filtering")
 

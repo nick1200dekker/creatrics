@@ -74,13 +74,14 @@ class TikTokHookGenerator:
             logger.error(f"Error reading prompt template: {e}")
             raise
 
-    def generate_hooks(self, content: str, user_id: str = None) -> Dict:
+    def generate_hooks(self, content: str, user_id: str = None, user_subscription: str = None) -> Dict:
         """
         Generate TikTok hooks using AI
 
         Args:
             content: Video script, concept, or content idea
             user_id: User ID for tracking
+            user_subscription: User's subscription plan for AI provider selection
 
         Returns:
             Dict with success status and generated hooks
@@ -92,8 +93,11 @@ class TikTokHookGenerator:
             # Format the prompt with user content
             prompt = prompt_template.format(content=content)
 
-            # Get AI provider
-            ai_provider = get_ai_provider()
+            # Get AI provider with script-specific preferences
+            ai_provider = get_ai_provider(
+                script_name='hook_generator/hook_generator',
+                user_subscription=user_subscription
+            )
 
             if ai_provider:
                 try:

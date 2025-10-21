@@ -63,7 +63,10 @@ class ReplyGenerator:
     def __init__(self):
         self.db = firestore.client()
         # Get AI provider instead of PostEditor
-        self.ai_provider = get_ai_provider()
+        self.ai_provider = get_ai_provider(
+                script_name='reply_guy/reply_generator',
+                user_subscription=user_subscription
+            )
     
     def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str = 'supportive', 
                       use_brand_voice: bool = False, image_urls: list = None) -> Optional[Dict]:

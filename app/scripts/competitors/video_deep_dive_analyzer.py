@@ -266,7 +266,10 @@ class VideoDeepDiveAnalyzer:
     def _analyze_with_ai(self, video_info: Dict, transcript_text: str, user_id: str) -> Dict:
         """Analyze video with AI"""
         try:
-            ai_provider = get_ai_provider()
+            ai_provider = get_ai_provider(
+                script_name='competitors/video_deep_dive_analyzer',
+                user_subscription=user_subscription
+            )
 
             # Prepare data
             title = video_info.get('title', '')
@@ -328,13 +331,16 @@ class VideoDeepDiveAnalyzer:
             logger.error(f"Error in AI analysis: {e}")
             return {'success': False, 'error': str(e)}
 
-    def _generate_summary(self, transcript_text: str, user_id: str) -> str:
+    def _generate_summary(self, transcript_text: str, user_id: str, user_subscription: str = None) -> str:
         """Generate a detailed summary of the video from transcript"""
         if not transcript_text:
             return "No transcript available for this video."
 
         try:
-            ai_provider = get_ai_provider()
+            ai_provider = get_ai_provider(
+                script_name='competitors/video_deep_dive_analyzer',
+                user_subscription=user_subscription
+            )
 
             # Use full transcript for comprehensive summary
             system_prompt = load_prompt('summarize_video_system.txt')

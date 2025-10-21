@@ -1278,6 +1278,16 @@
                 <i class="ph ph-caret-right chevron"></i>
             </div>
             <div class="nav-group-items">
+                <a href="{{ url_for('users.index') }}"
+                   class="nav-subitem {% if request.endpoint and 'users' in request.endpoint %}active{% endif %}">
+                    <i class="ph ph-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('ai_provider.index') }}"
+                   class="nav-subitem {% if request.endpoint and 'ai_provider' in request.endpoint %}active{% endif %}">
+                    <i class="ph ph-brain"></i>
+                    <span>AI Provider</span>
+                </a>
                 <a href="{{ url_for('prompts.index') }}"
                    class="nav-subitem {% if request.endpoint and 'prompts' in request.endpoint %}active{% endif %}">
                     <i class="ph ph-file-text"></i>

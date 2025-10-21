@@ -84,7 +84,7 @@ class VideoTitleGenerator:
             return None
 
     def generate_titles(self, user_input: str, video_type: str = 'long_form',
-                       user_id: str = None) -> Dict:
+                       user_id: str = None, user_subscription: str = None) -> Dict:
         """
         Generate YouTube titles using AI
 
@@ -92,6 +92,7 @@ class VideoTitleGenerator:
             user_input: Video description or script
             video_type: Either 'long_form' or 'shorts'
             user_id: User ID for tracking
+            user_subscription: User's subscription plan for AI provider selection
 
         Returns:
             Dict with success status and generated titles
@@ -101,8 +102,11 @@ class VideoTitleGenerator:
             if video_type not in ['long_form', 'shorts']:
                 video_type = 'long_form'
 
-            # Get AI provider
-            ai_provider = get_ai_provider()
+            # Get AI provider with script-specific preferences
+            ai_provider = get_ai_provider(
+                script_name='video_title/video_title',
+                user_subscription=user_subscription
+            )
 
             if ai_provider:
                 try:

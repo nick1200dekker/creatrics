@@ -77,7 +77,7 @@ class VideoTagsGenerator:
             logger.error(f"Error reading prompt template: {e}")
             return self.get_fallback_prompt()
 
-    def generate_tags(self, input_text: str, user_id: str = None, channel_keywords: List[str] = None) -> Dict:
+    def generate_tags(self, input_text: str, user_id: str = None, channel_keywords: List[str] = None, user_subscription: str = None) -> Dict:
         """
         Generate YouTube tags using AI
 
@@ -89,8 +89,11 @@ class VideoTagsGenerator:
             Dict with success status and generated tags
         """
         try:
-            # Get AI provider
-            ai_provider = get_ai_provider()
+            # Get AI provider with script-specific preferences
+            ai_provider = get_ai_provider(
+                script_name='video_title/video_tags',
+                user_subscription=user_subscription
+            )
 
             if ai_provider:
                 try:

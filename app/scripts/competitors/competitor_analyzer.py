@@ -357,10 +357,13 @@ class CompetitorAnalyzer:
             'total_parsed': parsed_count
         }
 
-    def _generate_insights(self, videos: List[Dict], patterns: Dict, days: int, channel_stats: Dict = None) -> Dict:
+    def _generate_insights(self, videos: List[Dict], patterns: Dict, days: int, channel_stats: Dict = None, user_subscription: str = None) -> Dict:
         """Generate AI insights from the data"""
         try:
-            ai_provider = get_ai_provider()
+            ai_provider = get_ai_provider(
+                script_name='competitors/competitor_analyzer',
+                user_subscription=user_subscription
+            )
 
             if not ai_provider or not videos:
                 return self._generate_fallback_insights(videos, patterns, days)

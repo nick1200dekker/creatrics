@@ -89,7 +89,8 @@ class VideoDescriptionGenerator:
             raise
 
     def generate_description(self, input_text: str, video_type: str = 'long',
-                           reference_description: str = "", user_id: str = None, keyword: str = "") -> Dict:
+                           reference_description: str = "", user_id: str = None, keyword: str = "",
+                           user_subscription: str = None) -> Dict:
         """
         Generate YouTube description using AI
 
@@ -99,13 +100,17 @@ class VideoDescriptionGenerator:
             reference_description: Optional reference description for style/links
             user_id: User ID for tracking
             keyword: Optional target keyword to include in description
+            user_subscription: User's subscription plan for AI provider selection
 
         Returns:
             Dict with success status and generated description
         """
         try:
-            # Get AI provider
-            ai_provider = get_ai_provider()
+            # Get AI provider with script-specific preferences
+            ai_provider = get_ai_provider(
+                script_name='video_title/video_description',
+                user_subscription=user_subscription
+            )
 
             if ai_provider:
                 try:

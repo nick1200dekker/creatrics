@@ -804,7 +804,10 @@ def generate_content():
         post_editor = PostEditor()
         
         user_id = get_workspace_user_id()
-        
+
+        # Get user subscription for AI provider selection
+        user_subscription = g.user.get('subscription_plan') if hasattr(g, 'user') and g.user else None
+
         # Step 1: Check credits BEFORE generation
         # Combine all post text for estimation
         combined_text = ""
@@ -831,7 +834,7 @@ def generate_content():
                 "error": f"Insufficient credits. Required: {required_credits:.2f}, Available: {current_credits:.2f}",
                 "error_type": "insufficient_credits"
             }), 402
-        
+
         # Step 2: Generate content (no credit logic here)
         generation_result = post_editor.generate(
             posts=posts,
@@ -839,7 +842,8 @@ def generate_content():
             additional_context=additional_context,
             user_id=user_id,
             voice_tone=voice_tone,
-            custom_voice_posts=custom_voice_posts
+            custom_voice_posts=custom_voice_posts,
+            user_subscription=user_subscription
         )
         
         if not generation_result['success']:
