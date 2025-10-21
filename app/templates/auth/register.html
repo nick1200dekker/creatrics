@@ -670,7 +670,16 @@
                         </div>
                         <div class="form-help">Password must be at least 8 characters long</div>
                     </div>
-                    
+
+                    <div class="form-group">
+                        <label for="referral_code" class="form-label">Referral Code <span style="opacity: 0.6; font-weight: 400;">(Optional)</span></label>
+                        <div class="form-input-wrapper">
+                            <input type="text" id="referral_code" name="referral_code" class="form-input" placeholder="Enter referral code" style="text-transform: uppercase;">
+                            <i class="ph ph-gift form-icon"></i>
+                        </div>
+                        <div class="form-help" style="color: #10B981;">Get 10 bonus credits when using a referral code!</div>
+                    </div>
+
                     <div class="form-group">
                         <div class="terms-notice">
                             By creating an account, you agree to our <a href="/terms-conditions" target="_blank">Terms & Conditions</a> and <a href="/privacy-policy" target="_blank">Privacy Policy</a>
@@ -827,43 +836,56 @@
             
             // Register button is enabled by default (no invite code required)
             
+            // Check URL for referral code and pre-fill
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCodeFromURL = urlParams.get('ref');
+            if (refCodeFromURL) {
+                document.getElementById('referral_code').value = refCodeFromURL.toUpperCase();
+            }
+
             // Handle register form
             document.getElementById('register-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 hideError();
-                
+
                 const email = document.getElementById('email').value.trim();
                 const username = document.getElementById('username').value.trim();
                 const password = document.getElementById('password').value;
-                
+                const referralCode = document.getElementById('referral_code').value.trim().toUpperCase();
+
                 // Validate form
                 if (!email || !username || !password) {
                     showError('Please fill in all fields');
                     return;
                 }
-                
+
                 // Validate username
                 if (username.length < 2 || username.length > 20) {
                     showError('Username must be between 2-20 characters');
                     return;
                 }
-                
+
                 if (!/^[a-zA-Z0-9]+$/.test(username)) {
                     showError('Username can only contain letters and numbers');
                     return;
                 }
-                
+
                 if (password.length < 8) {
                     showError('Password must be at least 8 characters long');
                     return;
                 }
-                
+
                 const registerBtn = document.getElementById('register-button');
                 const originalText = registerBtn.innerHTML;
                 registerBtn.disabled = true;
                 registerBtn.innerHTML = '<i class="ph ph-spinner"></i> Creating account...';
-                
+
                 try {
+                    // Store referral code in localStorage for callback processing
+                    if (referralCode) {
+                        localStorage.setItem('pendingReferralCode', referralCode);
+                    }
+
                     const { data, error } = await supabaseClient.auth.signUp({
                         email,
                         password,
@@ -875,18 +897,20 @@
                             emailRedirectTo: window.location.origin + "/auth/callback"
                         }
                     });
-                    
+
                     if (error) {
                         throw error;
                     }
-                    
+
                     // Mark user registration date for welcome message
                     localStorage.setItem('userRegistrationDate', new Date().getTime().toString());
-                    
+
                     // Show success message
                     showSuccess();
-                    
+
                 } catch (error) {
+                    // Clear referral code from storage on error
+                    localStorage.removeItem('pendingReferralCode');
                     showError(error.message || "Registration failed. Please try again.");
                     registerBtn.disabled = false;
                     registerBtn.innerHTML = originalText;

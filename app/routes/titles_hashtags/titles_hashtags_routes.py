@@ -82,7 +82,8 @@ def generate_tiktok_titles():
                     model_name=token_usage.get('model', None),  # Uses current AI provider model
                     input_tokens=token_usage.get('input_tokens', 0),
                     output_tokens=token_usage.get('output_tokens', 0),
-                    description="TikTok Title & Hashtags Generation"
+                    description="TikTok Title & Hashtags Generation",
+                    provider_enum=token_usage.get('provider_enum')
                 )
 
                 if not deduction_result['success']:

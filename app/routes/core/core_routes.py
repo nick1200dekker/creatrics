@@ -158,32 +158,34 @@ def create_session():
     """Create a new session with the provided token"""
     try:
         logger.info("Session creation endpoint called")
-        
-        # Get token from request
+
+        # Get token and optional referral code from request
         if request.is_json:
             data = request.json
             token = data.get('token')
             return_to = data.get('return_to', '/')
+            referral_code = data.get('referral_code', '').strip().upper()
         else:
             token = request.form.get('token')
             return_to = request.form.get('return_to', '/')
-        
+            referral_code = request.form.get('referral_code', '').strip().upper()
+
         if not token:
             logger.warning("No token provided in session creation request")
             return jsonify({"success": False, "error": "No token provided"}), 400
-        
+
         logger.info(f"Processing token for session creation: {token[:10]}...")
-        
+
         # Verify token
         payload = verify_token(token)
-        
+
         if not payload:
             logger.warning("Invalid token for session creation")
             return jsonify({"success": False, "error": "Invalid token"}), 400
-        
+
         user_id = payload.get('sub')
         logger.info(f"Creating session for user: {user_id}")
-        
+
         # Get user metadata
         user_metadata = payload.get('user_metadata', {})
         email = payload.get('email')
@@ -222,6 +224,19 @@ def create_session():
                 # Continue anyway - we want the login to succeed
         else:
             logger.info(f"User {user_id} already exists in Firebase")
+
+        # Process referral code for new users
+        if is_new_user and referral_code:
+            try:
+                from app.system.services.referral_service import ReferralService
+                result = ReferralService.process_signup_referral(user_id, referral_code)
+                if result.get('success'):
+                    logger.info(f"Referral processed for user {user_id}: {result.get('message')}")
+                else:
+                    logger.warning(f"Referral processing failed for user {user_id}: {result.get('message')}")
+            except Exception as ref_error:
+                logger.error(f"Error processing referral code: {str(ref_error)}")
+                # Don't fail the login if referral processing fails
 
         # Send welcome email for new users
         if is_new_user and email:

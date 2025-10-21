@@ -270,16 +270,17 @@ class ReplyGuyService:
             # Get list name
             list_name = ""
             if list_type == 'default':
-                doc_ref = self.db.collection('default_lists').document(list_id)
-                doc = doc_ref.get()
-                if doc.exists:
-                    list_name = doc.to_dict().get('name', '')
+                # Default lists are hardcoded, not in Firebase
+                if list_id == 'content_creators':
+                    list_name = 'Reply List'
+                else:
+                    list_name = list_id  # Fallback to ID if unknown
             else:
                 doc_ref = self.db.collection('users').document(str(user_id)).collection('reply_guy').document('lists').collection('custom').document(list_id)
                 doc = doc_ref.get()
                 if doc.exists:
                     list_name = doc.to_dict().get('name', '')
-            
+
             # Save selection
             settings_ref = self.db.collection('users').document(str(user_id)).collection('reply_guy').document('settings')
             settings_ref.set({
@@ -288,9 +289,9 @@ class ReplyGuyService:
                 'selected_list_name': list_name,
                 'last_updated': datetime.now()
             }, merge=True)
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error setting current selection: {str(e)}")
             return False
@@ -488,7 +489,7 @@ class ReplyGuyService:
     
     # REPLY GENERATION
     
-    def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str, use_brand_voice: bool = False, image_urls: list = None) -> Optional[str]:
+    def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str, use_brand_voice: bool = False, image_urls: list = None, user_subscription: str = None) -> Optional[str]:
         """Generate AI reply with proper newline handling, mention filtering, and image context"""
         try:
             # Additional check to prevent generating replies to mention tweets
@@ -506,9 +507,10 @@ class ReplyGuyService:
                 author=author,
                 style=style,
                 use_brand_voice=use_brand_voice,
-                image_urls=image_urls or []
+                image_urls=image_urls or [],
+                user_subscription=user_subscription
             )
-            
+
         except Exception as e:
             logger.error(f"Error generating reply: {str(e)}")
             return None

@@ -11,7 +11,7 @@ from functools import wraps
 
 from . import bp
 from app.system.auth.middleware import auth_required
-from app.system.auth.permissions import require_permission, get_workspace_user_id
+from app.system.auth.permissions import require_permission, get_workspace_user_id, get_user_subscription
 from app.scripts.reply_guy.reply_guy_service import ReplyGuyService
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.reply_guy.tenor import TenorService
@@ -409,23 +409,24 @@ def generate_reply():
             return jsonify({'success': False, 'error': 'Cannot generate replies to mention tweets'}), 400
         
         user_id = get_workspace_user_id()
-        
+        user_subscription = get_user_subscription()
+
         # Check credits efficiently (following video_tags pattern)
         credits_manager = CreditsManager()
-        
+
         # Step 1: Estimate LLM cost from tweet text
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
             text_content=tweet_text,
             model_name=None  # Uses current AI provider model
         )
-        
+
         required_credits = cost_estimate['final_cost']
         current_credits = credits_manager.get_user_credits(user_id)
         credit_check = credits_manager.check_sufficient_credits(
             user_id=user_id,
             required_credits=required_credits
         )
-        
+
         # Check for sufficient credits - strict enforcement
         if not credit_check.get('sufficient', False):
             return jsonify({
@@ -436,7 +437,7 @@ def generate_reply():
                 'required_credits': required_credits,
                 'credits_required': True
             }), 402
-        
+
         # Generate reply with GIF suggestion (now returns dict with 'reply' and 'gif_query')
         service = ReplyGuyService()
         result = service.generate_reply(
@@ -445,7 +446,8 @@ def generate_reply():
             author=author,
             style=style,
             use_brand_voice=use_brand_voice,
-            image_urls=image_urls
+            image_urls=image_urls,
+            user_subscription=user_subscription
         )
         
         if not result or 'reply' not in result:
@@ -480,7 +482,8 @@ def generate_reply():
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 description=f"Reply Guy reply to @{author}",
-                feature_id="reply_guy"
+                feature_id="reply_guy",
+                provider_enum=token_usage.get('provider_enum')
             )
             
             if not deduction_result['success']:

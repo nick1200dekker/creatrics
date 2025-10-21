@@ -5,7 +5,7 @@ Handles user's own YouTube video optimization
 from flask import render_template, request, jsonify
 from . import bp
 from app.system.auth.middleware import auth_required
-from app.system.auth.permissions import get_workspace_user_id, require_permission
+from app.system.auth.permissions import get_workspace_user_id, require_permission, get_user_subscription
 from app.scripts.optimize_video.video_optimizer import VideoOptimizer
 from app.system.services.firebase_service import db
 from app.system.credits.credits_manager import CreditsManager
@@ -236,6 +236,7 @@ def optimize_video_analysis(video_id):
     """Optimize a specific video with AI analysis and recommendations"""
     try:
         user_id = get_workspace_user_id()
+        user_subscription = get_user_subscription()
 
         # Check if optimization already exists in Firebase
         optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
@@ -279,7 +280,7 @@ def optimize_video_analysis(video_id):
 
         # Perform new optimization
         optimizer = VideoOptimizer()
-        result = optimizer.optimize_video(video_id, user_id)
+        result = optimizer.optimize_video(video_id, user_id, user_subscription)
 
         if not result.get('success'):
             error_msg = result.get('error', 'Optimization failed')
@@ -313,7 +314,8 @@ def optimize_video_analysis(video_id):
                 model_name=token_usage.get('model', None),
                 input_tokens=token_usage.get('input_tokens', 0),
                 output_tokens=token_usage.get('output_tokens', 0),
-                description=f"Video Optimization - {video_id}"
+                description=f"Video Optimization - {video_id}",
+                provider_enum=token_usage.get('provider_enum')
             )
 
             if not deduction_result['success']:

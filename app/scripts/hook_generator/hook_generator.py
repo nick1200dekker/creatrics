@@ -136,7 +136,8 @@ class TikTokHookGenerator:
                         'token_usage': {
                             'model': response.get('model', 'ai_provider') if isinstance(response, dict) else 'ai_provider',
                             'input_tokens': token_usage.get('input_tokens', 0),
-                            'output_tokens': token_usage.get('output_tokens', 0)
+                            'output_tokens': token_usage.get('output_tokens', 0),
+                            'provider_enum': response.get('provider_enum') if isinstance(response, dict) else None
                         }
                     }
 

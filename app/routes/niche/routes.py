@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, request, jsonify, g
 from app.system.auth.middleware import auth_required
-from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission, get_user_subscription
 from app.system.services.firebase_service import UserService
 from app.scripts.niche.tracker_service import TrackerService
 from app.scripts.niche.x_list_manager import XListManager
@@ -92,12 +92,12 @@ def clear_analysis_status(user_id: str, list_name: str = None):
             logger.info(f"Clearing user analysis status: {key}")
             del analysis_status[key]
 
-def analyze_creators_async(user_id: str, list_name: str, time_range: str):
+def analyze_creators_async(user_id: str, list_name: str, time_range: str, user_subscription: str = None):
     """Perform creator analysis in background thread with enhanced status tracking"""
     try:
         # Update initial status
         update_analysis_status(user_id, list_name, 'processing', 'Starting analysis...', 5)
-        
+
         # Get creators from list
         update_analysis_status(user_id, list_name, 'processing', 'Loading creator list...', 10)
         creators = tracker_service.get_list_creators(user_id, list_name)
@@ -105,24 +105,25 @@ def analyze_creators_async(user_id: str, list_name: str, time_range: str):
             logger.error(f"No creators found in list {list_name} for user {user_id}")
             update_analysis_status(user_id, list_name, 'error', 'No creators found in list', 0, 'No creators found in list')
             return
-        
+
         logger.info(f"Starting analysis for {len(creators)} creators")
         update_analysis_status(user_id, list_name, 'processing', f'Analyzing {len(creators)} creators...', 20)
-        
+
         # FIXED: Create a simplified status callback that doesn't show individual creators
         def status_callback(step: str, progress: int):
             # Simplify the step message to just show "Analyzing..."
             simplified_step = "Analyzing creators..."
             update_analysis_status(user_id, list_name, 'processing', simplified_step, progress)
-        
+
         # Perform analysis with status callback
         update_analysis_status(user_id, list_name, 'processing', 'Collecting tweets and engagement data...', 40)
         analysis_result = creator_analyzer.analyze_creators(
-            user_id, 
-            creators, 
-            time_range, 
+            user_id,
+            creators,
+            time_range,
             list_name,
-            status_callback=status_callback
+            status_callback=status_callback,
+            user_subscription=user_subscription
         )
         
         if not analysis_result:
@@ -345,6 +346,9 @@ def analyze_creators():
                 'current_credits': credit_check.get('current_credits', 0)
             }), 402
 
+        # Get user subscription for AI provider selection
+        user_subscription = get_user_subscription()
+
         # Clear any old status for this user
         clear_analysis_status(user_id)
 
@@ -354,7 +358,7 @@ def analyze_creators():
         # Start analysis in background thread
         thread = threading.Thread(
             target=analyze_creators_async,
-            args=(user_id, list_name, time_range)
+            args=(user_id, list_name, time_range, user_subscription)
         )
         thread.daemon = True
         thread.start()

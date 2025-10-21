@@ -150,7 +150,8 @@ class CompetitorAnalyzer:
                 token_usage = {
                     'model': 'fallback',
                     'input_tokens': 0,
-                    'output_tokens': 0
+                    'output_tokens': 0,
+                    'provider_enum': None
                 }
 
             return {
@@ -428,7 +429,8 @@ class CompetitorAnalyzer:
             parsed_insights['_token_usage'] = {
                 'model': response.get('model', 'unknown'),
                 'input_tokens': usage.get('input_tokens', 0),
-                'output_tokens': usage.get('output_tokens', 0)
+                'output_tokens': usage.get('output_tokens', 0),
+                'provider_enum': response.get('provider_enum')
             }
 
             return parsed_insights

@@ -118,6 +118,20 @@ class VideoScriptGenerator:
                             # Set a reasonable default for token calculation
                             duration = 10
 
+                    # Define duration_str and duration_instruction early (needed for templates)
+                    if video_type == 'short':
+                        duration_str = f"{duration}-second YouTube Short" if not best_effort else "YouTube Short (15-60 seconds, you decide based on content)"
+                        if script_format == 'bullet':
+                            duration_instruction = f"- This is a VERY SHORT video ({duration} seconds only). Write 5-8 key points." if not best_effort else "- Determine the appropriate length (15-60 seconds)."
+                        else:
+                            duration_instruction = f"- This script must be EXACTLY {duration} seconds when read aloud (about {duration * 2} words)." if not best_effort else "- Determine the appropriate length based on the content (15-60 seconds)."
+                    else:
+                        duration_str = f"{duration}-minute YouTube video" if not best_effort else "YouTube video (you decide the appropriate length based on content depth)"
+                        if script_format == 'bullet':
+                            duration_instruction = f"- The video should be approximately {duration} minutes long." if not best_effort else "- Determine the appropriate video length based on content."
+                        else:
+                            duration_instruction = f"- The script should be approximately {duration} minutes long when read at a natural pace (about {duration * 150} words)." if not best_effort else "- Determine the appropriate length based on content depth."
+
                     # Use prompt template if available, otherwise use inline prompt
                     if prompt_template:
                         # Calculate word count for shorts
@@ -127,14 +141,13 @@ class VideoScriptGenerator:
                         simple_prompt = prompt_template.format(
                             concept=concept,
                             duration=duration,
-                            duration_words=duration_words
+                            duration_words=duration_words,
+                            duration_str=duration_str,
+                            duration_instruction=duration_instruction
                         )
                     else:
                         # Fallback to inline prompts (keeping existing logic)
-                        if video_type == 'short':
-                            duration_str = f"{duration}-second YouTube Short" if not best_effort else "YouTube Short (15-60 seconds, you decide based on content)"
-                        else:
-                            duration_str = f"{duration}-minute YouTube video" if not best_effort else "YouTube video (you decide the appropriate length based on content depth)"
+                        # duration_str already defined above
 
                         # Load prompts from files
                         if script_format == 'bullet':
@@ -261,7 +274,8 @@ class VideoScriptGenerator:
                 'token_usage': {
                     'model': 'fallback',
                     'input_tokens': 0,
-                    'output_tokens': 0
+                    'output_tokens': 0,
+                            'provider_enum': response.get('provider_enum') if isinstance(response, dict) else None
                 }
             }
 

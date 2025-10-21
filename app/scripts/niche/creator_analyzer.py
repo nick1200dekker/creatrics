@@ -51,7 +51,7 @@ class CreatorAnalyzer:
             logger.error(f"Error loading prompt template: {e}")
             raise
 
-    def estimate_and_check_ai_credits(self, user_id: str, tweets_count: int) -> Dict:
+    def estimate_and_check_ai_credits(self, user_id: str, tweets_count: int, user_subscription: str = None) -> Dict:
         """Estimate AI credits needed for timeline analysis"""
         try:
             from app.system.credits.credits_manager import CreditsManager
@@ -95,61 +95,62 @@ class CreatorAnalyzer:
             logger.error(f"Error estimating AI credits: {e}")
             return {'success': False, 'error': str(e)}
 
-    def deduct_actual_ai_credits(self, user_id: str, input_tokens: int, output_tokens: int, model: str) -> bool:
+    def deduct_actual_ai_credits(self, user_id: str, input_tokens: int, output_tokens: int, model: str, provider_enum=None) -> bool:
         """Deduct actual credits used"""
         try:
             from app.system.credits.credits_manager import CreditsManager
-            
+
             credits_manager = CreditsManager()
-            
+
             result = credits_manager.deduct_llm_credits(
                 user_id=user_id,
                 model_name=model,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 description=f"Creator Timeline Analysis - {input_tokens + output_tokens} tokens",
-                feature_id="creator_tracker_analysis"
+                feature_id="creator_tracker_analysis",
+                provider_enum=provider_enum
             )
-            
+
             return result['success']
-                
+
         except Exception as e:
             logger.error(f"Error deducting AI credits: {e}")
             return False
 
-    def analyze_creators(self, user_id: str, creators: List[str], time_range: str = '24h', list_name: str = '', status_callback=None) -> Optional[Dict]:
+    def analyze_creators(self, user_id: str, creators: List[str], time_range: str = '24h', list_name: str = '', status_callback=None, user_subscription: str = None) -> Optional[Dict]:
         """Analyze creators and generate insights"""
         try:
             logger.info(f"Starting creator analysis: {len(creators)} creators for time range {time_range}")
-            
+
             if status_callback:
                 status_callback("Fetching tweets from creators...", 50)
-            
+
             # Fetch tweets for each creator
             all_tweets = []
             creator_stats = {}
-            
+
             for i, creator in enumerate(creators):
                 logger.info(f"Fetching tweets for @{creator}")
                 tweets = self.get_tweets(creator)
-                
+
                 # FIXED: Simplified progress update - don't show individual creator names
                 if status_callback:
                     progress = 50 + (i / len(creators)) * 30  # 50-80% range
                     # Just show "Analyzing creators..." instead of specific creator names
                     status_callback("Analyzing creators...", progress)
-                
+
                 # Filter out RTs and limit to 50 most recent tweets
                 filtered_tweets = [
-                    tweet for tweet in tweets 
+                    tweet for tweet in tweets
                     if tweet.get('text') is not None and not tweet.get('text', '').startswith('RT @')
                 ][:50]
-                
+
                 if filtered_tweets:
                     time_filtered_tweets = self.filter_tweets_by_time_range(filtered_tweets, time_range)
                     processed_tweets = [self.process_tweet(tweet, creator) for tweet in time_filtered_tweets]
                     creator_stats[creator] = self.calculate_creator_performance(time_filtered_tweets)
-                    
+
                     logger.info(f"Found {len(processed_tweets)} tweets for @{creator} in the last {time_range}")
                     all_tweets.extend(processed_tweets)
                 else:
@@ -159,22 +160,22 @@ class CreatorAnalyzer:
                         'avg_likes_per_tweet': 0, 'avg_retweets_per_tweet': 0, 'avg_views_per_tweet': 0,
                         'engagement_rate': 0
                     }
-                
+
                 time.sleep(1)  # Rate limiting
-            
+
             logger.info(f"Total tweets collected: {len(all_tweets)}")
-            
+
             if status_callback:
                 status_callback("Generating AI insights...", 85)
-            
+
             # Sort all tweets by engagement
             all_tweets.sort(key=lambda x: (
-                self._safe_int(x.get('engagement', {}).get('likes', 0)) + 
+                self._safe_int(x.get('engagement', {}).get('likes', 0)) +
                 self._safe_int(x.get('engagement', {}).get('retweets', 0))
             ), reverse=True)
-            
+
             # Generate timeline analysis with AI
-            hot_on_timeline = self.generate_timeline_analysis(all_tweets[:300], user_id)
+            hot_on_timeline = self.generate_timeline_analysis(all_tweets[:300], user_id, user_subscription)
             
             if status_callback:
                 status_callback("Finalizing results...", 95)
@@ -247,10 +248,11 @@ class CreatorAnalyzer:
             # Deduct credits using unified response
             if response.get('usage'):
                 self.deduct_actual_ai_credits(
-                    user_id, 
-                    response['usage']['input_tokens'], 
+                    user_id,
+                    response['usage']['input_tokens'],
                     response['usage']['output_tokens'],
-                    response['model']
+                    response['model'],
+                    provider_enum=response.get('provider_enum')
                 )
             
             # Process the AI response

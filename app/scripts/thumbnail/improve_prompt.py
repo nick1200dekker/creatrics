@@ -37,7 +37,7 @@ def get_prompt_template():
     logger.info("Loaded prompt template from prompts/prompt.txt")
     return template
 
-def improve_editing_prompt(prompt_text, image_base64=None, mime_type='image/jpeg', model='nano-banana', all_images_with_types=None):
+def improve_editing_prompt(prompt_text, image_base64=None, mime_type='image/jpeg', model='nano-banana', all_images_with_types=None, user_subscription=None):
     """
     Improve an editing prompt using AI Provider
 
@@ -178,6 +178,7 @@ def improve_editing_prompt(prompt_text, image_base64=None, mime_type='image/jpeg
                 'model': response.get('model', 'ai_provider'),
                 'input_tokens': token_usage.get('input_tokens', 0),
                 'output_tokens': token_usage.get('output_tokens', 0),
+                'provider_enum': response.get('provider_enum'),
                 'provider': response.get('provider', 'unknown')
             }
         }

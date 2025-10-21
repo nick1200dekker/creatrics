@@ -2,10 +2,10 @@
 Keyword Research Routes
 Handles YouTube keyword research with autocomplete and competition analysis
 """
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, g
 from . import bp
 from app.system.auth.middleware import auth_required
-from app.system.auth.permissions import get_workspace_user_id, require_permission
+from app.system.auth.permissions import get_workspace_user_id, require_permission, get_user_subscription
 from app.system.credits.credits_manager import CreditsManager
 import logging
 import os
@@ -688,6 +688,7 @@ def ai_keyword_explore():
 
         user_id = get_workspace_user_id()
         credits_manager = CreditsManager()
+        user_subscription = get_user_subscription()
 
         logger.info(f"AI keyword explore requested for topic: '{topic}' with {keyword_count} keywords")
 
@@ -723,10 +724,10 @@ def ai_keyword_explore():
             }), 402
 
         # Step 1: Detect topic context
-        context = detect_topic_context(topic)
+        context = detect_topic_context(topic, user_subscription)
 
         # Step 2: Generate keywords with AI
-        keyword_result = generate_keywords_with_ai(topic, context, keyword_count)
+        keyword_result = generate_keywords_with_ai(topic, context, keyword_count, user_subscription)
         keywords = keyword_result.get('keywords', [])
 
         if not keywords:
@@ -804,6 +805,15 @@ def ai_keyword_explore():
 
         # Deduct credits - MUST succeed or we don't return results
         if total_input_tokens > 0:
+            # Get provider_enum from the first available API response (they all use the same provider)
+            provider_enum = None
+            if context.get('_token_usage', {}).get('provider_enum'):
+                provider_enum = context['_token_usage']['provider_enum']
+            elif keyword_result.get('token_usage', {}).get('provider_enum'):
+                provider_enum = keyword_result['token_usage']['provider_enum']
+            elif insights.get('token_usage', {}).get('provider_enum'):
+                provider_enum = insights['token_usage']['provider_enum']
+
             ai_provider = get_ai_provider()
             deduction_result = credits_manager.deduct_llm_credits(
                 user_id=user_id,
@@ -811,7 +821,8 @@ def ai_keyword_explore():
                 input_tokens=total_input_tokens,
                 output_tokens=total_output_tokens,
                 description=f"AI Keyword Research - {topic} ({keyword_count} keywords)",
-                feature_id="ai_keyword_research"
+                feature_id="ai_keyword_research",
+                provider_enum=provider_enum  # Use actual provider from API responses
             )
 
             if not deduction_result['success']:

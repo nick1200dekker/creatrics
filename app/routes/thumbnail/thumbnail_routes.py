@@ -408,7 +408,8 @@ def improve_prompt():
                     output_tokens=token_usage.get('output_tokens', 0),
                     model_name=token_usage.get('model', 'ai_provider'),
                     description=f"Prompt improvement {image_context}".strip(),
-                    feature_id="thumbnail_prompt_improver"
+                    feature_id="thumbnail_prompt_improver",
+                    provider_enum=token_usage.get('provider_enum')
                 )
 
                 if actual_credits.get('success'):

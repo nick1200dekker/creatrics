@@ -85,6 +85,28 @@ def get_workspace_user_id():
     # Return the active workspace ID, defaulting to user's own ID
     return g.get('active_workspace_id', g.user.get('id'))
 
+def get_user_subscription():
+    """
+    Get the user's subscription plan for AI provider selection
+
+    Returns workspace subscription if in a team workspace, otherwise user's own subscription
+
+    Returns:
+        str: User's subscription plan (e.g., 'admin', 'premium', 'free')
+    """
+    # Use workspace subscription if available (for team members)
+    if hasattr(g, 'workspace_data') and g.workspace_data:
+        return g.workspace_data.get('subscription_plan')
+
+    # Otherwise use user's own subscription
+    if hasattr(g, 'user') and g.user:
+        user_subscription = g.user.get('subscription_plan')
+        if not user_subscription and 'data' in g.user:
+            user_subscription = g.user['data'].get('subscription_plan')
+        return user_subscription
+
+    return None
+
 def require_permission(permission_name):
     """
     Decorator to require specific permission for a route

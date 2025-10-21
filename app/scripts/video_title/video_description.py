@@ -188,7 +188,8 @@ class VideoDescriptionGenerator:
                 'token_usage': {
                     'model': 'fallback',
                     'input_tokens': 0,
-                    'output_tokens': 0
+                    'output_tokens': 0,
+                            'provider_enum': response.get('provider_enum') if isinstance(response, dict) else None
                 }
             }
 

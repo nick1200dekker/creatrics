@@ -218,23 +218,40 @@ const Auth = {
      * @returns {Promise} Server response promise
      */
     createServerSession: function(token) {
+        // Check for pending referral code in localStorage
+        const referralCode = localStorage.getItem('pendingReferralCode');
+        const payload = { token };
+
+        // Include referral code if available
+        if (referralCode) {
+            payload.referral_code = referralCode;
+            console.log('Including referral code in session creation:', referralCode);
+        }
+
         return fetch('/auth/session', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ token }),
+            body: JSON.stringify(payload),
             credentials: 'include' // Important: Include cookies with request
         })
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Server session creation failed: ${response.status}`);
             }
-            
+
             return response.json();
         })
         .then(data => {
             console.log("Server session created successfully");
+
+            // Clear referral code after successful session creation
+            if (referralCode) {
+                localStorage.removeItem('pendingReferralCode');
+                console.log('Referral code processed and cleared');
+            }
+
             return data;
         });
     },

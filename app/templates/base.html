@@ -1248,6 +1248,12 @@
                     <span>Teams</span>
                 </a>
                 {% endif %}
+                <a href="{{ url_for('referral.referral_dashboard') }}"
+                   class="nav-subitem {% if request.endpoint and 'referral' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-gift"></i>
+                    <span>Referrals</span>
+                </a>
                 {% if not workspace_info or workspace_info.is_owner %}
                 <a href="{{ url_for('payment.index') }}"
                    class="nav-subitem {% if request.endpoint == 'payment.index' %}active{% endif %}"

@@ -499,7 +499,8 @@ class PostEditor:
             'token_usage': {
                 'input_tokens': total_input_tokens,
                 'output_tokens': total_output_tokens,
-                'model': ai_provider.default_model
+                'model': ai_provider.default_model,
+                'provider_enum': ai_provider.provider
             }
         }
 

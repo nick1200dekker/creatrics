@@ -118,6 +118,7 @@ from app.routes.admin.ai_provider_routes import ai_provider_bp
 from app.routes.users import users_bp
 from app.routes.home.home_routes import bp as home_bp
 from app.routes.payment import bp as payment_bp
+from app.routes.referral import bp as referral_bp
 
 # Import content creator blueprints
 from app.routes.thumbnail import bp as thumbnail_bp
@@ -164,6 +165,7 @@ app.register_blueprint(ai_provider_bp)
 app.register_blueprint(users_bp)
 app.register_blueprint(home_bp)
 app.register_blueprint(payment_bp)
+app.register_blueprint(referral_bp)
 app.register_blueprint(thumbnail_bp)
 app.register_blueprint(video_title_tags_bp)
 app.register_blueprint(video_script_bp)

@@ -205,7 +205,7 @@ class XContentSuggestions:
             logger.error(f"Error saving suggestions to cache: {e}")
             return False
 
-    def generate_suggestions(self, user_id: str, force_refresh: bool = False) -> Dict:
+    def generate_suggestions(self, user_id: str, force_refresh: bool = False, user_subscription: str = None) -> Dict:
         """
         Generate 5 content suggestions based on user's recent posts
 
@@ -293,7 +293,8 @@ class XContentSuggestions:
                 'token_usage': {
                     'input_tokens': response.get('usage', {}).get('input_tokens', 0),
                     'output_tokens': response.get('usage', {}).get('output_tokens', 0),
-                    'model': response.get('provider', 'unknown')
+                    'model': response.get('provider', 'unknown'),
+                    'provider_enum': response.get('provider_enum')
                 }
             }
 

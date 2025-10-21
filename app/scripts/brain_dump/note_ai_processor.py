@@ -56,7 +56,7 @@ def load_prompt(filename: str, section: str = None) -> str:
         raise
 
 
-def modify_note_with_ai(content: str, prompt: str, user_id: str, model: str = None) -> dict:
+def modify_note_with_ai(content: str, prompt: str, user_id: str, model: str = None, user_subscription: str = None) -> dict:
     """
     Modify note content using AI with proper credit management
 
@@ -124,9 +124,11 @@ def modify_note_with_ai(content: str, prompt: str, user_id: str, model: str = No
         if isinstance(response, dict):
             modified_content = response.get('content', '')
             token_usage = response.get('usage', {})
+            provider_enum = response.get('provider_enum')
         else:
             modified_content = str(response)
             token_usage = {}
+            provider_enum = None
 
         if not modified_content:
             return {'status': 'error', 'error': 'Failed to generate modified content'}
@@ -142,7 +144,8 @@ def modify_note_with_ai(content: str, prompt: str, user_id: str, model: str = No
                 input_tokens=int(input_tokens),
                 output_tokens=int(output_tokens),
                 description=f"Brain Dump AI Modification: {prompt[:50]}{'...' if len(prompt) > 50 else ''}",
-                feature_id="brain_dump_ai_modify"
+                feature_id="brain_dump_ai_modify",
+                provider_enum=provider_enum
             )
 
             if not deduction_result['success']:
@@ -167,7 +170,7 @@ def modify_note_with_ai(content: str, prompt: str, user_id: str, model: str = No
         return {'status': 'error', 'error': str(e)}
 
 
-def process_transcript_with_ai(transcript: str, prompt: str, user_id: str, model: str = None) -> dict:
+def process_transcript_with_ai(transcript: str, prompt: str, user_id: str, model: str = None, user_subscription: str = None) -> dict:
     """
     Process video transcript with AI based on user prompt
 
@@ -235,9 +238,11 @@ def process_transcript_with_ai(transcript: str, prompt: str, user_id: str, model
         if isinstance(response, dict):
             result_content = response.get('content', '')
             token_usage = response.get('usage', {})
+            provider_enum = response.get('provider_enum')
         else:
             result_content = str(response)
             token_usage = {}
+            provider_enum = None
 
         if not result_content:
             return {'status': 'error', 'error': 'Failed to process transcript'}
@@ -253,7 +258,8 @@ def process_transcript_with_ai(transcript: str, prompt: str, user_id: str, model
                 input_tokens=int(input_tokens),
                 output_tokens=int(output_tokens),
                 description=f"Video Transcript AI Processing: {prompt[:50]}{'...' if len(prompt) > 50 else ''}",
-                feature_id="video_transcript_ai_process"
+                feature_id="video_transcript_ai_process",
+                provider_enum=provider_enum
             )
 
             if not deduction_result['success']:

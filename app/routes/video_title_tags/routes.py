@@ -89,7 +89,8 @@ def generate_video_titles():
                     model_name=token_usage.get('model', None),  # Uses current AI provider model
                     input_tokens=token_usage.get('input_tokens', 0),
                     output_tokens=token_usage.get('output_tokens', 0),
-                    description=f"Video Title Generation ({video_type}) - 10 titles"
+                    description=f"Video Title Generation ({video_type}) - 10 titles",
+                    provider_enum=token_usage.get('provider_enum')
                 )
 
                 if not deduction_result['success']:
@@ -180,7 +181,8 @@ def generate_video_tags():
                     model_name=token_usage.get('model', None),  # Uses current AI provider model
                     input_tokens=token_usage.get('input_tokens', 0),
                     output_tokens=token_usage.get('output_tokens', 0),
-                    description="Video Tags Generation"
+                    description="Video Tags Generation",
+                    provider_enum=token_usage.get('provider_enum')
                 )
 
                 if not deduction_result['success']:
@@ -280,7 +282,8 @@ def generate_video_description():
                     model_name=token_usage.get('model', None),  # Uses current AI provider model
                     input_tokens=token_usage.get('input_tokens', 0),
                     output_tokens=token_usage.get('output_tokens', 0),
-                    description=f"Video Description Generation ({video_type})"
+                    description=f"Video Description Generation ({video_type})",
+                    provider_enum=token_usage.get('provider_enum')
                 )
 
                 if not deduction_result['success']:

@@ -98,36 +98,43 @@ class UserService:
         if not db:
             logger.error("Firestore not initialized")
             return None
-            
+
         try:
             logger.info(f"Creating user {user_id} in Firestore with data: {user_data}")
             doc_ref = db.collection('users').document(user_id)
-            
+
             # Add timestamps
             user_data['created_at'] = datetime.now()
             user_data['last_login'] = datetime.now()
             user_data['is_active'] = True
             user_data['subscription_plan'] = user_data.get('subscription_plan', 'Free Plan')
-            
+
             # Add 5 credits to new users
             user_data['credits'] = 5
-            
+
+            # Initialize referral data
+            from app.system.services.referral_service import ReferralService
+            username = user_data.get('username')
+            referral_data = ReferralService.create_referral_entry(user_id, username)
+            if referral_data:
+                user_data.update(referral_data)
+
             # Save to Firestore
             doc_ref.set(user_data)
             logger.info(f"User {user_id} created successfully in Firestore")
-            
+
             # Initialize user directories
             StorageService.initialize_user_directories(user_id)
-            
+
             # Create default settings file
             default_settings = {
                 'theme': 'dark',
                 'notifications': True,
                 'created_at': datetime.now().isoformat()
             }
-            
+
             StorageService.save_config_file(user_id, 'settings.json', default_settings)
-            
+
             return doc_ref.get().to_dict()
         except Exception as e:
             logger.error(f"Error creating user {user_id}: {str(e)}")

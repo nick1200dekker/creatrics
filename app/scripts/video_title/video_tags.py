@@ -181,7 +181,8 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
                 'token_usage': {
                     'model': 'fallback',
                     'input_tokens': 0,
-                    'output_tokens': 0
+                    'output_tokens': 0,
+                            'provider_enum': response.get('provider_enum') if isinstance(response, dict) else None
                 }
             }
 

@@ -168,11 +168,11 @@ class AIProviderManager:
                         )
 
                         if is_free_user:
-                            logger.info(f"Free user detected - overriding {preferred_provider} preference with DeepSeek")
+                            logger.info(f"Free user detected - using DeepSeek")
                             return AIProvider.DEEPSEEK
 
                     # Use the preferred provider
-                    logger.info(f"Using preferred provider for {self.script_name}: {preferred_provider}")
+                    logger.debug(f"Using preferred provider for {self.script_name}: {preferred_provider}")
                     return provider_map[preferred_provider]
 
         # 2. Check if free users should be forced to DeepSeek (when no script preference exists)
@@ -394,6 +394,7 @@ class AIProviderManager:
                         'total_tokens': response.usage.total_tokens if hasattr(response, 'usage') else 0
                     },
                     'provider': self.provider.value,
+                    'provider_enum': self.provider,  # Add enum for cost calculation
                     'raw_response': response
                 }
                 
@@ -443,6 +444,7 @@ class AIProviderManager:
                         'total_tokens': (response.usage.input_tokens + response.usage.output_tokens) if hasattr(response, 'usage') else 0
                     },
                     'provider': self.provider.value,
+                    'provider_enum': self.provider,  # Add enum for cost calculation
                     'raw_response': response
                 }
                 
@@ -566,6 +568,7 @@ class AIProviderManager:
                         'total_tokens': total_tokens
                     },
                     'provider': self.provider.value,
+                    'provider_enum': self.provider,  # Add enum for cost calculation
                     'raw_response': response
                 }
                 
@@ -769,6 +772,7 @@ class AIProviderManager:
                     'total_tokens': (response.usage.input_tokens + response.usage.output_tokens) if hasattr(response, 'usage') else 0
                 },
                 'provider': self.provider.value,
+                'provider_enum': self.provider,  # Add enum for cost calculation
                 'raw_response': response
             }
             
@@ -881,6 +885,7 @@ class AIProviderManager:
                     'total_tokens': total_tokens
                 },
                 'provider': self.provider.value,
+                'provider_enum': self.provider,  # Add enum for cost calculation
                 'raw_response': response
             }
         else:

@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% set check_auth = true %}
+{% block title %}Referrals - Creatrics{% endblock %}
+
+{% block additional_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/referral.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="referral-wrapper">
+    <!-- Header -->
+    <div class="referral-header">
+        <h1 class="referral-title">
+            <i class="ph ph-gift"></i>
+            Referrals
+        </h1>
+    </div>
+
+    <!-- Content -->
+    <div class="referral-content">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">
+                    <i class="ph ph-users"></i>
+                    Total Referrals
+                </div>
+                <div class="stat-value" id="total-signups">
+                    <span class="skeleton" style="width: 60px;"></span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">
+                    <i class="ph ph-coins"></i>
+                    Credits Earned
+                </div>
+                <div class="stat-value" id="total-earned">
+                    <span class="skeleton" style="width: 60px;"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Power Referrer Badge -->
+        <div id="power-badge-container" style="display: none; margin-bottom: 2rem;">
+            <div class="power-badge">
+                <i class="ph ph-lightning"></i>
+                Power Referrer - 100+ Signups
+            </div>
+        </div>
+
+        <!-- Rewards Info -->
+        <div class="rewards-info">
+            <h4>
+                <i class="ph ph-star"></i>
+                How It Works
+            </h4>
+            <ul class="rewards-list">
+                <li>
+                    <i class="ph ph-check-circle"></i>
+                    <span>Share your referral code with friends</span>
+                </li>
+                <li>
+                    <i class="ph ph-check-circle"></i>
+                    <span>You both get <strong id="signup-bonus">10 credits</strong> when they sign up</span>
+                </li>
+                <li>
+                    <i class="ph ph-check-circle"></i>
+                    <span>Get <strong id="subscription-bonus">200 bonus credits</strong> when they subscribe (one-time)</span>
+                </li>
+                <li>
+                    <i class="ph ph-check-circle"></i>
+                    <span>Reach 100+ referrals to become a Power Referrer</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Referral Code Section -->
+        <div class="code-section">
+            <h3>
+                <i class="ph ph-barcode"></i>
+                Your Referral Code
+            </h3>
+            <div class="code-display">
+                <div class="code-box" id="referral-code">
+                    <span class="skeleton"></span>
+                </div>
+                <button class="copy-button" id="copy-code-btn" onclick="copyReferralCode()">
+                    <i class="ph ph-copy"></i>
+                    Copy Code
+                </button>
+            </div>
+
+            <div class="share-links">
+                <a href="#" class="share-link" id="share-link" onclick="shareViaLink(event)">
+                    <i class="ph ph-link"></i>
+                    Copy Link
+                </a>
+                <a href="#" class="share-link" id="share-twitter" onclick="shareViaTwitter(event)">
+                    <i class="ph ph-twitter-logo"></i>
+                    Share on X
+                </a>
+                <a href="#" class="share-link" id="share-email" onclick="shareViaEmail(event)">
+                    <i class="ph ph-envelope"></i>
+                    Share via Email
+                </a>
+            </div>
+        </div>
+
+        <!-- Referrals Table -->
+        <div class="referrals-section">
+            <h3>
+                <i class="ph ph-list"></i>
+                Your Referrals
+            </h3>
+            <div class="referrals-table">
+                <table id="referrals-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Joined Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="referrals-tbody">
+                        <tr>
+                            <td colspan="3" class="empty-state">
+                                <i class="ph ph-user-plus"></i>
+                                <p>Loading referrals...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadReferralData();
+});
+
+async function loadReferralData() {
+    try {
+        const response = await fetch('/referral/api/stats', {
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch referral data');
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            updateUI(data.stats);
+        }
+    } catch (error) {
+        console.error('Error loading referral data:', error);
+        showToast('Error loading referral data', 'error');
+    }
+}
+
+function updateUI(stats) {
+    // Update stats
+    document.getElementById('total-signups').textContent = stats.total_signups || 0;
+    document.getElementById('total-earned').textContent = stats.total_earned_credits || 0;
+
+    // Update referral code
+    document.getElementById('referral-code').textContent = stats.referral_code || 'Loading...';
+
+    // Update reward amounts
+    document.getElementById('signup-bonus').textContent = `${stats.signup_bonus} credits`;
+    document.getElementById('subscription-bonus').textContent = `${stats.subscription_bonus} bonus credits`;
+
+    // Show power badge if applicable
+    if (stats.is_power_referrer) {
+        document.getElementById('power-badge-container').style.display = 'block';
+    }
+
+    // Update referrals table
+    const tbody = document.getElementById('referrals-tbody');
+    if (stats.referred_users && stats.referred_users.length > 0) {
+        tbody.innerHTML = stats.referred_users.map(user => `
+            <tr>
+                <td>${user.username || 'User'}</td>
+                <td>${formatDate(user.joined_date)}</td>
+                <td>
+                    <span class="status-badge ${user.converted ? 'converted' : 'active'}">
+                        <i class="ph ${user.converted ? 'ph-crown' : 'ph-check-circle'}"></i>
+                        ${user.converted ? 'Subscribed' : 'Active'}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    } else {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="empty-state">
+                    <i class="ph ph-user-plus"></i>
+                    <p>No referrals yet. Share your code to get started!</p>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function formatDate(dateValue) {
+    if (!dateValue) return 'N/A';
+
+    try {
+        let date;
+        if (dateValue._seconds) {
+            // Firestore timestamp
+            date = new Date(dateValue._seconds * 1000);
+        } else {
+            date = new Date(dateValue);
+        }
+
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    } catch (e) {
+        return 'N/A';
+    }
+}
+
+function copyReferralCode() {
+    const code = document.getElementById('referral-code').textContent.trim();
+
+    if (!code || code === 'Loading...') {
+        showToast('Referral code not loaded yet', 'error');
+        return;
+    }
+
+    navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('copy-code-btn');
+        btn.innerHTML = '<i class="ph ph-check"></i> Copied!';
+        showToast('Referral code copied!', 'success');
+
+        setTimeout(() => {
+            btn.innerHTML = '<i class="ph ph-copy"></i> Copy Code';
+        }, 2000);
+    }).catch(err => {
+        showToast('Failed to copy code', 'error');
+    });
+}
+
+function shareViaLink(event) {
+    event.preventDefault();
+    const code = document.getElementById('referral-code').textContent.trim();
+    const link = `${window.location.origin}/auth/register?ref=${code}`;
+
+    navigator.clipboard.writeText(link).then(() => {
+        showToast('Referral link copied!', 'success');
+    }).catch(err => {
+        showToast('Failed to copy link', 'error');
+    });
+}
+
+function shareViaTwitter(event) {
+    event.preventDefault();
+    const code = document.getElementById('referral-code').textContent.trim();
+    const link = `${window.location.origin}/auth/register?ref=${code}`;
+    const text = `Join me on Creatrics - AI-powered content creation tools! Use my referral code ${code} to get bonus credits. ${link}`;
+
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(twitterUrl, '_blank', 'width=600,height=400');
+}
+
+function shareViaEmail(event) {
+    event.preventDefault();
+    const code = document.getElementById('referral-code').textContent.trim();
+    const link = `${window.location.origin}/auth/register?ref=${code}`;
+    const subject = 'Join Creatrics with my referral code!';
+    const body = `Hey! I've been using Creatrics for AI-powered content creation and thought you'd love it.\n\nUse my referral code ${code} when you sign up to get bonus credits!\n\nSign up here: ${link}`;
+
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+</script>
+{% endblock %}

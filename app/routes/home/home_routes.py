@@ -466,7 +466,8 @@ def get_x_content_suggestions():
                     input_tokens=token_usage.get('input_tokens', 0),
                     output_tokens=token_usage.get('output_tokens', 0),
                     description="X Content Suggestions Generation",
-                    feature_id="x_content_suggestions"
+                    feature_id="x_content_suggestions",
+                    provider_enum=token_usage.get('provider_enum')
                 )
 
                 if not deduction_result['success']:

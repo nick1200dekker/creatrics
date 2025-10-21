@@ -59,17 +59,19 @@ logger = logging.getLogger(__name__)
 
 class ReplyGenerator:
     """Generates AI-powered tweet replies with GIF suggestions"""
-    
+
     def __init__(self):
         self.db = firestore.client()
-        # Get AI provider instead of PostEditor
-        self.ai_provider = get_ai_provider(
-                script_name='reply_guy/reply_generator',
-                user_subscription=user_subscription
-            )
-    
-    def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str = 'supportive', 
-                      use_brand_voice: bool = False, image_urls: list = None) -> Optional[Dict]:
+
+    def _get_ai_provider(self, user_subscription: str = None):
+        """Get AI provider with user subscription context"""
+        return get_ai_provider(
+            script_name='reply_guy/reply_generator',
+            user_subscription=user_subscription
+        )
+
+    def generate_reply(self, user_id: str, tweet_text: str, author: str, style: str = 'supportive',
+                      use_brand_voice: bool = False, image_urls: list = None, user_subscription: str = None) -> Optional[Dict]:
         """Generate AI reply to a tweet with GIF suggestion
 
         Args:
@@ -79,16 +81,20 @@ class ReplyGenerator:
             style: Reply style (creatrics, supportive, etc.)
             use_brand_voice: Whether to use user's brand voice
             image_urls: List of image URLs from the tweet (for vision analysis)
-            
+            user_subscription: User's subscription plan (for AI provider selection)
+
         Returns:
             Dict with 'reply' text and 'gif_query' for suggested GIF, or None on error
         """
         try:
+            # Get AI provider with user subscription context
+            ai_provider = self._get_ai_provider(user_subscription)
+
             # Get the prompt template
             prompt_template = self.get_prompt_template(use_brand_voice)
-            
+
             # Check if current AI provider supports vision (do this early)
-            provider_config = self.ai_provider.config
+            provider_config = ai_provider.config
             supports_vision = provider_config.get('supports_vision', False)
             should_use_images = image_urls and len(image_urls) > 0 and supports_vision
 
@@ -235,7 +241,7 @@ class ReplyGenerator:
                         })
 
                 # Use vision-capable completion for images
-                response = self.ai_provider.create_vision_completion(
+                response = ai_provider.create_vision_completion(
                     messages_with_images=[
                         {"role": "system", "content": system_message},
                         {"role": "user", "content": vision_content}
@@ -245,7 +251,7 @@ class ReplyGenerator:
                 )
             else:
                 # Use regular completion for text-only
-                response = self.ai_provider.create_completion(
+                response = ai_provider.create_completion(
                     messages=[
                         {"role": "system", "content": system_message},
                         {"role": "user", "content": prompt}
@@ -364,7 +370,7 @@ class ReplyGenerator:
                 reply_text = "That's an interesting perspective"
 
             # Now generate GIF suggestions (multiple queries)
-            gif_queries = self.generate_gif_queries(reply_text, tweet_text, style)
+            gif_queries = self.generate_gif_queries(reply_text, tweet_text, style, ai_provider)
 
             logger.info(f"Generated reply for @{author}: {reply_text[:50]}... | GIF queries: {gif_queries}")
 
@@ -378,7 +384,8 @@ class ReplyGenerator:
                     'input_tokens': token_usage.get('input_tokens', 0),
                     'output_tokens': token_usage.get('output_tokens', 0),
                     'total_tokens': token_usage.get('total_tokens', 0),
-                    'model': response.get('model', None)
+                    'model': response.get('model', None),
+                    'provider_enum': response.get('provider_enum')
                 }
             }
             
@@ -386,13 +393,14 @@ class ReplyGenerator:
             logger.error(f"Error generating reply: {str(e)}")
             raise Exception(f"Error generating reply: {str(e)}")
     
-    def generate_gif_queries(self, reply_text: str, tweet_text: str, style: str) -> List[str]:
+    def generate_gif_queries(self, reply_text: str, tweet_text: str, style: str, ai_provider) -> List[str]:
         """Generate multiple GIF search queries based on the reply and tweet context
 
         Args:
             reply_text: The generated reply text
             tweet_text: The original tweet text
             style: The reply style used
+            ai_provider: The AI provider instance to use
 
         Returns:
             A list of 1-3 word GIF search queries
@@ -408,7 +416,7 @@ class ReplyGenerator:
             )
 
             # Use AI provider with lower temperature for more predictable output
-            response = self.ai_provider.create_completion(
+            response = ai_provider.create_completion(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}

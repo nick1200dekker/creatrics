@@ -486,19 +486,19 @@ class StripeService:
                 elif plan_id == 'basic' and mode == 'subscription':
                     # New Premium Creator subscription
                     credits_to_add = 1000
-                    
+
                     logger.info(f"Processing new Premium Creator subscription for user {user_id}")
-                    
+
                     # Update user to Premium Creator plan FIRST
                     update_result = UserService.update_user(user_id, {
                         'subscription_plan': 'Premium Creator'
                     })
-                    
+
                     if update_result:
                         logger.info(f"✅ Updated user {user_id} to Premium Creator plan")
                     else:
                         logger.error(f"❌ Failed to update user plan")
-                    
+
                     # Add initial 1000 credits
                     credit_result = credits_manager.add_credits(
                         user_id,
@@ -506,17 +506,29 @@ class StripeService:
                         f"Premium Creator subscription - initial credits (session: {session_id[:20]}...)",
                         "subscription_initial"
                     )
-                    
+
                     if credit_result['success']:
                         logger.info(f"✅ Successfully added 1000 initial credits to user {user_id}")
                         logger.info(f"New balance: {credit_result.get('credits_remaining', 'unknown')}")
-                        
+
                         # Record the transaction
                         StripeService._record_credit_transaction(
                             user_id, transaction_id, credits_to_add, "Premium Creator initial"
                         )
                     else:
                         logger.error(f"❌ Failed to add initial credits: {credit_result.get('message', 'Unknown error')}")
+
+                    # Process referral subscription bonus (one-time)
+                    try:
+                        from app.system.services.referral_service import ReferralService
+                        referral_result = ReferralService.process_subscription_referral(user_id)
+                        if referral_result.get('success'):
+                            logger.info(f"✅ Referral subscription bonus processed: {referral_result.get('message')}")
+                        else:
+                            logger.info(f"Referral subscription bonus: {referral_result.get('message')}")
+                    except Exception as ref_error:
+                        logger.error(f"Error processing subscription referral bonus: {str(ref_error)}")
+
                 else:
                     logger.warning(f"Unknown plan_id: {plan_id} or mode: {mode}")
                 

@@ -67,19 +67,34 @@ def get_base_topaz_upscale_cost():
     return FAL_TOPAZ_UPSCALE['BASE_COST']
 
 # Helper function to calculate LLM costs - Uses Claude
-def calculate_llm_cost(model_name, input_tokens, output_tokens, cached_tokens=0):
+def calculate_llm_cost(model_name, input_tokens, output_tokens, cached_tokens=0, provider_enum=None):
     """
     Calculate the cost of an LLM API call in credits
-    Uses Claude pricing via AI Provider Manager
+    Uses actual provider pricing if provider_enum is provided, otherwise uses default
+
+    Args:
+        model_name: Name of the model used
+        input_tokens: Number of input tokens
+        output_tokens: Number of output tokens
+        cached_tokens: Number of cached tokens (optional)
+        provider_enum: AIProvider enum value (e.g., AIProvider.GOOGLE) to use correct pricing
     """
     try:
         # Lazy import to avoid circular dependencies
-        from app.system.ai_provider.ai_provider import get_ai_provider
+        from app.system.ai_provider.ai_provider import get_ai_provider, AIProviderManager, AIProvider
 
-        # Get AI provider manager
-        ai_provider = get_ai_provider()
+        # If provider_enum is provided, create a manager with that provider's config
+        if provider_enum is not None and isinstance(provider_enum, AIProvider):
+            # Create a temporary manager to access the specific provider's pricing
+            temp_manager = AIProviderManager()
+            temp_manager.provider = provider_enum
+            temp_manager.config = AIProviderManager.PROVIDER_CONFIGS[provider_enum]
+            ai_provider = temp_manager
+        else:
+            # Get default AI provider manager
+            ai_provider = get_ai_provider()
 
-        # If model_name is None, use the default model (Claude)
+        # If model_name is None, use the default model
         if model_name is None:
             model_name = ai_provider.default_model
 

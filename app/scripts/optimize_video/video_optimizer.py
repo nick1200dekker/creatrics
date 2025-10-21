@@ -188,7 +188,8 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                 optimized_description,
                 optimized_tags,
                 thumbnail_analysis,
-                user_id
+                user_id,
+                user_subscription
             )
 
             # Prepare response
@@ -327,7 +328,8 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
         optimized_description: str,
         optimized_tags: list,
         thumbnail_analysis: Dict,
-        user_id: str
+        user_id: str,
+        user_subscription: str = None
     ) -> Dict:
         """Generate overall video optimization recommendations"""
         try:
@@ -387,7 +389,8 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                     input_tokens,
                     output_tokens,
                     'Video optimization recommendations',
-                    feature_id='optimize_video'
+                    feature_id='optimize_video',
+                    provider_enum=response.get('provider_enum')
                 )
 
             return {

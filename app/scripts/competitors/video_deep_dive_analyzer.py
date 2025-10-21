@@ -263,7 +263,7 @@ class VideoDeepDiveAnalyzer:
             logger.error(f"Error fetching transcript for {video_id}: {e}")
             return ""
 
-    def _analyze_with_ai(self, video_info: Dict, transcript_text: str, user_id: str) -> Dict:
+    def _analyze_with_ai(self, video_info: Dict, transcript_text: str, user_id: str, user_subscription: str = None) -> Dict:
         """Analyze video with AI"""
         try:
             ai_provider = get_ai_provider(
@@ -304,14 +304,15 @@ class VideoDeepDiveAnalyzer:
             analysis = response.get('content', '') if isinstance(response, dict) else str(response)
             usage = response.get('usage', {})
 
-            # Deduct credits
+            # Deduct credits with correct provider pricing
             credits_manager = CreditsManager()
             deduction_result = credits_manager.deduct_llm_credits(
                 user_id=user_id,
                 model_name=response.get('model', 'unknown'),
                 input_tokens=usage.get('input_tokens', 0),
                 output_tokens=usage.get('output_tokens', 0),
-                description=f"Video Deep Dive Analysis - {title[:50]}"
+                description=f"Video Deep Dive Analysis - {title[:50]}",
+                provider_enum=response.get('provider_enum')  # Pass the actual provider used
             )
 
             if not deduction_result.get('success', False):
@@ -366,7 +367,8 @@ class VideoDeepDiveAnalyzer:
                 model_name=response.get('model', 'unknown'),
                 input_tokens=usage.get('input_tokens', 0),
                 output_tokens=usage.get('output_tokens', 0),
-                description="Video Summary Generation"
+                description="Video Summary Generation",
+                provider_enum=response.get('provider_enum')
             )
 
             if not deduction_result.get('success', False):

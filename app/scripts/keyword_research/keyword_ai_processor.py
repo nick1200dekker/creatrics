@@ -141,7 +141,7 @@ def fetch_youtube_data_for_topic(topic: str, max_pages: int = 5) -> dict:
         return None
 
 
-def detect_topic_context(topic: str) -> dict:
+def detect_topic_context(topic: str, user_subscription: str = None) -> dict:
     """
     Use AI to detect the domain and content style of a topic
     Uses REAL YouTube data to inform the analysis
@@ -209,7 +209,8 @@ Here are ALL REAL top-performing videos for this topic (from last month, {total_
         context['_token_usage'] = {
             'input_tokens': response.get('usage', {}).get('input_tokens', 0),
             'output_tokens': response.get('usage', {}).get('output_tokens', 0),
-            'model': ai_provider.default_model
+            'model': ai_provider.default_model,
+            'provider_enum': response.get('provider_enum')
         }
 
         return context
@@ -226,7 +227,7 @@ Here are ALL REAL top-performing videos for this topic (from last month, {total_
         }
 
 
-def generate_keywords_with_ai(topic: str, context: dict, count: int = 100) -> dict:
+def generate_keywords_with_ai(topic: str, context: dict, count: int = 100, user_subscription: str = None) -> dict:
     """
     Generate keyword variations using AI based on topic, context, and REAL YouTube data
     Returns dict with keywords list and token_usage
@@ -323,7 +324,8 @@ HERE IS THE REAL DATA - Top performing videos for "{topic}" from the last month:
             'token_usage': {
                 'input_tokens': response.get('usage', {}).get('input_tokens', 0),
                 'output_tokens': response.get('usage', {}).get('output_tokens', 0),
-                'model': ai_provider.default_model
+                'model': ai_provider.default_model,
+                'provider_enum': response.get('provider_enum')
             }
         }
 
@@ -389,7 +391,8 @@ def generate_ai_insights(results: list, topic: str, context: dict, user_subscrip
             'token_usage': {
                 'input_tokens': response.get('usage', {}).get('input_tokens', 0),
                 'output_tokens': response.get('usage', {}).get('output_tokens', 0),
-                'model': ai_provider.default_model
+                'model': ai_provider.default_model,
+                'provider_enum': response.get('provider_enum')
             }
         }
 

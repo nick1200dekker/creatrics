@@ -697,7 +697,7 @@
                 console.log('Analysis response:', data);
 
                 if (data.success) {
-                    showToast('Analysis started! This will take a few minutes.', 'success');
+                    // showToast('Analysis started! This will take a few minutes.', 'success');
                     startStatusPolling();
                 } else {
                     console.log('Analysis failed to start:', data.error);
@@ -876,7 +876,7 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast('Analysis started! This will take a few minutes.', 'success');
+                    // showToast('Analysis started! This will take a few minutes.', 'success');
                     startStatusPolling();
                 } else {
                     console.log('Analysis failed to start:', data.error);

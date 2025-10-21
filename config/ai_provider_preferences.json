@@ -2,6 +2,24 @@
   "free_users_deepseek": true,
   "script_preferences": {
     "reply_guy/reply_generator": "google",
-    "post_editor/post_editor": "openai"
+    "post_editor/post_editor": "google",
+    "keyword_research/keyword_ai_processor": "google",
+    "brain_dump/note_ai_processor": "google",
+    "clip_spaces/processor": "google",
+    "competitors/competitor_analyzer": "google",
+    "hook_generator/hook_generator": "google",
+    "home/x_content_suggestions": "google",
+    "competitors/video_deep_dive_analyzer": "google",
+    "niche/creator_analyzer": "google",
+    "optimize_video/thumbnail_analyzer": "google",
+    "optimize_video/video_optimizer": "google",
+    "thumbnail/improve_prompt": "google",
+    "tiktok_competitors/tiktok_competitor_analyzer": "google",
+    "tiktok_titles_hashtags/tiktok_title_generator": "google",
+    "video_title/video_title": "google",
+    "video_script/video_script": "google",
+    "tiktok_trend_finder/tiktok_ai_processor": "google",
+    "video_title/video_tags": "google",
+    "video_title/video_description": "google"
   }
 }

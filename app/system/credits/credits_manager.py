@@ -469,10 +469,10 @@ class CreditsManager:
                 'credits_remaining': self.get_user_credits(user_id)
             }
     
-    def deduct_llm_credits(self, user_id, model_name, input_tokens, output_tokens, description, feature_id=None):
+    def deduct_llm_credits(self, user_id, model_name, input_tokens, output_tokens, description, feature_id=None, provider_enum=None):
         """
-        Deduct credits for Claude LLM usage
-        
+        Deduct credits for LLM usage with correct provider pricing
+
         Args:
             user_id (str): User ID
             model_name (str): LLM model name
@@ -480,29 +480,37 @@ class CreditsManager:
             output_tokens (int): Actual output tokens
             description (str): Transaction description
             feature_id (str): Optional feature ID
-            
+            provider_enum: AIProvider enum (e.g., AIProvider.GOOGLE) for correct pricing
+
         Returns:
             dict: Transaction result
         """
         try:
-            # Calculate actual cost using Claude pricing
-            actual_cost = calculate_llm_cost(model_name, input_tokens, output_tokens)
-            
+            # Calculate actual cost using the correct provider's pricing
+            actual_cost = calculate_llm_cost(
+                model_name,
+                input_tokens,
+                output_tokens,
+                provider_enum=provider_enum
+            )
+
             # Apply margin
             credits_to_deduct = apply_margin(actual_cost, self.default_margin)
-            
-            # Enhanced description
-            detailed_description = f"{description} - {input_tokens}in/{output_tokens}out tokens, {model_name}"
-            
+
+            # Enhanced description with provider info
+            provider_name = provider_enum.value if provider_enum else 'default'
+            detailed_description = f"{description} - {input_tokens}in/{output_tokens}out tokens, {model_name} ({provider_name})"
+
             # Deduct credits
             result = self.deduct_credits(user_id, credits_to_deduct, detailed_description, feature_id)
-            
+
             if result['success']:
-                logger.info(f"LLM credits deducted: {credits_to_deduct} credits (actual: {actual_cost:.4f}, margin: {self.default_margin*100}%)")
+                logger.info(f"LLM credits deducted: {credits_to_deduct} credits (actual: {actual_cost:.4f}, margin: {self.default_margin*100}%, provider: {provider_name})")
                 result['actual_cost'] = actual_cost
                 result['margin_applied'] = self.default_margin
                 result['tokens_used'] = {'input': input_tokens, 'output': output_tokens}
-            
+                result['provider'] = provider_name
+
             return result
 
         except Exception as e:

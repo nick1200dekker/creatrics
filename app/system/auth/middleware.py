@@ -155,29 +155,35 @@ def auth_required(f):
             return f(*args, **kwargs)
         
         payload = verify_token(token)
-        
+
         if not payload:
             # Log the auth failure with more detail
             logger.warning(f"Authentication failed on path: {request.path}. Token invalid or expired.")
-            
+
             # API routes return JSON error
             if request.path.startswith('/api/') or '/api/' in request.path:
                 return jsonify({"error": "Unauthorized", "reason": "invalid_session"}), 401
-                
+
             # Create a redirect response to the login page
             response = make_response(redirect(url_for('core.login', reason='session_expired', _external=True)))
-            
+
             # Clear any existing auth cookies to ensure clean state
             response.delete_cookie(COOKIE_NAME, path=COOKIE_PATH, domain=COOKIE_DOMAIN)
-            
+
             # Set cache headers to prevent browser from caching the redirect
             response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
             response.headers['Pragma'] = 'no-cache'
             response.headers['Expires'] = '0'
-            
+
             return response
-        
-        # Store user info in Flask global context
+
+        # Check if g.user was already set by auth_middleware (before_request)
+        # If so, don't overwrite it - the middleware has already loaded fresh data from Firebase
+        if hasattr(g, 'user') and g.user and g.user.get('id') == payload.get('sub'):
+            logger.debug(f"Auth decorator: g.user already set by middleware for {g.user_id}, skipping recreation")
+            return f(*args, **kwargs)
+
+        # Store user info in Flask global context (fallback if middleware didn't run)
         g.user_id = payload.get('sub')
         # Try multiple fields for username (Google OAuth uses full_name, email users use username)
         user_metadata = payload.get('user_metadata', {})
@@ -416,7 +422,6 @@ def auth_middleware():
                 # CRITICAL: Set both in the nested dict and directly to ensure template access
                 g.user['data']['subscription_plan'] = user_data['subscription_plan']
                 g.user['subscription_plan'] = user_data['subscription_plan']
-                logger.info(f"Loaded subscription plan from Firebase for {request.path}: {user_data['subscription_plan']}")
 
             if 'credits' in user_data:
                 g.user['data']['credits'] = user_data['credits']

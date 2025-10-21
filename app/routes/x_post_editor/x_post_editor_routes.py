@@ -866,7 +866,8 @@ def generate_content():
             model_name=token_usage['model'],
             input_tokens=token_usage['input_tokens'],
             output_tokens=token_usage['output_tokens'],
-            description=f"Post Editor enhancement ({preset}) - {len(generation_result['enhanced_posts'])} posts"
+            description=f"Post Editor enhancement ({preset}) - {len(generation_result['enhanced_posts'])} posts",
+            provider_enum=token_usage.get('provider_enum')
         )
         
         if not deduction_result['success']:

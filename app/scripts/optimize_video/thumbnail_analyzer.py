@@ -135,7 +135,8 @@ class ThumbnailAnalyzer:
                         input_tokens,
                         output_tokens,
                         'Thumbnail analysis (vision)',
-                        feature_id='optimize_video'
+                        feature_id='optimize_video',
+                        provider_enum=response.get('provider_enum')
                     )
                     logger.info(f"Credits deducted for thumbnail analysis: {input_tokens} in / {output_tokens} out tokens")
 

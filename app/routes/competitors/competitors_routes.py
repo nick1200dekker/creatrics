@@ -811,7 +811,8 @@ def analyze_competitors():
                     model_name=token_usage.get('model', None),  # Uses current AI provider model
                     input_tokens=token_usage.get('input_tokens', 0),
                     output_tokens=token_usage.get('output_tokens', 0),
-                    description="Competitor Analysis"
+                    description="Competitor Analysis",
+                    provider_enum=token_usage.get('provider_enum')  # Use actual provider pricing
                 )
 
         # Save as latest analysis (replace if exists)
