@@ -28,32 +28,46 @@ html.dark .credits-wrapper {
     border-color: transparent;
 }
 
-/* Header Section - matching other pages */
+/* Header Section - matching optimize video page */
 .credits-header {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
-    background: var(--bg-secondary);
+    background: linear-gradient(135deg,
+        rgba(59, 130, 246, 0.03) 0%,
+        rgba(139, 92, 246, 0.03) 100%);
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+html.dark .credits-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+    border-bottom-color: rgba(63, 63, 70, 0.5);
+}
+
 .credits-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     margin: 0;
 }
 
 .credits-title i {
     color: #3B82F6;
-    font-size: 1.75rem;
+}
+
+html.dark .credits-title i {
+    color: #60A5FA;
 }
 
 /* Content Area */
 .credits-content {
     padding: 2rem;
+}
+
+html.dark .credits-content {
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.02) 0%, transparent 100%);
 }
 
 /* Balance Card - Enhanced */
@@ -163,82 +177,6 @@ html.dark .balance-card {
     color: white;
 }
 
-/* Stats Grid - Matching other pages */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-secondary);
-    border-radius: 16px;
-    padding: 1.25rem;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-html.dark .stat-card {
-    border-color: transparent;
-    background: var(--bg-tertiary);
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, currentColor, transparent);
-    opacity: 0.3;
-}
-
-.stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-}
-
-.stat-label {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
-}
-
-.stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.stat-value.credits-spent {
-    color: #EF4444;
-}
-
-.stat-card:has(.credits-spent)::before {
-    background: linear-gradient(90deg, transparent, #EF4444, transparent);
-}
-
-.stat-value.credits-earned {
-    color: #10B981;
-}
-
-.stat-card:has(.credits-earned)::before {
-    background: linear-gradient(90deg, transparent, #10B981, transparent);
-}
-
-.stat-value.total-transactions {
-    color: #3B82F6;
-}
-
-.stat-card:has(.total-transactions)::before {
-    background: linear-gradient(90deg, transparent, #3B82F6, transparent);
-}
 
 /* Transactions Section */
 .transactions-section {
@@ -257,11 +195,6 @@ html.dark .transactions-section {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
     background: var(--bg-secondary);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
 }
 
 .section-title {
@@ -278,54 +211,8 @@ html.dark .transactions-section {
     color: #3B82F6;
 }
 
-/* Filter Section */
-.filter-section {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background: var(--bg-tertiary);
-    border-radius: 10px;
-    border: 1px solid var(--border-primary);
-}
-
-.filter-btn {
-    padding: 0.5rem 1rem;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-}
-
-.filter-btn::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 2px;
-    background: linear-gradient(90deg, #3B82F6, #8B5CF6);
-    transition: width 0.3s ease;
-}
-
-.filter-btn:hover {
-    background: var(--hover-bg);
-    color: var(--text-primary);
-}
-
-.filter-btn.active {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-    color: #3B82F6;
-    border-color: rgba(59, 130, 246, 0.3);
-}
-
-.filter-btn.active::before {
-    width: 80%;
+html.dark .section-title i {
+    color: #60A5FA;
 }
 
 /* Transactions Content */
@@ -341,7 +228,7 @@ html.dark .transactions-section {
 }
 
 .transaction-card {
-    background: var(--bg-tertiary);
+    background: transparent;
     border: 1px solid var(--border-primary);
     border-radius: 12px;
     padding: 1rem 1.25rem;
@@ -351,7 +238,7 @@ html.dark .transactions-section {
 }
 
 html.dark .transaction-card {
-    border-color: transparent;
+    border-color: rgba(63, 63, 70, 0.5);
 }
 
 .transaction-card::before {
@@ -366,8 +253,13 @@ html.dark .transaction-card {
 }
 
 .transaction-card:hover {
-    background: var(--hover-bg);
+    background: rgba(59, 130, 246, 0.03);
     transform: translateX(2px);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+html.dark .transaction-card:hover {
+    background: rgba(59, 130, 246, 0.05);
 }
 
 .transaction-card:hover::before {
@@ -548,20 +440,26 @@ html.dark .transaction-card {
 .loading-state {
     text-align: center;
     padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.loading-spinner {
-    display: inline-block;
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border-primary);
-    border-top-color: #3B82F6;
-    border-radius: 50%;
+.loading-state i.ph-spinner {
+    font-size: 2rem;
+    color: #3B82F6;
+    opacity: 1;
+    margin-bottom: 1rem;
     animation: spin 1s linear infinite;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+html.dark .loading-state i.ph-spinner {
+    color: #60A5FA;
 }
 
 @keyframes spin {
+    from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
 
@@ -602,18 +500,6 @@ html.dark .transaction-card {
         justify-self: start;
     }
 
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .transactions-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .filter-section {
-        justify-content: center;
-    }
 }
 </style>
 {% endblock %}
@@ -652,22 +538,6 @@ html.dark .transaction-card {
             </div>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid" id="statsGrid" style="display: none;">
-            <div class="stat-card">
-                <div class="stat-label">Credits Spent</div>
-                <div class="stat-value credits-spent" id="creditsSpent">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Credits Earned</div>
-                <div class="stat-value credits-earned" id="creditsEarned">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Transactions</div>
-                <div class="stat-value total-transactions" id="totalTransactions">0</div>
-            </div>
-        </div>
-
         <!-- Transactions Section -->
         <div class="transactions-section">
             <div class="transactions-header">
@@ -675,17 +545,12 @@ html.dark .transaction-card {
                     <i class="ph ph-clock-counter-clockwise"></i>
                     Transaction History
                 </h2>
-                <div class="filter-section">
-                    <button class="filter-btn active" onclick="filterTransactions('all')">All</button>
-                    <button class="filter-btn" onclick="filterTransactions('deduction')">Spent</button>
-                    <button class="filter-btn" onclick="filterTransactions('addition')">Earned</button>
-                </div>
             </div>
             <div class="transactions-content">
                 <div id="transactionsContainer">
                     <div class="loading-state">
-                        <div class="loading-spinner"></div>
-                        <div style="margin-top: 1rem; color: var(--text-secondary);">Loading transactions...</div>
+                        <i class="ph ph-spinner"></i>
+                        <div style="color: var(--text-secondary);">Loading transactions...</div>
                     </div>
                 </div>
             </div>
@@ -714,9 +579,6 @@ async function loadTransactionHistory() {
             // Store all transactions
             allTransactions = data.transactions;
 
-            // Calculate stats
-            updateStats();
-
             // Display transactions
             displayTransactions(allTransactions);
         } else {
@@ -728,27 +590,6 @@ async function loadTransactionHistory() {
     }
 }
 
-function updateStats() {
-    let creditsSpent = 0;
-    let creditsEarned = 0;
-
-    allTransactions.forEach(tx => {
-        if (tx.amount < 0) {
-            creditsSpent += Math.abs(tx.amount);
-        } else {
-            creditsEarned += tx.amount;
-        }
-    });
-
-    document.getElementById('creditsSpent').textContent = creditsSpent.toFixed(2);
-    document.getElementById('creditsEarned').textContent = creditsEarned.toFixed(2);
-    document.getElementById('totalTransactions').textContent = allTransactions.length;
-
-    // Show stats grid if there are transactions
-    if (allTransactions.length > 0) {
-        document.getElementById('statsGrid').style.display = 'grid';
-    }
-}
 
 function displayTransactions(transactions) {
     const container = document.getElementById('transactionsContainer');
@@ -805,26 +646,6 @@ function displayTransactions(transactions) {
 
     html += '</div>';
     container.innerHTML = html;
-}
-
-function filterTransactions(type) {
-    currentFilter = type;
-
-    // Update filter buttons
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-
-    // Filter transactions
-    let filtered = allTransactions;
-    if (type === 'deduction') {
-        filtered = allTransactions.filter(tx => tx.amount < 0);
-    } else if (type === 'addition') {
-        filtered = allTransactions.filter(tx => tx.amount >= 0);
-    }
-
-    displayTransactions(filtered);
 }
 
 function showError(message) {

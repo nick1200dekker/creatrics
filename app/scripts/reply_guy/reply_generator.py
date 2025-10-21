@@ -84,6 +84,16 @@ class ReplyGenerator:
             # Get the prompt template
             prompt_template = self.get_prompt_template(use_brand_voice)
             
+            # Check if current AI provider supports vision (do this early)
+            provider_config = self.ai_provider.config
+            supports_vision = provider_config.get('supports_vision', False)
+            should_use_images = image_urls and len(image_urls) > 0 and supports_vision
+
+            # Log if images are being skipped due to non-vision model
+            if image_urls and len(image_urls) > 0 and not supports_vision:
+                model_name = provider_config.get('display_name', 'current model')
+                logger.info(f"Tweet has {len(image_urls)} image(s) but {model_name} doesn't support vision - using text-only reply generation")
+
             # Add brand voice context if requested
             brand_voice_context = ""
             if use_brand_voice:
@@ -92,13 +102,17 @@ class ReplyGenerator:
                     logger.info(f"Adding Brand Voice context for user {user_id}")
                 else:
                     logger.info(f"Brand Voice requested but no context found for user {user_id}")
-            
+
             # Convert _new_line_ back to actual newlines for the AI prompt
             clean_tweet_text = tweet_text.replace('_new_line_', '\n')
 
-            # Add image context if images are present
-            if image_urls and len(image_urls) > 0:
+            # Add image context only if provider supports vision and images are present
+            if should_use_images:
                 image_context = f"\n\nIMAGES: This tweet contains {len(image_urls)} image(s). The images are shown above. Reference what you see in the images when crafting your reply to make it more relevant and engaging."
+                clean_tweet_text += image_context
+            elif image_urls and len(image_urls) > 0 and not supports_vision:
+                # Provider doesn't support vision, but tweet has images - mention this
+                image_context = f"\n\nNOTE: This tweet contains {len(image_urls)} image(s), but you cannot see them. Focus on the text content only."
                 clean_tweet_text += image_context
 
             # Load and prepare style guide
@@ -139,11 +153,11 @@ class ReplyGenerator:
             # Call AI provider - higher temperature for more natural responses when mimicking
             temperature = 0.85 if (use_brand_voice and brand_voice_context) else 0.7
 
-            # Build user message - include images if available
+            # Build user message - include images if available AND provider supports vision
             user_message_content = []
 
-            # Add images first if they exist (Claude Vision)
-            if image_urls and len(image_urls) > 0:
+            # Add images first if they exist and provider supports vision
+            if should_use_images:
                 import requests
                 import base64
 
@@ -194,8 +208,8 @@ class ReplyGenerator:
                     print(f"  TEXT: {item.get('text')}")
             print("=" * 80)
 
-            # Use vision completion if images are present, regular completion otherwise
-            if image_urls and len(image_urls) > 0:
+            # Use vision completion only if images are present AND provider supports vision
+            if should_use_images:
                 # Format for vision API - OpenAI style
                 vision_content = []
 
