@@ -135,12 +135,12 @@ def index():
             logger.info(f"Auto-selected first default list: {first_default_list['id']}")
 
         if current_selection:
-            # PERFORMANCE: Only load first 100 tweets for initial page render
+            # PERFORMANCE: Only load first 50 tweets for initial page render
             current_analysis = service.get_current_analysis(
                 user_id,
                 current_selection['list_id'],
                 current_selection['list_type'],
-                limit=100,  # Only send first 100 to template
+                limit=50,  # Only send first 50 to template
                 offset=0
             )
             if current_analysis:
@@ -809,7 +809,7 @@ def get_more_tweets():
         list_id = data.get('list_id')
         list_type = data.get('list_type')
         offset = int(data.get('offset', 0))
-        limit = int(data.get('limit', 100))
+        limit = int(data.get('limit', 50))
 
         service = ReplyGuyService()
         user_id = get_workspace_user_id()

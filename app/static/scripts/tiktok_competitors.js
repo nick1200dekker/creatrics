@@ -11,6 +11,39 @@ let videosDisplayed = 25;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
+    // Check for ongoing TikTok competitor analysis
+    const ongoingAnalysis = sessionStorage.getItem('tiktok_competitor_analysis_ongoing');
+    if (ongoingAnalysis) {
+        const analysisData = JSON.parse(ongoingAnalysis);
+        const currentTime = Date.now();
+
+        // If analysis started less than 3 minutes ago, show loading
+        if (currentTime - analysisData.startTime < 180000) {
+            console.log('Ongoing TikTok competitor analysis detected for list:', analysisData.listId);
+            currentListId = analysisData.listId;
+            isAnalyzing = true;
+
+            // Hide setup section and show progress section with loading state
+            document.getElementById('setupSection').style.display = 'none';
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+
+            // Show progress as analyzing (inline to avoid function order issues)
+            const progressBar = document.querySelector('.progress-fill');
+            const progressText = document.querySelector('.progress-text');
+            const progressPercent = document.querySelector('.progress-percent');
+            if (progressBar) progressBar.style.width = '50%';
+            if (progressText) progressText.textContent = 'Analysis in progress...';
+            if (progressPercent) progressPercent.textContent = '50%';
+
+            // Poll for completion
+            checkTikTokCompetitorAnalysisStatus(analysisData.listId, analysisData.timeframe);
+        } else {
+            // Analysis timed out, clear it
+            sessionStorage.removeItem('tiktok_competitor_analysis_ongoing');
+        }
+    }
+
     loadNicheLists();
     loadLatestAnalysisCard();
 });
@@ -369,6 +402,13 @@ async function analyzeCompetitors() {
 
     isAnalyzing = true;
 
+    // Mark as ongoing in sessionStorage
+    sessionStorage.setItem('tiktok_competitor_analysis_ongoing', JSON.stringify({
+        listId: currentListId,
+        timeframe: selectedTimeframe,
+        startTime: Date.now()
+    }));
+
     document.getElementById('setupSection').style.display = 'none';
     document.getElementById('progressSection').style.display = 'block';
     document.getElementById('resultsSection').style.display = 'none';
@@ -396,6 +436,9 @@ async function analyzeCompetitors() {
 
         if (data.success) {
             updateProgress(100, 'Analysis complete!');
+
+            // Clear ongoing analysis flag - analysis complete!
+            sessionStorage.removeItem('tiktok_competitor_analysis_ongoing');
 
             document.getElementById('progressSection').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
@@ -1011,4 +1054,40 @@ function escapeHtml(text) {
 function getListName(listId) {
     const list = nicheLists.find(l => l.id === listId);
     return list ? list.name : 'Unknown';
+}
+
+/**
+ * Check if TikTok competitor analysis is complete by checking if results section is visible
+ */
+async function checkTikTokCompetitorAnalysisStatus(listId, timeframe) {
+    const maxAttempts = 90; // Poll for up to 3 minutes
+    let attempts = 0;
+
+    const pollInterval = setInterval(async () => {
+        attempts++;
+
+        // Check if results section is now visible (analysis complete)
+        const resultsSection = document.getElementById('resultsSection');
+        if (resultsSection && resultsSection.style.display !== 'none') {
+            // Analysis complete! Clear sessionStorage
+            console.log('TikTok competitor analysis complete for list:', listId);
+            sessionStorage.removeItem('tiktok_competitor_analysis_ongoing');
+            clearInterval(pollInterval);
+            isAnalyzing = false;
+            return;
+        }
+
+        // If max attempts reached, stop polling
+        if (attempts >= maxAttempts) {
+            console.log('TikTok competitor analysis polling timed out');
+            sessionStorage.removeItem('tiktok_competitor_analysis_ongoing');
+            clearInterval(pollInterval);
+            isAnalyzing = false;
+            document.getElementById('analysisResults').innerHTML = `
+                <div class="error-card">
+                    <p>Analysis is taking longer than expected. Please try again.</p>
+                </div>
+            `;
+        }
+    }, 2000); // Poll every 2 seconds
 }

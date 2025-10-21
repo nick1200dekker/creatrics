@@ -447,13 +447,13 @@ html.dark .status-badge.converted {
 }
 
 .empty-state i {
-    font-size: 3rem;
+    font-size: 1.5rem;
     color: var(--text-tertiary);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .empty-state p {
-    font-size: 1rem;
+    font-size: 0.875rem;
     margin: 0;
 }
 

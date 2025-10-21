@@ -11,6 +11,26 @@ let currentMode = 'manual'; // 'manual' or 'ai'
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Check for ongoing keyword research
+    const ongoingResearch = sessionStorage.getItem('keyword_research_ongoing');
+    if (ongoingResearch) {
+        const researchData = JSON.parse(ongoingResearch);
+        const currentTime = Date.now();
+
+        // If research started less than 2 minutes ago, show loading
+        if (currentTime - researchData.startTime < 120000) {
+            console.log('Ongoing keyword research detected:', researchData.keyword);
+            document.getElementById('keywordInput').value = researchData.keyword;
+            showLoading();
+
+            // Poll for completion
+            checkKeywordResearchStatus(researchData.keyword, researchData.mode);
+        } else {
+            // Research timed out, clear it
+            sessionStorage.removeItem('keyword_research_ongoing');
+        }
+    }
+
     // Enter key support in search input
     document.getElementById('keywordInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
@@ -68,6 +88,13 @@ async function exploreManual(keywordToExplore) {
 
     // Update input
     document.getElementById('keywordInput').value = keywordToExplore;
+
+    // Mark as ongoing in sessionStorage
+    sessionStorage.setItem('keyword_research_ongoing', JSON.stringify({
+        keyword: keywordToExplore,
+        mode: 'manual',
+        startTime: Date.now()
+    }));
 
     // Show loading state
     showLoading();
@@ -165,6 +192,13 @@ async function exploreManual(keywordToExplore) {
 async function exploreWithAI(topic) {
     const count = 50; // Always generate 50 keywords
 
+    // Mark as ongoing in sessionStorage
+    sessionStorage.setItem('keyword_research_ongoing', JSON.stringify({
+        keyword: topic,
+        mode: 'ai',
+        startTime: Date.now()
+    }));
+
     // Show loading with AI-specific message
     document.getElementById('loadingContainer').style.display = 'flex';
     document.querySelector('.loading-text').textContent = `AI is generating ${count} keywords for "${topic}"...`;
@@ -248,6 +282,9 @@ function switchMode(mode) {
  * Display results
  */
 function displayResults(keyword, mainAnalysis, suggestions) {
+    // Clear ongoing research flag - research complete!
+    sessionStorage.removeItem('keyword_research_ongoing');
+
     // Hide loading and empty state
     document.getElementById('loadingContainer').style.display = 'none';
     document.getElementById('emptyState').style.display = 'none';
@@ -514,6 +551,13 @@ function escapeHtml(text) {
 async function exploreWithAI(topic) {
     const count = 50; // Always generate 50 keywords
 
+    // Mark as ongoing in sessionStorage
+    sessionStorage.setItem('keyword_research_ongoing', JSON.stringify({
+        keyword: topic,
+        mode: 'ai',
+        startTime: Date.now()
+    }));
+
     // Show loading with AI-specific message
     document.getElementById('loadingContainer').style.display = 'flex';
     document.querySelector('.loading-text').textContent = `AI is generating ${count} keywords for "${topic}"...`;
@@ -561,6 +605,9 @@ async function exploreWithAI(topic) {
  * Display AI exploration results
  */
 function displayAIResults(data) {
+    // Clear ongoing research flag - research complete!
+    sessionStorage.removeItem('keyword_research_ongoing');
+
     // Hide empty state and loading
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('loadingContainer').style.display = 'none';
@@ -759,6 +806,9 @@ function createKeywordTableRow(keyword) {
  * Show insufficient credits error with nice UI
  */
 function showInsufficientCreditsError(data) {
+    // Clear the ongoing research flag
+    sessionStorage.removeItem('keyword_research_ongoing');
+
     document.getElementById('loadingContainer').style.display = 'none';
     document.getElementById('emptyState').style.display = 'none';
 
@@ -779,6 +829,37 @@ function showInsufficientCreditsError(data) {
             </a>
         </div>
     `;
+}
+
+/**
+ * Check if keyword research is complete by checking if results are visible
+ */
+async function checkKeywordResearchStatus(keyword, mode) {
+    const maxAttempts = 60; // Poll for up to 2 minutes
+    let attempts = 0;
+
+    const pollInterval = setInterval(async () => {
+        attempts++;
+
+        // Check if results section is now visible (research complete)
+        const resultsSection = document.getElementById('resultsSection');
+        if (resultsSection && resultsSection.style.display !== 'none') {
+            // Research complete! Clear sessionStorage
+            console.log('Keyword research complete for:', keyword);
+            sessionStorage.removeItem('keyword_research_ongoing');
+            clearInterval(pollInterval);
+            return;
+        }
+
+        // If max attempts reached, stop polling
+        if (attempts >= maxAttempts) {
+            console.log('Keyword research polling timed out');
+            sessionStorage.removeItem('keyword_research_ongoing');
+            clearInterval(pollInterval);
+            document.getElementById('loadingContainer').style.display = 'none';
+            alert('Research is taking longer than expected. Please try again.');
+        }
+    }, 2000); // Poll every 2 seconds
 }
 
 // Additional AI functions are defined above near switchMode()

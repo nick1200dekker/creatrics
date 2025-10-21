@@ -10,6 +10,30 @@ let currentInputMode = 'channel'; // 'channel' or 'url'
 
 // Load videos on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Check for ongoing optimization
+    const ongoingOptimization = sessionStorage.getItem('optimize_video_ongoing');
+    if (ongoingOptimization) {
+        const optimizationData = JSON.parse(ongoingOptimization);
+        const currentTime = Date.now();
+
+        // If optimization started less than 3 minutes ago, show loading
+        if (currentTime - optimizationData.startTime < 180000) {
+            console.log('Ongoing optimization detected for video:', optimizationData.videoId);
+            currentVideoId = optimizationData.videoId;
+
+            // Hide videos list, show loading section
+            document.getElementById('videosListSection').style.display = 'none';
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+
+            // Poll for completion
+            checkOptimizationStatus(optimizationData.videoId);
+        } else {
+            // Optimization timed out, clear it
+            sessionStorage.removeItem('optimize_video_ongoing');
+        }
+    }
+
     loadMyVideos();
     loadOptimizationHistory();
 
@@ -336,6 +360,12 @@ async function optimizeVideo(videoId) {
         // Store current video ID globally
         currentVideoId = videoId;
 
+        // Mark as ongoing in sessionStorage
+        sessionStorage.setItem('optimize_video_ongoing', JSON.stringify({
+            videoId: videoId,
+            startTime: Date.now()
+        }));
+
         // Hide videos list, show loading section
         document.getElementById('videosListSection').style.display = 'none';
         document.getElementById('loadingSection').style.display = 'block';
@@ -356,6 +386,9 @@ async function optimizeVideo(videoId) {
         if (!data.success) {
             // Check for insufficient credits
             if (data.error_type === 'insufficient_credits') {
+                // Clear ongoing optimization flag
+                sessionStorage.removeItem('optimize_video_ongoing');
+
                 document.getElementById('loadingSection').style.display = 'none';
                 document.getElementById('resultsSection').style.display = 'block';
                 document.getElementById('resultsSection').innerHTML = `
@@ -381,6 +414,9 @@ async function optimizeVideo(videoId) {
         if (!data.data) {
             throw new Error('No optimization data received from server');
         }
+
+        // Clear ongoing optimization flag - optimization complete!
+        sessionStorage.removeItem('optimize_video_ongoing');
 
         // Display results immediately
         console.log('Displaying results with titles:', data.data.title_suggestions);
@@ -1275,4 +1311,52 @@ function updateCharacterCount() {
     } else {
         charCountEl.style.color = 'var(--text-secondary)';
     }
+}
+
+/**
+ * Check if optimization is complete by polling the history
+ */
+async function checkOptimizationStatus(videoId) {
+    const maxAttempts = 90; // Poll for up to 3 minutes (90 * 2 seconds)
+    let attempts = 0;
+
+    const pollInterval = setInterval(async () => {
+        attempts++;
+
+        try {
+            // Check if the optimization exists in history
+            const response = await fetch('/optimize-video/api/optimization-history');
+            const data = await response.json();
+
+            if (data.success && data.history) {
+                const optimization = data.history.find(item => item.video_id === videoId);
+
+                if (optimization) {
+                    // Optimization complete! Clear sessionStorage and show results
+                    console.log('Optimization complete for video:', videoId);
+                    sessionStorage.removeItem('optimize_video_ongoing');
+                    clearInterval(pollInterval);
+
+                    // Load and display the optimization
+                    showOptimizationResults(videoId);
+                    return;
+                }
+            }
+
+            // If max attempts reached, stop polling
+            if (attempts >= maxAttempts) {
+                console.log('Optimization polling timed out');
+                sessionStorage.removeItem('optimize_video_ongoing');
+                clearInterval(pollInterval);
+                document.getElementById('optimizationResults').innerHTML = `
+                    <div class="error-card">
+                        <p>Optimization is taking longer than expected. Please try again.</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error checking optimization status:', error);
+            // Continue polling even on error
+        }
+    }, 2000); // Poll every 2 seconds
 }

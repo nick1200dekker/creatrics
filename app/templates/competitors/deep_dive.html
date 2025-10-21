@@ -930,5 +930,18 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Clear ongoing analysis flag when deep dive page loads successfully
+// This means the analysis is complete
+if (sessionStorage.getItem('analyzing_video')) {
+    const analysisData = JSON.parse(sessionStorage.getItem('analyzing_video'));
+    const currentVideoId = '{{ video_id }}';
+
+    // Only clear if this is the video that was being analyzed
+    if (analysisData.videoId === currentVideoId) {
+        console.log('Analysis complete, clearing sessionStorage flag');
+        sessionStorage.removeItem('analyzing_video');
+    }
+}
 </script>
 {% endblock %}

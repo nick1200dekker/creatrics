@@ -2178,24 +2178,36 @@
                         list_id: listId,
                         list_type: listType,
                         offset: loaded,
-                        limit: 100
+                        limit: 50
                     })
                 });
 
                 const data = await response.json();
 
                 if (data.success && data.tweets) {
-                    const container = document.getElementById('tweets-container');
+                    const tweetsSection = document.getElementById('tweets-section');
+                    const loadMoreContainer = this.parentElement;
 
                     data.tweets.forEach(tweet => {
                         const tweetHtml = renderTweetCard(tweet);
-                        container.insertAdjacentHTML('beforeend', tweetHtml);
+                        // Insert before the load more button container
+                        loadMoreContainer.insertAdjacentHTML('beforebegin', tweetHtml);
                     });
 
                     const newLoaded = loaded + data.tweets.length;
                     this.setAttribute('data-loaded', newLoaded);
 
+                    // Update timestamps for newly loaded tweets
                     updateTimestamps();
+
+                    // Re-setup reply style dropdowns for new tweets
+                    setupReplyStyleDropdowns();
+
+                    // Re-apply brand voice state for new tweets
+                    setBrandVoiceState(state.hasBrandVoiceData);
+
+                    // Fix profile pictures for new tweets
+                    setTimeout(fixProfilePictureConsistency, 500);
 
                     if (data.has_more) {
                         const remaining = total - newLoaded;
@@ -2218,10 +2230,181 @@
     }
 
     function renderTweetCard(tweet) {
+        const replyStyles = [
+            {id: "creatrics", name: "Creatrics"},
+            {id: "supportive", name: "Supportive"},
+            {id: "questioning", name: "Questioning"},
+            {id: "valueadd", name: "Value-Add"},
+            {id: "humorous", name: "Humorous"},
+            {id: "contrarian", name: "Contrarian"}
+        ];
+
+        // Render profile image or fallback
+        const profileImageHtml = tweet.profile_image_url ? `
+            <img src="${tweet.profile_image_url}" alt="${tweet.author}"
+                 onload="this.classList.remove('error')"
+                 onerror="this.classList.add('error')">
+            <div class="fallback-avatar">
+                <i class="ph ph-user"></i>
+            </div>
+        ` : `
+            <div class="fallback-avatar" style="display: flex;">
+                <i class="ph ph-user"></i>
+            </div>
+        `;
+
+        // Render timestamp
+        const timestampHtml = tweet.created_at ? `
+            <span style="color: var(--text-tertiary); margin-left: 0.5rem;">· <span class="tweet-timestamp" data-timestamp="${tweet.created_at}"></span></span>
+        ` : '';
+
+        // Render media (photos and videos)
+        let mediaHtml = '';
+        if (tweet.media) {
+            mediaHtml = '<div class="tweet-media">';
+
+            // Photos
+            if (tweet.media.photo && tweet.media.photo.length > 0) {
+                mediaHtml += '<div class="tweet-photos">';
+                tweet.media.photo.forEach(photo => {
+                    mediaHtml += `
+                        <div class="tweet-photo">
+                            <img src="${photo.media_url_https}" alt="Tweet image" class="tweet-image" loading="lazy"
+                                 onerror="this.style.display='none'">
+                        </div>
+                    `;
+                });
+                mediaHtml += '</div>';
+            }
+
+            // Videos
+            if (tweet.media.video && tweet.media.video.length > 0) {
+                mediaHtml += '<div class="tweet-videos">';
+                tweet.media.video.forEach(video => {
+                    if (video.variants && video.variants.length > 0) {
+                        const mp4Variant = video.variants.filter(v => v.content_type === 'video/mp4').pop();
+                        if (mp4Variant) {
+                            mediaHtml += `
+                                <div class="tweet-video">
+                                    <video controls class="tweet-video-player" poster="${video.media_url_https}">
+                                        <source src="${mp4Variant.url}" type="video/mp4">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </div>
+                            `;
+                        } else {
+                            mediaHtml += `
+                                <div class="tweet-video">
+                                    <img src="${video.media_url_https}" alt="Video thumbnail" class="tweet-video-thumb" loading="lazy"
+                                         onerror="this.style.display='none'">
+                                </div>
+                            `;
+                        }
+                    } else {
+                        mediaHtml += `
+                            <div class="tweet-video">
+                                <img src="${video.media_url_https}" alt="Video thumbnail" class="tweet-video-thumb" loading="lazy"
+                                     onerror="this.style.display='none'">
+                            </div>
+                        `;
+                    }
+                });
+                mediaHtml += '</div>';
+            }
+
+            mediaHtml += '</div>';
+        }
+
+        // Render reply style options
+        const replyStyleOptionsHtml = replyStyles.map((style, index) => `
+            <div class="dropdown-option reply-style-option ${index === 0 ? 'selected' : ''}" data-value="${style.id}">
+                ${style.name}
+            </div>
+        `).join('');
+
         return `
             <div class="tweet-opportunity" data-tweet-id="${tweet.tweet_id}">
                 <div class="tweet-grid">
-                    <!-- Add full tweet HTML structure here -->
+                    <!-- Tweet Content -->
+                    <div class="tweet-content-section">
+                        <div class="tweet-author-info">
+                            <div class="tweet-avatar">
+                                ${profileImageHtml}
+                            </div>
+                            <div class="tweet-author-details">
+                                <div class="tweet-author-name">${tweet.name || tweet.author}</div>
+                                <div class="tweet-author-username">
+                                    @${tweet.author}
+                                    ${timestampHtml}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tweet-text" data-raw-text="${tweet.text}">
+                            ${tweet.text}
+                        </div>
+
+                        ${mediaHtml}
+
+                        <div class="tweet-engagement">
+                            <div class="engagement-stat">
+                                <i class="ph ph-chat-circle" style="color: #8b5cf6;"></i>
+                                ${tweet.engagement.replies || 0}
+                            </div>
+                            <div class="engagement-stat">
+                                <i class="ph ph-heart" style="color: #ef4444;"></i>
+                                ${tweet.engagement.likes || 0}
+                            </div>
+                            <div class="engagement-stat">
+                                <i class="ph ph-arrows-counter-clockwise" style="color: #22c55e;"></i>
+                                ${tweet.engagement.retweets || 0}
+                            </div>
+                            <div class="engagement-stat">
+                                <i class="ph ph-eye" style="color: #3b82f6;"></i>
+                                ${tweet.engagement.views || 0}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reply Panel with GIF Support -->
+                    <div class="reply-panel">
+                        <div class="reply-panel-header">
+                            <div class="style-selector">
+                                <div class="dropdown">
+                                    <div class="dropdown-trigger reply-style-trigger">
+                                        <span class="selected-style-text">Creatrics</span>
+                                        <i class="ph ph-caret-down dropdown-arrow"></i>
+                                    </div>
+                                    <div class="dropdown-menu reply-style-menu">
+                                        ${replyStyleOptionsHtml}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <label for="brand-voice-tweet-${tweet.tweet_id}" class="brand-voice-toggle">
+                                <input type="checkbox" id="brand-voice-tweet-${tweet.tweet_id}" class="brand-voice-checkbox">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Brand Voice</span>
+                            </label>
+                        </div>
+
+                        <textarea id="reply-textarea-tweet-${tweet.tweet_id}" class="reply-textarea"
+                                  placeholder="Click generate to create a response..."></textarea>
+
+                        <div class="reply-footer">
+                            <div class="character-count">0/280</div>
+                            <div class="reply-actions">
+                                <button class="action-btn generate generate-reply-btn" title="Generate AI reply">
+                                    <i class="ph ph-sparkle"></i>
+                                </button>
+                                <button class="action-btn post post-reply-btn" title="Post reply">
+                                    <i class="ph ph-paper-plane-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- GIF Panel will be dynamically created by JS -->
+                    </div>
                 </div>
             </div>
         `;

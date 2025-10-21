@@ -26,7 +26,7 @@ function resetAllCards() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    // Check for error parameter in URL
+    // Check for error parameter in URL first
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
 
@@ -34,18 +34,49 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Full URL:', window.location.href);
 
     if (error === 'insufficient_credits') {
-        console.log('Insufficient credits detected - showing error panel');
+        console.log('Insufficient credits detected - clearing analysis flag and showing error panel');
+        // Clear the ongoing analysis flag since we hit an error
+        sessionStorage.removeItem('analyzing_video');
         // Show insufficient credits error inline
         showInsufficientCreditsInline();
+        // Hide loading modal
+        hideLoading();
         // Clear the error parameter from URL without reloading
         window.history.replaceState({}, document.title, window.location.pathname);
-    } else {
-        console.log('No error parameter found, loading history normally');
-        loadHistory();
+        // Reset all video cards
+        resetAllCards();
+        return; // Stop here, don't check for ongoing analysis
     }
 
-    // Hide loading modal on page load (in case user navigated back)
-    hideLoading();
+    // Check for ongoing analysis
+    const ongoingAnalysis = sessionStorage.getItem('analyzing_video');
+    if (ongoingAnalysis) {
+        const analysisData = JSON.parse(ongoingAnalysis);
+        const analysisStartTime = analysisData.startTime;
+        const videoId = analysisData.videoId;
+        const currentTime = Date.now();
+
+        // If analysis started less than 2 minutes ago, show loading
+        if (currentTime - analysisStartTime < 120000) {
+            console.log('Ongoing analysis detected for video:', videoId);
+            showLoading();
+
+            // Poll for completion
+            checkAnalysisStatus(videoId, analysisData.isShort);
+        } else {
+            // Analysis timed out, clear it
+            sessionStorage.removeItem('analyzing_video');
+            hideLoading();
+        }
+    } else {
+        // No ongoing analysis, hide loading modal
+        hideLoading();
+    }
+
+    // Load history normally
+    console.log('Loading history normally');
+    loadHistory();
+
     // Reset all video cards
     resetAllCards();
 });
@@ -144,6 +175,13 @@ async function analyzeFromUrl() {
         const data = await response.json();
 
         if (data.success) {
+            // Mark analysis as ongoing in sessionStorage
+            sessionStorage.setItem('analyzing_video', JSON.stringify({
+                videoId: data.video_id,
+                isShort: data.is_short,
+                startTime: Date.now()
+            }));
+
             // Navigate to analysis page with is_short parameter
             const queryParam = data.is_short ? '?is_short=true' : '';
             window.location.href = `/analyze-video/video/${data.video_id}${queryParam}`;
@@ -280,6 +318,13 @@ async function analyzeVideoWithLoader(cardElement, videoId, isShort = false) {
             return;
         }
 
+        // Mark analysis as ongoing in sessionStorage
+        sessionStorage.setItem('analyzing_video', JSON.stringify({
+            videoId: videoId,
+            isShort: isShort,
+            startTime: Date.now()
+        }));
+
         // Navigate to analysis
         const queryParam = isShort ? '?is_short=true' : '';
         window.location.href = `/analyze-video/video/${videoId}${queryParam}`;
@@ -304,6 +349,13 @@ async function analyzeVideo(videoId, isShort = false) {
             showInsufficientCreditsInline();
             return;
         }
+
+        // Mark analysis as ongoing in sessionStorage
+        sessionStorage.setItem('analyzing_video', JSON.stringify({
+            videoId: videoId,
+            isShort: isShort,
+            startTime: Date.now()
+        }));
 
         // Navigate to analysis
         const queryParam = isShort ? '?is_short=true' : '';
@@ -470,6 +522,50 @@ function showLoading() {
 // Hide loading modal
 function hideLoading() {
     document.getElementById('loadingModal').style.display = 'none';
+}
+
+// Check if analysis is complete by polling the history
+async function checkAnalysisStatus(videoId, isShort = false) {
+    const maxAttempts = 60; // Poll for up to 2 minutes (60 * 2 seconds)
+    let attempts = 0;
+
+    const pollInterval = setInterval(async () => {
+        attempts++;
+
+        try {
+            // Check if the analysis exists in history
+            const response = await fetch('/api/analyze-video/history');
+            const data = await response.json();
+
+            if (data.success && data.history) {
+                const analysis = data.history.find(item => item.video_id === videoId);
+
+                if (analysis) {
+                    // Analysis complete! Clear sessionStorage and redirect
+                    console.log('Analysis complete for video:', videoId);
+                    sessionStorage.removeItem('analyzing_video');
+                    clearInterval(pollInterval);
+
+                    // Redirect to the analysis page
+                    const queryParam = isShort ? '?is_short=true' : '';
+                    window.location.href = `/analyze-video/video/${videoId}${queryParam}`;
+                    return;
+                }
+            }
+
+            // If max attempts reached, stop polling
+            if (attempts >= maxAttempts) {
+                console.log('Analysis polling timed out');
+                sessionStorage.removeItem('analyzing_video');
+                clearInterval(pollInterval);
+                hideLoading();
+                alert('Analysis is taking longer than expected. Please check back in a moment.');
+            }
+        } catch (error) {
+            console.error('Error checking analysis status:', error);
+            // Continue polling even on error
+        }
+    }, 2000); // Poll every 2 seconds
 }
 
 // Escape HTML
