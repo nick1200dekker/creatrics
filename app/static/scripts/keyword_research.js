@@ -597,7 +597,9 @@ async function exploreWithAI(topic) {
         document.getElementById('loadingContainer').style.display = 'none';
         const exploreBtn = document.getElementById('exploreBtn');
         exploreBtn.disabled = false;
-        exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Generate & Analyze</span>';
+        // Set button text based on current mode
+        const btnText = currentMode === 'ai' ? 'Generate & Analyze' : 'Explore';
+        exploreBtn.innerHTML = `<i class="ph ph-sparkle"></i><span id="exploreBtnText">${btnText}</span>`;
     }
 }
 

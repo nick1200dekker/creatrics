@@ -171,17 +171,26 @@ html.dark .loading-spinner i {
     margin: 0;
 }
 
-/* Progress Section */
+/* Progress Section - matching Competitor Analysis */
 .progress-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    width: 100%;
     padding: 3rem 2rem;
 }
 
 .progress-card {
     background: var(--bg-primary);
-    border-radius: 12px;
-    padding: 2rem;
     border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    max-width: 600px;
+    width: 90%;
+    text-align: center;
     transition: all 0.2s ease;
+    margin: 0 auto;
 }
 
 html.dark .progress-card {
@@ -191,32 +200,55 @@ html.dark .progress-card {
 }
 
 .progress-header {
-    text-align: center;
     margin-bottom: 2rem;
 }
 
 .progress-icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 1rem;
-    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-    border-radius: 16px;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    border-radius: 50%;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    animation: pulse 2s ease-in-out infinite;
 }
 
 html.dark .progress-icon {
     background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 4px 16px rgba(96, 165, 250, 0.4);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 24px rgba(59, 130, 246, 0.5);
+    }
+}
+
+@keyframes pulse-dark {
+    0%, 100% {
+        box-shadow: 0 4px 16px rgba(96, 165, 250, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 24px rgba(96, 165, 250, 0.6);
+    }
+}
+
+html.dark .progress-icon {
+    animation: pulse-dark 2s ease-in-out infinite;
 }
 
 .progress-icon i {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: white;
-}
-
-.progress-icon i.spinning {
-    animation: spin 2s linear infinite;
+    animation: spin 1s linear infinite;
 }
 
 .progress-title {
