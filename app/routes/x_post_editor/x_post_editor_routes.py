@@ -806,7 +806,13 @@ def generate_content():
         user_id = get_workspace_user_id()
 
         # Get user subscription for AI provider selection
-        user_subscription = g.user.get('subscription_plan') if hasattr(g, 'user') and g.user else None
+        user_subscription = None
+        if hasattr(g, 'user') and g.user:
+            # Try direct access first (set by middleware)
+            user_subscription = g.user.get('subscription_plan')
+            # Fallback to nested data
+            if not user_subscription and 'data' in g.user:
+                user_subscription = g.user['data'].get('subscription_plan')
 
         # Step 1: Check credits BEFORE generation
         # Combine all post text for estimation

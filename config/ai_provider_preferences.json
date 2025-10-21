@@ -1,5 +1,5 @@
 {
-  "free_users_deepseek": false,
+  "free_users_deepseek": true,
   "script_preferences": {
     "reply_guy/reply_generator": "google",
     "post_editor/post_editor": "openai"

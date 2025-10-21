@@ -190,12 +190,13 @@ def auth_required(f):
             'id': payload.get('sub'),
             'data': {
                 'email': payload.get('email'),
-                'username': username
+                'username': username,
+                'subscription_plan': user_metadata.get('subscription_plan', 'Free Plan')
             },
             'jwt_claims': payload,
             'is_guest': False
         }
-        
+
         logger.debug(f"Auth successful for user {g.user_id} on path: {request.path}")
         return f(*args, **kwargs)
         

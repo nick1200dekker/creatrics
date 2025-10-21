@@ -458,14 +458,7 @@
         background: var(--bg-tertiary);
         color: #60A5FA;
     }
-    
-    .admin-section {
-        padding: 0.5rem 0;
-        margin: 0.75rem;
-        border-top: 1px solid var(--border-primary);
-        border-bottom: 1px solid var(--border-primary);
-    }
-    
+
     .user-section {
         padding: 1rem 0.75rem;
         border-top: 1px solid var(--border-primary);
@@ -1265,11 +1258,9 @@
                 {% endif %}
             </div>
         </div>
-    </nav>
-    
-    <!-- Admin Section -->
-    <div class="admin-section" id="admin-section" style="display: none;">
-        <div class="nav-group" data-group="Admin">
+
+        <!-- Admin Group (shown inline if admin) -->
+        <div class="nav-group" data-group="Admin" id="admin-nav-group" style="display: none;">
             <div class="nav-group-header" onclick="toggleNavGroup(this)">
                 <div class="left-content">
                     <i class="ph ph-shield-star"></i>
@@ -1295,7 +1286,7 @@
                 </a>
             </div>
         </div>
-    </div>
+    </nav>
 
     <!-- User Section -->
     <div class="user-section" id="user-section">
@@ -1617,14 +1608,14 @@ restoreNavStates();
                             planDisplay.textContent = plan;
                         }
                         
-                        const adminSection = document.getElementById('admin-section');
-                        if (adminSection) {
+                        const adminNavGroup = document.getElementById('admin-nav-group');
+                        if (adminNavGroup) {
                             const normalizedPlan = (userData.subscription_plan || 'Free Plan').toLowerCase().trim();
-                            const isAdminPlan = normalizedPlan === 'admin' || 
+                            const isAdminPlan = normalizedPlan === 'admin' ||
                                               normalizedPlan === 'admin plan' ||
                                               normalizedPlan === 'administrator';
-                            
-                            adminSection.style.display = isAdminPlan ? 'block' : 'none';
+
+                            adminNavGroup.style.display = isAdminPlan ? 'block' : 'none';
                         }
                     }
                 } catch (error) {

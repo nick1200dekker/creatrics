@@ -151,21 +151,36 @@ class AIProviderManager:
             'gemini': AIProvider.GOOGLE,  # Alternative name for Google
         }
 
-        # 1. Check if free users should be forced to DeepSeek
-        if preferences.get('free_users_deepseek', False):
-            is_free_user = self.user_subscription and self.user_subscription.lower() in ['free', 'free plan', '']
-            if is_free_user:
-                logger.info(f"Free user detected - forcing DeepSeek provider")
-                return AIProvider.DEEPSEEK
-
-        # 2. Check script-specific preferences
+        # 1. Check script-specific preferences (for premium users or when free toggle is off)
         if self.script_name:
             script_prefs = preferences.get('script_preferences', {})
             if self.script_name in script_prefs:
                 preferred_provider = script_prefs[self.script_name]
                 if preferred_provider in provider_map:
+                    # Check if free users should be overridden to DeepSeek
+                    free_users_toggle = preferences.get('free_users_deepseek', False)
+
+                    if free_users_toggle:
+                        # Check if this user is a free user
+                        is_free_user = (
+                            self.user_subscription is not None and
+                            self.user_subscription.lower().strip() in ['free', 'free plan', '']
+                        )
+
+                        if is_free_user:
+                            logger.info(f"Free user detected - overriding {preferred_provider} preference with DeepSeek")
+                            return AIProvider.DEEPSEEK
+
+                    # Use the preferred provider
                     logger.info(f"Using preferred provider for {self.script_name}: {preferred_provider}")
                     return provider_map[preferred_provider]
+
+        # 2. Check if free users should be forced to DeepSeek (when no script preference exists)
+        if preferences.get('free_users_deepseek', False):
+            is_free_user = self.user_subscription and self.user_subscription.lower().strip() in ['free', 'free plan', '']
+            if is_free_user:
+                logger.info(f"Free user detected - forcing DeepSeek provider (no script preference)")
+                return AIProvider.DEEPSEEK
 
         # 3. Fall back to environment variable
         provider_str = os.environ.get('AI_PROVIDER', 'claude').lower()
