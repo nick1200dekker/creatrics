@@ -61,33 +61,32 @@
             </div>
         </div>
 
-        <!-- Search Section -->
-        <div class="search-section">
-            <div class="search-box">
-                <div class="search-input-wrapper">
-                    <i class="ph ph-magnifying-glass search-icon" id="searchIcon"></i>
-                    <input
-                        type="text"
-                        id="keywordInput"
-                        class="keyword-input"
-                        placeholder="Enter a keyword to research (e.g., clash royale, minecraft, cooking)"
-                        autocomplete="off"
-                    >
-                    <button id="exploreBtn" class="explore-button" onclick="exploreKeyword()">
-                        <i class="ph ph-sparkle"></i>
-                        <span id="exploreBtnText">Explore</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Breadcrumb Trail (only for manual mode) -->
-            <div class="breadcrumb-trail" id="breadcrumbTrail" style="display: none;">
-                <div class="breadcrumb-items" id="breadcrumbItems"></div>
-            </div>
-        </div>
-
         <!-- MANUAL MODE SECTION -->
         <div id="manualSection" style="display: block;">
+            <!-- Search Section for Manual Mode -->
+            <div class="search-section">
+                <div class="search-box">
+                    <div class="search-input-wrapper">
+                        <i class="ph ph-magnifying-glass search-icon"></i>
+                        <input
+                            type="text"
+                            id="manualKeywordInput"
+                            class="keyword-input"
+                            placeholder="Enter a keyword to research (e.g., clash royale, minecraft, cooking)"
+                            autocomplete="off"
+                        >
+                        <button id="manualExploreBtn" class="explore-button" onclick="exploreKeyword()">
+                            <i class="ph ph-sparkle"></i>
+                            <span>Explore</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Breadcrumb Trail (only for manual mode) -->
+                <div class="breadcrumb-trail" id="breadcrumbTrail" style="display: none;">
+                    <div class="breadcrumb-items" id="breadcrumbItems"></div>
+                </div>
+            </div>
             <!-- Loading State -->
             <div class="loading-container" id="manualLoadingContainer" style="display: none;">
                 <div class="loading-spinner">
@@ -169,6 +168,26 @@
 
         <!-- AI EXPLORER MODE SECTION -->
         <div id="aiSection" style="display: none;">
+            <!-- Search Section for AI Mode -->
+            <div class="search-section">
+                <div class="search-box">
+                    <div class="search-input-wrapper">
+                        <i class="ph ph-magic-wand search-icon"></i>
+                        <input
+                            type="text"
+                            id="aiKeywordInput"
+                            class="keyword-input"
+                            placeholder="Enter a topic (e.g., Fortnite, Yoga, AI Video Models)"
+                            autocomplete="off"
+                        >
+                        <button id="aiExploreBtn" class="explore-button" onclick="exploreKeyword()">
+                            <i class="ph ph-sparkle"></i>
+                            <span>Generate & Analyze</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Loading State -->
             <div class="loading-container" id="aiLoadingContainer" style="display: none;">
                 <div class="loading-spinner">

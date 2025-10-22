@@ -10,22 +10,41 @@ let analysisCache = {};
 let currentMode = 'manual'; // 'manual' or 'ai'
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Check for ongoing AI keyword research
     const ongoingAIResearch = sessionStorage.getItem('ai_keyword_research_ongoing');
     if (ongoingAIResearch) {
         const researchData = JSON.parse(ongoingAIResearch);
         const currentTime = Date.now();
 
-        // If research started less than 2 minutes ago, show loading in AI mode
+        // If research started less than 2 minutes ago, check if it's already complete
         if (currentTime - researchData.startTime < 120000) {
             console.log('Ongoing AI keyword research detected:', researchData.keyword);
 
-            // Show loading state in AI mode section
-            showAILoading(researchData.keyword);
+            // First check if this research is already saved
+            try {
+                const response = await fetch('/keyword-research/api/latest-research');
+                const data = await response.json();
 
-            // Poll for completion
-            checkAIResearchStatus(researchData.keyword);
+                if (data.success && data.has_research && data.research.topic === researchData.keyword) {
+                    // Research is already complete! Just load it
+                    console.log('Research already complete, loading saved results');
+                    sessionStorage.removeItem('ai_keyword_research_ongoing');
+
+                    if (currentMode === 'ai') {
+                        loadLatestResearchCard();
+                    }
+                } else {
+                    // Research not complete yet, show loading and poll
+                    showAILoading(researchData.keyword);
+                    checkAIResearchStatus(researchData.keyword);
+                }
+            } catch (error) {
+                console.error('Error checking research status:', error);
+                // Fallback to polling
+                showAILoading(researchData.keyword);
+                checkAIResearchStatus(researchData.keyword);
+            }
         } else {
             // Research timed out, clear it
             sessionStorage.removeItem('ai_keyword_research_ongoing');
@@ -41,8 +60,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Enter key support in search input
-    document.getElementById('keywordInput').addEventListener('keypress', function(e) {
+    // Enter key support in search inputs
+    document.getElementById('manualKeywordInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            exploreKeyword();
+        }
+    });
+
+    document.getElementById('aiKeywordInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             exploreKeyword();
         }
@@ -53,7 +78,11 @@ document.addEventListener('DOMContentLoaded', function() {
  * Quick explore from example chips
  */
 function quickExplore(keyword) {
-    document.getElementById('keywordInput').value = keyword;
+    if (currentMode === 'ai') {
+        document.getElementById('aiKeywordInput').value = keyword;
+    } else {
+        document.getElementById('manualKeywordInput').value = keyword;
+    }
     exploreKeyword();
 }
 
@@ -61,7 +90,8 @@ function quickExplore(keyword) {
  * Main function to explore a keyword - supports both Manual and AI modes
  */
 async function exploreKeyword(keyword = null) {
-    const keywordToExplore = keyword || document.getElementById('keywordInput').value.trim();
+    const inputField = currentMode === 'ai' ? document.getElementById('aiKeywordInput') : document.getElementById('manualKeywordInput');
+    const keywordToExplore = keyword || inputField.value.trim();
 
     if (!keywordToExplore) {
         showError('Please enter a ' + (currentMode === 'ai' ? 'topic' : 'keyword'));
@@ -89,13 +119,13 @@ async function exploreManual(keywordToExplore) {
     }
 
     // Update input
-    document.getElementById('keywordInput').value = keywordToExplore;
+    document.getElementById('manualKeywordInput').value = keywordToExplore;
 
     // Show loading state for MANUAL mode only
     showManualLoading();
 
     // Disable explore button
-    const exploreBtn = document.getElementById('exploreBtn');
+    const exploreBtn = document.getElementById('manualExploreBtn');
     exploreBtn.disabled = true;
     exploreBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Analyzing...';
 
@@ -176,11 +206,15 @@ async function exploreManual(keywordToExplore) {
     } catch (error) {
         console.error('Exploration error:', error);
         showError(error.message || 'Failed to explore keyword');
-        document.getElementById('manualEmptyState').style.display = 'block';
+        if (currentMode === 'manual') {
+            document.getElementById('manualEmptyState').style.display = 'block';
+        }
     } finally {
-        document.getElementById('manualLoadingContainer').style.display = 'none';
-        exploreBtn.disabled = false;
-        exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Explore</span>';
+        if (currentMode === 'manual') {
+            document.getElementById('manualLoadingContainer').style.display = 'none';
+            exploreBtn.disabled = false;
+            exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span>Explore</span>';
+        }
     }
 }
 
@@ -198,20 +232,11 @@ function switchMode(mode) {
         }
     });
 
-    // Update UI elements
-    const searchIcon = document.getElementById('searchIcon');
-    const keywordInput = document.getElementById('keywordInput');
-    const exploreBtnText = document.getElementById('exploreBtnText');
-
     // Show/hide appropriate sections
     const manualSection = document.getElementById('manualSection');
     const aiSection = document.getElementById('aiSection');
 
     if (mode === 'ai') {
-        searchIcon.className = 'ph ph-magic-wand search-icon';
-        keywordInput.placeholder = 'Enter a topic (e.g., Fortnite, Yoga, AI Video Models)';
-        exploreBtnText.textContent = 'Generate & Analyze';
-
         // Show AI section, hide manual section
         manualSection.style.display = 'none';
         aiSection.style.display = 'block';
@@ -222,6 +247,7 @@ function switchMode(mode) {
             const researchData = JSON.parse(ongoingAIResearch);
             if (Date.now() - researchData.startTime < 120000) {
                 showAILoading(researchData.keyword);
+                checkAIResearchStatus(researchData.keyword);
             } else {
                 loadLatestResearchCard();
             }
@@ -230,16 +256,12 @@ function switchMode(mode) {
         }
     } else {
         // Manual mode
-        searchIcon.className = 'ph ph-magnifying-glass search-icon';
-        keywordInput.placeholder = 'Enter a keyword to research (e.g., clash royale, minecraft, cooking)';
-        exploreBtnText.textContent = 'Explore';
-
         // Show manual section, hide AI section
         manualSection.style.display = 'block';
         aiSection.style.display = 'none';
 
-        // Clear the keyword input when switching from AI to manual
-        keywordInput.value = '';
+        // Hide latest research card in manual mode
+        document.getElementById('latestResearchSection').style.display = 'none';
     }
 }
 
@@ -475,6 +497,13 @@ function showAILoading(topic) {
     document.getElementById('aiResultsSection').style.display = 'none';
     document.getElementById('aiLoadingContainer').style.display = 'flex';
     document.querySelector('#aiLoadingContainer .loading-text').textContent = `Analyzing "${topic}"...`;
+
+    // Set button to generating state
+    const aiBtn = document.getElementById('aiExploreBtn');
+    if (aiBtn) {
+        aiBtn.disabled = true;
+        aiBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Generating...';
+    }
 }
 
 /**
@@ -499,6 +528,9 @@ function escapeHtml(text) {
 async function exploreWithAI(topic) {
     const count = 50; // Always generate 50 keywords
 
+    // Clear any existing ongoing research (allows re-searching same keyword)
+    sessionStorage.removeItem('ai_keyword_research_ongoing');
+
     // Mark as ongoing in sessionStorage
     sessionStorage.setItem('ai_keyword_research_ongoing', JSON.stringify({
         keyword: topic,
@@ -509,7 +541,7 @@ async function exploreWithAI(topic) {
     showAILoading(topic);
 
     // Disable explore button
-    const exploreBtn = document.getElementById('exploreBtn');
+    const exploreBtn = document.getElementById('aiExploreBtn');
     exploreBtn.disabled = true;
     exploreBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Generating...';
 
@@ -541,12 +573,17 @@ async function exploreWithAI(topic) {
 
     } catch (error) {
         console.error('AI exploration error:', error);
+        sessionStorage.removeItem('ai_keyword_research_ongoing');
         showError(error.message || 'Failed to explore topic with AI');
-        document.getElementById('aiEmptyState').style.display = 'block';
+        if (currentMode === 'ai') {
+            document.getElementById('aiEmptyState').style.display = 'block';
+        }
     } finally {
-        document.getElementById('aiLoadingContainer').style.display = 'none';
-        exploreBtn.disabled = false;
-        exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Generate & Analyze</span>';
+        if (currentMode === 'ai') {
+            document.getElementById('aiLoadingContainer').style.display = 'none';
+            exploreBtn.disabled = false;
+            exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span>Generate & Analyze</span>';
+        }
     }
 }
 
@@ -560,6 +597,13 @@ function displayAIResults(data) {
     // Hide empty state and loading
     document.getElementById('aiEmptyState').style.display = 'none';
     document.getElementById('aiLoadingContainer').style.display = 'none';
+
+    // Reset button state
+    const aiBtn = document.getElementById('aiExploreBtn');
+    if (aiBtn) {
+        aiBtn.disabled = false;
+        aiBtn.innerHTML = '<i class="ph ph-sparkle"></i><span>Generate & Analyze</span>';
+    }
 
     // Show results section
     document.getElementById('aiResultsSection').style.display = 'block';
