@@ -1,25 +1,25 @@
 {
   "free_users_deepseek": true,
   "script_preferences": {
-    "reply_guy/reply_generator": "google",
+    "reply_guy/reply_generator": "claude",
     "post_editor/post_editor": "google",
     "keyword_research/keyword_ai_processor": "google",
-    "brain_dump/note_ai_processor": "google",
+    "brain_dump/note_ai_processor": "deepseek",
     "clip_spaces/processor": "google",
-    "competitors/competitor_analyzer": "google",
+    "competitors/competitor_analyzer": "deepseek",
     "hook_generator/hook_generator": "google",
     "home/x_content_suggestions": "google",
-    "competitors/video_deep_dive_analyzer": "google",
-    "niche/creator_analyzer": "google",
-    "optimize_video/thumbnail_analyzer": "google",
-    "optimize_video/video_optimizer": "google",
-    "thumbnail/improve_prompt": "google",
-    "tiktok_competitors/tiktok_competitor_analyzer": "google",
+    "competitors/video_deep_dive_analyzer": "deepseek",
+    "niche/creator_analyzer": "deepseek",
+    "optimize_video/thumbnail_analyzer": "claude",
+    "optimize_video/video_optimizer": "claude",
+    "thumbnail/improve_prompt": "claude",
+    "tiktok_competitors/tiktok_competitor_analyzer": "deepseek",
     "tiktok_titles_hashtags/tiktok_title_generator": "google",
     "video_title/video_title": "google",
-    "video_script/video_script": "google",
-    "tiktok_trend_finder/tiktok_ai_processor": "google",
+    "video_script/video_script": "deepseek",
+    "tiktok_trend_finder/tiktok_ai_processor": "deepseek",
     "video_title/video_tags": "google",
-    "video_title/video_description": "google"
+    "video_title/video_description": "claude"
   }
 }

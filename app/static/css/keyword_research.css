@@ -919,6 +919,13 @@ html.dark .insights-badge {
     color: var(--text-primary);
 }
 
+.keywords-table td:nth-child(2),
+.keywords-table td:nth-child(3),
+.keywords-table td:nth-child(4),
+.keywords-table td:nth-child(5) {
+    text-align: center;
+}
+
 .keyword-cell {
     font-weight: 500;
     font-size: 0.9375rem;
@@ -1439,4 +1446,63 @@ html.dark .relevance-badge.relevance-poor {
 
 .relevance-wrapper:hover .relevance-tooltip {
     display: block;
+}
+
+/* Relevance Metric Badge (for main analysis KPIs) */
+.relevance-metric-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.relevance-metric-badge.relevance-high {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22C55E;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+html.dark .relevance-metric-badge.relevance-high {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ADE80;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.relevance-metric-badge.relevance-good {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+html.dark .relevance-metric-badge.relevance-good {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60A5FA;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.relevance-metric-badge.relevance-fair {
+    background: rgba(251, 146, 60, 0.1);
+    color: #F59E0B;
+    border: 1px solid rgba(251, 146, 60, 0.2);
+}
+
+html.dark .relevance-metric-badge.relevance-fair {
+    background: rgba(251, 146, 60, 0.15);
+    color: #FBBF24;
+    border-color: rgba(251, 146, 60, 0.3);
+}
+
+.relevance-metric-badge.relevance-poor {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+html.dark .relevance-metric-badge.relevance-poor {
+    background: rgba(239, 68, 68, 0.15);
+    color: #F87171;
+    border-color: rgba(239, 68, 68, 0.3);
 }

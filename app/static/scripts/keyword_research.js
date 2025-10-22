@@ -37,13 +37,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                     }
                 } else {
                     // Research not complete yet, show loading and poll
-                    showAILoading(researchData.keyword);
+                    showAILoading(researchData.keyword, researchData.isRefining);
                     checkAIResearchStatus(researchData.keyword);
                 }
             } catch (error) {
                 console.error('Error checking research status:', error);
                 // Fallback to polling
-                showAILoading(researchData.keyword);
+                showAILoading(researchData.keyword, researchData.isRefining);
                 checkAIResearchStatus(researchData.keyword);
             }
         } else {
@@ -312,6 +312,28 @@ function displayMainAnalysis(keyword, analysis) {
         };
         document.getElementById('interestLevel').textContent = interestBadges[analysis.interest_level] || 'Unknown';
 
+        // Relevance badge under Interest
+        const relevance = analysis.relevance_percentage || 0;
+        const relevanceSubLabel = document.getElementById('relevanceSubLabel');
+        const relevanceBadge = document.getElementById('relevanceBadge');
+
+        if (relevance > 0) {
+            let relevanceClass = 'relevance-high';
+            if (relevance < 60) {
+                relevanceClass = 'relevance-poor';
+            } else if (relevance < 70) {
+                relevanceClass = 'relevance-fair';
+            } else if (relevance < 85) {
+                relevanceClass = 'relevance-good';
+            }
+
+            relevanceBadge.className = `relevance-metric-badge ${relevanceClass}`;
+            relevanceBadge.textContent = `${relevance}% Relevance`;
+            relevanceSubLabel.style.display = 'block';
+        } else {
+            relevanceSubLabel.style.display = 'none';
+        }
+
         // Opportunity score
         document.getElementById('opportunityScore').textContent = analysis.opportunity_score;
 
@@ -347,6 +369,7 @@ function displayMainAnalysis(keyword, analysis) {
         document.getElementById('opportunityBadge').textContent = 'Analyzing...';
         document.getElementById('opportunityBadge').className = 'opportunity-badge medium';
         document.getElementById('qualityWarning').style.display = 'none';
+        document.getElementById('relevanceSubLabel').style.display = 'none';
     }
 }
 
@@ -493,17 +516,24 @@ function showManualLoading() {
 /**
  * Show loading state for AI mode
  */
-function showAILoading(topic) {
+function showAILoading(topic, isRefining = false) {
     document.getElementById('aiEmptyState').style.display = 'none';
     document.getElementById('aiResultsSection').style.display = 'none';
     document.getElementById('aiLoadingContainer').style.display = 'flex';
-    document.querySelector('#aiLoadingContainer .loading-text').textContent = `Analyzing "${topic}"...`;
+    document.querySelector('#aiLoadingContainer .loading-text').textContent = isRefining ? `Refining keywords for "${topic}"...` : `Analyzing "${topic}"...`;
 
-    // Set button to generating state
+    // Disable both buttons since they share the same process
     const aiBtn = document.getElementById('aiExploreBtn');
+    const refineBtn = document.getElementById('refineKeywordsBtn');
+
     if (aiBtn) {
         aiBtn.disabled = true;
         aiBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Generating...';
+    }
+
+    if (refineBtn) {
+        refineBtn.disabled = true;
+        refineBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Refining...';
     }
 }
 
@@ -602,16 +632,18 @@ function displayAIResults(data) {
     document.getElementById('aiEmptyState').style.display = 'none';
     document.getElementById('aiLoadingContainer').style.display = 'none';
 
-    // Reset button state
+    // Reset both buttons state
     const aiBtn = document.getElementById('aiExploreBtn');
+    const refineBtn = document.getElementById('refineKeywordsBtn');
+
     if (aiBtn) {
         aiBtn.disabled = false;
         aiBtn.innerHTML = '<i class="ph ph-sparkle"></i><span>Generate & Analyze</span>';
     }
 
-    // Show refine keywords button
-    const refineBtn = document.getElementById('refineKeywordsBtn');
     if (refineBtn) {
+        refineBtn.disabled = false;
+        refineBtn.innerHTML = '<i class="ph ph-arrows-clockwise"></i><span>Refine Keywords</span>';
         refineBtn.style.display = 'flex';
     }
 
@@ -1016,9 +1048,17 @@ async function refineKeywords() {
         return;
     }
 
-    const refineBtn = document.getElementById('refineKeywordsBtn');
-    refineBtn.disabled = true;
-    refineBtn.innerHTML = '<i class="ph ph-arrows-clockwise spin"></i> Refining...';
+    const topic = currentAIResults.topic;
+
+    // Mark as ongoing in sessionStorage (same as regular AI explore)
+    sessionStorage.setItem('ai_keyword_research_ongoing', JSON.stringify({
+        keyword: topic,
+        startTime: Date.now(),
+        isRefining: true
+    }));
+
+    // Show loading state for refining (disables both buttons)
+    showAILoading(topic, true);
 
     try {
         // Separate keywords into high-performing (>=75) and low-performing (<75)
@@ -1034,7 +1074,7 @@ async function refineKeywords() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                topic: currentAIResults.topic,
+                topic: topic,
                 high_performing: highPerforming,
                 low_performing: lowPerforming,
                 count: newKeywordsNeeded
@@ -1045,6 +1085,7 @@ async function refineKeywords() {
 
         if (!response.ok || !data.success) {
             if (data.error_type === 'insufficient_credits') {
+                sessionStorage.removeItem('ai_keyword_research_ongoing');
                 showInsufficientCreditsError(data);
                 return;
             }
@@ -1056,9 +1097,27 @@ async function refineKeywords() {
 
     } catch (error) {
         console.error('Refine keywords error:', error);
+        sessionStorage.removeItem('ai_keyword_research_ongoing');
         showError(error.message || 'Failed to refine keywords');
-    } finally {
-        refineBtn.disabled = false;
-        refineBtn.innerHTML = '<i class="ph ph-arrows-clockwise"></i> Refine Keywords';
+
+        // Reset button states on error
+        const aiBtn = document.getElementById('aiExploreBtn');
+        const refineBtn = document.getElementById('refineKeywordsBtn');
+
+        if (aiBtn) {
+            aiBtn.disabled = false;
+            aiBtn.innerHTML = '<i class="ph ph-sparkle"></i><span>Generate & Analyze</span>';
+        }
+        if (refineBtn) {
+            refineBtn.disabled = false;
+            refineBtn.innerHTML = '<i class="ph ph-arrows-clockwise"></i><span>Refine Keywords</span>';
+        }
+
+        document.getElementById('aiLoadingContainer').style.display = 'none';
+        if (currentAIResults && currentAIResults.results) {
+            document.getElementById('aiResultsSection').style.display = 'block';
+        } else {
+            document.getElementById('aiEmptyState').style.display = 'block';
+        }
     }
 }

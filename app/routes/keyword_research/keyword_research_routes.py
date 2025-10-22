@@ -248,11 +248,16 @@ def analyze_keyword():
             quality_warning = f'{relevance_percentage}% relevance. Try using a more specific keyword to get better results.'
             # Apply heavy penalty for poor relevance
             opportunity_score = max(0, opportunity_score - 30)
-        elif relevance_percentage < 50:
+        elif relevance_percentage < 60:
             keyword_quality = 'mixed'
             quality_warning = f'{relevance_percentage}% relevance. Try making the keyword more specific to improve match quality.'
             # Apply moderate penalty for mixed relevance
-            opportunity_score = max(0, opportunity_score - 15)
+            opportunity_score = max(0, opportunity_score - 20)
+        elif relevance_percentage < 70:
+            keyword_quality = 'fair'
+            quality_warning = f'{relevance_percentage}% relevance. Consider using a more targeted keyword.'
+            # Apply light penalty for fair relevance
+            opportunity_score = max(0, opportunity_score - 10)
 
         result = {
             'keyword': keyword,
@@ -449,11 +454,16 @@ def batch_analyze():
                     quality_warning = f'{relevance_percentage}% relevance. Try using a more specific keyword to get better results.'
                     # Apply heavy penalty for poor relevance
                     opportunity_score = max(0, opportunity_score - 30)
-                elif relevance_percentage < 50:
+                elif relevance_percentage < 60:
                     keyword_quality = 'mixed'
                     quality_warning = f'{relevance_percentage}% relevance. Try making the keyword more specific to improve match quality.'
                     # Apply moderate penalty for mixed relevance
-                    opportunity_score = max(0, opportunity_score - 15)
+                    opportunity_score = max(0, opportunity_score - 20)
+                elif relevance_percentage < 70:
+                    keyword_quality = 'fair'
+                    quality_warning = f'{relevance_percentage}% relevance. Consider using a more targeted keyword.'
+                    # Apply light penalty for fair relevance
+                    opportunity_score = max(0, opportunity_score - 10)
 
                 results.append({
                     'keyword': keyword,
@@ -550,16 +560,20 @@ def analyze_single_keyword_parallel(keyword: str) -> dict:
         total_analyzed = 0
         high_performing_videos = 0
 
-        keyword_terms = set(keyword.lower().split())
+        # Extract meaningful terms (ignore stop words) - same logic as main analyze
+        stop_words = {'vs', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+        keyword_terms = [term.lower() for term in keyword.split() if term.lower() not in stop_words and len(term) > 2]
 
         for video in videos[:20]:
             try:
                 total_analyzed += 1
                 title = video.get('title', '').lower()
 
-                # Check relevance
-                if any(term in title for term in keyword_terms):
-                    matching_titles += 1
+                # Check relevance - title must contain at least 50% of keyword terms
+                if title:
+                    matches = sum(1 for term in keyword_terms if term in title)
+                    if len(keyword_terms) > 0 and matches >= len(keyword_terms) * 0.5:
+                        matching_titles += 1
 
                 # Get views - ensure proper type conversion
                 try:
@@ -640,10 +654,14 @@ def analyze_single_keyword_parallel(keyword: str) -> dict:
             keyword_quality = 'poor'
             quality_warning = f'{relevance_percentage}% relevance - keyword may be too broad or ambiguous'
             opportunity_score = max(0, opportunity_score - 30)
-        elif relevance_percentage < 50:
+        elif relevance_percentage < 60:
+            keyword_quality = 'mixed'
+            quality_warning = f'{relevance_percentage}% relevance'
+            opportunity_score = max(0, opportunity_score - 20)
+        elif relevance_percentage < 70:
             keyword_quality = 'fair'
             quality_warning = f'{relevance_percentage}% relevance'
-            opportunity_score = max(0, opportunity_score - 15)
+            opportunity_score = max(0, opportunity_score - 10)
 
         return {
             'keyword': keyword,
@@ -933,24 +951,24 @@ def refine_keywords():
         # Build a list of existing keywords to avoid duplicates
         existing_keywords = [kw['keyword'] for kw in high_performing + low_performing]
 
-        # Build sections for high and low performing keywords
+        # Build sections for high and low performing keywords with relevance scores
         high_perf_section = ""
         if high_performing:
-            high_perf_list = chr(10).join('- ' + kw['keyword'] + f" (score: {kw['opportunity_score']})" for kw in high_performing[:15])
+            high_perf_list = chr(10).join('- ' + kw['keyword'] + f" (score: {kw['opportunity_score']}, relevance: {kw.get('relevance_percentage', 0)}%)" for kw in high_performing[:15])
             high_perf_section = f"""Previous research found these HIGH-PERFORMING keywords (score >=75):
 {high_perf_list}
 
-These keywords performed well! Generate similar variations but NOT duplicates."""
+These keywords performed well! Notice their high relevance scores - generate similar variations but NOT duplicates."""
 
         low_perf_section = ""
         if low_performing:
-            low_perf_list = chr(10).join('- ' + kw['keyword'] + f" (score: {kw['opportunity_score']})" for kw in low_performing[:15])
+            low_perf_list = chr(10).join('- ' + kw['keyword'] + f" (score: {kw['opportunity_score']}, relevance: {kw.get('relevance_percentage', 0)}%)" for kw in low_performing[:15])
             low_perf_section = f"""
 
 These keywords had LOWER performance:
 {low_perf_list}
 
-Learn from why these didn't perform as well (too broad, too competitive, etc.)."""
+Learn from why these didn't perform well. Check if low relevance (<70%) was the issue - if so, the keyword is too broad/vague."""
 
         # Add context about existing keywords for the AI
         refinement_prompt = f"""
@@ -961,11 +979,25 @@ EXISTING KEYWORDS TO AVOID (do NOT generate duplicates):
 
 {high_perf_section}{low_perf_section}
 
+CRITICAL: UNDERSTANDING RELEVANCE SCORE
+The "relevance score" measures how well YouTube search results match the keyword. When we search for a keyword but find videos that don't contain the keyword terms in their titles, it means:
+- There is NO real search interest for that specific keyword
+- YouTube is showing alternative/related content instead
+- The keyword is too broad, vague, or has low actual demand
+
+Keywords with LOW relevance (<70%) get penalized:
+- <40% relevance: -30 points (heavy penalty)
+- 40-60% relevance: -20 points (moderate penalty)
+- 60-70% relevance: -10 points (light penalty)
+
+This is why high-performing keywords typically have BOTH good competition/interest scores AND high relevance (70%+).
+
 YOUR TASK FOR REFINEMENT:
 1. Generate COMPLETELY NEW keywords (not in the list above)
-2. Learn patterns from high-performing keywords (what made them successful?)
-3. Avoid patterns from low-performing keywords (what made them fail?)
-4. Focus on untapped variations and angles that weren't explored yet
+2. Learn patterns from high-performing keywords (what made them successful? - likely good relevance + low competition)
+3. Avoid patterns from low-performing keywords (what made them fail? - often poor relevance or too competitive)
+4. Focus on SPECIFIC, TARGETED keywords that will have high relevance (not broad/vague terms)
+5. Prefer keywords that clearly describe actual search intent rather than generic phrases
 """
 
         keyword_result = generate_keywords_with_ai(topic, context, keyword_count, user_subscription, refinement_context=refinement_prompt)
@@ -1004,8 +1036,9 @@ YOUR TASK FOR REFINEMENT:
 
         logger.info(f"Analysis complete: {len(new_results)} successful, {failed} failed")
 
-        # Step 4: Combine high-performing keywords with new results
-        all_results = high_performing + new_results
+        # Step 4: Combine ALL original keywords (both high and low performing) with new results
+        # This keeps all 50 original keywords + 50 new ones = 100 total
+        all_results = high_performing + low_performing + new_results
 
         # Sort by opportunity score
         all_results.sort(key=lambda x: x['opportunity_score'], reverse=True)
