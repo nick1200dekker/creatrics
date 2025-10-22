@@ -78,105 +78,142 @@
                         <span id="exploreBtnText">Explore</span>
                     </button>
                 </div>
-
             </div>
 
-            <!-- Breadcrumb Trail -->
+            <!-- Breadcrumb Trail (only for manual mode) -->
             <div class="breadcrumb-trail" id="breadcrumbTrail" style="display: none;">
                 <div class="breadcrumb-items" id="breadcrumbItems"></div>
             </div>
         </div>
 
-        <!-- Loading State -->
-        <div class="loading-container" id="loadingContainer" style="display: none;">
-            <div class="loading-spinner">
-                <i class="ph ph-spinner spin"></i>
-                <span class="loading-text">Analyzing keywords...</span>
+        <!-- MANUAL MODE SECTION -->
+        <div id="manualSection" style="display: block;">
+            <!-- Loading State -->
+            <div class="loading-container" id="manualLoadingContainer" style="display: none;">
+                <div class="loading-spinner">
+                    <i class="ph ph-spinner spin"></i>
+                    <span class="loading-text">Analyzing keywords...</span>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="manualResultsSection" style="display: none;">
+                <!-- Current Keyword Analysis -->
+                <div class="keyword-analysis-card">
+                    <div class="analysis-header">
+                        <h2 class="analyzed-keyword" id="analyzedKeyword"></h2>
+                        <span class="opportunity-badge" id="opportunityBadge"></span>
+                    </div>
+
+                    <!-- Quality Warning -->
+                    <div class="quality-warning" id="qualityWarning" style="display: none;"></div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon competition">
+                                <i class="ph ph-stack"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">Competition</div>
+                                <div class="metric-value" id="competitionLevel">-</div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon views">
+                                <i class="ph ph-fire"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">Search Interest</div>
+                                <div class="metric-value" id="interestLevel">-</div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon score">
+                                <i class="ph ph-target"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">Opportunity Score</div>
+                                <div class="metric-value opportunity-score" id="opportunityScore">-</div>
+                                <div class="metric-sublabel">Interest + Competition</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Keywords Section -->
+                <div class="related-keywords-section">
+                    <div class="section-header">
+                        <h3>
+                            <i class="ph ph-lightbulb"></i>
+                            Related Keywords
+                        </h3>
+                    </div>
+
+                    <div class="keywords-grid" id="keywordsGrid">
+                        <!-- Keywords will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="manualEmptyState">
+                <div class="empty-icon">
+                    <i class="ph ph-magnifying-glass"></i>
+                </div>
+                <h3>Start Your Keyword Research</h3>
+                <p>Enter a keyword above to discover related search terms and competition metrics</p>
             </div>
         </div>
 
-        <!-- Results Section -->
-        <div class="results-section" id="resultsSection" style="display: none;">
-
-            <!-- AI Insights (only shown in AI mode) -->
-            <div class="ai-insights-card" id="aiInsightsCard" style="display: none;">
-                <div class="insights-header">
-                    <h3>
-                        <i class="ph ph-lightbulb"></i>
-                        AI Insights
-                    </h3>
-                    <div class="insights-meta" id="insightsMeta"></div>
+        <!-- AI EXPLORER MODE SECTION -->
+        <div id="aiSection" style="display: none;">
+            <!-- Loading State -->
+            <div class="loading-container" id="aiLoadingContainer" style="display: none;">
+                <div class="loading-spinner">
+                    <i class="ph ph-spinner spin"></i>
+                    <span class="loading-text">Analyzing keywords...</span>
                 </div>
-                <div class="insights-content" id="insightsContent"></div>
             </div>
 
-            <!-- Current Keyword Analysis -->
-            <div class="keyword-analysis-card" id="currentAnalysis">
-                <div class="analysis-header">
-                    <h2 class="analyzed-keyword" id="analyzedKeyword"></h2>
-                    <span class="opportunity-badge" id="opportunityBadge"></span>
+            <!-- Results Section -->
+            <div class="results-section" id="aiResultsSection" style="display: none;">
+                <!-- AI Insights -->
+                <div class="ai-insights-card" id="aiInsightsCard" style="display: none;">
+                    <div class="insights-header">
+                        <h3>
+                            <i class="ph ph-lightbulb"></i>
+                            AI Insights
+                        </h3>
+                        <div class="insights-meta" id="insightsMeta"></div>
+                    </div>
+                    <div class="insights-content" id="insightsContent"></div>
                 </div>
 
-                <!-- Quality Warning -->
-                <div class="quality-warning" id="qualityWarning" style="display: none;"></div>
-
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-icon competition">
-                            <i class="ph ph-stack"></i>
-                        </div>
-                        <div class="metric-content">
-                            <div class="metric-label">Competition</div>
-                            <div class="metric-value" id="competitionLevel">-</div>
-                        </div>
+                <!-- Related Keywords Section -->
+                <div class="related-keywords-section">
+                    <div class="section-header">
+                        <h3 id="aiKeywordsTitle">
+                            <i class="ph ph-lightbulb"></i>
+                            Keyword Opportunities
+                        </h3>
                     </div>
 
-                    <div class="metric-card">
-                        <div class="metric-icon views">
-                            <i class="ph ph-fire"></i>
-                        </div>
-                        <div class="metric-content">
-                            <div class="metric-label">Search Interest</div>
-                            <div class="metric-value" id="interestLevel">-</div>
-                        </div>
-                    </div>
-
-                    <div class="metric-card">
-                        <div class="metric-icon score">
-                            <i class="ph ph-target"></i>
-                        </div>
-                        <div class="metric-content">
-                            <div class="metric-label">Opportunity Score</div>
-                            <div class="metric-value opportunity-score" id="opportunityScore">-</div>
-                            <div class="metric-sublabel">Interest + Competition</div>
-                        </div>
+                    <div class="keywords-grid" id="aiKeywordsGrid">
+                        <!-- Keywords table will be populated here -->
                     </div>
                 </div>
             </div>
 
-            <!-- Related Keywords Section -->
-            <div class="related-keywords-section">
-                <div class="section-header">
-                    <h3 id="keywordsTitle">
-                        <i class="ph ph-lightbulb"></i>
-                        Related Keywords
-                    </h3>
+            <!-- Empty State -->
+            <div class="empty-state" id="aiEmptyState">
+                <div class="empty-icon">
+                    <i class="ph ph-magic-wand"></i>
                 </div>
-
-                <div class="keywords-grid" id="keywordsGrid">
-                    <!-- Keywords will be populated here -->
-                </div>
+                <h3>AI-Powered Keyword Discovery</h3>
+                <p>Enter a topic above and let AI generate and analyze 50 keyword opportunities for you</p>
             </div>
-        </div>
-
-        <!-- Empty State -->
-        <div class="empty-state" id="emptyState">
-            <div class="empty-icon">
-                <i class="ph ph-magnifying-glass"></i>
-            </div>
-            <h3>Start Your Keyword Research</h3>
-            <p>Enter a keyword above to discover related search terms and competition metrics</p>
-
         </div>
     </div>
 </div>
