@@ -624,10 +624,10 @@ function displayAIResults(data) {
         </span>
     `;
 
-    // Load the latest research card now that analysis is complete
-    if (currentMode === 'ai') {
-        setTimeout(() => loadLatestResearchCard(), 500);
-    }
+    // Don't show the latest research card when we just completed the analysis
+    // (user is already viewing the latest results)
+    // Hide it if it's visible
+    document.getElementById('latestResearchSection').style.display = 'none';
 
     const insightsContent = document.getElementById('insightsContent');
     insightsContent.innerHTML = formatInsights(data.insights);
