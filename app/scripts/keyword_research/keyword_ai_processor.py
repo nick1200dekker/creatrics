@@ -227,10 +227,13 @@ Here are ALL REAL top-performing videos for this topic (from last month, {total_
         }
 
 
-def generate_keywords_with_ai(topic: str, context: dict, count: int = 100, user_subscription: str = None) -> dict:
+def generate_keywords_with_ai(topic: str, context: dict, count: int = 100, user_subscription: str = None, refinement_context: str = None) -> dict:
     """
     Generate keyword variations using AI based on topic, context, and REAL YouTube data
     Returns dict with keywords list and token_usage
+
+    Args:
+        refinement_context: Optional context about previous keywords for refinement
     """
     try:
         ai_provider = get_ai_provider(
@@ -264,6 +267,11 @@ HERE IS THE REAL DATA - Top performing videos for "{topic}" from the last month:
 
 {video_samples_text}"""
 
+        # Add refinement context if provided
+        refinement_section = ""
+        if refinement_context:
+            refinement_section = f"\n\n{refinement_context}"
+
         # Load prompts from files
         system_prompt_template = load_prompt('keyword_ai_processor_prompts.txt', 'GENERATE_KEYWORDS_SYSTEM')
         system_prompt = system_prompt_template.format(current_date=current_date)
@@ -274,7 +282,7 @@ HERE IS THE REAL DATA - Top performing videos for "{topic}" from the last month:
             current_date=current_date,
             real_data_section=real_data_section,
             count=count
-        )
+        ) + refinement_section
 
         # Log the full prompt for debugging
         logger.info(f"========== AI KEYWORD GENERATION PROMPT for '{topic}' ==========")

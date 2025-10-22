@@ -8,6 +8,7 @@ let currentKeyword = '';
 let keywordHistory = [];
 let analysisCache = {};
 let currentMode = 'manual'; // 'manual' or 'ai'
+let currentAIResults = null; // Store current AI results for refinement
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async function() {
@@ -591,6 +592,9 @@ async function exploreWithAI(topic) {
  * Display AI exploration results
  */
 function displayAIResults(data) {
+    // Store current results for refinement
+    currentAIResults = data;
+
     // Clear ongoing research flag - research complete!
     sessionStorage.removeItem('ai_keyword_research_ongoing');
 
@@ -603,6 +607,12 @@ function displayAIResults(data) {
     if (aiBtn) {
         aiBtn.disabled = false;
         aiBtn.innerHTML = '<i class="ph ph-sparkle"></i><span>Generate & Analyze</span>';
+    }
+
+    // Show refine keywords button
+    const refineBtn = document.getElementById('refineKeywordsBtn');
+    if (refineBtn) {
+        refineBtn.style.display = 'flex';
     }
 
     // Show results section
@@ -965,5 +975,61 @@ async function loadLatestResearch() {
         document.getElementById('aiLoadingContainer').style.display = 'none';
         showError('Failed to load research: ' + error.message);
         document.getElementById('aiEmptyState').style.display = 'block';
+    }
+}
+
+/**
+ * Refine current keywords - keep high-performing ones and generate new ones
+ */
+async function refineKeywords() {
+    if (!currentAIResults || !currentAIResults.results || currentAIResults.results.length === 0) {
+        showError('No keywords to refine. Please generate keywords first.');
+        return;
+    }
+
+    const refineBtn = document.getElementById('refineKeywordsBtn');
+    refineBtn.disabled = true;
+    refineBtn.innerHTML = '<i class="ph ph-arrows-clockwise spin"></i> Refining...';
+
+    try {
+        // Separate keywords into high-performing (>=75) and low-performing (<75)
+        const highPerforming = currentAIResults.results.filter(kw => kw.opportunity_score >= 75);
+        const lowPerforming = currentAIResults.results.filter(kw => kw.opportunity_score < 75);
+
+        // Calculate how many new keywords to generate
+        const newKeywordsNeeded = 50;
+
+        const response = await fetch('/keyword-research/api/refine-keywords', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                topic: currentAIResults.topic,
+                high_performing: highPerforming,
+                low_performing: lowPerforming,
+                count: newKeywordsNeeded
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            if (data.error_type === 'insufficient_credits') {
+                showInsufficientCreditsError(data);
+                return;
+            }
+            throw new Error(data.error || 'Failed to refine keywords');
+        }
+
+        // Display refined results
+        displayAIResults(data);
+
+    } catch (error) {
+        console.error('Refine keywords error:', error);
+        showError(error.message || 'Failed to refine keywords');
+    } finally {
+        refineBtn.disabled = false;
+        refineBtn.innerHTML = '<i class="ph ph-arrows-clockwise"></i> Refine Keywords';
     }
 }

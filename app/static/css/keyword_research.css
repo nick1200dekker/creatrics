@@ -433,6 +433,9 @@ html.dark .metric-icon.views {
 
 .section-header {
     margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .section-header h3 {
@@ -442,7 +445,7 @@ html.dark .metric-icon.views {
     font-size: 1.125rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
+    margin: 0;
 }
 
 .section-header h3 i {
@@ -1273,4 +1276,62 @@ html.dark .latest-analysis-btn i {
 .keyword-input:focus,
 .explore-button:focus {
     outline: none;
+}
+
+/* Refine Keywords Button - Same style as explore button */
+.refine-keywords-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+    flex-shrink: 0;
+}
+
+html.dark .refine-keywords-btn {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.3);
+}
+
+.refine-keywords-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+html.dark .refine-keywords-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
+}
+
+.refine-keywords-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.refine-keywords-btn i {
+    font-size: 1rem;
+}
+
+.refine-keywords-btn i.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }

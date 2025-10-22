@@ -875,6 +875,220 @@ def ai_keyword_explore():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@bp.route('/api/refine-keywords', methods=['POST'])
+@auth_required
+@require_permission('keyword_research')
+def refine_keywords():
+    """
+    Refine keywords by keeping high-performing ones (>=75) and generating new ones
+    """
+    try:
+        from app.scripts.keyword_research.keyword_ai_processor import (
+            detect_topic_context,
+            generate_keywords_with_ai,
+            generate_ai_insights
+        )
+
+        data = request.json
+        topic = data.get('topic', '').strip()
+        high_performing = data.get('high_performing', [])
+        low_performing = data.get('low_performing', [])
+        keyword_count = int(data.get('count', 50))
+
+        if not topic:
+            return jsonify({'success': False, 'error': 'Topic is required'}), 400
+
+        user_id = get_workspace_user_id()
+        credits_manager = CreditsManager()
+        user_subscription = get_user_subscription()
+
+        logger.info(f"Refine keywords requested for topic: '{topic}'. Keeping {len(high_performing)} high-performing keywords, generating {keyword_count} new ones")
+
+        # Estimate cost (same as ai-keyword-explore)
+        estimated_input_tokens = 7000
+        estimated_output_tokens = 700
+
+        ai_provider = get_ai_provider()
+        config = ai_provider.config
+
+        input_cost = estimated_input_tokens * config.get('input_cost_per_token', 0.000001)
+        output_cost = estimated_output_tokens * config.get('output_cost_per_token', 0.00001)
+        estimated_credits = (input_cost + output_cost) * 100
+
+        # Check credits
+        credit_check = credits_manager.check_sufficient_credits(user_id, estimated_credits)
+        if not credit_check.get('sufficient', False):
+            return jsonify({
+                'success': False,
+                'error': f"Insufficient credits. Required: ~{estimated_credits:.2f}, Available: {credit_check['current_credits']:.2f}",
+                'error_type': 'insufficient_credits',
+                'current_credits': credit_check['current_credits'],
+                'required_credits': estimated_credits
+            }), 402
+
+        # Step 1: Detect topic context
+        context = detect_topic_context(topic, user_subscription)
+
+        # Step 2: Generate NEW keywords with AI (with context about what to avoid)
+        # Build a list of existing keywords to avoid duplicates
+        existing_keywords = [kw['keyword'] for kw in high_performing + low_performing]
+
+        # Build sections for high and low performing keywords
+        high_perf_section = ""
+        if high_performing:
+            high_perf_list = chr(10).join('- ' + kw['keyword'] + f" (score: {kw['opportunity_score']})" for kw in high_performing[:15])
+            high_perf_section = f"""Previous research found these HIGH-PERFORMING keywords (score >=75):
+{high_perf_list}
+
+These keywords performed well! Generate similar variations but NOT duplicates."""
+
+        low_perf_section = ""
+        if low_performing:
+            low_perf_list = chr(10).join('- ' + kw['keyword'] + f" (score: {kw['opportunity_score']})" for kw in low_performing[:15])
+            low_perf_section = f"""
+
+These keywords had LOWER performance:
+{low_perf_list}
+
+Learn from why these didn't perform as well (too broad, too competitive, etc.)."""
+
+        # Add context about existing keywords for the AI
+        refinement_prompt = f"""
+⚠️ KEYWORD REFINEMENT MODE ⚠️
+
+EXISTING KEYWORDS TO AVOID (do NOT generate duplicates):
+{', '.join(existing_keywords[:50])}
+
+{high_perf_section}{low_perf_section}
+
+YOUR TASK FOR REFINEMENT:
+1. Generate COMPLETELY NEW keywords (not in the list above)
+2. Learn patterns from high-performing keywords (what made them successful?)
+3. Avoid patterns from low-performing keywords (what made them fail?)
+4. Focus on untapped variations and angles that weren't explored yet
+"""
+
+        keyword_result = generate_keywords_with_ai(topic, context, keyword_count, user_subscription, refinement_context=refinement_prompt)
+        new_keywords = keyword_result.get('keywords', [])
+
+        if not new_keywords:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to generate new keywords'
+            }), 500
+
+        logger.info(f"Generated {len(new_keywords)} new keywords, starting parallel analysis...")
+
+        # Step 3: Analyze NEW keywords in parallel
+        new_results = []
+        failed = 0
+
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_keyword = {
+                executor.submit(analyze_single_keyword_parallel, kw): kw
+                for kw in new_keywords
+            }
+
+            for future in as_completed(future_to_keyword):
+                keyword = future_to_keyword[future]
+                try:
+                    result = future.result()
+                    if result:
+                        new_results.append(result)
+                    else:
+                        failed += 1
+                except Exception as e:
+                    logger.error(f"Failed to analyze '{keyword}': {e}")
+                    failed += 1
+                time.sleep(0.1)
+
+        logger.info(f"Analysis complete: {len(new_results)} successful, {failed} failed")
+
+        # Step 4: Combine high-performing keywords with new results
+        all_results = high_performing + new_results
+
+        # Sort by opportunity score
+        all_results.sort(key=lambda x: x['opportunity_score'], reverse=True)
+
+        # Step 5: Generate AI insights for combined results
+        insights = generate_ai_insights(all_results, topic, context)
+
+        # Step 6: Deduct credits
+        total_input_tokens = 0
+        total_output_tokens = 0
+
+        if context.get('_token_usage'):
+            total_input_tokens += context['_token_usage']['input_tokens']
+            total_output_tokens += context['_token_usage']['output_tokens']
+
+        if keyword_result.get('token_usage'):
+            total_input_tokens += keyword_result['token_usage']['input_tokens']
+            total_output_tokens += keyword_result['token_usage']['output_tokens']
+
+        if insights.get('token_usage'):
+            total_input_tokens += insights['token_usage']['input_tokens']
+            total_output_tokens += insights['token_usage']['output_tokens']
+
+        logger.info(f"TOTAL tokens for refinement: {total_input_tokens} in / {total_output_tokens} out")
+
+        if total_input_tokens > 0:
+            provider_enum = None
+            if context.get('_token_usage', {}).get('provider_enum'):
+                provider_enum = context['_token_usage']['provider_enum']
+
+            deduction_result = credits_manager.deduct_llm_credits(
+                user_id=user_id,
+                model_name=ai_provider.default_model,
+                input_tokens=total_input_tokens,
+                output_tokens=total_output_tokens,
+                description=f"AI Keyword Refinement - {topic}",
+                feature_id="ai_keyword_refinement",
+                provider_enum=provider_enum
+            )
+
+            if not deduction_result['success']:
+                logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+                return jsonify({
+                    'success': False,
+                    'error': f"Credit deduction failed: {deduction_result.get('message')}",
+                    'error_type': 'credit_deduction_failed'
+                }), 402
+
+        context_copy = {k: v for k, v in context.items() if not k.startswith('_')}
+
+        response_data = {
+            'success': True,
+            'topic': topic,
+            'detected_context': context_copy,
+            'keywords_generated': len(new_keywords),
+            'keywords_analyzed': len(all_results),
+            'keywords_failed': failed,
+            'results': all_results,
+            'insights': insights['insights_text'],
+            'top_recommendations': insights['top_recommendations']
+        }
+
+        # Save to Firebase
+        try:
+            research_ref = db.collection('users').document(user_id).collection('keyword_research').document('latest')
+            research_data = {
+                'topic': topic,
+                'keyword_count': len(all_results),
+                'results': response_data,
+                'created_at': datetime.now()
+            }
+            research_ref.set(research_data)
+            logger.info(f"Saved refined keyword research for user {user_id}")
+        except Exception as e:
+            logger.error(f"Error saving keyword research: {e}")
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        logger.error(f"Error in refine keywords: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @bp.route('/api/latest-research', methods=['GET'])
 @auth_required
 @require_permission('keyword_research')
