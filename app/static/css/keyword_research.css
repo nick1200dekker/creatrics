@@ -893,6 +893,18 @@ html.dark .insights-badge {
     letter-spacing: 0.05em;
 }
 
+.keywords-table th:nth-child(1) {
+    width: 35%;
+}
+
+.keywords-table th:nth-child(2),
+.keywords-table th:nth-child(3),
+.keywords-table th:nth-child(4),
+.keywords-table th:nth-child(5) {
+    width: 16.25%;
+    text-align: center;
+}
+
 .keywords-table tbody tr {
     border-bottom: 1px solid var(--border-primary);
     transition: background-color 0.15s ease;
@@ -1334,4 +1346,97 @@ html.dark .refine-keywords-btn:hover:not(:disabled) {
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Relevance Column Styles */
+.relevance-cell {
+    text-align: center;
+}
+
+.relevance-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    position: relative;
+}
+
+.relevance-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.relevance-badge.relevance-high {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22C55E;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+html.dark .relevance-badge.relevance-high {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ADE80;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.relevance-badge.relevance-good {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+html.dark .relevance-badge.relevance-good {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60A5FA;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.relevance-badge.relevance-fair {
+    background: rgba(251, 146, 60, 0.1);
+    color: #F59E0B;
+    border: 1px solid rgba(251, 146, 60, 0.2);
+}
+
+html.dark .relevance-badge.relevance-fair {
+    background: rgba(251, 146, 60, 0.15);
+    color: #FBBF24;
+    border-color: rgba(251, 146, 60, 0.3);
+}
+
+.relevance-badge.relevance-poor {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+html.dark .relevance-badge.relevance-poor {
+    background: rgba(239, 68, 68, 0.15);
+    color: #F87171;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.relevance-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 10;
+}
+
+.relevance-wrapper:hover .relevance-tooltip {
+    display: block;
 }

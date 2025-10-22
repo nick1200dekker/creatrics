@@ -662,6 +662,7 @@ function displayAIResults(data) {
                         <th>Score</th>
                         <th>Competition</th>
                         <th>Interest</th>
+                        <th>Relevance</th>
                     </tr>
                 </thead>
                 <tbody id="aiKeywordsTableBody">
@@ -789,6 +790,26 @@ function createKeywordTableRow(keyword) {
         'high': 'High Competition'
     };
 
+    // Determine relevance class and label
+    const relevance = keyword.relevance_percentage || 0;
+    let relevanceClass = 'relevance-high';
+    let relevanceLabel = 'High';
+
+    if (relevance < 60) {
+        relevanceClass = 'relevance-poor';
+        relevanceLabel = 'Poor';
+    } else if (relevance < 70) {
+        relevanceClass = 'relevance-fair';
+        relevanceLabel = 'Fair';
+    } else if (relevance < 85) {
+        relevanceClass = 'relevance-good';
+        relevanceLabel = 'Good';
+    }
+
+    // Add quality warning tooltip if present
+    const relevanceTooltip = keyword.quality_warning ?
+        `<span class="relevance-tooltip">${escapeHtml(keyword.quality_warning)}</span>` : '';
+
     row.innerHTML = `
         <td class="keyword-cell">${keyword.keyword}</td>
         <td class="score-cell">
@@ -803,6 +824,14 @@ function createKeywordTableRow(keyword) {
             <span class="interest-badge ${interestClass}">
                 ${interestLabels[keyword.interest_level] || 'Unknown Interest'}
             </span>
+        </td>
+        <td class="relevance-cell">
+            <div class="relevance-wrapper">
+                <span class="relevance-badge ${relevanceClass}">
+                    ${relevance}%
+                </span>
+                ${relevanceTooltip}
+            </div>
         </td>
     `;
 
