@@ -16,8 +16,12 @@ from datetime import datetime
 from app.system.ai_provider.ai_provider import get_ai_provider
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+from firebase_admin import firestore
 
 logger = logging.getLogger(__name__)
+
+# Initialize Firestore
+db = firestore.client()
 
 # RapidAPI configuration
 RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY', '16c9c09b8bmsh0f0d3ec2999f27ep115961jsn5f75604e8050')
@@ -837,7 +841,7 @@ def ai_keyword_explore():
         # Clean up internal token usage from context before returning
         context_copy = {k: v for k, v in context.items() if not k.startswith('_')}
 
-        return jsonify({
+        response_data = {
             'success': True,
             'topic': topic,
             'detected_context': context_copy,
@@ -847,8 +851,60 @@ def ai_keyword_explore():
             'results': results,
             'insights': insights['insights_text'],
             'top_recommendations': insights['top_recommendations']
-        })
+        }
+
+        # Save to Firebase for later retrieval
+        try:
+            research_ref = db.collection('users').document(user_id).collection('keyword_research').document('latest')
+            research_data = {
+                'topic': topic,
+                'keyword_count': len(results),
+                'results': response_data,  # Save complete response
+                'created_at': datetime.now()
+            }
+            research_ref.set(research_data)
+            logger.info(f"Saved latest keyword research for user {user_id}")
+        except Exception as e:
+            logger.error(f"Error saving keyword research: {e}")
+            # Don't fail the request if save fails
+
+        return jsonify(response_data)
 
     except Exception as e:
         logger.error(f"Error in AI keyword explore: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/api/latest-research', methods=['GET'])
+@auth_required
+@require_permission('keyword_research')
+def get_latest_research():
+    """Get the latest saved keyword research"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get the latest research document
+        research_ref = db.collection('users').document(user_id).collection('keyword_research').document('latest')
+        research_doc = research_ref.get()
+
+        if not research_doc.exists:
+            return jsonify({
+                'success': True,
+                'has_research': False
+            })
+
+        research_data = research_doc.to_dict()
+
+        # Convert timestamp
+        if research_data.get('created_at'):
+            research_data['created_at'] = research_data['created_at'].isoformat()
+
+        return jsonify({
+            'success': True,
+            'has_research': True,
+            'research': research_data
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting latest research: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500

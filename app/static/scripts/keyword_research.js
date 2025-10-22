@@ -20,15 +20,54 @@ document.addEventListener('DOMContentLoaded', function() {
         // If research started less than 2 minutes ago, show loading
         if (currentTime - researchData.startTime < 120000) {
             console.log('Ongoing keyword research detected:', researchData.keyword);
-            document.getElementById('keywordInput').value = researchData.keyword;
-            showLoading();
+
+            // If it's AI mode, switch to AI mode and show loading state
+            if (researchData.mode === 'ai') {
+                // Switch to AI mode first
+                currentMode = 'ai';
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.mode === 'ai') {
+                        btn.classList.add('active');
+                    }
+                });
+
+                // Update UI to AI mode
+                const searchIcon = document.getElementById('searchIcon');
+                const keywordInput = document.getElementById('keywordInput');
+                const exploreBtnText = document.getElementById('exploreBtnText');
+                searchIcon.className = 'ph ph-magic-wand search-icon';
+                keywordInput.placeholder = 'Enter a topic (e.g., Fortnite, Yoga, AI Video Models)';
+                exploreBtnText.textContent = 'Generate & Analyze';
+
+                // Show loading state
+                document.getElementById('keywordInput').value = researchData.keyword;
+                showLoading();
+
+                // Disable explore button during processing
+                const exploreBtn = document.getElementById('exploreBtn');
+                exploreBtn.disabled = true;
+                exploreBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Analyzing...';
+            } else {
+                // Manual mode - disable button
+                const exploreBtn = document.getElementById('exploreBtn');
+                exploreBtn.disabled = true;
+                exploreBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Analyzing...';
+                document.getElementById('keywordInput').value = researchData.keyword;
+                showLoading();
+            }
 
             // Poll for completion
             checkKeywordResearchStatus(researchData.keyword, researchData.mode);
         } else {
             // Research timed out, clear it
             sessionStorage.removeItem('keyword_research_ongoing');
+            // Load normal latest research card (only shows in AI mode)
+            loadLatestResearchCard();
         }
+    } else {
+        // No ongoing research, load latest research card normally (only shows in AI mode)
+        loadLatestResearchCard();
     }
 
     // Enter key support in search input
@@ -187,62 +226,6 @@ async function exploreManual(keywordToExplore) {
 }
 
 /**
- * AI-powered keyword exploration
- */
-async function exploreWithAI(topic) {
-    const count = 50; // Always generate 50 keywords
-
-    // Mark as ongoing in sessionStorage
-    sessionStorage.setItem('keyword_research_ongoing', JSON.stringify({
-        keyword: topic,
-        mode: 'ai',
-        startTime: Date.now()
-    }));
-
-    // Show loading with AI-specific message
-    document.getElementById('loadingContainer').style.display = 'flex';
-    document.querySelector('.loading-text').textContent = `AI is generating ${count} keywords for "${topic}"...`;
-    document.getElementById('emptyState').style.display = 'none';
-
-    try {
-        const response = await fetch('/keyword-research/api/ai-keyword-explore', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                topic: topic,
-                count: count
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to generate keywords');
-        }
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to generate keywords');
-        }
-
-        // Display AI results
-        displayAIResults(data);
-
-    } catch (error) {
-        console.error('AI exploration error:', error);
-        showError(error.message || 'Failed to explore topic with AI');
-        document.getElementById('emptyState').style.display = 'block';
-    } finally {
-        document.getElementById('loadingContainer').style.display = 'none';
-        const exploreBtn = document.getElementById('exploreBtn');
-        exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Generate & Analyze</span>';
-    }
-}
-
-// Removed - duplicate function moved to line 663
-
-/**
  * Switch between Manual and AI Explorer mode
  */
 function switchMode(mode) {
@@ -260,20 +243,63 @@ function switchMode(mode) {
     const searchIcon = document.getElementById('searchIcon');
     const keywordInput = document.getElementById('keywordInput');
     const exploreBtnText = document.getElementById('exploreBtnText');
+    const exploreBtn = document.getElementById('exploreBtn');
+
+    // Check for ongoing research
+    const ongoingResearch = sessionStorage.getItem('keyword_research_ongoing');
+    const hasOngoingResearch = ongoingResearch && JSON.parse(ongoingResearch).mode === 'ai';
 
     if (mode === 'ai') {
         searchIcon.className = 'ph ph-magic-wand search-icon';
         keywordInput.placeholder = 'Enter a topic (e.g., Fortnite, Yoga, AI Video Models)';
         exploreBtnText.textContent = 'Generate & Analyze';
+
+        // Check if there's ongoing research and show loading card, otherwise show latest research
+        if (hasOngoingResearch) {
+            const researchData = JSON.parse(ongoingResearch);
+            if (Date.now() - researchData.startTime < 120000) {
+                showLatestResearchLoadingCard(researchData.keyword);
+                // Show loading spinner in main area
+                document.getElementById('loadingContainer').style.display = 'flex';
+                document.getElementById('emptyState').style.display = 'none';
+                // Disable explore button
+                exploreBtn.disabled = true;
+                exploreBtn.innerHTML = '<i class="ph ph-spinner spin"></i> Analyzing...';
+            } else {
+                loadLatestResearchCard();
+            }
+        } else {
+            loadLatestResearchCard();
+        }
     } else {
+        // Switching to manual mode
         searchIcon.className = 'ph ph-magnifying-glass search-icon';
         keywordInput.placeholder = 'Enter a keyword to research (e.g., clash royale, minecraft, cooking)';
         exploreBtnText.textContent = 'Explore';
+
+        // Hide latest research card in manual mode
+        document.getElementById('latestResearchSection').style.display = 'none';
+
+        // If there's ongoing AI research, don't show loading spinner in manual mode
+        if (hasOngoingResearch) {
+            // Hide loading spinner
+            document.getElementById('loadingContainer').style.display = 'none';
+            // Show empty state
+            document.getElementById('emptyState').style.display = 'block';
+            // Enable explore button for manual searches
+            exploreBtn.disabled = false;
+            exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Explore</span>';
+        }
+
+        // Clear the keyword input when switching from AI to manual
+        keywordInput.value = '';
     }
 
     // Clear results
     document.getElementById('resultsSection').style.display = 'none';
-    document.getElementById('emptyState').style.display = 'block';
+    if (!hasOngoingResearch || mode === 'manual') {
+        document.getElementById('emptyState').style.display = 'block';
+    }
     keywordHistory = [];
     updateBreadcrumb();
 }
@@ -560,7 +586,7 @@ async function exploreWithAI(topic) {
 
     // Show loading with AI-specific message
     document.getElementById('loadingContainer').style.display = 'flex';
-    document.querySelector('.loading-text').textContent = `AI is generating ${count} keywords for "${topic}"...`;
+    document.querySelector('.loading-text').textContent = 'Analyzing Keywords...';
     document.getElementById('emptyState').style.display = 'none';
 
     try {
@@ -636,6 +662,11 @@ function displayAIResults(data) {
             ${data.detected_context.domain}
         </span>
     `;
+
+    // Load the latest research card now that analysis is complete
+    if (currentMode === 'ai') {
+        setTimeout(() => loadLatestResearchCard(), 500);
+    }
 
     const insightsContent = document.getElementById('insightsContent');
     insightsContent.innerHTML = formatInsights(data.insights);
@@ -834,7 +865,7 @@ function showInsufficientCreditsError(data) {
 }
 
 /**
- * Check if keyword research is complete by checking if results are visible
+ * Check if keyword research is complete by polling the backend
  */
 async function checkKeywordResearchStatus(keyword, mode) {
     const maxAttempts = 60; // Poll for up to 2 minutes
@@ -843,14 +874,60 @@ async function checkKeywordResearchStatus(keyword, mode) {
     const pollInterval = setInterval(async () => {
         attempts++;
 
-        // Check if results section is now visible (research complete)
-        const resultsSection = document.getElementById('resultsSection');
-        if (resultsSection && resultsSection.style.display !== 'none') {
-            // Research complete! Clear sessionStorage
-            console.log('Keyword research complete for:', keyword);
-            sessionStorage.removeItem('keyword_research_ongoing');
-            clearInterval(pollInterval);
-            return;
+        try {
+            // For AI mode, check if the research is saved in Firebase
+            if (mode === 'ai') {
+                const response = await fetch('/keyword-research/api/latest-research');
+                const data = await response.json();
+
+                if (data.success && data.has_research) {
+                    const research = data.research;
+                    // Check if this is the research we're waiting for
+                    if (research.topic === keyword) {
+                        console.log('AI keyword research complete for:', keyword);
+                        sessionStorage.removeItem('keyword_research_ongoing');
+                        clearInterval(pollInterval);
+
+                        // Hide loading
+                        document.getElementById('loadingContainer').style.display = 'none';
+
+                        // Re-enable the explore button
+                        const exploreBtn = document.getElementById('exploreBtn');
+                        exploreBtn.disabled = false;
+                        if (currentMode === 'ai') {
+                            exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Generate & Analyze</span>';
+                        } else {
+                            exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Explore</span>';
+                        }
+
+                        // Display the results
+                        displayAIResults(research.results);
+
+                        return;
+                    }
+                }
+            }
+
+            // Check if results section is now visible (for manual mode or fallback)
+            const resultsSection = document.getElementById('resultsSection');
+            if (resultsSection && resultsSection.style.display !== 'none') {
+                console.log('Keyword research complete for:', keyword);
+                sessionStorage.removeItem('keyword_research_ongoing');
+                clearInterval(pollInterval);
+
+                // Re-enable the explore button
+                const exploreBtn = document.getElementById('exploreBtn');
+                exploreBtn.disabled = false;
+                if (currentMode === 'ai') {
+                    exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Generate & Analyze</span>';
+                } else {
+                    exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Explore</span>';
+                }
+
+                return;
+            }
+        } catch (error) {
+            console.error('Error checking research status:', error);
         }
 
         // If max attempts reached, stop polling
@@ -859,9 +936,119 @@ async function checkKeywordResearchStatus(keyword, mode) {
             sessionStorage.removeItem('keyword_research_ongoing');
             clearInterval(pollInterval);
             document.getElementById('loadingContainer').style.display = 'none';
+
+            // Re-enable button
+            const exploreBtn = document.getElementById('exploreBtn');
+            exploreBtn.disabled = false;
+            if (currentMode === 'ai') {
+                exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Generate & Analyze</span>';
+                // Try to load latest research even on timeout
+                await loadLatestResearchCard();
+            } else {
+                exploreBtn.innerHTML = '<i class="ph ph-sparkle"></i><span id="exploreBtnText">Explore</span>';
+            }
+
             alert('Research is taking longer than expected. Please try again.');
         }
     }, 2000); // Poll every 2 seconds
 }
 
-// Additional AI functions are defined above near switchMode()
+/**
+ * Show loading state on latest research card while AI is processing
+ * Actually just hide the card - we'll show it when analysis is complete
+ */
+function showLatestResearchLoadingCard(topic) {
+    const section = document.getElementById('latestResearchSection');
+    // Hide card completely during processing
+    section.style.display = 'none';
+}
+
+/**
+ * Load latest research card (shows on AI mode)
+ */
+async function loadLatestResearchCard() {
+    try {
+        const response = await fetch('/keyword-research/api/latest-research');
+        const data = await response.json();
+
+        if (data.success && data.has_research) {
+            const research = data.research;
+            const section = document.getElementById('latestResearchSection');
+            const topic = document.getElementById('latestResearchTopic');
+            const keywordCount = document.getElementById('latestResearchKeywordCount');
+            const date = document.getElementById('latestResearchDate');
+
+            // Format date
+            const createdDate = new Date(research.created_at);
+            const now = new Date();
+            const diffMs = now - createdDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            let dateStr;
+            if (diffMins < 60) {
+                dateStr = `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+            } else if (diffHours < 24) {
+                dateStr = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+            } else if (diffDays < 7) {
+                dateStr = `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+            } else {
+                dateStr = createdDate.toLocaleDateString();
+            }
+
+            topic.textContent = research.topic;
+            keywordCount.textContent = research.keyword_count;
+            date.textContent = dateStr;
+
+            // Restore click handler
+            const card = section.querySelector('.latest-analysis-card');
+            if (card) {
+                card.style.cursor = 'pointer';
+                card.onclick = loadLatestResearch;
+            }
+
+            // Only show in AI mode
+            if (currentMode === 'ai') {
+                section.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading latest research:', error);
+    }
+}
+
+/**
+ * Load and display latest research
+ */
+async function loadLatestResearch() {
+    try {
+        // Show loading
+        document.getElementById('loadingContainer').style.display = 'flex';
+        document.querySelector('.loading-text').textContent = 'Analyzing Keywords...';
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('resultsSection').style.display = 'none';
+
+        const response = await fetch('/keyword-research/api/latest-research');
+        const data = await response.json();
+
+        if (data.success && data.has_research) {
+            const research = data.research;
+
+            // Hide loading
+            document.getElementById('loadingContainer').style.display = 'none';
+
+            // Display the saved research
+            displayAIResults(research.results);
+        } else {
+            document.getElementById('loadingContainer').style.display = 'none';
+            showError('No saved research found.');
+            document.getElementById('emptyState').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading latest research:', error);
+        document.getElementById('loadingContainer').style.display = 'none';
+        showError('Failed to load research: ' + error.message);
+        document.getElementById('emptyState').style.display = 'block';
+    }
+}

@@ -32,6 +32,35 @@
             </div>
         </div>
 
+        <!-- Latest Research Card (only shown in AI mode when available) -->
+        <div id="latestResearchSection" class="latest-analysis-section" style="display: none;">
+            <div class="latest-analysis-card" onclick="loadLatestResearch()">
+                <div class="latest-analysis-icon">
+                    <i class="ph ph-clock-counter-clockwise"></i>
+                </div>
+                <div class="latest-analysis-content">
+                    <div class="latest-analysis-title">Latest Research</div>
+                    <div class="latest-analysis-meta">
+                        <span class="latest-analysis-detail">
+                            <i class="ph ph-tag"></i>
+                            <span id="latestResearchTopic">—</span>
+                        </span>
+                        <span class="latest-analysis-detail">
+                            <i class="ph ph-list-bullets"></i>
+                            <span id="latestResearchKeywordCount">—</span> keywords
+                        </span>
+                        <span class="latest-analysis-detail">
+                            <i class="ph ph-calendar"></i>
+                            <span id="latestResearchDate">—</span>
+                        </span>
+                    </div>
+                </div>
+                <button class="latest-analysis-btn">
+                    <i class="ph ph-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
         <!-- Search Section -->
         <div class="search-section">
             <div class="search-box">

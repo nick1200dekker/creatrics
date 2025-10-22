@@ -261,6 +261,10 @@ html.dark .loading-spinner i {
     to { transform: rotate(360deg); }
 }
 
+.spin {
+    animation: spin 1s linear infinite;
+}
+
 /* Results Section */
 .results-section {
     padding: 2rem;
@@ -1251,4 +1255,119 @@ html.dark .insufficient-credits-card {
 
 .upgrade-plan-btn:active {
     transform: translateY(0);
+}
+
+/* Latest Research Card */
+.latest-analysis-section {
+    margin-bottom: 1.5rem;
+}
+
+.latest-analysis-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+html.dark .latest-analysis-card {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
+.latest-analysis-card:hover {
+    background: var(--hover-bg);
+    border-color: #3B82F6;
+    transform: translateX(2px);
+}
+
+html.dark .latest-analysis-card:hover {
+    background: rgba(63, 63, 70, 0.8);
+    border-color: #60A5FA;
+}
+
+.latest-analysis-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 8px;
+}
+
+html.dark .latest-analysis-icon {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.latest-analysis-icon i {
+    font-size: 1.25rem;
+    color: #3B82F6;
+}
+
+html.dark .latest-analysis-icon i {
+    color: #60A5FA;
+}
+
+.latest-analysis-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.latest-analysis-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.latest-analysis-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+}
+
+.latest-analysis-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.latest-analysis-detail i {
+    font-size: 0.9rem;
+}
+
+.latest-analysis-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.latest-analysis-btn i {
+    font-size: 1rem;
+    color: #3B82F6;
+    transition: transform 0.2s;
+}
+
+html.dark .latest-analysis-btn i {
+    color: #60A5FA;
+}
+
+.latest-analysis-card:hover .latest-analysis-btn i {
+    transform: translateX(4px);
 }
