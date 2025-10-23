@@ -10,7 +10,7 @@
     "hook_generator/hook_generator": "google",
     "home/x_content_suggestions": "google",
     "competitors/video_deep_dive_analyzer": "deepseek",
-    "niche/creator_analyzer": "deepseek",
+    "niche/creator_analyzer": "google",
     "optimize_video/thumbnail_analyzer": "claude",
     "optimize_video/video_optimizer": "claude",
     "thumbnail/improve_prompt": "claude",

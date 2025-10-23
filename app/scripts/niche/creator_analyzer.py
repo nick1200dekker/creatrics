@@ -198,7 +198,7 @@ class CreatorAnalyzer:
             
             return {
                 'hot_on_timeline': hot_on_timeline,
-                'top_performing_tweets': all_tweets[:20],
+                'top_performing_tweets': all_tweets[:40],
                 'creator_stats': creator_stats,
                 'performance_chart_data': performance_chart_data
             }
@@ -377,7 +377,7 @@ class CreatorAnalyzer:
     def process_tweet(self, tweet: Dict, creator_name: str) -> Dict:
         """Process a tweet to extract necessary data"""
         tweet_id = self._extract_tweet_id(tweet)
-        
+
         processed = {
             "tweet_id": tweet_id,
             "creator": creator_name,
@@ -389,17 +389,30 @@ class CreatorAnalyzer:
                 "views": self._safe_int(tweet.get('views', 0))
             }
         }
-        
+
+        # Extract author information with better profile image handling
         if 'author' in tweet and isinstance(tweet['author'], dict):
             author = tweet['author']
             processed["name"] = author.get('name', author.get('screen_name', creator_name))
-            processed["profile_image_url"] = author.get('avatar', author.get('profile_image_url', ''))
+
+            # Try multiple fields for profile image
+            profile_img = (
+                author.get('avatar') or
+                author.get('profile_image_url') or
+                author.get('profile_image_url_https') or
+                ''
+            )
+            # Convert _normal to _400x400 for better quality
+            if profile_img and '_normal' in profile_img:
+                profile_img = profile_img.replace('_normal', '_400x400')
+
+            processed["profile_image_url"] = profile_img
         else:
             processed["name"] = creator_name
             processed["profile_image_url"] = ''
-        
+
         processed["media"] = self._extract_media(tweet)
-        
+
         return processed
     
     def _extract_media(self, tweet: Dict) -> Dict:

@@ -180,7 +180,7 @@
                                 <div id="tweets-chart" style="height: 100%;"></div>
                             </div>
                         </div>
-                        
+
                         <div class="chart-card">
                             <div class="chart-header">
                                 <div class="chart-icon">
@@ -192,7 +192,7 @@
                                 <div id="likes-chart" style="height: 100%;"></div>
                             </div>
                         </div>
-                        
+
                         <div class="chart-card">
                             <div class="chart-header">
                                 <div class="chart-icon">
@@ -204,7 +204,7 @@
                                 <div id="views-chart" style="height: 100%;"></div>
                             </div>
                         </div>
-                        
+
                         <div class="chart-card">
                             <div class="chart-header">
                                 <div class="chart-icon">
@@ -216,6 +216,65 @@
                                 <div id="engagement-chart" style="height: 100%;"></div>
                             </div>
                         </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Top Performing Posts -->
+                {% if top_tweets %}
+                <div class="top-posts-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="ph ph-fire"></i>
+                            Top Performing Posts
+                        </h2>
+                    </div>
+                    <div class="posts-grid">
+                        {% for tweet in top_tweets[:40] %}
+                        <div class="post-card">
+                            <div class="post-header">
+                                {% if tweet.profile_image_url and tweet.profile_image_url != '' %}
+                                <img src="{{ tweet.profile_image_url }}"
+                                     alt="@{{ tweet.creator }}"
+                                     class="post-avatar"
+                                     onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="post-avatar-placeholder" style="display: none;">
+                                    <i class="ph ph-user"></i>
+                                </div>
+                                {% else %}
+                                <div class="post-avatar-placeholder">
+                                    <i class="ph ph-user"></i>
+                                </div>
+                                {% endif %}
+                                <div class="post-author">
+                                    <div class="post-name">{{ tweet.name or tweet.creator }}</div>
+                                    <div class="post-handle">@{{ tweet.creator }}</div>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                {{ tweet.text }}
+                            </div>
+                            <div class="post-stats">
+                                <div class="stat">
+                                    <i class="ph ph-heart"></i>
+                                    <span>{{ '{:,}'.format(tweet.engagement.likes) }}</span>
+                                </div>
+                                <div class="stat">
+                                    <i class="ph ph-repeat"></i>
+                                    <span>{{ '{:,}'.format(tweet.engagement.retweets) }}</span>
+                                </div>
+                                <div class="stat">
+                                    <i class="ph ph-eye"></i>
+                                    <span>{{ '{:,}'.format(tweet.engagement.views) }}</span>
+                                </div>
+                            </div>
+                            {% if tweet.tweet_id %}
+                            <a href="https://x.com/{{ tweet.creator }}/status/{{ tweet.tweet_id }}" target="_blank" class="post-link">
+                                View on X <i class="ph ph-arrow-square-out"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endif %}

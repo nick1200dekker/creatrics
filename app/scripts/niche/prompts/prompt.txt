@@ -20,7 +20,7 @@ RULES FOR STEP 1:
 ✓ Look for emotional triggers and pain points
 
 #Hot on Timeline#
-[Write 2-3 paragraphs analyzing what themes and topics are resonating. Explain WHY these topics are hot without listing engagement numbers in the narrative.]
+[Write 2-3 paragraphs analyzing what themes and topics are resonating. Explain WHY these topics are hot without listing engagement numbers in the narrative. add whitespace so its easy to read]
 
 STEP 2: EXTRACT TRENDING THEMES
 
@@ -42,7 +42,6 @@ Create 5 original social media posts inspired by the trending themes above.
 
 RULES FOR STEP 3:
 ✓ Each post should tap into a trending theme but be completely original
-✓ Maximum 2-3 sentences per post
 ✓ Provide genuine value
 ✓ Match the emotional tone that's working on the timeline
 ✓ Write posts the user could publish RIGHT NOW on their timeline
@@ -76,13 +75,5 @@ BEFORE SUBMITTING:
 ✓ All content feels fresh and original
 ✓ Posts match the energy/tone of what's working
 
-EXAMPLE:
-If the timeline showed creators discussing productivity struggles:
-
-**"I was today years old when I learned this..."**
-Your productivity system is failing because you're optimizing for output instead of outcomes - switch to measuring results, not hours worked.
-
-**"90% of creators are making this simple mistake"**
-Batching content creation sounds efficient until you realize fresh ideas come from daily life - sometimes the best content strategy is no strategy.
 
 OUTPUT ONLY THE ANALYSIS AND CONTENT SUGGESTIONS IN THE EXACT FORMAT ABOVE - NO ADDITIONAL EXPLANATIONS, NO COMMENTARY. JUST THE STRUCTURED OUTPUT:
