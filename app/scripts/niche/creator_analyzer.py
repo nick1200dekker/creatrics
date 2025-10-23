@@ -126,6 +126,9 @@ class CreatorAnalyzer:
             if status_callback:
                 status_callback("Fetching tweets from creators...", 50)
 
+            # Cache for creator profile images - ensures consistency
+            creator_profile_cache = {}
+
             # Fetch tweets for each creator
             all_tweets = []
             creator_stats = {}
@@ -148,7 +151,36 @@ class CreatorAnalyzer:
 
                 if filtered_tweets:
                     time_filtered_tweets = self.filter_tweets_by_time_range(filtered_tweets, time_range)
-                    processed_tweets = [self.process_tweet(tweet, creator) for tweet in time_filtered_tweets]
+
+                    # Extract and cache the best profile image for this creator
+                    if creator not in creator_profile_cache:
+                        for tweet in time_filtered_tweets:
+                            if 'author' in tweet and isinstance(tweet['author'], dict):
+                                author = tweet['author']
+                                profile_img = (
+                                    author.get('avatar') or
+                                    author.get('profile_image_url') or
+                                    author.get('profile_image_url_https') or
+                                    ''
+                                )
+                                if profile_img:
+                                    # Convert _normal to _400x400 for better quality
+                                    if '_normal' in profile_img:
+                                        profile_img = profile_img.replace('_normal', '_400x400')
+                                    creator_profile_cache[creator] = {
+                                        'profile_image_url': profile_img,
+                                        'name': author.get('name', author.get('screen_name', creator))
+                                    }
+                                    break
+
+                        # Fallback if no profile image found
+                        if creator not in creator_profile_cache:
+                            creator_profile_cache[creator] = {
+                                'profile_image_url': '',
+                                'name': creator
+                            }
+
+                    processed_tweets = [self.process_tweet(tweet, creator, creator_profile_cache.get(creator, {})) for tweet in time_filtered_tweets]
                     creator_stats[creator] = self.calculate_creator_performance(time_filtered_tweets)
 
                     logger.info(f"Found {len(processed_tweets)} tweets for @{creator} in the last {time_range}")
@@ -374,8 +406,8 @@ class CreatorAnalyzer:
         
         return []
     
-    def process_tweet(self, tweet: Dict, creator_name: str) -> Dict:
-        """Process a tweet to extract necessary data"""
+    def process_tweet(self, tweet: Dict, creator_name: str, cached_profile: Dict = None) -> Dict:
+        """Process a tweet to extract necessary data, using cached profile data for consistency"""
         tweet_id = self._extract_tweet_id(tweet)
 
         processed = {
@@ -390,8 +422,12 @@ class CreatorAnalyzer:
             }
         }
 
-        # Extract author information with better profile image handling
-        if 'author' in tweet and isinstance(tweet['author'], dict):
+        # Use cached profile data if available (ensures consistency across all tweets from same creator)
+        if cached_profile:
+            processed["name"] = cached_profile.get('name', creator_name)
+            processed["profile_image_url"] = cached_profile.get('profile_image_url', '')
+        # Fallback to extracting from tweet if no cache
+        elif 'author' in tweet and isinstance(tweet['author'], dict):
             author = tweet['author']
             processed["name"] = author.get('name', author.get('screen_name', creator_name))
 

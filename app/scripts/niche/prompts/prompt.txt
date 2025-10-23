@@ -20,7 +20,7 @@ RULES FOR STEP 1:
 ✓ Look for emotional triggers and pain points
 
 #Hot on Timeline#
-[Write 2-3 paragraphs analyzing what themes and topics are resonating. Explain WHY these topics are hot without listing engagement numbers in the narrative. add whitespace so its easy to read]
+[Write 2-3 paragraphs analyzing what themes and topics are resonating. Explain WHY these topics are hot without listing engagement numbers in the narrative. add whitespace/ new lines so its easy to read, dont make long sentences.]
 
 STEP 2: EXTRACT TRENDING THEMES
 
@@ -43,37 +43,22 @@ Create 5 original social media posts inspired by the trending themes above.
 RULES FOR STEP 3:
 ✓ Each post should tap into a trending theme but be completely original
 ✓ Provide genuine value
-✓ Match the emotional tone that's working on the timeline
 ✓ Write posts the user could publish RIGHT NOW on their timeline
 ✓ No direct references to other creators' posts
-✓ Each post should stand alone and make sense without context
+✓ The post CAN be longer than 3 lines. Also write the way the niche is writing, keep it human. 
+✓ No hashtags! Keep whitespace! Add hot takes or humour. Be the ultimate shitposter that gets engagement.
 
-CONTENT TYPES TO CREATE:
-- Actionable tips related to trending themes
-- Contrarian takes on popular topics
-- Personal insights about trending challenges
-- Solutions to problems being discussed
-- Fresh perspectives on hot topics
 
 FORMAT FOR EACH SUGGESTION:
-**"[Attention-grabbing opener]"**
-[Original insight/tip/perspective that taps into the trending theme but stands alone as valuable content]
+**"[Attention-grabbing opener/ Hook the reader]"**
 
-QUALITY CHECK FOR EACH POST:
-□ Is it inspired by timeline trends but completely original?
-□ Could someone share this without needing context?
-□ Does it provide real value?
-□ Would it fit naturally in today's conversation?
-□ Is it something the user could post immediately?
+[Story/value part
 
-STEP 4: FINAL REVIEW
+Add whitespace
 
-BEFORE SUBMITTING:
-✓ All 5 posts address different trending themes
-✓ Each post is self-contained and valuable
-✓ No mentions of other creators or their specific posts
-✓ All content feels fresh and original
-✓ Posts match the energy/tone of what's working
+Keep it human]
+
+[Punch / endline so the watcher will give engagement]
 
 
 OUTPUT ONLY THE ANALYSIS AND CONTENT SUGGESTIONS IN THE EXACT FORMAT ABOVE - NO ADDITIONAL EXPLANATIONS, NO COMMENTARY. JUST THE STRUCTURED OUTPUT:
