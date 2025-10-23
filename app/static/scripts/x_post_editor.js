@@ -1739,15 +1739,6 @@
         initialize();
     }
 
-    // Beforeunload handler
-    window.addEventListener('beforeunload', (e) => {
-        if (state.hasUnsavedChanges) {
-            const message = 'You have unsaved changes. Are you sure you want to leave?';
-            e.returnValue = message;
-            return message;
-        }
-    });
-
 })();
 
 // Initialize on page load

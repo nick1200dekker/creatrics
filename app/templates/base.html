@@ -1065,7 +1065,8 @@
                 {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.clip_spaces %}
                 <a href="{{ url_for('clip_spaces.index') }}"
                    class="nav-subitem {% if request.endpoint and 'clip_spaces' in request.endpoint %}active{% endif %}"
-                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                   onclick="return BaseApp.checkGuestAccess(event, this)"
+                   style="display: none;">
                     <i class="ph ph-scissors"></i>
                     <span>Clip Spaces</span>
                 </a>
