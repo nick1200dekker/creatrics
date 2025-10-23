@@ -99,6 +99,40 @@
                             </div>
                         </div>
 
+                        <!-- Channel Keywords Section (Only shown when Tags is selected) -->
+                        <div class="form-group" id="channelKeywordsSection" style="display: none;">
+                            <div class="reference-section">
+                                <div class="reference-header">
+                                    <label class="form-label" style="margin-bottom: 0;">
+                                        <i class="ph ph-tag"></i>
+                                        Channel Keywords
+                                        <div class="info-tooltip" style="display: inline-block;">
+                                            <i class="ph ph-info"></i>
+                                            <span class="tooltip-text">Your channel's keywords. 3-5 relevant keywords will be included in the generated tags for branding consistency.</span>
+                                        </div>
+                                    </label>
+                                    <button class="reference-toggle-btn" onclick="toggleChannelKeywordsSection()" id="channelKeywordsToggle">
+                                        <i class="ph ph-caret-down"></i>
+                                    </button>
+                                </div>
+                                <div class="reference-content" id="channelKeywordsContent">
+                                    <textarea class="reference-textarea"
+                                              id="channelKeywords"
+                                              placeholder="Enter your channel keywords separated by commas (e.g., your name, tiktok, instagram, content creation, social media growth)&#10;&#10;These will be loaded automatically from your YouTube channel when you connect it in Optimize Video."
+                                              maxlength="2000"
+                                              oninput="updateChannelKeywordsCharCount()"></textarea>
+                                    <div class="reference-footer">
+                                        <div class="char-count" id="channelKeywordsCharCount">0 / 2000</div>
+                                        <div class="reference-actions">
+                                            <button class="reference-action-btn clear-btn" onclick="clearChannelKeywords()" title="Clear keywords">
+                                                <i class="ph ph-x"></i> Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Reference Description Section (Only shown when Description is selected) -->
                         <div class="form-group" id="referenceDescriptionSection" style="display: none;">
                             <div class="reference-section">
@@ -106,6 +140,10 @@
                                     <label class="form-label" style="margin-bottom: 0;">
                                         <i class="ph ph-lightbulb"></i>
                                         Reference Description
+                                        <div class="info-tooltip" style="display: inline-block;">
+                                            <i class="ph ph-info"></i>
+                                            <span class="tooltip-text">Paste an existing description to use as a style template. The AI will match the tone, structure, and formatting of your reference.</span>
+                                        </div>
                                     </label>
                                     <button class="reference-toggle-btn" onclick="toggleReferenceSection()" id="referenceToggle">
                                         <i class="ph ph-caret-down"></i>

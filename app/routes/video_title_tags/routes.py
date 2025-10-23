@@ -6,6 +6,7 @@ from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_title.video_title import VideoTitleGenerator
 from app.scripts.video_title.video_tags import VideoTagsGenerator
 from app.scripts.video_title.video_description import VideoDescriptionGenerator
+from app.system.services.firebase_service import db
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,33 @@ logger = logging.getLogger(__name__)
 def video_title_tags():
     """Video title and tags generator page"""
     return render_template('video_title_tags/index.html')
+
+@bp.route('/api/get-channel-keywords', methods=['GET'])
+@auth_required
+@require_permission('video_title')
+def get_channel_keywords():
+    """Get user's YouTube channel keywords"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get user's YouTube channel keywords from Firestore
+        user_ref = db.collection('users').document(user_id)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            return jsonify({'success': True, 'keywords': []})
+
+        user_data = user_doc.to_dict()
+        channel_keywords = user_data.get('youtube_channel_keywords', [])
+
+        return jsonify({
+            'success': True,
+            'keywords': channel_keywords
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting channel keywords: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @bp.route('/api/generate-video-titles', methods=['POST'])
 @auth_required
@@ -122,6 +150,7 @@ def generate_video_tags():
         data = request.json
         input_text = data.get('input', '').strip()
         keyword = data.get('keyword', '').strip()
+        channel_keywords = data.get('channel_keywords', [])
 
         if not input_text:
             return jsonify({'success': False, 'error': 'Please provide video details'}), 400
@@ -135,6 +164,19 @@ def generate_video_tags():
         tags_generator = VideoTagsGenerator()
 
         user_id = get_workspace_user_id()
+
+        # If no channel keywords provided by user, try to get from Firebase
+        if not channel_keywords:
+            try:
+                user_ref = db.collection('users').document(user_id)
+                user_doc = user_ref.get()
+                if user_doc.exists:
+                    user_data = user_doc.to_dict()
+                    channel_keywords = user_data.get('youtube_channel_keywords', [])
+                    logger.info(f"Retrieved {len(channel_keywords)} channel keywords from Firebase for user {user_id}")
+            except Exception as e:
+                logger.warning(f"Could not retrieve channel keywords from Firebase: {e}")
+                channel_keywords = []
 
         # Step 1: Check credits before generation
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
@@ -158,10 +200,11 @@ def generate_video_tags():
                 "error_type": "insufficient_credits"
             }), 402
 
-        # Step 2: Generate tags
+        # Step 2: Generate tags with channel keywords
         generation_result = tags_generator.generate_tags(
             input_text=input_text,
-            user_id=user_id
+            user_id=user_id,
+            channel_keywords=channel_keywords
         )
 
         if not generation_result.get('success'):

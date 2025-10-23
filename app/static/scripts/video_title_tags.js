@@ -14,6 +14,8 @@ let isGenerating = false;
 document.addEventListener('DOMContentLoaded', function() {
     updateCharCount();
     updateRefDescCharCount();
+    updateChannelKeywordsCharCount();
+    loadChannelKeywords();
 });
 
 // Set video type
@@ -41,10 +43,31 @@ function updateRefDescCharCount() {
     document.getElementById('refDescCharCount').textContent = `${count} / 5000`;
 }
 
+// Update character count for channel keywords
+function updateChannelKeywordsCharCount() {
+    const input = document.getElementById('channelKeywords');
+    const count = input.value.length;
+    document.getElementById('channelKeywordsCharCount').textContent = `${count} / 2000`;
+}
+
 // Toggle reference section
 function toggleReferenceSection() {
     const content = document.getElementById('referenceContent');
     const toggle = document.getElementById('referenceToggle');
+
+    if (content.classList.contains('show')) {
+        content.classList.remove('show');
+        toggle.innerHTML = '<i class="ph ph-caret-down"></i>';
+    } else {
+        content.classList.add('show');
+        toggle.innerHTML = '<i class="ph ph-caret-up"></i>';
+    }
+}
+
+// Toggle channel keywords section
+function toggleChannelKeywordsSection() {
+    const content = document.getElementById('channelKeywordsContent');
+    const toggle = document.getElementById('channelKeywordsToggle');
 
     if (content.classList.contains('show')) {
         content.classList.remove('show');
@@ -73,6 +96,35 @@ function saveReferenceDescription() {
     }
 }
 
+// Clear channel keywords
+function clearChannelKeywords() {
+    const keywords = document.getElementById('channelKeywords');
+    keywords.value = '';
+    updateChannelKeywordsCharCount();
+    showToast('Channel keywords cleared', 'info');
+}
+
+// Load channel keywords from backend
+async function loadChannelKeywords() {
+    try {
+        const response = await fetch('/api/get-channel-keywords', {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'}
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.keywords && data.keywords.length > 0) {
+                const keywordsInput = document.getElementById('channelKeywords');
+                keywordsInput.value = data.keywords.join(', ');
+                updateChannelKeywordsCharCount();
+            }
+        }
+    } catch (error) {
+        console.log('Could not load channel keywords:', error);
+    }
+}
+
 // Toggle generation card selection
 function toggleGenerationCard(card, type) {
     card.classList.toggle('active');
@@ -84,6 +136,16 @@ function toggleGenerationCard(card, type) {
             referenceSection.style.display = 'block';
         } else {
             referenceSection.style.display = 'none';
+        }
+    }
+
+    // Show/hide channel keywords section based on Tags card selection
+    if (type === 'tags') {
+        const channelKeywordsSection = document.getElementById('channelKeywordsSection');
+        if (card.classList.contains('active')) {
+            channelKeywordsSection.style.display = 'block';
+        } else {
+            channelKeywordsSection.style.display = 'none';
         }
     }
 }
@@ -188,12 +250,19 @@ async function generateContent() {
 
         // Generate tags if requested
         if (generateTags) {
+            // Get channel keywords from input (user can override)
+            const channelKeywordsInput = document.getElementById('channelKeywords').value.trim();
+            const channelKeywords = channelKeywordsInput
+                ? channelKeywordsInput.split(',').map(k => k.trim()).filter(k => k)
+                : [];
+
             const tagsResponse = await fetch('/api/generate-video-tags', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     input: enhancedInput,
-                    keyword: keyword
+                    keyword: keyword,
+                    channel_keywords: channelKeywords
                 })
             });
             tagsData = await tagsResponse.json();
