@@ -1242,13 +1242,100 @@
         };
     }
 
+    // Style @mentions in content
+    function styleAtMentions() {
+        const timeline = document.querySelector('.hot-timeline');
+        if (!timeline) return;
+
+        // Find all text nodes and wrap @mentions
+        function processNode(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent;
+                // Match @username patterns
+                const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+
+                if (mentionRegex.test(text)) {
+                    const span = document.createElement('span');
+                    span.innerHTML = text.replace(mentionRegex, '<span class="mention-handle">@$1</span>');
+                    node.parentNode.replaceChild(span, node);
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+                Array.from(node.childNodes).forEach(processNode);
+            }
+        }
+
+        processNode(timeline);
+    }
+
+    // Add update icon to dropdown options
+    function addUpdateIcons() {
+        const dropdownOptions = document.querySelectorAll('.dropdown-option:not(.create-new)');
+
+        dropdownOptions.forEach(option => {
+            // Skip if already has update icon
+            if (option.querySelector('.update-icon')) return;
+
+            const listName = option.dataset.value;
+            if (!listName) return;
+
+            // Create update icon
+            const updateIcon = document.createElement('i');
+            updateIcon.className = 'ph ph-arrows-clockwise update-icon';
+            updateIcon.title = 'Update this list';
+
+            // Add click handler
+            updateIcon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+
+                // Trigger update for this list
+                updateList(listName);
+            });
+
+            option.appendChild(updateIcon);
+        });
+    }
+
+    // Update a specific list
+    function updateList(listName) {
+        if (!listName) return;
+
+        // Show loading state
+        if (window.showToast) {
+            window.showToast(`Updating ${listName}...`, 'info');
+        }
+
+        // Select this list and trigger analyze
+        window.NicheRadarState.selectedList = listName;
+
+        // Update dropdown text
+        const dropdownText = document.querySelector('#selected-list-text');
+        if (dropdownText) {
+            dropdownText.textContent = listName;
+        }
+
+        // Trigger analyze
+        const analyzeButton = document.querySelector('#analyze-button, #analyze-button-empty, #analyze-button-default');
+        if (analyzeButton) {
+            analyzeButton.click();
+        }
+    }
+
     // Initialize on DOMContentLoaded
     document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('analytics-panel') || document.getElementById('lists-panel')) {
             initializeNicheRadar();
+
+            // Style @mentions after content loads
+            setTimeout(() => {
+                styleAtMentions();
+                addUpdateIcons();
+            }, 500);
         }
     });
 
     // Expose for external initialization
     window.initializeNicheRadar = initializeNicheRadar;
+    window.styleAtMentions = styleAtMentions;
+    window.addUpdateIcons = addUpdateIcons;
 })();
