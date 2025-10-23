@@ -46,16 +46,34 @@ class ReplyAnalyzer:
                     ][:10]
 
                     if filtered_tweets:
-                        # Extract profile info from first tweet for consistency
-                        first_tweet = filtered_tweets[0]
-                        if 'author' in first_tweet and isinstance(first_tweet['author'], dict):
-                            author_info = first_tweet['author']
-                            account_profiles[account] = {
-                                'screen_name': author_info.get('screen_name', account),
-                                'name': author_info.get('name', account),
-                                'avatar': author_info.get('avatar', author_info.get('profile_image_url', ''))
-                            }
-                        else:
+                        # Extract profile info from first tweet with valid profile image
+                        profile_found = False
+                        for tweet in filtered_tweets:
+                            if 'author' in tweet and isinstance(tweet['author'], dict):
+                                author_info = tweet['author']
+                                # Try multiple fields for profile image
+                                profile_img = (
+                                    author_info.get('avatar') or
+                                    author_info.get('profile_image_url') or
+                                    author_info.get('profile_image_url_https') or
+                                    ''
+                                )
+
+                                if profile_img:
+                                    # Convert _normal to _400x400 for better quality
+                                    if '_normal' in profile_img:
+                                        profile_img = profile_img.replace('_normal', '_400x400')
+
+                                    account_profiles[account] = {
+                                        'screen_name': author_info.get('screen_name', account),
+                                        'name': author_info.get('name', account),
+                                        'avatar': profile_img
+                                    }
+                                    profile_found = True
+                                    break
+
+                        # Fallback if no profile image found
+                        if not profile_found:
                             account_profiles[account] = {
                                 'screen_name': account,
                                 'name': account,

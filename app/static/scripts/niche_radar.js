@@ -1339,3 +1339,201 @@
     window.styleAtMentions = styleAtMentions;
     window.addUpdateIcons = addUpdateIcons;
 })();
+
+// Toggle post expansion
+function togglePost(index) {
+    const cards = document.querySelectorAll('.post-card-collapsible');
+    if (cards[index]) {
+        cards[index].classList.toggle('expanded');
+    }
+}
+
+// Toggle content suggestion expansion
+function toggleSuggestion(index) {
+    const cards = document.querySelectorAll('.content-suggestion-card');
+    if (cards[index]) {
+        cards[index].classList.toggle('expanded');
+    }
+}
+
+// Transform Content Suggestions into expandable cards
+function transformContentSuggestions() {
+    const timeline = document.querySelector('.hot-timeline');
+    if (!timeline) return;
+
+    // Find the Content Suggestions section
+    const headers = timeline.querySelectorAll('h2');
+    let contentSuggestionsHeader = null;
+
+    headers.forEach(h2 => {
+        if (h2.textContent.includes('Content Suggestions')) {
+            contentSuggestionsHeader = h2;
+        }
+    });
+
+    if (!contentSuggestionsHeader) return;
+
+    // Get all content after the header and identify hooks from <strong> tags
+    let currentNode = contentSuggestionsHeader.nextSibling;
+    const nodesToRemove = [];
+    const contentParts = []; // Array of {type: 'hook'|'text', content: string}
+
+    console.log('=== COLLECTING NODES WITH STRONG TAG DETECTION ===');
+    while (currentNode) {
+        // Stop if we hit another h2
+        if (currentNode.nodeType === 1 && currentNode.tagName === 'H2') break;
+
+        // Check for STRONG tags (hooks)
+        if (currentNode.nodeType === 1 && currentNode.tagName === 'STRONG') {
+            const hookText = currentNode.textContent.trim();
+            if (hookText) {
+                console.log('Found STRONG (hook):', hookText);
+                contentParts.push({ type: 'hook', content: hookText });
+            }
+        }
+        // Text node
+        else if (currentNode.nodeType === 3) {
+            const text = (currentNode.textContent || '').trim();
+            if (text) {
+                console.log('Text node:', text.substring(0, 100));
+                contentParts.push({ type: 'text', content: text });
+            }
+        }
+        // BR tags create line breaks
+        else if (currentNode.nodeType === 1 && currentNode.tagName === 'BR') {
+            // Skip - we'll handle spacing differently
+        }
+        // Other elements - check if they contain text but aren't STRONG
+        else if (currentNode.nodeType === 1) {
+            const text = (currentNode.textContent || '').trim();
+            if (text) {
+                console.log('Element:', currentNode.tagName, text.substring(0, 100));
+                contentParts.push({ type: 'text', content: text });
+            }
+        }
+
+        nodesToRemove.push(currentNode);
+        currentNode = currentNode.nextSibling;
+    }
+
+    console.log('=== CONTENT PARTS ===');
+    console.log(contentParts);
+
+    // Build suggestions by grouping content between hooks
+    const suggestions = [];
+    let currentSuggestion = null;
+
+    for (const part of contentParts) {
+        if (part.type === 'hook') {
+            // Save previous suggestion if exists
+            if (currentSuggestion) {
+                suggestions.push(currentSuggestion);
+            }
+            // Start new suggestion with this hook as the title
+            currentSuggestion = {
+                hook: part.content,
+                body: []
+            };
+        } else if (part.type === 'text' && currentSuggestion) {
+            // Add text to current suggestion body
+            currentSuggestion.body.push(part.content);
+        }
+    }
+
+    // Add last suggestion
+    if (currentSuggestion) {
+        suggestions.push(currentSuggestion);
+    }
+
+    console.log('=== PARSED SUGGESTIONS ===');
+    console.log(suggestions);
+
+    // Remove nodes
+    nodesToRemove.forEach(node => node.remove());
+
+    // Create the suggestions container
+    const suggestionsContainer = document.createElement('div');
+    suggestionsContainer.className = 'content-suggestions-list';
+
+    suggestions.forEach((suggestion, index) => {
+        if (!suggestion.hook) return;
+
+        const hook = suggestion.hook;
+        const bodyText = suggestion.body.join('\n\n');
+
+        // Create expandable card
+        const card = document.createElement('div');
+        card.className = 'content-suggestion-card';
+        card.onclick = () => toggleSuggestion(index);
+
+        // Collapsed view
+        const collapsed = document.createElement('div');
+        collapsed.className = 'suggestion-collapsed';
+        collapsed.innerHTML = `
+            <div class="suggestion-title-row">
+                <div class="suggestion-number">${index + 1}</div>
+                <div class="suggestion-title">${hook}</div>
+                <div class="hook-badge">Content Idea</div>
+            </div>
+            <i class="ph ph-caret-down expand-icon"></i>
+        `;
+
+        // Expanded view
+        const expanded = document.createElement('div');
+        expanded.className = 'suggestion-expanded';
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'suggestion-content';
+        contentDiv.style.whiteSpace = 'pre-wrap';
+        // Display full content: hook + body
+        contentDiv.textContent = hook + '\n\n' + bodyText;
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'suggestion-actions';
+        actionsDiv.innerHTML = `
+            <button class="suggestion-btn btn-copy" onclick="event.stopPropagation(); copyContentSuggestion(${index})">
+                <i class="ph ph-copy"></i>
+                Copy
+            </button>
+        `;
+
+        expanded.appendChild(contentDiv);
+        expanded.appendChild(actionsDiv);
+
+        card.appendChild(collapsed);
+        card.appendChild(expanded);
+        suggestionsContainer.appendChild(card);
+    });
+
+    // Insert after the header
+    contentSuggestionsHeader.after(suggestionsContainer);
+}
+
+// Copy content suggestion
+function copyContentSuggestion(index) {
+    const cards = document.querySelectorAll('.content-suggestion-card');
+    if (!cards[index]) return;
+
+    const content = cards[index].querySelector('.suggestion-content');
+    if (!content) return;
+
+    const text = content.innerText || content.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = cards[index].querySelector('.btn-copy');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-check"></i> Copied!';
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+}
+
+// Initialize content suggestions transformation on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        transformContentSuggestions();
+    }, 500);
+});

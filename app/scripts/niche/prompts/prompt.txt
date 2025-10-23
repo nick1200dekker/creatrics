@@ -26,7 +26,7 @@ STEP 2: EXTRACT TRENDING THEMES
 
 #Top Trending Topics#
 [List 3-5 trending themes/conversations, formatted as:]
-- [Theme/Topic]: @username1 shared [specific content/insight], while @username2 discussed [their angle on same theme]. @username3's post about [specific detail] shows how [what this reveals about the trend]. This is resonating because [underlying reason].
+- **[Theme/Topic]**: @username1 shared [specific content/insight], while @username2 discussed [their angle on same theme]. @username3's post about [specific detail] shows how [what this reveals about the trend]. This is resonating because [underlying reason].
 
 RULES FOR STEP 2:
 ✓ Show WHO is talking about WHAT with real usernames
@@ -34,6 +34,7 @@ RULES FOR STEP 2:
 ✓ Identify the deeper need/desire behind each trend
 ✓ Explain WHY each topic is resonating emotionally
 ✓ Focus on extractable insights, not just descriptions
+✓ The user can expand individual posts to see full content, so mention specific posts worth checking out
 
 STEP 3: CREATE ORIGINAL CONTENT IDEAS
 
@@ -50,15 +51,15 @@ RULES FOR STEP 3:
 
 
 FORMAT FOR EACH SUGGESTION:
-**"[Attention-grabbing opener/ Hook the reader]"**
+**Attention-grabbing opener/ Hook the reader**
+Story/value part
+add more lines if needed
+Punch / endline so the watcher will give engagement
 
-[Story/value part
-
-Add whitespace
-
-Keep it human]
-
-[Punch / endline so the watcher will give engagement]
-
+CRITICAL FORMATTING RULES:
+- Separate each of the 5 content suggestions with TWO blank lines
+- Each suggestion MUST start with a bold hook (**Hook text**)
+- After the bold hook, add the body text on new lines
+- Do NOT run suggestions together - they must be clearly separated
 
 OUTPUT ONLY THE ANALYSIS AND CONTENT SUGGESTIONS IN THE EXACT FORMAT ABOVE - NO ADDITIONAL EXPLANATIONS, NO COMMENTARY. JUST THE STRUCTURED OUTPUT:
