@@ -116,7 +116,7 @@
                         <input type="checkbox" id="perm_reply_guy">
                         <label for="perm_reply_guy">Reply Guy</label>
                     </div>
-                    <div class="permission-item">
+                    <div class="permission-item" style="display: none;">
                         <input type="checkbox" id="perm_clip_spaces">
                         <label for="perm_clip_spaces">Clip Spaces</label>
                     </div>
@@ -526,7 +526,6 @@ function editPermissions(memberId, permissions) {
             features: [
                 { id: 'x_post_editor', label: 'Post Magic' },
                 { id: 'reply_guy', label: 'Reply Guy' },
-                { id: 'clip_spaces', label: 'Clip Spaces' },
                 { id: 'niche', label: 'Niche Radar' }
             ]
         },

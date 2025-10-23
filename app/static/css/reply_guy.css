@@ -811,7 +811,7 @@ html.dark .primary-btn:hover:not(:disabled) {
 }
 
 .loading-icon {
-    font-size: 4rem;
+    font-size: 2.5rem;
     color: #3B82F6;
     margin-bottom: 0.5rem;
 }
