@@ -16,7 +16,7 @@
     "thumbnail/improve_prompt": "claude",
     "tiktok_competitors/tiktok_competitor_analyzer": "deepseek",
     "tiktok_titles_hashtags/tiktok_title_generator": "google",
-    "video_title/video_title": "google",
+    "video_title/video_title": "claude",
     "video_script/video_script": "deepseek",
     "tiktok_trend_finder/tiktok_ai_processor": "deepseek",
     "video_title/video_tags": "google",

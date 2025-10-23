@@ -45,6 +45,90 @@ def get_channel_keywords():
         logger.error(f"Error getting channel keywords: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@bp.route('/api/save-channel-keywords', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def save_channel_keywords():
+    """Save user's channel keywords to Firestore"""
+    try:
+        user_id = get_workspace_user_id()
+        data = request.json
+        keywords = data.get('keywords', [])
+
+        if not isinstance(keywords, list):
+            return jsonify({'success': False, 'error': 'Keywords must be an array'}), 400
+
+        # Update user's channel keywords in Firestore
+        user_ref = db.collection('users').document(user_id)
+        user_ref.update({
+            'youtube_channel_keywords': keywords
+        })
+
+        logger.info(f"Saved {len(keywords)} channel keywords for user {user_id}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Channel keywords saved successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error saving channel keywords: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/get-reference-description', methods=['GET'])
+@auth_required
+@require_permission('video_title')
+def get_reference_description():
+    """Get user's saved reference description"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get user's reference description from Firestore
+        user_ref = db.collection('users').document(user_id)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            return jsonify({'success': True, 'reference_description': ''})
+
+        user_data = user_doc.to_dict()
+        reference_description = user_data.get('reference_description', '')
+
+        return jsonify({
+            'success': True,
+            'reference_description': reference_description
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting reference description: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/save-reference-description', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def save_reference_description():
+    """Save user's reference description to Firestore"""
+    try:
+        user_id = get_workspace_user_id()
+        data = request.json
+        reference_description = data.get('reference_description', '').strip()
+
+        # Update user's reference description in Firestore
+        user_ref = db.collection('users').document(user_id)
+        user_ref.update({
+            'reference_description': reference_description
+        })
+
+        logger.info(f"Saved reference description for user {user_id} ({len(reference_description)} chars)")
+
+        return jsonify({
+            'success': True,
+            'message': 'Reference description saved successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error saving reference description: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @bp.route('/api/generate-video-titles', methods=['POST'])
 @auth_required
 @require_permission('video_title')

@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateRefDescCharCount();
     updateChannelKeywordsCharCount();
     loadChannelKeywords();
+    loadReferenceDescription();
 });
 
 // Set video type
@@ -86,13 +87,42 @@ function clearReferenceDescription() {
     showToast('Reference description cleared', 'info');
 }
 
-// Save reference description (visual feedback)
-function saveReferenceDescription() {
+// Save reference description to backend
+async function saveReferenceDescription() {
     const refDesc = document.getElementById('referenceDescription').value.trim();
-    if (refDesc) {
-        showToast('Reference description saved', 'success');
-    } else {
+
+    if (!refDesc) {
         showToast('No reference description to save', 'error');
+        return;
+    }
+
+    const saveBtn = document.getElementById('saveRefDescBtn');
+    const originalContent = saveBtn.innerHTML;
+
+    try {
+        const response = await fetch('/api/save-reference-description', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ reference_description: refDesc })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Change button to "Saved" with checkmark
+            saveBtn.innerHTML = '<i class="ph ph-check"></i> Saved';
+            showToast('Reference description saved successfully!', 'success');
+
+            // Revert back to "Save" after 2 seconds
+            setTimeout(() => {
+                saveBtn.innerHTML = originalContent;
+            }, 2000);
+        } else {
+            showToast('Failed to save reference description', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving reference description:', error);
+        showToast('Failed to save reference description', 'error');
     }
 }
 
@@ -102,6 +132,48 @@ function clearChannelKeywords() {
     keywords.value = '';
     updateChannelKeywordsCharCount();
     showToast('Channel keywords cleared', 'info');
+}
+
+// Save channel keywords to backend
+async function saveChannelKeywords() {
+    const keywordsInput = document.getElementById('channelKeywords').value.trim();
+
+    if (!keywordsInput) {
+        showToast('No channel keywords to save', 'error');
+        return;
+    }
+
+    // Parse keywords (comma-separated)
+    const keywords = keywordsInput.split(',').map(k => k.trim()).filter(k => k);
+
+    const saveBtn = document.getElementById('saveKeywordsBtn');
+    const originalContent = saveBtn.innerHTML;
+
+    try {
+        const response = await fetch('/api/save-channel-keywords', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ keywords: keywords })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Change button to "Saved" with checkmark
+            saveBtn.innerHTML = '<i class="ph ph-check"></i> Saved';
+            showToast('Channel keywords saved successfully!', 'success');
+
+            // Revert back to "Save" after 2 seconds
+            setTimeout(() => {
+                saveBtn.innerHTML = originalContent;
+            }, 2000);
+        } else {
+            showToast('Failed to save channel keywords', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving channel keywords:', error);
+        showToast('Failed to save channel keywords', 'error');
+    }
 }
 
 // Load channel keywords from backend
@@ -122,6 +194,27 @@ async function loadChannelKeywords() {
         }
     } catch (error) {
         console.log('Could not load channel keywords:', error);
+    }
+}
+
+// Load reference description from backend
+async function loadReferenceDescription() {
+    try {
+        const response = await fetch('/api/get-reference-description', {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'}
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.reference_description) {
+                const refDescInput = document.getElementById('referenceDescription');
+                refDescInput.value = data.reference_description;
+                updateRefDescCharCount();
+            }
+        }
+    } catch (error) {
+        console.log('Could not load reference description:', error);
     }
 }
 
