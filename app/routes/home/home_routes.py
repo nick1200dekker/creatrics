@@ -473,6 +473,18 @@ def get_x_content_suggestions():
                 if not deduction_result['success']:
                     logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
 
+        # Ensure JSON-serializable response: convert AIProvider enum to string
+        try:
+            token_usage = result.get('token_usage', {})
+            provider_enum = token_usage.get('provider_enum')
+            if provider_enum is not None:
+                # Preserve a readable provider name and replace enum with its value
+                token_usage['provider_name'] = getattr(provider_enum, 'value', str(provider_enum))
+                token_usage['provider_enum'] = getattr(provider_enum, 'value', str(provider_enum))
+                result['token_usage'] = token_usage
+        except Exception as conv_err:
+            logger.warning(f"Failed to normalize provider_enum for JSON response: {conv_err}")
+
         return jsonify(result)
 
     except Exception as e:

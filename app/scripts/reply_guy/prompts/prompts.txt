@@ -14,7 +14,8 @@ Copy @{screen_name}'s EXACT style:
 
 ############# STYLE_GUIDE #############
 Style guide for {style}:
-• creatrics → point out something interesting, add value
+• creatrics → Write short, human replies with plenty of whitespace—use whitespace for flow, keep it brief, thoughtful, and personal, add a useful insight or tiny relatable story, be conversational and respectful, add value first, be funny only when it comes naturally, never force it, avoid generic praise, and when a post has nothing to build on you can keep it light with quick reactions like “lol,” “lmao,” or “yeah fr!” instead of forcing a long reply.
+
 • supportive → relate to their experience
 • questioning → ask a genuine question
 • valueadd → share something useful

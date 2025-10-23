@@ -19,7 +19,6 @@ REQUIREMENTS:
 1. Generate 20-30 highly relevant tags
 2. CRITICAL: Each tag MUST be 30 characters or less
    - YouTube REJECTS any tag over 30 characters
-   - Keep tags short and concise
 3. CRITICAL: Total character count MUST NOT EXCEED 480 characters
    - Count = sum of all tag characters + commas + spaces between tags
    - Example: "tag1, tag2, tag3" = 4+1+1+4+1+1+4 = 16 characters total
@@ -31,14 +30,7 @@ REQUIREMENTS:
 
 TAG STRATEGY:
 - If a PRIMARY KEYWORD is provided, ALWAYS include it (or close variations) as the FIRST tags
-- Split the primary keyword into component parts if needed (e.g., "clash royale best decks to climb" → "clash royale", "clash royale decks", "best decks", "clash royale ladder", "trophy climbing")
-- Start with 2-3 BROAD genre/category tags (e.g., "mobile game", "gaming")
-- Add 2-3 main topic tags (e.g., "clash royale", "supercell")
-- Add 5-7 specific niche keywords (keep under 30 chars each)
-- Include 3-5 long-tail keywords (max 30 chars - be concise!)
-- Add 2-3 trending keywords if relevant (short phrases)
-- Include 2-3 audience terms (beginner, pro tips, etc.)
-- Add 2-3 action words (how to, tutorial, guide, tips)
+- You need to think like this, where are people searching for when they search for a video like this so youtube knows where to show this content
 - Include current year tags if relevant (current year: {current_year})
 
 IMPORTANT: Balance between broad discoverability and specific targeting
@@ -54,7 +46,7 @@ OPTIMIZE FOR:
 FORMAT:
 Return only the comma-separated tags, no numbering or explanations.
 
-Example format:
-youtube monetization, how to monetize youtube, youtube money guide, make money on youtube, youtube ad revenue, youtube partner program, monetization requirements, 1000 subscribers, 4000 watch hours, youtube tips for beginners, youtube growth strategy, content creator income, youtube earnings, passive income youtube, youtube channel monetization, youtube shorts monetization, youtube ads, creator economy, online income, youtube success tips
+Example for a Youtube Growth Video:
+youtube tips, grow on youtube, get more views youtube, youtube settings, increase youtube views, how to get more views, youtube algorithm, youtube growth 2025, best youtube settings, youtube tutorial, youtube tricks, youtube hacks, content creator tips, viral youtube shorts, youtube views boost, youtube secret setting, youtube views boost strategy, how to grow on youtube shorts, youtube for beginners, viral shorts, how to grow on youtube, youtube monetization
 
 OUTPUT ONLY THE COMMA-SEPARATED TAGS - NO EXPLANATIONS, NO COMMENTARY, NO NUMBERING. JUST THE TAGS:
