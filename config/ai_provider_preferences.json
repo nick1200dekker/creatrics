@@ -2,7 +2,7 @@
   "free_users_deepseek": true,
   "script_preferences": {
     "reply_guy/reply_generator": "claude",
-    "post_editor/post_editor": "google",
+    "post_editor/post_editor": "claude",
     "keyword_research/keyword_ai_processor": "google",
     "brain_dump/note_ai_processor": "deepseek",
     "clip_spaces/processor": "google",

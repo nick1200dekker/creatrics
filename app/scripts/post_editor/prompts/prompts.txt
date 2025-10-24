@@ -1,90 +1,121 @@
 ############# braindump #############
-Transform these rough notes/keywords into an optimized X/Twitter post.
+Transform these raw keywords, bullet points, or rough notes into a polished X/Twitter post that sounds professional and engaging.
 
 {VOICE_CONTEXT}
 
+YOUR TASK:
+Take disconnected ideas/keywords and craft them into a cohesive, scroll-stopping post.
+
 X POST OPTIMIZATION RULES:
 1. NO HASHTAGS - Never use hashtags
-2. Use whitespace strategically - Add line breaks between key points for readability
-3. Strong hook - Start with an attention-grabbing first line
-4. Clear structure - Make it scannable with proper spacing
-5. Conversational tone - Write like you're talking to a friend
-6. Short, punchy sentences - Keep each line impactful
-7. End with value - Finish with a takeaway, question, or call-to-action
-8. No unnecessary quotes - Use direct language
-9. Emojis (optional) - Only if they add value, use sparingly
+2. Strategic whitespace - Add line breaks between key points for rhythm
+3. Magnetic hook - Turn the main keyword into an attention-grabbing opener
+4. Visual hierarchy - Use spacing to create easy scanning
+5. Human voice - Sound like a real person, not a robot assembling keywords
+6. Sentence variety - Mix short punchy lines with medium ones
+7. Strong close - End with insight, question, or call-to-action
+8. Direct language - Expand keywords into complete thoughts
+9. Selective emojis - Only 1-3 if they amplify key points
 
-CONTENT TRANSFORMATION:
-- Turn keywords into complete thoughts
-- Add context where needed
-- Create a logical flow
-- Make it engaging and human
-- Remove jargon unless essential
-- Focus on clarity and impact
+KEYWORD-TO-POST TRANSFORMATION:
+- Identify the core message from the keywords
+- Build a logical narrative flow
+- Expand each keyword into a complete thought
+- Add necessary context without overexplaining
+- Connect ideas with smooth transitions
+- Remove redundancy and jargon
+- Make it conversational, not a list
+- Lead with the strongest idea, not chronologically
 
-User's notes/keywords:
+CONTENT PRO APPROACH:
+- What's the ONE big idea here?
+- Which keyword is most attention-grabbing?
+- How would you explain this to a friend?
+- What's the "so what?" for readers?
+- Does it sound natural when read aloud?
+
+STRUCTURE OPTIONS:
+- Problem → Solution
+- Before → After
+- Mistake → Fix
+- Question → Answer
+- Claim → Proof
+- Story → Lesson
+
+User's keywords/notes:
 {text}
 
 {VOICE_EXAMPLES}
 
-OUTPUT ONLY THE OPTIMIZED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST CONTENT:
+TRANSFORM THE KEYWORDS INTO A COMPLETE, ENGAGING POST. NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST:
 
 Optimized post:
 
 ############# grammar #############
-Only fix critical grammar issues that affect understanding. Keep the original style and tone intact.
+Polish this post like a content pro would - fixing what breaks clarity while keeping the authentic voice.
 
 {VOICE_CONTEXT}
 
-Focus on:
-- Fix only major grammar errors that impact clarity
-- Add whitespace only if text is a dense block without breaks
-- Keep the original voice and personality
-- Preserve informal language and creative formatting
-- Maintain original punctuation unless it causes confusion
-- Keep emojis and hashtags exactly as they are
-- Preserve line breaks and formatting structure
+Fix with precision:
+- Correct only grammar that disrupts understanding
+- Add breathing room if text is a wall of words
+- Preserve the original personality and tone
+- Keep deliberate informal style choices
+- Fix confusing punctuation, keep stylistic choices
+- Maintain all emojis and hashtags exactly as is
+- Respect original formatting and line breaks
+- Don't "corporate-ify" casual language
+
+Think: "How would a content creator clean this up without losing the vibe?"
 
 Original text:
 {text}
 
-OUTPUT ONLY THE IMPROVED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST CONTENT:
+OUTPUT ONLY THE IMPROVED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE POLISHED VERSION:
 
 Improved version:
 
 ############# hook_story_punch #############
-Transform this post into a clean, engaging social media post using the Hook-Story-Punch framework:
+Rewrite this post using the Hook-Story-Punch framework. Make it scroll-stopping content.
 
 {VOICE_CONTEXT}
 
-HOOK (First Line):
-- Start with your strongest point
-- Create instant curiosity
-- Use questions or bold claims
-- Make them want more
+HOOK (First 1-2 Lines):
+- Lead with your most provocative insight
+- Create instant tension or curiosity
+- Use pattern interrupts (questions, contradictions, bold claims)
+- Make it impossible to scroll past
 
-STORY (Middle):
-- Break complex ideas into simple lines
-- Use whitespace for impact
-- Build clear progression
-- Keep momentum strong
-- Add meaningful emojis
+STORY (Middle Section):
+- Build one clear idea per line
+- Use whitespace as a storytelling tool
+- Create visual rhythm that pulls readers down
+- Add momentum with progression
+- Strategic emojis that enhance (not decorate)
+- Use concrete examples over abstract concepts
 
-PUNCH (Ending):
-- End with impact
-- Ask engaging questions
-- Drive interaction
-- Keep it natural
+PUNCH (Final Lines):
+- Land with impact
+- Ask questions that spark comments
+- Create a "mic drop" moment
+- Make sharing feel natural
 
-FORMATTING:
-- Short, impactful lines (max 2 lines per thought)
-- Strategic whitespace
-- Emojis to enhance key points
+FORMATTING RULES:
+- Each thought = 1-2 lines max
+- Strategic line breaks for rhythm
+- Emojis only where they add meaning
 - Never use hashtags
-- Keep bullet points simple (•)
-- Never use markdown formatting (**, ##, etc)
-- Match original length
-- Preserve @mentions
+- Simple bullets (•) if needed
+- No markdown (**, ##, etc.)
+- Match original length naturally
+- Keep all @mentions intact
+
+CONTENT PRO STANDARDS:
+- Every line must earn its place
+- Cut anything that doesn't drive the story
+- Write like you're explaining to a friend
+- Build tension then deliver payoff
+- Make the structure invisible
 
 Examples:
 
@@ -124,9 +155,9 @@ Bad: "Today we'll discuss leadership..."
 Good: "The best leaders don't actually lead"
 
 The formula:
-• Hook with your best point
-• Create instant curiosity
-• Tell the full story
+- Hook with your best point
+- Create instant curiosity
+- Tell the full story
 
 Never save your best for last
 Your first line is everything
@@ -136,81 +167,100 @@ Original text:
 
 {VOICE_EXAMPLES}
 
-OUTPUT ONLY THE TRANSFORMED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS, NO META-COMMENTS LIKE "STYLE ANALYSIS" OR "COMPLETE REWRITE". JUST THE FINAL POST CONTENT:
+OUTPUT ONLY THE TRANSFORMED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL SCROLL-STOPPING CONTENT:
 
 Transformed version:
 
 ############# mimic #############
-YOU MUST COMPLETELY REWRITE THE ENTIRE POST FROM SCRATCH. Do not edit the original - REWRITE EVERY SINGLE SENTENCE to match the reference examples exactly. Make it sound like the SAME PERSON wrote it.
+COMPLETE REWRITE REQUIRED. Analyze the reference examples deeply, then rewrite this post from scratch to match that EXACT voice signature.
 
 {VOICE_CONTEXT}
 
-MANDATORY STYLE COPYING:
-1. Copy the EXACT grammar mistakes from examples (completly, anouncement, etc.)
-2. Copy the EXACT contractions (dont, cant, ive, etc.)
-3. Copy the EXACT sentence starters ("man", "but", "so i", etc.)
-4. Copy the EXACT casual/formal level
-5. Copy the EXACT punctuation style
-6. Copy the EXACT vocabulary level
-7. Copy the EXACT line break patterns
-8. Copy the EXACT tone and energy
+VOICE SIGNATURE ELEMENTS TO COPY EXACTLY:
+1. Grammar patterns (if examples use "completly" or "dont" - you must too)
+2. Contraction style (don't vs dont, I've vs ive)
+3. Signature openers ("man", "look", "here's the thing", "so")
+4. Energy level (hyped vs chill, formal vs casual)
+5. Punctuation rhythm (..., -, !, ?)
+6. Vocabulary range (sophisticated vs simple)
+7. Line break patterns and pacing
+8. Tone fingerprint (sarcastic, earnest, bold, humble)
+9. Sentence structure preferences (short/long mix ratio)
+10. Personality quirks and repeated phrases
 
-FORBIDDEN:
-- Do NOT fix grammar if examples have always the same mistakes
-- Do NOT make sentences more formal if examples are casual
-- Do NOT add sophisticated words if examples use simple ones
-- Do NOT improve anything - ONLY copy the style
+MIMIC LIKE A CONTENT PRO:
+- Read examples until you HEAR the voice
+- Copy mistakes if they're consistent patterns
+- Match energy before matching words
+- Preserve their unique style signatures
+- Don't "improve" - REPLICATE
+
+STRICTLY FORBIDDEN:
+- Fixing grammar the examples consistently use
+- Making formal what's intentionally casual
+- Using complex words when examples are simple
+- Cleaning up their stylistic choices
+- Adding polish they don't have
+- Removing personality for "correctness"
 
 Original text:
 {text}
 
-Reference Examples
+Reference Examples:
 {VOICE_EXAMPLES}
 
-COMPLETELY REWRITE THE ENTIRE POST FROM SCRATCH. Do not keep any original phrasing - TRANSFORM EVERY SENTENCE to match the reference examples exactly. Make it sound like the reference author wrote it.
+REWRITE EVERY SENTENCE FROM SCRATCH. Transform this into content the reference author would actually write. Match their voice so well their audience couldn't tell the difference.
 
-OUTPUT ONLY THE REWRITTEN POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST CONTENT:
+OUTPUT ONLY THE REWRITTEN POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE CONTENT IN THEIR VOICE:
+
+Rewritten version:
 
 ############# storytelling #############
-Transform this post into a clean, engaging social media post using powerful storytelling hooks.
+Transform this into compelling social content using proven storytelling techniques that content pros use daily.
 
 {VOICE_CONTEXT}
 
-FORMATTING:
-- Short, impactful sentences
-- Use line breaks for rhythm
-- Remove unnecessary quotes
-- Keep only essential details
-- Use simple, direct language
-- Add whitespace between thoughts
-- End with a clear call-to-action
-- Keep original emojis in their context
-- Match the original post length (don't make longer or shorter)
-- If original post is short, keep it short
-- If original post is a thread, keep it as a thread
-- Never use markdown formatting (**, ##, etc.)
+STORYTELLING FRAMEWORK:
+1. Emotional opener:
+   - Start with dialogue that hits feelings instantly
+   - Lead with a single powerful emotion word
+   - Choose visceral over intellectual
 
-STORYTELLING HOOKS:
-1. Open with emotion:
-   - Use a spoken line that triggers feelings
-   - Start with one powerful emotion word
-   - Choose words that relate to feelings
+2. Build connection:
+   - "What would you do if..." scenarios
+   - Open with unexpected action
+   - Mix dramatic with conversational for contrast
 
-2. Create instant connection:
-   - "What would you do if..." questions
-   - Open with extreme action
-   - Use casual tone for contrast
+3. Surprise and pivot:
+   - Subvert expectations mid-story
+   - Start with the result, then explain how
+   - Combine extremes with casual delivery
 
-3. Hook with surprise:
-   - Make unexpected pivots
-   - Start with the end result
-   - Mix extreme with casual
+FORMATTING STANDARDS:
+- Short, deliberate sentences
+- Line breaks create reading rhythm
+- No unnecessary quote marks
+- Only essential story details
+- Simple, active language
+- Whitespace between thoughts for pacing
+- Clear call-to-action or question at end
+- Preserve original emojis in context
+- Match original post length naturally
+- Maintain thread format if original is threaded
+- Never use markdown (**, ##, etc.)
+
+CONTENT PRO STORYTELLING:
+- Hook with emotion, not information
+- Build tension before resolution
+- Use dialogue to create scenes
+- Make readers feel, then think
+- End with a question that sparks discussion
 
 Original post:
 {text}
 
 {VOICE_EXAMPLES}
 
-OUTPUT ONLY THE TRANSFORMED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST CONTENT:
+OUTPUT ONLY THE TRANSFORMED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE STORY-DRIVEN CONTENT:
 
 Transformed version:

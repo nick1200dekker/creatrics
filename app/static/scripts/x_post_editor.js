@@ -281,10 +281,7 @@
             if (deleteBtn) {
                 deleteBtn.onclick = (e) => {
                     e.stopPropagation();
-                    const title = item.querySelector('.draft-title').textContent;
-                    if (confirm(`Delete draft "${title}"?`)) {
-                        deleteDraft(draftId, item);
-                    }
+                    deleteDraft(draftId, item);
                 };
             }
         });
@@ -1709,26 +1706,9 @@
         return div.innerHTML;
     }
 
-    // Toast notification
+    // Toast notification - disabled
     window.showToast = function(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `toast-notification ${type}`;
-        
-        const icon = type === 'success' ? 'ph-check-circle' : 'ph-x-circle';
-        
-        toast.innerHTML = `
-            <i class="ph ${icon}"></i>
-            <span>${message}</span>
-        `;
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => toast.classList.add('show'), 100);
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        // Toast messages disabled
     };
 
     // Expose functions
