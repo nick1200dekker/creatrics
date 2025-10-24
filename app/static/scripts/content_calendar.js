@@ -1,4 +1,4 @@
-// Content Calendar JavaScript - Part 1
+// Content Calendar JavaScript - Updated Version
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing Content Calendar...');
     
@@ -28,23 +28,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Create custom drag ghost element
     function createDragGhost(eventEl, event) {
-        // Remove any existing ghost
         removeDragGhost();
-
-        // Get the original element's dimensions
         const rect = eventEl.getBoundingClientRect();
-
-        // Create new ghost element
         dragGhost = document.createElement('div');
         dragGhost.className = 'drag-ghost';
         dragGhost.textContent = event.title;
-
-        // Apply the exact width of the original element
         dragGhost.style.width = rect.width + 'px';
         dragGhost.style.minWidth = rect.width + 'px';
         dragGhost.style.maxWidth = rect.width + 'px';
 
-        // Add platform class for coloring
         const eventData = events.find(e => e.id == event.id);
         if (eventData) {
             if (eventData.platform) {
@@ -52,15 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 dragGhost.classList.add('platform-other');
             }
-
-            // Add money emoji for sponsored content
             if (eventData.content_type === 'sponsored') {
                 dragGhost.textContent = event.title + ' 💰';
             }
         }
-
         document.body.appendChild(dragGhost);
-
         return dragGhost;
     }
     
@@ -104,34 +92,22 @@ document.addEventListener('DOMContentLoaded', function() {
             firstDay: weekStart,
 
             eventDragStart: function(info) {
-                // Create and show custom drag ghost
                 const ghost = createDragGhost(info.el, info.event);
-                
-                // Add mouse move listener
                 document.addEventListener('mousemove', updateDragGhostPosition);
-                
-                // Initial position
                 updateDragGhostPosition(info.jsEvent);
-                
-                // Make original event semi-transparent
                 info.el.style.opacity = '0.5';
             },
 
             eventDragStop: function(info) {
-                // Remove ghost and listeners
                 removeDragGhost();
                 document.removeEventListener('mousemove', updateDragGhostPosition);
-                
-                // Reset opacity
                 info.el.style.opacity = '';
             },
             
             eventDrop: function(info) {
-                // Clean up any remaining ghost
                 removeDragGhost();
                 document.removeEventListener('mousemove', updateDragGhostPosition);
                 
-                // Update event date on backend
                 const eventData = {
                     publish_date: info.event.start.toISOString()
                 };
@@ -146,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!data.success) {
                         info.revert();
                     }
-                    // Update local events array without full reload
                     const eventIndex = events.findIndex(e => e.id == info.event.id);
                     if (eventIndex !== -1) {
                         events[eventIndex].publish_date = info.event.start.toISOString();
@@ -159,33 +134,27 @@ document.addEventListener('DOMContentLoaded', function() {
             },
 
             dateClick: function(info) {
-                // Format the date properly for datetime-local input
                 const clickedDate = new Date(info.date);
                 const year = clickedDate.getFullYear();
                 const month = String(clickedDate.getMonth() + 1).padStart(2, '0');
                 const day = String(clickedDate.getDate()).padStart(2, '0');
-                const dateString = `${year}-${month}-${day}T12:00`;
+                const dateString = `${year}-${month}-${day}`;
                 
-                // Open modal with the date pre-filled
                 openNewEventModal();
                 document.getElementById('event-date').value = dateString;
+                document.getElementById('event-time').value = '12:00';
             },
             
             eventClick: function(info) {
-                // Open edit modal instead of delete
                 openEditEventModal(info.event.id);
             },
             
             eventDidMount: function(info) {
-                // Add custom classes based on event properties
                 const event = events.find(e => e.id == info.event.id);
                 if (event) {
-                    // Add sponsored class for money icon
                     if (event.content_type === 'sponsored') {
                         info.el.classList.add('sponsored');
                     }
-
-                    // Add platform class for coloring
                     if (event.platform) {
                         const platformClass = 'platform-' + event.platform.toLowerCase().replace(/[^a-z0-9]/g, '');
                         info.el.classList.add(platformClass);
@@ -214,7 +183,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
     
-    // Clean up on page unload
     window.addEventListener('beforeunload', function() {
         removeDragGhost();
     });
@@ -227,22 +195,54 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector(`.content-type-option[data-type="${type}"]`).classList.add('selected');
     };
     
-    // Toggle analytics - now works like a view switch
+    // Platform selector - NEW
+    window.selectPlatform = function(platform) {
+        // Update the platform dropdown
+        const platformOption = document.querySelector(`[data-platform="${platform}"]`);
+        if (platformOption) {
+            const icon = platformOption.getAttribute('data-icon');
+            const color = platformOption.getAttribute('data-color');
+            const iconClass = icon.includes('fill') ? `ph-fill ${icon}` : `ph ${icon}`;
+
+            const selectedPlatformText = document.getElementById('selected-platform-text');
+            const selectedPlatformInput = document.getElementById('selected-platform');
+            const platformDropdownMenu = document.getElementById('platform-dropdown-menu');
+
+            // Remove 'selected' class from all options
+            if (platformDropdownMenu) {
+                platformDropdownMenu.querySelectorAll('.dropdown-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                // Add 'selected' class to current platform
+                platformOption.classList.add('selected');
+            }
+
+            if (selectedPlatformText) {
+                selectedPlatformText.innerHTML = `
+                    <i class="${iconClass}"></i>
+                    ${platform}
+                `;
+            }
+
+            if (selectedPlatformInput) {
+                selectedPlatformInput.value = platform;
+            }
+        }
+    };
+    
+    // Toggle analytics
     window.toggleAnalytics = function() {
         const isAnalyticsActive = document.getElementById('analytics-toggle-btn').classList.contains('active');
 
         if (!isAnalyticsActive) {
-            // Switch to analytics view
             currentView = 'analytics';
-
-            // Update buttons
             document.querySelectorAll('.view-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             document.getElementById('analytics-toggle-btn').classList.add('active');
 
-            // Hide all other views
-            document.getElementById('calendar').style.display = 'none';
+            // Hide all main panels
+            document.getElementById('calendar-panel').style.display = 'none';
             document.getElementById('table-view').style.display = 'none';
             document.getElementById('kanban-view').style.display = 'none';
 
@@ -251,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
             panel.classList.add('show');
             updateAnalytics();
         } else {
-            // Switch back to calendar view
             switchView('calendar');
         }
     };
@@ -261,7 +260,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
         const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
         
-        // Filter events for current month
         const monthEvents = events.filter(event => {
             if (!event.publish_date) return false;
             const eventDate = new Date(event.publish_date);
@@ -286,7 +284,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('review-posts').textContent = reviewPosts;
         document.getElementById('ready-posts').textContent = readyPosts;
         
-        // Calculate percentages
         if (totalPosts > 0) {
             document.getElementById('organic-percentage').textContent = `${Math.round((organicPosts / totalPosts) * 100)}%`;
             document.getElementById('sponsored-percentage').textContent = `${Math.round((sponsoredPosts / totalPosts) * 100)}%`;
@@ -295,7 +292,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('sponsored-percentage').textContent = '0%';
         }
 
-        // Generate daily posts chart
         generateDailyChart(monthEvents, monthStart, monthEnd);
     }
 
@@ -304,21 +300,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const daysInMonth = monthEnd.getDate();
         const dailyCounts = new Array(daysInMonth).fill(0);
 
-        // Count posts per day
         monthEvents.forEach(event => {
             if (event.publish_date) {
-                const day = new Date(event.publish_date).getDate() - 1; // 0-indexed
+                const day = new Date(event.publish_date).getDate() - 1;
                 if (day >= 0 && day < daysInMonth) {
                     dailyCounts[day]++;
                 }
             }
         });
 
-        const maxCount = Math.max(...dailyCounts, 1); // At least 1 for scale
+        const maxCount = Math.max(...dailyCounts, 1);
         const yAxisSteps = 5;
         const yAxisMax = Math.ceil(maxCount / yAxisSteps) * yAxisSteps || 5;
 
-        // Generate Y-axis labels
         const yAxisContainer = document.getElementById('chart-y-axis');
         yAxisContainer.innerHTML = '';
         for (let i = yAxisSteps; i >= 0; i--) {
@@ -327,7 +321,6 @@ document.addEventListener('DOMContentLoaded', function() {
             yAxisContainer.appendChild(label);
         }
 
-        // Generate bars
         const barsContainer = document.getElementById('chart-bars');
         barsContainer.innerHTML = '';
 
@@ -336,7 +329,6 @@ document.addEventListener('DOMContentLoaded', function() {
             barWrapper.className = 'chart-bar';
             barWrapper.style.height = `${(count / yAxisMax) * 100}%`;
 
-            // Add tooltip
             const tooltip = document.createElement('div');
             tooltip.className = 'chart-bar-tooltip';
             const date = new Date(monthStart);
@@ -348,17 +340,15 @@ document.addEventListener('DOMContentLoaded', function() {
             barsContainer.appendChild(barWrapper);
         });
 
-        // Generate X-axis labels (show every few days to avoid crowding)
         const xAxisContainer = document.getElementById('chart-x-axis');
         xAxisContainer.innerHTML = '';
 
-        const labelInterval = daysInMonth > 15 ? 5 : 3; // Show every 5 days if month > 15 days, else every 3
+        const labelInterval = daysInMonth > 15 ? 5 : 3;
 
         for (let i = 0; i < daysInMonth; i++) {
             const label = document.createElement('div');
             label.className = 'chart-x-label';
 
-            // Only show some labels to avoid crowding
             if (i === 0 || (i + 1) % labelInterval === 0 || i === daysInMonth - 1) {
                 label.textContent = i + 1;
             } else {
@@ -373,7 +363,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.setWeekStart = function(startDay) {
         weekStart = startDay;
 
-        // Update button states
         document.querySelectorAll('.week-toggle-btn').forEach(btn => {
             btn.classList.remove('active');
             if ((startDay === 1 && btn.textContent.includes('Mon')) ||
@@ -382,20 +371,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Update calendar
         if (calendar) {
             calendar.setOption('firstDay', weekStart);
         }
 
-        // Save preference
         localStorage.setItem('calendarWeekStart', weekStart);
     };
 
-    // Load saved week start preference
     const savedWeekStart = localStorage.getItem('calendarWeekStart');
     if (savedWeekStart !== null) {
         weekStart = parseInt(savedWeekStart);
-        // Update button states after DOM loads
         setTimeout(() => {
             document.querySelectorAll('.week-toggle-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -404,11 +389,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 0);
     }
 
-    // Make functions globally available
     window.switchView = function(view) {
         currentView = view;
 
-        // Update buttons
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.classList.remove('active');
             if (btn.textContent.toLowerCase().includes(view)) {
@@ -416,27 +399,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Show/hide views
-        document.getElementById('calendar').style.display = view === 'calendar' ? 'block' : 'none';
-        document.getElementById('table-view').style.display = view === 'table' ? 'block' : 'none';
-        document.getElementById('kanban-view').style.display = view === 'kanban' ? 'block' : 'none';
-
-        // Hide analytics panel if switching to non-analytics view
+        // Hide analytics panel
         const analyticsPanel = document.getElementById('analytics-panel');
-        if (view !== 'analytics' && analyticsPanel) {
+        if (analyticsPanel) {
             analyticsPanel.classList.remove('show');
         }
 
-        if (view === 'calendar') {
-            // Re-render calendar when switching back to it
-            if (calendar) {
-                calendar.render();
-                calendar.updateSize();
-                loadEvents(); // Reload events to ensure calendar is populated
-            }
-        } else if (view === 'table') {
+        // Hide all main panels first
+        const calendarPanel = document.getElementById('calendar-panel');
+        const tableView = document.getElementById('table-view');
+        const kanbanView = document.getElementById('kanban-view');
+
+        if (calendarPanel) calendarPanel.style.display = 'none';
+        if (tableView) tableView.style.display = 'none';
+        if (kanbanView) kanbanView.style.display = 'none';
+
+        // Show selected panel
+        if (view === 'calendar' && calendarPanel) {
+            calendarPanel.style.display = 'block';
+            // Force calendar to re-render and resize
+            setTimeout(() => {
+                if (calendar) {
+                    calendar.render();
+                    calendar.updateSize();
+                }
+            }, 50);
+        } else if (view === 'table' && tableView) {
+            tableView.style.display = 'block';
             renderTable();
-        } else if (view === 'kanban') {
+        } else if (view === 'kanban' && kanbanView) {
+            kanbanView.style.display = 'block';
             renderKanban();
         }
     };
@@ -463,20 +455,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    window.openNewEventModal = function() {
+    window.openNewEventModal = function(contentType = 'organic') {
         editingEventId = null;
         document.getElementById('modal-title').textContent = 'Add New Event';
         document.getElementById('delete-btn').style.display = 'none';
         document.getElementById('event-id').value = '';
         document.getElementById('event-title').value = '';
         document.getElementById('event-date').value = '';
-        document.getElementById('event-platform').value = 'YouTube';
+        document.getElementById('event-time').value = '';
+        selectPlatform('YouTube');
         document.getElementById('event-status').value = 'draft';
         document.getElementById('event-notes').value = '';
-        
-        // Reset content type selector
-        selectContentType('organic');
-        
+        selectContentType(contentType);
         document.getElementById('event-modal').classList.add('show');
     };
     
@@ -490,13 +480,26 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('delete-btn').style.display = 'inline-flex';
         document.getElementById('event-id').value = eventId;
         document.getElementById('event-title').value = event.title || '';
-        document.getElementById('event-date').value = event.publish_date ? 
-            new Date(event.publish_date).toISOString().slice(0, 16) : '';
-        document.getElementById('event-platform').value = event.platform || 'YouTube';
+        
+        // Split datetime into date and time
+        if (event.publish_date) {
+            const eventDate = new Date(event.publish_date);
+            const year = eventDate.getFullYear();
+            const month = String(eventDate.getMonth() + 1).padStart(2, '0');
+            const day = String(eventDate.getDate()).padStart(2, '0');
+            const hours = String(eventDate.getHours()).padStart(2, '0');
+            const minutes = String(eventDate.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('event-date').value = `${year}-${month}-${day}`;
+            document.getElementById('event-time').value = `${hours}:${minutes}`;
+        } else {
+            document.getElementById('event-date').value = '';
+            document.getElementById('event-time').value = '';
+        }
+        
+        selectPlatform(event.platform || 'YouTube');
         document.getElementById('event-status').value = event.status || 'draft';
         document.getElementById('event-notes').value = event.notes || '';
-        
-        // Set content type
         selectContentType(event.content_type === 'sponsored' ? 'sponsored' : 'organic');
         
         document.getElementById('event-modal').classList.add('show');
@@ -507,34 +510,52 @@ document.addEventListener('DOMContentLoaded', function() {
         editingEventId = null;
     };
     
+    let isSaving = false;
+
     window.saveEvent = function() {
+        // Prevent duplicate submissions
+        if (isSaving) {
+            return;
+        }
+
         const eventId = document.getElementById('event-id').value;
         const title = document.getElementById('event-title').value;
-        const date = document.getElementById('event-date').value;
-        const platform = document.getElementById('event-platform').value;
+        const dateValue = document.getElementById('event-date').value;
+        const timeValue = document.getElementById('event-time').value;
+        const platform = document.getElementById('selected-platform').value;
         const status = document.getElementById('event-status').value;
         const notes = document.getElementById('event-notes').value;
         const contentType = document.querySelector('.content-type-option.selected').dataset.type;
-        
+
         if (!title) {
             return;
         }
-        
+
+        // Set saving flag
+        isSaving = true;
+
+        // Combine date and time if both provided
+        let publishDate = null;
+        if (dateValue && timeValue) {
+            publishDate = `${dateValue}T${timeValue}:00`;
+        } else if (dateValue) {
+            publishDate = `${dateValue}T12:00:00`;
+        }
+
         const eventData = {
             title: title,
-            publish_date: date || null,
+            publish_date: publishDate,
             platform: platform,
             status: status,
             notes: notes,
             content_type: contentType
         };
-        
-        const url = eventId ? 
-            `/content-calendar/api/event/${eventId}` : 
+
+        const url = eventId ?
+            `/content-calendar/api/event/${eventId}` :
             '/content-calendar/api/event';
         const method = eventId ? 'PUT' : 'POST';
-        
-        // Save to backend
+
         fetch(url, {
             method: method,
             headers: {
@@ -551,6 +572,10 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error saving event:', error);
+        })
+        .finally(() => {
+            // Reset saving flag after request completes
+            isSaving = false;
         });
     };
     
@@ -586,12 +611,10 @@ document.addEventListener('DOMContentLoaded', function() {
     window.allowDrop = function(ev) {
         ev.preventDefault();
         
-        // Clear any existing timeout
         if (dragTimeout) {
             clearTimeout(dragTimeout);
         }
         
-        // Add drag-over class with a small delay to prevent flashing
         dragTimeout = setTimeout(() => {
             ev.currentTarget.parentElement.classList.add('drag-over');
         }, 50);
@@ -600,25 +623,21 @@ document.addEventListener('DOMContentLoaded', function() {
     window.dropCard = function(ev) {
         ev.preventDefault();
         
-        // Clear timeout
         if (dragTimeout) {
             clearTimeout(dragTimeout);
             dragTimeout = null;
         }
         
-        // Remove drag-over class
         ev.currentTarget.parentElement.classList.remove('drag-over');
         
         const eventId = ev.dataTransfer.getData('eventId');
         const newStatus = ev.currentTarget.parentElement.dataset.status;
         
-        // Find the dragged card and immediately move it visually
         const card = document.querySelector(`.kanban-card[data-event-id="${eventId}"]`);
         if (card) {
             ev.currentTarget.appendChild(card);
         }
         
-        // Update status on backend
         fetch(`/content-calendar/api/event/${eventId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -627,15 +646,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Update the events array
                 const eventIndex = events.findIndex(e => e.id == eventId);
                 if (eventIndex !== -1) {
                     events[eventIndex].status = newStatus;
                 }
-                // Re-render to update counts
                 renderKanban();
             } else {
-                // Revert if failed
                 loadEvents();
             }
         })
@@ -659,7 +675,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 events = data;
                 
-                // Add events to calendar (only those with dates)
                 if (calendar) {
                     calendar.removeAllEvents();
                     data.filter(event => event.publish_date).forEach(event => {
@@ -667,7 +682,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         const today = new Date();
                         const daysUntil = Math.floor((eventDate - today) / (1000 * 60 * 60 * 24));
                         
-                        // Determine background color
                         let backgroundColor = getEventColor(event);
                         
                         const classNames = [];
@@ -686,18 +700,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             start: event.publish_date,
                             backgroundColor: backgroundColor,
                             classNames: classNames,
-                            editable: true,  // Ensure each event is draggable
+                            editable: true,
                             startEditable: true
                         });
                     });
                 }
                 
-                // Update analytics if visible
                 if (document.getElementById('analytics-panel').classList.contains('show')) {
                     updateAnalytics();
                 }
                 
-                // Update other views if visible
                 if (currentView === 'table') {
                     renderTable();
                 } else if (currentView === 'kanban') {
@@ -710,14 +722,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function getEventColor(event) {
-        // Platform-based coloring only
         const platform = (event.platform || 'Other').toLowerCase();
         switch(platform) {
-            case 'youtube': return '#FF0000';
+            case 'youtube': return '#CC0000';
             case 'x':
-            case 'twitter': return '#000000';
-            case 'instagram': return '#E4405F';
-            case 'tiktok': return '#010101';
+            case 'twitter': return '#4A5568';
+            case 'instagram': return '#C13584';
+            case 'tiktok': return '#4A5568';
             case 'blog': return '#6B7280';
             default: return '#9CA3AF';
         }
@@ -737,13 +748,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
         
-        // Filter out old content
         const visibleEvents = events.filter(event => !shouldHideOldContent(event));
         
         visibleEvents.forEach(event => {
             const row = document.createElement('tr');
             
-            // Add platform color as accent
             const platformColor = getEventColor(event);
             row.style.borderLeft = `3px solid ${platformColor}`;
             
@@ -764,17 +773,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function renderKanban() {
-        // Clear all columns
         const columns = ['draft', 'in-progress', 'review', 'ready'];
         columns.forEach(status => {
             const column = document.querySelector(`.kanban-column[data-status="${status}"] .kanban-column-body`);
             column.innerHTML = '';
         });
         
-        // Filter out old content
         const visibleEvents = events.filter(event => !shouldHideOldContent(event));
         
-        // Group events by status
         const eventsByStatus = {
             'draft': [],
             'in-progress': [],
@@ -789,7 +795,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Render cards in each column
         Object.entries(eventsByStatus).forEach(([status, statusEvents]) => {
             const column = document.querySelector(`.kanban-column[data-status="${status}"] .kanban-column-body`);
             const countEl = document.querySelector(`.kanban-column[data-status="${status}"] .kanban-column-count`);
@@ -802,7 +807,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.draggable = true;
                 card.dataset.eventId = event.id;
                 
-                // Add platform-based styling
                 const platform = (event.platform || 'Other').toLowerCase();
                 card.style.borderLeft = `3px solid ${getEventColor(event)}`;
                 
@@ -820,7 +824,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     ` : ''}
                 `;
                 
-                // Add drag event listeners
                 card.addEventListener('dragstart', function(e) {
                     e.dataTransfer.effectAllowed = 'move';
                     e.dataTransfer.setData('eventId', event.id);
@@ -833,7 +836,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         col.classList.remove('drag-over');
                     });
                     
-                    // Clear any pending timeout
                     if (dragTimeout) {
                         clearTimeout(dragTimeout);
                         dragTimeout = null;
@@ -851,7 +853,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Add event listeners for kanban columns to handle drag leave
     document.querySelectorAll('.kanban-column-body').forEach(column => {
         column.addEventListener('dragleave', function(e) {
             if (e.target === column) {
@@ -859,4 +860,85 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Dropdown functionality for "Add New Event"
+    const addEventDropdownTrigger = document.getElementById('add-event-dropdown-trigger');
+    const addEventDropdownMenu = document.getElementById('add-event-dropdown-menu');
+
+    if (addEventDropdownTrigger && addEventDropdownMenu) {
+        addEventDropdownTrigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            addEventDropdownTrigger.classList.toggle('active');
+            addEventDropdownMenu.classList.toggle('active');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!addEventDropdownTrigger.contains(e.target) && !addEventDropdownMenu.contains(e.target)) {
+                addEventDropdownTrigger.classList.remove('active');
+                addEventDropdownMenu.classList.remove('active');
+            }
+        });
+
+        // Close dropdown when an option is clicked
+        addEventDropdownMenu.querySelectorAll('.dropdown-option').forEach(option => {
+            option.addEventListener('click', function() {
+                addEventDropdownTrigger.classList.remove('active');
+                addEventDropdownMenu.classList.remove('active');
+            });
+        });
+    }
+
+    // Platform Dropdown functionality
+    const platformDropdownTrigger = document.getElementById('platform-dropdown-trigger');
+    const platformDropdownMenu = document.getElementById('platform-dropdown-menu');
+    const selectedPlatformText = document.getElementById('selected-platform-text');
+    const selectedPlatformInput = document.getElementById('selected-platform');
+
+    if (platformDropdownTrigger && platformDropdownMenu) {
+        platformDropdownTrigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            platformDropdownTrigger.classList.toggle('active');
+            platformDropdownMenu.classList.toggle('active');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!platformDropdownTrigger.contains(e.target) && !platformDropdownMenu.contains(e.target)) {
+                platformDropdownTrigger.classList.remove('active');
+                platformDropdownMenu.classList.remove('active');
+            }
+        });
+
+        // Handle platform selection
+        platformDropdownMenu.querySelectorAll('.dropdown-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const platform = this.getAttribute('data-platform');
+                const icon = this.getAttribute('data-icon');
+                const color = this.getAttribute('data-color');
+
+                // Remove 'selected' class from all options
+                platformDropdownMenu.querySelectorAll('.dropdown-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+
+                // Add 'selected' class to clicked option
+                this.classList.add('selected');
+
+                // Update selected text
+                const iconClass = icon.includes('fill') ? `ph-fill ${icon}` : `ph ${icon}`;
+                selectedPlatformText.innerHTML = `
+                    <i class="${iconClass}"></i>
+                    ${platform}
+                `;
+
+                // Update hidden input
+                selectedPlatformInput.value = platform;
+
+                // Close dropdown
+                platformDropdownTrigger.classList.remove('active');
+                platformDropdownMenu.classList.remove('active');
+            });
+        });
+    }
 });

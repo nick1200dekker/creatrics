@@ -35,10 +35,25 @@
     <!-- Controls -->
     <div class="calendar-controls">
         <div class="control-group">
-            <button class="btn btn-primary" onclick="openNewEventModal()">
-                <i class="ph ph-plus"></i>
-                Add Event
-            </button>
+            <div class="dropdown">
+                <div class="dropdown-trigger" id="add-event-dropdown-trigger">
+                    <span id="add-event-text">
+                        <i class="ph ph-plus-circle"></i>
+                        Add New Event
+                    </span>
+                    <i class="ph ph-caret-down dropdown-arrow"></i>
+                </div>
+                <div class="dropdown-menu" id="add-event-dropdown-menu">
+                    <div class="dropdown-option" onclick="openNewEventModal('organic')">
+                        <i class="ph ph-pencil"></i>
+                        <span>Organic Content</span>
+                    </div>
+                    <div class="dropdown-option" onclick="openNewEventModal('sponsored')">
+                        <i class="ph ph-currency-dollar"></i>
+                        <span>Sponsored Content</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="view-toggle">
@@ -73,14 +88,95 @@
         </div>
     </div>
     
-    <!-- Calendar View -->
-    <div id="calendar"></div>
+    <!-- Main Content Area -->
+    <div class="main-content-area">
+        <!-- Calendar View -->
+        <div class="main-panel" id="calendar-panel">
+            <div id="calendar"></div>
+        </div>
+
+        <!-- Table View -->
+        <div class="main-panel" id="table-view">
+            <table class="content-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Date</th>
+                        <th>Platform</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Kanban View -->
+        <div class="main-panel" id="kanban-view">
+            <div class="kanban-board">
+                <div class="kanban-column" data-status="draft">
+                    <div class="kanban-column-header">
+                        <div class="kanban-column-title">
+                            <i class="ph ph-pencil"></i>
+                            Draft
+                        </div>
+                        <span class="kanban-column-count">0</span>
+                    </div>
+                    <div class="kanban-column-body" ondrop="dropCard(event)" ondragover="allowDrop(event)">
+                        <!-- Cards will be populated here -->
+                    </div>
+                </div>
+
+                <div class="kanban-column" data-status="in-progress">
+                    <div class="kanban-column-header">
+                        <div class="kanban-column-title">
+                            <i class="ph ph-clock"></i>
+                            In Progress
+                        </div>
+                        <span class="kanban-column-count">0</span>
+                    </div>
+                    <div class="kanban-column-body" ondrop="dropCard(event)" ondragover="allowDrop(event)">
+                        <!-- Cards will be populated here -->
+                    </div>
+                </div>
+
+                <div class="kanban-column" data-status="review">
+                    <div class="kanban-column-header">
+                        <div class="kanban-column-title">
+                            <i class="ph ph-eye"></i>
+                            Review
+                        </div>
+                        <span class="kanban-column-count">0</span>
+                    </div>
+                    <div class="kanban-column-body" ondrop="dropCard(event)" ondragover="allowDrop(event)">
+                        <!-- Cards will be populated here -->
+                    </div>
+                </div>
+
+                <div class="kanban-column" data-status="ready">
+                    <div class="kanban-column-header">
+                        <div class="kanban-column-title">
+                            <i class="ph ph-check-circle"></i>
+                            Ready
+                        </div>
+                        <span class="kanban-column-count">0</span>
+                    </div>
+                    <div class="kanban-column-body" ondrop="dropCard(event)" ondragover="allowDrop(event)">
+                        <!-- Cards will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Analytics Panel -->
     <div id="analytics-panel" class="analytics-panel">
-        <!-- Content Type Row -->
+        <!-- Content Type Section -->
         <div class="analytics-section">
-            <h3 style="color: var(--text-secondary); font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Content Type</h3>
+            <h3><i class="ph ph-tag"></i> Content Type</h3>
             <div class="analytics-grid">
                 <div class="analytics-card">
                     <div class="analytics-label">Total Posts</div>
@@ -99,9 +195,9 @@
             </div>
         </div>
 
-        <!-- Status Row -->
-        <div class="analytics-section" style="margin-top: 2rem;">
-            <h3 style="color: var(--text-secondary); font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Content Status</h3>
+        <!-- Status Section -->
+        <div class="analytics-section">
+            <h3><i class="ph ph-list-checks"></i> Content Status</h3>
             <div class="analytics-grid">
                 <div class="analytics-card">
                     <div class="analytics-label">Draft</div>
@@ -128,7 +224,7 @@
 
         <!-- Daily Posts Chart -->
         <div class="chart-container">
-            <h3 style="color: var(--text-secondary); font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Posts Per Day</h3>
+            <h3><i class="ph ph-chart-bar"></i> Posts Per Day</h3>
             <div class="chart-wrapper">
                 <div class="chart-y-axis" id="chart-y-axis">
                     <!-- Y-axis labels will be generated dynamically -->
@@ -142,89 +238,13 @@
             </div>
         </div>
     </div>
-
-    <!-- Table View -->
-    <div id="table-view">
-        <table class="content-table">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Date</th>
-                    <th>Platform</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="table-body">
-                <!-- Will be populated by JavaScript -->
-            </tbody>
-        </table>
-    </div>
-    
-    <!-- Kanban View -->
-    <div id="kanban-view">
-        <div class="kanban-board">
-            <div class="kanban-column" data-status="draft">
-                <div class="kanban-column-header">
-                    <div class="kanban-column-title">
-                        <i class="ph ph-pencil"></i>
-                        Draft
-                    </div>
-                    <span class="kanban-column-count">0</span>
-                </div>
-                <div class="kanban-column-body" ondrop="dropCard(event)" ondragover="allowDrop(event)">
-                    <!-- Cards will be populated here -->
-                </div>
-            </div>
-            
-            <div class="kanban-column" data-status="in-progress">
-                <div class="kanban-column-header">
-                    <div class="kanban-column-title">
-                        <i class="ph ph-clock"></i>
-                        In Progress
-                    </div>
-                    <span class="kanban-column-count">0</span>
-                </div>
-                <div class="kanban-column-body" ondrop="dropCard(event)" ondragover="allowDrop(event)">
-                    <!-- Cards will be populated here -->
-                </div>
-            </div>
-            
-            <div class="kanban-column" data-status="review">
-                <div class="kanban-column-header">
-                    <div class="kanban-column-title">
-                        <i class="ph ph-eye"></i>
-                        Review
-                    </div>
-                    <span class="kanban-column-count">0</span>
-                </div>
-                <div class="kanban-column-body" ondrop="dropCard(event)" ondragover="allowDrop(event)">
-                    <!-- Cards will be populated here -->
-                </div>
-            </div>
-            
-            <div class="kanban-column" data-status="ready">
-                <div class="kanban-column-header">
-                    <div class="kanban-column-title">
-                        <i class="ph ph-check-circle"></i>
-                        Ready
-                    </div>
-                    <span class="kanban-column-count">0</span>
-                </div>
-                <div class="kanban-column-body" ondrop="dropCard(event)" ondragover="allowDrop(event)">
-                    <!-- Cards will be populated here -->
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Event Modal (for both new and edit) -->
 <div id="event-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 style="font-size: 1.25rem; font-weight: 600;" id="modal-title">Add New Event</h2>
+            <h2 id="modal-title">Add New Event</h2>
         </div>
         <div class="modal-body">
             <input type="hidden" id="event-id" value="">
@@ -244,31 +264,64 @@
             
             <div class="form-group">
                 <label class="form-label">Title *</label>
-                <input type="text" id="event-title" class="form-input" placeholder="Event title">
+                <input type="text" id="event-title" class="form-input" placeholder="Enter event title">
             </div>
-            
-            <div class="form-group">
-                <label class="form-label">Date & Time (optional - leave empty for drafts)</label>
-                <div class="date-input-wrapper">
-                    <input type="datetime-local" id="event-date" class="form-input"
-                           onclick="this.showPicker ? this.showPicker() : this.focus()"
-                           placeholder="Click to select date and time">
-                    <button type="button" class="date-picker-btn" onclick="document.getElementById('event-date').showPicker ? document.getElementById('event-date').showPicker() : document.getElementById('event-date').click()">
-                        <i class="ph ph-calendar"></i>
-                    </button>
-                </div>
-            </div>
-            
+
+            <!-- Platform Dropdown Selector -->
             <div class="form-group">
                 <label class="form-label">Platform</label>
-                <select id="event-platform" class="form-select">
-                    <option value="YouTube">YouTube</option>
-                    <option value="X">X (Twitter)</option>
-                    <option value="Instagram">Instagram</option>
-                    <option value="TikTok">TikTok</option>
-                    <option value="Blog">Blog</option>
-                    <option value="Other">Other</option>
-                </select>
+                <div class="dropdown platform-dropdown">
+                    <div class="dropdown-trigger" id="platform-dropdown-trigger">
+                        <span id="selected-platform-text">
+                            <i class="ph-fill ph-youtube-logo"></i>
+                            YouTube
+                        </span>
+                        <i class="ph ph-caret-down dropdown-arrow"></i>
+                    </div>
+                    <div class="dropdown-menu" id="platform-dropdown-menu">
+                        <div class="dropdown-option platform-option-item selected" data-platform="YouTube" data-icon="ph-youtube-logo" data-color="#FF0000">
+                            <i class="ph-fill ph-youtube-logo"></i>
+                            <span>YouTube</span>
+                        </div>
+                        <div class="dropdown-option platform-option-item" data-platform="X" data-icon="ph-x-logo" data-color="#000000">
+                            <i class="ph-fill ph-x-logo"></i>
+                            <span>X</span>
+                        </div>
+                        <div class="dropdown-option platform-option-item" data-platform="Instagram" data-icon="ph-instagram-logo" data-color="#E4405F">
+                            <i class="ph-fill ph-instagram-logo"></i>
+                            <span>Instagram</span>
+                        </div>
+                        <div class="dropdown-option platform-option-item" data-platform="TikTok" data-icon="ph-tiktok-logo" data-color="#010101">
+                            <i class="ph-fill ph-tiktok-logo"></i>
+                            <span>TikTok</span>
+                        </div>
+                        <div class="dropdown-option platform-option-item" data-platform="Blog" data-icon="ph-article" data-color="#6B7280">
+                            <i class="ph ph-article"></i>
+                            <span>Blog</span>
+                        </div>
+                        <div class="dropdown-option platform-option-item" data-platform="Other" data-icon="ph-dots-three" data-color="#9CA3AF">
+                            <i class="ph ph-dots-three"></i>
+                            <span>Other</span>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="selected-platform" value="YouTube">
+            </div>
+            
+            <!-- Date & Time - Separate Inputs -->
+            <div class="form-group">
+                <label class="form-label">Publish Date</label>
+                <div class="date-time-grid">
+                    <div class="date-input-wrapper">
+                        <input type="date" id="event-date" class="form-input">
+                        <i class="input-icon-btn ph ph-calendar"></i>
+                    </div>
+                    <div class="time-input-wrapper">
+                        <input type="time" id="event-time" class="form-input">
+                        <i class="input-icon-btn ph ph-clock"></i>
+                    </div>
+                </div>
+                <small style="color: var(--text-tertiary); font-size: 0.8125rem; margin-top: 0.25rem; display: block;">Optional - leave empty for drafts</small>
             </div>
             
             <div class="form-group">
@@ -283,7 +336,7 @@
             
             <div class="form-group">
                 <label class="form-label">Notes</label>
-                <textarea id="event-notes" class="form-textarea" placeholder="Additional notes..."></textarea>
+                <textarea id="event-notes" class="form-textarea" placeholder="Add notes, ideas, or important details..."></textarea>
             </div>
         </div>
         <div class="modal-footer">
