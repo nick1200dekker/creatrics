@@ -523,13 +523,11 @@ html.dark .news-card {
 
 .news-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 html.dark .news-card:hover {
-    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
-    border-color: rgba(96, 165, 250, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .news-header {
@@ -805,26 +803,27 @@ html.dark .suggestion-btn:hover {
     font-size: 1rem;
 }
 
-.btn-copy {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.3);
-    color: #3B82F6;
+.btn-post-x {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(0, 0, 0, 1);
+    color: white;
 }
 
-html.dark .btn-copy {
-    background: rgba(96, 165, 250, 0.1);
-    border-color: rgba(96, 165, 250, 0.3);
-    color: #60A5FA;
+html.dark .btn-post-x {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
 }
 
-.btn-copy:hover {
-    background: rgba(59, 130, 246, 0.2);
-    border-color: rgba(59, 130, 246, 0.5);
+.btn-post-x:hover {
+    background: rgba(0, 0, 0, 1);
+    border-color: rgba(0, 0, 0, 1);
+    transform: translateY(-1px);
 }
 
-html.dark .btn-copy:hover {
-    background: rgba(96, 165, 250, 0.2);
-    border-color: rgba(96, 165, 250, 0.5);
+html.dark .btn-post-x:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* Insufficient Credits */

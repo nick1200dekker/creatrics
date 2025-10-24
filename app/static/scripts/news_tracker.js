@@ -358,14 +358,10 @@ const NewsTracker = {
                 <!-- Generated Post Container -->
                 <div class="generated-post-section" id="generatedPost-${containerId}-${index}" style="display: none;">
                     <div class="post-display" id="postContent-${containerId}-${index}"></div>
-                    <div style="margin-top: 0.75rem; display: flex; gap: 0.75rem;">
-                        <button class="suggestion-btn btn-copy" onclick="NewsTracker.copyPost('${containerId}', ${index})">
-                            <i class="ph ph-copy"></i>
-                            <span>Copy Post</span>
-                        </button>
-                        <button class="suggestion-btn" onclick="NewsTracker.regeneratePost('${containerId}', ${index})">
-                            <i class="ph ph-arrows-clockwise"></i>
-                            <span>Regenerate</span>
+                    <div style="margin-top: 0.75rem;">
+                        <button class="suggestion-btn btn-post-x" onclick="NewsTracker.postToX('${containerId}', ${index})">
+                            <i class="ph ph-x-logo"></i>
+                            <span>Post on X</span>
                         </button>
                     </div>
                 </div>
@@ -423,17 +419,28 @@ const NewsTracker = {
 
             const data = await response.json();
 
+            console.log('Generate post response:', { ok: response.ok, data });
+
             generating.style.display = 'none';
 
-            if (data.success) {
-                document.getElementById(`postContent-${containerId}-${index}`).textContent = data.post;
-                generated.style.display = 'block';
+            // Check for success response
+            if (response.ok && data.success) {
+                const postContentEl = document.getElementById(`postContent-${containerId}-${index}`);
+                if (postContentEl && data.post) {
+                    postContentEl.textContent = data.post;
+                    generated.style.display = 'block';
 
-                // Update credits
-                if (typeof BaseApp !== 'undefined' && data.credits_used) {
-                    BaseApp.updateCredits(-data.credits_used);
+                    // Update credits if available
+                    if (typeof BaseApp !== 'undefined' && typeof BaseApp.updateCredits === 'function' && data.credits_used) {
+                        BaseApp.updateCredits(-data.credits_used);
+                    }
+                } else {
+                    console.error('Missing elements or post data:', { postContentEl, post: data.post });
+                    actions.style.display = 'flex';
+                    showToast('Error displaying post', 'error');
                 }
             } else {
+                // Show error
                 actions.style.display = 'flex';
                 if (data.error_type === 'insufficient_credits') {
                     showToast(data.error, 'error');
@@ -445,7 +452,7 @@ const NewsTracker = {
             console.error('Error generating post:', error);
             generating.style.display = 'none';
             actions.style.display = 'flex';
-            showToast('Failed to generate post', 'error');
+            showToast('Network error. Please try again.', 'error');
         }
     },
 
@@ -459,15 +466,15 @@ const NewsTracker = {
         this.generatePost(containerId, index);
     },
 
-    copyPost(containerId, index) {
+    postToX(containerId, index) {
         const postContent = document.getElementById(`postContent-${containerId}-${index}`).textContent;
 
-        navigator.clipboard.writeText(postContent).then(() => {
-            showToast('Post copied to clipboard', 'success');
-        }).catch(err => {
-            console.error('Failed to copy:', err);
-            showToast('Failed to copy post', 'error');
-        });
+        // Create X (Twitter) intent URL
+        const tweetText = encodeURIComponent(postContent);
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
+
+        // Open in new window
+        window.open(twitterUrl, '_blank', 'width=550,height=420');
     },
 
     async fetchLiveFeed() {
