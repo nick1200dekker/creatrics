@@ -41,30 +41,26 @@ html.dark .calendar-header {
 
 .calendar-title {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-primary);
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     margin: 0;
 }
 
 .calendar-title i {
-    color: #3B82F6;
-}
-
-html.dark .calendar-title i {
-    color: #60A5FA;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
 }
 
 /* Analytics Panel */
-.analytics-panel {
-    margin: 0 2rem 2rem 2rem;
-    display: none;
+#analytics-panel {
+    padding: 2rem;
 }
 
-.analytics-panel.show {
-    display: block;
+#analytics-panel.show {
+    display: block !important;
 }
 
 .analytics-section {
@@ -307,7 +303,7 @@ html.dark .calendar-controls {
     gap: 0.5rem;
 }
 
-/* Dropdown Styles - Enhanced Premium Look */
+/* Dropdown Styles - Simple Gray Button */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -315,69 +311,57 @@ html.dark .calendar-controls {
 }
 
 .dropdown-trigger {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    border-radius: 10px;
-    padding: 0.65rem 1.25rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
     color: var(--text-primary);
     font-size: 0.875rem;
     width: 100%;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
+    transition: all 0.2s ease;
+    font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
 }
 
 html.dark .dropdown-trigger {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
-    border-color: rgba(96, 165, 250, 0.3);
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
 }
 
 .dropdown-trigger:hover {
-    border-color: #3B82F6;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-    transform: translateY(-1px);
+    background: var(--hover-bg);
 }
 
 html.dark .dropdown-trigger:hover {
-    border-color: #60A5FA;
-    background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(167, 139, 250, 0.15) 100%);
+    background: rgba(82, 82, 91, 0.6);
 }
 
 .dropdown-trigger.active {
-    border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+    background: var(--hover-bg);
 }
 
 html.dark .dropdown-trigger.active {
-    border-color: #60A5FA;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+    background: rgba(82, 82, 91, 0.6);
 }
 
 #add-event-text {
     display: flex;
     align-items: center;
-    gap: 0.625rem;
+    gap: 0.5rem;
 }
 
 #add-event-text i {
-    font-size: 1.125rem;
-    color: #3B82F6;
-}
-
-html.dark #add-event-text i {
-    color: #60A5FA;
+    font-size: 1rem;
+    color: var(--text-secondary);
 }
 
 .dropdown-arrow {
     color: var(--text-tertiary);
     transition: transform 0.2s ease;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
 }
 
 .dropdown-trigger.active .dropdown-arrow {
@@ -779,7 +763,7 @@ html.dark .view-btn.active {
     border: 1px solid var(--border-primary);
     border-radius: 12px;
     overflow: hidden;
-    min-height: 600px;
+    min-height: 800px;
     transition: all 0.3s ease;
     display: none;
     position: relative;
@@ -798,8 +782,8 @@ html.dark .main-panel {
 
 /* Calendar container */
 #calendar {
-    padding: 1.5rem;
-    min-height: 500px;
+    padding: 0;
+    min-height: 700px;
     background: transparent;
     width: 100%;
     overflow: visible;
@@ -897,14 +881,14 @@ html.dark .main-panel {
 }
 
 .fc-view-harness {
-    min-height: 600px !important;
+    min-height: 700px !important;
     width: 100% !important;
     position: relative !important;
     z-index: 1 !important;
 }
 
 .fc-view-harness-active {
-    min-height: 600px !important;
+    min-height: 700px !important;
 }
 
 .fc-scrollgrid {
@@ -922,8 +906,12 @@ html.dark .main-panel {
 }
 
 .fc-theme-standard .fc-scrollgrid {
-    border: 1px solid var(--border-primary) !important;
+    border: none !important;
     width: 100% !important;
+}
+
+html.dark .fc-theme-standard .fc-scrollgrid {
+    border: none !important;
 }
 
 .fc-col-header {
@@ -1601,14 +1589,18 @@ html.dark .platform-select-wrapper .form-select:focus {
 }
 
 .date-input-wrapper,
-.time-input-wrapper {
+.time-input-wrapper,
+.time-select-wrapper,
+.date-select-wrapper {
     position: relative;
     display: flex;
     align-items: center;
 }
 
 .date-input-wrapper .form-input,
-.time-input-wrapper .form-input {
+.time-input-wrapper .form-input,
+.time-select-wrapper .form-select,
+.date-select-wrapper .form-select {
     flex: 1;
     padding-left: 2.75rem;
     padding-right: 1rem;
@@ -1641,8 +1633,14 @@ html.dark .input-icon-btn {
 }
 
 .date-input-wrapper .form-input:focus,
-.time-input-wrapper .form-input:focus {
+.time-input-wrapper .form-input:focus,
+.time-select-wrapper .form-select:focus {
     padding-left: 2.75rem;
+}
+
+/* Hide icon when time select is open */
+.time-select-wrapper:focus-within .input-icon-btn {
+    display: none;
 }
 
 /* Style the calendar and time picker icons - Hide default */
@@ -1747,10 +1745,10 @@ html.dark input[type="time"]::placeholder {
 .form-textarea {
     width: 100%;
     padding: 0.75rem 1rem;
-    background: var(--bg-primary);
+    background: #FFFFFF;
     border: 1px solid var(--border-primary);
     border-radius: 10px;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     color: var(--text-primary);
     transition: all 0.2s;
     font-family: inherit;
@@ -1766,9 +1764,72 @@ html.dark input[type="time"]::placeholder {
 html.dark .form-input,
 html.dark .form-select,
 html.dark .form-textarea {
-    background: rgba(39, 39, 42, 0.8);
+    background: #27272A;
     border-color: rgba(63, 63, 70, 0.8);
     color: #E4E4E7;
+}
+
+/* Make date and time select larger and more visible */
+.date-select-wrapper .form-select,
+.time-select-wrapper .form-select {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Time select zoomed in - show only 6 options */
+.time-select-wrapper .form-select[size] {
+    height: auto;
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+    overflow-y: auto;
+    border-radius: 8px;
+}
+
+.time-select-wrapper .form-select[size] option {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+.time-select-wrapper .form-select[size] option:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+html.dark .time-select-wrapper .form-select[size] option:hover {
+    background: rgba(96, 165, 250, 0.15);
+}
+
+.time-select-wrapper .form-select[size] option:checked {
+    background: #3B82F6;
+    color: white;
+}
+
+html.dark .time-select-wrapper .form-select[size] option:checked {
+    background: #60A5FA;
+    color: #18181B;
+}
+
+/* Style date input calendar picker */
+.date-input-wrapper .form-input[type="date"] {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Hide the default calendar icon from browser */
+.date-input-wrapper .form-input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.date-input-wrapper .form-input[type="date"]::-webkit-inner-spin-button,
+.date-input-wrapper .form-input[type="date"]::-webkit-clear-button {
+    display: none;
 }
 
 .form-input:focus,

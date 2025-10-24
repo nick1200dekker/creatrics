@@ -218,8 +218,8 @@
 .dashboard-wrapper {
     background: var(--bg-secondary);
     border-radius: 12px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-secondary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-primary);
     overflow: hidden;
     width: 100%;
     min-height: calc(100vh - 60px);
@@ -233,7 +233,7 @@ html.dark .dashboard-wrapper {
 
 /* Dashboard container */
 .dashboard-container {
-    padding: 1.5rem;
+    padding: 2rem;
     position: relative;
     z-index: 1;
     max-width: 100%;
@@ -246,11 +246,11 @@ html.dark .dashboard-wrapper {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
-    padding: 1.75rem 2rem;
-    background: rgba(59, 130, 246, 0.08);
-    border-radius: 20px;
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(37, 99, 235, 0.04) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(59, 130, 246, 0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
     flex-wrap: wrap;
@@ -307,10 +307,11 @@ html.dark .dashboard-header {
 .header-stat {
     text-align: center;
     padding: 1.25rem 1.75rem;
-    background: transparent;
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
     min-width: 120px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 html.dark .header-stat {
@@ -352,12 +353,18 @@ html.dark .header-stat {
 
 /* Channel Card */
 .channel-card {
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(59, 130, 246, 0.15);
-    border-radius: 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+}
+
+.channel-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
 }
 
 html.dark .channel-card {
@@ -474,10 +481,15 @@ html.dark .view-analytics-btn:hover {
 .metric-item {
     text-align: center;
     padding: 1.125rem 0.875rem;
-    border-radius: 12px;
-    background: var(--bg-secondary);
+    border-radius: 10px;
+    background: var(--bg-tertiary);
     border: 1px solid var(--border-primary);
     min-width: 0;
+    transition: all 0.2s ease;
+}
+
+.metric-item:hover {
+    background: var(--bg-secondary);
 }
 
 html.dark .metric-item {
@@ -508,14 +520,14 @@ html.dark .metric-item {
 
 /* NEW: Quick Actions Section - Standalone with auto-scroll */
 .quick-actions-section {
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(59, 130, 246, 0.15);
-    border-radius: 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
     padding: 2rem 0;
     margin-bottom: 2rem;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 html.dark .quick-actions-section {
@@ -576,15 +588,23 @@ html.dark .quick-actions-section {
 .action-card {
     flex-shrink: 0;
     width: 260px;
-    background: var(--bg-secondary);
+    background: var(--bg-tertiary);
     border: 1px solid var(--border-primary);
-    border-radius: 16px;
+    border-radius: 14px;
     padding: 1.75rem;
     text-decoration: none;
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+}
+
+.action-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    background: var(--bg-secondary);
+    border-color: rgba(59, 130, 246, 0.2);
 }
 
 html.dark .action-card {
@@ -596,7 +616,7 @@ html.dark .action-card {
 .action-icon-wrapper {
     width: 64px;
     height: 64px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(37, 99, 235, 0.06));
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -604,11 +624,17 @@ html.dark .action-card {
     margin-bottom: 1rem;
     position: relative;
     z-index: 1;
+    border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 .action-icon-wrapper i {
     font-size: 1.75rem;
-    color: #3B82F6;
+    color: #2563EB;
+}
+
+html.dark .action-icon-wrapper {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
+    border: none;
 }
 
 html.dark .action-icon-wrapper i {
@@ -653,13 +679,19 @@ html.dark .platform-badge.tiktok { color: #FFFFFF; }
 
 /* Connect Channel Card */
 .connect-channel-card {
-    background: var(--bg-primary);
-    border: 1px dashed var(--border-primary);
+    background: var(--bg-tertiary);
+    border: 2px dashed var(--border-primary);
     display: flex;
     flex-direction: column;
     text-align: center;
     padding: 2.5rem;
     height: 100%;
+    transition: all 0.2s ease;
+}
+
+.connect-channel-card:hover {
+    background: var(--bg-secondary);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
 html.dark .connect-channel-card {
@@ -707,12 +739,12 @@ html.dark .connect-channel-card {
 
 /* Calendar Section */
 .calendar-section {
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(59, 130, 246, 0.15);
-    border-radius: 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 html.dark .calendar-section {
@@ -790,12 +822,19 @@ html.dark .view-calendar-btn:hover {
     align-items: center;
     gap: 1rem;
     padding: 1.125rem;
-    background: var(--bg-secondary);
-    border-radius: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
     border-left: 3px solid #3B82F6;
     border: 1px solid var(--border-primary);
     border-left-width: 3px;
-    border-left-color: #3B82F6;
+    border-left-color: #2563EB;
+    transition: all 0.2s ease;
+}
+
+.calendar-event:hover {
+    background: var(--bg-secondary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transform: translateX(2px);
 }
 
 html.dark .calendar-event {
@@ -808,13 +847,15 @@ html.dark .calendar-event {
     flex-direction: column;
     align-items: center;
     padding: 0.5rem;
-    background: var(--bg-tertiary);
-    border-radius: 6px;
+    background: rgba(59, 130, 246, 0.08);
+    border-radius: 8px;
     min-width: 50px;
+    border: 1px solid rgba(59, 130, 246, 0.12);
 }
 
 html.dark .event-date {
     background: rgba(63, 63, 70, 0.5);
+    border: none;
 }
 
 .event-day {
@@ -846,26 +887,61 @@ html.dark .event-date {
 }
 
 .event-status {
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
+    padding: 0.375rem 0.875rem;
+    border-radius: 8px;
     font-size: 0.75rem;
     font-weight: 600;
+    text-transform: capitalize;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
 }
 
-.status-draft { background: #F3F4F6; color: #6B7280; }
-.status-in-progress { background: #FEF3C7; color: #D97706; }
-.status-ready { background: #D1FAE5; color: #059669; }
+/* Light mode status badges - Modern design */
+.status-draft {
+    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+    color: #6B7280;
+    border: 1px solid #E5E7EB;
+}
 
-html.dark .status-draft { background: #374151; color: #9CA3AF; }
-html.dark .status-in-progress { background: #78350F; color: #FCD34D; }
-html.dark .status-ready { background: #064E3B; color: #6EE7B7; }
+.status-in-progress {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    color: #D97706;
+    border: 1px solid #FDE68A;
+}
+
+.status-ready {
+    background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+    color: #059669;
+    border: 1px solid #A7F3D0;
+}
+
+/* Dark mode status badges */
+html.dark .status-draft {
+    background: #374151;
+    color: #9CA3AF;
+    border: 1px solid #4B5563;
+}
+
+html.dark .status-in-progress {
+    background: #78350F;
+    color: #FCD34D;
+    border: 1px solid #92400E;
+}
+
+html.dark .status-ready {
+    background: #064E3B;
+    color: #6EE7B7;
+    border: 1px solid #065F46;
+}
 
 .empty-calendar {
     text-align: center;
     padding: 3.5rem 2rem;
-    background: var(--bg-secondary);
-    border-radius: 16px;
-    border: 1px dashed var(--border-primary);
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    border: 2px dashed var(--border-primary);
 }
 
 .empty-calendar > i {
@@ -1125,12 +1201,13 @@ html.dark .suggestions-error {
 
 /* Guest Hero */
 .guest-hero {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(37, 99, 235, 0.04) 100%);
     padding: 4rem 2rem;
-    border-radius: 24px;
+    border-radius: 20px;
     margin-bottom: 3rem;
     text-align: center;
-    border: 1px solid rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 html.dark .guest-hero {
@@ -1210,12 +1287,19 @@ html.dark .guest-hero {
 }
 
 .preview-card {
-    background: var(--bg-primary);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
-    border-radius: 16px;
+    border-radius: 14px;
     padding: 2rem;
     text-align: center;
     transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.preview-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: rgba(59, 130, 246, 0.2);
 }
 
 html.dark .preview-card {
@@ -1223,21 +1307,23 @@ html.dark .preview-card {
     border-color: rgba(63, 63, 70, 0.6);
 }
 
-.preview-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-}
-
 .preview-icon {
     width: 64px;
     height: 64px;
     margin: 0 auto 1rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.06) 100%);
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.75rem;
+    color: #2563EB;
+    border: 1px solid rgba(59, 130, 246, 0.12);
+}
+
+html.dark .preview-icon {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border: none;
     color: #3B82F6;
 }
 
@@ -1722,10 +1808,11 @@ html.dark #mobile-menu-toggle:hover {
 
 /* Mission & Vision Section */
 .mission-vision-section {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
-    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(37, 99, 235, 0.04) 100%);
+    border-radius: 20px;
     padding: 3rem;
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 html.dark .mission-vision-section {
@@ -1762,12 +1849,19 @@ html.dark .mission-vision-icon {
 }
 
 .mission-card {
-    background: var(--bg-primary);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
-    border-radius: 16px;
+    border-radius: 14px;
     padding: 2rem;
     text-align: left;
     transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.mission-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: rgba(59, 130, 246, 0.2);
 }
 
 html.dark .mission-card {
@@ -1775,25 +1869,23 @@ html.dark .mission-card {
     border-color: rgba(63, 63, 70, 0.6);
 }
 
-.mission-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-}
-
 .mission-card .card-icon {
     width: 56px;
     height: 56px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.06) 100%);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 1.25rem;
     font-size: 1.75rem;
-    color: #3B82F6;
+    color: #2563EB;
+    border: 1px solid rgba(59, 130, 246, 0.12);
 }
 
 html.dark .mission-card .card-icon {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+    border: none;
     color: #60A5FA;
 }
 

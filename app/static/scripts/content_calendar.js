@@ -242,12 +242,13 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('analytics-toggle-btn').classList.add('active');
 
             // Hide all main panels
-            document.getElementById('calendar-panel').style.display = 'none';
+            document.getElementById('calendar').style.display = 'none';
             document.getElementById('table-view').style.display = 'none';
             document.getElementById('kanban-view').style.display = 'none';
 
             // Show analytics panel
             const panel = document.getElementById('analytics-panel');
+            panel.style.display = 'block';
             panel.classList.add('show');
             updateAnalytics();
         } else {
@@ -399,24 +400,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Hide analytics panel
+        // Hide all main panels first
+        const calendarEl = document.getElementById('calendar');
+        const tableView = document.getElementById('table-view');
+        const kanbanView = document.getElementById('kanban-view');
         const analyticsPanel = document.getElementById('analytics-panel');
+
+        if (calendarEl) calendarEl.style.display = 'none';
+        if (tableView) tableView.style.display = 'none';
+        if (kanbanView) kanbanView.style.display = 'none';
         if (analyticsPanel) {
+            analyticsPanel.style.display = 'none';
             analyticsPanel.classList.remove('show');
         }
 
-        // Hide all main panels first
-        const calendarPanel = document.getElementById('calendar-panel');
-        const tableView = document.getElementById('table-view');
-        const kanbanView = document.getElementById('kanban-view');
-
-        if (calendarPanel) calendarPanel.style.display = 'none';
-        if (tableView) tableView.style.display = 'none';
-        if (kanbanView) kanbanView.style.display = 'none';
-
         // Show selected panel
-        if (view === 'calendar' && calendarPanel) {
-            calendarPanel.style.display = 'block';
+        if (view === 'calendar' && calendarEl) {
+            calendarEl.style.display = 'block';
             // Force calendar to re-render and resize
             setTimeout(() => {
                 if (calendar) {
