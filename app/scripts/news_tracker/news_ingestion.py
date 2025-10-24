@@ -14,7 +14,7 @@ from firebase_admin import firestore
 from app.system.services.firebase_service import db
 from app.system.ai_provider.ai_provider import get_ai_provider
 from app.scripts.news_tracker.news_service import NewsService
-from app.scripts.news_radar.feed_service import FeedService
+from app.scripts.news_tracker.feed_service import FeedService
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,15 @@ NEWS_FEEDS = [
     "https://techcrunch.com/feed/",
     "https://www.theverge.com/rss/index.xml",
     "https://www.cnet.com/rss/news/",
+    "https://feeds.arstechnica.com/arstechnica/index",
+    "https://www.engadget.com/rss.xml",
+    "https://feeds.feedburner.com/thenextweb",
+
+    # Crypto & Finance
+    "https://www.coindesk.com/arc/outboundfeeds/rss/",
+    "https://cointelegraph.com/rss",
+    "https://www.theblock.co/rss.xml",
+    "https://decrypt.co/feed",
 
     # Business & Finance
     "https://www.forbes.com/business/feed/",
@@ -47,10 +56,12 @@ NEWS_FEEDS = [
     "https://variety.com/feed/",
     "https://deadline.com/feed/",
 
-    # Gaming
+    # Gaming & Esports
     "https://www.pcgamer.com/rss/",
     "https://www.polygon.com/rss/index.xml",
     "https://kotaku.com/rss",
+    "https://www.vg247.com/feed/",
+    "https://www.eurogamer.net/?format=rss",
 
     # Science
     "https://www.space.com/feeds/all",
@@ -81,7 +92,6 @@ class NewsRadarService:
             raise Exception("Firestore not initialized")
         self.db = db
         self.news_service = NewsService()
-        self.prompt_template = load_prompt('categorize_and_score.txt')
 
     def fetch_all_news(self) -> List[Dict]:
         """Fetch news from all RSS feeds"""
@@ -131,7 +141,7 @@ class NewsRadarService:
             prompt = batch_prompt.format(articles=articles_text)
 
             ai_provider = get_ai_provider(
-                script_name='news_radar/news_ingestion',
+                script_name='news_tracker/news_ingestion',
                 user_subscription=None
             )
 

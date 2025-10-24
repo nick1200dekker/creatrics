@@ -4,7 +4,7 @@ from app.system.auth.middleware import auth_required
 from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.news_tracker.news_service import NewsService
-from app.scripts.news_radar.feed_service import FeedService
+from app.scripts.news_tracker.feed_service import FeedService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ bp = Blueprint('news_tracker', __name__, url_prefix='/news-tracker')
 @require_permission('news_tracker')
 def index():
     """News Tracker main page"""
-    return render_template('news_tracker.html')
+    return render_template('news_tracker/index.html')
 
 @bp.route('/api/fetch-news', methods=['POST'])
 @auth_required

@@ -3,7 +3,7 @@ News Tracker Cron Routes - Automated news ingestion endpoint
 """
 from flask import Blueprint, jsonify
 import logging
-from app.scripts.news_radar.news_ingestion import run_news_ingestion
+from app.scripts.news_tracker.news_ingestion import run_news_ingestion
 
 logger = logging.getLogger(__name__)
 bp = Blueprint('news_tracker_cron', __name__, url_prefix='/api/cron/news')

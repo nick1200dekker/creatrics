@@ -5,6 +5,7 @@ import os
 import requests
 import feedparser
 import logging
+import html
 from pathlib import Path
 from typing import List, Dict, Optional
 from app.system.ai_provider.ai_provider import get_ai_provider
@@ -58,6 +59,41 @@ Create a compelling X post that:
 
 Return ONLY the post content, nothing else."""
 
+    def fetch_og_image(self, url: str) -> Optional[str]:
+        """
+        Fetch Open Graph image from article URL (fallback when RSS has no image)
+
+        Args:
+            url: Article URL
+
+        Returns:
+            Open Graph image URL or None
+        """
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            response = requests.get(url, headers=headers, timeout=5)
+            response.raise_for_status()
+
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # Try Open Graph image
+            og_image = soup.find('meta', property='og:image')
+            if og_image and og_image.get('content'):
+                return og_image.get('content')
+
+            # Try Twitter card image
+            twitter_image = soup.find('meta', attrs={'name': 'twitter:image'})
+            if twitter_image and twitter_image.get('content'):
+                return twitter_image.get('content')
+
+            return None
+
+        except Exception as e:
+            logger.debug(f"Could not fetch OG image from {url}: {e}")
+            return None
+
     def fetch_news(self, feed_url: str, limit: int = 20) -> List[Dict]:
         """
         Fetch news from RSS feed
@@ -80,8 +116,11 @@ Return ONLY the post content, nothing else."""
 
             news_items = []
             for entry in feed.entries[:limit]:
+                # Decode HTML entities in title (&#8216; → ')
+                title = html.unescape(entry.get('title', 'No title'))
+
                 item = {
-                    'title': entry.get('title', 'No title'),
+                    'title': title,
                     'link': entry.get('link', ''),
                     'description': entry.get('description', entry.get('summary', '')),
                     'published': entry.get('published', entry.get('pubDate', '')),
@@ -117,10 +156,19 @@ Return ONLY the post content, nothing else."""
                     if img_tag and img_tag.get('src'):
                         item['image'] = img_tag.get('src')
 
+                # Final fallback: Fetch Open Graph image from article URL
+                # (For feeds like TechCrunch, CNBC that don't include images in RSS)
+                if not item['image'] and item['link']:
+                    og_image = self.fetch_og_image(item['link'])
+                    if og_image:
+                        item['image'] = og_image
+
                 # Clean HTML from description and truncate to 200 chars
                 if item['description']:
                     soup = BeautifulSoup(item['description'], 'html.parser')
                     clean_text = soup.get_text().strip()
+                    # Decode HTML entities in description too
+                    clean_text = html.unescape(clean_text)
                     item['description'] = clean_text[:200] + '...' if len(clean_text) > 200 else clean_text
 
                 news_items.append(item)
