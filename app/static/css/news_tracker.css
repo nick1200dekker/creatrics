@@ -16,7 +16,7 @@
     border-radius: 12px;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-secondary);
-    overflow: hidden;
+    overflow: visible;
     width: 100%;
     transition: background-color 0.3s ease, border-color 0.3s ease;
     opacity: 0;
@@ -87,7 +87,7 @@ html.dark .news-tracker-content {
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
     border-radius: 12px;
-    overflow: hidden;
+    overflow: visible;
     margin-bottom: 2rem;
     transition: all 0.3s ease;
 }
@@ -106,6 +106,9 @@ html.dark .main-panel {
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
+    overflow: visible;
+    position: relative;
+    z-index: 10;
 }
 
 html.dark .panel-header {
@@ -145,6 +148,7 @@ html.dark .panel-title i {
 
 .panel-content {
     padding: 1.5rem;
+    overflow: visible;
 }
 
 /* Dropdown */
@@ -214,8 +218,8 @@ html.dark .dropdown-trigger.active {
     border: 1px solid var(--border-primary);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    max-height: 400px;
+    z-index: 9999;
+    max-height: 600px;
     overflow-y: auto;
     margin-top: 4px;
     display: none;
@@ -380,70 +384,30 @@ html.dark .secondary-btn:hover {
     background: rgba(63, 63, 70, 0.8);
 }
 
-/* Progress Section */
+/* Progress/Loading Section - Matches Reply Guy style */
 .progress-section {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 400px;
-    width: 100%;
+    padding: 4rem 2rem;
+    text-align: center;
 }
 
 .progress-card {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    padding: 3rem 2rem;
-    max-width: 600px;
-    width: 90%;
-    text-align: center;
-    transition: all 0.2s ease;
+    max-width: 400px;
     margin: 0 auto;
 }
 
-html.dark .progress-card {
-    background: rgba(39, 39, 42, 0.6);
-    border-color: rgba(63, 63, 70, 0.6);
-    backdrop-filter: blur(10px);
-}
-
-.progress-header {
-    margin-bottom: 2rem;
-}
-
 .progress-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-    border-radius: 50%;
-    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-    animation: pulse 2s ease-in-out infinite;
+    font-size: 2.5rem;
+    color: #3B82F6;
+    margin-bottom: 0.5rem;
 }
 
 html.dark .progress-icon {
-    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
-    box-shadow: 0 4px 16px rgba(96, 165, 250, 0.4);
-}
-
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-    }
-    50% {
-        transform: scale(1.05);
-        box-shadow: 0 4px 24px rgba(59, 130, 246, 0.5);
-    }
+    color: #60A5FA;
 }
 
 .progress-icon i {
-    font-size: 2.5rem;
-    color: white;
     animation: spin 1s linear infinite;
+    display: inline-block;
 }
 
 @keyframes spin {
@@ -456,16 +420,17 @@ html.dark .progress-icon {
 }
 
 .progress-title {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: 1.125rem;
+    font-weight: 600;
     color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
+    margin: 0.5rem 0 0.5rem 0;
 }
 
 .progress-subtitle {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
     margin: 0;
+    line-height: 1.5;
 }
 
 /* Empty States */

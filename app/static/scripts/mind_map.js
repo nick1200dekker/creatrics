@@ -15,6 +15,9 @@ let maps = {
         name: 'Map 1',
         nodes: [],
         connections: [],
+        zoom: 1,
+        panX: 0,
+        panY: 0,
         created: new Date().toISOString(),
         updated: new Date().toISOString()
     }
@@ -23,12 +26,55 @@ let maps = {
 // Initialize mind map when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Mind Map...');
-    
+
     // Load existing data from Firebase
     loadFromFirebase();
-    
+
     // Setup zoom controls
     setupZoomControls();
+
+    // Add keyboard event listener for Delete, Copy, Paste
+    document.addEventListener('keydown', function(e) {
+        // Don't handle shortcuts if user is typing in an input/textarea
+        const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.contentEditable === 'true';
+
+        // Delete/Backspace
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (isTyping) return;
+
+            e.preventDefault();
+
+            if (selectedNode) {
+                deleteSelectedNode();
+                saveToFirebase();
+            } else if (selectedConnection) {
+                deleteSelectedConnection();
+                saveToFirebase();
+            }
+        }
+
+        // Copy (Ctrl+C or Cmd+C)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+            if (isTyping) return;
+
+            if (selectedNode) {
+                e.preventDefault();
+                copySelectedNode();
+                saveToFirebase();
+            }
+        }
+
+        // Paste (Ctrl+V or Cmd+V)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+            if (isTyping) return;
+
+            if (selectedNode) {
+                e.preventDefault();
+                copySelectedNode();
+                saveToFirebase();
+            }
+        }
+    });
     
     // Get canvas reference
     const canvas = document.getElementById('mindMapCanvas');
@@ -681,12 +727,15 @@ function handleConnectionClick(node) {
 function createNewMap() {
     const mapCount = Object.keys(maps).length + 1;
     const newMapId = 'map' + mapCount;
-    
+
     maps[newMapId] = {
         id: newMapId,
         name: 'Map ' + mapCount,
         nodes: [],
         connections: [],
+        zoom: 1,
+        panX: 0,
+        panY: 0,
         created: new Date().toISOString(),
         updated: new Date().toISOString()
     };
@@ -775,13 +824,22 @@ function saveCurrentMapState() {
 
     maps[currentMapId].nodes = nodes;
     maps[currentMapId].connections = [...connections];
+    maps[currentMapId].zoom = currentZoom;
+    maps[currentMapId].panX = panX;
+    maps[currentMapId].panY = panY;
     maps[currentMapId].updated = new Date().toISOString();
 }
 
 function loadMapState(mapId) {
     const mapData = maps[mapId];
     if (!mapData) return;
-    
+
+    // Restore zoom and pan state
+    currentZoom = mapData.zoom || 1;
+    panX = mapData.panX || 0;
+    panY = mapData.panY || 0;
+    applyZoom();
+
     mapData.nodes.forEach(nodeData => {
         const node = document.createElement('div');
         node.className = 'mind-node';

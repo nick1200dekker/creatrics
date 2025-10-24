@@ -11,12 +11,84 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint('news_tracker', __name__, url_prefix='/news-tracker')
 
+# Available RSS feeds
+RSS_FEEDS = [
+    # General News
+    {'name': 'BBC News', 'url': 'https://feeds.bbci.co.uk/news/rss.xml'},
+    {'name': 'Reuters World', 'url': 'http://feeds.reuters.com/Reuters/worldNews'},
+    {'name': 'The Guardian', 'url': 'https://www.theguardian.com/world/rss'},
+    {'name': 'CNN Top Stories', 'url': 'http://rss.cnn.com/rss/cnn_topstories.rss'},
+    {'name': 'Associated Press', 'url': 'https://apnews.com/index.rss'},
+    {'name': 'NPR News', 'url': 'https://feeds.npr.org/1001/rss.xml'},
+    {'name': 'Al Jazeera', 'url': 'https://www.aljazeera.com/xml/rss/all.xml'},
+
+    # Tech & Business
+    {'name': 'TechCrunch', 'url': 'https://techcrunch.com/feed/'},
+    {'name': 'The Verge', 'url': 'https://www.theverge.com/rss/index.xml'},
+    {'name': 'Hacker News', 'url': 'https://news.ycombinator.com/rss'},
+    {'name': 'Ars Technica', 'url': 'https://feeds.arstechnica.com/arstechnica/index'},
+    {'name': 'Wired', 'url': 'https://www.wired.com/feed/rss'},
+    {'name': 'Engadget', 'url': 'https://www.engadget.com/rss.xml'},
+    {'name': 'MIT Technology Review', 'url': 'https://www.technologyreview.com/feed/'},
+    {'name': 'VentureBeat', 'url': 'https://venturebeat.com/feed/'},
+    {'name': 'Bloomberg Technology', 'url': 'https://feeds.bloomberg.com/technology/news.rss'},
+    {'name': 'Forbes Technology', 'url': 'https://www.forbes.com/technology/feed/'},
+
+    # Finance & Crypto
+    {'name': 'CoinDesk', 'url': 'https://www.coindesk.com/arc/outboundfeeds/rss/'},
+    {'name': 'Cointelegraph', 'url': 'https://cointelegraph.com/rss'},
+    {'name': 'The Block Crypto', 'url': 'https://www.theblock.co/rss.xml'},
+    {'name': 'Decrypt', 'url': 'https://decrypt.co/feed'},
+    {'name': 'Yahoo Finance', 'url': 'https://finance.yahoo.com/news/rssindex'},
+    {'name': 'MarketWatch', 'url': 'http://feeds.marketwatch.com/marketwatch/topstories/'},
+
+    # Science & Space
+    {'name': 'NASA', 'url': 'https://www.nasa.gov/rss/dyn/breaking_news.rss'},
+    {'name': 'Science Daily', 'url': 'https://www.sciencedaily.com/rss/all.xml'},
+    {'name': 'Scientific American', 'url': 'http://rss.sciam.com/ScientificAmerican-Global'},
+    {'name': 'Space.com', 'url': 'https://www.space.com/feeds/all'},
+    {'name': 'Phys.org', 'url': 'https://phys.org/rss-feed/'},
+
+    # Gaming & Entertainment
+    {'name': 'IGN', 'url': 'http://feeds.ign.com/ign/all'},
+    {'name': 'GameSpot', 'url': 'https://www.gamespot.com/feeds/mashup'},
+    {'name': 'Polygon', 'url': 'https://www.polygon.com/rss/index.xml'},
+    {'name': 'Kotaku', 'url': 'https://kotaku.com/rss'},
+    {'name': 'PC Gamer', 'url': 'https://www.pcgamer.com/rss/'},
+    {'name': 'The Hollywood Reporter', 'url': 'https://www.hollywoodreporter.com/feed/'},
+    {'name': 'Variety', 'url': 'https://variety.com/feed/'},
+
+    # Sports
+    {'name': 'ESPN', 'url': 'https://www.espn.com/espn/rss/news'},
+    {'name': 'BBC Sport', 'url': 'http://feeds.bbci.co.uk/sport/rss.xml'},
+    {'name': 'The Athletic', 'url': 'https://theathletic.com/feed/'},
+
+    # Lifestyle & Health
+    {'name': 'WebMD', 'url': 'https://www.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC'},
+    {'name': 'Healthline', 'url': 'https://www.healthline.com/feeds/rss'},
+    {'name': 'Medical News Today', 'url': 'https://www.medicalnewstoday.com/feeds/rss'},
+
+    # Environment
+    {'name': 'Climate Home News', 'url': 'https://www.climatechangenews.com/feed/'},
+    {'name': 'Inside Climate News', 'url': 'https://insideclimatenews.org/feed/'},
+]
+
 @bp.route('/')
 @auth_required
 @require_permission('news_tracker')
 def index():
     """News Tracker main page"""
     return render_template('news_tracker/index.html')
+
+@bp.route('/api/feeds', methods=['GET'])
+@auth_required
+@require_permission('news_tracker')
+def get_feeds():
+    """Get list of available RSS feeds"""
+    return jsonify({
+        'success': True,
+        'feeds': RSS_FEEDS
+    })
 
 @bp.route('/api/fetch-news', methods=['POST'])
 @auth_required

@@ -14,7 +14,8 @@ const NewsTracker = {
         selectedFeed: 'https://feeds.bbci.co.uk/news/rss.xml',
         selectedFeedName: 'BBC News',
         categories: [],
-        userSubscriptions: []
+        userSubscriptions: [],
+        rssFeeds: []
     },
 
     init() {
@@ -23,12 +24,15 @@ const NewsTracker = {
         this.setupTabs();
         this.setupEventListeners();
 
-        // Load categories and subscriptions, then feed
+        // Load categories, feeds, and subscriptions, then feed
         this.loadCategories().then(() => {
             this.loadUserSubscriptions().then(() => {
                 this.loadForYouFeed();
             });
         });
+
+        // Load RSS feeds
+        this.loadRSSFeeds();
     },
 
     setupTabs() {
@@ -67,6 +71,9 @@ const NewsTracker = {
                 // Load content for tab if needed
                 if (tabName === 'for-you' && this.state.forYouArticles.length === 0) {
                     this.loadForYouFeed();
+                } else if (tabName === 'categories' && !this.state.selectedCategory && this.state.categories.length > 0) {
+                    // Auto-select first category when switching to Categories tab
+                    this.selectCategory(this.state.categories[0]);
                 }
             });
         });
@@ -109,6 +116,56 @@ const NewsTracker = {
                     trigger.classList.remove('active');
                 });
             }
+        });
+    },
+
+    async loadRSSFeeds() {
+        try {
+            const response = await fetch('/news-tracker/api/feeds');
+            const data = await response.json();
+
+            if (data.success) {
+                this.state.rssFeeds = data.feeds;
+                this.renderFeedDropdown();
+            }
+        } catch (error) {
+            console.error('Error loading RSS feeds:', error);
+        }
+    },
+
+    renderFeedDropdown() {
+        const feedMenu = document.getElementById('feedMenu');
+        if (!feedMenu || this.state.rssFeeds.length === 0) return;
+
+        feedMenu.innerHTML = this.state.rssFeeds.map((feed, index) => `
+            <div class="dropdown-option" data-feed="${escapeHtml(feed.url)}" data-name="${escapeHtml(feed.name)}">
+                <i class="ph ph-check" style="opacity: ${index === 0 ? '1' : '0'}"></i>
+                <span>${escapeHtml(feed.name)}</span>
+            </div>
+        `).join('');
+
+        // Add click handlers for feed selection
+        feedMenu.querySelectorAll('.dropdown-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const feedUrl = option.dataset.feed;
+                const feedName = option.dataset.name;
+
+                this.state.selectedFeed = feedUrl;
+                this.state.selectedFeedName = feedName;
+
+                // Update UI
+                document.getElementById('selectedFeed').textContent = feedName;
+
+                // Update check marks
+                feedMenu.querySelectorAll('.dropdown-option i').forEach(icon => {
+                    icon.style.opacity = '0';
+                });
+                option.querySelector('i').style.opacity = '1';
+
+                // Close dropdown
+                feedMenu.classList.remove('active');
+                document.getElementById('feedDropdown').classList.remove('active');
+            });
         });
     },
 
@@ -481,11 +538,13 @@ const NewsTracker = {
     },
 
     async fetchLiveFeed() {
-        const selectedOption = document.querySelector('#feedMenu .dropdown-option');
-        if (!selectedOption) return;
+        const feedUrl = this.state.selectedFeed;
+        const feedName = this.state.selectedFeedName;
 
-        const feedUrl = selectedOption.dataset.feed;
-        const feedName = selectedOption.dataset.name;
+        if (!feedUrl) {
+            showToast('Please select a feed', 'error');
+            return;
+        }
 
         const loading = document.getElementById('liveFeedLoading');
         const list = document.getElementById('liveFeedList');

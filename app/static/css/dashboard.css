@@ -898,42 +898,24 @@ html.dark .event-date {
     gap: 0.375rem;
 }
 
-/* Light mode status badges - Modern design */
-.status-draft {
-    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
-    color: #6B7280;
-    border: 1px solid #E5E7EB;
-}
-
-.status-in-progress {
-    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-    color: #D97706;
-    border: 1px solid #FDE68A;
-}
-
+/* Status badges - Single color like Daily Post Suggestions */
+.status-draft,
+.status-in-progress,
+.status-review,
 .status-ready {
-    background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
-    color: #059669;
-    border: 1px solid #A7F3D0;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #3B82F6;
 }
 
 /* Dark mode status badges */
-html.dark .status-draft {
-    background: #374151;
-    color: #9CA3AF;
-    border: 1px solid #4B5563;
-}
-
-html.dark .status-in-progress {
-    background: #78350F;
-    color: #FCD34D;
-    border: 1px solid #92400E;
-}
-
+html.dark .status-draft,
+html.dark .status-in-progress,
+html.dark .status-review,
 html.dark .status-ready {
-    background: #064E3B;
-    color: #6EE7B7;
-    border: 1px solid #065F46;
+    background: rgba(96, 165, 250, 0.15);
+    border-color: rgba(96, 165, 250, 0.3);
+    color: #60A5FA;
 }
 
 .empty-calendar {
