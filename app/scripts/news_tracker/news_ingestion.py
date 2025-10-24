@@ -47,6 +47,11 @@ NEWS_FEEDS = [
     "https://www.forbes.com/business/feed/",
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10001147",
 
+    # Politics & World News
+    "https://www.theguardian.com/world/rss",
+    "https://www.theatlantic.com/feed/all/",
+    "https://feeds.npr.org/1001/rss.xml",
+
     # Sports
     "https://feeds.bbci.co.uk/sport/rss.xml",
     "https://feeds.bbci.co.uk/sport/football/rss.xml",
@@ -56,12 +61,21 @@ NEWS_FEEDS = [
     "https://variety.com/feed/",
     "https://deadline.com/feed/",
 
+    # Fashion & Beauty
+    "https://www.vogue.com/feed/rss",
+    "https://www.elle.com/rss/all.xml/",
+    "https://www.allure.com/feed/rss",
+    "https://www.refinery29.com/rss.xml",
+
     # Gaming & Esports
     "https://www.pcgamer.com/rss/",
     "https://www.polygon.com/rss/index.xml",
     "https://kotaku.com/rss",
     "https://www.vg247.com/feed/",
     "https://www.eurogamer.net/?format=rss",
+
+    # Health & Wellness
+    "https://www.statnews.com/feed/",
 
     # Science
     "https://www.space.com/feeds/all",

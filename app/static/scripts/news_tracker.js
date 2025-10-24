@@ -85,6 +85,20 @@ const NewsTracker = {
             this.saveUserSubscriptions();
         });
 
+        // Live RSS feed dropdown
+        document.getElementById('feedDropdown')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const menu = document.getElementById('feedMenu');
+            const trigger = document.getElementById('feedDropdown');
+            menu.classList.toggle('active');
+            trigger.classList.toggle('active');
+        });
+
+        // Fetch live feed button
+        document.getElementById('fetchLiveFeed')?.addEventListener('click', () => {
+            this.fetchLiveFeed();
+        });
+
         // Close dropdowns when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.dropdown')) {
@@ -168,14 +182,18 @@ const NewsTracker = {
         const grid = document.getElementById('categoriesGrid');
         if (!grid) return;
 
-        grid.innerHTML = this.state.categories.map(category => `
-            <label class="category-checkbox">
+        grid.innerHTML = this.state.categories.map((category, index) => {
+            const id = `category_${index}`;
+            return `
+            <div class="permission-item">
                 <input type="checkbox"
+                       id="${id}"
                        value="${escapeHtml(category)}"
                        ${this.state.userSubscriptions.includes(category) ? 'checked' : ''}>
-                <span class="category-label">${escapeHtml(category)}</span>
-            </label>
-        `).join('');
+                <label for="${id}">${escapeHtml(category)}</label>
+            </div>
+        `;
+        }).join('');
     },
 
     async saveUserSubscriptions() {
@@ -474,6 +492,44 @@ function formatDate(dateStr) {
         return date.toLocaleDateString();
     } catch {
         return dateStr;
+    }
+},
+
+    async fetchLiveFeed() {
+        const selectedOption = document.querySelector('#feedMenu .dropdown-option');
+        if (!selectedOption) return;
+
+        const feedUrl = selectedOption.dataset.feed;
+        const feedName = selectedOption.dataset.name;
+
+        const loading = document.getElementById('liveFeedLoading');
+        const list = document.getElementById('liveFeedList');
+
+        loading.style.display = 'flex';
+        list.style.display = 'none';
+
+        try {
+            const response = await fetch('/news-tracker/api/fetch-news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ feed_url: feedUrl })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.state.liveFeedArticles = data.news || [];
+                this.renderArticles(this.state.liveFeedArticles, 'liveFeedList');
+                loading.style.display = 'none';
+                list.style.display = 'block';
+            } else {
+                throw new Error(data.error || 'Failed to fetch news');
+            }
+        } catch (error) {
+            console.error('Error fetching live feed:', error);
+            loading.style.display = 'none';
+            showToast('Failed to fetch RSS feed', 'error');
+        }
     }
 }
 

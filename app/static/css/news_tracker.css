@@ -1056,57 +1056,60 @@ html.dark .category-badge {
     font-size: 0.875rem;
 }
 
-/* Category Settings Grid */
+/* Category Settings Grid - Match Teams Management style */
 .categories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
 }
 
-.category-checkbox {
+.categories-grid .permission-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
     background: var(--bg-secondary);
-    border: 2px solid var(--border-primary);
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
-    cursor: pointer;
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
-html.dark .category-checkbox {
-    background: rgba(39, 39, 42, 0.6);
-    border-color: rgba(63, 63, 70, 0.6);
+html.dark .categories-grid .permission-item {
+    background: rgba(39, 39, 42, 0.4);
+    border-color: rgba(63, 63, 70, 0.5);
 }
 
-.category-checkbox:hover {
-    border-color: rgba(59, 130, 246, 0.5);
+.categories-grid .permission-item:hover {
     background: var(--bg-hover);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
-.category-checkbox input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
+.categories-grid .permission-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
     cursor: pointer;
     accent-color: #3B82F6;
 }
 
-.category-label {
+.categories-grid .permission-item label {
     flex: 1;
     font-size: 0.9375rem;
     font-weight: 500;
     color: var(--text-primary);
+    cursor: pointer;
+    margin: 0;
 }
 
-.category-checkbox:has(input:checked) {
+.categories-grid .permission-item:has(input:checked) {
+    background: rgba(59, 130, 246, 0.08);
     border-color: #3B82F6;
-    background: rgba(59, 130, 246, 0.05);
 }
 
-html.dark .category-checkbox:has(input:checked) {
+html.dark .categories-grid .permission-item:has(input:checked) {
+    background: rgba(96, 165, 250, 0.12);
     border-color: #60A5FA;
-    background: rgba(96, 165, 250, 0.1);
 }
 
 /* Category Bubbles Grid (for Categories tab) */
