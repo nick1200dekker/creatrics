@@ -4,6 +4,7 @@ from app.system.auth.middleware import auth_required
 from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.news_tracker.news_service import NewsService
+from app.scripts.news_radar.feed_service import FeedService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -125,6 +126,131 @@ def generate_post():
         })
     except Exception as e:
         logger.error(f"Error generating post: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/api/personalized-feed', methods=['GET'])
+@auth_required
+@require_permission('news_tracker')
+def get_personalized_feed():
+    """Get personalized 'For You' feed based on user's subscriptions"""
+    try:
+        user_id = get_workspace_user_id()
+        limit = request.args.get('limit', 50, type=int)
+
+        feed_service = FeedService()
+        articles = feed_service.get_personalized_feed(user_id, limit)
+
+        return jsonify({
+            'success': True,
+            'articles': articles
+        })
+    except Exception as e:
+        logger.error(f"Error getting personalized feed: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/api/category-feed/<category>', methods=['GET'])
+@auth_required
+@require_permission('news_tracker')
+def get_category_feed(category):
+    """Get articles for a specific category"""
+    try:
+        limit = request.args.get('limit', 50, type=int)
+
+        feed_service = FeedService()
+        articles = feed_service.get_category_feed(category, limit)
+
+        return jsonify({
+            'success': True,
+            'category': category,
+            'articles': articles
+        })
+    except Exception as e:
+        logger.error(f"Error getting category feed: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/api/categories', methods=['GET'])
+@auth_required
+@require_permission('news_tracker')
+def get_categories():
+    """Get all available categories"""
+    try:
+        feed_service = FeedService()
+        categories = feed_service.get_all_categories()
+
+        return jsonify({
+            'success': True,
+            'categories': categories
+        })
+    except Exception as e:
+        logger.error(f"Error getting categories: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/api/subscriptions', methods=['GET'])
+@auth_required
+@require_permission('news_tracker')
+def get_subscriptions():
+    """Get user's category subscriptions"""
+    try:
+        user_id = get_workspace_user_id()
+
+        feed_service = FeedService()
+        subscriptions = feed_service.get_user_subscriptions(user_id)
+
+        return jsonify({
+            'success': True,
+            'subscriptions': subscriptions
+        })
+    except Exception as e:
+        logger.error(f"Error getting subscriptions: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/api/subscriptions', methods=['POST'])
+@auth_required
+@require_permission('news_tracker')
+def update_subscriptions():
+    """Update user's category subscriptions"""
+    try:
+        user_id = get_workspace_user_id()
+        data = request.get_json()
+        categories = data.get('categories', [])
+
+        if not isinstance(categories, list):
+            return jsonify({
+                'success': False,
+                'error': 'Categories must be an array'
+            }), 400
+
+        feed_service = FeedService()
+        success = feed_service.update_user_subscriptions(user_id, categories)
+
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Subscriptions updated successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to update subscriptions'
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Error updating subscriptions: {e}", exc_info=True)
         return jsonify({
             'success': False,
             'error': str(e)

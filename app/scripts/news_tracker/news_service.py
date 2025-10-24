@@ -101,6 +101,22 @@ Return ONLY the post content, nothing else."""
                     if entry.enclosures[0].get('type', '').startswith('image'):
                         item['image'] = entry.enclosures[0].get('href')
 
+                # Try to extract from HTML content field (The Verge, some Atom feeds)
+                if not item['image'] and hasattr(entry, 'content') and len(entry.content) > 0:
+                    content_html = entry.content[0].get('value', '')
+                    if content_html:
+                        soup_temp = BeautifulSoup(content_html, 'html.parser')
+                        img_tag = soup_temp.find('img')
+                        if img_tag and img_tag.get('src'):
+                            item['image'] = img_tag.get('src')
+
+                # Try to extract from description field (fallback for other feeds)
+                if not item['image'] and item['description']:
+                    soup_temp = BeautifulSoup(item['description'], 'html.parser')
+                    img_tag = soup_temp.find('img')
+                    if img_tag and img_tag.get('src'):
+                        item['image'] = img_tag.get('src')
+
                 # Clean HTML from description and truncate to 200 chars
                 if item['description']:
                     soup = BeautifulSoup(item['description'], 'html.parser')

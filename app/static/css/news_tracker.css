@@ -972,3 +972,203 @@ html.dark .generating-spinner i.ph-spinner {
     font-size: 0.9375rem;
 }
 
+/* Tabs */
+.tabs-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--border-primary);
+    padding: 0 0.5rem;
+}
+
+html.dark .tabs-container {
+    border-bottom-color: rgba(63, 63, 70, 0.5);
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.tab-btn.active {
+    color: #3B82F6;
+    border-bottom-color: #3B82F6;
+}
+
+html.dark .tab-btn.active {
+    color: #60A5FA;
+    border-bottom-color: #60A5FA;
+}
+
+.tab-btn i {
+    font-size: 1.125rem;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Category Badges */
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 6px;
+    color: #3B82F6;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+html.dark .category-badge {
+    background: rgba(96, 165, 250, 0.1);
+    border-color: rgba(96, 165, 250, 0.3);
+    color: #60A5FA;
+}
+
+.importance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.875rem;
+}
+
+/* Category Settings Grid */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.category-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+html.dark .category-checkbox {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.category-checkbox:hover {
+    border-color: rgba(59, 130, 246, 0.5);
+    background: var(--bg-hover);
+}
+
+.category-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #3B82F6;
+}
+
+.category-label {
+    flex: 1;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.category-checkbox:has(input:checked) {
+    border-color: #3B82F6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+html.dark .category-checkbox:has(input:checked) {
+    border-color: #60A5FA;
+    background: rgba(96, 165, 250, 0.1);
+}
+
+/* Category Bubbles Grid (for Categories tab) */
+.category-bubbles-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.category-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-primary);
+    border-radius: 50px;
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+html.dark .category-bubble {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.category-bubble:hover {
+    transform: translateY(-2px);
+    border-color: rgba(59, 130, 246, 0.5);
+    background: var(--bg-hover);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+html.dark .category-bubble:hover {
+    background: rgba(63, 63, 70, 0.8);
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 4px 8px rgba(96, 165, 250, 0.2);
+}
+
+.category-bubble.active {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    border-color: #3B82F6;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+html.dark .category-bubble.active {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    border-color: #60A5FA;
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
+}
+
+.category-bubble.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.category-bubble i {
+    font-size: 1.125rem;
+}
+

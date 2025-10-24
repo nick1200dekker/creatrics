@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}News Tracker - Creatrics{% endblock %}
+
+{% block additional_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/news_tracker.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="news-tracker-wrapper">
+    <!-- Header -->
+    <div class="news-tracker-header">
+        <h1 class="news-tracker-title">
+            <i class="ph ph-newspaper"></i>
+            News Tracker
+        </h1>
+    </div>
+
+    <!-- Main Content -->
+    <div class="news-tracker-content">
+        <!-- Main Panel -->
+        <div class="main-panel">
+            <div class="panel-header">
+                <div class="panel-title-section">
+                    <h2 class="panel-title">
+                        <i class="ph ph-rss"></i>
+                        News Feed
+                    </h2>
+                </div>
+                <div class="panel-controls">
+                    <div class="dropdown">
+                        <button class="dropdown-trigger" id="feedDropdown">
+                            <span id="selectedFeed">BBC News</span>
+                            <i class="ph ph-caret-down dropdown-arrow"></i>
+                        </button>
+                        <div class="dropdown-menu" id="feedMenu">
+                            <!-- News & Current Affairs -->
+                            <div class="dropdown-header">News & Current Affairs</div>
+                            <div class="dropdown-option selected" data-feed="https://feeds.bbci.co.uk/news/rss.xml" data-name="BBC News">
+                                <i class="ph ph-check"></i>
+                                <span>BBC News</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://feeds.bbci.co.uk/news/world/rss.xml" data-name="BBC World News">
+                                <i class="ph ph-check"></i>
+                                <span>BBC World News</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" data-name="NY Times">
+                                <i class="ph ph-check"></i>
+                                <span>NY Times</span>
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Technology & Startups -->
+                            <div class="dropdown-header">Technology & Startups</div>
+                            <div class="dropdown-option" data-feed="https://www.wired.com/feed/rss" data-name="Wired">
+                                <i class="ph ph-check"></i>
+                                <span>Wired</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://techcrunch.com/feed/" data-name="TechCrunch">
+                                <i class="ph ph-check"></i>
+                                <span>TechCrunch</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://www.theverge.com/rss/index.xml" data-name="The Verge">
+                                <i class="ph ph-check"></i>
+                                <span>The Verge</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://www.cnet.com/rss/news/" data-name="CNET">
+                                <i class="ph ph-check"></i>
+                                <span>CNET</span>
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Business & Finance -->
+                            <div class="dropdown-header">Business & Finance</div>
+                            <div class="dropdown-option" data-feed="https://www.forbes.com/business/feed/" data-name="Forbes Business">
+                                <i class="ph ph-check"></i>
+                                <span>Forbes Business</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10001147" data-name="CNBC Top News">
+                                <i class="ph ph-check"></i>
+                                <span>CNBC Top News</span>
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Sports -->
+                            <div class="dropdown-header">Sports</div>
+                            <div class="dropdown-option" data-feed="https://feeds.bbci.co.uk/sport/rss.xml" data-name="BBC Sport">
+                                <i class="ph ph-check"></i>
+                                <span>BBC Sport</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://feeds.bbci.co.uk/sport/football/rss.xml" data-name="BBC Football">
+                                <i class="ph ph-check"></i>
+                                <span>BBC Football</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://www.skysports.com/rss/12040" data-name="Sky Sports">
+                                <i class="ph ph-check"></i>
+                                <span>Sky Sports</span>
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Entertainment -->
+                            <div class="dropdown-header">Entertainment</div>
+                            <div class="dropdown-option" data-feed="https://variety.com/feed/" data-name="Variety">
+                                <i class="ph ph-check"></i>
+                                <span>Variety</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://deadline.com/feed/" data-name="Deadline">
+                                <i class="ph ph-check"></i>
+                                <span>Deadline</span>
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Gaming -->
+                            <div class="dropdown-header">Gaming</div>
+                            <div class="dropdown-option" data-feed="https://www.pcgamer.com/rss/" data-name="PC Gamer">
+                                <i class="ph ph-check"></i>
+                                <span>PC Gamer</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://www.polygon.com/rss/index.xml" data-name="Polygon">
+                                <i class="ph ph-check"></i>
+                                <span>Polygon</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://kotaku.com/rss" data-name="Kotaku">
+                                <i class="ph ph-check"></i>
+                                <span>Kotaku</span>
+                            </div>
+
+                            <div class="dropdown-divider"></div>
+
+                            <!-- Science & Space -->
+                            <div class="dropdown-header">Science & Space</div>
+                            <div class="dropdown-option" data-feed="https://www.space.com/feeds/all" data-name="Space.com">
+                                <i class="ph ph-check"></i>
+                                <span>Space.com</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://www.livescience.com/feeds/all" data-name="Live Science">
+                                <i class="ph ph-check"></i>
+                                <span>Live Science</span>
+                            </div>
+                            <div class="dropdown-option" data-feed="https://www.popsci.com/feed/" data-name="Popular Science">
+                                <i class="ph ph-check"></i>
+                                <span>Popular Science</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="primary-btn" id="fetchNewsBtn">
+                        <i class="ph ph-arrows-clockwise"></i>
+                        Fetch News
+                    </button>
+                </div>
+            </div>
+
+            <!-- News List -->
+            <div class="panel-content" id="newsContent">
+                <!-- Loading State -->
+                <div class="progress-section" id="loadingState" style="display: none;">
+                    <div class="progress-card">
+                        <div class="progress-header">
+                            <div class="progress-icon">
+                                <i class="ph ph-newspaper"></i>
+                            </div>
+                            <h3 class="progress-title">Fetching Latest News</h3>
+                            <p class="progress-subtitle">Loading fresh stories...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <i class="ph ph-newspaper empty-icon"></i>
+                    <h3 class="empty-title">No news loaded yet</h3>
+                    <p class="empty-text">Select a news feed and click "Fetch News" to get started</p>
+                </div>
+
+                <!-- News Items Container -->
+                <div class="news-list" id="newsList" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/news_tracker.js') }}"></script>
+<script>
+    // Initialize News Tracker when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        NewsTracker.init();
+    });
+</script>
+{% endblock %}
