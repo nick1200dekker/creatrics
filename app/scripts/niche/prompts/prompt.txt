@@ -22,6 +22,9 @@ RULES FOR STEP 1:
 #Hot on Timeline#
 [Write 2-3 paragraphs analyzing what themes and topics are resonating. Explain WHY these topics are hot without listing engagement numbers in the narrative. add whitespace/ new lines so its easy to read, dont make long sentences.]
 
+CRITICAL FORMATTING RULES:
+Write human! Make it easy to read! No AI terms like buzzing on the timeline. 
+
 STEP 2: EXTRACT TRENDING THEMES
 
 #Top Trending Topics#

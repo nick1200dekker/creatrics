@@ -1033,7 +1033,8 @@
            workspace_info.permissions.analytics or
            workspace_info.permissions.reply_guy or
            workspace_info.permissions.clip_spaces or
-           workspace_info.permissions.niche %}
+           workspace_info.permissions.niche or
+           workspace_info.permissions.news_tracker %}
 
         {% if has_x_permissions %}
         <div class="nav-group" data-group="X">
@@ -1078,6 +1079,15 @@
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-crosshair"></i>
                     <span>Niche Radar</span>
+                </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.news_tracker %}
+                <a href="{{ url_for('news_tracker.index') }}"
+                   class="nav-subitem {% if request.endpoint and 'news_tracker' in request.endpoint %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-newspaper"></i>
+                    <span>News Tracker</span>
                 </a>
                 {% endif %}
 
