@@ -1205,7 +1205,7 @@ def tiktok_posts():
 
         if posts_doc.exists:
             cached_data = posts_doc.to_dict()
-            # Check if data is less than 1 hour old
+            # Check if data is less than 24 hours old (increased from 1 hour to match daily cron job)
             fetched_at = cached_data.get('fetched_at')
             if fetched_at:
                 from datetime import datetime, timedelta
@@ -1214,7 +1214,7 @@ def tiktok_posts():
                 else:
                     fetched_time = fetched_at
 
-                if datetime.now() - fetched_time.replace(tzinfo=None) < timedelta(hours=1):
+                if datetime.now() - fetched_time.replace(tzinfo=None) < timedelta(hours=24):
                     logger.info(f"Returning cached TikTok posts for user {user_id}")
                     return jsonify({
                         'posts': cached_data.get('posts', []),

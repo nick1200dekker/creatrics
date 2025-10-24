@@ -1120,29 +1120,66 @@ class XAnalytics:
             logger.error(f"Error storing posts in Firebase: {str(e)}")
     
     def _store_replies(self, replies):
-        """Store replies data in Firebase subcollection"""
+        """Store replies data in Firebase subcollection, merging with existing replies"""
         try:
             if not replies:
                 logger.warning(f"No replies to store for user {self.user_id}")
                 return
-                
-            logger.info(f"Storing {len(replies)} replies")
-            
+
+            logger.info(f"Merging {len(replies)} new replies with existing replies")
+
+            # Get existing replies document
+            replies_ref = self.db.collection('users').document(self.user_id).collection('x_replies').document('data')
+            existing_doc = replies_ref.get()
+
+            # Merge with existing replies to avoid losing old data
+            if existing_doc.exists:
+                existing_data = existing_doc.to_dict()
+                existing_replies = existing_data.get('replies', [])
+
+                # Create a set of existing reply IDs for deduplication
+                existing_reply_ids = set()
+                for reply in existing_replies:
+                    reply_id = reply.get('reply', {}).get('id')
+                    if reply_id:
+                        existing_reply_ids.add(reply_id)
+
+                # Add only new replies (not already in existing)
+                new_replies_added = 0
+                for reply in replies:
+                    reply_id = reply.get('reply', {}).get('id')
+                    if reply_id and reply_id not in existing_reply_ids:
+                        existing_replies.append(reply)
+                        existing_reply_ids.add(reply_id)
+                        new_replies_added += 1
+
+                logger.info(f"Merged {new_replies_added} new replies with {len(existing_replies) - new_replies_added} existing replies")
+                all_replies = existing_replies
+            else:
+                logger.info(f"No existing replies found, storing {len(replies)} new replies")
+                all_replies = replies
+
+            # Sort all replies by views (descending) and keep top 100
+            sorted_replies = sorted(
+                all_replies,
+                key=lambda r: r.get('reply', {}).get('views', 0),
+                reverse=True
+            )[:100]
+
             # Prepare replies data
             replies_doc = {
                 'user_id': self.user_id,
                 'timestamp': datetime.now().isoformat(),
                 'screen_name': self.x_handle,
-                'count': len(replies),
-                'replies': replies
+                'count': len(sorted_replies),
+                'replies': sorted_replies
             }
-            
-            # Store with fixed name 'data'
-            replies_ref = self.db.collection('users').document(self.user_id).collection('x_replies').document('data')
+
+            # Store merged replies
             replies_ref.set(replies_doc)
-            
-            logger.info(f"Stored {len(replies)} replies for user {self.user_id}")
-            
+
+            logger.info(f"Stored {len(sorted_replies)} total replies for user {self.user_id}")
+
         except Exception as e:
             logger.error(f"Error storing replies in Firebase: {str(e)}")
     

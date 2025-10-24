@@ -326,13 +326,16 @@ const NewsTracker = {
         container.innerHTML = articles.map((article, index) => `
             <div class="news-card" data-index="${index}">
                 <div style="display: flex; align-items: flex-start; margin-bottom: 1rem;">
-                    ${article.image ? `
-                        <div class="news-image-container">
+                    <div class="news-image-container">
+                        ${article.image ? `
                             <img src="${escapeHtml(article.image)}" alt="${escapeHtml(article.title)}"
                                  class="news-image" loading="lazy"
-                                 onerror="this.parentElement.style.display='none'">
-                        </div>
-                    ` : ''}
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22120%22 height=%22120%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22system-ui%22 font-size=%2248%22 fill=%22%239ca3af%22%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E'">
+                        ` : `
+                            <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22120%22 height=%22120%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22system-ui%22 font-size=%2248%22 fill=%22%239ca3af%22%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E"
+                                 alt="${escapeHtml(article.title)}" class="news-image">
+                        `}
+                    </div>
                     <div class="news-content-wrapper">
                         <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
                             <span class="category-badge">${escapeHtml(article.category)}</span>
