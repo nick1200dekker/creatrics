@@ -101,10 +101,11 @@ Return ONLY the post content, nothing else."""
                     if entry.enclosures[0].get('type', '').startswith('image'):
                         item['image'] = entry.enclosures[0].get('href')
 
-                # Clean HTML from description
+                # Clean HTML from description and truncate to 200 chars
                 if item['description']:
                     soup = BeautifulSoup(item['description'], 'html.parser')
-                    item['description'] = soup.get_text().strip()
+                    clean_text = soup.get_text().strip()
+                    item['description'] = clean_text[:200] + '...' if len(clean_text) > 200 else clean_text
 
                 news_items.append(item)
 
