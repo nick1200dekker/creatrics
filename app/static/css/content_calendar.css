@@ -61,7 +61,6 @@ html.dark .calendar-title i {
 .analytics-panel {
     margin: 0 2rem 2rem 2rem;
     display: none;
-    min-height: 600px;
 }
 
 .analytics-panel.show {
@@ -74,6 +73,10 @@ html.dark .calendar-title i {
     border-radius: 16px;
     padding: 2rem;
     margin-bottom: 2rem;
+}
+
+.analytics-section:first-child {
+    margin-top: 0;
 }
 
 html.dark .analytics-section {
@@ -304,7 +307,7 @@ html.dark .calendar-controls {
     gap: 0.5rem;
 }
 
-/* Dropdown Styles - Simple and Clean */
+/* Dropdown Styles - Enhanced Premium Look */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -312,54 +315,58 @@ html.dark .calendar-controls {
 }
 
 .dropdown-trigger {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 10px;
+    padding: 0.65rem 1.25rem;
     color: var(--text-primary);
     font-size: 0.875rem;
     width: 100%;
     cursor: pointer;
-    transition: all 0.2s ease;
-    font-weight: 500;
+    transition: all 0.3s ease;
+    font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
 }
 
 html.dark .dropdown-trigger {
-    background: rgba(39, 39, 42, 0.6);
-    border-color: rgba(63, 63, 70, 0.6);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border-color: rgba(96, 165, 250, 0.3);
 }
 
 .dropdown-trigger:hover {
     border-color: #3B82F6;
-    background: var(--hover-bg);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    transform: translateY(-1px);
 }
 
 html.dark .dropdown-trigger:hover {
     border-color: #60A5FA;
-    background: rgba(59, 130, 246, 0.08);
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(167, 139, 250, 0.15) 100%);
 }
 
 .dropdown-trigger.active {
     border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
 }
 
 html.dark .dropdown-trigger.active {
     border-color: #60A5FA;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
 }
 
 #add-event-text {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.625rem;
 }
 
 #add-event-text i {
-    font-size: 1rem;
+    font-size: 1.125rem;
     color: #3B82F6;
 }
 
@@ -370,7 +377,7 @@ html.dark #add-event-text i {
 .dropdown-arrow {
     color: var(--text-tertiary);
     transition: transform 0.2s ease;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
 }
 
 .dropdown-trigger.active .dropdown-arrow {
@@ -382,21 +389,22 @@ html.dark #add-event-text i {
     top: 100%;
     left: 0;
     right: 0;
-    background: #FFFFFF;
+    background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     z-index: 1000;
     max-height: 300px;
     overflow-y: auto;
-    margin-top: 4px;
+    margin-top: 6px;
     display: none;
 }
 
 html.dark .dropdown-menu {
-    background: #27272A;
-    border-color: rgba(63, 63, 70, 0.6);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background: rgba(39, 39, 42, 0.98);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
 }
 
 .dropdown-menu.active {
@@ -404,7 +412,7 @@ html.dark .dropdown-menu {
 }
 
 .dropdown-option {
-    padding: 10px 16px;
+    padding: 0.875rem 1.25rem;
     color: var(--text-primary);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -412,19 +420,24 @@ html.dark .dropdown-menu {
     font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.875rem;
 }
 
 .dropdown-option:hover {
-    background: var(--hover-bg);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
 }
 
 html.dark .dropdown-option:hover {
-    background: rgba(59, 130, 246, 0.1);
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(167, 139, 250, 0.15) 100%);
 }
 
 .dropdown-option i {
-    font-size: 1rem;
+    font-size: 1.125rem;
+    color: #3B82F6;
+}
+
+html.dark .dropdown-option i {
+    color: #60A5FA;
 }
 
 .dropdown-option.selected {
@@ -443,21 +456,21 @@ html.dark .dropdown-option:hover {
 #selected-platform-text {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.625rem;
 }
 
 #selected-platform-text i {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
 }
 
 .platform-dropdown .dropdown-option {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.875rem;
 }
 
 .platform-dropdown .dropdown-option i {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
 }
 
 /* Platform icon colors - Brand colors always */
@@ -517,6 +530,14 @@ html.dark #selected-platform-text i.ph-tiktok-logo {
     color: #6B7280 !important;
 }
 
+html.dark .platform-option-item[data-platform="Blog"] i {
+    color: #9CA3AF !important;
+}
+
+html.dark #selected-platform-text i.ph-article {
+    color: #9CA3AF !important;
+}
+
 .platform-option-item[data-platform="Other"] i {
     color: #9CA3AF !important;
 }
@@ -525,7 +546,7 @@ html.dark #selected-platform-text i.ph-tiktok-logo {
     color: #9CA3AF !important;
 }
 
-/* Modal Buttons - Matching Reply Guy */
+/* Modal Buttons */
 .modal-footer .btn {
     padding: 0.6rem 1rem;
     background: var(--bg-tertiary);
@@ -752,7 +773,7 @@ html.dark .view-btn.active {
     margin: 0 2rem 2rem 2rem;
 }
 
-/* Main Panel - Matching Reply Guy */
+/* Main Panel */
 .main-panel {
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
@@ -761,6 +782,8 @@ html.dark .view-btn.active {
     min-height: 600px;
     transition: all 0.3s ease;
     display: none;
+    position: relative;
+    z-index: 1;
 }
 
 .main-panel#calendar-panel {
@@ -789,47 +812,48 @@ html.dark .main-panel {
     z-index: 100000 !important;
     pointer-events: none !important;
     border: none !important;
-    border-radius: 4px !important;
-    padding: 3px 6px !important;
-    font-size: 0.85rem !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-size: 0.875rem !important;
     cursor: grabbing !important;
     margin: 0 !important;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-    height: 24px !important;
-    line-height: 18px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+    height: auto !important;
+    line-height: 1.4 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     color: white !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
     opacity: 0.95 !important;
     transform: translate(-50%, -50%) !important;
+    backdrop-filter: blur(10px) !important;
 }
 
 /* Platform colors for drag ghost */
 .drag-ghost.platform-youtube {
-    background: #CC0000 !important;
+    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%) !important;
 }
 
 .drag-ghost.platform-x,
 .drag-ghost.platform-twitter {
-    background: #4A5568 !important;
+    background: linear-gradient(135deg, #1DA1F2 0%, #0C85D0 100%) !important;
 }
 
 .drag-ghost.platform-instagram {
-    background: #C13584 !important;
+    background: linear-gradient(135deg, #E4405F 0%, #C13584 100%) !important;
 }
 
 .drag-ghost.platform-tiktok {
-    background: #4A5568 !important;
+    background: linear-gradient(135deg, #000000 0%, #111111 100%) !important;
 }
 
 .drag-ghost.platform-blog {
-    background: #6B7280 !important;
+    background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%) !important;
 }
 
 .drag-ghost.platform-other {
-    background: #9CA3AF !important;
+    background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%) !important;
 }
 
 /* Fix FullCalendar drag and drop */
@@ -906,19 +930,22 @@ html.dark .main-panel {
     width: 100% !important;
 }
 
+/* Enhanced Column Header - Matching table background */
 .fc-col-header-cell {
-    background: var(--bg-tertiary) !important;
+    background: #f3f4f6 !important;
     padding: 1rem 0 !important;
     font-size: 0.95rem !important;
+    border-bottom: none !important;
 }
 
 html.dark .fc-col-header-cell {
-    background: rgba(39, 39, 42, 0.8) !important;
+    background: #1f1f23 !important;
+    border-bottom: none !important;
 }
 
 .fc-col-header-cell-cushion {
-    color: var(--text-secondary) !important;
-    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    font-weight: 700 !important;
     font-size: 0.95rem !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
@@ -930,6 +957,11 @@ html.dark .fc-col-header-cell {
     border: 1px solid var(--border-primary) !important;
     position: relative !important;
     overflow: hidden !important;
+}
+
+html.dark .fc-daygrid-day {
+    background: rgba(39, 39, 42, 0.4) !important;
+    border-color: rgba(63, 63, 70, 0.4) !important;
 }
 
 .fc-daygrid-day-frame {
@@ -963,11 +995,15 @@ html.dark .fc-col-header-cell {
     background: var(--hover-bg) !important;
 }
 
+html.dark .fc-daygrid-day:hover {
+    background: rgba(59, 130, 246, 0.08) !important;
+}
+
 .fc-daygrid-day-number {
     color: var(--text-primary) !important;
     padding: 6px 8px !important;
     font-size: 0.875rem !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
@@ -990,75 +1026,91 @@ html.dark .fc-col-header-cell {
     background: #3B82F6;
     border-radius: 50%;
     z-index: 2;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+html.dark .fc-day-today::after {
+    background: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
 }
 
 .fc-day-today .fc-daygrid-day-number {
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     color: var(--text-primary) !important;
 }
 
-/* Events with status colors */
+/* Enhanced Premium Events */
 .fc-event {
     border: none !important;
-    border-radius: 4px !important;
-    padding: 3px 20px 3px 6px !important;
-    font-size: 0.85rem !important;
+    border-radius: 8px !important;
+    padding: 6px 24px 6px 10px !important;
+    font-size: 0.875rem !important;
     cursor: move !important;
-    margin: 2px !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-    height: 24px !important;
-    line-height: 18px !important;
+    margin: 3px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    height: auto !important;
+    min-height: 28px !important;
+    line-height: 1.4 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     position: relative !important;
+    font-weight: 600 !important;
+    backdrop-filter: blur(8px) !important;
 }
 
-/* Platform-based coloring */
+/* Platform-based coloring with gradients */
 .fc-event.platform-youtube {
-    background: #CC0000 !important;
+    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%) !important;
+    border-left: 4px solid #AA0000 !important;
 }
 
 .fc-event.platform-x,
 .fc-event.platform-twitter {
-    background: #4A5568 !important;
+    background: linear-gradient(135deg, #1DA1F2 0%, #0C85D0 100%) !important;
+    border-left: 4px solid #0A6AA8 !important;
 }
 
 .fc-event.platform-instagram {
-    background: #C13584 !important;
+    background: linear-gradient(135deg, #E4405F 0%, #C13584 100%) !important;
+    border-left: 4px solid #A02D6A !important;
 }
 
 .fc-event.platform-tiktok {
-    background: #4A5568 !important;
+    background: linear-gradient(135deg, #000000 0%, #111111 100%) !important;
+    border-left: 4px solid #000000 !important;
 }
 
 .fc-event.platform-blog {
-    background: #6B7280 !important;
+    background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%) !important;
+    border-left: 4px solid #374151 !important;
 }
 
 .fc-event.platform-other {
-    background: #9CA3AF !important;
+    background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%) !important;
+    border-left: 4px solid #4B5563 !important;
 }
 
 /* Money icon for sponsored posts */
 .fc-event.sponsored::after {
     content: '💰';
     position: absolute;
-    right: 4px;
+    right: 6px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 0.7rem;
+    font-size: 0.875rem;
     line-height: 1;
 }
 
 .fc-event-main {
     color: white !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
 }
 
 .fc-event:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25), 0 3px 6px rgba(0, 0, 0, 0.15) !important;
 }
 
 .fc-daygrid-event-harness {
@@ -1069,6 +1121,10 @@ html.dark .fc-col-header-cell {
 .fc-day-other {
     background: var(--bg-tertiary) !important;
     opacity: 0.5;
+}
+
+html.dark .fc-day-other {
+    background: rgba(24, 24, 27, 0.4) !important;
 }
 
 .fc-day-other .fc-daygrid-day-number {
@@ -1401,7 +1457,7 @@ html.dark .status-ready {
     color: #6EE7B7;
 }
 
-/* Modals - Matching Reply Guy */
+/* Modals - Enhanced */
 .modal {
     display: none;
     position: fixed;
@@ -1409,8 +1465,8 @@ html.dark .status-ready {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 10000;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 99999;
     align-items: flex-start;
     justify-content: center;
     padding-top: 5rem;
@@ -1418,6 +1474,7 @@ html.dark .status-ready {
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
+    backdrop-filter: blur(4px);
 }
 
 .modal.show {
@@ -1446,16 +1503,17 @@ html.dark .status-ready {
 html.dark .modal-content {
     background: rgba(39, 39, 42, 0.98);
     border-color: rgba(63, 63, 70, 0.8);
+    backdrop-filter: blur(20px);
 }
 
 .modal-header {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-primary);
-    background: var(--bg-tertiary);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
 }
 
 html.dark .modal-header {
-    background: rgba(63, 63, 70, 0.4);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
     border-bottom-color: rgba(82, 82, 91, 0.5);
 }
 
@@ -1481,11 +1539,11 @@ html.dark .modal-header {
     display: flex;
     justify-content: flex-end;
     gap: 0.875rem;
-    background: var(--bg-tertiary);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
 }
 
 html.dark .modal-footer {
-    background: rgba(63, 63, 70, 0.4);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
     border-top-color: rgba(82, 82, 91, 0.5);
 }
 
@@ -1688,16 +1746,16 @@ html.dark input[type="time"]::placeholder {
 .form-select,
 .form-textarea {
     width: 100%;
-    padding: 0.6rem 1rem;
+    padding: 0.75rem 1rem;
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 0.875rem;
     color: var(--text-primary);
     transition: all 0.2s;
     font-family: inherit;
     font-weight: 500;
-    height: 40px;
+    height: 42px;
 }
 
 .form-textarea {
@@ -1708,8 +1766,8 @@ html.dark input[type="time"]::placeholder {
 html.dark .form-input,
 html.dark .form-select,
 html.dark .form-textarea {
-    background: rgba(39, 39, 42, 0.6);
-    border-color: rgba(63, 63, 70, 0.6);
+    background: rgba(39, 39, 42, 0.8);
+    border-color: rgba(63, 63, 70, 0.8);
     color: #E4E4E7;
 }
 
@@ -1718,18 +1776,16 @@ html.dark .form-textarea {
 .form-textarea:focus {
     outline: none;
     border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    background: white;
-    color: #18181B;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    background: var(--bg-primary);
 }
 
 html.dark .form-input:focus,
 html.dark .form-select:focus,
 html.dark .form-textarea:focus {
-    background: rgba(39, 39, 42, 0.8);
+    background: rgba(39, 39, 42, 0.95);
     border-color: #60A5FA;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
-    color: #FAFAFA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
 }
 
 .form-input::placeholder,
@@ -1743,7 +1799,7 @@ html.dark .form-textarea:focus {
     line-height: 1.5;
 }
 
-/* Content type selector */
+/* Content type selector - Enhanced */
 .content-type-selector {
     display: flex;
     gap: 0.75rem;
@@ -1752,12 +1808,12 @@ html.dark .form-textarea:focus {
 
 .content-type-option {
     flex: 1;
-    padding: 0.875rem 1rem;
+    padding: 1rem 1.25rem;
     border: 2px solid var(--border-primary);
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     text-align: center;
-    transition: all 0.2s;
+    transition: all 0.3s;
     background: var(--bg-primary);
     font-size: 0.875rem;
     color: var(--text-secondary);
@@ -1765,30 +1821,33 @@ html.dark .form-textarea:focus {
 }
 
 html.dark .content-type-option {
-    background: rgba(39, 39, 42, 0.6);
-    border-color: rgba(63, 63, 70, 0.6);
+    background: rgba(39, 39, 42, 0.8);
+    border-color: rgba(63, 63, 70, 0.8);
 }
 
 .content-type-option:hover {
-    border-color: rgba(59, 130, 246, 0.4);
-    background: var(--hover-bg);
-    transform: translateY(-1px);
+    border-color: rgba(59, 130, 246, 0.5);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 html.dark .content-type-option:hover {
-    border-color: rgba(96, 165, 250, 0.5);
+    border-color: rgba(96, 165, 250, 0.6);
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.12) 0%, rgba(167, 139, 250, 0.12) 100%);
 }
 
 .content-type-option.selected {
     border-color: #3B82F6;
-    background: rgba(59, 130, 246, 0.1);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
     color: var(--text-primary);
     font-weight: 700;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 html.dark .content-type-option.selected {
     border-color: #60A5FA;
-    background: rgba(96, 165, 250, 0.15);
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.2) 0%, rgba(167, 139, 250, 0.2) 100%);
 }
 
 /* Loading */
