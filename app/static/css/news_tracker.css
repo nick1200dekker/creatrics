@@ -215,7 +215,7 @@ html.dark .dropdown-trigger.active {
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     z-index: 1000;
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
     margin-top: 4px;
     display: none;
@@ -264,6 +264,39 @@ html.dark .dropdown-option.selected i {
 
 html.dark .dropdown-option:hover {
     background: rgba(63, 63, 70, 0.8);
+}
+
+/* Dropdown Headers */
+.dropdown-header {
+    padding: 8px 16px 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    background: var(--surface-secondary);
+    margin-top: 4px;
+    pointer-events: none;
+}
+
+.dropdown-header:first-child {
+    margin-top: 0;
+}
+
+html.dark .dropdown-header {
+    background: rgba(39, 39, 42, 0.5);
+    color: rgba(161, 161, 170, 0.8);
+}
+
+/* Dropdown Dividers */
+.dropdown-divider {
+    height: 1px;
+    background: var(--border-primary);
+    margin: 4px 0;
+}
+
+html.dark .dropdown-divider {
+    background: rgba(63, 63, 70, 0.5);
 }
 
 .dropdown-option.selected {

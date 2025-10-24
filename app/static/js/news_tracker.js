@@ -126,8 +126,6 @@ window.NewsTracker = (function() {
             state.news = data.news;
             renderNews();
 
-            showToast('News fetched successfully!', 'success');
-
         } catch (error) {
             console.error('Error fetching news:', error);
             showToast(error.message || 'Failed to fetch news', 'error');
@@ -293,10 +291,6 @@ window.NewsTracker = (function() {
             document.getElementById(`postContent-${index}`).textContent = data.post;
             document.getElementById(`generatedPost-${index}`).style.display = 'block';
 
-            // Show credits used in toast
-            const creditsUsed = data.credits_used ? data.credits_used.toFixed(2) : '~0.50';
-            showToast(`Post generated! (${creditsUsed} credits used)`, 'success');
-
         } catch (error) {
             console.error('Error generating post:', error);
             showToast(error.message || 'Failed to generate post', 'error');
@@ -321,14 +315,12 @@ window.NewsTracker = (function() {
         try {
             const postContent = document.getElementById(`postContent-${index}`).textContent;
             if (!postContent) {
-                showToast('No post to copy', 'error');
                 return;
             }
             await navigator.clipboard.writeText(postContent);
             showToast('Post copied to clipboard!', 'success');
         } catch (error) {
             console.error('Error copying to clipboard:', error);
-            showToast('Failed to copy to clipboard', 'error');
         }
     }
 
