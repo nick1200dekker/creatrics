@@ -957,10 +957,12 @@ html.dark .insufficient-credits-card {
     font-size: 2.5rem;
     color: #3B82F6;
     animation: spin 1s linear infinite;
+    display: inline-block;
 }
 
 html.dark .generating-spinner i.ph-spinner {
     color: #60A5FA;
+    animation: spin 1s linear infinite;
 }
 
 .generating-text {
