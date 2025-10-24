@@ -206,17 +206,18 @@ class FeedService:
 
             for doc in all_docs:
                 article = doc.to_dict()
-                created_at_str = article.get('created_at') or article.get('published', '')
+                # Use published date (when article was actually published) not created_at (when we ingested it)
+                published_str = article.get('published', '') or article.get('created_at', '')
 
-                if not created_at_str:
+                if not published_str:
                     # Keep articles without timestamp (shouldn't happen)
                     kept_count += 1
                     continue
 
                 try:
-                    created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+                    published_date = datetime.fromisoformat(published_str.replace('Z', '+00:00'))
 
-                    if created_at < cutoff_time:
+                    if published_date < cutoff_time:
                         # Delete old article
                         doc.reference.delete()
                         deleted_count += 1

@@ -525,8 +525,12 @@ function formatDate(dateStr) {
         if (hours < 1) return 'Just now';
         if (hours < 24) return `${hours}h ago`;
         const days = Math.floor(hours / 24);
+        if (days === 1) return 'Yesterday';
         if (days < 7) return `${days}d ago`;
-        return date.toLocaleDateString();
+
+        // Format as "Oct 17, 2025" instead of locale-dependent format
+        const options = { month: 'short', day: 'numeric', year: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
     } catch {
         return dateStr;
     }

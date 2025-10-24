@@ -8,6 +8,8 @@ import logging
 import html
 from pathlib import Path
 from typing import List, Dict, Optional
+from datetime import datetime, timezone
+from time import mktime
 from app.system.ai_provider.ai_provider import get_ai_provider
 from bs4 import BeautifulSoup
 
@@ -124,11 +126,25 @@ Return ONLY the post content, nothing else."""
                 # Decode HTML entities (&#8216; → ')
                 title = html.unescape(clean_title)
 
+                # Parse published date - feedparser normalizes to published_parsed (time tuple)
+                published_date = ''
+                if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                    try:
+                        # Convert time tuple to ISO format datetime string
+                        dt = datetime.fromtimestamp(mktime(entry.published_parsed), tz=timezone.utc)
+                        published_date = dt.isoformat()
+                    except Exception as e:
+                        logger.debug(f"Error parsing published_parsed: {e}")
+                        published_date = entry.get('published', entry.get('pubDate', ''))
+                else:
+                    # Fallback to raw string if parsed version not available
+                    published_date = entry.get('published', entry.get('pubDate', ''))
+
                 item = {
                     'title': title,
                     'link': entry.get('link', ''),
                     'description': entry.get('description', entry.get('summary', '')),
-                    'published': entry.get('published', entry.get('pubDate', '')),
+                    'published': published_date,
                     'source': feed.feed.get('title', 'Unknown'),
                     'image': None
                 }
