@@ -116,8 +116,13 @@ Return ONLY the post content, nothing else."""
 
             news_items = []
             for entry in feed.entries[:limit]:
-                # Decode HTML entities in title (&#8216; → ')
-                title = html.unescape(entry.get('title', 'No title'))
+                # Clean title: strip HTML tags and decode entities
+                raw_title = entry.get('title', 'No title')
+                # Remove HTML tags like <em>, <strong>, etc.
+                soup_title = BeautifulSoup(raw_title, 'html.parser')
+                clean_title = soup_title.get_text()
+                # Decode HTML entities (&#8216; → ')
+                title = html.unescape(clean_title)
 
                 item = {
                     'title': title,

@@ -468,32 +468,7 @@ const NewsTracker = {
             console.error('Failed to copy:', err);
             showToast('Failed to copy post', 'error');
         });
-    }
-};
-
-// Utility functions
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function formatDate(dateStr) {
-    try {
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diff = now - date;
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-
-        if (hours < 1) return 'Just now';
-        if (hours < 24) return `${hours}h ago`;
-        const days = Math.floor(hours / 24);
-        if (days < 7) return `${days}d ago`;
-        return date.toLocaleDateString();
-    } catch {
-        return dateStr;
-    }
-},
+    },
 
     async fetchLiveFeed() {
         const selectedOption = document.querySelector('#feedMenu .dropdown-option');
@@ -530,6 +505,30 @@ function formatDate(dateStr) {
             loading.style.display = 'none';
             showToast('Failed to fetch RSS feed', 'error');
         }
+    }
+};
+
+// Utility functions
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatDate(dateStr) {
+    try {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = now - date;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+
+        if (hours < 1) return 'Just now';
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        if (days < 7) return `${days}d ago`;
+        return date.toLocaleDateString();
+    } catch {
+        return dateStr;
     }
 }
 
