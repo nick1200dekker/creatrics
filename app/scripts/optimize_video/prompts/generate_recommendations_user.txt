@@ -18,14 +18,10 @@ New Title: {optimized_title}
 New Description: {optimized_description_preview}
 New Tags: {optimized_tags}
 
-THUMBNAIL ANALYSIS:
-{thumbnail_analysis}
-
 Provide specific recommendations in these areas:
 1. Title Optimization - Compare current vs optimized
 2. Description Improvements - Key changes needed
 3. Tags Strategy - SEO improvements
-4. Thumbnail Recommendations - Visual improvements
-5. Content Insights - What's working and what could improve
+4. Content Insights - What's working and what could improve
 
 Format as clear, actionable bullet points for each section.

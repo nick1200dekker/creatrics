@@ -123,11 +123,12 @@ class ThumbnailAnalyzer:
 
                 # Get token usage from response (don't deduct here - will be handled centrally)
                 usage = response.get('usage', {})
+                provider_enum = response.get('provider_enum')
                 token_usage = {
                     'model': response.get('model', None),
                     'input_tokens': usage.get('input_tokens', 0),
                     'output_tokens': usage.get('output_tokens', 0),
-                    'provider_enum': response.get('provider_enum')
+                    'provider_enum': provider_enum.value if provider_enum else None
                 }
 
                 return {

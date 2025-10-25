@@ -34,9 +34,13 @@
                             My Videos
                         </h3>
                         <div class="view-toggle">
-                            <button class="toggle-btn active" onclick="switchInputMode('channel')" id="channelToggleBtn">
+                            <button class="toggle-btn active" onclick="switchInputMode('public')" id="publicToggleBtn">
                                 <i class="ph ph-video"></i>
-                                Channel
+                                Public
+                            </button>
+                            <button class="toggle-btn" onclick="switchInputMode('private')" id="privateToggleBtn">
+                                <i class="ph ph-lock-key"></i>
+                                Private
                             </button>
                             <button class="toggle-btn" onclick="switchInputMode('url')" id="urlToggleBtn">
                                 <i class="ph ph-link"></i>
@@ -73,41 +77,47 @@
                             </div>
                             <p class="url-input-hint">
                                 <i class="ph ph-info"></i>
-                                Works with any public video or your unlisted/private videos
+                                Works with any public video or your unlisted videos, but not private videos.
                             </p>
                         </div>
                     </div>
+
+                    <!-- Public Videos Grid -->
                     <div id="myVideosGrid" class="videos-grid">
                         <!-- Videos will be populated here -->
                     </div>
-                </div>
 
-                <!-- My Shorts Section -->
-                <div class="my-videos-section" id="channelShortsSection" style="display: none;">
-                    <div class="section-header">
-                        <h3 class="section-title">
+                    <!-- Public Shorts Section -->
+                    <div id="myShortsSection" style="display: none;">
+                        <h4 class="shorts-header">
                             <i class="ph ph-device-mobile"></i>
                             My Shorts
-                        </h3>
+                        </h4>
+                        <div id="myShortsGrid" class="videos-grid">
+                            <!-- Shorts will be populated here -->
+                        </div>
                     </div>
-                    <div id="myShortsGrid" class="videos-grid">
-                        <!-- Shorts will be populated here -->
-                    </div>
-                </div>
 
-                <!-- Optimization History -->
-                <div class="history-section">
-                    <h3 class="section-title">
-                        <i class="ph ph-clock-counter-clockwise"></i>
-                        Recent Optimizations
-                    </h3>
-                    <div id="historyGrid" class="history-grid">
-                        <!-- History will be populated here -->
-                    </div>
-                    <div id="emptyHistory" class="empty-state" style="display: none;">
-                        <i class="ph ph-magic-wand"></i>
-                        <p>No optimizations yet</p>
-                        <span>Start by optimizing a video above</span>
+                    <!-- Private Videos Content -->
+                    <div id="privateVideosContent" style="display: none;">
+                        <div class="private-videos-notice" id="privateVideosNotice" style="display: none;">
+                            <i class="ph ph-info"></i>
+                            <p>Fetching your private and unlisted videos from YouTube API. Checking your 100 most recent videos...</p>
+                        </div>
+                        <div id="privateVideosGrid" class="videos-grid">
+                            <!-- Private videos will be populated here -->
+                        </div>
+
+                        <!-- Private Shorts Section -->
+                        <div id="privateShortsSection" style="display: none;">
+                            <h4 class="shorts-header">
+                                <i class="ph ph-device-mobile"></i>
+                                Private Shorts
+                            </h4>
+                            <div id="privateShortsGrid" class="videos-grid">
+                                <!-- Private shorts will be populated here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

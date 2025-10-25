@@ -9,6 +9,7 @@ from app.system.auth.permissions import get_workspace_user_id, require_permissio
 from app.scripts.optimize_video.video_optimizer import VideoOptimizer
 from app.system.services.firebase_service import db
 from app.system.credits.credits_manager import CreditsManager
+from app.system.ai_provider.ai_provider import AIProvider
 from datetime import datetime, timezone
 import logging
 import os
@@ -83,10 +84,15 @@ def get_unoptimized_videos():
                     video_id = video.get('videoId')
                     # Only include if NOT already optimized
                     if video_id and video_id not in optimized_video_ids:
+                        # Get highest resolution thumbnail from RapidAPI response
+                        # Array goes from low to high resolution, last item is typically maxresdefault
+                        thumbnails = video.get('thumbnail', [])
+                        thumbnail = thumbnails[-1].get('url') if thumbnails else f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+
                         videos.append({
                             'video_id': video_id,
                             'title': video.get('title'),
-                            'thumbnail': video.get('thumbnail', [{}])[0].get('url') if video.get('thumbnail') else '',
+                            'thumbnail': thumbnail,
                             'view_count': video.get('viewCountText', '0'),
                             'published_time': video.get('publishedTimeText', '')
                         })
@@ -180,10 +186,16 @@ def get_my_videos():
             for video in data['data']:
                 # Only include actual videos (not shorts, playlists, etc.)
                 if video.get('type') == 'video':
+                    video_id = video.get('videoId')
+                    # Get highest resolution thumbnail from RapidAPI response
+                    # Array goes from low to high resolution, last item is typically maxresdefault
+                    thumbnails = video.get('thumbnail', [])
+                    thumbnail = thumbnails[-1].get('url') if thumbnails else f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+
                     videos.append({
-                        'video_id': video.get('videoId'),
+                        'video_id': video_id,
                         'title': video.get('title'),
-                        'thumbnail': video.get('thumbnail', [{}])[0].get('url') if video.get('thumbnail') else '',
+                        'thumbnail': thumbnail,
                         'view_count': video.get('viewCountText', '0'),
                         'published_time': video.get('publishedTimeText', ''),
                         'length_text': video.get('lengthText', ''),
@@ -200,10 +212,16 @@ def get_my_videos():
             if 'data' in shorts_data:
                 for short in shorts_data['data']:
                     if short.get('type') == 'shorts':
+                        video_id = short.get('videoId')
+                        # Get highest resolution thumbnail from RapidAPI response
+                        # Array goes from low to high resolution, last item is typically maxresdefault
+                        thumbnails = short.get('thumbnail', [])
+                        thumbnail = thumbnails[-1].get('url') if thumbnails else f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+
                         videos.append({
-                            'video_id': short.get('videoId'),
+                            'video_id': video_id,
                             'title': short.get('title'),
-                            'thumbnail': short.get('thumbnail', [{}])[0].get('url') if short.get('thumbnail') else '',
+                            'thumbnail': thumbnail,
                             'view_count': short.get('viewCountText', '0'),
                             'published_time': '',
                             'length_text': 'Short',
@@ -227,6 +245,146 @@ def get_my_videos():
         return jsonify({'success': False, 'error': 'Failed to fetch videos from YouTube'}), 500
     except Exception as e:
         logger.error(f"Error getting user videos: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/get-private-videos', methods=['GET'])
+@auth_required
+@require_permission('optimize_video')
+def get_private_videos():
+    """Get user's private/unlisted YouTube videos using official YouTube API"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Check cache first (15 minutes) - only if not forcing refresh
+        force_refresh = request.args.get('refresh') == 'true'
+        cache_ref = db.collection('users').document(user_id).collection('cache').document('private_videos')
+
+        if not force_refresh:
+            cache_doc = cache_ref.get()
+
+            if cache_doc.exists:
+                cache_data = cache_doc.to_dict()
+                cache_time = cache_data.get('cached_at')
+                cache_version = cache_data.get('version', 1)  # Add version check
+
+                # Only use cache if it's version 2 (post-fix) and within 15 minutes
+                if cache_version >= 2 and cache_time and (datetime.now(timezone.utc) - cache_time).total_seconds() < 900:
+                    logger.info(f"Returning cached private videos for user {user_id}")
+                    return jsonify({
+                        'success': True,
+                        'videos': cache_data.get('videos', []),
+                        'from_cache': True
+                    })
+
+        # Get user's YouTube credentials
+        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+        yt_analytics = YouTubeAnalytics(user_id)
+
+        if not yt_analytics.credentials or not yt_analytics.channel_id:
+            return jsonify({
+                'success': False,
+                'error': 'No YouTube account connected with proper permissions'
+            }), 400
+
+        # Build YouTube Data API client
+        from googleapiclient.discovery import build
+        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+        # Fetch all videos (including private/unlisted)
+        # We check up to 100 most recent videos to find private/unlisted ones
+        # API Cost: ~3 units (1 search call + 2 videos.list calls for status check)
+        all_video_ids = []
+        next_page_token = None
+        MAX_VIDEOS_TO_CHECK = 100
+
+        # First, get all video IDs
+        while True:
+            search_request = youtube.search().list(
+                part='snippet',
+                forMine=True,
+                type='video',
+                maxResults=50,
+                pageToken=next_page_token,
+                order='date'
+            )
+            response = search_request.execute()
+
+            for item in response.get('items', []):
+                video_id = item['id'].get('videoId')
+                if video_id:
+                    all_video_ids.append(video_id)
+
+            next_page_token = response.get('nextPageToken')
+            if not next_page_token or len(all_video_ids) >= MAX_VIDEOS_TO_CHECK:
+                break
+
+        # Now fetch video details to check privacy status
+        videos = []
+        if all_video_ids:
+            # Fetch in batches of 50 (YouTube API limit)
+            for i in range(0, len(all_video_ids), 50):
+                batch_ids = all_video_ids[i:i+50]
+
+                video_details = youtube.videos().list(
+                    part='snippet,status,contentDetails',
+                    id=','.join(batch_ids)
+                ).execute()
+
+                for video in video_details.get('items', []):
+                    privacy_status = video['status'].get('privacyStatus', 'public')
+
+                    # Only include private and unlisted videos
+                    if privacy_status in ['private', 'unlisted']:
+                        # Parse duration to detect shorts (ISO 8601 format like PT1M30S)
+                        import re
+                        duration_str = video['contentDetails'].get('duration', 'PT0S')
+                        duration_seconds = 0
+
+                        try:
+                            # Parse ISO 8601 duration (e.g., PT1M30S = 90 seconds)
+                            hours = re.search(r'(\d+)H', duration_str)
+                            minutes = re.search(r'(\d+)M', duration_str)
+                            seconds = re.search(r'(\d+)S', duration_str)
+
+                            if hours:
+                                duration_seconds += int(hours.group(1)) * 3600
+                            if minutes:
+                                duration_seconds += int(minutes.group(1)) * 60
+                            if seconds:
+                                duration_seconds += int(seconds.group(1))
+                        except:
+                            duration_seconds = 0
+
+                        is_short = duration_seconds <= 60
+
+                        videos.append({
+                            'video_id': video['id'],
+                            'title': video['snippet'].get('title'),
+                            'thumbnail': video['snippet']['thumbnails'].get('medium', {}).get('url', ''),
+                            'published_time': video['snippet'].get('publishedAt', ''),
+                            'privacy_status': privacy_status,
+                            'is_private': True,
+                            'is_short': is_short,
+                            'duration': duration_seconds
+                        })
+
+        logger.info(f"Fetched {len(videos)} private/unlisted videos for user {user_id}")
+
+        # Cache the results with version number
+        cache_ref.set({
+            'videos': videos,
+            'cached_at': datetime.now(timezone.utc),
+            'version': 2  # Version 2 = properly filtered private/unlisted only
+        })
+
+        return jsonify({
+            'success': True,
+            'videos': videos,
+            'from_cache': False
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching private videos: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @bp.route('/api/optimize/<video_id>', methods=['POST'])
@@ -298,7 +456,6 @@ def optimize_video_analysis(video_id):
             'title_suggestions': result.get('title_suggestions', []),
             'optimized_description': result.get('optimized_description', ''),
             'optimized_tags': result.get('optimized_tags', []),
-            'thumbnail_analysis': result.get('thumbnail_analysis', ''),
             'recommendations': result.get('recommendations', {}),
             'optimized_at': datetime.now(timezone.utc)
         }
@@ -319,13 +476,22 @@ def optimize_video_analysis(video_id):
                 if input_tokens > 0 or output_tokens > 0:
                     logger.info(f"Deducting credits for {operation_name}: {input_tokens} input, {output_tokens} output tokens")
 
+                    # Convert provider_enum string back to AIProvider enum if present
+                    provider_enum_str = token_usage.get('provider_enum')
+                    provider_enum = None
+                    if provider_enum_str:
+                        try:
+                            provider_enum = AIProvider(provider_enum_str)
+                        except (ValueError, KeyError):
+                            logger.warning(f"Invalid provider enum value: {provider_enum_str}")
+
                     deduction_result = credits_manager.deduct_llm_credits(
                         user_id=user_id,
                         model_name=token_usage.get('model', None),
                         input_tokens=input_tokens,
                         output_tokens=output_tokens,
                         description=f"Video Optimization - {operation_name} - {video_id}",
-                        provider_enum=token_usage.get('provider_enum')
+                        provider_enum=provider_enum
                     )
 
                     if not deduction_result['success']:

@@ -164,6 +164,7 @@ html.dark .secondary-button:hover:not(:disabled) {
 }
 
 .video-card {
+    width: 100%;
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
     border-radius: 10px;
@@ -225,6 +226,29 @@ html.dark .video-card:hover {
 
 .short-badge i {
     font-size: 0.875rem;
+}
+
+.optimized-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(16, 185, 129, 0.95);
+    color: white;
+    padding: 6px;
+    border-radius: 50%;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    z-index: 2;
+}
+
+.optimized-badge i {
+    font-size: 1rem;
 }
 
 .video-info {
@@ -298,7 +322,7 @@ html.dark .empty-state i:not(.ph-spinner) {
     font-size: 2rem;
     color: #3B82F6;
     opacity: 1;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     animation: spin 1s linear infinite;
 }
 
@@ -423,12 +447,16 @@ html.dark .progress-card {
 
 .progress-header {
     margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .progress-icon {
     width: 80px;
     height: 80px;
-    margin: 0 auto 1.5rem;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1301,6 +1329,106 @@ html.dark .toggle-btn.active {
     background: #60A5FA;
 }
 
+/* Shorts Header */
+.shorts-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 1.5rem 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+html.dark .shorts-header {
+    border-bottom-color: rgba(82, 82, 91, 0.5);
+}
+
+.shorts-header i {
+    font-size: 1.125rem;
+    color: #3B82F6;
+}
+
+html.dark .shorts-header i {
+    color: #60A5FA;
+}
+
+/* Private Videos Notice */
+.private-videos-notice {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+html.dark .private-videos-notice {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.private-videos-notice i {
+    font-size: 2rem;
+    color: #3B82F6;
+    margin-bottom: 0.75rem;
+}
+
+html.dark .private-videos-notice i {
+    color: #60A5FA;
+}
+
+.private-videos-notice p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+}
+
+.load-private-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+html.dark .load-private-btn {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.3);
+}
+
+.load-private-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+html.dark .load-private-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
+}
+
+.load-private-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.load-private-btn i {
+    font-size: 1rem;
+}
+
 /* URL Input Section */
 .url-input-container {
     background: var(--bg-secondary);
@@ -1670,4 +1798,94 @@ html.dark .insufficient-credits-card {
 
 .upgrade-plan-btn:active {
     transform: translateY(0);
+}
+
+/* YouTube Connect Banner */
+.youtube-connect-banner {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin: 1rem 2rem;
+}
+
+html.dark .youtube-connect-banner {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.banner-content > i {
+    font-size: 2rem;
+    color: #3B82F6;
+    flex-shrink: 0;
+}
+
+.banner-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.banner-text strong {
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.banner-text span {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.banner-btn {
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+    color: white;
+    padding: 0.625rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.banner-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.banner-btn i {
+    font-size: 1rem;
+}
+
+/* Toggle button display */
+.toggle-btn {
+    display: flex;
+}
+
+@media (max-width: 768px) {
+    .youtube-connect-banner {
+        margin: 1rem;
+        padding: 1rem;
+    }
+
+    .banner-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .banner-btn {
+        width: 100%;
+        justify-content: center;
+    }
 }

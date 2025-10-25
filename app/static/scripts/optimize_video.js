@@ -6,7 +6,8 @@
 // Global state
 let currentVideoId = null;
 let currentOptimizedDescription = null;
-let currentInputMode = 'channel'; // 'channel' or 'url'
+let currentInputMode = 'public'; // 'public', 'private', or 'url'
+let hasYouTubeConnected = false; // Track if YouTube is connected
 
 // Load videos on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -35,7 +36,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     loadMyVideos();
-    loadOptimizationHistory();
 
     // Check if video_id is in URL params (from homepage)
     const urlParams = new URLSearchParams(window.location.search);
@@ -47,24 +47,54 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Switch between channel and URL input modes
+ * Switch between public, private, and URL input modes
  */
 function switchInputMode(mode) {
     currentInputMode = mode;
 
     // Update toggle buttons
-    document.getElementById('channelToggleBtn').classList.toggle('active', mode === 'channel');
+    document.getElementById('publicToggleBtn').classList.toggle('active', mode === 'public');
+    document.getElementById('privateToggleBtn').classList.toggle('active', mode === 'private');
     document.getElementById('urlToggleBtn').classList.toggle('active', mode === 'url');
 
-    // Show/hide sections
-    if (mode === 'channel') {
-        document.getElementById('urlInputSection').style.display = 'none';
-        document.getElementById('myVideosGrid').style.display = 'grid';
-        document.getElementById('emptyVideos').style.display = document.getElementById('myVideosGrid').children.length === 0 ? 'flex' : 'none';
-    } else {
+    // Hide all sections first
+    document.getElementById('urlInputSection').style.display = 'none';
+    document.getElementById('myVideosGrid').style.display = 'none';
+    document.getElementById('myShortsSection').style.display = 'none';
+    document.getElementById('privateVideosContent').style.display = 'none';
+    document.getElementById('emptyVideos').style.display = 'none';
+
+    // Show appropriate section
+    if (mode === 'public') {
+        // Show public videos and shorts
+        const videosGrid = document.getElementById('myVideosGrid');
+        const shortsSection = document.getElementById('myShortsSection');
+        const shortsGrid = document.getElementById('myShortsGrid');
+
+        videosGrid.style.display = 'grid';
+        if (shortsGrid.children.length > 0) {
+            shortsSection.style.display = 'block';
+        }
+
+        // Show empty state if no videos
+        if (videosGrid.children.length === 0) {
+            document.getElementById('emptyVideos').style.display = 'flex';
+        }
+    } else if (mode === 'private') {
+        // Show private videos content
+        document.getElementById('privateVideosContent').style.display = 'block';
+
+        // Auto-load private videos if not already loaded
+        const privateVideosGrid = document.getElementById('privateVideosGrid');
+
+        // Check if grid is empty or only has loading/empty state
+        const hasVideos = privateVideosGrid.querySelector('.video-card');
+        if (!hasVideos) {
+            loadPrivateVideos();
+        }
+    } else if (mode === 'url') {
+        // Show URL input
         document.getElementById('urlInputSection').style.display = 'block';
-        document.getElementById('myVideosGrid').style.display = 'none';
-        document.getElementById('emptyVideos').style.display = 'none';
     }
 }
 
@@ -169,80 +199,81 @@ function formatTimestamp(timestamp) {
  */
 async function loadMyVideos() {
     const videosGrid = document.getElementById('myVideosGrid');
+    const shortsSection = document.getElementById('myShortsSection');
     const shortsGrid = document.getElementById('myShortsGrid');
-    const shortsSection = document.getElementById('channelShortsSection');
     const emptyState = document.getElementById('emptyVideos');
 
     try {
         // Show loading state
-        videosGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2rem;"><div style="font-size: 2rem; color: #3B82F6; margin-bottom: 1rem;"><i class="ph ph-spinner" style="animation: spin 1s linear infinite; display: inline-block;"></i></div><p style="color: var(--text-tertiary); margin: 0;">Loading your videos...</p></div>';
+        videosGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2rem;"><div style="font-size: 2rem; color: #3B82F6; margin-bottom: 0.5rem;"><i class="ph ph-spinner" style="animation: spin 1s linear infinite; display: inline-block;"></i></div><p style="color: var(--text-tertiary); margin: 0;">Loading your videos...</p></div>';
         emptyState.style.display = 'none';
         shortsSection.style.display = 'none';
 
-        const response = await fetch('/optimize-video/api/get-my-videos');
-        const data = await response.json();
+        // Fetch videos and optimization history in parallel
+        const [videosResponse, historyResponse] = await Promise.all([
+            fetch('/optimize-video/api/get-my-videos'),
+            fetch('/optimize-video/api/optimization-history')
+        ]);
 
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to load videos');
+        const videosData = await videosResponse.json();
+        const historyData = await historyResponse.json();
+
+        if (!videosData.success) {
+            throw new Error(videosData.error || 'Failed to load videos');
         }
 
-        const allVideos = data.videos || [];
+        const allVideos = videosData.videos || [];
+        const history = historyData.history || [];
+
+        // Check if YouTube is connected (has videos or channel name)
+        hasYouTubeConnected = allVideos.length > 0 || videosData.channel_name;
+        updateToggleButtonsVisibility();
+
+        // Create a set of optimized video IDs for quick lookup
+        const optimizedVideoIds = new Set(history.map(h => h.video_id));
 
         // Separate videos and shorts, limit to 8 each
         const regularVideos = allVideos.filter(v => !v.is_short).slice(0, 8);
         const shorts = allVideos.filter(v => v.is_short).slice(0, 8);
+
+        // Helper function to create video card HTML
+        const createVideoCard = (video) => {
+            const isOptimized = optimizedVideoIds.has(video.video_id);
+            const thumbnailUrl = video.thumbnail || `https://i.ytimg.com/vi/${video.video_id}/maxresdefault.jpg`;
+            return `
+                <div class="video-card ${isOptimized ? 'optimized' : ''}" onclick="handleVideoClick('${video.video_id}', ${isOptimized})">
+                    <div class="video-thumbnail">
+                        <img src="${thumbnailUrl}" alt="${escapeHtml(video.title)}" loading="lazy" onerror="this.onerror=null; this.src='https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg'">
+                        ${isOptimized ? '<span class="optimized-badge"><i class="ph ph-check-circle"></i></span>' : ''}
+                        ${video.is_short ? '<span class="short-badge"><i class="ph ph-device-mobile"></i> Short</span>' : ''}
+                    </div>
+                    <div class="video-info">
+                        <h4 class="video-title">${escapeHtml(video.title)}</h4>
+                        <div class="video-meta">
+                            <span class="stat">
+                                <i class="ph ph-eye"></i>
+                                ${video.view_count}
+                            </span>
+                            ${!video.is_short ? `<span class="stat"><i class="ph ph-clock"></i> ${formatTimestamp(video.published_time)}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
 
         // Render regular videos
         if (regularVideos.length === 0) {
             videosGrid.innerHTML = '';
             emptyState.style.display = 'flex';
         } else {
-            videosGrid.innerHTML = regularVideos.map(video => `
-                <div class="video-card" onclick="optimizeVideo('${video.video_id}')">
-                    <div class="video-thumbnail">
-                        <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">
-                    </div>
-                    <div class="video-info">
-                        <h4 class="video-title">${escapeHtml(video.title)}</h4>
-                        <div class="video-meta">
-                            <span class="stat">
-                                <i class="ph ph-eye"></i>
-                                ${video.view_count}
-                            </span>
-                            <span class="stat">
-                                <i class="ph ph-clock"></i>
-                                ${formatTimestamp(video.published_time)}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+            videosGrid.innerHTML = regularVideos.map(createVideoCard).join('');
             emptyState.style.display = 'none';
         }
 
         // Render shorts if any exist
         if (shorts.length > 0) {
             shortsSection.style.display = 'block';
-            shortsGrid.innerHTML = shorts.map(video => `
-                <div class="video-card" onclick="optimizeVideo('${video.video_id}')">
-                    <div class="video-thumbnail">
-                        <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">
-                        <span class="short-badge">
-                            <i class="ph ph-device-mobile"></i>
-                            Short
-                        </span>
-                    </div>
-                    <div class="video-info">
-                        <h4 class="video-title">${escapeHtml(video.title)}</h4>
-                        <div class="video-meta">
-                            <span class="stat">
-                                <i class="ph ph-eye"></i>
-                                ${video.view_count}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+            shortsGrid.innerHTML = shorts.map(createVideoCard).join('');
         }
 
     } catch (error) {
@@ -272,83 +303,66 @@ async function loadMyVideos() {
 }
 
 /**
- * Load optimization history
+ * Update toggle buttons visibility based on YouTube connection
  */
-async function loadOptimizationHistory() {
-    const grid = document.getElementById('historyGrid');
-    const emptyState = document.getElementById('emptyHistory');
+function updateToggleButtonsVisibility() {
+    const publicToggle = document.getElementById('publicToggleBtn');
+    const privateToggle = document.getElementById('privateToggleBtn');
+    const urlToggle = document.getElementById('urlToggleBtn');
+    const sectionHeader = document.querySelector('.section-header');
 
-    try {
-        const response = await fetch('/optimize-video/api/optimization-history');
-        const data = await response.json();
+    if (!hasYouTubeConnected) {
+        // Hide public and private toggles, show only URL
+        if (publicToggle) publicToggle.style.display = 'none';
+        if (privateToggle) privateToggle.style.display = 'none';
 
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to load history');
+        // Auto-switch to URL mode if not already
+        if (currentInputMode !== 'url') {
+            currentInputMode = 'url';
+            switchInputMode('url');
         }
 
-        const history = data.history || [];
-
-        if (history.length === 0) {
-            grid.innerHTML = '';
-            emptyState.style.display = 'flex';
-            return;
-        }
-
-        emptyState.style.display = 'none';
-
-        // Render history using video-card style (matching analyze_video)
-        grid.innerHTML = history.map(item => {
-            const videoInfo = item.video_info || {};
-            const optimizedAt = item.optimized_at ? new Date(item.optimized_at) : null;
-            
-            // Format time ago
-            let timeAgo = '';
-            if (optimizedAt) {
-                const now = new Date();
-                const diffMs = now - optimizedAt;
-                const diffMins = Math.floor(diffMs / 60000);
-                const diffHours = Math.floor(diffMs / 3600000);
-                const diffDays = Math.floor(diffMs / 86400000);
-
-                if (diffMins < 1) {
-                    timeAgo = 'Just now';
-                } else if (diffMins < 60) {
-                    timeAgo = `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`;
-                } else if (diffHours < 24) {
-                    timeAgo = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
-                } else if (diffDays < 7) {
-                    timeAgo = `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-                } else {
-                    // Format as "Dec 25, 2024"
-                    timeAgo = optimizedAt.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                    });
-                }
-            }
-
-            return `
-                <div class="history-item" onclick="showOptimizationResults('${item.video_id}')">
-                    <div class="history-thumbnail">
-                        <img src="${videoInfo.thumbnail || ''}" alt="${escapeHtml(videoInfo.title || '')}" loading="lazy">
+        // Add banner if it doesn't exist
+        if (!document.getElementById('youtubeConnectBanner')) {
+            const banner = document.createElement('div');
+            banner.id = 'youtubeConnectBanner';
+            banner.className = 'youtube-connect-banner';
+            banner.innerHTML = `
+                <div class="banner-content">
+                    <i class="ph ph-youtube-logo"></i>
+                    <div class="banner-text">
+                        <strong>Connect your YouTube account</strong>
+                        <span>Get access to all features including public and private video optimization</span>
                     </div>
-                    <div class="history-info">
-                        <h4 class="history-title">${escapeHtml(videoInfo.title || item.current_title || 'Untitled')}</h4>
-                        <div class="history-meta">
-                            <span class="stat">
-                                <i class="ph ph-calendar"></i>
-                                ${timeAgo}
-                            </span>
-                        </div>
-                    </div>
+                    <a href="/accounts/social-accounts" class="banner-btn">
+                        <i class="ph ph-link"></i>
+                        Connect YouTube
+                    </a>
                 </div>
             `;
-        }).join('');
+            sectionHeader.insertAdjacentElement('afterend', banner);
+        }
+    } else {
+        // Show all toggles
+        if (publicToggle) publicToggle.style.display = 'flex';
+        if (privateToggle) privateToggle.style.display = 'flex';
 
-    } catch (error) {
-        console.error('Error loading history:', error);
-        emptyState.style.display = 'flex';
+        // Remove banner if it exists
+        const banner = document.getElementById('youtubeConnectBanner');
+        if (banner) banner.remove();
+    }
+}
+
+/**
+ * Handle video card click - optimize if not optimized, show results if already optimized
+ */
+async function handleVideoClick(videoId, isOptimized) {
+    if (isOptimized) {
+        // Video already optimized, load and show results directly
+        await showOptimizationResults(videoId);
+    } else {
+        // Video not optimized, start optimization
+        await optimizeVideo(videoId);
     }
 }
 
@@ -434,9 +448,6 @@ async function optimizeVideo(videoId) {
                 });
             }
         }, 100);
-
-        // Reload history
-        loadOptimizationHistory();
 
     } catch (error) {
         console.error('Error optimizing video:', error);
@@ -610,19 +621,6 @@ function displayOptimizationResults(data) {
                     </div>
                 </div>
             </div>
-
-            <!-- Thumbnail Analysis -->
-            ${data.thumbnail_analysis ? `
-            <div class="result-card">
-                <h3 class="section-title">
-                    <i class="ph ph-image"></i>
-                    Thumbnail Analysis
-                </h3>
-                <div class="thumbnail-analysis-content">
-                    <div class="recommendations-text">${formatMarkdown(data.thumbnail_analysis)}</div>
-                </div>
-            </div>
-            ` : ''}
         </div>
     `;
 
@@ -645,12 +643,21 @@ function displayOptimizationResults(data) {
 /**
  * Back to videos list
  */
-function backToVideos() {
+async function backToVideos() {
     document.getElementById('resultsSection').style.display = 'none';
     document.getElementById('videosListSection').style.display = 'block';
 
-    // Reload videos from RapidAPI to get fresh data
-    loadMyVideos();
+    // Always reload videos to get fresh optimization status (to show checkmarks)
+    if (currentInputMode === 'private') {
+        await loadPrivateVideos();
+    } else if (currentInputMode === 'public') {
+        await loadMyVideos();
+    }
+
+    // Re-apply the current input mode to ensure correct sections are displayed
+    setTimeout(() => {
+        switchInputMode(currentInputMode);
+    }, 200);
 }
 
 /**
@@ -658,10 +665,51 @@ function backToVideos() {
  */
 async function showOptimizationResults(videoId) {
     try {
-        // For simplicity, just re-optimize (it will load from cache)
-        await optimizeVideo(videoId);
+        // Store current video ID globally
+        currentVideoId = videoId;
+
+        // Hide videos list, show loading briefly
+        document.getElementById('videosListSection').style.display = 'none';
+        document.getElementById('loadingSection').style.display = 'block';
+        document.getElementById('resultsSection').style.display = 'none';
+
+        // Fetch the cached optimization
+        const response = await fetch(`/optimize-video/api/optimize/${videoId}`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch optimization: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to load optimization');
+        }
+
+        // Hide loading, show results
+        document.getElementById('loadingSection').style.display = 'none';
+        document.getElementById('resultsSection').style.display = 'block';
+
+        // Display the results
+        displayOptimizationResults(result.data);
+
+        // Scroll to results
+        setTimeout(() => {
+            const resultsSection = document.getElementById('resultsSection');
+            if (resultsSection) {
+                resultsSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }, 100);
+
     } catch (error) {
         console.error('Error showing results:', error);
+        document.getElementById('loadingSection').style.display = 'none';
+        document.getElementById('videosListSection').style.display = 'block';
         alert('Failed to load optimization results');
     }
 }
@@ -1359,4 +1407,136 @@ async function checkOptimizationStatus(videoId) {
             // Continue polling even on error
         }
     }, 2000); // Poll every 2 seconds
+}
+
+/**
+ * Load private/unlisted videos using YouTube API
+ */
+async function loadPrivateVideos(forceRefresh = false) {
+    const privateVideosGrid = document.getElementById('privateVideosGrid');
+    const privateShortsSection = document.getElementById('privateShortsSection');
+    const privateShortsGrid = document.getElementById('privateShortsGrid');
+    const noticeDiv = document.getElementById('privateVideosNotice');
+
+    try {
+        // Show loading in grid
+        privateVideosGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2rem;"><div style="font-size: 2rem; color: #3B82F6; margin-bottom: 0.5rem;"><i class="ph ph-spinner" style="animation: spin 1s linear infinite; display: inline-block;"></i></div><p style="color: var(--text-tertiary); margin: 0;">Fetching private videos from YouTube API...</p></div>';
+        privateShortsSection.style.display = 'none';
+
+        const url = forceRefresh
+            ? '/optimize-video/api/get-private-videos?refresh=true'
+            : '/optimize-video/api/get-private-videos';
+
+        // Fetch videos and optimization history in parallel
+        const [videosResponse, historyResponse] = await Promise.all([
+            fetch(url),
+            fetch('/optimize-video/api/optimization-history')
+        ]);
+
+        const data = await videosResponse.json();
+        const historyData = await historyResponse.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to load private videos');
+        }
+
+        const allVideos = data.videos || [];
+        const history = historyData.history || [];
+        const fromCache = data.from_cache || false;
+
+        // Create a set of optimized video IDs for quick lookup
+        const optimizedVideoIds = new Set(history.map(h => h.video_id));
+
+        // Split videos and shorts
+        const regularVideos = allVideos.filter(v => !v.is_short);
+        const shorts = allVideos.filter(v => v.is_short);
+
+        // Hide notice
+        if (noticeDiv) noticeDiv.style.display = 'none';
+
+        // Render regular private videos
+        if (regularVideos.length === 0 && shorts.length === 0) {
+            privateVideosGrid.innerHTML = `
+                <div style="grid-column: 1 / -1;" class="empty-state">
+                    <i class="ph ph-lock-key"></i>
+                    <p>No private or unlisted videos found</p>
+                    <span>All your videos are public</span>
+                </div>
+            `;
+        } else {
+            privateVideosGrid.innerHTML = regularVideos.map(video => {
+                const privacyLabel = video.privacy_status === 'unlisted' ? 'Unlisted' : 'Private';
+                const privacyIcon = video.privacy_status === 'unlisted' ? 'ph-eye-slash' : 'ph-lock-key';
+                const thumbnail = video.thumbnail || `https://i.ytimg.com/vi/${video.video_id}/mqdefault.jpg`;
+                const isOptimized = optimizedVideoIds.has(video.video_id);
+
+                return `
+                <div class="video-card ${isOptimized ? 'optimized' : ''}" onclick="handleVideoClick('${video.video_id}', ${isOptimized})">
+                    <div class="video-thumbnail">
+                        <img src="${thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${video.video_id}/default.jpg'">
+                        ${isOptimized ? '<span class="optimized-badge"><i class="ph ph-check-circle"></i></span>' : ''}
+                        <span class="short-badge">
+                            <i class="ph ${privacyIcon}"></i>
+                            ${privacyLabel}
+                        </span>
+                    </div>
+                    <div class="video-info">
+                        <h4 class="video-title">${escapeHtml(video.title)}</h4>
+                        <div class="video-meta">
+                            <span class="stat">
+                                <i class="ph ph-clock"></i>
+                                ${formatTimestamp(video.published_time)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            // Render private shorts if any exist
+            if (shorts.length > 0) {
+                privateShortsSection.style.display = 'block';
+                privateShortsGrid.innerHTML = shorts.map(video => {
+                    const privacyLabel = video.privacy_status === 'unlisted' ? 'Unlisted' : 'Private';
+                    const privacyIcon = video.privacy_status === 'unlisted' ? 'ph-eye-slash' : 'ph-lock-key';
+                    const thumbnail = video.thumbnail || `https://i.ytimg.com/vi/${video.video_id}/mqdefault.jpg`;
+                    const isOptimized = optimizedVideoIds.has(video.video_id);
+
+                    return `
+                    <div class="video-card ${isOptimized ? 'optimized' : ''}" onclick="handleVideoClick('${video.video_id}', ${isOptimized})">
+                        <div class="video-thumbnail">
+                            <img src="${thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${video.video_id}/default.jpg'">
+                            ${isOptimized ? '<span class="optimized-badge"><i class="ph ph-check-circle"></i></span>' : ''}
+                            <span class="short-badge">
+                                <i class="ph ${privacyIcon}"></i>
+                                ${privacyLabel}
+                            </span>
+                        </div>
+                        <div class="video-info">
+                            <h4 class="video-title">${escapeHtml(video.title)}</h4>
+                            <div class="video-meta">
+                                <span class="stat">
+                                    <i class="ph ph-clock"></i>
+                                    ${formatTimestamp(video.published_time)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        console.log(`Loaded ${regularVideos.length} private videos and ${shorts.length} private shorts${fromCache ? ' (from cache)' : ''}`);
+
+    } catch (error) {
+        console.error('Error loading private videos:', error);
+        privateVideosGrid.innerHTML = `
+            <div style="grid-column: 1 / -1;" class="empty-state">
+                <i class="ph ph-warning"></i>
+                <p>Failed to load private videos</p>
+                <span>${error.message}</span>
+            </div>
+        `;
+    }
 }

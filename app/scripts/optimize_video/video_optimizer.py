@@ -13,7 +13,6 @@ from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_title.video_title import VideoTitleGenerator
 from app.scripts.video_title.video_description import VideoDescriptionGenerator
 from app.scripts.video_title.video_tags import VideoTagsGenerator
-from app.scripts.optimize_video.thumbnail_analyzer import ThumbnailAnalyzer
 
 
 # Get prompts directory
@@ -39,7 +38,6 @@ class VideoOptimizer:
         self.title_generator = VideoTitleGenerator()
         self.description_generator = VideoDescriptionGenerator()
         self.tags_generator = VideoTagsGenerator()
-        self.thumbnail_analyzer = ThumbnailAnalyzer()
 
     def optimize_video(self, video_id: str, user_id: str, user_subscription: str = None) -> Dict[str, Any]:
         """
@@ -54,21 +52,30 @@ class VideoOptimizer:
             Dict with optimization results
         """
         try:
-            # Fetch video info
+            # Fetch video info - try RapidAPI first, fallback to YouTube API for private videos
             video_info = self._fetch_video_info(video_id)
-            if not video_info:
-                return {'success': False, 'error': 'Failed to fetch video information'}
+
+            # Check if video_info has required fields (RapidAPI returns incomplete data for private videos)
+            has_required_fields = video_info and video_info.get('title') and video_info.get('lengthSeconds')
+
+            if not has_required_fields:
+                # Try YouTube API for private/unlisted videos
+                logger.info(f"RapidAPI returned incomplete data for {video_id}, trying YouTube API for private video")
+                video_info = self._fetch_video_info_youtube_api(video_id, user_id)
+                if not video_info or not video_info.get('title'):
+                    return {'success': False, 'error': 'Failed to fetch video information'}
 
             # Fetch transcript (both text and with timestamps)
-            transcript_text, transcript_with_timestamps = self._fetch_transcript_with_timestamps(video_id)
+            # Pass user_id to enable YouTube API transcript fetching for private videos
+            transcript_text, transcript_with_timestamps = self._fetch_transcript_with_timestamps(video_id, user_id)
 
             # Get current metadata
             current_title = video_info.get('title', '')
             current_description = video_info.get('description', '')
             current_tags = video_info.get('keywords', [])
 
-            # Get thumbnail URL
-            thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+            # Get thumbnail URL - use from API if available, otherwise use default YouTube URL
+            thumbnail_url = video_info.get('thumbnail_url', f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg")
 
             # Detect if video is a short (under 60 seconds)
             video_duration = int(video_info.get('lengthSeconds', 0))
@@ -168,18 +175,6 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
             )
             optimized_tags = tags_result.get('tags', current_tags)
 
-            # Analyze thumbnail with Claude Vision (skip for shorts)
-            thumbnail_analysis = {}
-            thumbnail_token_usage = {}
-            if not is_short:
-                thumbnail_analysis = self.thumbnail_analyzer.analyze_thumbnail(
-                    thumbnail_url,
-                    current_title,
-                    user_id
-                )
-                # Get thumbnail token usage if available
-                thumbnail_token_usage = thumbnail_analysis.get('token_usage', {})
-
             # Generate overall recommendations
             recommendations = self._generate_recommendations(
                 video_info,
@@ -190,7 +185,6 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                 optimized_titles,
                 optimized_description,
                 optimized_tags,
-                thumbnail_analysis,
                 user_id,
                 user_subscription
             )
@@ -222,13 +216,6 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                     **tags_result.get('token_usage', {})
                 })
 
-            # Add thumbnail analysis tokens
-            if thumbnail_token_usage.get('input_tokens', 0) > 0:
-                all_token_usages.append({
-                    'operation': 'Thumbnail Analysis',
-                    **thumbnail_token_usage
-                })
-
             # Add recommendations tokens
             if recommendations_token_usage.get('input_tokens', 0) > 0:
                 all_token_usages.append({
@@ -255,7 +242,6 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                 'title_suggestions': title_suggestions,  # Return all 5 suggestions
                 'optimized_description': optimized_description,
                 'optimized_tags': optimized_tags,
-                'thumbnail_analysis': thumbnail_analysis.get('analysis', ''),
                 'recommendations': recommendations,
                 'all_token_usages': all_token_usages  # Return all token usages for credit deduction
             }
@@ -287,8 +273,179 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
             logger.error(f"Error fetching video info for {video_id}: {e}")
             return {}
 
-    def _fetch_transcript_with_timestamps(self, video_id: str) -> tuple:
-        """Fetch video transcript from RapidAPI"""
+    def _fetch_video_info_youtube_api(self, video_id: str, user_id: str) -> Dict:
+        """
+        Fetch video information using official YouTube API (for private/unlisted videos)
+        Returns normalized video info matching RapidAPI format
+        """
+        try:
+            from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+            from googleapiclient.discovery import build
+
+            # Get user's YouTube credentials
+            yt_analytics = YouTubeAnalytics(user_id)
+            if not yt_analytics.credentials:
+                logger.warning(f"No YouTube credentials for user {user_id}")
+                return {}
+
+            # Build YouTube Data API client
+            youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+            # Fetch video details
+            video_response = youtube.videos().list(
+                part='snippet,statistics,contentDetails,status',
+                id=video_id
+            ).execute()
+
+            if not video_response.get('items'):
+                logger.warning(f"No video found with ID {video_id}")
+                return {}
+
+            video = video_response['items'][0]
+            snippet = video.get('snippet', {})
+            statistics = video.get('statistics', {})
+            content_details = video.get('contentDetails', {})
+
+            # Parse duration (ISO 8601 format like PT1M30S)
+            import re
+            duration_str = content_details.get('duration', 'PT0S')
+            duration_seconds = 0
+            try:
+                hours = re.search(r'(\d+)H', duration_str)
+                minutes = re.search(r'(\d+)M', duration_str)
+                seconds = re.search(r'(\d+)S', duration_str)
+
+                if hours:
+                    duration_seconds += int(hours.group(1)) * 3600
+                if minutes:
+                    duration_seconds += int(minutes.group(1)) * 60
+                if seconds:
+                    duration_seconds += int(seconds.group(1))
+            except:
+                duration_seconds = 0
+
+            # Get best available thumbnail
+            thumbnails = snippet.get('thumbnails', {})
+            thumbnail_url = (
+                thumbnails.get('maxres', {}).get('url') or
+                thumbnails.get('high', {}).get('url') or
+                thumbnails.get('medium', {}).get('url') or
+                thumbnails.get('default', {}).get('url') or
+                f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
+            )
+
+            # Normalize to match RapidAPI format
+            normalized_info = {
+                'title': snippet.get('title', ''),
+                'description': snippet.get('description', ''),
+                'keywords': snippet.get('tags', []),
+                'channelTitle': snippet.get('channelName', snippet.get('channelTitle', '')),
+                'viewCount': statistics.get('viewCount', '0'),
+                'likeCount': statistics.get('likeCount', '0'),
+                'publishDate': snippet.get('publishedAt', ''),
+                'lengthSeconds': duration_seconds,
+                'thumbnail_url': thumbnail_url
+            }
+
+            logger.info(f"Fetched video info via YouTube API for {video_id}: {normalized_info['title']}")
+            return normalized_info
+
+        except Exception as e:
+            logger.error(f"Error fetching video info via YouTube API for {video_id}: {e}")
+            return {}
+
+    def _fetch_transcript_youtube_api(self, video_id: str, user_id: str) -> tuple:
+        """
+        Fetch transcript using official YouTube API (for private/unlisted videos)
+        Returns: (transcript_text, transcript_with_timestamps)
+        """
+        try:
+            from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+            from googleapiclient.discovery import build
+
+            # Get YouTube credentials
+            yt_analytics = YouTubeAnalytics(user_id)
+            if not yt_analytics.credentials:
+                logger.info(f"No YouTube API credentials available for user {user_id}")
+                return None, None
+
+            # Build YouTube API client
+            youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+            # Get captions list
+            captions_response = youtube.captions().list(
+                part='snippet',
+                videoId=video_id
+            ).execute()
+
+            if not captions_response.get('items'):
+                logger.info(f"No captions available via YouTube API for video {video_id}")
+                return None, None
+
+            # Find English caption track
+            caption_id = None
+            for caption in captions_response['items']:
+                lang = caption['snippet'].get('language', '')
+                if lang.startswith('en') or lang == 'en':
+                    caption_id = caption['id']
+                    break
+
+            # Fallback to first available caption
+            if not caption_id and captions_response['items']:
+                caption_id = captions_response['items'][0]['id']
+
+            if not caption_id:
+                return None, None
+
+            # Download caption track
+            caption_download = youtube.captions().download(
+                id=caption_id,
+                tfmt='srt'  # SubRip format with timestamps
+            ).execute()
+
+            # Parse SRT format
+            transcript_text = ""
+            transcript_with_timestamps = []
+
+            # Simple SRT parser
+            blocks = caption_download.decode('utf-8').strip().split('\n\n')
+            for block in blocks:
+                lines = block.split('\n')
+                if len(lines) >= 3:
+                    # Line 0: sequence number
+                    # Line 1: timestamp
+                    # Lines 2+: text
+                    timestamp = lines[1].split(' --> ')[0].strip()
+                    text = ' '.join(lines[2:])
+
+                    transcript_text += text + " "
+                    transcript_with_timestamps.append({
+                        'time': timestamp,
+                        'text': text
+                    })
+
+            logger.info(f"Successfully fetched transcript via YouTube API for video {video_id}")
+            return transcript_text.strip(), transcript_with_timestamps
+
+        except Exception as e:
+            logger.warning(f"Failed to fetch transcript via YouTube API for {video_id}: {e}")
+            return None, None
+
+    def _fetch_transcript_with_timestamps(self, video_id: str, user_id: str = None) -> tuple:
+        """
+        Fetch video transcript with smart fallback:
+        1. Try YouTube API first (for private videos)
+        2. Fallback to RapidAPI (for public videos)
+        """
+        # Try YouTube API first if user_id provided
+        if user_id:
+            yt_transcript, yt_timestamps = self._fetch_transcript_youtube_api(video_id, user_id)
+            if yt_transcript:
+                logger.info(f"Using YouTube API transcript for video {video_id}")
+                return yt_transcript, yt_timestamps
+
+        # Fallback to RapidAPI
+        logger.info(f"Attempting RapidAPI transcript for video {video_id}")
         try:
             import time
             url = f"https://{self.rapidapi_host}/get_transcript"
@@ -372,7 +529,6 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
         optimized_title: str,
         optimized_description: str,
         optimized_tags: list,
-        thumbnail_analysis: Dict,
         user_id: str,
         user_subscription: str = None
     ) -> Dict:
@@ -405,8 +561,7 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                 transcript_preview=transcript[:1500],
                 optimized_title=optimized_title,
                 optimized_description_preview=f"{optimized_description[:300]}...",
-                optimized_tags=', '.join(optimized_tags[:15]),
-                thumbnail_analysis=thumbnail_analysis.get('analysis', 'No thumbnail analysis available')
+                optimized_tags=', '.join(optimized_tags[:15])
             )
 
             response = ai_provider.create_completion(
@@ -422,11 +577,12 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
 
             # Get token usage from response (don't deduct here - will be handled centrally)
             usage = response.get('usage', {})
+            provider_enum = response.get('provider_enum')
             token_usage = {
                 'model': response.get('model', None),
                 'input_tokens': usage.get('input_tokens', 0),
                 'output_tokens': usage.get('output_tokens', 0),
-                'provider_enum': response.get('provider_enum')
+                'provider_enum': provider_enum.value if provider_enum else None
             }
 
             return {
