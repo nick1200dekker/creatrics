@@ -5,7 +5,7 @@
 <meta name="keywords" content="AI video title generator, YouTube title creator, viral video titles, video tags optimizer, YouTube tags, SEO video optimization, video description generator">
 {% endblock %}
 
-{% block title %}AI Video Title, Description & Tags Generator | Creatrics{% endblock %}
+{% block title %}Upload Studio | Creatrics{% endblock %}
 
 {% block additional_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/video_title_tags.css') }}">
@@ -18,7 +18,7 @@
         <div class="generator-header">
             <h1 class="generator-title">
                 <i class="ph ph-sparkle"></i>
-                Title, Description & Tags Generator
+                Upload Studio
             </h1>
         </div>
 
@@ -41,19 +41,30 @@
                             <div class="video-upload-area" id="videoUploadArea" onclick="triggerVideoUpload()">
                                 <input type="file" id="videoFileInput" accept="video/*" style="display: none;" onchange="handleVideoSelect(event)">
                                 <div class="upload-content" id="uploadContent">
-                                    <i class="ph ph-cloud-arrow-up" style="font-size: 3rem; color: var(--text-tertiary); margin-bottom: 0.5rem;"></i>
-                                    <div style="color: var(--text-primary); font-weight: 500; margin-bottom: 0.25rem;">Click to upload video</div>
-                                    <div style="color: var(--text-tertiary); font-size: 0.875rem;">MP4, MOV, AVI (max 256GB)</div>
+                                    <i class="ph ph-cloud-arrow-up" style="font-size: 2rem; color: var(--text-tertiary); margin-bottom: 0.25rem;"></i>
+                                    <div style="color: var(--text-primary); font-weight: 500; margin-bottom: 0.125rem; font-size: 0.9375rem;">Click to upload video</div>
+                                    <div style="color: var(--text-tertiary); font-size: 0.8125rem;">MP4, MOV, AVI (max 256GB)</div>
                                 </div>
                                 <div class="upload-progress" id="uploadProgress" style="display: none;">
                                     <div class="upload-file-info">
                                         <i class="ph ph-video" style="font-size: 2rem; color: var(--primary);"></i>
-                                        <div>
+                                        <div style="flex: 1;">
                                             <div id="uploadFileName" style="color: var(--text-primary); font-weight: 500;"></div>
                                             <div id="uploadFileSize" style="color: var(--text-tertiary); font-size: 0.875rem;"></div>
+
+                                            <!-- Progress bar -->
+                                            <div id="videoUploadProgressContainer" style="display: none; margin-top: 0.75rem;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                                                    <span style="font-size: 0.8125rem; color: var(--text-secondary);" id="videoUploadStatus">Uploading...</span>
+                                                    <span style="font-size: 0.8125rem; color: var(--text-secondary); font-weight: 600;" id="videoUploadPercent">0%</span>
+                                                </div>
+                                                <div style="width: 100%; height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-primary);">
+                                                    <div id="videoUploadProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%); transition: width 0.3s ease; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);"></div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <button class="remove-video-btn" onclick="removeVideo(event)" title="Remove video">
+                                    <button class="remove-video-btn" onclick="removeVideo(event)" title="Remove video" id="removeVideoBtn">
                                         <i class="ph ph-x"></i>
                                     </button>
                                 </div>
@@ -174,10 +185,10 @@
                                 <div class="reference-header">
                                     <label class="form-label" style="margin-bottom: 0;">
                                         <i class="ph ph-lightbulb"></i>
-                                        Reference Description
+                                        <span id="refDescLabel">Reference Description (Long Form)</span>
                                         <div class="info-tooltip" style="display: inline-block;">
                                             <i class="ph ph-info"></i>
-                                            <span class="tooltip-text">Paste an existing description to use as a style template. The AI will match the tone, structure, and formatting of your reference.</span>
+                                            <span class="tooltip-text">Paste an existing description to use as a style template. The AI will match the tone, structure, and formatting of your reference. Separate templates for long form and shorts.</span>
                                         </div>
                                     </label>
                                     <button class="reference-toggle-btn" onclick="toggleReferenceSection()" id="referenceToggle">
@@ -186,10 +197,17 @@
                                 </div>
                                 <div class="reference-content" id="referenceContent">
                                     <textarea class="reference-textarea"
-                                              id="referenceDescription"
-                                              placeholder="Paste an existing description you want to use as a template or reference..."
+                                              id="referenceDescriptionLong"
+                                              placeholder="Paste an existing long form description you want to use as a template or reference..."
                                               maxlength="5000"
-                                              oninput="updateRefDescCharCount()"></textarea>
+                                              oninput="updateRefDescCharCount()"
+                                              style="display: block;"></textarea>
+                                    <textarea class="reference-textarea"
+                                              id="referenceDescriptionShort"
+                                              placeholder="Paste an existing shorts description you want to use as a template or reference..."
+                                              maxlength="5000"
+                                              oninput="updateRefDescCharCount()"
+                                              style="display: none;"></textarea>
                                     <div class="reference-footer">
                                         <div class="char-count" id="refDescCharCount">0 / 5000</div>
                                         <div class="reference-actions">

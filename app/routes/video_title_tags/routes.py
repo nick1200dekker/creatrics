@@ -79,23 +79,35 @@ def save_channel_keywords():
 @auth_required
 @require_permission('video_title')
 def get_reference_description():
-    """Get user's saved reference description"""
+    """Get user's saved reference descriptions"""
     try:
         user_id = get_workspace_user_id()
 
-        # Get user's reference description from Firestore
+        # Get user's reference descriptions from Firestore
         user_ref = db.collection('users').document(user_id)
         user_doc = user_ref.get()
 
         if not user_doc.exists:
-            return jsonify({'success': True, 'reference_description': ''})
+            return jsonify({
+                'success': True,
+                'reference_description_long': '',
+                'reference_description_short': ''
+            })
 
         user_data = user_doc.to_dict()
-        reference_description = user_data.get('reference_description', '')
+        reference_description_long = user_data.get('reference_description_long', '')
+        reference_description_short = user_data.get('reference_description_short', '')
+
+        # Backwards compatibility: check old field
+        if not reference_description_long and not reference_description_short:
+            old_reference = user_data.get('reference_description', '')
+            if old_reference:
+                reference_description_long = old_reference
 
         return jsonify({
             'success': True,
-            'reference_description': reference_description
+            'reference_description_long': reference_description_long,
+            'reference_description_short': reference_description_short
         })
 
     except Exception as e:
@@ -106,23 +118,25 @@ def get_reference_description():
 @auth_required
 @require_permission('video_title')
 def save_reference_description():
-    """Save user's reference description to Firestore"""
+    """Save user's reference descriptions to Firestore"""
     try:
         user_id = get_workspace_user_id()
         data = request.json
-        reference_description = data.get('reference_description', '').strip()
+        reference_description_long = data.get('reference_description_long', '').strip()
+        reference_description_short = data.get('reference_description_short', '').strip()
 
-        # Update user's reference description in Firestore
+        # Update user's reference descriptions in Firestore
         user_ref = db.collection('users').document(user_id)
         user_ref.update({
-            'reference_description': reference_description
+            'reference_description_long': reference_description_long,
+            'reference_description_short': reference_description_short
         })
 
-        logger.info(f"Saved reference description for user {user_id} ({len(reference_description)} chars)")
+        logger.info(f"Saved reference descriptions for user {user_id} (long: {len(reference_description_long)} chars, short: {len(reference_description_short)} chars)")
 
         return jsonify({
             'success': True,
-            'message': 'Reference description saved successfully'
+            'message': 'Reference descriptions saved successfully'
         })
 
     except Exception as e:
@@ -433,6 +447,166 @@ def generate_video_description():
         logger.error(f"Error generating video description: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@bp.route('/api/upload-video-temp', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def upload_video_temp():
+    """Temporarily upload video to server"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Check if file is uploaded
+        if 'video' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No video file provided'
+            }), 400
+
+        video_file = request.files['video']
+        if video_file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No video file selected'
+            }), 400
+
+        # Validate file type
+        if not video_file.content_type.startswith('video/'):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid file type. Please upload a video file.'
+            }), 400
+
+        # Save to temporary location
+        import tempfile
+        import os
+        from werkzeug.utils import secure_filename
+
+        # Create temp directory if it doesn't exist
+        temp_dir = os.path.join(tempfile.gettempdir(), 'video_uploads', user_id)
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Generate filename
+        filename = secure_filename(video_file.filename)
+        file_path = os.path.join(temp_dir, filename)
+
+        # Save the file
+        video_file.save(file_path)
+
+        logger.info(f"Temporarily uploaded video for user {user_id}: {filename} ({os.path.getsize(file_path)} bytes)")
+
+        return jsonify({
+            'success': True,
+            'video_path': file_path,
+            'filename': filename,
+            'message': 'Video uploaded successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error uploading video temp: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to upload video: {str(e)}'
+        }), 500
+
+@bp.route('/api/delete-temp-video', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def delete_temp_video():
+    """Delete temporarily uploaded video from server"""
+    try:
+        data = request.get_json()
+        video_path = data.get('video_path', '').strip()
+
+        if not video_path:
+            return jsonify({
+                'success': False,
+                'error': 'No video path provided'
+            }), 400
+
+        # Security check - ensure path is in temp directory
+        import os
+        import tempfile
+        temp_base = os.path.join(tempfile.gettempdir(), 'video_uploads')
+        if not video_path.startswith(temp_base):
+            logger.warning(f"Attempted to delete file outside temp directory: {video_path}")
+            return jsonify({
+                'success': False,
+                'error': 'Invalid video path'
+            }), 400
+
+        # Delete the file if it exists
+        if os.path.exists(video_path):
+            os.unlink(video_path)
+            logger.info(f"Deleted temporary video: {video_path}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Video deleted successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error deleting temp video: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to delete video: {str(e)}'
+        }), 500
+
+@bp.route('/api/upload-thumbnail-temp', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def upload_thumbnail_temp():
+    """Temporarily upload thumbnail to server"""
+    try:
+        user_id = get_workspace_user_id()
+
+        if 'thumbnail' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No thumbnail file provided'
+            }), 400
+
+        thumbnail_file = request.files['thumbnail']
+
+        if thumbnail_file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No thumbnail file selected'
+            }), 400
+
+        # Validate file type
+        if thumbnail_file.content_type not in ['image/jpeg', 'image/jpg', 'image/png']:
+            return jsonify({
+                'success': False,
+                'error': 'Only JPG and PNG images are supported'
+            }), 400
+
+        # Create temp directory for thumbnails
+        temp_dir = os.path.join(tempfile.gettempdir(), 'thumbnail_uploads', user_id)
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Generate filename
+        filename = secure_filename(thumbnail_file.filename)
+        file_path = os.path.join(temp_dir, filename)
+
+        # Save the file
+        thumbnail_file.save(file_path)
+
+        logger.info(f"Temporarily uploaded thumbnail for user {user_id}: {filename} ({os.path.getsize(file_path)} bytes)")
+
+        return jsonify({
+            'success': True,
+            'thumbnail_path': file_path,
+            'filename': filename,
+            'message': 'Thumbnail uploaded successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error uploading thumbnail temp: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to upload thumbnail: {str(e)}'
+        }), 500
+
 @bp.route('/api/check-youtube-connection', methods=['GET'])
 @auth_required
 def check_youtube_connection():
@@ -469,32 +643,32 @@ def upload_youtube_video():
     try:
         user_id = get_workspace_user_id()
 
-        # Check if files are uploaded
-        if 'video' not in request.files:
+        # Get metadata from request (now JSON instead of form)
+        data = request.get_json()
+
+        video_path = data.get('video_path', '').strip()
+        title = data.get('title', '').strip()
+        description = data.get('description', '').strip()
+        tags = data.get('tags', [])
+        privacy_status = data.get('privacy_status', 'private')
+        language = data.get('language', 'en')  # Default to English
+        thumbnail_path = data.get('thumbnail_path')  # Optional server path to thumbnail
+        scheduled_time = data.get('scheduled_time')  # Optional scheduled publish time (ISO 8601 format)
+
+        # Check if video path is provided
+        if not video_path:
             return jsonify({
                 'success': False,
                 'error': 'No video file provided'
             }), 400
 
-        video_file = request.files['video']
-        if video_file.filename == '':
+        # Verify video file exists
+        import os
+        if not os.path.exists(video_path):
             return jsonify({
                 'success': False,
-                'error': 'No video file selected'
+                'error': 'Video file not found. Please upload the video again.'
             }), 400
-
-        # Get metadata from form
-        title = request.form.get('title', '').strip()
-        description = request.form.get('description', '').strip()
-        tags = request.form.get('tags', '[]')
-        privacy_status = request.form.get('privacy_status', 'private')
-
-        # Parse tags from JSON string
-        import json
-        try:
-            tags_list = json.loads(tags)
-        except:
-            tags_list = []
 
         if not title:
             return jsonify({
@@ -515,87 +689,129 @@ def upload_youtube_video():
         # Build YouTube Data API client
         from googleapiclient.discovery import build
         from googleapiclient.http import MediaFileUpload
-        import tempfile
-        import os
 
         youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
 
-        # Save video to temporary file
-        temp_video = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(video_file.filename)[1])
-        video_file.save(temp_video.name)
-        temp_video.close()
+        # Rename video file for SEO (use title as filename)
+        import re
+        # Create safe filename from title
+        safe_title = re.sub(r'[^\w\s-]', '', title)  # Remove special chars
+        safe_title = re.sub(r'[-\s]+', '-', safe_title)  # Replace spaces/dashes with single dash
+        safe_title = safe_title.strip('-')[:100]  # Limit length and trim dashes
 
+        # Get original file extension
+        original_ext = os.path.splitext(video_path)[1]
+
+        # Create new path with SEO-friendly filename
+        video_dir = os.path.dirname(video_path)
+        seo_video_path = os.path.join(video_dir, f"{safe_title}{original_ext}")
+
+        # Rename the file
         try:
-            # Upload video
-            logger.info(f"Uploading video for user {user_id}: {title}")
+            os.rename(video_path, seo_video_path)
+            video_path = seo_video_path
+            logger.info(f"Renamed video file for SEO: {safe_title}{original_ext}")
+        except Exception as e:
+            logger.warning(f"Could not rename video file: {e}, using original path")
 
-            request_body = {
-                'snippet': {
-                    'title': title,
-                    'description': description,
-                    'tags': tags_list[:500] if len(tags_list) > 500 else tags_list,  # YouTube allows max 500 tags
-                    'categoryId': '22'  # People & Blogs category
-                },
-                'status': {
-                    'privacyStatus': privacy_status,
-                    'selfDeclaredMadeForKids': False
-                }
+        # Upload video to YouTube
+        logger.info(f"Uploading video to YouTube for user {user_id}: {title}")
+
+        request_body = {
+            'snippet': {
+                'title': title,
+                'description': description,
+                'tags': tags[:500] if len(tags) > 500 else tags,  # YouTube allows max 500 tags
+                'categoryId': '22',  # People & Blogs category
+                'defaultLanguage': language,
+                'defaultAudioLanguage': language
+            },
+            'status': {
+                'privacyStatus': privacy_status,
+                'selfDeclaredMadeForKids': False
             }
+        }
 
-            media_file = MediaFileUpload(temp_video.name, resumable=True)
+        # Add scheduled publish time if provided
+        if scheduled_time:
+            from datetime import datetime
+            # Convert HTML datetime-local format to YouTube API format (ISO 8601)
+            try:
+                dt = datetime.fromisoformat(scheduled_time)
+                request_body['status']['publishAt'] = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+                logger.info(f"Video scheduled for: {request_body['status']['publishAt']}")
+            except Exception as e:
+                logger.warning(f"Could not parse scheduled time: {e}")
 
-            upload_request = youtube.videos().insert(
-                part='snippet,status',
-                body=request_body,
-                media_body=media_file
-            )
+        media_file = MediaFileUpload(video_path, resumable=True)
 
-            response = None
-            while response is None:
-                status, response = upload_request.next_chunk()
-                if status:
-                    logger.info(f"Upload progress: {int(status.progress() * 100)}%")
+        upload_request = youtube.videos().insert(
+            part='snippet,status',
+            body=request_body,
+            media_body=media_file
+        )
 
-            video_id = response['id']
-            logger.info(f"Video uploaded successfully: {video_id}")
+        response = None
+        while response is None:
+            status, response = upload_request.next_chunk()
+            if status:
+                logger.info(f"Upload progress: {int(status.progress() * 100)}%")
 
-            # Upload thumbnail if provided
-            if 'thumbnail' in request.files:
-                thumbnail_file = request.files['thumbnail']
-                if thumbnail_file.filename != '':
-                    # Validate thumbnail
-                    if thumbnail_file.content_type not in ['image/jpeg', 'image/jpg', 'image/png']:
-                        logger.warning("Invalid thumbnail file type, skipping thumbnail upload")
-                    else:
-                        # Save thumbnail to temporary file
-                        temp_thumbnail = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(thumbnail_file.filename)[1])
-                        thumbnail_file.save(temp_thumbnail.name)
-                        temp_thumbnail.close()
+        video_id = response['id']
+        logger.info(f"Video uploaded successfully: {video_id}")
 
-                        try:
-                            from googleapiclient.http import MediaFileUpload as MediaUpload
-                            thumbnail_media = MediaUpload(temp_thumbnail.name, mimetype=thumbnail_file.content_type, resumable=True)
+        # Upload thumbnail if provided
+        if thumbnail_path and os.path.exists(thumbnail_path):
+            try:
+                # Rename thumbnail file for SEO (use title as filename)
+                thumbnail_ext = os.path.splitext(thumbnail_path)[1]
+                thumbnail_dir = os.path.dirname(thumbnail_path)
+                seo_thumbnail_path = os.path.join(thumbnail_dir, f"{safe_title}-thumbnail{thumbnail_ext}")
 
-                            youtube.thumbnails().set(
-                                videoId=video_id,
-                                media_body=thumbnail_media
-                            ).execute()
+                try:
+                    os.rename(thumbnail_path, seo_thumbnail_path)
+                    thumbnail_path = seo_thumbnail_path
+                    logger.info(f"Renamed thumbnail file for SEO: {safe_title}-thumbnail{thumbnail_ext}")
+                except Exception as e:
+                    logger.warning(f"Could not rename thumbnail file: {e}, using original path")
 
-                            logger.info(f"Thumbnail uploaded successfully for video {video_id}")
-                        except Exception as e:
-                            logger.error(f"Error uploading thumbnail: {e}")
-                        finally:
-                            os.unlink(temp_thumbnail.name)
+                # Detect mimetype from file extension
+                import mimetypes
+                mimetype, _ = mimetypes.guess_type(thumbnail_path)
+                if not mimetype:
+                    mimetype = 'image/jpeg'  # Default
 
-            return jsonify({
-                'success': True,
-                'video_id': video_id,
-                'message': 'Video uploaded successfully to YouTube'
-            })
+                # Upload thumbnail to YouTube
+                from googleapiclient.http import MediaFileUpload as MediaUpload
+                thumbnail_media = MediaUpload(thumbnail_path, mimetype=mimetype, resumable=True)
 
-        finally:
-            # Clean up temporary video file
-            os.unlink(temp_video.name)
+                youtube.thumbnails().set(
+                    videoId=video_id,
+                    media_body=thumbnail_media
+                ).execute()
+
+                logger.info(f"Thumbnail uploaded successfully for video {video_id}")
+            except Exception as e:
+                logger.error(f"Error uploading thumbnail: {e}")
+            finally:
+                # Clean up thumbnail file
+                try:
+                    os.unlink(thumbnail_path)
+                except Exception as e:
+                    logger.error(f"Error deleting thumbnail file: {e}")
+
+        # Clean up temporary video file
+        try:
+            os.unlink(video_path)
+            logger.info(f"Cleaned up temporary video file: {video_path}")
+        except Exception as e:
+            logger.error(f"Error deleting video file: {e}")
+
+        return jsonify({
+            'success': True,
+            'video_id': video_id,
+            'message': 'Video uploaded successfully to YouTube'
+        })
 
     except Exception as e:
         logger.error(f"Error uploading video to YouTube: {e}")

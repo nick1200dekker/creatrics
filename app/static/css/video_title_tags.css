@@ -1152,13 +1152,12 @@ html.dark .insufficient-credits-card {
 /* Video Upload Section */
 .video-upload-area {
     position: relative;
-    padding: 1.25rem;
+    padding: 0.75rem;
     border: 2px dashed var(--border-primary);
     border-radius: 8px;
     background: transparent;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1188,7 +1187,7 @@ html.dark .insufficient-credits-card {
 
 .upload-file-info {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
     flex: 1;
 }
@@ -1201,6 +1200,7 @@ html.dark .insufficient-credits-card {
     color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;
+    align-self: flex-start;
 }
 
 .remove-video-btn:hover {
@@ -1237,18 +1237,49 @@ html.dark .title-item.selected {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 6px;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    margin-bottom: 1rem;
+    padding: 0.625rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+    margin-top: 0;
+    font-style: italic;
+}
+
+html.dark .title-selection-notice {
+    background: transparent;
+    border: none;
 }
 
 .title-selection-notice i {
-    color: #3B82F6;
-    font-size: 1.1rem;
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+html.dark .title-selection-notice i {
+    color: var(--text-tertiary);
+}
+
+/* Description Textarea - Auto Height */
+#generatedDescription {
+    min-height: 200px;
+    max-height: 500px;
+}
+
+#generatedDescription:focus {
+    outline: none;
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    border-radius: 6px;
+    padding: 0.5rem;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark #generatedDescription:focus {
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
 /* Tags Editor */
@@ -1256,8 +1287,13 @@ html.dark .title-item.selected {
     margin-top: 1rem;
     padding: 1.25rem;
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
+    border-radius: 10px;
     background: var(--bg-secondary);
+}
+
+html.dark .tags-editor-container {
+    background: rgba(39, 39, 42, 0.5);
+    border-color: rgba(63, 63, 70, 0.6);
 }
 
 .tags-list-editable {
@@ -1272,11 +1308,28 @@ html.dark .title-item.selected {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 0.875rem;
     background: rgba(59, 130, 246, 0.1);
     color: var(--text-primary);
-    border-radius: 6px;
-    font-size: 0.875rem;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    transition: all 0.2s ease;
+}
+
+html.dark .tag-editable {
+    background: rgba(96, 165, 250, 0.15);
+    border-color: rgba(96, 165, 250, 0.25);
+}
+
+.tag-editable:hover {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+html.dark .tag-editable:hover {
+    background: rgba(96, 165, 250, 0.2);
+    border-color: rgba(96, 165, 250, 0.35);
 }
 
 .tag-delete-btn {
@@ -1303,19 +1356,35 @@ html.dark .title-item.selected {
     padding: 0.75rem;
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--text-primary);
     font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+html.dark .tag-input {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(82, 82, 91, 0.6);
 }
 
 .tag-input:focus {
-    outline: 2px solid #3B82F6;
-    outline-offset: -1px;
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .tag-input:focus {
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
 .char-count-section {
     padding-top: 1rem;
     border-top: 1px solid var(--border-primary);
+}
+
+html.dark .char-count-section {
+    border-top-color: rgba(82, 82, 91, 0.4);
 }
 
 .char-count-header {
@@ -1328,20 +1397,25 @@ html.dark .title-item.selected {
 .char-count-label {
     font-size: 0.875rem;
     color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .char-count-value {
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-secondary);
 }
 
 .char-count-progress {
-    height: 8px;
+    height: 6px;
     background: var(--bg-tertiary);
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
     margin-bottom: 0.5rem;
+}
+
+html.dark .char-count-progress {
+    background: rgba(63, 63, 70, 0.5);
 }
 
 .char-count-fill {
@@ -1369,24 +1443,7 @@ html.dark .title-item.selected {
 
 /* Upload Section */
 .upload-section-content {
-    padding: 1.5rem;
-}
-
-.upload-warning {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem 1.25rem;
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    border-radius: 8px;
-    color: #F59E0B;
-    font-size: 0.875rem;
-    margin-bottom: 1.5rem;
-}
-
-.upload-warning i {
-    font-size: 1.25rem;
+    padding: 1.5rem 2rem;
 }
 
 .upload-options-grid {
@@ -1396,11 +1453,23 @@ html.dark .title-item.selected {
     margin-bottom: 1.5rem;
 }
 
+@media (max-width: 768px) {
+    .upload-options-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .upload-option-card {
     padding: 1rem;
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+html.dark .upload-option-card {
+    background: rgba(39, 39, 42, 0.5);
+    border-color: rgba(63, 63, 70, 0.6);
 }
 
 .upload-option-label {
@@ -1408,29 +1477,113 @@ html.dark .title-item.selected {
     align-items: center;
     gap: 0.5rem;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.75rem;
 }
 
 .upload-option-label i {
-    color: var(--text-tertiary);
+    color: #3B82F6;
+    font-size: 1rem;
+}
+
+html.dark .upload-option-label i {
+    color: #60A5FA;
 }
 
 .privacy-select {
     width: 100%;
-    padding: 0.625rem 0.75rem;
-    background: var(--bg-primary);
+    padding: 0.75rem 0.875rem;
+    background: var(--bg-tertiary);
     border: 1px solid var(--border-primary);
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--text-primary);
     font-size: 0.875rem;
+    font-weight: 500;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+html.dark .privacy-select {
+    background: rgba(63, 63, 70, 0.6);
+    border-color: rgba(82, 82, 91, 0.6);
+}
+
+.privacy-select:hover {
+    border-color: #3B82F6;
+}
+
+html.dark .privacy-select:hover {
+    border-color: #60A5FA;
 }
 
 .privacy-select:focus {
-    outline: 2px solid #3B82F6;
-    outline-offset: -1px;
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .privacy-select:focus {
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+/* Schedule datetime input */
+.schedule-datetime-input {
+    width: 100%;
+    padding: 0.75rem 0.875rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    color-scheme: light;
+}
+
+html.dark .schedule-datetime-input {
+    background: rgba(63, 63, 70, 0.6);
+    border-color: rgba(82, 82, 91, 0.6);
+    color-scheme: dark;
+}
+
+.schedule-datetime-input:hover {
+    border-color: #3B82F6;
+}
+
+html.dark .schedule-datetime-input:hover {
+    border-color: #60A5FA;
+}
+
+.schedule-datetime-input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .schedule-datetime-input:focus {
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+/* Style the calendar picker icon in dark mode */
+.schedule-datetime-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.schedule-datetime-input::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+html.dark .schedule-datetime-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.6) sepia(1) saturate(5) hue-rotate(195deg);
+}
+
+/* Make calendar icon in label blue */
+.schedule-label i {
+    color: var(--primary);
 }
 
 .thumbnail-upload-btn {
@@ -1439,20 +1592,32 @@ html.dark .title-item.selected {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.625rem 1rem;
-    background: var(--bg-primary);
+    padding: 0.75rem 1rem;
+    background: var(--bg-tertiary);
     border: 1px solid var(--border-primary);
-    border-radius: 6px;
-    color: var(--text-secondary);
+    border-radius: 8px;
+    color: var(--text-primary);
     font-size: 0.875rem;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
+html.dark .thumbnail-upload-btn {
+    background: rgba(63, 63, 70, 0.6);
+    border-color: rgba(82, 82, 91, 0.6);
+}
+
 .thumbnail-upload-btn:hover {
     background: var(--bg-hover);
-    border-color: var(--primary);
-    color: var(--primary);
+    border-color: #3B82F6;
+    color: #3B82F6;
+    transform: translateY(-1px);
+}
+
+html.dark .thumbnail-upload-btn:hover {
+    border-color: #60A5FA;
+    color: #60A5FA;
 }
 
 .thumbnail-preview-card {
@@ -1462,16 +1627,22 @@ html.dark .title-item.selected {
     padding: 1rem;
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
+    border-radius: 10px;
     margin-bottom: 1.5rem;
     animation: fadeIn 0.3s ease;
+}
+
+html.dark .thumbnail-preview-card {
+    background: rgba(39, 39, 42, 0.5);
+    border-color: rgba(63, 63, 70, 0.6);
 }
 
 .thumbnail-preview-img {
     width: 120px;
     height: 68px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 8px;
+    border: 1px solid var(--border-primary);
 }
 
 .thumbnail-preview-info {
@@ -1491,20 +1662,26 @@ html.dark .title-item.selected {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 0.875rem;
     background: transparent;
     border: 1px solid var(--border-primary);
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--text-secondary);
     font-size: 0.875rem;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
+html.dark .thumbnail-remove-btn {
+    border-color: rgba(82, 82, 91, 0.6);
+}
+
 .thumbnail-remove-btn:hover {
-    background: var(--error);
-    border-color: var(--error);
+    background: #EF4444;
+    border-color: #EF4444;
     color: white;
+    transform: translateY(-1px);
 }
 
 .upload-video-btn {
@@ -1513,21 +1690,33 @@ html.dark .title-item.selected {
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    padding: 1rem;
-    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
-    border: none;
-    border-radius: 8px;
-    color: white;
+    padding: 1rem 1.25rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    color: var(--text-primary);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
+html.dark .upload-video-btn {
+    background: rgba(63, 63, 70, 0.6);
+    border-color: rgba(82, 82, 91, 0.6);
+}
+
 .upload-video-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #CC0000 0%, #990000 100%);
-    box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+    background: #3B82F6;
+    border-color: #3B82F6;
+    color: white;
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+html.dark .upload-video-btn:hover:not(:disabled) {
+    background: #60A5FA;
+    border-color: #60A5FA;
 }
 
 .upload-video-btn:active:not(:disabled) {
@@ -1543,7 +1732,13 @@ html.dark .title-item.selected {
     font-size: 1.25rem;
 }
 
-/* Thumbnail Preview */
+/* Animate spinner icon in upload button */
+.upload-video-btn .ph-spinner {
+    animation: spin 1s linear infinite;
+    color: var(--primary);
+}
+
+/* Thumbnail Preview Animation */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -1555,8 +1750,83 @@ html.dark .title-item.selected {
     }
 }
 
+/* Upload Progress Modal */
+.upload-progress-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.upload-progress-modal.show {
+    opacity: 1;
+}
+
+.upload-progress-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.upload-progress-content {
+    position: relative;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 480px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    z-index: 1;
+}
+
+html.dark .upload-progress-content {
+    background: rgba(39, 39, 42, 0.95);
+    border-color: rgba(63, 63, 70, 0.8);
+}
+
+/* Upload spinner container */
+.upload-spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+
+.upload-spinner-icon {
+    font-size: 3rem;
+    color: #3B82F6;
+    animation: spin 1s linear infinite;
+}
+
+html.dark .upload-spinner-icon {
+    color: #60A5FA;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 @media (max-width: 768px) {
-    .upload-options-grid {
-        grid-template-columns: 1fr;
+    .upload-progress-content {
+        padding: 1.5rem;
+        max-width: 90%;
     }
 }

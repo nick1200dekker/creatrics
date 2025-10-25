@@ -13,6 +13,8 @@ let selectedVideoFile = null;
 let selectedThumbnailFile = null;
 let selectedTitle = null;
 let hasYouTubeConnected = false;
+let uploadedVideoPath = null; // Server path to uploaded video
+let uploadedThumbnailPath = null; // Server path to uploaded thumbnail
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -73,7 +75,7 @@ function triggerVideoUpload() {
 /**
  * Handle video file selection
  */
-function handleVideoSelect(event) {
+async function handleVideoSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -90,9 +92,6 @@ function handleVideoSelect(event) {
         return;
     }
 
-    // Store the file
-    selectedVideoFile = file;
-
     // Auto-select all generation options (titles, description, tags)
     const titlesCard = document.getElementById('titlesCard');
     const descriptionCard = document.getElementById('descriptionCard');
@@ -108,7 +107,7 @@ function handleVideoSelect(event) {
         toggleGenerationCard(tagsCard, 'tags');
     }
 
-    // Update UI to show selected file
+    // Update UI to show file info
     const uploadContent = document.getElementById('uploadContent');
     const uploadProgress = document.getElementById('uploadProgress');
     const fileName = document.getElementById('uploadFileName');
@@ -119,16 +118,36 @@ function handleVideoSelect(event) {
     fileName.textContent = file.name;
     fileSize.textContent = formatFileSize(file.size);
 
-    showToast('Video selected! All content types auto-selected.', 'success');
+    // Start uploading to server immediately
+    await uploadVideoToServer(file);
 }
 
 /**
  * Remove selected video
  */
-function removeVideo(event) {
+async function removeVideo(event) {
     event.stopPropagation();
 
+    // Delete video from server if it was uploaded
+    if (uploadedVideoPath) {
+        try {
+            await fetch('/api/delete-temp-video', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    video_path: uploadedVideoPath
+                })
+            });
+        } catch (error) {
+            console.error('Error deleting temp video:', error);
+        }
+    }
+
     selectedVideoFile = null;
+    uploadedVideoPath = null;
+
     const fileInput = document.getElementById('videoFileInput');
     if (fileInput) {
         fileInput.value = '';
@@ -152,6 +171,130 @@ function formatFileSize(bytes) {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
 
+/**
+ * Upload video to server
+ */
+async function uploadVideoToServer(file) {
+    const progressContainer = document.getElementById('videoUploadProgressContainer');
+    const progressBar = document.getElementById('videoUploadProgressBar');
+    const progressPercent = document.getElementById('videoUploadPercent');
+    const progressStatus = document.getElementById('videoUploadStatus');
+    const removeBtn = document.getElementById('removeVideoBtn');
+
+    // Show progress bar
+    if (progressContainer) {
+        progressContainer.style.display = 'block';
+    }
+
+    // Disable remove button during upload
+    if (removeBtn) {
+        removeBtn.disabled = true;
+        removeBtn.style.opacity = '0.5';
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('video', file);
+
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+
+                if (progressBar) {
+                    progressBar.style.width = `${percentComplete}%`;
+                }
+                if (progressPercent) {
+                    progressPercent.textContent = `${percentComplete}%`;
+                }
+                if (progressStatus) {
+                    progressStatus.textContent = 'Uploading to server...';
+                }
+            }
+        });
+
+        const uploadPromise = new Promise((resolve, reject) => {
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        resolve(JSON.parse(xhr.responseText));
+                    } catch (e) {
+                        reject(new Error('Invalid response from server'));
+                    }
+                } else {
+                    try {
+                        const errorData = JSON.parse(xhr.responseText);
+                        reject(new Error(errorData.error || 'Upload failed'));
+                    } catch (e) {
+                        reject(new Error('Upload failed'));
+                    }
+                }
+            };
+            xhr.onerror = () => reject(new Error('Network error'));
+            xhr.open('POST', '/api/upload-video-temp');
+            xhr.send(formData);
+        });
+
+        const data = await uploadPromise;
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to upload video');
+        }
+
+        // Store the uploaded video path
+        uploadedVideoPath = data.video_path;
+        selectedVideoFile = file; // Keep file reference
+
+        // Update UI to show success
+        if (progressStatus) {
+            progressStatus.textContent = 'Upload complete!';
+            progressStatus.style.color = '#10B981';
+        }
+        if (progressBar) {
+            progressBar.style.background = 'linear-gradient(90deg, #10B981 0%, #059669 100%)';
+        }
+
+        // Re-enable remove button
+        if (removeBtn) {
+            removeBtn.disabled = false;
+            removeBtn.style.opacity = '1';
+        }
+
+        showToast('Video uploaded successfully!', 'success');
+
+    } catch (error) {
+        console.error('Error uploading video:', error);
+        showToast('Failed to upload video: ' + error.message, 'error');
+
+        // Hide progress and reset
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
+
+        // Re-enable remove button
+        if (removeBtn) {
+            removeBtn.disabled = false;
+            removeBtn.style.opacity = '1';
+        }
+
+        // Reset file input
+        const fileInput = document.getElementById('videoFileInput');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+
+        // Hide upload progress section
+        const uploadContent = document.getElementById('uploadContent');
+        const uploadProgress = document.getElementById('uploadProgress');
+        if (uploadContent && uploadProgress) {
+            uploadContent.style.display = 'flex';
+            uploadProgress.style.display = 'none';
+        }
+    }
+}
+
 // Set video type
 function setVideoType(type) {
     currentVideoType = type;
@@ -161,6 +304,24 @@ function setVideoType(type) {
     } else {
         document.getElementById('shortFormBtn').classList.add('active');
     }
+
+    // Switch reference description textarea
+    const refLong = document.getElementById('referenceDescriptionLong');
+    const refShort = document.getElementById('referenceDescriptionShort');
+    const refLabel = document.getElementById('refDescLabel');
+
+    if (type === 'long') {
+        if (refLong) refLong.style.display = 'block';
+        if (refShort) refShort.style.display = 'none';
+        if (refLabel) refLabel.textContent = 'Reference Description (Long Form)';
+    } else {
+        if (refLong) refLong.style.display = 'none';
+        if (refShort) refShort.style.display = 'block';
+        if (refLabel) refLabel.textContent = 'Reference Description (Shorts)';
+    }
+
+    // Update character count for visible textarea
+    updateRefDescCharCount();
 }
 
 // Update character count for main input
@@ -172,9 +333,20 @@ function updateCharCount() {
 
 // Update character count for reference description
 function updateRefDescCharCount() {
-    const input = document.getElementById('referenceDescription');
-    const count = input.value.length;
-    document.getElementById('refDescCharCount').textContent = `${count} / 5000`;
+    const refLong = document.getElementById('referenceDescriptionLong');
+    const refShort = document.getElementById('referenceDescriptionShort');
+    const charCountEl = document.getElementById('refDescCharCount');
+
+    if (!charCountEl) return;
+
+    // Count based on currently visible textarea
+    if (currentVideoType === 'long' && refLong) {
+        const count = refLong.value.length;
+        charCountEl.textContent = `${count} / 5000`;
+    } else if (currentVideoType === 'short' && refShort) {
+        const count = refShort.value.length;
+        charCountEl.textContent = `${count} / 5000`;
+    }
 }
 
 // Update character count for channel keywords
@@ -214,17 +386,28 @@ function toggleChannelKeywordsSection() {
 
 // Clear reference description
 function clearReferenceDescription() {
-    const refDesc = document.getElementById('referenceDescription');
-    refDesc.value = '';
+    const refLong = document.getElementById('referenceDescriptionLong');
+    const refShort = document.getElementById('referenceDescriptionShort');
+
+    if (currentVideoType === 'long' && refLong) {
+        refLong.value = '';
+    } else if (currentVideoType === 'short' && refShort) {
+        refShort.value = '';
+    }
+
     updateRefDescCharCount();
     showToast('Reference description cleared', 'info');
 }
 
 // Save reference description to backend
 async function saveReferenceDescription() {
-    const refDesc = document.getElementById('referenceDescription').value.trim();
+    const refLong = document.getElementById('referenceDescriptionLong');
+    const refShort = document.getElementById('referenceDescriptionShort');
 
-    if (!refDesc) {
+    const refDescLongValue = refLong ? refLong.value.trim() : '';
+    const refDescShortValue = refShort ? refShort.value.trim() : '';
+
+    if (!refDescLongValue && !refDescShortValue) {
         showToast('No reference description to save', 'error');
         return;
     }
@@ -236,7 +419,10 @@ async function saveReferenceDescription() {
         const response = await fetch('/api/save-reference-description', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ reference_description: refDesc })
+            body: JSON.stringify({
+                reference_description_long: refDescLongValue,
+                reference_description_short: refDescShortValue
+            })
         });
 
         const data = await response.json();
@@ -340,9 +526,17 @@ async function loadReferenceDescription() {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.success && data.reference_description) {
-                const refDescInput = document.getElementById('referenceDescription');
-                refDescInput.value = data.reference_description;
+            if (data.success) {
+                const refLongInput = document.getElementById('referenceDescriptionLong');
+                const refShortInput = document.getElementById('referenceDescriptionShort');
+
+                if (data.reference_description_long && refLongInput) {
+                    refLongInput.value = data.reference_description_long;
+                }
+                if (data.reference_description_short && refShortInput) {
+                    refShortInput.value = data.reference_description_short;
+                }
+
                 updateRefDescCharCount();
             }
         }
@@ -380,7 +574,12 @@ function toggleGenerationCard(card, type) {
 async function generateContent() {
     const input = document.getElementById('videoInput').value.trim();
     const keyword = document.getElementById('keywordInput').value.trim();
-    const referenceDescription = document.getElementById('referenceDescription').value.trim();
+
+    // Get correct reference description based on video type
+    const refLong = document.getElementById('referenceDescriptionLong');
+    const refShort = document.getElementById('referenceDescriptionShort');
+    const referenceDescription = (currentVideoType === 'long' && refLong) ? refLong.value.trim() : (refShort ? refShort.value.trim() : '');
+
     const generateTitles = document.getElementById('titlesCard').classList.contains('active');
     const generateDescription = document.getElementById('descriptionCard').classList.contains('active');
     const generateTags = document.getElementById('tagsCard').classList.contains('active');
@@ -651,14 +850,6 @@ function selectTitle(index) {
             item.classList.remove('selected');
         }
     });
-
-    // Enable upload button
-    const uploadBtn = document.getElementById('uploadBtn');
-    if (uploadBtn) {
-        uploadBtn.disabled = false;
-        uploadBtn.style.opacity = '1';
-        uploadBtn.style.cursor = 'pointer';
-    }
 }
 
 // Render description section
@@ -681,8 +872,8 @@ function renderDescriptionSection(description, visible) {
                     </button>
                 </div>
             </div>
-            <div style="margin-top: 1rem; padding: 1.25rem; border: 1px solid var(--border-primary); border-radius: 8px; background: var(--bg-secondary);">
-                <textarea style="width: 100%; color: var(--text-primary); line-height: 1.6; white-space: pre-wrap; background: transparent; border: none; outline: none; resize: vertical; min-height: 150px; font-family: inherit;" id="generatedDescription" readonly>${escapeHtml(description)}</textarea>
+            <div style="margin-top: 1rem; padding: 1.25rem; border: 1px solid var(--border-primary); border-radius: 10px; background: var(--bg-secondary);">
+                <textarea style="width: 100%; color: var(--text-primary); line-height: 1.6; white-space: pre-wrap; background: transparent; border: none; resize: vertical; font-family: inherit;" id="generatedDescription" readonly>${escapeHtml(description)}</textarea>
                 <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-primary); color: var(--text-secondary); font-size: 0.875rem;" id="descCharCount">
                     ${description.length} characters
                 </div>
@@ -771,33 +962,38 @@ function renderTagsSection(tags, visible) {
 
 // Render upload section
 function renderUploadSection(visible) {
-    const titleSelected = selectedTitle !== null;
     return `
         <div class="results-section tab-content-section" id="uploadSection" style="${visible ? 'display: block;' : 'display: none;'}">
             <div class="upload-section-content">
-                ${!titleSelected ? `
-                    <div class="upload-warning">
-                        <i class="ph ph-warning"></i>
-                        <span>Please select a title from the Titles tab before uploading</span>
-                    </div>
-                ` : ''}
-
                 <div class="upload-options-grid">
-                    <!-- Privacy Status -->
-                    <div class="upload-option-card">
+                    <!-- Language -->
+                    <div class="upload-option-card" style="grid-column: 1;">
                         <label class="upload-option-label">
-                            <i class="ph ph-lock-key"></i>
-                            Privacy Status
+                            <i class="ph ph-globe"></i>
+                            Language
                         </label>
-                        <select class="privacy-select" id="privacySelect">
-                            <option value="private">Private</option>
-                            <option value="unlisted">Unlisted</option>
-                            <option value="public">Public</option>
+                        <select class="privacy-select" id="languageSelect">
+                            <option value="en" selected>English</option>
+                            <option value="es">Spanish (Español)</option>
+                            <option value="fr">French (Français)</option>
+                            <option value="de">German (Deutsch)</option>
+                            <option value="it">Italian (Italiano)</option>
+                            <option value="pt">Portuguese (Português)</option>
+                            <option value="nl">Dutch (Nederlands)</option>
+                            <option value="ru">Russian (Русский)</option>
+                            <option value="ja">Japanese (日本語)</option>
+                            <option value="ko">Korean (한국어)</option>
+                            <option value="zh-CN">Chinese Simplified (简体中文)</option>
+                            <option value="zh-TW">Chinese Traditional (繁體中文)</option>
+                            <option value="ar">Arabic (العربية)</option>
+                            <option value="hi">Hindi (हिन्दी)</option>
+                            <option value="pl">Polish (Polski)</option>
+                            <option value="tr">Turkish (Türkçe)</option>
                         </select>
                     </div>
 
                     <!-- Thumbnail Upload -->
-                    <div class="upload-option-card">
+                    <div class="upload-option-card" style="grid-column: 2;">
                         <label class="upload-option-label">
                             <i class="ph ph-image"></i>
                             Thumbnail (Optional)
@@ -807,6 +1003,29 @@ function renderUploadSection(visible) {
                             <span id="thumbnailBtnText">Choose File</span>
                         </button>
                         <input type="file" id="thumbnailFileInput" accept="image/jpeg,image/jpg,image/png" style="display: none;" onchange="handleThumbnailSelect(event)">
+                    </div>
+
+                    <!-- Privacy Status -->
+                    <div class="upload-option-card" id="statusCard" style="grid-column: 1;">
+                        <label class="upload-option-label">
+                            <i class="ph ph-lock-key"></i>
+                            Status
+                        </label>
+                        <select class="privacy-select" id="privacySelect" onchange="handleStatusChange()">
+                            <option value="private" selected>Private</option>
+                            <option value="unlisted">Unlisted</option>
+                            <option value="public">Public</option>
+                            <option value="scheduled">Schedule</option>
+                        </select>
+                    </div>
+
+                    <!-- Schedule Date/Time (appears when scheduled is selected) -->
+                    <div class="upload-option-card" id="scheduleDateTime" style="grid-column: 2; display: none;">
+                        <label class="upload-option-label schedule-label">
+                            <i class="ph ph-calendar"></i>
+                            Publish Date & Time
+                        </label>
+                        <input type="datetime-local" class="privacy-select schedule-datetime-input" id="scheduleInput" onclick="this.showPicker()">
                     </div>
                 </div>
 
@@ -820,7 +1039,7 @@ function renderUploadSection(visible) {
                     </div>
                 </div>
 
-                <button class="upload-video-btn" onclick="uploadToYouTube()" id="uploadBtn" ${!titleSelected ? 'disabled' : ''}>
+                <button class="upload-video-btn" onclick="uploadToYouTube()" id="uploadBtn">
                     <i class="ph ph-youtube-logo"></i>
                     Upload to YouTube
                 </button>
@@ -868,16 +1087,24 @@ function toggleEditTitleItem(event, index) {
         textEl.focus();
         icon.className = 'ph ph-check';
         button.title = 'Save';
-        textEl.style.outline = '2px solid #3B82F6';
-        textEl.style.padding = '0.25rem';
-        textEl.style.borderRadius = '4px';
+        
+        // Store the original styling
+        textEl.dataset.originalBg = textEl.style.background || '';
+        
+        // Light highlight for edit mode
+        textEl.style.background = 'var(--bg-tertiary)';
+        textEl.style.padding = '0.25rem 0.5rem';
+        textEl.style.borderRadius = '6px';
     } else {
         // Exit edit mode and update the title
         textEl.setAttribute('contenteditable', 'false');
         icon.className = 'ph ph-pencil-simple';
         button.title = 'Edit';
-        textEl.style.outline = 'none';
+        
+        // Restore original styling
+        textEl.style.background = textEl.dataset.originalBg || '';
         textEl.style.padding = '0';
+        textEl.style.borderRadius = '0';
 
         // Update currentTitles array
         currentTitles[index] = textEl.textContent.trim();
@@ -899,13 +1126,11 @@ function toggleEditDescription() {
         textarea.focus();
         icon.className = 'ph ph-check';
         if (span.tagName === 'SPAN') span.textContent = 'Save';
-        textarea.style.outline = '2px solid #3B82F6';
     } else {
         // Exit edit mode
         textarea.setAttribute('readonly', 'true');
         icon.className = 'ph ph-pencil-simple';
         if (span.tagName === 'SPAN') span.textContent = 'Edit';
-        textarea.style.outline = 'none';
 
         // Update current description
         currentDescription = textarea.value;
@@ -982,7 +1207,7 @@ function selectThumbnail() {
 /**
  * Handle thumbnail file selection
  */
-function handleThumbnailSelect(event) {
+async function handleThumbnailSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -1018,6 +1243,39 @@ function handleThumbnailSelect(event) {
         preview.style.display = 'flex';
     };
     reader.readAsDataURL(file);
+
+    // Upload thumbnail to server immediately
+    await uploadThumbnailToServer(file);
+}
+
+/**
+ * Upload thumbnail to server
+ */
+async function uploadThumbnailToServer(file) {
+    try {
+        const formData = new FormData();
+        formData.append('thumbnail', file);
+
+        const response = await fetch('/api/upload-thumbnail-temp', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to upload thumbnail');
+        }
+
+        // Store the uploaded thumbnail path
+        uploadedThumbnailPath = data.thumbnail_path;
+        console.log('Thumbnail uploaded to server:', uploadedThumbnailPath);
+
+    } catch (error) {
+        console.error('Error uploading thumbnail:', error);
+        showToast('Failed to upload thumbnail: ' + error.message, 'error');
+        uploadedThumbnailPath = null;
+    }
 }
 
 /**
@@ -1025,6 +1283,8 @@ function handleThumbnailSelect(event) {
  */
 function removeThumbnail() {
     selectedThumbnailFile = null;
+    uploadedThumbnailPath = null;
+
     const fileInput = document.getElementById('thumbnailFileInput');
     if (fileInput) {
         fileInput.value = '';
@@ -1042,11 +1302,44 @@ function removeThumbnail() {
 }
 
 /**
+ * Handle status change (show/hide schedule datetime)
+ */
+function handleStatusChange() {
+    const privacySelect = document.getElementById('privacySelect');
+    const scheduleDateTime = document.getElementById('scheduleDateTime');
+    const scheduleInput = document.getElementById('scheduleInput');
+
+    if (privacySelect && scheduleDateTime) {
+        if (privacySelect.value === 'scheduled') {
+            scheduleDateTime.style.display = 'block';
+
+            // Set default to tomorrow at 12:00 if not already set
+            if (scheduleInput && !scheduleInput.value) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(12, 0, 0, 0);
+
+                // Format as datetime-local (YYYY-MM-DDTHH:mm)
+                const year = tomorrow.getFullYear();
+                const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                const day = String(tomorrow.getDate()).padStart(2, '0');
+                const hours = String(tomorrow.getHours()).padStart(2, '0');
+                const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
+
+                scheduleInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+        } else {
+            scheduleDateTime.style.display = 'none';
+        }
+    }
+}
+
+/**
  * Upload video to YouTube
  */
 async function uploadToYouTube() {
-    if (!selectedVideoFile) {
-        showToast('Please select a video file', 'error');
+    if (!uploadedVideoPath) {
+        showToast('Please upload a video file first', 'error');
         return;
     }
 
@@ -1059,33 +1352,63 @@ async function uploadToYouTube() {
     const description = currentDescription || '';
     const tags = currentTags || [];
 
-    // Get privacy status
+    // Get privacy status and language
     const privacySelect = document.getElementById('privacySelect');
     const privacyStatus = privacySelect ? privacySelect.value : 'private';
 
+    const languageSelect = document.getElementById('languageSelect');
+    const language = languageSelect ? languageSelect.value : 'en';
+
+    // Get scheduled date/time if status is scheduled
+    let scheduledTime = null;
+    if (privacyStatus === 'scheduled') {
+        const scheduleInput = document.getElementById('scheduleInput');
+        if (!scheduleInput || !scheduleInput.value) {
+            showToast('Please select a publish date and time', 'error');
+            return;
+        }
+        scheduledTime = scheduleInput.value;
+    }
+
     const uploadBtn = document.getElementById('uploadBtn');
     const originalContent = uploadBtn.innerHTML;
+
+    // Show upload progress modal
+    showUploadProgressModal();
 
     try {
         uploadBtn.disabled = true;
         uploadBtn.innerHTML = '<i class="ph ph-spinner"></i> Uploading...';
 
-        // Create FormData
-        const formData = new FormData();
-        formData.append('video', selectedVideoFile);
-        formData.append('title', title);
-        formData.append('description', description);
-        formData.append('tags', JSON.stringify(tags));
-        formData.append('privacy_status', privacyStatus);
+        // Update progress modal
+        updateUploadProgress('Uploading video to YouTube...', 'uploading');
 
-        if (selectedThumbnailFile) {
-            formData.append('thumbnail', selectedThumbnailFile);
+        // Send video path (already on server) to YouTube upload endpoint
+        const requestBody = {
+            video_path: uploadedVideoPath,
+            title: title,
+            description: description,
+            tags: tags,
+            privacy_status: privacyStatus === 'scheduled' ? 'private' : privacyStatus, // Scheduled videos are private until publish time
+            language: language
+        };
+
+        // Include thumbnail path if available
+        if (uploadedThumbnailPath) {
+            requestBody.thumbnail_path = uploadedThumbnailPath;
         }
 
-        // Upload video
+        // Include scheduled time if available
+        if (scheduledTime) {
+            requestBody.scheduled_time = scheduledTime;
+        }
+
         const response = await fetch('/api/upload-youtube-video', {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();
@@ -1094,6 +1417,15 @@ async function uploadToYouTube() {
             throw new Error(data.error || 'Failed to upload video');
         }
 
+        // Update progress to processing
+        updateUploadProgress('Processing video on YouTube...', 'processing');
+
+        // Small delay to show processing state
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Hide progress modal
+        hideUploadProgressModal();
+
         showToast('Video uploaded successfully to YouTube!', 'success');
 
         const privacyLabel = privacyStatus.charAt(0).toUpperCase() + privacyStatus.slice(1);
@@ -1101,21 +1433,26 @@ async function uploadToYouTube() {
         // Show success message with video link
         const resultsContainer = document.getElementById('resultsContainer');
         resultsContainer.innerHTML = `
-            <div style="text-align: center; padding: 3rem;">
-                <div style="font-size: 4rem; color: #10B981; margin-bottom: 1rem;">
-                    <i class="ph ph-check-circle"></i>
+            <div style="max-width: 500px; margin: 2rem auto; text-align: center; padding: 2.5rem; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 12px;">
+                <div style="width: 64px; height: 64px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                    <i class="ph-fill ph-check" style="font-size: 2rem; color: white;"></i>
                 </div>
-                <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Video Uploaded Successfully!</h3>
-                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-                    Your video has been uploaded to YouTube as ${privacyLabel}.
+                <h3 style="color: var(--text-primary); margin-bottom: 0.75rem; font-size: 1.5rem; font-weight: 600;">Upload Complete!</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9375rem; line-height: 1.6;">
+                    Your video is now live on YouTube as <strong style="color: var(--text-primary);">${privacyLabel}</strong>
                 </p>
-                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                    <a href="https://studio.youtube.com/video/${data.video_id}/edit" target="_blank" class="generate-btn">
-                        <i class="ph ph-youtube-logo"></i> View in YouTube Studio
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <a href="https://studio.youtube.com/video/${data.video_id}/edit" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border-radius: 8px; text-decoration: none; font-weight: 500; transition: all 0.2s ease; font-size: 0.9375rem;">
+                        <i class="ph ph-youtube-logo" style="font-size: 1.25rem;"></i> Open in YouTube Studio
                     </a>
-                    <button class="action-btn" onclick="location.reload()">
-                        <i class="ph ph-arrow-counter-clockwise"></i> Upload Another
+                    <button onclick="location.reload()" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: transparent; color: var(--text-secondary); border: 1px solid var(--border-primary); border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; font-size: 0.9375rem;">
+                        <i class="ph ph-arrow-counter-clockwise"></i> Upload Another Video
                     </button>
+                </div>
+                <div style="padding-top: 1.5rem; border-top: 1px solid var(--border-primary);">
+                    <p style="color: var(--text-tertiary); font-size: 0.8125rem; margin: 0;">
+                        Video ID: <code style="padding: 0.125rem 0.375rem; background: var(--bg-tertiary); border-radius: 4px; font-size: 0.75rem; color: var(--text-secondary);">${data.video_id}</code>
+                    </p>
                 </div>
             </div>
         `;
@@ -1124,12 +1461,103 @@ async function uploadToYouTube() {
         selectedVideoFile = null;
         selectedThumbnailFile = null;
         selectedTitle = null;
+        uploadedVideoPath = null;
+        uploadedThumbnailPath = null;
 
     } catch (error) {
         console.error('Error uploading video:', error);
+        hideUploadProgressModal();
         showToast('Failed to upload video: ' + error.message, 'error');
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = originalContent;
+    }
+}
+
+/**
+ * Show upload progress modal
+ */
+function showUploadProgressModal() {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('uploadProgressModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'uploadProgressModal';
+    modal.className = 'upload-progress-modal';
+    modal.innerHTML = `
+        <div class="upload-progress-overlay"></div>
+        <div class="upload-progress-content">
+            <div class="upload-spinner-container">
+                <i class="ph ph-spinner upload-spinner-icon"></i>
+            </div>
+            <h3 id="uploadProgressTitle" style="color: var(--text-primary); margin: 1.5rem 0 0.5rem; font-size: 1.25rem; font-weight: 600;">Uploading to YouTube</h3>
+            <p id="uploadProgressMessage" style="color: var(--text-secondary); margin: 0 0 1.5rem; font-size: 0.9375rem;">Please wait while we upload your video to YouTube</p>
+
+            <div style="margin: 1.5rem 0;">
+                <div style="width: 100%; height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-primary);">
+                    <div id="uploadProgressFill" style="height: 100%; width: 0%; background: #3B82F6; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+
+            <p style="color: var(--text-tertiary); font-size: 0.8125rem; margin: 0; text-align: center;">
+                This may take a few minutes
+            </p>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Trigger animation
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+/**
+ * Update upload progress
+ */
+function updateUploadProgress(message, stage) {
+    const titleEl = document.getElementById('uploadProgressTitle');
+    const messageEl = document.getElementById('uploadProgressMessage');
+    const percentEl = document.getElementById('uploadProgressPercent');
+    const fillEl = document.getElementById('uploadProgressFill');
+
+    if (titleEl) {
+        if (stage === 'uploading') {
+            titleEl.textContent = 'Uploading to YouTube';
+        } else if (stage === 'processing') {
+            titleEl.textContent = 'Processing Video';
+        }
+    }
+
+    if (messageEl) {
+        messageEl.textContent = message;
+    }
+
+    // Extract percentage from message if present
+    const percentMatch = message.match(/(\d+)%/);
+    if (percentMatch && percentEl && fillEl) {
+        const percent = parseInt(percentMatch[1]);
+        percentEl.textContent = `${percent}%`;
+        fillEl.style.width = `${percent}%`;
+    } else if (stage === 'processing') {
+        // Show indeterminate progress for processing
+        if (fillEl) {
+            fillEl.style.width = '100%';
+        }
+        if (percentEl) {
+            percentEl.textContent = 'Processing...';
+        }
+    }
+}
+
+/**
+ * Hide upload progress modal
+ */
+function hideUploadProgressModal() {
+    const modal = document.getElementById('uploadProgressModal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
     }
 }
 
