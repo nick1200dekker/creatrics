@@ -9,6 +9,10 @@ let currentTitles = [];
 let currentTags = [];
 let currentDescription = '';
 let isGenerating = false;
+let selectedVideoFile = null;
+let selectedThumbnailFile = null;
+let selectedTitle = null;
+let hasYouTubeConnected = false;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -17,7 +21,136 @@ document.addEventListener('DOMContentLoaded', function() {
     updateChannelKeywordsCharCount();
     loadChannelKeywords();
     loadReferenceDescription();
+    checkYouTubeConnection();
 });
+
+/**
+ * Check if user has YouTube connected
+ */
+async function checkYouTubeConnection() {
+    try {
+        const response = await fetch('/api/check-youtube-connection');
+        const data = await response.json();
+
+        hasYouTubeConnected = data.connected;
+
+        if (!data.connected) {
+            // Show connection notice and hide upload section
+            const uploadSection = document.getElementById('videoUploadSection');
+            if (uploadSection) {
+                uploadSection.innerHTML = `
+                    <label class="form-label">
+                        <i class="ph ph-upload"></i>
+                        Upload Video
+                    </label>
+                    <div style="padding: 1rem; background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: 8px; text-align: center;">
+                        <i class="ph ph-youtube-logo" style="font-size: 2rem; color: var(--text-tertiary); margin-bottom: 0.5rem; display: block;"></i>
+                        <div style="color: var(--text-secondary); margin-bottom: 0.75rem;">Connect your YouTube account to upload videos</div>
+                        <a href="/accounts/social-accounts" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--primary); color: white; border-radius: 6px; text-decoration: none; font-weight: 500;">
+                            <i class="ph ph-link"></i>
+                            Connect YouTube
+                        </a>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.log('Could not check YouTube connection:', error);
+        hasYouTubeConnected = false;
+    }
+}
+
+/**
+ * Trigger video file upload
+ */
+function triggerVideoUpload() {
+    const fileInput = document.getElementById('videoFileInput');
+    if (fileInput) {
+        fileInput.click();
+    }
+}
+
+/**
+ * Handle video file selection
+ */
+function handleVideoSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check if YouTube is connected
+    if (!hasYouTubeConnected) {
+        showToast('Please connect your YouTube account first', 'error');
+        event.target.value = '';
+        return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+        showToast('Please select a valid video file', 'error');
+        return;
+    }
+
+    // Store the file
+    selectedVideoFile = file;
+
+    // Auto-select all generation options (titles, description, tags)
+    const titlesCard = document.getElementById('titlesCard');
+    const descriptionCard = document.getElementById('descriptionCard');
+    const tagsCard = document.getElementById('tagsCard');
+
+    if (!titlesCard.classList.contains('active')) {
+        toggleGenerationCard(titlesCard, 'titles');
+    }
+    if (!descriptionCard.classList.contains('active')) {
+        toggleGenerationCard(descriptionCard, 'description');
+    }
+    if (!tagsCard.classList.contains('active')) {
+        toggleGenerationCard(tagsCard, 'tags');
+    }
+
+    // Update UI to show selected file
+    const uploadContent = document.getElementById('uploadContent');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const fileName = document.getElementById('uploadFileName');
+    const fileSize = document.getElementById('uploadFileSize');
+
+    uploadContent.style.display = 'none';
+    uploadProgress.style.display = 'flex';
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+
+    showToast('Video selected! All content types auto-selected.', 'success');
+}
+
+/**
+ * Remove selected video
+ */
+function removeVideo(event) {
+    event.stopPropagation();
+
+    selectedVideoFile = null;
+    const fileInput = document.getElementById('videoFileInput');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+
+    const uploadContent = document.getElementById('uploadContent');
+    const uploadProgress = document.getElementById('uploadProgress');
+
+    uploadContent.style.display = 'flex';
+    uploadProgress.style.display = 'none';
+}
+
+/**
+ * Format file size
+ */
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
 
 // Set video type
 function setVideoType(type) {
@@ -423,6 +556,13 @@ function displayCombinedResults(titlesData, descriptionData, tagsData) {
                 </button>
             `;
         }
+        if (selectedVideoFile && hasYouTubeConnected) {
+            html += `
+                <button class="results-tab-btn" onclick="switchTab('upload')">
+                    <i class="ph ph-upload"></i> Upload
+                </button>
+            `;
+        }
         html += '</div>';
     }
 
@@ -444,6 +584,11 @@ function displayCombinedResults(titlesData, descriptionData, tagsData) {
         html += renderTagsSection(tagsData.tags, !showTabs || (!hasTitles && !hasDescription && hasTags));
     }
 
+    // Display Upload Section (only if YouTube connected)
+    if (selectedVideoFile && hasYouTubeConnected) {
+        html += renderUploadSection(!showTabs);
+    }
+
     document.getElementById('resultsContainer').innerHTML = html;
 }
 
@@ -462,14 +607,25 @@ function renderTitlesSection(titles, visible) {
                     </button>
                 </div>
             </div>
+            ${selectedVideoFile && hasYouTubeConnected ? `
+                <div class="title-selection-notice">
+                    <i class="ph ph-info"></i>
+                    <span>Click on a title below to select it for your video</span>
+                </div>
+            ` : ''}
             <div class="titles-content">
                 <div class="titles-list">
                     ${titles.map((title, index) => `
-                        <div class="title-item" id="title-item-${index}">
+                        <div class="title-item ${selectedTitle === index ? 'selected' : ''}" id="title-item-${index}" ${selectedVideoFile && hasYouTubeConnected ? `onclick="selectTitle(${index})"` : ''}>
                             <span class="title-number">${index + 1}</span>
-                            <span class="title-text">${escapeHtml(title)}</span>
+                            <div class="title-text" contenteditable="false" id="title-text-${index}">${escapeHtml(title)}</div>
                             <div class="title-actions">
-                                <button class="title-action-btn" onclick="copyTitle(${index})" title="Copy title">
+                                ${hasYouTubeConnected ? `
+                                    <button class="title-action-btn edit-title-btn" onclick="toggleEditTitleItem(event, ${index})" title="Edit title">
+                                        <i class="ph ph-pencil-simple"></i>
+                                    </button>
+                                ` : ''}
+                                <button class="title-action-btn" onclick="copyTitle(${index}, event)" title="Copy title">
                                     <i class="ph ph-copy"></i>
                                 </button>
                             </div>
@@ -479,6 +635,30 @@ function renderTitlesSection(titles, visible) {
             </div>
         </div>
     `;
+}
+
+/**
+ * Select a title for upload
+ */
+function selectTitle(index) {
+    selectedTitle = index;
+
+    // Update UI - highlight selected title
+    document.querySelectorAll('.title-item').forEach((item, i) => {
+        if (i === index) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+
+    // Enable upload button
+    const uploadBtn = document.getElementById('uploadBtn');
+    if (uploadBtn) {
+        uploadBtn.disabled = false;
+        uploadBtn.style.opacity = '1';
+        uploadBtn.style.cursor = 'pointer';
+    }
 }
 
 // Render description section
@@ -491,14 +671,19 @@ function renderDescriptionSection(description, visible) {
                     Generated Description
                 </h3>
                 <div class="results-actions">
+                    ${hasYouTubeConnected ? `
+                        <button class="action-btn edit-desc-btn" onclick="toggleEditDescription()" title="Edit description" id="editDescBtn">
+                            <i class="ph ph-pencil-simple"></i> Edit
+                        </button>
+                    ` : ''}
                     <button class="action-btn" onclick="copyDescription()" title="Copy description">
                         <i class="ph ph-copy"></i> Copy
                     </button>
                 </div>
             </div>
             <div style="margin-top: 1rem; padding: 1.25rem; border: 1px solid var(--border-primary); border-radius: 8px; background: var(--bg-secondary);">
-                <div style="color: var(--text-primary); line-height: 1.6; white-space: pre-wrap;" id="generatedDescription">${escapeHtml(description)}</div>
-                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-primary); color: var(--text-secondary); font-size: 0.875rem;">
+                <textarea style="width: 100%; color: var(--text-primary); line-height: 1.6; white-space: pre-wrap; background: transparent; border: none; outline: none; resize: vertical; min-height: 150px; font-family: inherit;" id="generatedDescription" readonly>${escapeHtml(description)}</textarea>
+                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-primary); color: var(--text-secondary); font-size: 0.875rem;" id="descCharCount">
                     ${description.length} characters
                 </div>
             </div>
@@ -509,6 +694,37 @@ function renderDescriptionSection(description, visible) {
 // Render tags section
 function renderTagsSection(tags, visible) {
     const totalChars = tags.join(', ').length;
+
+    // If YouTube not connected, show simple tags display
+    if (!hasYouTubeConnected) {
+        return `
+            <div class="results-section tab-content-section" id="tagsSection" style="${visible ? 'display: block;' : 'display: none;'}">
+                <div class="results-header">
+                    <h3 class="results-title">
+                        <i class="ph ph-hash"></i>
+                        Generated Tags (${tags.length})
+                    </h3>
+                    <div class="results-actions">
+                        <button class="action-btn" onclick="copyGeneratedTags()" title="Copy tags">
+                            <i class="ph ph-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                <div class="tags-display-container">
+                    <div class="tags-display-wrapper">
+                        ${tags.map(tag => `
+                            <span class="tag-badge">${escapeHtml(tag)}</span>
+                        `).join('')}
+                    </div>
+                    <div class="tags-display-info">
+                        Total: ${totalChars} / 500 characters
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // If YouTube connected, show editable tags
     return `
         <div class="results-section tab-content-section" id="tagsSection" style="${visible ? 'display: block;' : 'display: none;'}">
             <div class="results-header">
@@ -522,15 +738,92 @@ function renderTagsSection(tags, visible) {
                     </button>
                 </div>
             </div>
-            <div class="tags-display-container">
-                <div class="tags-display-wrapper">
-                    ${tags.map(tag => `
-                        <span class="tag-badge">${escapeHtml(tag)}</span>
+            <div class="tags-editor-container">
+                <div class="tags-list-editable" id="editableTagsList">
+                    ${tags.map((tag, index) => `
+                        <span class="tag tag-editable">
+                            ${escapeHtml(tag)}
+                            <button class="tag-delete-btn" onclick="deleteGeneratedTag(${index})" title="Remove tag">
+                                <i class="ph ph-x"></i>
+                            </button>
+                        </span>
                     `).join('')}
                 </div>
-                <div class="tags-display-info">
-                    Total: ${totalChars} / 500 characters
+                <div class="tag-input-wrapper">
+                    <input type="text" class="tag-input" id="newTagInput" placeholder="Type tag and press Enter to add..." onkeypress="handleTagInputKeypress(event)"/>
                 </div>
+                <div class="char-count-section">
+                    <div class="char-count-header">
+                        <span class="char-count-label">Character Usage</span>
+                        <span class="char-count-value" id="tagsCharCount">${totalChars} / 500</span>
+                    </div>
+                    <div class="char-count-progress">
+                        <div class="char-count-fill ${totalChars > 500 ? 'error' : totalChars > 450 ? 'warning' : totalChars >= 400 ? 'good' : ''}" id="tagsCharFill" style="width: ${Math.min((totalChars / 500) * 100, 100)}%"></div>
+                    </div>
+                    <div class="char-count-info">
+                        <span class="tag-count">Tags: <strong id="tagsCountValue">${tags.length}</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Render upload section
+function renderUploadSection(visible) {
+    const titleSelected = selectedTitle !== null;
+    return `
+        <div class="results-section tab-content-section" id="uploadSection" style="${visible ? 'display: block;' : 'display: none;'}">
+            <div class="upload-section-content">
+                ${!titleSelected ? `
+                    <div class="upload-warning">
+                        <i class="ph ph-warning"></i>
+                        <span>Please select a title from the Titles tab before uploading</span>
+                    </div>
+                ` : ''}
+
+                <div class="upload-options-grid">
+                    <!-- Privacy Status -->
+                    <div class="upload-option-card">
+                        <label class="upload-option-label">
+                            <i class="ph ph-lock-key"></i>
+                            Privacy Status
+                        </label>
+                        <select class="privacy-select" id="privacySelect">
+                            <option value="private">Private</option>
+                            <option value="unlisted">Unlisted</option>
+                            <option value="public">Public</option>
+                        </select>
+                    </div>
+
+                    <!-- Thumbnail Upload -->
+                    <div class="upload-option-card">
+                        <label class="upload-option-label">
+                            <i class="ph ph-image"></i>
+                            Thumbnail (Optional)
+                        </label>
+                        <button class="thumbnail-upload-btn" onclick="selectThumbnail()">
+                            <i class="ph ph-upload-simple"></i>
+                            <span id="thumbnailBtnText">Choose File</span>
+                        </button>
+                        <input type="file" id="thumbnailFileInput" accept="image/jpeg,image/jpg,image/png" style="display: none;" onchange="handleThumbnailSelect(event)">
+                    </div>
+                </div>
+
+                <div id="thumbnailPreview" style="display: none;" class="thumbnail-preview-card">
+                    <img id="thumbnailImg" class="thumbnail-preview-img">
+                    <div class="thumbnail-preview-info">
+                        <div id="thumbnailName" class="thumbnail-preview-name"></div>
+                        <button onclick="removeThumbnail()" class="thumbnail-remove-btn">
+                            <i class="ph ph-x"></i> Remove
+                        </button>
+                    </div>
+                </div>
+
+                <button class="upload-video-btn" onclick="uploadToYouTube()" id="uploadBtn" ${!titleSelected ? 'disabled' : ''}>
+                    <i class="ph ph-youtube-logo"></i>
+                    Upload to YouTube
+                </button>
             </div>
         </div>
     `;
@@ -559,8 +852,291 @@ function switchTab(tabName) {
     event.target.closest('.results-tab-btn').classList.add('active');
 }
 
+/**
+ * Toggle edit mode for title item
+ */
+function toggleEditTitleItem(event, index) {
+    event.stopPropagation();
+
+    const textEl = document.getElementById(`title-text-${index}`);
+    const button = event.currentTarget;
+    const icon = button.querySelector('i');
+
+    if (textEl.getAttribute('contenteditable') === 'false') {
+        // Enter edit mode
+        textEl.setAttribute('contenteditable', 'true');
+        textEl.focus();
+        icon.className = 'ph ph-check';
+        button.title = 'Save';
+        textEl.style.outline = '2px solid #3B82F6';
+        textEl.style.padding = '0.25rem';
+        textEl.style.borderRadius = '4px';
+    } else {
+        // Exit edit mode and update the title
+        textEl.setAttribute('contenteditable', 'false');
+        icon.className = 'ph ph-pencil-simple';
+        button.title = 'Edit';
+        textEl.style.outline = 'none';
+        textEl.style.padding = '0';
+
+        // Update currentTitles array
+        currentTitles[index] = textEl.textContent.trim();
+    }
+}
+
+/**
+ * Toggle edit mode for description
+ */
+function toggleEditDescription() {
+    const textarea = document.getElementById('generatedDescription');
+    const button = document.getElementById('editDescBtn');
+    const icon = button.querySelector('i');
+    const span = button.querySelector('span') || button;
+
+    if (textarea.hasAttribute('readonly')) {
+        // Enter edit mode
+        textarea.removeAttribute('readonly');
+        textarea.focus();
+        icon.className = 'ph ph-check';
+        if (span.tagName === 'SPAN') span.textContent = 'Save';
+        textarea.style.outline = '2px solid #3B82F6';
+    } else {
+        // Exit edit mode
+        textarea.setAttribute('readonly', 'true');
+        icon.className = 'ph ph-pencil-simple';
+        if (span.tagName === 'SPAN') span.textContent = 'Edit';
+        textarea.style.outline = 'none';
+
+        // Update current description
+        currentDescription = textarea.value;
+
+        // Update character count
+        const charCount = document.getElementById('descCharCount');
+        if (charCount) {
+            charCount.textContent = `${currentDescription.length} characters`;
+        }
+    }
+}
+
+/**
+ * Delete a generated tag
+ */
+function deleteGeneratedTag(index) {
+    currentTags.splice(index, 1);
+    updateTagsDisplay();
+}
+
+/**
+ * Handle tag input keypress
+ */
+function handleTagInputKeypress(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const input = document.getElementById('newTagInput');
+        const newTag = input.value.trim();
+
+        if (newTag) {
+            currentTags.push(newTag);
+            input.value = '';
+            updateTagsDisplay();
+        }
+    }
+}
+
+/**
+ * Update tags display after changes
+ */
+function updateTagsDisplay() {
+    const tagsList = document.getElementById('editableTagsList');
+    const totalChars = currentTags.join(', ').length;
+
+    tagsList.innerHTML = currentTags.map((tag, index) => `
+        <span class="tag tag-editable">
+            ${escapeHtml(tag)}
+            <button class="tag-delete-btn" onclick="deleteGeneratedTag(${index})" title="Remove tag">
+                <i class="ph ph-x"></i>
+            </button>
+        </span>
+    `).join('');
+
+    // Update counts
+    document.getElementById('tagsCharCount').textContent = `${totalChars} / 500`;
+    document.getElementById('tagsCountValue').textContent = currentTags.length;
+
+    // Update progress bar
+    const fill = document.getElementById('tagsCharFill');
+    fill.style.width = `${Math.min((totalChars / 500) * 100, 100)}%`;
+    fill.className = `char-count-fill ${totalChars > 500 ? 'error' : totalChars > 450 ? 'warning' : totalChars >= 400 ? 'good' : ''}`;
+}
+
+/**
+ * Select thumbnail file
+ */
+function selectThumbnail() {
+    const fileInput = document.getElementById('thumbnailFileInput');
+    if (fileInput) {
+        fileInput.click();
+    }
+}
+
+/**
+ * Handle thumbnail file selection
+ */
+function handleThumbnailSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+        showToast('Only JPG and PNG images are supported', 'error');
+        return;
+    }
+
+    // Validate file size (2MB limit for YouTube)
+    if (file.size > 2 * 1024 * 1024) {
+        showToast('Image must be smaller than 2MB', 'error');
+        return;
+    }
+
+    selectedThumbnailFile = file;
+
+    // Update button text
+    const btnText = document.getElementById('thumbnailBtnText');
+    if (btnText) {
+        btnText.textContent = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
+    }
+
+    // Show preview
+    const preview = document.getElementById('thumbnailPreview');
+    const img = document.getElementById('thumbnailImg');
+    const name = document.getElementById('thumbnailName');
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        img.src = e.target.result;
+        name.textContent = file.name;
+        preview.style.display = 'flex';
+    };
+    reader.readAsDataURL(file);
+}
+
+/**
+ * Remove thumbnail
+ */
+function removeThumbnail() {
+    selectedThumbnailFile = null;
+    const fileInput = document.getElementById('thumbnailFileInput');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+
+    const btnText = document.getElementById('thumbnailBtnText');
+    if (btnText) {
+        btnText.textContent = 'Choose File';
+    }
+
+    const preview = document.getElementById('thumbnailPreview');
+    if (preview) {
+        preview.style.display = 'none';
+    }
+}
+
+/**
+ * Upload video to YouTube
+ */
+async function uploadToYouTube() {
+    if (!selectedVideoFile) {
+        showToast('Please select a video file', 'error');
+        return;
+    }
+
+    if (selectedTitle === null) {
+        showToast('Please select a title from the Titles tab', 'error');
+        return;
+    }
+
+    const title = currentTitles[selectedTitle];
+    const description = currentDescription || '';
+    const tags = currentTags || [];
+
+    // Get privacy status
+    const privacySelect = document.getElementById('privacySelect');
+    const privacyStatus = privacySelect ? privacySelect.value : 'private';
+
+    const uploadBtn = document.getElementById('uploadBtn');
+    const originalContent = uploadBtn.innerHTML;
+
+    try {
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="ph ph-spinner"></i> Uploading...';
+
+        // Create FormData
+        const formData = new FormData();
+        formData.append('video', selectedVideoFile);
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('tags', JSON.stringify(tags));
+        formData.append('privacy_status', privacyStatus);
+
+        if (selectedThumbnailFile) {
+            formData.append('thumbnail', selectedThumbnailFile);
+        }
+
+        // Upload video
+        const response = await fetch('/api/upload-youtube-video', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to upload video');
+        }
+
+        showToast('Video uploaded successfully to YouTube!', 'success');
+
+        const privacyLabel = privacyStatus.charAt(0).toUpperCase() + privacyStatus.slice(1);
+
+        // Show success message with video link
+        const resultsContainer = document.getElementById('resultsContainer');
+        resultsContainer.innerHTML = `
+            <div style="text-align: center; padding: 3rem;">
+                <div style="font-size: 4rem; color: #10B981; margin-bottom: 1rem;">
+                    <i class="ph ph-check-circle"></i>
+                </div>
+                <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Video Uploaded Successfully!</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    Your video has been uploaded to YouTube as ${privacyLabel}.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <a href="https://studio.youtube.com/video/${data.video_id}/edit" target="_blank" class="generate-btn">
+                        <i class="ph ph-youtube-logo"></i> View in YouTube Studio
+                    </a>
+                    <button class="action-btn" onclick="location.reload()">
+                        <i class="ph ph-arrow-counter-clockwise"></i> Upload Another
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Reset state
+        selectedVideoFile = null;
+        selectedThumbnailFile = null;
+        selectedTitle = null;
+
+    } catch (error) {
+        console.error('Error uploading video:', error);
+        showToast('Failed to upload video: ' + error.message, 'error');
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = originalContent;
+    }
+}
+
 // Copy single title
-async function copyTitle(index) {
+async function copyTitle(index, event) {
+    if (event) event.stopPropagation();
+
     const title = currentTitles[index];
     try {
         await navigator.clipboard.writeText(title);

@@ -432,3 +432,174 @@ def generate_video_description():
     except Exception as e:
         logger.error(f"Error generating video description: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/check-youtube-connection', methods=['GET'])
+@auth_required
+def check_youtube_connection():
+    """Check if user has YouTube connected"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get user's YouTube channel info from Firestore
+        user_ref = db.collection('users').document(user_id)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            return jsonify({'connected': False})
+
+        user_data = user_doc.to_dict()
+
+        # Check if YouTube is connected
+        youtube_channel_id = user_data.get('youtube_channel_id', '')
+        youtube_account = user_data.get('youtube_account', '')
+
+        return jsonify({
+            'connected': bool(youtube_channel_id and youtube_account)
+        })
+
+    except Exception as e:
+        logger.error(f"Error checking YouTube connection: {e}")
+        return jsonify({'connected': False})
+
+@bp.route('/api/upload-youtube-video', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def upload_youtube_video():
+    """Upload a video to YouTube with title, description, and tags"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Check if files are uploaded
+        if 'video' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No video file provided'
+            }), 400
+
+        video_file = request.files['video']
+        if video_file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No video file selected'
+            }), 400
+
+        # Get metadata from form
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        tags = request.form.get('tags', '[]')
+        privacy_status = request.form.get('privacy_status', 'private')
+
+        # Parse tags from JSON string
+        import json
+        try:
+            tags_list = json.loads(tags)
+        except:
+            tags_list = []
+
+        if not title:
+            return jsonify({
+                'success': False,
+                'error': 'Title is required'
+            }), 400
+
+        # Get YouTube credentials
+        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+        yt_analytics = YouTubeAnalytics(user_id)
+
+        if not yt_analytics.credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No YouTube account connected. Please connect your YouTube account first.'
+            }), 400
+
+        # Build YouTube Data API client
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaFileUpload
+        import tempfile
+        import os
+
+        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+        # Save video to temporary file
+        temp_video = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(video_file.filename)[1])
+        video_file.save(temp_video.name)
+        temp_video.close()
+
+        try:
+            # Upload video
+            logger.info(f"Uploading video for user {user_id}: {title}")
+
+            request_body = {
+                'snippet': {
+                    'title': title,
+                    'description': description,
+                    'tags': tags_list[:500] if len(tags_list) > 500 else tags_list,  # YouTube allows max 500 tags
+                    'categoryId': '22'  # People & Blogs category
+                },
+                'status': {
+                    'privacyStatus': privacy_status,
+                    'selfDeclaredMadeForKids': False
+                }
+            }
+
+            media_file = MediaFileUpload(temp_video.name, resumable=True)
+
+            upload_request = youtube.videos().insert(
+                part='snippet,status',
+                body=request_body,
+                media_body=media_file
+            )
+
+            response = None
+            while response is None:
+                status, response = upload_request.next_chunk()
+                if status:
+                    logger.info(f"Upload progress: {int(status.progress() * 100)}%")
+
+            video_id = response['id']
+            logger.info(f"Video uploaded successfully: {video_id}")
+
+            # Upload thumbnail if provided
+            if 'thumbnail' in request.files:
+                thumbnail_file = request.files['thumbnail']
+                if thumbnail_file.filename != '':
+                    # Validate thumbnail
+                    if thumbnail_file.content_type not in ['image/jpeg', 'image/jpg', 'image/png']:
+                        logger.warning("Invalid thumbnail file type, skipping thumbnail upload")
+                    else:
+                        # Save thumbnail to temporary file
+                        temp_thumbnail = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(thumbnail_file.filename)[1])
+                        thumbnail_file.save(temp_thumbnail.name)
+                        temp_thumbnail.close()
+
+                        try:
+                            from googleapiclient.http import MediaFileUpload as MediaUpload
+                            thumbnail_media = MediaUpload(temp_thumbnail.name, mimetype=thumbnail_file.content_type, resumable=True)
+
+                            youtube.thumbnails().set(
+                                videoId=video_id,
+                                media_body=thumbnail_media
+                            ).execute()
+
+                            logger.info(f"Thumbnail uploaded successfully for video {video_id}")
+                        except Exception as e:
+                            logger.error(f"Error uploading thumbnail: {e}")
+                        finally:
+                            os.unlink(temp_thumbnail.name)
+
+            return jsonify({
+                'success': True,
+                'video_id': video_id,
+                'message': 'Video uploaded successfully to YouTube'
+            })
+
+        finally:
+            # Clean up temporary video file
+            os.unlink(temp_video.name)
+
+    except Exception as e:
+        logger.error(f"Error uploading video to YouTube: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to upload video: {str(e)}'
+        }), 500

@@ -612,6 +612,230 @@ Video Transcript: {stored_data.get('transcript_preview', '')}
         logger.error(f"Error refreshing titles: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@bp.route('/api/upload-thumbnail/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def upload_thumbnail(video_id):
+    """Upload a custom thumbnail to YouTube video"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Check if file was uploaded
+        if 'thumbnail' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No thumbnail file provided'
+            }), 400
+
+        file = request.files['thumbnail']
+
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No file selected'
+            }), 400
+
+        # Validate file type
+        allowed_types = {'image/jpeg', 'image/jpg', 'image/png'}
+        if file.content_type not in allowed_types:
+            return jsonify({
+                'success': False,
+                'error': 'Only JPG and PNG images are supported'
+            }), 400
+
+        # Read file into memory
+        file_content = file.read()
+
+        # Validate file size (2MB limit)
+        if len(file_content) > 2 * 1024 * 1024:
+            return jsonify({
+                'success': False,
+                'error': 'Image must be smaller than 2MB'
+            }), 400
+
+        # Upload to YouTube
+        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+        yt_analytics = YouTubeAnalytics(user_id)
+
+        if not yt_analytics.credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No YouTube account connected'
+            }), 400
+
+        # Build YouTube Data API client
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaInMemoryUpload
+        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+        # Upload thumbnail
+        media = MediaInMemoryUpload(file_content, mimetype=file.content_type, resumable=True)
+
+        youtube.thumbnails().set(
+            videoId=video_id,
+            media_body=media
+        ).execute()
+
+        logger.info(f"Thumbnail uploaded successfully for video {video_id} by user {user_id}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Thumbnail uploaded successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error uploading thumbnail: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to upload thumbnail: {str(e)}'
+        }), 500
+
+@bp.route('/api/set-video-public/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def set_video_public(video_id):
+    """Set a video's privacy status to public"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Build YouTube Data API client
+        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+        yt_analytics = YouTubeAnalytics(user_id)
+
+        if not yt_analytics.credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No YouTube account connected'
+            }), 400
+
+        from googleapiclient.discovery import build
+        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+        # Update video privacy status
+        youtube.videos().update(
+            part='status',
+            body={
+                'id': video_id,
+                'status': {
+                    'privacyStatus': 'public'
+                }
+            }
+        ).execute()
+
+        logger.info(f"Video {video_id} set to public by user {user_id}")
+
+        # Clear private videos cache since this video is now public
+        cache_ref = db.collection('users').document(user_id).collection('cache').document('private_videos')
+        cache_ref.delete()
+
+        return jsonify({
+            'success': True,
+            'message': 'Video is now public'
+        })
+
+    except Exception as e:
+        logger.error(f"Error setting video to public: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to update video visibility: {str(e)}'
+        }), 500
+
+@bp.route('/api/set-video-private/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def set_video_private(video_id):
+    """Set a video's privacy status to private"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Build YouTube Data API client
+        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+        yt_analytics = YouTubeAnalytics(user_id)
+
+        if not yt_analytics.credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No YouTube account connected'
+            }), 400
+
+        from googleapiclient.discovery import build
+        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+        # Update video privacy status
+        youtube.videos().update(
+            part='status',
+            body={
+                'id': video_id,
+                'status': {
+                    'privacyStatus': 'private'
+                }
+            }
+        ).execute()
+
+        logger.info(f"Video {video_id} set to private by user {user_id}")
+
+        # Clear private videos cache to refresh it
+        cache_ref = db.collection('users').document(user_id).collection('cache').document('private_videos')
+        cache_ref.delete()
+
+        return jsonify({
+            'success': True,
+            'message': 'Video is now private'
+        })
+
+    except Exception as e:
+        logger.error(f"Error setting video to private: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to update video visibility: {str(e)}'
+        }), 500
+
+@bp.route('/api/delete-video/<video_id>', methods=['DELETE'])
+@auth_required
+@require_permission('optimize_video')
+def delete_video(video_id):
+    """Delete a video from YouTube"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Build YouTube Data API client
+        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+        yt_analytics = YouTubeAnalytics(user_id)
+
+        if not yt_analytics.credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No YouTube account connected'
+            }), 400
+
+        from googleapiclient.discovery import build
+        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+        # Delete the video
+        youtube.videos().delete(id=video_id).execute()
+
+        logger.info(f"Video {video_id} deleted by user {user_id}")
+
+        # Delete optimization data from Firebase if exists
+        optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
+        optimization_ref.delete()
+
+        # Clear caches
+        cache_ref = db.collection('users').document(user_id).collection('cache').document('private_videos')
+        cache_ref.delete()
+
+        return jsonify({
+            'success': True,
+            'message': 'Video deleted successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error deleting video: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to delete video: {str(e)}'
+        }), 500
+
 @bp.route('/api/apply-optimizations/<video_id>', methods=['POST'])
 @auth_required
 @require_permission('optimize_video')

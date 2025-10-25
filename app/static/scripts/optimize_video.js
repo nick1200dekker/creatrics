@@ -237,17 +237,47 @@ async function loadMyVideos() {
         const shorts = allVideos.filter(v => v.is_short).slice(0, 8);
 
         // Helper function to create video card HTML
-        const createVideoCard = (video) => {
+        const createVideoCard = (video, isPrivate = false) => {
             const isOptimized = optimizedVideoIds.has(video.video_id);
             const thumbnailUrl = video.thumbnail || `https://i.ytimg.com/vi/${video.video_id}/maxresdefault.jpg`;
+
+            // Build menu items based on video privacy status
+            const menuItems = `
+                ${!isOptimized ? `
+                <button class="menu-item" onclick="optimizeVideoFromMenu(event, '${video.video_id}')">
+                    <i class="ph ph-magic-wand"></i>
+                    Optimize Video
+                </button>
+                ` : ''}
+                <button class="menu-item" onclick="uploadThumbnail(event, '${video.video_id}')">
+                    <i class="ph ph-image"></i>
+                    Change Thumbnail
+                </button>
+                ${isPrivate ? `
+                <button class="menu-item" onclick="setVideoPublic(event, '${video.video_id}')">
+                    <i class="ph ph-globe"></i>
+                    Set to Public
+                </button>
+                ` : `
+                <button class="menu-item" onclick="setVideoPrivate(event, '${video.video_id}')">
+                    <i class="ph ph-lock-key"></i>
+                    Set to Private
+                </button>
+                `}
+                <button class="menu-item menu-item-danger" onclick="deleteVideo(event, '${video.video_id}')">
+                    <i class="ph ph-trash"></i>
+                    Delete Video
+                </button>
+            `;
+
             return `
-                <div class="video-card ${isOptimized ? 'optimized' : ''}" onclick="handleVideoClick('${video.video_id}', ${isOptimized})">
-                    <div class="video-thumbnail">
+                <div class="video-card ${isOptimized ? 'optimized' : ''}" data-video-id="${video.video_id}">
+                    <div class="video-thumbnail" onclick="handleVideoClick('${video.video_id}', ${isOptimized})">
                         <img src="${thumbnailUrl}" alt="${escapeHtml(video.title)}" loading="lazy" onerror="this.onerror=null; this.src='https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg'">
                         ${isOptimized ? '<span class="optimized-badge"><i class="ph ph-check-circle"></i></span>' : ''}
                         ${video.is_short ? '<span class="short-badge"><i class="ph ph-device-mobile"></i> Short</span>' : ''}
                     </div>
-                    <div class="video-info">
+                    <div class="video-info" onclick="handleVideoClick('${video.video_id}', ${isOptimized})">
                         <h4 class="video-title">${escapeHtml(video.title)}</h4>
                         <div class="video-meta">
                             <span class="stat">
@@ -255,6 +285,14 @@ async function loadMyVideos() {
                                 ${video.view_count}
                             </span>
                             ${!video.is_short ? `<span class="stat"><i class="ph ph-clock"></i> ${formatTimestamp(video.published_time)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="video-card-menu">
+                        <button class="video-menu-btn" onclick="toggleVideoMenu(event, '${video.video_id}')" title="More options">
+                            <i class="ph ph-dots-three-vertical"></i>
+                        </button>
+                        <div class="video-menu-dropdown" id="menu-${video.video_id}">
+                            ${menuItems}
                         </div>
                     </div>
                 </div>
@@ -1465,64 +1503,18 @@ async function loadPrivateVideos(forceRefresh = false) {
             `;
         } else {
             privateVideosGrid.innerHTML = regularVideos.map(video => {
-                const privacyLabel = video.privacy_status === 'unlisted' ? 'Unlisted' : 'Private';
-                const privacyIcon = video.privacy_status === 'unlisted' ? 'ph-eye-slash' : 'ph-lock-key';
-                const thumbnail = video.thumbnail || `https://i.ytimg.com/vi/${video.video_id}/mqdefault.jpg`;
                 const isOptimized = optimizedVideoIds.has(video.video_id);
-
-                return `
-                <div class="video-card ${isOptimized ? 'optimized' : ''}" onclick="handleVideoClick('${video.video_id}', ${isOptimized})">
-                    <div class="video-thumbnail">
-                        <img src="${thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${video.video_id}/default.jpg'">
-                        ${isOptimized ? '<span class="optimized-badge"><i class="ph ph-check-circle"></i></span>' : ''}
-                        <span class="short-badge">
-                            <i class="ph ${privacyIcon}"></i>
-                            ${privacyLabel}
-                        </span>
-                    </div>
-                    <div class="video-info">
-                        <h4 class="video-title">${escapeHtml(video.title)}</h4>
-                        <div class="video-meta">
-                            <span class="stat">
-                                <i class="ph ph-clock"></i>
-                                ${formatTimestamp(video.published_time)}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                `;
+                return createPrivateVideoCard(video, isOptimized, optimizedVideoIds);
             }).join('');
 
             // Render private shorts if any exist
             if (shorts.length > 0) {
                 privateShortsSection.style.display = 'block';
                 privateShortsGrid.innerHTML = shorts.map(video => {
-                    const privacyLabel = video.privacy_status === 'unlisted' ? 'Unlisted' : 'Private';
-                    const privacyIcon = video.privacy_status === 'unlisted' ? 'ph-eye-slash' : 'ph-lock-key';
-                    const thumbnail = video.thumbnail || `https://i.ytimg.com/vi/${video.video_id}/mqdefault.jpg`;
                     const isOptimized = optimizedVideoIds.has(video.video_id);
-
-                    return `
-                    <div class="video-card ${isOptimized ? 'optimized' : ''}" onclick="handleVideoClick('${video.video_id}', ${isOptimized})">
-                        <div class="video-thumbnail">
-                            <img src="${thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${video.video_id}/default.jpg'">
-                            ${isOptimized ? '<span class="optimized-badge"><i class="ph ph-check-circle"></i></span>' : ''}
-                            <span class="short-badge">
-                                <i class="ph ${privacyIcon}"></i>
-                                ${privacyLabel}
-                            </span>
-                        </div>
-                        <div class="video-info">
-                            <h4 class="video-title">${escapeHtml(video.title)}</h4>
-                            <div class="video-meta">
-                                <span class="stat">
-                                    <i class="ph ph-clock"></i>
-                                    ${formatTimestamp(video.published_time)}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    `;
+                    // Mark as short for the badge
+                    video.is_short = true;
+                    return createPrivateVideoCard(video, isOptimized, optimizedVideoIds);
                 }).join('');
             }
         }
@@ -1539,4 +1531,315 @@ async function loadPrivateVideos(forceRefresh = false) {
             </div>
         `;
     }
+}
+
+/**
+ * Create private video card HTML
+ */
+function createPrivateVideoCard(video, isOptimized, optimizedVideoIds) {
+    const thumbnailUrl = video.thumbnail || `https://i.ytimg.com/vi/${video.video_id}/mqdefault.jpg`;
+    const privacyLabel = video.privacy_status === 'unlisted' ? 'Unlisted' : 'Private';
+    const privacyIcon = video.privacy_status === 'unlisted' ? 'ph-eye-slash' : 'ph-lock-key';
+
+    // Build menu items for private videos
+    const menuItems = `
+        ${!isOptimized ? `
+        <button class="menu-item" onclick="optimizeVideoFromMenu(event, '${video.video_id}')">
+            <i class="ph ph-magic-wand"></i>
+            Optimize Video
+        </button>
+        ` : ''}
+        <button class="menu-item" onclick="uploadThumbnail(event, '${video.video_id}')">
+            <i class="ph ph-image"></i>
+            Change Thumbnail
+        </button>
+        <button class="menu-item" onclick="setVideoPublic(event, '${video.video_id}')">
+            <i class="ph ph-globe"></i>
+            Set to Public
+        </button>
+        <button class="menu-item menu-item-danger" onclick="deleteVideo(event, '${video.video_id}')">
+            <i class="ph ph-trash"></i>
+            Delete Video
+        </button>
+    `;
+
+    return `
+        <div class="video-card ${isOptimized ? 'optimized' : ''}" data-video-id="${video.video_id}">
+            <div class="video-thumbnail" onclick="handleVideoClick('${video.video_id}', ${isOptimized})">
+                <img src="${thumbnailUrl}" alt="${escapeHtml(video.title)}" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${video.video_id}/default.jpg'">
+                ${isOptimized ? '<span class="optimized-badge"><i class="ph ph-check-circle"></i></span>' : ''}
+                <span class="privacy-badge">
+                    <i class="ph ${privacyIcon}"></i>
+                    ${privacyLabel}
+                </span>
+                ${video.is_short ? '<span class="short-badge"><i class="ph ph-device-mobile"></i> Short</span>' : ''}
+            </div>
+            <div class="video-info" onclick="handleVideoClick('${video.video_id}', ${isOptimized})">
+                <h4 class="video-title">${escapeHtml(video.title)}</h4>
+                <div class="video-meta">
+                    <span class="stat">
+                        <i class="ph ph-clock"></i>
+                        ${formatTimestamp(video.published_time)}
+                    </span>
+                </div>
+            </div>
+            <div class="video-card-menu">
+                <button class="video-menu-btn" onclick="toggleVideoMenu(event, '${video.video_id}')" title="More options">
+                    <i class="ph ph-dots-three-vertical"></i>
+                </button>
+                <div class="video-menu-dropdown" id="menu-${video.video_id}">
+                    ${menuItems}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Toggle video card menu dropdown
+ */
+function toggleVideoMenu(event, videoId) {
+    event.stopPropagation();
+
+    // Close all other open menus
+    document.querySelectorAll('.video-menu-dropdown').forEach(menu => {
+        if (menu.id !== `menu-${videoId}`) {
+            menu.classList.remove('show');
+        }
+    });
+
+    // Toggle current menu
+    const menu = document.getElementById(`menu-${videoId}`);
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.video-card-menu')) {
+        document.querySelectorAll('.video-menu-dropdown').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
+
+/**
+ * Upload thumbnail for a video
+ */
+async function uploadThumbnail(event, videoId) {
+    event.stopPropagation();
+
+    // Close menu
+    document.getElementById(`menu-${videoId}`)?.classList.remove('show');
+
+    // Create file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/jpg,image/png';
+
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file size (2MB limit for YouTube)
+        if (file.size > 2 * 1024 * 1024) {
+            showToast('Image must be smaller than 2MB');
+            return;
+        }
+
+        // Validate file type
+        if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+            showToast('Only JPG and PNG images are supported');
+            return;
+        }
+
+        try {
+            showToast('Uploading thumbnail...');
+
+            const formData = new FormData();
+            formData.append('thumbnail', file);
+
+            const response = await fetch(`/optimize-video/api/upload-thumbnail/${videoId}`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to upload thumbnail');
+            }
+
+            showToast('✅ Thumbnail updated successfully!');
+
+            // Refresh the video thumbnail in the UI
+            const videoCard = document.querySelector(`[data-video-id="${videoId}"]`);
+            if (videoCard) {
+                const img = videoCard.querySelector('.video-thumbnail img');
+                if (img) {
+                    // Add cache buster to force reload
+                    img.src = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg?t=${Date.now()}`;
+                }
+            }
+
+        } catch (error) {
+            console.error('Error uploading thumbnail:', error);
+            showToast('❌ Failed to upload thumbnail: ' + error.message);
+        }
+    };
+
+    input.click();
+}
+
+/**
+ * Optimize video from menu
+ */
+async function optimizeVideoFromMenu(event, videoId) {
+    event.stopPropagation();
+
+    // Close menu
+    document.getElementById(`menu-${videoId}`)?.classList.remove('show');
+
+    // Start optimization
+    await optimizeVideo(videoId);
+}
+
+/**
+ * Set video to public
+ */
+async function setVideoPublic(event, videoId) {
+    event.stopPropagation();
+
+    // Close menu
+    document.getElementById(`menu-${videoId}`)?.classList.remove('show');
+
+    showConfirmModal(
+        'Set Video to Public',
+        'Are you sure you want to make this video public? This will make it visible to everyone on YouTube.',
+        async () => {
+            try {
+                showToast('Updating video visibility...');
+
+                const response = await fetch(`/optimize-video/api/set-video-public/${videoId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to update video visibility');
+                }
+
+                showToast('✅ Video is now public!');
+
+                // Remove the video from private section if currently viewing private videos
+                if (currentInputMode === 'private') {
+                    const videoCard = document.querySelector(`[data-video-id="${videoId}"]`);
+                    if (videoCard) {
+                        videoCard.remove();
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error setting video to public:', error);
+                showToast('❌ Failed to update visibility: ' + error.message);
+            }
+        }
+    );
+}
+
+/**
+ * Set video to private
+ */
+async function setVideoPrivate(event, videoId) {
+    event.stopPropagation();
+
+    // Close menu
+    document.getElementById(`menu-${videoId}`)?.classList.remove('show');
+
+    showConfirmModal(
+        'Set Video to Private',
+        'Are you sure you want to make this video private? This will hide it from public view on YouTube.',
+        async () => {
+            try {
+                showToast('Updating video visibility...');
+
+                const response = await fetch(`/optimize-video/api/set-video-private/${videoId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to update video visibility');
+                }
+
+                showToast('✅ Video is now private!');
+
+                // Remove the video from public section if currently viewing public videos
+                if (currentInputMode === 'public') {
+                    const videoCard = document.querySelector(`[data-video-id="${videoId}"]`);
+                    if (videoCard) {
+                        videoCard.remove();
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error setting video to private:', error);
+                showToast('❌ Failed to update visibility: ' + error.message);
+            }
+        }
+    );
+}
+
+/**
+ * Delete video
+ */
+async function deleteVideo(event, videoId) {
+    event.stopPropagation();
+
+    // Close menu
+    document.getElementById(`menu-${videoId}`)?.classList.remove('show');
+
+    showConfirmModal(
+        'Delete Video',
+        'Are you sure you want to permanently delete this video? This action cannot be undone and will remove the video from YouTube.',
+        async () => {
+            try {
+                showToast('Deleting video...');
+
+                const response = await fetch(`/optimize-video/api/delete-video/${videoId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to delete video');
+                }
+
+                showToast('✅ Video deleted successfully!');
+
+                // Remove the video card from UI
+                const videoCard = document.querySelector(`[data-video-id="${videoId}"]`);
+                if (videoCard) {
+                    videoCard.remove();
+                }
+
+            } catch (error) {
+                console.error('Error deleting video:', error);
+                showToast('❌ Failed to delete video: ' + error.message);
+            }
+        }
+    );
 }
