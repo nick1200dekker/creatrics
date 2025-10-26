@@ -125,6 +125,7 @@ class CaptionCorrector:
                     'success': True,
                     'preview': True,
                     'message': 'Captions corrected (preview mode)',
+                    'original_srt': srt_content,  # Include original for comparison
                     'corrected_srt': corrected_srt,
                     'corrected_segments': corrected_segment_count,
                     'quota_used': 200,  # Only download quota used

@@ -575,7 +575,7 @@ function showOptimizationSelection(videoId, videoInfo) {
                     </div>
                 </div>
 
-                <div class="optimization-card" onclick="toggleOptimization(this, 'captions')" data-optimization="captions">
+                <div class="optimization-card ${!hasYouTubeConnected ? 'disabled' : ''}" onclick="${!hasYouTubeConnected ? '' : 'toggleOptimization(this, \'captions\')'}" data-optimization="captions" ${!hasYouTubeConnected ? 'title="Requires YouTube account connection"' : ''}>
                     <div class="optimization-card-header">
                         <div class="optimization-checkbox">
                             <i class="ph-fill ph-check"></i>
@@ -584,16 +584,16 @@ function showOptimizationSelection(videoId, videoInfo) {
                             <i class="ph ph-closed-captioning"></i>
                         </div>
                         <div class="optimization-info">
-                            <div class="optimization-name">Captions</div>
-                            <div class="optimization-description">AI grammar & punctuation correction</div>
-                            <div class="optimization-badge optional">
-                                Optional
+                            <div class="optimization-name">Captions ${!hasYouTubeConnected ? '<i class="ph ph-lock-simple" style="font-size: 0.875rem; margin-left: 0.25rem;"></i>' : ''}</div>
+                            <div class="optimization-description">${!hasYouTubeConnected ? 'Requires YouTube account connection' : 'AI grammar & punctuation correction'}</div>
+                            <div class="optimization-badge ${!hasYouTubeConnected ? 'disabled' : 'optional'}">
+                                ${!hasYouTubeConnected ? 'YouTube Required' : 'Optional'}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="optimization-card" onclick="toggleOptimization(this, 'pinned_comment')" data-optimization="pinned_comment">
+                <div class="optimization-card ${!hasYouTubeConnected ? 'disabled' : ''}" onclick="${!hasYouTubeConnected ? '' : 'toggleOptimization(this, \'pinned_comment\')'}" data-optimization="pinned_comment" ${!hasYouTubeConnected ? 'title="Requires YouTube account connection"' : ''}>
                     <div class="optimization-card-header">
                         <div class="optimization-checkbox">
                             <i class="ph-fill ph-check"></i>
@@ -602,10 +602,10 @@ function showOptimizationSelection(videoId, videoInfo) {
                             <i class="ph ph-push-pin"></i>
                         </div>
                         <div class="optimization-info">
-                            <div class="optimization-name">Pinned Comment</div>
-                            <div class="optimization-description">Engagement-boosting pinned comment</div>
-                            <div class="optimization-badge optional">
-                                Optional
+                            <div class="optimization-name">Pinned Comment ${!hasYouTubeConnected ? '<i class="ph ph-lock-simple" style="font-size: 0.875rem; margin-left: 0.25rem;"></i>' : ''}</div>
+                            <div class="optimization-description">${!hasYouTubeConnected ? 'Requires YouTube account connection' : 'Engagement-boosting pinned comment'}</div>
+                            <div class="optimization-badge ${!hasYouTubeConnected ? 'disabled' : 'optional'}">
+                                ${!hasYouTubeConnected ? 'YouTube Required' : 'Optional'}
                             </div>
                         </div>
                     </div>
@@ -722,11 +722,11 @@ async function runSelectedOptimizations(videoId) {
         console.log('Title suggestions received:', data.data?.title_suggestions);
 
         if (!data.success) {
+            // Clear ongoing optimization flag
+            sessionStorage.removeItem('optimize_video_ongoing');
+
             // Check for insufficient credits
             if (data.error_type === 'insufficient_credits') {
-                // Clear ongoing optimization flag
-                sessionStorage.removeItem('optimize_video_ongoing');
-
                 document.getElementById('loadingSection').style.display = 'none';
                 document.getElementById('resultsSection').style.display = 'block';
                 document.getElementById('resultsSection').innerHTML = `
@@ -746,6 +746,35 @@ async function runSelectedOptimizations(videoId) {
                 `;
                 return;
             }
+
+            // Check for transcript unavailable
+            if (data.error_type === 'transcript_unavailable') {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('resultsSection').style.display = 'block';
+                document.getElementById('resultsSection').innerHTML = `
+                    <div class="transcript-unavailable-card" style="max-width: 600px; margin: 3rem auto;">
+                        <div class="error-icon-wrapper" style="width: 80px; height: 80px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem;">
+                            <i class="ph ph-clock-countdown" style="font-size: 2.5rem; color: #F59E0B;"></i>
+                        </div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: 700; text-align: center;">Transcript Not Available Yet</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; text-align: center; line-height: 1.6;">
+                            ${escapeHtml(data.message || 'YouTube typically generates transcripts 15-30 minutes after upload. Please try again later.')}
+                        </p>
+                        <div style="display: flex; gap: 1rem; justify-content: center;">
+                            <button onclick="backToVideos()" class="selection-btn selection-btn-secondary">
+                                <i class="ph ph-arrow-left"></i>
+                                Back to Videos
+                            </button>
+                            <button onclick="runSelectedOptimizations('${currentVideoId}')" class="selection-btn selection-btn-primary">
+                                <i class="ph ph-arrow-clockwise"></i>
+                                Try Again
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
             throw new Error(data.error || 'Optimization failed');
         }
 
@@ -1022,8 +1051,28 @@ function displayOptimizationResults(data) {
                 </h3>
                 ${hasCaptions ? `
                 <div class="advanced-result-box">
-                    <h4><i class="ph ph-subtitles"></i> Corrected Captions (Preview)</h4>
-                    <textarea class="caption-preview" readonly>${escapeHtml(data.corrected_captions.corrected_srt || '')}</textarea>
+                    <div class="captions-header">
+                        <h4><i class="ph ph-subtitles"></i> Corrected Captions</h4>
+                        <div class="captions-controls">
+                            <div class="toggle-view-btns">
+                                <button class="toggle-view-btn active" onclick="toggleCaptionsView('diff')" id="diffViewBtn">
+                                    <i class="ph ph-git-diff"></i>
+                                    Diff View
+                                </button>
+                                <button class="toggle-view-btn" onclick="toggleCaptionsView('corrected')" id="correctedViewBtn">
+                                    <i class="ph ph-file-text"></i>
+                                    Corrected Only
+                                </button>
+                            </div>
+                            <button class="edit-btn" onclick="toggleEditCaptions(this)" title="Edit" id="editCaptionsBtn">
+                                <i class="ph ph-pencil-simple"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="captionsDiffView" class="captions-diff-view">
+                        ${generateCaptionsDiff(data.corrected_captions.original_srt || '', data.corrected_captions.corrected_srt || '')}
+                    </div>
+                    <textarea class="caption-preview" id="captionsTextarea" style="display: none;">${escapeHtml(data.corrected_captions.corrected_srt || '')}</textarea>
                     <button class="apply-btn" onclick="applyCaptions()">
                         <i class="ph ph-youtube-logo"></i>
                         Apply to YouTube
@@ -1032,8 +1081,13 @@ function displayOptimizationResults(data) {
                 ` : ''}
                 ${hasPinnedComment ? `
                 <div class="advanced-result-box">
-                    <h4><i class="ph ph-chat-circle"></i> Pinned Comment (Preview)</h4>
-                    <textarea class="comment-preview" id="pinnedCommentPreview">${escapeHtml(data.pinned_comment.comment_text || '')}</textarea>
+                    <div class="captions-header">
+                        <h4><i class="ph ph-chat-circle"></i> Pinned Comment</h4>
+                        <button class="edit-btn" onclick="toggleEditPinnedComment(this)" title="Edit" id="editPinnedCommentBtn">
+                            <i class="ph ph-pencil-simple"></i>
+                        </button>
+                    </div>
+                    <textarea class="comment-preview" id="pinnedCommentPreview" readonly>${escapeHtml(data.pinned_comment.comment_text || '')}</textarea>
                     <button class="apply-btn" onclick="applyPinnedComment()">
                         <i class="ph ph-youtube-logo"></i>
                         Post to YouTube
@@ -1130,7 +1184,7 @@ async function generateMissingOptimization(type) {
  */
 async function applyCaptions() {
     try {
-        const captionPreview = document.querySelector('.caption-preview');
+        const captionPreview = document.getElementById('captionsTextarea');
         const correctedSrt = captionPreview ? captionPreview.value : null;
 
         if (!correctedSrt) {
@@ -1315,6 +1369,177 @@ function formatMarkdown(text) {
     formatted = formatted.replace(/\n/g, '<br>');
 
     return formatted;
+}
+
+/**
+ * Parse SRT content into structured segments
+ */
+function parseSRT(srtContent) {
+    if (!srtContent) return [];
+
+    const segments = [];
+    const blocks = srtContent.trim().split('\n\n');
+
+    for (const block of blocks) {
+        const lines = block.trim().split('\n');
+        if (lines.length >= 3) {
+            const index = lines[0];
+            const timestamp = lines[1];
+            const text = lines.slice(2).join(' ');
+
+            segments.push({
+                index,
+                timestamp,
+                text: text.trim()
+            });
+        }
+    }
+
+    return segments;
+}
+
+/**
+ * Simple diff algorithm to highlight changes between two strings
+ */
+function highlightDiff(original, corrected) {
+    const originalWords = original.split(/\s+/);
+    const correctedWords = corrected.split(/\s+/);
+
+    let result = '';
+    let i = 0, j = 0;
+
+    while (i < correctedWords.length) {
+        if (i < originalWords.length && originalWords[i] === correctedWords[i]) {
+            // No change
+            result += correctedWords[i] + ' ';
+            i++;
+            j++;
+        } else {
+            // Changed/added word
+            result += `<span class="diff-changed">${correctedWords[i]}</span> `;
+            i++;
+        }
+    }
+
+    return result.trim();
+}
+
+/**
+ * Generate captions diff view HTML
+ */
+function generateCaptionsDiff(originalSRT, correctedSRT) {
+    const originalSegments = parseSRT(originalSRT);
+    const correctedSegments = parseSRT(correctedSRT);
+
+    if (originalSegments.length === 0 || correctedSegments.length === 0) {
+        return '<div class="diff-empty">No captions to compare</div>';
+    }
+
+    let html = '<div class="diff-container">';
+
+    // Show side-by-side comparison for first 20 segments as preview
+    const previewCount = Math.min(20, Math.min(originalSegments.length, correctedSegments.length));
+
+    for (let i = 0; i < previewCount; i++) {
+        const original = originalSegments[i];
+        const corrected = correctedSegments[i];
+
+        // Check if text changed
+        const hasChange = original.text !== corrected.text;
+
+        html += `
+            <div class="diff-row ${hasChange ? 'has-change' : ''}">
+                <div class="diff-timestamp">${escapeHtml(corrected.timestamp)}</div>
+                <div class="diff-comparison">
+                    <div class="diff-original">
+                        <div class="diff-label">Original</div>
+                        <div class="diff-text">${escapeHtml(original.text)}</div>
+                    </div>
+                    <div class="diff-corrected">
+                        <div class="diff-label">Corrected</div>
+                        <div class="diff-text">${hasChange ? highlightDiff(original.text, corrected.text) : escapeHtml(corrected.text)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    if (correctedSegments.length > previewCount) {
+        html += `<div class="diff-more">... and ${correctedSegments.length - previewCount} more segments</div>`;
+    }
+
+    html += '</div>';
+    return html;
+}
+
+/**
+ * Toggle between diff view and corrected-only view for captions
+ */
+function toggleCaptionsView(view) {
+    const diffView = document.getElementById('captionsDiffView');
+    const textarea = document.getElementById('captionsTextarea');
+    const diffBtn = document.getElementById('diffViewBtn');
+    const correctedBtn = document.getElementById('correctedViewBtn');
+
+    if (view === 'diff') {
+        diffView.style.display = 'block';
+        textarea.style.display = 'none';
+        diffBtn.classList.add('active');
+        correctedBtn.classList.remove('active');
+    } else {
+        diffView.style.display = 'none';
+        textarea.style.display = 'block';
+        textarea.readOnly = true;
+        diffBtn.classList.remove('active');
+        correctedBtn.classList.add('active');
+    }
+}
+
+/**
+ * Toggle edit mode for captions
+ */
+function toggleEditCaptions(button) {
+    const textarea = document.getElementById('captionsTextarea');
+    const icon = button.querySelector('i');
+
+    // Switch to corrected view if in diff view
+    toggleCaptionsView('corrected');
+
+    if (textarea.readOnly) {
+        textarea.readOnly = false;
+        textarea.focus();
+        icon.className = 'ph ph-check';
+        button.title = 'Save';
+        button.classList.add('editing');
+    } else {
+        textarea.readOnly = true;
+        icon.className = 'ph ph-pencil-simple';
+        button.title = 'Edit';
+        button.classList.remove('editing');
+        showToast('✓ Changes saved');
+    }
+}
+
+/**
+ * Toggle edit mode for pinned comment
+ */
+function toggleEditPinnedComment(button) {
+    const textarea = document.getElementById('pinnedCommentPreview');
+    const icon = button.querySelector('i');
+
+    if (textarea.readOnly) {
+        textarea.readOnly = false;
+        textarea.focus();
+        icon.className = 'ph ph-check';
+        button.title = 'Save';
+        button.classList.add('editing');
+    } else {
+        textarea.readOnly = true;
+        icon.className = 'ph ph-pencil-simple';
+        button.title = 'Edit';
+        button.classList.remove('editing');
+        showToast('✓ Changes saved');
+    }
 }
 
 /**

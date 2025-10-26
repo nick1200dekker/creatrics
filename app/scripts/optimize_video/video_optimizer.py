@@ -589,17 +589,10 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
     def _fetch_transcript_with_timestamps(self, video_id: str, user_id: str = None) -> tuple:
         """
         Fetch video transcript with smart fallback:
-        1. Try YouTube API first (for private videos)
-        2. Fallback to RapidAPI (for public videos)
+        1. Try RapidAPI first (free, works for public videos)
+        2. Fallback to YouTube API (costs 250 quota units, for private/unlisted videos)
         """
-        # Try YouTube API first if user_id provided
-        if user_id:
-            yt_transcript, yt_timestamps = self._fetch_transcript_youtube_api(video_id, user_id)
-            if yt_transcript:
-                logger.info(f"Using YouTube API transcript for video {video_id}")
-                return yt_transcript, yt_timestamps
-
-        # Fallback to RapidAPI
+        # Try RapidAPI first (free, no quota cost)
         logger.info(f"Attempting RapidAPI transcript for video {video_id}")
         try:
             import time
@@ -665,14 +658,24 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                                 })
 
                     full_transcript = ' '.join(text_segments)
-                    logger.info(f"Fetched transcript for {video_id}: {len(full_transcript)} characters")
+                    logger.info(f"RapidAPI transcript fetched for {video_id}: {len(full_transcript)} characters")
                     return full_transcript, timestamp_segments
 
-            return "", []
+            logger.warning(f"No transcript data in RapidAPI response for video {video_id}")
 
         except Exception as e:
-            logger.error(f"Error fetching transcript for {video_id}: {e}")
-            return "", []
+            logger.warning(f"RapidAPI transcript failed for {video_id}: {e}")
+
+        # Fallback to YouTube API (for private/unlisted videos)
+        if user_id:
+            logger.info(f"Attempting YouTube API transcript as fallback for video {video_id}")
+            yt_transcript, yt_timestamps = self._fetch_transcript_youtube_api(video_id, user_id)
+            if yt_transcript:
+                logger.info(f"YouTube API transcript fetched for video {video_id} (250 quota units used)")
+                return yt_transcript, yt_timestamps
+
+        logger.error(f"Failed to fetch transcript for {video_id} from both RapidAPI and YouTube API")
+        return "", []
 
     def _generate_recommendations(
         self,

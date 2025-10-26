@@ -1798,6 +1798,20 @@ html.dark .insufficient-credits-card {
     transform: translateY(-1px);
 }
 
+/* Transcript unavailable card */
+.transcript-unavailable-card {
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-tertiary);
+    border: 2px solid #F59E0B;
+    border-radius: 12px;
+}
+
+html.dark .transcript-unavailable-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: #F59E0B;
+}
+
 .upgrade-plan-btn:active {
     transform: translateY(0);
 }
@@ -2305,6 +2319,30 @@ html.dark .optimization-badge.optional {
     color: #60A5FA;
 }
 
+.optimization-badge.disabled {
+    background: rgba(161, 161, 170, 0.1);
+    color: #71717A;
+    border: 1px solid rgba(161, 161, 170, 0.2);
+}
+
+html.dark .optimization-badge.disabled {
+    background: rgba(161, 161, 170, 0.15);
+    color: #A1A1AA;
+}
+
+/* Disabled optimization cards */
+.optimization-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.optimization-card.disabled:hover {
+    border-color: var(--border-primary);
+    transform: none;
+    box-shadow: none;
+}
+
 /* Selection Actions */
 .selection-actions {
     display: flex;
@@ -2566,6 +2604,175 @@ html.dark .selection-btn-secondary:hover {
 .comment-preview {
     min-height: 100px;
     font-family: inherit;
+}
+
+/* Captions header with controls */
+.captions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.captions-header h4 {
+    margin: 0;
+}
+
+.captions-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.toggle-view-btns {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-primary);
+    padding: 0.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-primary);
+}
+
+.toggle-view-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-view-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+.toggle-view-btn.active {
+    background: #3B82F6;
+    color: white;
+}
+
+html.dark .toggle-view-btn.active {
+    background: #60A5FA;
+}
+
+.toggle-view-btn i {
+    font-size: 1rem;
+}
+
+/* Diff view styles */
+.captions-diff-view {
+    max-height: 500px;
+    overflow-y: auto;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.diff-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.diff-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.diff-row.has-change {
+    border-left: 3px solid #3B82F6;
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, var(--bg-secondary) 100%);
+}
+
+html.dark .diff-row.has-change {
+    border-left-color: #60A5FA;
+    background: linear-gradient(90deg, rgba(96, 165, 250, 0.1) 0%, var(--bg-secondary) 100%);
+}
+
+.diff-timestamp {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+
+.diff-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.diff-original,
+.diff-corrected {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.diff-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+}
+
+.diff-text {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+.diff-changed {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+    color: #3B82F6;
+    padding: 0.125rem 0.25rem;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+html.dark .diff-changed {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.25) 0%, rgba(96, 165, 250, 0.15) 100%);
+    color: #60A5FA;
+}
+
+.diff-more {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+    font-style: italic;
+}
+
+.diff-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-tertiary);
+}
+
+/* Edit button for captions */
+.edit-btn.editing {
+    background: #10B981;
+    color: white;
+}
+
+html.dark .edit-btn.editing {
+    background: #34D399;
 }
 
 .apply-btn {

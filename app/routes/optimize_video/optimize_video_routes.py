@@ -462,6 +462,21 @@ def optimize_video_analysis(video_id):
                 'error': 'No optimizations selected'
             }), 400
 
+        # Check if captions or pinned_comment are selected - these require YouTube API access
+        requires_youtube_api = 'captions' in selected_optimizations or 'pinned_comment' in selected_optimizations
+
+        if requires_youtube_api:
+            # Verify user has YouTube connected
+            from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+            yt_analytics = YouTubeAnalytics(user_id)
+
+            if not yt_analytics.credentials:
+                return jsonify({
+                    'success': False,
+                    'error': 'YouTube account connection required for captions and pinned comments',
+                    'error_type': 'no_youtube_connection'
+                }), 400
+
         # Check credits before optimization (estimates ~5000 tokens)
         credits_manager = CreditsManager()
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
@@ -510,6 +525,7 @@ def optimize_video_analysis(video_id):
         captions_result = result.get('corrected_captions_result')
         if captions_result and captions_result.get('success'):
             optimization_data['corrected_captions'] = {
+                'original_srt': captions_result.get('original_srt', ''),
                 'corrected_srt': captions_result.get('corrected_srt', ''),
                 'corrected_segments': captions_result.get('corrected_segments', 0),
                 'message': captions_result.get('message', ''),
