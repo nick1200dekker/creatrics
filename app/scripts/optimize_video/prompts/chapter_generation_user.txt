@@ -1,0 +1,7 @@
+Generate SEO-optimized chapter titles for this video transcript:
+
+Target Keyword: {target_keyword}
+
+{chapters_text}
+
+Generate exactly {num_chapters} chapter titles, one per line.

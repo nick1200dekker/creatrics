@@ -1,0 +1,8 @@
+Generate an engaging pinned comment for this video:
+
+Title: {video_title}
+Target Keyword: {target_keyword}
+
+Video preview: {transcript_preview}
+
+Generate a pinned comment that will boost engagement.

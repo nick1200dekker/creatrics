@@ -483,9 +483,9 @@ class AIProviderManager:
                 combined_content = '\n'.join(str(m) for m in formatted_messages if m)
                 
                 # Create generation config
-                # Force higher max_output_tokens for Google Gemini to prevent truncation
-                # Use requested tokens but ensure minimum of 4096 to avoid truncation
-                google_max_tokens = max(max_tokens, 4096) if max_tokens else 8192
+                # Use requested max_tokens directly, or default to 8192 if not specified
+                # Don't force a minimum - respect the caller's limit to avoid hitting token caps
+                google_max_tokens = max_tokens if max_tokens else 8192
                 # Don't limit by config max, let Google handle its own limits
                 config = types.GenerateContentConfig(
                     temperature=temperature,
@@ -813,8 +813,9 @@ class AIProviderManager:
             # Create generation config
             # Extract max_tokens from kwargs and ensure proper value for Google
             max_tokens = kwargs.pop('max_tokens', 8192)
-            # Force minimum of 4096 tokens to prevent truncation
-            google_max_tokens = max(max_tokens, 4096)
+            # Use requested max_tokens directly, or default to 8192 if not specified
+            # Don't force a minimum - respect the caller's limit to avoid hitting token caps
+            google_max_tokens = max_tokens if max_tokens else 8192
 
             config = types.GenerateContentConfig(
                 system_instruction=system_instruction if system_instruction else None,

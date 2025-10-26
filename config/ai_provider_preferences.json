@@ -21,6 +21,7 @@
     "tiktok_trend_finder/tiktok_ai_processor": "deepseek",
     "video_title/video_tags": "google",
     "video_title/video_description": "claude",
-    "news_tracker/news_service": "google"
+    "news_tracker/news_service": "google",
+    "optimize_video/caption_correction": "deepseek"
   }
 }

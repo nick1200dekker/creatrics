@@ -385,6 +385,40 @@ def get_private_videos():
 
     except Exception as e:
         logger.error(f"Error fetching private videos: {e}")
+
+        # Check for YouTube quota exceeded error
+        error_str = str(e)
+        if 'quotaExceeded' in error_str or 'exceeded your quota' in error_str:
+            return jsonify({
+                'success': False,
+                'error': 'YouTube API quota exceeded. Please try again tomorrow.',
+                'error_type': 'quota_exceeded'
+            }), 429
+
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/video-info/<video_id>', methods=['GET'])
+@auth_required
+@require_permission('optimize_video')
+def get_video_info(video_id):
+    """Get basic video information without optimizing"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Use VideoOptimizer to fetch video info
+        optimizer = VideoOptimizer()
+        video_info = optimizer.get_video_info(video_id, user_id)
+
+        if not video_info:
+            return jsonify({'success': False, 'error': 'Failed to fetch video information'}), 404
+
+        return jsonify({
+            'success': True,
+            'data': video_info
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching video info: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @bp.route('/api/optimize/<video_id>', methods=['POST'])
@@ -395,6 +429,11 @@ def optimize_video_analysis(video_id):
     try:
         user_id = get_workspace_user_id()
         user_subscription = get_user_subscription()
+
+        # Get selected optimizations from request body
+        request_data = request.get_json() or {}
+        selected_optimizations = request_data.get('selected_optimizations', ['title', 'description', 'tags'])
+        logger.info(f"Selected optimizations for {video_id}: {selected_optimizations}")
 
         # Check if optimization already exists in Firebase
         optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
@@ -416,6 +455,13 @@ def optimize_video_analysis(video_id):
                 'data': stored_data
             })
 
+        # If no optimizations selected (empty array), return error
+        if not selected_optimizations or len(selected_optimizations) == 0:
+            return jsonify({
+                'success': False,
+                'error': 'No optimizations selected'
+            }), 400
+
         # Check credits before optimization (estimates ~5000 tokens)
         credits_manager = CreditsManager()
         cost_estimate = credits_manager.estimate_llm_cost_from_text(
@@ -436,9 +482,9 @@ def optimize_video_analysis(video_id):
                 "error_type": "insufficient_credits"
             }), 402
 
-        # Perform new optimization
+        # Perform new optimization with selected features
         optimizer = VideoOptimizer()
-        result = optimizer.optimize_video(video_id, user_id, user_subscription)
+        result = optimizer.optimize_video(video_id, user_id, user_subscription, selected_optimizations=selected_optimizations)
 
         if not result.get('success'):
             error_msg = result.get('error', 'Optimization failed')
@@ -459,6 +505,27 @@ def optimize_video_analysis(video_id):
             'recommendations': result.get('recommendations', {}),
             'optimized_at': datetime.now(timezone.utc)
         }
+
+        # Add captions result if present
+        captions_result = result.get('corrected_captions_result')
+        if captions_result and captions_result.get('success'):
+            optimization_data['corrected_captions'] = {
+                'corrected_srt': captions_result.get('corrected_srt', ''),
+                'corrected_segments': captions_result.get('corrected_segments', 0),
+                'message': captions_result.get('message', ''),
+                'preview': captions_result.get('preview', True),
+                'generated_at': datetime.now(timezone.utc)
+            }
+
+        # Add pinned comment result if present
+        pinned_comment_result = result.get('pinned_comment_result')
+        if pinned_comment_result and pinned_comment_result.get('success'):
+            optimization_data['pinned_comment'] = {
+                'comment_text': pinned_comment_result.get('comment_text', ''),
+                'message': pinned_comment_result.get('message', ''),
+                'preview': pinned_comment_result.get('preview', True),
+                'generated_at': datetime.now(timezone.utc)
+            }
 
         optimization_ref.set(optimization_data)
         logger.info(f"Saved video optimization to Firebase for user {user_id}: {video_id}")
@@ -530,9 +597,23 @@ def get_optimization_history():
             doc_data = doc.to_dict()
             doc_data['video_id'] = doc.id
 
-            # Convert timestamp
+            # Convert timestamps
             if doc_data.get('optimized_at'):
                 doc_data['optimized_at'] = doc_data['optimized_at'].isoformat()
+
+            # Convert nested timestamps in captions
+            if doc_data.get('corrected_captions'):
+                if doc_data['corrected_captions'].get('generated_at'):
+                    doc_data['corrected_captions']['generated_at'] = doc_data['corrected_captions']['generated_at'].isoformat()
+                if doc_data['corrected_captions'].get('applied_at'):
+                    doc_data['corrected_captions']['applied_at'] = doc_data['corrected_captions']['applied_at'].isoformat()
+
+            # Convert nested timestamps in pinned comment
+            if doc_data.get('pinned_comment'):
+                if doc_data['pinned_comment'].get('generated_at'):
+                    doc_data['pinned_comment']['generated_at'] = doc_data['pinned_comment']['generated_at'].isoformat()
+                if doc_data['pinned_comment'].get('applied_at'):
+                    doc_data['pinned_comment']['applied_at'] = doc_data['pinned_comment']['applied_at'].isoformat()
 
             history.append(doc_data)
 
@@ -735,6 +816,16 @@ def set_video_public(video_id):
 
     except Exception as e:
         logger.error(f"Error setting video to public: {e}")
+
+        # Check for YouTube quota exceeded error
+        error_str = str(e)
+        if 'quotaExceeded' in error_str or 'exceeded your quota' in error_str:
+            return jsonify({
+                'success': False,
+                'error': 'YouTube API quota exceeded. Please try again tomorrow.',
+                'error_type': 'quota_exceeded'
+            }), 429
+
         return jsonify({
             'success': False,
             'error': f'Failed to update video visibility: {str(e)}'
@@ -785,6 +876,16 @@ def set_video_private(video_id):
 
     except Exception as e:
         logger.error(f"Error setting video to private: {e}")
+
+        # Check for YouTube quota exceeded error
+        error_str = str(e)
+        if 'quotaExceeded' in error_str or 'exceeded your quota' in error_str:
+            return jsonify({
+                'success': False,
+                'error': 'YouTube API quota exceeded. Please try again tomorrow.',
+                'error_type': 'quota_exceeded'
+            }), 429
+
         return jsonify({
             'success': False,
             'error': f'Failed to update video visibility: {str(e)}'
@@ -831,6 +932,16 @@ def delete_video(video_id):
 
     except Exception as e:
         logger.error(f"Error deleting video: {e}")
+
+        # Check for YouTube quota exceeded error
+        error_str = str(e)
+        if 'quotaExceeded' in error_str or 'exceeded your quota' in error_str:
+            return jsonify({
+                'success': False,
+                'error': 'YouTube API quota exceeded. Please try again tomorrow.',
+                'error_type': 'quota_exceeded'
+            }), 429
+
         return jsonify({
             'success': False,
             'error': f'Failed to delete video: {str(e)}'
@@ -894,7 +1005,349 @@ def apply_optimizations(video_id):
 
     except Exception as e:
         logger.error(f"Error applying optimizations: {e}")
+
+        # Check for YouTube quota exceeded error
+        error_str = str(e)
+        if 'quotaExceeded' in error_str or 'exceeded your quota' in error_str:
+            return jsonify({
+                'success': False,
+                'error': 'YouTube API quota exceeded. Please try again tomorrow.',
+                'error_type': 'quota_exceeded'
+            }), 429
+
         return jsonify({
             'success': False,
             'error': f'Failed to apply optimizations: {str(e)}'
+        }), 500
+
+@bp.route('/api/correct-captions/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def correct_captions(video_id):
+    """Correct English captions for a video"""
+    try:
+        user_id = get_workspace_user_id()
+        user_subscription = get_user_subscription()
+
+        # Perform caption correction
+        optimizer = VideoOptimizer()
+        result = optimizer.correct_english_captions(video_id, user_id, user_subscription)
+
+        if not result.get('success'):
+            error_type = result.get('error_type', 'unknown')
+            error_msg = result.get('error', 'Caption correction failed')
+
+            # Return appropriate status codes for different errors
+            if error_type == 'no_youtube_connection':
+                return jsonify(result), 400
+            elif error_type in ['no_captions', 'no_english_captions']:
+                return jsonify(result), 404
+            else:
+                return jsonify(result), 500
+
+        # Deduct credits for AI usage
+        token_usage = result.get('token_usage')
+        if token_usage and token_usage.get('input_tokens', 0) > 0:
+            credits_manager = CreditsManager()
+            from app.system.ai_provider.ai_provider import AIProvider
+
+            provider_enum_str = token_usage.get('provider_enum')
+            provider_enum = None
+            if provider_enum_str:
+                try:
+                    provider_enum = AIProvider(provider_enum_str)
+                except (ValueError, KeyError):
+                    logger.warning(f"Invalid provider enum value: {provider_enum_str}")
+
+            deduction_result = credits_manager.deduct_llm_credits(
+                user_id=user_id,
+                model_name=token_usage.get('model'),
+                input_tokens=token_usage.get('input_tokens', 0),
+                output_tokens=token_usage.get('output_tokens', 0),
+                description=f"Caption Correction - {video_id}",
+                provider_enum=provider_enum
+            )
+
+            if not deduction_result['success']:
+                logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Credit deduction failed',
+                    'error_type': 'insufficient_credits'
+                }), 402
+
+        logger.info(f"Successfully corrected captions for video {video_id} by user {user_id}")
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error correcting captions: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to correct captions: {str(e)}'
+        }), 500
+
+@bp.route('/api/generate-chapters/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def generate_chapters(video_id):
+    """Generate chapters/timestamps for a video"""
+    try:
+        user_id = get_workspace_user_id()
+        user_subscription = get_user_subscription()
+
+        # Get target keyword if video was uploaded via Upload Studio
+        target_keyword = None
+        try:
+            uploaded_video_ref = db.collection('users').document(user_id).collection('uploaded_videos').document(video_id)
+            uploaded_video_doc = uploaded_video_ref.get()
+
+            if uploaded_video_doc.exists:
+                video_metadata = uploaded_video_doc.to_dict()
+                target_keyword = video_metadata.get('target_keyword')
+        except Exception as e:
+            logger.warning(f"Could not retrieve target keyword: {e}")
+
+        # Generate chapters
+        optimizer = VideoOptimizer()
+        result = optimizer.generate_chapters(video_id, user_id, target_keyword, user_subscription)
+
+        if not result.get('success'):
+            error_type = result.get('error_type', 'unknown')
+
+            if error_type == 'no_transcript':
+                return jsonify(result), 404
+            else:
+                return jsonify(result), 500
+
+        # Deduct credits for AI usage
+        token_usage = result.get('token_usage')
+        if token_usage and token_usage.get('input_tokens', 0) > 0:
+            credits_manager = CreditsManager()
+            from app.system.ai_provider.ai_provider import AIProvider
+
+            provider_enum_str = token_usage.get('provider_enum')
+            provider_enum = None
+            if provider_enum_str:
+                try:
+                    provider_enum = AIProvider(provider_enum_str)
+                except (ValueError, KeyError):
+                    logger.warning(f"Invalid provider enum value: {provider_enum_str}")
+
+            deduction_result = credits_manager.deduct_llm_credits(
+                user_id=user_id,
+                model_name=token_usage.get('model'),
+                input_tokens=token_usage.get('input_tokens', 0),
+                output_tokens=token_usage.get('output_tokens', 0),
+                description=f"Chapter Generation - {video_id}",
+                provider_enum=provider_enum
+            )
+
+            if not deduction_result['success']:
+                logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Credit deduction failed',
+                    'error_type': 'insufficient_credits'
+                }), 402
+
+        logger.info(f"Successfully generated {result.get('num_chapters')} chapters for video {video_id}")
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error generating chapters: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to generate chapters: {str(e)}'
+        }), 500
+
+@bp.route('/api/post-pinned-comment/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def post_pinned_comment(video_id):
+    """Generate and post a pinned comment for a video"""
+    try:
+        user_id = get_workspace_user_id()
+        user_subscription = get_user_subscription()
+
+        # Get video title and target keyword if available
+        video_title = None
+        target_keyword = None
+
+        try:
+            # Check optimization data first
+            optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
+            optimization_doc = optimization_ref.get()
+
+            if optimization_doc.exists:
+                optimization_data = optimization_doc.to_dict()
+                video_title = optimization_data.get('current_title')
+
+            # Check Upload Studio data for target keyword
+            uploaded_video_ref = db.collection('users').document(user_id).collection('uploaded_videos').document(video_id)
+            uploaded_video_doc = uploaded_video_ref.get()
+
+            if uploaded_video_doc.exists:
+                video_metadata = uploaded_video_doc.to_dict()
+                target_keyword = video_metadata.get('target_keyword')
+                if not video_title:
+                    video_title = video_metadata.get('title')
+
+        except Exception as e:
+            logger.warning(f"Could not retrieve video metadata: {e}")
+
+        # Generate and post comment
+        optimizer = VideoOptimizer()
+        result = optimizer.generate_and_post_pinned_comment(video_id, user_id, video_title, target_keyword, user_subscription)
+
+        if not result.get('success'):
+            error_type = result.get('error_type', 'unknown')
+
+            if error_type == 'no_youtube_connection':
+                return jsonify(result), 400
+            else:
+                return jsonify(result), 500
+
+        # Deduct credits for AI usage
+        token_usage = result.get('token_usage')
+        if token_usage and token_usage.get('input_tokens', 0) > 0:
+            credits_manager = CreditsManager()
+            from app.system.ai_provider.ai_provider import AIProvider
+
+            provider_enum_str = token_usage.get('provider_enum')
+            provider_enum = None
+            if provider_enum_str:
+                try:
+                    provider_enum = AIProvider(provider_enum_str)
+                except (ValueError, KeyError):
+                    logger.warning(f"Invalid provider enum value: {provider_enum_str}")
+
+            deduction_result = credits_manager.deduct_llm_credits(
+                user_id=user_id,
+                model_name=token_usage.get('model'),
+                input_tokens=token_usage.get('input_tokens', 0),
+                output_tokens=token_usage.get('output_tokens', 0),
+                description=f"Pinned Comment - {video_id}",
+                provider_enum=provider_enum
+            )
+
+            if not deduction_result['success']:
+                logger.error(f"Failed to deduct credits: {deduction_result.get('message')}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Credit deduction failed',
+                    'error_type': 'insufficient_credits'
+                }), 402
+
+        logger.info(f"Successfully posted pinned comment for video {video_id}")
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error posting pinned comment: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to post pinned comment: {str(e)}'
+        }), 500
+
+@bp.route('/api/apply-captions/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def apply_captions(video_id):
+    """Apply previously corrected captions to YouTube"""
+    try:
+        user_id = get_workspace_user_id()
+        request_data = request.get_json()
+        corrected_srt = request_data.get('corrected_srt')
+
+        if not corrected_srt:
+            return jsonify({
+                'success': False,
+                'error': 'No caption data provided'
+            }), 400
+
+        # Apply captions
+        from app.scripts.optimize_video.caption_correction import CaptionCorrector
+        corrector = CaptionCorrector()
+        result = corrector.apply_corrected_captions(video_id, user_id, corrected_srt)
+
+        if not result.get('success'):
+            error_type = result.get('error_type', 'unknown')
+            if error_type == 'quota_exceeded':
+                return jsonify(result), 429
+            elif error_type == 'no_youtube_connection':
+                return jsonify(result), 400
+            else:
+                return jsonify(result), 500
+
+        # Update Firebase to mark captions as applied
+        try:
+            optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
+            optimization_ref.update({
+                'corrected_captions.preview': False,
+                'corrected_captions.applied_at': datetime.now(timezone.utc)
+            })
+        except Exception as e:
+            logger.warning(f"Could not update caption application status: {e}")
+
+        logger.info(f"Successfully applied captions to video {video_id}")
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error applying captions: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to apply captions: {str(e)}'
+        }), 500
+
+@bp.route('/api/apply-pinned-comment/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def apply_pinned_comment(video_id):
+    """Apply previously generated pinned comment to YouTube"""
+    try:
+        user_id = get_workspace_user_id()
+        request_data = request.get_json()
+        comment_text = request_data.get('comment_text')
+
+        if not comment_text:
+            return jsonify({
+                'success': False,
+                'error': 'No comment text provided'
+            }), 400
+
+        # Apply pinned comment
+        from app.scripts.optimize_video.pinned_comment_generator import PinnedCommentGenerator
+        generator = PinnedCommentGenerator()
+        result = generator.apply_pinned_comment(video_id, user_id, comment_text)
+
+        if not result.get('success'):
+            error_type = result.get('error_type', 'unknown')
+            if error_type == 'quota_exceeded':
+                return jsonify(result), 429
+            elif error_type == 'no_youtube_connection':
+                return jsonify(result), 400
+            else:
+                return jsonify(result), 500
+
+        # Update Firebase to mark pinned comment as applied
+        try:
+            optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
+            optimization_ref.update({
+                'pinned_comment.preview': False,
+                'pinned_comment.applied_at': datetime.now(timezone.utc),
+                'pinned_comment.comment_id': result.get('comment_id')
+            })
+        except Exception as e:
+            logger.warning(f"Could not update pinned comment application status: {e}")
+
+        logger.info(f"Successfully applied pinned comment to video {video_id}")
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error applying pinned comment: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to apply pinned comment: {str(e)}'
         }), 500

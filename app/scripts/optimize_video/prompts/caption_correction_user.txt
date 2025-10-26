@@ -1,0 +1,19 @@
+Correct the following video captions. Each segment is marked with <N>text</N> to preserve exact timing.
+
+🎯 TASK: Add punctuation, capitalize properly, remove filler words (um, uh, like, you know).
+
+⚠️ CRITICAL: This text contains {marker_count} markers from <0> to <{max_marker}>.
+You MUST return ALL {marker_count} markers in your response.
+
+CAPTIONS TO CORRECT:
+{caption_text}
+
+OUTPUT REQUIREMENTS:
+✅ Return ALL {marker_count} markers: <0>, <1>, <2>, ..., <{max_marker}>
+✅ Keep markers in exact sequential order
+✅ Add punctuation (. , ! ?)
+✅ Capitalize sentence starts, "I", proper nouns
+✅ Remove filler words only (um, uh, like when filler, you know)
+✅ Keep all other words exactly as spoken
+
+Start your response with <0> and end with <{max_marker}>. Do not skip any markers.

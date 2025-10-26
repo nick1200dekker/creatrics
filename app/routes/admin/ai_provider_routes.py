@@ -85,8 +85,8 @@ def get_ai_scripts():
                             if folder.name == file_stem:
                                 display_name = folder_display
                             # If file name contains common suffixes, remove them
-                            elif file_stem.endswith('_generator') or file_stem.endswith('_analyzer') or file_stem.endswith('_processor'):
-                                # e.g., "hook_generator/hook_generator" -> "Hook Generator"
+                            elif file_stem.endswith('_generator') or file_stem.endswith('_analyzer') or file_stem.endswith('_processor') or file_stem.endswith('_correction'):
+                                # e.g., "hook_generator" -> "Hook Generator", "caption_correction" -> "Caption Correction"
                                 display_name = file_display
                             else:
                                 # Use abbreviated format

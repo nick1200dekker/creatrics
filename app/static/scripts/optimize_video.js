@@ -209,10 +209,11 @@ async function loadMyVideos() {
         emptyState.style.display = 'none';
         shortsSection.style.display = 'none';
 
-        // Fetch videos and optimization history in parallel
+        // Fetch videos and optimization history in parallel (with cache busting)
+        const timestamp = Date.now();
         const [videosResponse, historyResponse] = await Promise.all([
-            fetch('/optimize-video/api/get-my-videos'),
-            fetch('/optimize-video/api/optimization-history')
+            fetch(`/optimize-video/api/get-my-videos?_t=${timestamp}`),
+            fetch(`/optimize-video/api/optimization-history?_t=${timestamp}`)
         ]);
 
         const videosData = await videosResponse.json();
@@ -232,9 +233,31 @@ async function loadMyVideos() {
         // Create a set of optimized video IDs for quick lookup
         const optimizedVideoIds = new Set(history.map(h => h.video_id));
 
-        // Separate videos and shorts, limit to 8 each
-        const regularVideos = allVideos.filter(v => !v.is_short).slice(0, 8);
-        const shorts = allVideos.filter(v => v.is_short).slice(0, 8);
+        // Debug: Log optimization data for public videos
+        console.log('[PUBLIC] Optimization history count:', history.length);
+        console.log('[PUBLIC] Optimized video IDs:', Array.from(optimizedVideoIds));
+        console.log('[PUBLIC] Total videos fetched:', allVideos.length);
+        if (allVideos.length > 0) {
+            console.log('[PUBLIC] First video ID:', allVideos[0].video_id);
+            console.log('[PUBLIC] Is first video optimized?', optimizedVideoIds.has(allVideos[0].video_id));
+        }
+
+        // Separate videos and shorts
+        const allRegularVideos = allVideos.filter(v => !v.is_short);
+        const allShorts = allVideos.filter(v => v.is_short);
+
+        // Sort to show optimized videos first
+        const sortByOptimized = (videos) => {
+            return videos.sort((a, b) => {
+                const aOptimized = optimizedVideoIds.has(a.video_id) ? 1 : 0;
+                const bOptimized = optimizedVideoIds.has(b.video_id) ? 1 : 0;
+                return bOptimized - aOptimized; // Optimized first
+            });
+        };
+
+        // Sort and limit to 8 each
+        const regularVideos = sortByOptimized(allRegularVideos).slice(0, 8);
+        const shorts = sortByOptimized(allShorts).slice(0, 8);
 
         // Helper function to create video card HTML
         const createVideoCard = (video, isPrivate = false) => {
@@ -405,10 +428,270 @@ async function handleVideoClick(videoId, isOptimized) {
 }
 
 /**
- * Optimize a specific video
+ * Optimize a specific video - Show selection screen first
  */
 async function optimizeVideo(videoId) {
     try {
+        // Store current video ID globally
+        currentVideoId = videoId;
+
+        // Fetch basic video info first
+        const videoInfo = await fetchVideoInfo(videoId);
+
+        if (!videoInfo) {
+            throw new Error('Failed to fetch video information');
+        }
+
+        // Show selection screen
+        showOptimizationSelection(videoId, videoInfo);
+
+    } catch (error) {
+        console.error('Error starting optimization:', error);
+        alert(`Failed to start optimization: ${error.message}`);
+    }
+}
+
+/**
+ * Fetch video info without optimizing
+ */
+async function fetchVideoInfo(videoId) {
+    try {
+        const response = await fetch(`/optimize-video/api/video-info/${videoId}`);
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to fetch video info');
+        }
+
+        return data.data;
+    } catch (error) {
+        console.error('Error fetching video info:', error);
+        return null;
+    }
+}
+
+/**
+ * Show optimization selection screen
+ */
+function showOptimizationSelection(videoId, videoInfo) {
+    const selectionSection = document.getElementById('selectionSection');
+
+    const html = `
+        <div class="selection-header">
+            <div class="selection-title-container">
+                <h3 class="video-title-display">${escapeHtml(videoInfo.title || '')}</h3>
+                <button class="back-btn" onclick="backToVideosFromSelection()">
+                    <i class="ph ph-arrow-left"></i>
+                    Back to Videos
+                </button>
+            </div>
+        </div>
+
+        <div class="selection-content">
+            <div class="video-header-card result-card" style="margin-bottom: 2rem;">
+                <div class="video-header-content">
+                    <div class="video-thumbnail-wrapper">
+                        <img src="${videoInfo.thumbnail || ''}" alt="Video thumbnail" class="video-thumbnail-img">
+                    </div>
+                    <div class="video-meta-info">
+                        <h3 class="video-title-text">${escapeHtml(videoInfo.title || '')}</h3>
+                        <div class="video-stats">
+                            <span class="stat">
+                                <i class="ph ph-eye"></i>
+                                ${videoInfo.view_count || '0'} views
+                            </span>
+                            <span class="stat">
+                                <i class="ph ph-clock"></i>
+                                ${formatTimestamp(videoInfo.published_time)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem;">
+                <i class="ph ph-check-square" style="color: #3B82F6;"></i>
+                Select Optimizations to Generate
+            </h3>
+            <p style="font-size: 0.9375rem; color: var(--text-secondary); margin-bottom: 2rem;">
+                Choose which aspects of your video you'd like to optimize. You'll be able to preview and edit everything before applying to YouTube.
+            </p>
+
+            <div class="optimization-grid">
+                <div class="optimization-card selected" onclick="toggleOptimization(this, 'title')" data-optimization="title">
+                    <div class="optimization-card-header">
+                        <div class="optimization-checkbox">
+                            <i class="ph-fill ph-check"></i>
+                        </div>
+                        <div class="optimization-icon">
+                            <i class="ph ph-text-aa"></i>
+                        </div>
+                        <div class="optimization-info">
+                            <div class="optimization-name">Title</div>
+                            <div class="optimization-description">10 AI-generated title options optimized for SEO</div>
+                            <div class="optimization-badge recommended">
+                                <i class="ph-fill ph-star"></i>
+                                Recommended
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="optimization-card selected" onclick="toggleOptimization(this, 'description')" data-optimization="description">
+                    <div class="optimization-card-header">
+                        <div class="optimization-checkbox">
+                            <i class="ph-fill ph-check"></i>
+                        </div>
+                        <div class="optimization-icon">
+                            <i class="ph ph-align-left"></i>
+                        </div>
+                        <div class="optimization-info">
+                            <div class="optimization-name">Description</div>
+                            <div class="optimization-description">SEO-optimized description with timestamps/chapters</div>
+                            <div class="optimization-badge recommended">
+                                <i class="ph-fill ph-star"></i>
+                                Recommended
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="optimization-card selected" onclick="toggleOptimization(this, 'tags')" data-optimization="tags">
+                    <div class="optimization-card-header">
+                        <div class="optimization-checkbox">
+                            <i class="ph-fill ph-check"></i>
+                        </div>
+                        <div class="optimization-icon">
+                            <i class="ph ph-hash"></i>
+                        </div>
+                        <div class="optimization-info">
+                            <div class="optimization-name">Tags</div>
+                            <div class="optimization-description">Keyword-optimized tags for better discoverability</div>
+                            <div class="optimization-badge recommended">
+                                <i class="ph-fill ph-star"></i>
+                                Recommended
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="optimization-card" onclick="toggleOptimization(this, 'captions')" data-optimization="captions">
+                    <div class="optimization-card-header">
+                        <div class="optimization-checkbox">
+                            <i class="ph-fill ph-check"></i>
+                        </div>
+                        <div class="optimization-icon">
+                            <i class="ph ph-closed-captioning"></i>
+                        </div>
+                        <div class="optimization-info">
+                            <div class="optimization-name">Captions</div>
+                            <div class="optimization-description">AI grammar & punctuation correction</div>
+                            <div class="optimization-badge optional">
+                                Optional
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="optimization-card" onclick="toggleOptimization(this, 'pinned_comment')" data-optimization="pinned_comment">
+                    <div class="optimization-card-header">
+                        <div class="optimization-checkbox">
+                            <i class="ph-fill ph-check"></i>
+                        </div>
+                        <div class="optimization-icon">
+                            <i class="ph ph-push-pin"></i>
+                        </div>
+                        <div class="optimization-info">
+                            <div class="optimization-name">Pinned Comment</div>
+                            <div class="optimization-description">Engagement-boosting pinned comment</div>
+                            <div class="optimization-badge optional">
+                                Optional
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="selection-actions">
+                <button class="selection-btn selection-btn-secondary" onclick="backToVideosFromSelection()">
+                    <i class="ph ph-x"></i>
+                    Cancel
+                </button>
+                <button class="selection-btn selection-btn-primary" onclick="runSelectedOptimizations('${videoId}')" id="runOptimizationsBtn">
+                    <i class="ph ph-magic-wand"></i>
+                    Generate Optimizations
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Hide videos list, show selection section
+    document.getElementById('videosListSection').style.display = 'none';
+    document.getElementById('loadingSection').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    selectionSection.innerHTML = html;
+    selectionSection.style.display = 'block';
+
+    // Scroll to selection section
+    setTimeout(() => {
+        selectionSection.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }, 100);
+}
+
+/**
+ * Toggle optimization selection
+ */
+function toggleOptimization(card, optimizationType) {
+    card.classList.toggle('selected');
+    updateOptimizationsButton();
+}
+
+/**
+ * Update the "Generate Optimizations" button state
+ */
+function updateOptimizationsButton() {
+    const selectedCards = document.querySelectorAll('.optimization-card.selected');
+    const button = document.getElementById('runOptimizationsBtn');
+
+    if (selectedCards.length === 0) {
+        button.disabled = true;
+        button.innerHTML = '<i class="ph ph-warning"></i> Select at least one optimization';
+    } else {
+        button.disabled = false;
+        button.innerHTML = `<i class="ph ph-magic-wand"></i> Generate ${selectedCards.length} Optimization${selectedCards.length > 1 ? 's' : ''}`;
+    }
+}
+
+/**
+ * Back to videos from selection screen
+ */
+function backToVideosFromSelection() {
+    document.getElementById('selectionSection').style.display = 'none';
+    document.getElementById('videosListSection').style.display = 'block';
+
+    // Re-apply the current input mode to ensure correct sections are displayed
+    setTimeout(() => {
+        switchInputMode(currentInputMode);
+    }, 100);
+}
+
+/**
+ * Run selected optimizations
+ */
+async function runSelectedOptimizations(videoId) {
+    try {
+        // Get selected optimizations
+        const selectedCards = document.querySelectorAll('.optimization-card.selected');
+        const selectedOptimizations = Array.from(selectedCards).map(card => card.dataset.optimization);
+
+        if (selectedOptimizations.length === 0) {
+            showToast('Please select at least one optimization');
+            return;
+        }
+
         // Store current video ID globally
         currentVideoId = videoId;
 
@@ -418,8 +701,8 @@ async function optimizeVideo(videoId) {
             startTime: Date.now()
         }));
 
-        // Hide videos list, show loading section
-        document.getElementById('videosListSection').style.display = 'none';
+        // Hide selection, show loading section
+        document.getElementById('selectionSection').style.display = 'none';
         document.getElementById('loadingSection').style.display = 'block';
         document.getElementById('resultsSection').style.display = 'none';
 
@@ -427,7 +710,10 @@ async function optimizeVideo(videoId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+                selected_optimizations: selectedOptimizations
+            })
         });
 
         const data = await response.json();
@@ -504,6 +790,13 @@ function displayOptimizationResults(data) {
     const recommendations = data.recommendations || {};
     const titleSuggestions = data.title_suggestions || [data.optimized_title];
 
+    // Determine which optimizations were generated (have data)
+    const hasTitle = titleSuggestions && titleSuggestions.length > 0 && titleSuggestions[0];
+    const hasDescription = data.optimized_description && data.optimized_description.trim().length > 0;
+    const hasTags = data.optimized_tags && data.optimized_tags.length > 0;
+    const hasCaptions = data.corrected_captions && data.corrected_captions.corrected_srt;
+    const hasPinnedComment = data.pinned_comment && data.pinned_comment.comment_text;
+
     const html = `
         <div class="results-header">
             <div class="results-title-container">
@@ -538,6 +831,7 @@ function displayOptimizationResults(data) {
                 </div>
             </div>
 
+            ${hasTitle ? `
             <!-- Title Suggestions -->
             <div class="result-card">
                 <div class="section-header">
@@ -572,7 +866,9 @@ function displayOptimizationResults(data) {
                     `).join('')}
                 </div>
             </div>
+            ` : ''}
 
+            ${hasDescription ? `
             <!-- Description Optimization -->
             <div class="result-card">
                 <h3 class="section-title">
@@ -602,7 +898,9 @@ function displayOptimizationResults(data) {
                     <textarea class="comparison-value description-text" id="optimizedDescription" readonly>${escapeHtml(data.optimized_description || '')}</textarea>
                 </div>
             </div>
+            ` : ''}
 
+            ${hasTags ? `
             <!-- Tags Optimization -->
             <div class="result-card">
                 <h3 class="section-title">
@@ -659,6 +957,122 @@ function displayOptimizationResults(data) {
                     </div>
                 </div>
             </div>
+            ` : ''}
+
+            ${(!hasTitle || !hasDescription || !hasTags) ? `
+            <!-- Generate Missing Optimizations -->
+            <div class="result-card">
+                <h3 class="section-title">
+                    <i class="ph ph-plus-circle"></i>
+                    Generate Additional Optimizations
+                </h3>
+                <div class="optimization-grid">
+                    ${!hasTitle ? `
+                    <div class="optimization-card" onclick="generateMissingOptimization('title')">
+                        <div class="optimization-icon">
+                            <i class="ph ph-text-aa"></i>
+                        </div>
+                        <div class="optimization-info">
+                            <div class="optimization-title">Title Suggestions</div>
+                            <div class="optimization-description">Generate 10 optimized titles</div>
+                        </div>
+                        <div class="optimization-action">
+                            <i class="ph ph-arrow-right"></i>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${!hasDescription ? `
+                    <div class="optimization-card" onclick="generateMissingOptimization('description')">
+                        <div class="optimization-icon">
+                            <i class="ph ph-align-left"></i>
+                        </div>
+                        <div class="optimization-info">
+                            <div class="optimization-title">Description</div>
+                            <div class="optimization-description">SEO-optimized description with timestamps</div>
+                        </div>
+                        <div class="optimization-action">
+                            <i class="ph ph-arrow-right"></i>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${!hasTags ? `
+                    <div class="optimization-card" onclick="generateMissingOptimization('tags')">
+                        <div class="optimization-icon">
+                            <i class="ph ph-hash"></i>
+                        </div>
+                        <div class="optimization-info">
+                            <div class="optimization-title">Tags</div>
+                            <div class="optimization-description">Relevant SEO tags for better discovery</div>
+                        </div>
+                        <div class="optimization-action">
+                            <i class="ph ph-arrow-right"></i>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+            ` : ''}
+
+            ${(hasCaptions || hasPinnedComment) ? `
+            <!-- Generated Advanced Optimizations -->
+            <div class="result-card">
+                <h3 class="section-title">
+                    <i class="ph ph-sparkle"></i>
+                    Advanced Optimizations
+                </h3>
+                ${hasCaptions ? `
+                <div class="advanced-result-box">
+                    <h4><i class="ph ph-subtitles"></i> Corrected Captions (Preview)</h4>
+                    <textarea class="caption-preview" readonly>${escapeHtml(data.corrected_captions.corrected_srt || '')}</textarea>
+                    <button class="apply-btn" onclick="applyCaptions()">
+                        <i class="ph ph-youtube-logo"></i>
+                        Apply to YouTube
+                    </button>
+                </div>
+                ` : ''}
+                ${hasPinnedComment ? `
+                <div class="advanced-result-box">
+                    <h4><i class="ph ph-chat-circle"></i> Pinned Comment (Preview)</h4>
+                    <textarea class="comment-preview" id="pinnedCommentPreview">${escapeHtml(data.pinned_comment.comment_text || '')}</textarea>
+                    <button class="apply-btn" onclick="applyPinnedComment()">
+                        <i class="ph ph-youtube-logo"></i>
+                        Post to YouTube
+                    </button>
+                </div>
+                ` : ''}
+            </div>
+            ` : ''}
+
+            ${(!hasCaptions || !hasPinnedComment) ? `
+            <!-- Advanced Optimizations Actions -->
+            <div class="result-card">
+                <h3 class="section-title">
+                    <i class="ph ph-sparkle"></i>
+                    Advanced Optimizations
+                </h3>
+                <div class="advanced-actions-grid">
+                    ${!hasCaptions ? `
+                    <button class="advanced-action-btn" onclick="correctCaptions()" id="correctCaptionsBtn">
+                        <i class="ph ph-subtitles"></i>
+                        <div class="action-info">
+                            <div class="action-title">Correct Captions</div>
+                            <div class="action-desc">Fix grammar & remove filler words</div>
+                        </div>
+                    </button>
+                    ` : ''}
+                    ${!hasPinnedComment ? `
+                    <button class="advanced-action-btn" onclick="postPinnedComment()" id="postPinnedCommentBtn">
+                        <i class="ph ph-chat-circle"></i>
+                        <div class="action-info">
+                            <div class="action-title">Post Pinned Comment</div>
+                            <div class="action-desc">Boost engagement with AI comment</div>
+                        </div>
+                    </button>
+                    ` : ''}
+                </div>
+                <div id="advancedOptimizationResult" class="advanced-result" style="display: none;"></div>
+            </div>
+            ` : ''}
         </div>
     `;
 
@@ -679,11 +1093,125 @@ function displayOptimizationResults(data) {
 }
 
 /**
+ * Generate missing optimization (title, description, or tags)
+ */
+async function generateMissingOptimization(type) {
+    try {
+        showToast(`Generating ${type}...`);
+
+        const response = await fetch(`/optimize-video/api/optimize/${currentVideoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                selected_optimizations: [type]
+            })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || `Failed to generate ${type}`);
+        }
+
+        // Reload results
+        showToast(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} generated!`);
+        displayOptimizationResults(data.data);
+
+    } catch (error) {
+        console.error(`Error generating ${type}:`, error);
+        showToast(`❌ Failed to generate ${type}`);
+    }
+}
+
+/**
+ * Apply captions to YouTube
+ */
+async function applyCaptions() {
+    try {
+        const captionPreview = document.querySelector('.caption-preview');
+        const correctedSrt = captionPreview ? captionPreview.value : null;
+
+        if (!correctedSrt) {
+            showToast('❌ No caption data available');
+            return;
+        }
+
+        showToast('Uploading captions to YouTube...');
+
+        const response = await fetch(`/optimize-video/api/apply-captions/${currentVideoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                corrected_srt: correctedSrt
+            })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to apply captions');
+        }
+
+        showToast('✅ Captions uploaded to YouTube!');
+
+    } catch (error) {
+        console.error('Error applying captions:', error);
+        showToast(`❌ ${error.message}`);
+    }
+}
+
+/**
+ * Apply pinned comment to YouTube
+ */
+async function applyPinnedComment() {
+    try {
+        const commentPreview = document.getElementById('pinnedCommentPreview');
+        const commentText = commentPreview ? commentPreview.value : null;
+
+        if (!commentText) {
+            showToast('❌ No comment text available');
+            return;
+        }
+
+        showToast('Posting comment to YouTube...');
+
+        const response = await fetch(`/optimize-video/api/apply-pinned-comment/${currentVideoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                comment_text: commentText
+            })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to post comment');
+        }
+
+        showToast('✅ Comment posted to YouTube! Remember to pin it in YouTube Studio.');
+
+    } catch (error) {
+        console.error('Error posting comment:', error);
+        showToast(`❌ ${error.message}`);
+    }
+}
+
+/**
  * Back to videos list
  */
 async function backToVideos() {
     document.getElementById('resultsSection').style.display = 'none';
     document.getElementById('videosListSection').style.display = 'block';
+
+    // Small delay to ensure Firestore has finished writing optimization data
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Always reload videos to get fresh optimization status (to show checkmarks)
     if (currentInputMode === 'private') {
@@ -713,7 +1241,13 @@ async function showOptimizationResults(videoId) {
 
         // Fetch the cached optimization
         const response = await fetch(`/optimize-video/api/optimize/${videoId}`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                selected_optimizations: []  // Empty array to just retrieve cached data
+            })
         });
 
         if (!response.ok) {
@@ -1461,14 +1995,16 @@ async function loadPrivateVideos(forceRefresh = false) {
         privateVideosGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2rem;"><div style="font-size: 2rem; color: #3B82F6; margin-bottom: 0.5rem;"><i class="ph ph-spinner" style="animation: spin 1s linear infinite; display: inline-block;"></i></div><p style="color: var(--text-tertiary); margin: 0;">Fetching private videos from YouTube API...</p></div>';
         privateShortsSection.style.display = 'none';
 
+        // Add timestamp for cache busting
+        const timestamp = Date.now();
         const url = forceRefresh
-            ? '/optimize-video/api/get-private-videos?refresh=true'
-            : '/optimize-video/api/get-private-videos';
+            ? `/optimize-video/api/get-private-videos?refresh=true&_t=${timestamp}`
+            : `/optimize-video/api/get-private-videos?_t=${timestamp}`;
 
         // Fetch videos and optimization history in parallel
         const [videosResponse, historyResponse] = await Promise.all([
             fetch(url),
-            fetch('/optimize-video/api/optimization-history')
+            fetch(`/optimize-video/api/optimization-history?_t=${timestamp}`)
         ]);
 
         const data = await videosResponse.json();
@@ -1842,4 +2378,234 @@ async function deleteVideo(event, videoId) {
             }
         }
     );
+}
+
+/**
+ * Correct English captions
+ */
+async function correctCaptions() {
+    if (!currentVideoId) {
+        showToast('❌ No video selected');
+        return;
+    }
+
+    const btn = document.getElementById('correctCaptionsBtn');
+    const resultDiv = document.getElementById('advancedOptimizationResult');
+
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i><div class="action-info"><div class="action-title">Processing...</div><div class="action-desc">This may take a minute</div></div>';
+    resultDiv.style.display = 'none';
+
+    try {
+        const response = await fetch(`/optimize-video/api/correct-captions/${currentVideoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            // Handle specific error types
+            if (data.error_type === 'no_captions') {
+                throw new Error('No captions found. YouTube may still be processing them.');
+            } else if (data.error_type === 'no_english_captions') {
+                throw new Error('No English captions found for this video.');
+            } else {
+                throw new Error(data.error || 'Failed to correct captions');
+            }
+        }
+
+        // Show success message
+        resultDiv.innerHTML = `
+            <div class="success-message">
+                <i class="ph ph-check-circle"></i>
+                <strong>Captions Corrected!</strong>
+                <p>English captions have been corrected and uploaded as a new track: "English (Corrected)"</p>
+                <p class="quota-note">YouTube API Quota Used: ${data.quota_used} units</p>
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+        showToast('✅ Captions corrected successfully!');
+
+    } catch (error) {
+        console.error('Error correcting captions:', error);
+        resultDiv.innerHTML = `
+            <div class="error-message">
+                <i class="ph ph-warning-circle"></i>
+                <strong>Failed</strong>
+                <p>${error.message}</p>
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+        showToast('❌ ' + error.message);
+    } finally {
+        // Reset button
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-subtitles"></i><div class="action-info"><div class="action-title">Correct Captions</div><div class="action-desc">Fix grammar & remove filler words</div></div>';
+    }
+}
+
+/**
+ * Generate chapters/timestamps
+ */
+async function generateChapters() {
+    if (!currentVideoId) {
+        showToast('❌ No video selected');
+        return;
+    }
+
+    const btn = document.getElementById('generateChaptersBtn');
+    const resultDiv = document.getElementById('advancedOptimizationResult');
+
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i><div class="action-info"><div class="action-title">Generating...</div><div class="action-desc">Analyzing transcript</div></div>';
+    resultDiv.style.display = 'none';
+
+    try {
+        const response = await fetch(`/optimize-video/api/generate-chapters/${currentVideoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            if (data.error_type === 'no_transcript') {
+                throw new Error('No transcript available. YouTube typically generates transcripts 15-30 minutes after upload.');
+            } else {
+                throw new Error(data.error || 'Failed to generate chapters');
+            }
+        }
+
+        // Show success with chapters
+        const chaptersHtml = data.chapters.map(ch => `<div class="chapter-item"><strong>${ch.timestamp}</strong> ${escapeHtml(ch.title)}</div>`).join('');
+
+        resultDiv.innerHTML = `
+            <div class="success-message">
+                <i class="ph ph-check-circle"></i>
+                <strong>Chapters Generated!</strong>
+                <p>Generated ${data.num_chapters} chapters. Copy the text below and add to your video description:</p>
+                <div class="chapters-output">
+                    <textarea class="chapters-textarea" readonly>${escapeHtml(data.description_format)}</textarea>
+                    <button class="copy-btn-small" onclick="copyChaptersToClipboard()">
+                        <i class="ph ph-copy"></i>
+                        Copy All
+                    </button>
+                </div>
+                <div class="chapters-preview">
+                    ${chaptersHtml}
+                </div>
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+
+        // Store chapters globally for copying
+        window.generatedChapters = data.description_format;
+
+        showToast('✅ Chapters generated successfully!');
+
+    } catch (error) {
+        console.error('Error generating chapters:', error);
+        resultDiv.innerHTML = `
+            <div class="error-message">
+                <i class="ph ph-warning-circle"></i>
+                <strong>Failed</strong>
+                <p>${error.message}</p>
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+        showToast('❌ ' + error.message);
+    } finally {
+        // Reset button
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-list-bullets"></i><div class="action-info"><div class="action-title">Generate Chapters</div><div class="action-desc">Create timestamped chapters</div></div>';
+    }
+}
+
+/**
+ * Copy chapters to clipboard
+ */
+function copyChaptersToClipboard() {
+    if (!window.generatedChapters) return;
+
+    navigator.clipboard.writeText(window.generatedChapters).then(() => {
+        showToast('✅ Chapters copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy chapters:', err);
+        showToast('❌ Failed to copy chapters');
+    });
+}
+
+/**
+ * Post pinned comment
+ */
+async function postPinnedComment() {
+    if (!currentVideoId) {
+        showToast('❌ No video selected');
+        return;
+    }
+
+    const btn = document.getElementById('postPinnedCommentBtn');
+    const resultDiv = document.getElementById('advancedOptimizationResult');
+
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i><div class="action-info"><div class="action-title">Posting...</div><div class="action-desc">Generating comment</div></div>';
+    resultDiv.style.display = 'none';
+
+    try {
+        const response = await fetch(`/optimize-video/api/post-pinned-comment/${currentVideoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to post comment');
+        }
+
+        // Show success with comment text
+        resultDiv.innerHTML = `
+            <div class="success-message">
+                <i class="ph ph-check-circle"></i>
+                <strong>Comment Posted!</strong>
+                <p>Posted engagement-boosting comment to your video:</p>
+                <div class="comment-preview">
+                    <div class="comment-text">"${escapeHtml(data.comment_text)}"</div>
+                </div>
+                <p class="note-text">
+                    <i class="ph ph-info"></i>
+                    ${data.note}
+                </p>
+                <p class="quota-note">YouTube API Quota Used: ${data.quota_used} units</p>
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+        showToast('✅ Comment posted successfully!');
+
+    } catch (error) {
+        console.error('Error posting comment:', error);
+        resultDiv.innerHTML = `
+            <div class="error-message">
+                <i class="ph ph-warning-circle"></i>
+                <strong>Failed</strong>
+                <p>${error.message}</p>
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+        showToast('❌ ' + error.message);
+    } finally {
+        // Reset button
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-chat-circle"></i><div class="action-info"><div class="action-title">Post Pinned Comment</div><div class="action-desc">Boost engagement with AI comment</div></div>';
+    }
 }

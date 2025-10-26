@@ -7,6 +7,7 @@ from app.scripts.video_title.video_title import VideoTitleGenerator
 from app.scripts.video_title.video_tags import VideoTagsGenerator
 from app.scripts.video_title.video_description import VideoDescriptionGenerator
 from app.system.services.firebase_service import db
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -654,6 +655,7 @@ def upload_youtube_video():
         language = data.get('language', 'en')  # Default to English
         thumbnail_path = data.get('thumbnail_path')  # Optional server path to thumbnail
         scheduled_time = data.get('scheduled_time')  # Optional scheduled publish time (ISO 8601 format)
+        target_keyword = data.get('target_keyword', '').strip()  # Store for Optimize Video later
 
         # Check if video path is provided
         if not video_path:
@@ -807,6 +809,40 @@ def upload_youtube_video():
         except Exception as e:
             logger.error(f"Error deleting video file: {e}")
 
+        # Store video metadata in Firestore for Optimize Video later
+        try:
+            # Get thumbnail URL from YouTube response
+            thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+            if 'snippet' in response and 'thumbnails' in response['snippet']:
+                thumbnails = response['snippet']['thumbnails']
+                # Try to get highest quality thumbnail
+                if 'maxres' in thumbnails:
+                    thumbnail_url = thumbnails['maxres']['url']
+                elif 'high' in thumbnails:
+                    thumbnail_url = thumbnails['high']['url']
+                elif 'medium' in thumbnails:
+                    thumbnail_url = thumbnails['medium']['url']
+
+            # Store in Firestore
+            video_metadata = {
+                'video_id': video_id,
+                'title': title,
+                'thumbnail_url': thumbnail_url,
+                'uploaded_at': datetime.now(timezone.utc),
+                'uploaded_via': 'upload_studio'
+            }
+
+            # Only add target_keyword if provided
+            if target_keyword:
+                video_metadata['target_keyword'] = target_keyword
+
+            db.collection('users').document(user_id).collection('uploaded_videos').document(video_id).set(video_metadata)
+            logger.info(f"Stored video metadata in Firestore for video {video_id}")
+
+        except Exception as e:
+            logger.error(f"Error storing video metadata in Firestore: {e}")
+            # Don't fail the upload if Firestore storage fails
+
         return jsonify({
             'success': True,
             'video_id': video_id,
@@ -815,6 +851,16 @@ def upload_youtube_video():
 
     except Exception as e:
         logger.error(f"Error uploading video to YouTube: {e}")
+
+        # Check for YouTube quota exceeded error
+        error_str = str(e)
+        if 'quotaExceeded' in error_str or 'exceeded your quota' in error_str:
+            return jsonify({
+                'success': False,
+                'error': 'YouTube API quota exceeded. Please try again tomorrow.',
+                'error_type': 'quota_exceeded'
+            }), 429
+
         return jsonify({
             'success': False,
             'error': f'Failed to upload video: {str(e)}'

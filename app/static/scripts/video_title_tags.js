@@ -1403,6 +1403,12 @@ async function uploadToYouTube() {
             requestBody.scheduled_time = scheduledTime;
         }
 
+        // Include target keyword if provided (for Optimize Video later)
+        const keywordInput = document.getElementById('keywordInput');
+        if (keywordInput && keywordInput.value.trim()) {
+            requestBody.target_keyword = keywordInput.value.trim();
+        }
+
         const response = await fetch('/api/upload-youtube-video', {
             method: 'POST',
             headers: {
