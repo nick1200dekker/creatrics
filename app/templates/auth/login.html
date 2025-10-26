@@ -11,10 +11,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 
-    <!-- Apply dark mode class immediately if saved -->
+    <!-- Apply dark mode class immediately - defaults to dark -->
     <script>
-        // Apply dark mode immediately to prevent flash
-        if (localStorage.getItem('darkMode') === 'true') {
+        // Apply dark mode immediately to prevent flash (defaults to dark)
+        if (localStorage.getItem('darkMode') !== 'false') {
             document.documentElement.classList.add('dark');
         }
     </script>
