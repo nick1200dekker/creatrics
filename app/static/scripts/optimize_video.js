@@ -2513,29 +2513,30 @@ async function optimizeVideoFromMenu(event, videoId) {
 
     // Get the button element and show loading spinner
     const button = event.currentTarget;
-    const icon = button.querySelector('i');
-    const originalIconClass = icon.className;
-    const originalButtonContent = button.innerHTML;
+    const originalHTML = button.innerHTML;
 
-    // Show spinner
-    icon.className = 'ph ph-spinner spin';
+    console.log('[DEBUG] Optimize button clicked, showing spinner');
+
+    // Show spinner and update text
+    button.innerHTML = '<i class="ph ph-spinner spin"></i> Loading...';
     button.disabled = true;
 
-    // Close menu
-    document.getElementById(`menu-${videoId}`)?.classList.remove('show');
+    console.log('[DEBUG] Button HTML updated to:', button.innerHTML);
 
     try {
-        // Start optimization
+        // Start optimization (don't close menu yet, keep button visible)
         await optimizeVideo(videoId);
+
+        // Close menu after loading is complete
+        document.getElementById(`menu-${videoId}`)?.classList.remove('show');
     } catch (error) {
         // Restore button on error
-        button.innerHTML = originalButtonContent;
+        button.innerHTML = originalHTML;
         button.disabled = false;
+
+        // Close menu on error
+        document.getElementById(`menu-${videoId}`)?.classList.remove('show');
         throw error;
-    } finally {
-        // Reset button when selection screen is shown
-        // (The selection screen will replace the content anyway)
-        button.disabled = false;
     }
 }
 

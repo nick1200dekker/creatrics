@@ -134,13 +134,15 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
                     )
 
                     # Generate using AI provider
+                    # For tags, we need a short response (just comma-separated tags)
+                    # But Google Gemini has issues with low max_tokens, so use 4096 to be safe
                     response = ai_provider.create_completion(
                         messages=[
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": prompt}
                         ],
                         temperature=0.7,
-                        max_tokens=2000  # Increased to 2000 to ensure enough space for tags generation
+                        max_tokens=4096  # Increased to 4096 to avoid Google Gemini MAX_TOKENS errors
                     )
 
                     # Extract tags from response

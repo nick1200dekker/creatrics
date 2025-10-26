@@ -150,5 +150,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='scripts/optimize_video.js') }}"></script>
+<script src="{{ url_for('static', filename='scripts/optimize_video.js') }}?v={{ range(1, 99999) | random }}"></script>
 {% endblock %}
