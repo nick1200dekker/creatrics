@@ -440,20 +440,47 @@ def optimize_video_analysis(video_id):
         existing_doc = optimization_ref.get()
 
         if existing_doc.exists:
-            # Return existing optimization
+            # Check if cached data has the requested optimizations
             logger.info(f"Loading existing optimization from Firebase for user {user_id}: {video_id}")
             stored_data = existing_doc.to_dict()
 
-            # Log what titles we're returning
-            title_suggestions = stored_data.get('title_suggestions', [])
-            logger.info(f"Returning cached optimization with {len(title_suggestions)} titles")
-            if title_suggestions:
-                logger.info(f"First cached title: {title_suggestions[0]}")
+            # Check which requested optimizations are missing from cache
+            missing_optimizations = []
+            if 'title' in selected_optimizations:
+                titles = stored_data.get('title_suggestions', [])
+                if not titles or len(titles) == 0 or not titles[0]:
+                    missing_optimizations.append('title')
+                    logger.info(f"Title missing from cache")
 
-            return jsonify({
-                'success': True,
-                'data': stored_data
-            })
+            if 'description' in selected_optimizations:
+                desc = stored_data.get('optimized_description', '')
+                if not desc or desc.strip() == '':
+                    missing_optimizations.append('description')
+                    logger.info(f"Description missing from cache")
+
+            if 'tags' in selected_optimizations:
+                tags = stored_data.get('optimized_tags', [])
+                current_tags = stored_data.get('current_tags', [])
+                logger.info(f"Checking tags: optimized={len(tags) if tags else 0}, current={len(current_tags) if current_tags else 0}")
+                # Tags are missing if: empty, or same as current tags (not optimized)
+                if not tags or len(tags) == 0 or tags == current_tags:
+                    missing_optimizations.append('tags')
+                    logger.info(f"Tags missing from cache or not optimized")
+
+            logger.info(f"Missing optimizations: {missing_optimizations}")
+
+            # If all requested optimizations are cached, return them
+            if not missing_optimizations:
+                title_suggestions = stored_data.get('title_suggestions', [])
+                logger.info(f"Returning cached optimization with {len(title_suggestions)} titles")
+                return jsonify({
+                    'success': True,
+                    'data': stored_data
+                })
+            else:
+                # Some optimizations are missing - need to regenerate those
+                logger.info(f"Cache missing optimizations: {missing_optimizations}. Will regenerate.")
+                # Continue to generation below
 
         # If no optimizations selected (empty array), return error
         if not selected_optimizations or len(selected_optimizations) == 0:
@@ -505,21 +532,41 @@ def optimize_video_analysis(video_id):
             error_msg = result.get('error', 'Optimization failed')
             return jsonify({'success': False, 'error': error_msg}), 500
 
-        # Save to Firebase
+        # Get existing data to merge with new results (prevent overwriting previously generated optimizations)
+        existing_data = {}
+        if existing_doc.exists:
+            existing_data = existing_doc.to_dict()
+            logger.info(f"Merging new optimization data with existing cached data")
+
+        # Save to Firebase - merge with existing data
         optimization_data = {
+            **existing_data,  # Start with existing data
+            # Always update these base fields
             'video_id': video_id,
-            'video_info': result.get('video_info', {}),
-            'current_title': result.get('current_title', ''),
-            'current_description': result.get('current_description', ''),
-            'current_tags': result.get('current_tags', []),
-            'transcript_preview': result.get('transcript_preview', ''),
-            'optimized_title': result.get('optimized_title', ''),
-            'title_suggestions': result.get('title_suggestions', []),
-            'optimized_description': result.get('optimized_description', ''),
-            'optimized_tags': result.get('optimized_tags', []),
-            'recommendations': result.get('recommendations', {}),
+            'video_info': result.get('video_info', {}) or existing_data.get('video_info', {}),
+            'current_title': result.get('current_title', '') or existing_data.get('current_title', ''),
+            'current_description': result.get('current_description', '') or existing_data.get('current_description', ''),
+            'current_tags': result.get('current_tags', []) or existing_data.get('current_tags', []),
+            'transcript_preview': result.get('transcript_preview', '') or existing_data.get('transcript_preview', ''),
             'optimized_at': datetime.now(timezone.utc)
         }
+
+        # Only update fields that were actually generated in this request
+        if 'title' in selected_optimizations:
+            optimization_data['optimized_title'] = result.get('optimized_title', '')
+            optimization_data['title_suggestions'] = result.get('title_suggestions', [])
+
+        if 'description' in selected_optimizations:
+            optimization_data['optimized_description'] = result.get('optimized_description', '')
+
+        if 'tags' in selected_optimizations:
+            optimization_data['optimized_tags'] = result.get('optimized_tags', [])
+
+        # Always include recommendations if present (or preserve existing)
+        if result.get('recommendations'):
+            optimization_data['recommendations'] = result.get('recommendations', {})
+        elif 'recommendations' not in optimization_data:
+            optimization_data['recommendations'] = {}
 
         # Add captions result if present
         captions_result = result.get('corrected_captions_result')

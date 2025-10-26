@@ -1686,6 +1686,15 @@ html.dark .confirm-modal-header i {
     color: #60A5FA;
 }
 
+/* Error modal styling */
+.error-modal .confirm-modal-header.error-header i {
+    color: #EF4444;
+}
+
+html.dark .error-modal .confirm-modal-header.error-header i {
+    color: #F87171;
+}
+
 .confirm-modal-title {
     font-size: 1.125rem;
     font-weight: 600;
@@ -2084,12 +2093,17 @@ html.dark .privacy-badge {
     align-items: center;
     gap: 1rem;
     padding: 1.25rem;
-    background: var(--bg-primary);
+    background: var(--bg-secondary);
     border: 2px solid var(--border-primary);
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
+}
+
+html.dark .advanced-action-btn {
+    background: rgba(63, 63, 70, 0.3);
+    border-color: rgba(82, 82, 91, 0.6);
 }
 
 .advanced-action-btn:hover:not(:disabled) {
@@ -2153,6 +2167,50 @@ html.dark .selection-header {
     padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+/* Selection Panel */
+.selection-panel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+html.dark .selection-panel {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.5);
+}
+
+.selection-panel-header {
+    margin-bottom: 2rem;
+}
+
+.selection-panel-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.selection-panel-title i {
+    color: #3B82F6;
+    font-size: 1.5rem;
+}
+
+html.dark .selection-panel-title i {
+    color: #60A5FA;
+}
+
+.selection-panel-subtitle {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
 }
 
 /* Optimization Grid */
@@ -2580,10 +2638,20 @@ html.dark .selection-btn-secondary:hover {
 .advanced-result-box h4 {
     margin: 0 0 1rem 0;
     font-size: 1rem;
+    font-weight: 700;
     color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.advanced-result-box h4 i {
+    color: #3B82F6;
+    font-size: 1.25rem;
+}
+
+html.dark .advanced-result-box h4 i {
+    color: #60A5FA;
 }
 
 .caption-preview,
@@ -2591,14 +2659,34 @@ html.dark .selection-btn-secondary:hover {
     width: 100%;
     min-height: 200px;
     padding: 1rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
-    border-radius: 6px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-primary);
+    border-radius: 8px;
     color: var(--text-primary);
     font-family: 'Courier New', monospace;
     font-size: 0.875rem;
     resize: vertical;
     margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+html.dark .caption-preview,
+html.dark .comment-preview {
+    background: rgba(63, 63, 70, 0.3);
+    border-color: rgba(82, 82, 91, 0.6);
+}
+
+.caption-preview:focus,
+.comment-preview:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .caption-preview:focus,
+html.dark .comment-preview:focus {
+    border-color: #60A5FA;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
 .comment-preview {
@@ -2776,23 +2864,35 @@ html.dark .edit-btn.editing {
 }
 
 .apply-btn {
-    background: #FF0000;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: white;
     border: none;
     padding: 0.75rem 1.5rem;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 0.9375rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 .apply-btn:hover {
-    background: #cc0000;
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
     transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+html.dark .apply-btn {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 2px 4px rgba(96, 165, 250, 0.2);
+}
+
+html.dark .apply-btn:hover {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    box-shadow: 0 4px 8px rgba(96, 165, 250, 0.3);
 }
 
 .apply-btn i {

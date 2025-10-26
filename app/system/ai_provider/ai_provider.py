@@ -532,16 +532,20 @@ class AIProviderManager:
                     # Handle empty response based on finish reason
                     if not response_text:
                         if finish_reason and str(finish_reason) == 'FinishReason.MAX_TOKENS':
+                            # MAX_TOKENS with no content is an error - need to increase max_tokens
+                            logger.error(f"Google Gemini hit MAX_TOKENS with no content. Increase max_output_tokens.")
                             response_text = "[Response truncated due to max tokens limit]"
                         else:
                             logger.warning(f"No text content found in Google Gemini response. Finish reason: {finish_reason}")
                             response_text = "[No response generated]"
-                        
+
                 except Exception as e:
                     logger.error(f"Error extracting text from Google Gemini response: {e}")
                     response_text = "[Error processing response]"
-                
+
                 # Validate response has actual content (not error placeholders)
+                # Note: MAX_TOKENS with partial content is OK (response was truncated but we got something)
+                # MAX_TOKENS with no content means we need to increase max_output_tokens
                 if response_text in ["[Error processing response]", "[No response generated]", "[Response truncated due to max tokens limit]"]:
                     raise ValueError(f"Invalid response from Google Gemini: {response_text}")
 

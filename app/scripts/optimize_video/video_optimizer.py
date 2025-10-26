@@ -152,9 +152,9 @@ class VideoOptimizer:
             logger.info(f"Video duration: {video_duration}s, is_short: {is_short}, video_type: {video_type}")
 
             # Generate optimized content using existing scripts
-            # For descriptions, use full transcript if under 20k chars (roughly <15 min video)
+            # For descriptions, use full transcript if under 80k chars (roughly <60 min video)
             # For shorts, always use full transcript (under 60 seconds = short transcript)
-            use_full_transcript = is_short or len(transcript_text) < 20000
+            use_full_transcript = is_short or len(transcript_text) < 80000
 
             # Context for title/tags generation
             # For shorts, use full transcript since it's very short (under 60 seconds)
@@ -190,7 +190,7 @@ Video Transcript: {transcript_for_title}{target_keyword_context}
 Video Title: {current_title}
 Video Description: {current_description[:500]}
 Video Transcript: {transcript_text if use_full_transcript else transcript_text[:2000]}
-Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}{target_keyword_context}
+Video Length: {'Under 60 minutes' if use_full_transcript else 'Over 60 minutes'}{target_keyword_context}
 {timestamps_text}
 """
 
@@ -260,22 +260,10 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                 )
                 optimized_tags = tags_result.get('tags', current_tags)
 
-            # Generate overall recommendations
-            recommendations = self._generate_recommendations(
-                video_info,
-                transcript_text,
-                current_title,
-                current_description,
-                current_tags,
-                optimized_titles,
-                optimized_description,
-                optimized_tags,
-                user_id,
-                user_subscription
-            )
-
-            # Get recommendations token usage
-            recommendations_token_usage = recommendations.get('token_usage', {})
+            # Skip recommendations generation - not displayed in UI and wastes credits
+            # recommendations = self._generate_recommendations(...)
+            recommendations = {}
+            recommendations_token_usage = {}
 
             # Collect all token usage for credit deduction
             all_token_usages = []
@@ -301,12 +289,12 @@ Video Length: {'Under 15 minutes' if use_full_transcript else 'Over 15 minutes'}
                     **tags_result.get('token_usage', {})
                 })
 
-            # Add recommendations tokens
-            if recommendations_token_usage.get('input_tokens', 0) > 0:
-                all_token_usages.append({
-                    'operation': 'SEO Recommendations',
-                    **recommendations_token_usage
-                })
+            # Skip recommendations tokens (disabled above)
+            # if recommendations_token_usage.get('input_tokens', 0) > 0:
+            #     all_token_usages.append({
+            #         'operation': 'SEO Recommendations',
+            #         **recommendations_token_usage
+            #     })
 
             # Handle captions - correct and upload
             corrected_captions_result = None

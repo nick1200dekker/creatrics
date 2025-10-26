@@ -140,7 +140,7 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
                             {"role": "user", "content": prompt}
                         ],
                         temperature=0.7,
-                        max_tokens=500
+                        max_tokens=2000  # Increased to 2000 to ensure enough space for tags generation
                     )
 
                     # Extract tags from response
