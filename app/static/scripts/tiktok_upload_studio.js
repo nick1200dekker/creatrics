@@ -320,8 +320,10 @@ function showAlert(message, type) {
     `;
 
     // Insert at top of container
-    const container = document.querySelector('.tiktok-studio-container');
-    container.insertBefore(alert, container.firstChild);
+    const container = document.querySelector('.generator-content');
+    if (container) {
+        container.insertBefore(alert, container.firstChild);
+    }
 
     // Auto-remove after 5 seconds
     setTimeout(() => {

@@ -141,8 +141,8 @@ class TikTokOAuthService:
             logger.info(f"Exchanging code for token for user {user_id}")
             response = requests.post(
                 TikTokOAuthService.TOKEN_URL,
-                json=token_data,
-                headers={'Content-Type': 'application/json'},
+                data=token_data,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'},
                 timeout=10
             )
             response.raise_for_status()
