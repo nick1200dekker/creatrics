@@ -59,10 +59,11 @@ class PinnedCommentGenerator:
 
                 video_title = video_info.get('title', '') if video_info else ''
 
-            # Get transcript for context
+            # Get transcript for context (use cached VTT data)
             transcript_text = ''
             if self.video_optimizer:
-                transcript_text, _ = self.video_optimizer._fetch_transcript_with_timestamps(video_id, user_id)
+                vtt_data = self.video_optimizer._fetch_and_cache_vtt(video_id, user_id)
+                transcript_text = vtt_data.get('plain_text', '')
 
             # Generate engaging pinned comment
             logger.info(f"Generating pinned comment for video {video_id}")

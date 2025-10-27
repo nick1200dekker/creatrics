@@ -18,6 +18,7 @@ class CaptionCorrector:
     def correct_english_captions(self, video_id: str, user_id: str, user_subscription: str = None, preview_only: bool = True) -> Dict[str, Any]:
         """
         Download English captions, correct grammar/remove filler words, and optionally re-upload
+        NOW SUPPORTS BOTH PUBLIC AND PRIVATE VIDEOS by using cached VTT data
 
         Args:
             video_id: YouTube video ID
@@ -31,7 +32,7 @@ class CaptionCorrector:
         try:
             from app.utils.youtube_client import get_user_youtube_client
 
-            # Get authenticated YouTube client
+            # Get authenticated YouTube client (for uploading)
             youtube = get_user_youtube_client(user_id)
             if not youtube:
                 return {
@@ -40,94 +41,63 @@ class CaptionCorrector:
                     'error_type': 'no_youtube_connection'
                 }
 
-            # Fetch captions from RapidAPI (works for public videos only)
-            import requests
-            import os
+            # Use cached VTT data from video_optimizer (avoids redundant downloads)
+            # This works for both public AND private videos!
+            logger.info("=" * 80)
+            logger.info("CAPTION CORRECTION - FETCHING VTT DATA:")
+            logger.info("=" * 80)
 
-            rapidapi_key = os.getenv('RAPIDAPI_KEY', '16c9c09b8bmsh0f0d3ec2999f27ep115961jsn5f75604e8050')
+            from app.scripts.optimize_video.video_optimizer import VideoOptimizer
 
-            logger.info(f"Fetching captions from RapidAPI for video {video_id}")
+            optimizer = VideoOptimizer()
+            vtt_data = optimizer._fetch_and_cache_vtt(video_id, user_id)
 
-            url = "https://yt-api.p.rapidapi.com/subtitles"
-            querystring = {"id": video_id, "format": "vtt"}
-            headers = {
-                "x-rapidapi-key": rapidapi_key,
-                "x-rapidapi-host": "yt-api.p.rapidapi.com"
-            }
-
-            response = requests.get(url, headers=headers, params=querystring, timeout=30)
-
-            if response.status_code != 200:
+            if not vtt_data:
                 return {
                     'success': False,
-                    'error': f'RapidAPI request failed: {response.status_code}',
-                    'error_type': 'rapidapi_error'
-                }
-
-            data = response.json()
-            subtitles = data.get('subtitles', [])
-
-            if not subtitles:
-                return {
-                    'success': False,
-                    'error': 'No captions found for this video (may be private)',
+                    'error': 'No captions available for this video',
                     'error_type': 'no_captions'
                 }
 
-            logger.info(f"Found {len(subtitles)} caption tracks from RapidAPI")
+            per_word = vtt_data['per_word']
+            segments_with_time = vtt_data['segments_with_time']
+            has_word_timestamps = vtt_data['has_per_word_timestamps']
 
-            # Find English (auto-generated) caption
-            english_auto_caption = None
-            for sub in subtitles:
-                lang_name = sub.get('languageName', '')
-                if 'English' in lang_name and 'auto-generated' in lang_name.lower():
-                    english_auto_caption = sub
-                    logger.info(f"✓ Selected auto-generated English caption: {lang_name}")
-                    break
+            logger.info(f"✓ Using cached VTT data for video {video_id}")
+            logger.info(f"✓ Per-word timestamps: {len(per_word)} words")
+            logger.info(f"✓ Segments: {len(segments_with_time)}")
+            logger.info(f"✓ Has per-word timestamps: {has_word_timestamps}")
 
-            if not english_auto_caption:
-                return {
-                    'success': False,
-                    'error': 'No auto-generated English captions found',
-                    'error_type': 'no_auto_captions'
-                }
+            if per_word:
+                logger.info(f"First 5 per-word entries: {per_word[:5]}")
 
-            # Download VTT from the URL
-            vtt_url = english_auto_caption['url']
-            logger.info(f"Downloading VTT from: {vtt_url[:100]}...")
+            logger.info("=" * 80)
 
-            vtt_response = requests.get(vtt_url, timeout=30)
-            if vtt_response.status_code != 200:
-                return {
-                    'success': False,
-                    'error': f'Failed to download VTT: {vtt_response.status_code}',
-                    'error_type': 'vtt_download_error'
-                }
+            # Generate original SRT for preview comparison
+            # If we have per-word timestamps, create a clean original from those (no duplicates)
+            # Otherwise, use segments (which may have YouTube's duplicate text)
+            if has_word_timestamps and per_word:
+                # Create clean original SRT from per-word data (groups ~6-8 words per segment)
+                srt_content = self._create_original_srt_from_words(per_word)
+            else:
+                # Fallback: use segments (may have duplicates from YouTube VTT)
+                srt_content = self._segments_to_srt(segments_with_time)
 
-            vtt_content = vtt_response.text
-            logger.info(f"Downloaded VTT: {len(vtt_content)} chars")
-            logger.info(f"RAW VTT FROM RAPIDAPI - First 1000 chars:\n{vtt_content[:1000]}")
-
-            # Check if VTT has per-word timestamps (<c> tags)
-            has_word_timestamps = '<c>' in vtt_content
-            logger.info(f"Has per-word timestamps (<c> tags): {has_word_timestamps}")
-
-            # Convert VTT to SRT for preview comparison
-            srt_content = self._convert_vtt_to_srt(vtt_content)
-
-            if has_word_timestamps:
-                logger.info("VTT has per-word timestamps - using word-level parsing")
-                # Parse VTT to extract per-word timestamps
-                word_level_data = self._parse_vtt_word_timestamps(vtt_content)
-
-                logger.info(f"Extracted {len(word_level_data)} words with precise timestamps")
+            if has_word_timestamps and per_word:
+                logger.info(f"Using per-word timestamps - {len(per_word)} words extracted")
 
                 # Send word-level data to AI for caption creation
-                corrected_srt, token_usage = self._correct_captions_with_word_timestamps(word_level_data, user_id, user_subscription)
+                corrected_srt, token_usage = self._correct_captions_with_word_timestamps(per_word, user_id, user_subscription)
 
             else:
-                logger.info("VTT does NOT have per-word timestamps - using segment-level correction")
-                logger.info(f"Converted to SRT: {len(srt_content)} chars")
+                logger.info("No per-word timestamps available - using segment-level correction")
+
+                if not segments_with_time:
+                    return {
+                        'success': False,
+                        'error': 'No transcript segments available',
+                        'error_type': 'no_segments'
+                    }
 
                 # Send SRT to AI for correction (old method)
                 corrected_srt, token_usage = self._correct_srt_with_ai(srt_content, user_id, user_subscription)
@@ -326,6 +296,70 @@ class CaptionCorrector:
                 'success': False,
                 'error': str(e)
             }
+
+    def _create_original_srt_from_words(self, per_word: List[Dict[str, Any]]) -> str:
+        """
+        Create a clean original SRT from per-word timestamps (no duplicates)
+        Groups words into natural segments of 6-8 words each
+
+        Args:
+            per_word: List of {'word': 'text', 'start': timestamp_seconds}
+
+        Returns:
+            SRT format string with clean segments
+        """
+        try:
+            if not per_word:
+                return ""
+
+            # Helper function to convert seconds to SRT timestamp
+            def format_timestamp(seconds):
+                h = int(seconds // 3600)
+                m = int((seconds % 3600) // 60)
+                s = int(seconds % 60)
+                ms = int((seconds % 1) * 1000)
+                return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
+            segments = []
+            words_per_segment = 7  # Average ~6-8 words per segment
+
+            # Group words into segments
+            for i in range(0, len(per_word), words_per_segment):
+                segment_words = per_word[i:i + words_per_segment]
+
+                # Start time = first word's timestamp
+                start_time = segment_words[0]['start']
+
+                # End time = next segment's first word timestamp (or last word + 0.5s)
+                if i + words_per_segment < len(per_word):
+                    end_time = per_word[i + words_per_segment]['start']
+                else:
+                    # Last segment: use last word's timestamp + 0.5 seconds
+                    end_time = segment_words[-1]['start'] + 0.5
+
+                # Join words into text
+                text = ' '.join([w['word'] for w in segment_words])
+
+                segments.append({
+                    'start': format_timestamp(start_time),
+                    'end': format_timestamp(end_time),
+                    'text': text
+                })
+
+            # Convert segments to SRT format
+            srt_lines = []
+            for i, seg in enumerate(segments, 1):
+                srt_lines.append(str(i))
+                srt_lines.append(f"{seg['start']} --> {seg['end']}")
+                srt_lines.append(seg['text'])
+                srt_lines.append('')  # Empty line between segments
+
+            logger.info(f"Created clean original SRT from {len(per_word)} words -> {len(segments)} segments")
+            return '\n'.join(srt_lines)
+
+        except Exception as e:
+            logger.error(f"Error creating original SRT from words: {e}")
+            return ""
 
     def _convert_vtt_to_srt(self, vtt_content: str) -> str:
         """
@@ -808,7 +842,19 @@ Return ONLY the SRT file:"""
         srt_lines = []
         for i, seg in enumerate(segments, 1):
             srt_lines.append(str(i))
-            srt_lines.append(seg['timestamp'])
+
+            # Handle both old format (timestamp) and new format (start/end)
+            if 'timestamp' in seg:
+                srt_lines.append(seg['timestamp'])
+            elif 'start' in seg and 'end' in seg:
+                # Convert VTT timestamps (00:00:00.120) to SRT format (00:00:00,120)
+                start_srt = seg['start'].replace('.', ',')
+                end_srt = seg['end'].replace('.', ',')
+                srt_lines.append(f"{start_srt} --> {end_srt}")
+            else:
+                # Fallback
+                srt_lines.append("00:00:00,000 --> 00:00:01,000")
+
             srt_lines.append(seg['text'])
             srt_lines.append('')  # Empty line between segments
         return '\n'.join(srt_lines)
