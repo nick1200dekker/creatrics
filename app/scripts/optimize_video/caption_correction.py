@@ -40,64 +40,73 @@ class CaptionCorrector:
                     'error_type': 'no_youtube_connection'
                 }
 
-            # List captions for the video
-            captions_response = youtube.captions().list(
-                part='snippet',
-                videoId=video_id
-            ).execute()
+            # Fetch captions from RapidAPI (works for public videos only)
+            import requests
+            import os
 
-            if not captions_response.get('items'):
+            rapidapi_key = os.getenv('RAPIDAPI_KEY', '16c9c09b8bmsh0f0d3ec2999f27ep115961jsn5f75604e8050')
+
+            logger.info(f"Fetching captions from RapidAPI for video {video_id}")
+
+            url = "https://yt-api.p.rapidapi.com/subtitles"
+            querystring = {"id": video_id, "format": "vtt"}
+            headers = {
+                "x-rapidapi-key": rapidapi_key,
+                "x-rapidapi-host": "yt-api.p.rapidapi.com"
+            }
+
+            response = requests.get(url, headers=headers, params=querystring, timeout=30)
+
+            if response.status_code != 200:
                 return {
                     'success': False,
-                    'error': 'No captions found for this video',
+                    'error': f'RapidAPI request failed: {response.status_code}',
+                    'error_type': 'rapidapi_error'
+                }
+
+            data = response.json()
+            subtitles = data.get('subtitles', [])
+
+            if not subtitles:
+                return {
+                    'success': False,
+                    'error': 'No captions found for this video (may be private)',
                     'error_type': 'no_captions'
                 }
 
-            # List all available caption tracks (for debugging)
-            logger.info(f"Found {len(captions_response['items'])} caption tracks for video {video_id}")
+            logger.info(f"Found {len(subtitles)} caption tracks from RapidAPI")
 
-            # Find English caption track (prefer automatic)
-            english_caption = None
-            for caption in captions_response['items']:
-                lang = caption['snippet'].get('language', '')
-                track_kind = caption['snippet'].get('trackKind', '')
-
-                # Prefer ASR (automatic) English captions (case-insensitive)
-                if lang.startswith('en') and track_kind.lower() == 'asr':
-                    english_caption = caption
-                    logger.info(f"✓ Selected ASR (auto-generated) English caption")
+            # Find English (auto-generated) caption
+            english_auto_caption = None
+            for sub in subtitles:
+                lang_name = sub.get('languageName', '')
+                if 'English' in lang_name and 'auto-generated' in lang_name.lower():
+                    english_auto_caption = sub
+                    logger.info(f"✓ Selected auto-generated English caption: {lang_name}")
                     break
 
-            # Fallback to any English caption
-            if not english_caption:
-                for caption in captions_response['items']:
-                    lang = caption['snippet'].get('language', '')
-                    if lang.startswith('en'):
-                        english_caption = caption
-                        logger.info(f"⚠ Selected non-ASR English caption (manually uploaded)")
-                        break
-
-            if not english_caption:
+            if not english_auto_caption:
                 return {
                     'success': False,
-                    'error': 'No English captions found',
-                    'error_type': 'no_english_captions'
+                    'error': 'No auto-generated English captions found',
+                    'error_type': 'no_auto_captions'
                 }
 
-            caption_id = english_caption['id']
-            caption_name = english_caption['snippet'].get('name', '')
-            caption_kind = english_caption['snippet'].get('trackKind', '')
-            logger.info(f"Downloading caption: '{caption_name}' (Kind: {caption_kind})")
+            # Download VTT from the URL
+            vtt_url = english_auto_caption['url']
+            logger.info(f"Downloading VTT from: {vtt_url[:100]}...")
 
-            # Download caption in VTT format (has per-word timestamps if available)
-            caption_data = youtube.captions().download(
-                id=caption_id,
-                tfmt='vtt'
-            ).execute()
-            vtt_content = caption_data.decode('utf-8')
+            vtt_response = requests.get(vtt_url, timeout=30)
+            if vtt_response.status_code != 200:
+                return {
+                    'success': False,
+                    'error': f'Failed to download VTT: {vtt_response.status_code}',
+                    'error_type': 'vtt_download_error'
+                }
 
+            vtt_content = vtt_response.text
             logger.info(f"Downloaded VTT: {len(vtt_content)} chars")
-            logger.info(f"RAW VTT FROM YOUTUBE - First 1000 chars:\n{vtt_content[:1000]}")
+            logger.info(f"RAW VTT FROM RAPIDAPI - First 1000 chars:\n{vtt_content[:1000]}")
 
             # Check if VTT has per-word timestamps (<c> tags)
             has_word_timestamps = '<c>' in vtt_content
