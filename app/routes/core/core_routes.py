@@ -225,15 +225,24 @@ def create_session():
         else:
             logger.info(f"User {user_id} already exists in Firebase")
 
-        # Process referral code for new users
-        if is_new_user and referral_code:
+        # Process referral code for new users OR existing users who haven't claimed a referral yet
+        if referral_code:
             try:
                 from app.system.services.referral_service import ReferralService
-                result = ReferralService.process_signup_referral(user_id, referral_code)
-                if result.get('success'):
-                    logger.info(f"Referral processed for user {user_id}: {result.get('message')}")
+
+                # Check if user has already been referred
+                user_data = UserService.get_user(user_id) if not is_new_user else user
+                has_referrer = user_data and user_data.get('referred_by') if user_data else False
+
+                if not has_referrer:
+                    # User hasn't claimed a referral yet, process it
+                    result = ReferralService.process_signup_referral(user_id, referral_code)
+                    if result.get('success'):
+                        logger.info(f"Referral processed for user {user_id}: {result.get('message')}")
+                    else:
+                        logger.warning(f"Referral processing failed for user {user_id}: {result.get('message')}")
                 else:
-                    logger.warning(f"Referral processing failed for user {user_id}: {result.get('message')}")
+                    logger.info(f"User {user_id} already has a referrer, skipping referral code")
             except Exception as ref_error:
                 logger.error(f"Error processing referral code: {str(ref_error)}")
                 # Don't fail the login if referral processing fails
