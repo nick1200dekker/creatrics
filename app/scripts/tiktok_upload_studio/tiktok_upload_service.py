@@ -71,19 +71,29 @@ class TikTokUploadService:
 
             # Log response for debugging
             logger.info(f"Init response status: {init_response.status_code}")
-            logger.debug(f"Init response: {init_response.text}")
+            logger.info(f"Init response body: {init_response.text}")
 
             init_response.raise_for_status()
             init_result = init_response.json()
 
-            # Check for errors
+            # Check for errors in response
             if 'error' in init_result:
                 error_msg = init_result['error'].get('message', 'Unknown error')
-                logger.error(f"TikTok init error: {error_msg}")
-                return {'success': False, 'error': error_msg}
+                error_code = init_result['error'].get('code', 'unknown')
+                logger.error(f"TikTok init error - code: {error_code}, message: {error_msg}")
+                return {'success': False, 'error': f"{error_code}: {error_msg}"}
 
-            upload_url = init_result['data']['upload_url']
-            publish_id = init_result['data']['publish_id']
+            # Check if data exists
+            if 'data' not in init_result:
+                logger.error(f"No data in init response: {init_result}")
+                return {'success': False, 'error': 'Invalid response from TikTok'}
+
+            upload_url = init_result['data'].get('upload_url')
+            publish_id = init_result['data'].get('publish_id')
+
+            if not upload_url or not publish_id:
+                logger.error(f"Missing upload_url or publish_id in response: {init_result}")
+                return {'success': False, 'error': 'Invalid upload response from TikTok'}
 
             logger.info(f"Got upload URL, publish_id: {publish_id}")
 

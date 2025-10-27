@@ -8,10 +8,15 @@ Here is the list of keywords:
 {keywords_text}
 
 Instructions:
-- Only return keywords that are directly related to gaming (video games, game titles, gaming culture, gaming creators, esports, etc.)
+- Return keywords that are related to gaming (video games, game titles, gaming culture, gaming creators, esports, streaming, etc.)
+- Be FLEXIBLE in your interpretation - keywords may be indirectly gaming-related or could be used in gaming contexts
+- Include keywords that gaming audiences would use, even if not exclusively gaming terms
+- Examples of what to include: game titles, gaming slang, streaming terms, popular gaming trends, gaming community terms
+- IMPORTANT: Many keywords could be unknown game titles (especially Roblox games, indie games, or new releases) - only exclude keywords if you are 100% certain they are NOT gaming-related
+- When in doubt, include it - it's better to be over-inclusive than to miss potential gaming content
 - Do NOT change or modify the keywords in any way
 - Return ONLY the gaming-related keywords, one per line
 - Do NOT include explanations, numbering, or any other text
-- If a keyword is not gaming-related, exclude it from your response
+- If a keyword has potential gaming relevance, include it
 
 Gaming-related keywords:

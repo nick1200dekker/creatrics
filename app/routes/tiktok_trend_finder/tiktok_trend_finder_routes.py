@@ -84,23 +84,27 @@ def analyze_trends():
     try:
         logger.info("Starting TikTok Trend Finder analysis")
 
-        # STEP 1: Fetch top 100 new_on_board hashtags (5 pages)
+        # STEP 1: Fetch top 100 hashtags with optimized API calls (4 total)
+        # 2 calls with new_on_board (pages 1-2, limit 50) + 2 calls without (pages 1-2, limit 50)
         all_hashtags = []
         headers = {
             "x-rapidapi-key": RAPIDAPI_KEY,
             "x-rapidapi-host": TIKTOK_CREATIVE_API_HOST
         }
 
-        for page in range(1, 6):  # Pages 1-5
+        # Fetch with new_on_board filter (2 API calls)
+        for page in range(1, 3):  # Pages 1-2
             querystring = {
                 "page": str(page),
-                "limit": "20",
-                "period": "7",
+                "limit": "50",
+                "period": "30",
+                "country": "US",
+                "sort_by": "popular",
                 "filter_by": "new_on_board",
                 "industry_id": "25000000000"  # Games industry
             }
 
-            logger.info(f"Fetching page {page} of trending hashtags")
+            logger.info(f"Fetching page {page} with new_on_board filter")
             response = requests.get(
                 f"https://{TIKTOK_CREATIVE_API_HOST}/api/trending/hashtag",
                 headers=headers,
@@ -113,11 +117,41 @@ def analyze_trends():
             if data.get('code') == 0 and 'data' in data and 'list' in data['data']:
                 hashtags = data['data']['list']
                 all_hashtags.extend([h['hashtag_name'] for h in hashtags])
-                logger.info(f"Page {page}: Fetched {len(hashtags)} hashtags")
+                logger.info(f"Page {page} (new_on_board): Fetched {len(hashtags)} hashtags")
             else:
-                logger.warning(f"Page {page}: Invalid response format")
+                logger.warning(f"Page {page} (new_on_board): Invalid response format")
 
-        logger.info(f"Total hashtags fetched: {len(all_hashtags)}")
+        # Fetch without new_on_board filter (2 API calls)
+        for page in range(1, 3):  # Pages 1-2
+            querystring = {
+                "page": str(page),
+                "limit": "50",
+                "period": "30",
+                "country": "US",
+                "sort_by": "popular",
+                "industry_id": "25000000000"  # Games industry
+            }
+
+            logger.info(f"Fetching page {page} without filter")
+            response = requests.get(
+                f"https://{TIKTOK_CREATIVE_API_HOST}/api/trending/hashtag",
+                headers=headers,
+                params=querystring,
+                timeout=30
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            if data.get('code') == 0 and 'data' in data and 'list' in data['data']:
+                hashtags = data['data']['list']
+                all_hashtags.extend([h['hashtag_name'] for h in hashtags])
+                logger.info(f"Page {page} (no filter): Fetched {len(hashtags)} hashtags")
+            else:
+                logger.warning(f"Page {page} (no filter): Invalid response format")
+
+        # Remove duplicates while preserving order
+        all_hashtags = list(dict.fromkeys(all_hashtags))
+        logger.info(f"Total unique hashtags fetched: {len(all_hashtags)}")
 
         if not all_hashtags:
             return jsonify({
