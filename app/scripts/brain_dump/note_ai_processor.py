@@ -117,7 +117,7 @@ def modify_note_with_ai(content: str, prompt: str, user_id: str, model: str = No
                 {"role": "user", "content": user_prompt}
             ],
             temperature=0.7,
-            max_tokens=2000
+            max_tokens=7000
         )
 
         # Get the content
@@ -231,7 +231,7 @@ def process_transcript_with_ai(transcript: str, prompt: str, user_id: str, model
                 {"role": "user", "content": user_prompt}
             ],
             temperature=0.7,
-            max_tokens=2000
+            max_tokens=7000
         )
 
         # Get the content

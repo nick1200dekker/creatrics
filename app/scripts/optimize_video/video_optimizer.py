@@ -798,7 +798,7 @@ Video Length: {'Short' if is_short else 'Long'}{target_keyword_context}
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=1500
+                max_tokens=7000
             )
 
             recommendations_text = response.get('content', '') if isinstance(response, dict) else str(response)
@@ -983,7 +983,7 @@ Video Length: {'Short' if is_short else 'Long'}{target_keyword_context}
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.7,
-                max_tokens=500
+                max_tokens=7000
             )
 
             titles_text = response.get('content', '') if isinstance(response, dict) else str(response)

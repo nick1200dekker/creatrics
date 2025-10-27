@@ -129,19 +129,16 @@ class CreatorAnalyzer:
             # Cache for creator profile images - ensures consistency
             creator_profile_cache = {}
 
-            # Fetch tweets for each creator
+            # PARALLEL API CALLS - Fetch tweets for all creators at once
             all_tweets = []
             creator_stats = {}
 
-            for i, creator in enumerate(creators):
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+
+            def fetch_creator_tweets(creator):
+                """Fetch tweets for a single creator"""
                 logger.info(f"Fetching tweets for @{creator}")
                 tweets = self.get_tweets(creator)
-
-                # FIXED: Simplified progress update - don't show individual creator names
-                if status_callback:
-                    progress = 50 + (i / len(creators)) * 30  # 50-80% range
-                    # Just show "Analyzing creators..." instead of specific creator names
-                    status_callback("Analyzing creators...", progress)
 
                 # Filter out RTs and limit to 50 most recent tweets
                 filtered_tweets = [
@@ -152,48 +149,78 @@ class CreatorAnalyzer:
                 if filtered_tweets:
                     time_filtered_tweets = self.filter_tweets_by_time_range(filtered_tweets, time_range)
 
-                    # Extract and cache the best profile image for this creator
-                    if creator not in creator_profile_cache:
-                        for tweet in time_filtered_tweets:
-                            if 'author' in tweet and isinstance(tweet['author'], dict):
-                                author = tweet['author']
-                                profile_img = (
-                                    author.get('avatar') or
-                                    author.get('profile_image_url') or
-                                    author.get('profile_image_url_https') or
-                                    ''
-                                )
-                                if profile_img:
-                                    # Convert _normal to _400x400 for better quality
-                                    if '_normal' in profile_img:
-                                        profile_img = profile_img.replace('_normal', '_400x400')
-                                    creator_profile_cache[creator] = {
-                                        'profile_image_url': profile_img,
-                                        'name': author.get('name', author.get('screen_name', creator))
-                                    }
-                                    break
+                    # Extract profile image
+                    profile_cache = {'profile_image_url': '', 'name': creator}
+                    for tweet in time_filtered_tweets:
+                        if 'author' in tweet and isinstance(tweet['author'], dict):
+                            author = tweet['author']
+                            profile_img = (
+                                author.get('avatar') or
+                                author.get('profile_image_url') or
+                                author.get('profile_image_url_https') or
+                                ''
+                            )
+                            if profile_img:
+                                if '_normal' in profile_img:
+                                    profile_img = profile_img.replace('_normal', '_400x400')
+                                profile_cache = {
+                                    'profile_image_url': profile_img,
+                                    'name': author.get('name', author.get('screen_name', creator))
+                                }
+                                break
 
-                        # Fallback if no profile image found
-                        if creator not in creator_profile_cache:
-                            creator_profile_cache[creator] = {
-                                'profile_image_url': '',
-                                'name': creator
-                            }
-
-                    processed_tweets = [self.process_tweet(tweet, creator, creator_profile_cache.get(creator, {})) for tweet in time_filtered_tweets]
-                    creator_stats[creator] = self.calculate_creator_performance(time_filtered_tweets)
+                    processed_tweets = [self.process_tweet(tweet, creator, profile_cache) for tweet in time_filtered_tweets]
+                    stats = self.calculate_creator_performance(time_filtered_tweets)
 
                     logger.info(f"Found {len(processed_tweets)} tweets for @{creator} in the last {time_range}")
-                    all_tweets.extend(processed_tweets)
+                    return {
+                        'creator': creator,
+                        'tweets': processed_tweets,
+                        'stats': stats,
+                        'profile_cache': profile_cache
+                    }
                 else:
                     logger.info(f"No tweets found for @{creator}")
-                    creator_stats[creator] = {
-                        'total_tweets': 0, 'total_likes': 0, 'total_retweets': 0, 'total_views': 0,
-                        'avg_likes_per_tweet': 0, 'avg_retweets_per_tweet': 0, 'avg_views_per_tweet': 0,
-                        'engagement_rate': 0
+                    return {
+                        'creator': creator,
+                        'tweets': [],
+                        'stats': {
+                            'total_tweets': 0, 'total_likes': 0, 'total_retweets': 0, 'total_views': 0,
+                            'avg_likes_per_tweet': 0, 'avg_retweets_per_tweet': 0, 'avg_views_per_tweet': 0,
+                            'engagement_rate': 0
+                        },
+                        'profile_cache': {'profile_image_url': '', 'name': creator}
                     }
 
-                time.sleep(1)  # Rate limiting
+            # Fetch all creators in parallel (max 5 workers to avoid rate limits)
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                future_to_creator = {
+                    executor.submit(fetch_creator_tweets, creator): creator
+                    for creator in creators
+                }
+
+                completed = 0
+                for future in as_completed(future_to_creator):
+                    try:
+                        result = future.result()
+                        all_tweets.extend(result['tweets'])
+                        creator_stats[result['creator']] = result['stats']
+                        creator_profile_cache[result['creator']] = result['profile_cache']
+
+                        # Update progress
+                        completed += 1
+                        if status_callback:
+                            progress = 50 + (completed / len(creators)) * 30
+                            status_callback("Analyzing creators...", progress)
+
+                    except Exception as e:
+                        creator = future_to_creator[future]
+                        logger.error(f"Error fetching tweets for {creator}: {e}")
+                        creator_stats[creator] = {
+                            'total_tweets': 0, 'total_likes': 0, 'total_retweets': 0, 'total_views': 0,
+                            'avg_likes_per_tweet': 0, 'avg_retweets_per_tweet': 0, 'avg_views_per_tweet': 0,
+                            'engagement_rate': 0
+                        }
 
             logger.info(f"Total tweets collected: {len(all_tweets)}")
 
@@ -274,7 +301,7 @@ class CreatorAnalyzer:
                     }
                 ],
                 temperature=0.7,
-                max_tokens=3500
+                max_tokens=7000
             )
             
             # Deduct credits using unified response

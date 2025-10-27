@@ -234,7 +234,7 @@ class PinnedCommentGenerator:
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.8,
-                max_tokens=100
+                max_tokens=7000
             )
 
             comment_text = response.get('content', '') if isinstance(response, dict) else str(response)

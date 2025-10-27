@@ -103,37 +103,38 @@ def analyze_keyword():
         all_time_url = f"https://{RAPIDAPI_HOST}/search"
         all_time_params = {"query": keyword}
 
-        all_time_response = requests.get(all_time_url, headers=headers, params=all_time_params, timeout=30)
-        all_time_response.raise_for_status()
-        all_time_data = all_time_response.json()
+        # PARALLEL API CALLS - Run all 3 at once!
+        import asyncio
+        import httpx
 
-        # Handle estimatedResults which might be a string
+        async def fetch_all_data():
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                tasks = [
+                    client.get(all_time_url, headers=headers, params=all_time_params),
+                    client.get(f"https://{RAPIDAPI_HOST}/suggest_queries", headers=headers, params={"query": keyword, "geo": "US"}),
+                    client.get(f"https://{RAPIDAPI_HOST}/search", headers=headers, params={"query": keyword, "upload_date": "month"})
+                ]
+                return await asyncio.gather(*tasks, return_exceptions=True)
+
+        all_time_response, autocomplete_response, recent_response = asyncio.run(fetch_all_data())
+
+        # Process all_time data
+        all_time_data = all_time_response.json() if not isinstance(all_time_response, Exception) else {}
         try:
             total_videos = int(all_time_data.get('estimatedResults', 0)) if all_time_data.get('estimatedResults') else 0
         except (ValueError, TypeError):
             total_videos = 0
 
-        # Get autocomplete suggestions count
-        autocomplete_url = f"https://{RAPIDAPI_HOST}/suggest_queries"
-        autocomplete_params = {"query": keyword, "geo": "US"}
-
+        # Process autocomplete data
         try:
-            autocomplete_response = requests.get(autocomplete_url, headers=headers, params=autocomplete_params, timeout=10)
-            autocomplete_data = autocomplete_response.json()
+            autocomplete_data = autocomplete_response.json() if not isinstance(autocomplete_response, Exception) else {}
             suggestion_count = len(autocomplete_data.get('suggestions', []))
         except:
             suggestion_count = 0
 
-        # Get RECENT videos (last 30 days) for better search volume estimation
-        recent_url = f"https://{RAPIDAPI_HOST}/search"
-        recent_params = {
-            "query": keyword,
-            "upload_date": "month"  # Last 30 days
-        }
-
+        # Process recent data
         try:
-            recent_response = requests.get(recent_url, headers=headers, params=recent_params, timeout=30)
-            recent_data = recent_response.json()
+            recent_data = recent_response.json() if not isinstance(recent_response, Exception) else {}
             recent_videos = recent_data.get('data', [])
         except:
             recent_videos = []

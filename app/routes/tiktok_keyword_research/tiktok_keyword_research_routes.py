@@ -56,101 +56,76 @@ def search_trends():
             "x-rapidapi-host": TIKTOK_API_HOST
         }
 
-        # Collect videos from multiple pages (5 pages)
-        # Note: cursor value comes from API response, not just incrementing numbers
+        # PARALLEL API CALLS - Fetch first page to get search_id, then fetch remaining 4 pages in parallel
         all_videos = []
         search_id = "0"
-        cursor = 0
-        max_pages = 5
 
-        for page_num in range(max_pages):
-            params = {
-                "keyword": keyword,
-                "cursor": cursor,
-                "search_id": search_id
-            }
+        # First request to get search_id
+        first_params = {
+            "keyword": keyword,
+            "cursor": 0,
+            "search_id": "0"
+        }
 
-            logger.info(f"Fetching TikTok {mode} results for '{keyword}' (page: {page_num}, cursor: {cursor}, search_id: {search_id})")
+        logger.info(f"Fetching first page for '{keyword}' ({mode} mode)")
+        first_response = requests.get(endpoint, headers=headers, params=first_params, timeout=30)
+        first_response.raise_for_status()
+        first_data = first_response.json()
 
-            response = requests.get(endpoint, headers=headers, params=params, timeout=30)
-            response.raise_for_status()
-
-            tiktok_data = response.json()
-
-            if tiktok_data.get('status_code') != 0:
-                logger.warning(f"TikTok API error on page {page_num}")
-                break  # Stop pagination on error
-
-            # Extract data based on mode
+        if first_data.get('status_code') == 0:
+            # Process first page
             if mode == 'video':
-                # For video mode, extract from item_list
-                item_list = tiktok_data.get('item_list', [])
+                item_list = first_data.get('item_list', [])
                 if item_list:
-                    # Log first and last video IDs to check for duplicates
-                    first_id = item_list[0].get('id') if item_list else None
-                    last_id = item_list[-1].get('id') if len(item_list) > 1 else None
-                    logger.info(f"Cursor {cursor}: Got {len(item_list)} videos (first: {first_id}, last: {last_id})")
                     all_videos.extend(item_list)
-                else:
-                    logger.info(f"Cursor {cursor}: No videos in item_list")
-                # Get search_id and cursor for next page
-                if page_num == 0:
-                    search_id = tiktok_data.get('search_id', search_id)
-                    logger.info(f"Video mode - Got search_id: {search_id}")
-
-                # Get next cursor from response
-                has_more = tiktok_data.get('has_more', False)
-                next_cursor = tiktok_data.get('cursor')
-                if next_cursor is not None:
-                    cursor = next_cursor
-                    logger.info(f"Video mode - Next cursor: {cursor}, has_more: {has_more}")
-                else:
-                    cursor += 1
-                    logger.info(f"Video mode - Incrementing cursor to: {cursor}")
-
-                if not has_more and page_num > 0:
-                    logger.info(f"Video mode - No more results, stopping at page {page_num}")
-                    break
+                search_id = first_data.get('search_id', search_id)
             else:
-                # For general/top mode, data is in 'data' array
-                page_data = tiktok_data.get('data', [])
+                page_data = first_data.get('data', [])
                 if page_data:
-                    # Extract video IDs and log to check for duplicates
-                    video_ids = []
-                    for item in page_data:
-                        if 'item' in item:
-                            video_ids.append(item['item'].get('id'))
-                        else:
-                            video_ids.append(item.get('id'))
-
-                    first_id = video_ids[0] if video_ids else None
-                    last_id = video_ids[-1] if len(video_ids) > 1 else None
-                    logger.info(f"Cursor {cursor}: Got {len(page_data)} videos (first: {first_id}, last: {last_id})")
                     all_videos.extend(page_data)
-                else:
-                    logger.info(f"Cursor {cursor}: No videos in data array")
-
-                # Get search_id and cursor for next page
-                log_pb = tiktok_data.get('log_pb', {})
+                log_pb = first_data.get('log_pb', {})
                 impr_id = log_pb.get('impr_id')
-                if impr_id and page_num == 0:
+                if impr_id:
                     search_id = impr_id
-                    logger.info(f"Top mode - Got search_id: {search_id}")
 
-                # Get next cursor from response
-                has_more = tiktok_data.get('has_more', False)
-                next_cursor = tiktok_data.get('cursor')
-                if next_cursor is not None:
-                    cursor = next_cursor
-                    logger.info(f"Top mode - Next cursor: {cursor}, has_more: {has_more}")
-                else:
-                    # Increment cursor if not in response
-                    cursor += 1
-                    logger.info(f"Top mode - Incrementing cursor to: {cursor}")
+            logger.info(f"Got search_id: {search_id}")
 
-                if not has_more and page_num > 0:
-                    logger.info(f"Top mode - No more results, stopping at page {page_num}")
-                    break
+            # Fetch remaining 4 pages in PARALLEL
+            import asyncio
+            import httpx
+
+            async def fetch_remaining_pages():
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    tasks = []
+                    for page_num in range(1, 5):
+                        params = {
+                            "keyword": keyword,
+                            "cursor": page_num,
+                            "search_id": search_id
+                        }
+                        tasks.append(client.get(endpoint, headers=headers, params=params))
+                    return await asyncio.gather(*tasks, return_exceptions=True)
+
+            logger.info("Fetching 4 more pages in parallel")
+            responses = asyncio.run(fetch_remaining_pages())
+
+            # Process parallel responses
+            for resp in responses:
+                if isinstance(resp, Exception):
+                    continue
+                try:
+                    data = resp.json()
+                    if data.get('status_code') == 0:
+                        if mode == 'video':
+                            item_list = data.get('item_list', [])
+                            if item_list:
+                                all_videos.extend(item_list)
+                        else:
+                            page_data = data.get('data', [])
+                            if page_data:
+                                all_videos.extend(page_data)
+                except:
+                    continue
 
         if not all_videos:
             return jsonify({

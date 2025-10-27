@@ -137,46 +137,33 @@ def search_accounts():
 
         url = "https://tiktok-api23.p.rapidapi.com/api/search/general"
 
-        # Fetch 5 pages to get more diverse channels
+        # PARALLEL API CALLS - Fetch first page to get search_id, then fetch 4 more pages in parallel
         channels_dict = {}
         search_id = "0"
-        cursor = 0
-        max_pages = 5
 
-        for page_num in range(max_pages):
-            params = {
-                "keyword": query,
-                "cursor": cursor,
-                "search_id": search_id
-            }
+        # First request to get search_id
+        first_params = {
+            "keyword": query,
+            "cursor": 0,
+            "search_id": "0"
+        }
 
-            logger.info(f"Fetching TikTok channels for '{query}' (page: {page_num}, cursor: {cursor})")
+        logger.info(f"Fetching first page for '{query}'")
+        first_response = requests.get(url, headers=headers, params=first_params, timeout=30)
+        first_response.raise_for_status()
+        first_data = first_response.json()
 
-            response = requests.get(url, headers=headers, params=params, timeout=30)
-            response.raise_for_status()
-
-            data = response.json()
-
-            if data.get('status_code') != 0:
-                logger.warning(f"TikTok API error on page {page_num}")
-                break
-
-            videos_data = data.get('data', [])
-
-            # Extract unique channels from videos
+        if first_data.get('status_code') == 0:
+            # Process first page
+            videos_data = first_data.get('data', [])
             for entry in videos_data:
                 try:
-                    # The response has a nested structure: data[i].item contains the actual video data
                     item = entry.get('item', {})
                     author = item.get('author', {})
                     sec_uid = author.get('secUid')
-
                     if not sec_uid or sec_uid in channels_dict:
                         continue
-
-                    # Get author stats from the item level
                     author_stats = item.get('authorStats', {})
-
                     channels_dict[sec_uid] = {
                         'sec_uid': sec_uid,
                         'username': author.get('uniqueId'),
@@ -192,27 +179,67 @@ def search_accounts():
                     logger.error(f"Error parsing channel: {e}")
                     continue
 
-            # Get search_id and cursor for next page
-            log_pb = data.get('log_pb', {})
+            # Get search_id for next requests
+            log_pb = first_data.get('log_pb', {})
             impr_id = log_pb.get('impr_id')
-            if impr_id and page_num == 0:
+            if impr_id:
                 search_id = impr_id
                 logger.info(f"Got search_id: {search_id}")
 
-            # Get next cursor from response
-            has_more = data.get('has_more', False)
-            next_cursor = data.get('cursor')
-            if next_cursor is not None:
-                cursor = next_cursor
-            else:
-                cursor += 1
+            # Fetch remaining 4 pages in PARALLEL
+            import asyncio
+            import httpx
 
-            if not has_more and page_num > 0:
-                logger.info(f"No more results, stopping at page {page_num}")
-                break
+            async def fetch_remaining_pages():
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    tasks = []
+                    for page_num in range(1, 5):
+                        params = {
+                            "keyword": query,
+                            "cursor": page_num,
+                            "search_id": search_id
+                        }
+                        tasks.append(client.get(url, headers=headers, params=params))
+                    return await asyncio.gather(*tasks, return_exceptions=True)
+
+            logger.info("Fetching 4 more pages in parallel")
+            responses = asyncio.run(fetch_remaining_pages())
+
+            # Process parallel responses
+            for resp in responses:
+                if isinstance(resp, Exception):
+                    continue
+                try:
+                    data = resp.json()
+                    if data.get('status_code') == 0:
+                        videos_data = data.get('data', [])
+                        for entry in videos_data:
+                            try:
+                                item = entry.get('item', {})
+                                author = item.get('author', {})
+                                sec_uid = author.get('secUid')
+                                if not sec_uid or sec_uid in channels_dict:
+                                    continue
+                                author_stats = item.get('authorStats', {})
+                                channels_dict[sec_uid] = {
+                                    'sec_uid': sec_uid,
+                                    'username': author.get('uniqueId'),
+                                    'nickname': author.get('nickname'),
+                                    'avatar': author.get('avatarLarger'),
+                                    'verified': author.get('verified', False),
+                                    'follower_count': author_stats.get('followerCount', 0),
+                                    'following_count': author_stats.get('followingCount', 0),
+                                    'video_count': author_stats.get('videoCount', 0),
+                                    'heart_count': author_stats.get('heartCount', 0)
+                                }
+                            except Exception as e:
+                                logger.error(f"Error parsing channel: {e}")
+                                continue
+                except:
+                    continue
 
         channels = list(channels_dict.values())
-        logger.info(f"Found {len(channels)} unique channels from {max_pages} pages")
+        logger.info(f"Found {len(channels)} unique channels")
 
         # Sort by follower count
         channels.sort(key=lambda x: x.get('follower_count', 0), reverse=True)

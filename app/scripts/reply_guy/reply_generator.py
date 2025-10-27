@@ -247,7 +247,7 @@ class ReplyGenerator:
                         {"role": "user", "content": vision_content}
                     ],
                     temperature=temperature,
-                    max_tokens=2000
+                    max_tokens=7000
                 )
             else:
                 # Use regular completion for text-only
@@ -257,7 +257,7 @@ class ReplyGenerator:
                         {"role": "user", "content": prompt}
                     ],
                     temperature=temperature,
-                    max_tokens=2000
+                    max_tokens=7000
                 )
 
             reply_text = response['content'].strip()
@@ -422,7 +422,7 @@ class ReplyGenerator:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.5,
-                max_tokens=50
+                max_tokens=7000
             )
 
             queries_text = response['content'].strip()

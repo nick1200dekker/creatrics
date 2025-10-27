@@ -304,7 +304,7 @@ Return ONLY the post content, nothing else."""
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.8,
-                max_tokens=500
+                max_tokens=7000
             )
 
             # Extract content and token usage from response

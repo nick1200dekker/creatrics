@@ -69,17 +69,96 @@ class VideoDeepDiveAnalyzer:
                     'error_type': 'insufficient_credits'
                 }
 
-            # Fetch video/short info
-            if is_short:
-                video_info = self._fetch_short_info(video_id)
-            else:
-                video_info = self._fetch_video_info(video_id)
+            # PARALLEL API CALLS - Fetch video info and transcript at the same time
+            import asyncio
+            import httpx
+
+            async def fetch_video_and_transcript():
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    headers = {
+                        "x-rapidapi-key": self.rapidapi_key,
+                        "x-rapidapi-host": self.rapidapi_host
+                    }
+
+                    # Create parallel tasks
+                    if is_short:
+                        video_task = client.get(
+                            f"https://{self.rapidapi_host}/shorts/info",
+                            headers=headers,
+                            params={"id": video_id, "params": "WHATTOWATCH"}
+                        )
+                    else:
+                        video_task = client.get(
+                            f"https://{self.rapidapi_host}/video/info",
+                            headers=headers,
+                            params={"id": video_id, "extend": "2"}
+                        )
+
+                    # Transcript step 1: Get language menu
+                    transcript_task = client.get(
+                        f"https://{self.rapidapi_host}/get_transcript",
+                        headers=headers,
+                        params={"id": video_id}
+                    )
+
+                    return await asyncio.gather(video_task, transcript_task, return_exceptions=True)
+
+            video_response, transcript_lang_response = asyncio.run(fetch_video_and_transcript())
+
+            # Process video info
+            if isinstance(video_response, Exception):
+                return {'success': False, 'error': 'Failed to fetch video info'}
+
+            try:
+                video_info = video_response.json()
+            except:
+                return {'success': False, 'error': 'Failed to parse video info'}
 
             if not video_info:
                 return {'success': False, 'error': 'Failed to fetch video info'}
 
-            # Fetch transcript
-            transcript_text = self._fetch_transcript(video_id)
+            # Process transcript (Step 1 already done in parallel, now do Step 2)
+            transcript_text = ""
+            if not isinstance(transcript_lang_response, Exception):
+                try:
+                    language_data = transcript_lang_response.json()
+                    transcript_params = None
+
+                    if 'languageMenu' in language_data and isinstance(language_data['languageMenu'], list):
+                        for lang_option in language_data['languageMenu']:
+                            if isinstance(lang_option, dict) and 'params' in lang_option:
+                                title = lang_option.get('title', '').lower()
+                                if 'english' in title or 'en' in title:
+                                    transcript_params = lang_option['params']
+                                    break
+
+                        if not transcript_params and len(language_data['languageMenu']) > 0:
+                            first_option = language_data['languageMenu'][0]
+                            if isinstance(first_option, dict) and 'params' in first_option:
+                                transcript_params = first_option['params']
+
+                    # Step 2: Fetch actual transcript
+                    if transcript_params:
+                        import requests
+                        url = f"https://{self.rapidapi_host}/get_transcript"
+                        headers = {
+                            "x-rapidapi-key": self.rapidapi_key,
+                            "x-rapidapi-host": self.rapidapi_host
+                        }
+                        response = requests.get(url, headers=headers, params={"id": video_id, "params": transcript_params})
+                        response.raise_for_status()
+                        transcript_data = response.json()
+
+                        if 'transcript' in transcript_data:
+                            segments = transcript_data['transcript']
+                            if isinstance(segments, list) and len(segments) > 0:
+                                text_segments = [seg['text'] for seg in segments if isinstance(seg, dict) and 'text' in seg]
+                                if text_segments:
+                                    transcript_text = ' '.join(text_segments)
+                                    logger.info(f"Complete transcript fetched: {len(transcript_text)} chars")
+                except Exception as e:
+                    logger.warning(f"Error processing transcript: {e}")
+                    transcript_text = ""
 
             # Generate summary from transcript
             summary = self._generate_summary(transcript_text, user_id)
@@ -298,7 +377,7 @@ class VideoDeepDiveAnalyzer:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=800
+                max_tokens=7000
             )
 
             analysis = response.get('content', '') if isinstance(response, dict) else str(response)
@@ -354,7 +433,7 @@ class VideoDeepDiveAnalyzer:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.5,
-                max_tokens=500
+                max_tokens=7000
             )
 
             summary = response.get('content', '') if isinstance(response, dict) else str(response)

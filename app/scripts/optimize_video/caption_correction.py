@@ -1062,7 +1062,7 @@ Return the corrected SRT file with NO overlapping timestamps:"""
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.3,
-                max_tokens=min(4000, len(text.split()) * 2)  # Ensure enough tokens for output
+                max_tokens=min(7000, len(text.split()) * 2)  # Ensure enough tokens for output
             )
 
             corrected_text = response.get('content', '') if isinstance(response, dict) else str(response)
@@ -1161,7 +1161,7 @@ Return the corrected SRT segment with NO overlapping timestamps:"""
                         {"role": "user", "content": user_prompt}
                     ],
                     temperature=0.3,
-                    max_tokens=7000  # Safe for DeepSeek
+                    max_tokens=7000  # Increased to 20000 for all providers
                 )
 
                 corrected_batch = response.get('content', '') if isinstance(response, dict) else str(response)

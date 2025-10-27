@@ -309,53 +309,95 @@ def search_videos():
 
         videos = []
         is_short = content_type == "shorts"
-        continuation_token = None
-        max_requests = 3  # Make 3 requests to get ~50 results
 
-        # Make multiple requests using continuation tokens
-        for request_count in range(max_requests):
-            if request_count > 0 and continuation_token:
-                querystring['continuation'] = continuation_token
+        # PARALLEL API CALLS - Make first request to get continuation token
+        querystring['_t'] = int(time.time())
+        first_response = requests.get(url, headers=youtube_api.headers, params=querystring, timeout=30)
+        first_response.raise_for_status()
+        first_data = first_response.json()
 
-            # Update cache-buster for each request
-            querystring['_t'] = int(time.time())
+        continuation_token = first_data.get('continuation')
 
-            response = requests.get(url, headers=youtube_api.headers, params=querystring, timeout=30)
-            response.raise_for_status()
+        # Process first batch
+        if 'data' in first_data:
+            for item in first_data['data']:
+                item_type = item.get('type')
+                if is_short and item_type == 'shorts':
+                    videos.append({
+                        'video_id': item.get('videoId'),
+                        'title': item.get('title'),
+                        'channel_title': item.get('channelTitle'),
+                        'thumbnail': item.get('thumbnail', [{}])[0].get('url') if item.get('thumbnail') else '',
+                        'view_count_text': item.get('viewCount', 'N/A'),
+                        'published_time': item.get('publishedTimeText', ''),
+                        'is_short': True
+                    })
+                elif not is_short and item_type == 'video':
+                    videos.append({
+                        'video_id': item.get('videoId'),
+                        'title': item.get('title'),
+                        'channel_title': item.get('channelTitle'),
+                        'thumbnail': item.get('thumbnail', [{}])[0].get('url') if item.get('thumbnail') else '',
+                        'view_count_text': item.get('viewCount', 'N/A'),
+                        'published_time': item.get('publishedTimeText', ''),
+                        'is_short': False
+                    })
 
-            data = response.json()
+        # If we have continuation token and need more results, fetch next 2 pages in PARALLEL
+        if continuation_token and len(videos) < 50:
+            import asyncio
+            import httpx
 
-            if 'data' in data:
-                for item in data['data']:
-                    item_type = item.get('type')
-                    # ONLY include items that match the requested type
-                    if is_short and item_type == 'shorts':
-                        videos.append({
-                            'video_id': item.get('videoId'),
-                            'title': item.get('title'),
-                            'channel_title': item.get('channelTitle'),
-                            'thumbnail': item.get('thumbnail', [{}])[0].get('url') if item.get('thumbnail') else '',
-                            'view_count_text': item.get('viewCount', 'N/A'),
-                            'published_time': item.get('publishedTimeText', ''),
-                            'is_short': True
-                        })
-                    elif not is_short and item_type == 'video':
-                        videos.append({
-                            'video_id': item.get('videoId'),
-                            'title': item.get('title'),
-                            'channel_title': item.get('channelTitle'),
-                            'thumbnail': item.get('thumbnail', [{}])[0].get('url') if item.get('thumbnail') else '',
-                            'view_count_text': item.get('viewCount', 'N/A'),
-                            'published_time': item.get('publishedTimeText', ''),
-                            'is_short': False
-                        })
+            async def fetch_next_pages():
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    tasks = []
+                    current_token = continuation_token
 
-            # Get continuation token for next request
-            continuation_token = data.get('continuation')
+                    # Create 2 requests with continuation tokens
+                    for i in range(2):
+                        if current_token:
+                            params = {**querystring, 'continuation': current_token, '_t': int(time.time()) + i}
+                            tasks.append(client.get(url, headers=youtube_api.headers, params=params))
 
-            # Stop if we have enough results or no more continuation
-            if len(videos) >= 50 or not continuation_token:
-                break
+                    if tasks:
+                        return await asyncio.gather(*tasks, return_exceptions=True)
+                    return []
+
+            responses = asyncio.run(fetch_next_pages())
+
+            # Process parallel responses
+            for resp in responses:
+                if isinstance(resp, Exception):
+                    continue
+                try:
+                    data = resp.json()
+                    if 'data' in data:
+                        for item in data['data']:
+                            if len(videos) >= 50:
+                                break
+                            item_type = item.get('type')
+                            if is_short and item_type == 'shorts':
+                                videos.append({
+                                    'video_id': item.get('videoId'),
+                                    'title': item.get('title'),
+                                    'channel_title': item.get('channelTitle'),
+                                    'thumbnail': item.get('thumbnail', [{}])[0].get('url') if item.get('thumbnail') else '',
+                                    'view_count_text': item.get('viewCount', 'N/A'),
+                                    'published_time': item.get('publishedTimeText', ''),
+                                    'is_short': True
+                                })
+                            elif not is_short and item_type == 'video':
+                                videos.append({
+                                    'video_id': item.get('videoId'),
+                                    'title': item.get('title'),
+                                    'channel_title': item.get('channelTitle'),
+                                    'thumbnail': item.get('thumbnail', [{}])[0].get('url') if item.get('thumbnail') else '',
+                                    'view_count_text': item.get('viewCount', 'N/A'),
+                                    'published_time': item.get('publishedTimeText', ''),
+                                    'is_short': False
+                                })
+                except:
+                    continue
 
         return jsonify({
             'success': True,

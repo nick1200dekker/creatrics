@@ -84,7 +84,7 @@ def filter_gaming_keywords_ai(keywords: list, user_subscription: str = None) -> 
                 {"role": "user", "content": user_prompt}
             ],
             temperature=0.3,
-            max_tokens=1000
+            max_tokens=7000
         )
 
         # Parse response - split by newlines and filter empty

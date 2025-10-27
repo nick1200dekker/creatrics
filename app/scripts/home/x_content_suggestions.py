@@ -266,7 +266,7 @@ class XContentSuggestions:
                     }
                 ],
                 temperature=0.8,
-                max_tokens=1500
+                max_tokens=7000
             )
 
             # Parse the response

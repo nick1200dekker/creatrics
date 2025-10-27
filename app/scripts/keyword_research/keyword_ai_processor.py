@@ -190,7 +190,7 @@ Here are ALL REAL top-performing videos for this topic (from last month, {total_
                 {"role": "user", "content": user_prompt}
             ],
             temperature=0.7,
-            max_tokens=500
+            max_tokens=7000
         )
 
         # Parse JSON response
@@ -295,7 +295,7 @@ HERE IS THE REAL DATA - Top performing videos for "{topic}" from the last month:
                 {"role": "user", "content": user_prompt}
             ],
             temperature=0.8,
-            max_tokens=4000
+            max_tokens=7000
         )
 
         # Parse JSON response
@@ -383,7 +383,7 @@ def generate_ai_insights(results: list, topic: str, context: dict, user_subscrip
                 {"role": "user", "content": user_prompt}
             ],
             temperature=0.7,
-            max_tokens=800
+            max_tokens=7000
         )
 
         # Handle different response formats

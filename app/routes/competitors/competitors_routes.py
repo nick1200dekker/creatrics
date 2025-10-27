@@ -481,14 +481,28 @@ def search_channels():
             continuation_token = data.get('continuation')
             request_count += 1
 
-        # Fetch detailed channel info for channels with missing data
+        # Fetch detailed channel info for channels with missing data IN PARALLEL
+        import asyncio
+        import httpx
+
         channel_details_url = "https://yt-api.p.rapidapi.com/channel/about"
-        for channel_id, channel_data in list(channels.items()):
-            # Only fetch if we don't have subscriber info
-            if channel_data['subscriber_count_text'] == 'Unknown':
+        missing_channels = [(cid, cdata) for cid, cdata in channels.items() if cdata['subscriber_count_text'] == 'Unknown']
+
+        if missing_channels:
+            async def fetch_channel_details():
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    tasks = [
+                        client.get(channel_details_url, headers=headers, params={"id": cid})
+                        for cid, _ in missing_channels
+                    ]
+                    return await asyncio.gather(*tasks, return_exceptions=True)
+
+            detail_responses = asyncio.run(fetch_channel_details())
+
+            for (channel_id, channel_data), detail_response in zip(missing_channels, detail_responses):
                 try:
-                    detail_querystring = {"id": channel_id}
-                    detail_response = requests.get(channel_details_url, headers=headers, params=detail_querystring)
+                    if isinstance(detail_response, Exception):
+                        continue
                     detail_data = detail_response.json()
 
                     if detail_data.get('subscriberCountText'):

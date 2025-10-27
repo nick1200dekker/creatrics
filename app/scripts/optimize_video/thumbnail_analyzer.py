@@ -100,7 +100,7 @@ class ThumbnailAnalyzer:
                             }
                         ],
                         temperature=0.7,
-                        max_tokens=1000
+                        max_tokens=7000
                     )
                     logger.info("Vision analysis completed successfully")
                 else:
@@ -114,7 +114,7 @@ class ThumbnailAnalyzer:
                             }
                         ],
                         temperature=0.7,
-                        max_tokens=1000
+                        max_tokens=7000
                     )
                     logger.info("Fallback analysis completed")
 

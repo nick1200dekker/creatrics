@@ -124,7 +124,7 @@ class TikTokTitleGenerator:
                             {"role": "user", "content": prompt}
                         ],
                         temperature=0.9,
-                        max_tokens=1000
+                        max_tokens=7000
                     )
 
                     # Extract titles from response

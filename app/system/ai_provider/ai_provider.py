@@ -242,12 +242,12 @@ class AIProviderManager:
     def default_model(self) -> str:
         """Get the display name of the current provider's model"""
         return self.config['display_name']
-    
+
     @property
     def api_model_name(self) -> str:
         """Get the actual API model name"""
         return self.config['model_name']
-    
+
     def get_client(self):
         """Get AI client for the current provider"""
         if self._client is not None:
@@ -308,12 +308,32 @@ class AIProviderManager:
             logger.error(f"Error initializing {self.provider} client: {e}")
             return None
     
+    async def create_completion_async(self, messages: List[Dict[str, str]],
+                                      temperature: float = 0.7,
+                                      max_tokens: int = 4096,
+                                      **kwargs) -> Dict[str, Any]:
+        """
+        ASYNC version - Create completion without blocking the thread
+        Thread is FREE to handle other users while AI generates response
+
+        This runs the sync create_completion in a thread pool to avoid blocking
+        """
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
+
+        # Run the sync version in a thread pool
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,  # Use default executor
+            lambda: self.create_completion(messages, temperature, max_tokens, **kwargs)
+        )
+
     def create_completion(self, messages: List[Dict[str, str]],
                          temperature: float = 0.7,
                          max_tokens: int = 4096,  # INCREASED: Default was too low for Google Gemini
                          **kwargs) -> Dict[str, Any]:
         """
-        Create a completion using the configured provider with automatic fallback
+        SYNC version - Create a completion using the configured provider with automatic fallback
         Returns unified response format regardless of provider
         Fallback chain: Primary → next providers in chain
         """
@@ -359,6 +379,11 @@ class AIProviderManager:
         Internal method to create completion with a specific client
         """
         try:
+            # Cap max_tokens based on provider's max_output_tokens limit
+            provider_max = self.config.get('max_output_tokens')
+            if provider_max and max_tokens > provider_max:
+                logger.warning(f"Requested max_tokens={max_tokens} exceeds {self.provider.value} limit of {provider_max}. Capping to {provider_max}.")
+                max_tokens = provider_max
             if self.provider in [AIProvider.OPENAI, AIProvider.DEEPSEEK]:
                 # OpenAI-compatible API
                 api_kwargs = {

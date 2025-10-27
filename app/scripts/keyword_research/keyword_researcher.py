@@ -97,7 +97,7 @@ class KeywordResearcher:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=100,  # Only need 3 short lines
+                max_tokens=7000,  # Only need 3 short lines
                 temperature=0.7
             )
 
@@ -196,16 +196,55 @@ class KeywordResearcher:
         # Step 1: AI extracts 3 topics (uses ~50-100 tokens)
         topics = self.extract_topics_with_ai(content, ai_provider)
 
-        # Step 2: Get autocomplete suggestions for each topic (FREE, no tokens)
+        # Step 2: PARALLEL API CALLS - Get autocomplete suggestions for all 3 topics at once
         keyword_data = {
             'main_topic': topics[0],
             'topics': topics,
             'suggestions': {}
         }
 
-        for topic in topics:
-            suggestions = self.get_autocomplete_suggestions(topic)
-            keyword_data['suggestions'][topic] = suggestions
+        # Fetch all 3 autocomplete suggestions in parallel
+        import asyncio
+        import httpx
+
+        async def fetch_all_autocomplete():
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                tasks = []
+                url = f"https://{self.rapidapi_host}/suggest_queries"
+                headers = {
+                    "x-rapidapi-key": self.rapidapi_key,
+                    "x-rapidapi-host": self.rapidapi_host,
+                    "Cache-Control": "no-cache",
+                    "Pragma": "no-cache"
+                }
+
+                for topic in topics:
+                    params = {"query": topic, "geo": "US"}
+                    tasks.append(client.get(url, headers=headers, params=params))
+
+                return await asyncio.gather(*tasks, return_exceptions=True)
+
+        responses = asyncio.run(fetch_all_autocomplete())
+
+        # Process responses
+        for i, (topic, resp) in enumerate(zip(topics, responses)):
+            if isinstance(resp, Exception):
+                logger.warning(f"Could not fetch autocomplete for '{topic}': {resp}")
+                keyword_data['suggestions'][topic] = []
+                continue
+
+            try:
+                if resp.status_code == 200:
+                    data = resp.json()
+                    suggestions = data.get('suggestions', [])
+                    keyword_data['suggestions'][topic] = suggestions
+                    logger.info(f"Got {len(suggestions)} suggestions for '{topic}'")
+                else:
+                    logger.warning(f"API returned {resp.status_code} for '{topic}'")
+                    keyword_data['suggestions'][topic] = []
+            except Exception as e:
+                logger.warning(f"Error processing autocomplete for '{topic}': {e}")
+                keyword_data['suggestions'][topic] = []
 
         total_keywords = sum(len(s) for s in keyword_data['suggestions'].values())
         logger.info(f"Keyword research complete: {total_keywords} keywords found for {len(topics)} topics")

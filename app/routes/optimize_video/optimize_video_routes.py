@@ -160,10 +160,23 @@ def get_my_videos():
         }
 
         logger.info(f"Fetching videos from RapidAPI for channel {channel_handle} (cache-busting enabled)")
-        response = requests.get(url, headers=headers, params=querystring, timeout=30)
-        response.raise_for_status()
 
-        data = response.json()
+        # PARALLEL API CALLS - Videos and Shorts at same time
+        import asyncio
+        import httpx
+
+        async def fetch_videos_and_shorts():
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                tasks = [
+                    client.get(url, headers=headers, params=querystring),
+                    client.get(f"https://{RAPIDAPI_HOST}/channel/shorts", headers=headers, params=querystring)
+                ]
+                return await asyncio.gather(*tasks, return_exceptions=True)
+
+        response, shorts_response = asyncio.run(fetch_videos_and_shorts())
+
+        # Process videos response
+        data = response.json() if not isinstance(response, Exception) else {}
 
         # Extract channel keywords from meta
         channel_keywords = []
@@ -202,12 +215,9 @@ def get_my_videos():
                         'is_short': False
                     })
 
-        # Fetch shorts separately
-        shorts_url = f"https://{RAPIDAPI_HOST}/channel/shorts"
+        # Process shorts response
         try:
-            shorts_response = requests.get(shorts_url, headers=headers, params=querystring, timeout=30)
-            shorts_response.raise_for_status()
-            shorts_data = shorts_response.json()
+            shorts_data = shorts_response.json() if not isinstance(shorts_response, Exception) else {}
 
             if 'data' in shorts_data:
                 for short in shorts_data['data']:

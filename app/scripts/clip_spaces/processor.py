@@ -453,7 +453,7 @@ class SpaceProcessor:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            max_tokens=4096
+            max_tokens=7000
         )
         
         return response['content'], {
@@ -488,7 +488,7 @@ class SpaceProcessor:
                 {"role": "system", "content": "You extract substantial business insights and detailed highlights from conversations. You map speaker IDs to real names when confident and focus on longer, valuable content."},
                 {"role": "user", "content": highlight_prompt}
             ],
-            max_tokens=4096
+            max_tokens=7000
         )
         
         highlights_tokens = {
@@ -507,7 +507,7 @@ class SpaceProcessor:
                 {"role": "system", "content": "You extract powerful, quotable moments from conversations. You focus on short, punchy statements that could be headlines or tweets. You map speaker IDs to real names when confident."},
                 {"role": "user", "content": quotes_prompt}
             ],
-            max_tokens=4096
+            max_tokens=7000
         )
         
         quotes_tokens = {

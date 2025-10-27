@@ -142,7 +142,7 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
                             {"role": "user", "content": prompt}
                         ],
                         temperature=0.7,
-                        max_tokens=4096  # Increased to 4096 to avoid Google Gemini MAX_TOKENS errors
+                        max_tokens=7000  # Increased to 20000 to avoid Google Gemini MAX_TOKENS errors
                     )
 
                     # Extract tags from response

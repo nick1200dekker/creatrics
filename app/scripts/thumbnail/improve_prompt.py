@@ -148,7 +148,7 @@ def improve_editing_prompt(prompt_text, image_base64=None, mime_type='image/jpeg
             response = ai_provider.create_vision_completion(
                 messages,
                 temperature=0.7,
-                max_tokens=200
+                max_tokens=7000
             )
         else:
             # Text-only completion
@@ -160,7 +160,7 @@ def improve_editing_prompt(prompt_text, image_base64=None, mime_type='image/jpeg
             response = ai_provider.create_completion(
                 messages=messages,
                 temperature=0.7,
-                max_tokens=200
+                max_tokens=7000
             )
         
         # Extract improved prompt from unified response

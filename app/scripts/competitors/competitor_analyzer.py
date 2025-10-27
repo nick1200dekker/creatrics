@@ -46,36 +46,39 @@ class CompetitorAnalyzer:
         try:
             days = int(timeframe)
             
-            # Fetch data for all channels
+            # PARALLEL API CALLS - Fetch data for all channels at once
             all_videos = []
             channels_info = []
-            
-            for channel in channel_data:
+
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+
+            def fetch_channel_videos(channel):
+                """Fetch videos for a single channel"""
                 channel_id = channel.get('channel_id')
                 channel_handle = channel.get('channel_handle', '')
                 channel_title = channel.get('title', '')
-                
+
                 # Use handle if available, otherwise use ID
                 identifier = channel_handle if channel_handle else channel_id
-                
+
                 logger.info(f"Fetching videos for {channel_title} ({identifier})")
-                
-                # Get videos - fetch multiple pages to get more videos
+
+                # Get first page of videos
                 videos_result = self.youtube_api.get_channel_videos(identifier)
                 if not videos_result:
                     logger.warning(f"Could not fetch videos for {identifier}")
-                    continue
-                
+                    return None
+
                 videos = videos_result.get('videos', [])
-                
-                # Try to fetch more videos with pagination
+
+                # Fetch more pages with pagination (up to 2 more pages)
                 continuation_token = videos_result.get('continuation_token')
                 fetch_count = 0
-                max_fetches = 2  # Fetch up to 2 more pages
-                
+                max_fetches = 2
+
                 while continuation_token and fetch_count < max_fetches:
                     more_videos_result = self.youtube_api.get_channel_videos(
-                        identifier, 
+                        identifier,
                         continuation_token=continuation_token
                     )
                     if more_videos_result:
@@ -84,13 +87,12 @@ class CompetitorAnalyzer:
                         fetch_count += 1
                     else:
                         break
-                
+
                 logger.info(f"Fetched {len(videos)} total videos for {channel_title}")
-                
+
                 # Filter by timeframe
                 filtered_videos = self.youtube_api.filter_videos_by_timeframe(videos, days)
-
-                logger.info(f"After filtering by {days} days: {len(filtered_videos)} videos")
+                logger.info(f"After filtering by {days} days: {len(filtered_videos)} videos for {channel_title}")
 
                 # Add channel info to each video
                 for video in filtered_videos:
@@ -98,15 +100,32 @@ class CompetitorAnalyzer:
                     video['channel_id'] = channel_id
                     video['channel_handle'] = channel_handle
 
-                all_videos.extend(filtered_videos)
-                
-                # Store channel info
-                channels_info.append({
-                    'channel_id': channel_id,
-                    'title': channel_title,
-                    'handle': channel_handle,
-                    'videos_in_timeframe': len(filtered_videos)
-                })
+                return {
+                    'videos': filtered_videos,
+                    'channel_info': {
+                        'channel_id': channel_id,
+                        'title': channel_title,
+                        'handle': channel_handle,
+                        'videos_in_timeframe': len(filtered_videos)
+                    }
+                }
+
+            # Fetch all channels in parallel (max 5 workers to avoid rate limits)
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                future_to_channel = {
+                    executor.submit(fetch_channel_videos, channel): channel
+                    for channel in channel_data
+                }
+
+                for future in as_completed(future_to_channel):
+                    try:
+                        result = future.result()
+                        if result:
+                            all_videos.extend(result['videos'])
+                            channels_info.append(result['channel_info'])
+                    except Exception as e:
+                        channel = future_to_channel[future]
+                        logger.error(f"Error fetching videos for {channel.get('title')}: {e}")
             
             if not all_videos:
                 return {
@@ -416,7 +435,7 @@ class CompetitorAnalyzer:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=1200
+                max_tokens=7000
             )
 
             insights_text = response.get('content', '') if isinstance(response, dict) else str(response)

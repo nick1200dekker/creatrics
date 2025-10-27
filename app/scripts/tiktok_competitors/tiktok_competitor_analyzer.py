@@ -46,31 +46,35 @@ class TikTokCompetitorAnalyzer:
         try:
             days = int(timeframe)
             
-            # Fetch data for all accounts
+            # PARALLEL API CALLS - Fetch data for all accounts in parallel
             all_videos = []
             accounts_info = []
-            
-            for account in account_data:
+
+            # Use ThreadPoolExecutor to fetch all accounts in parallel
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+
+            def fetch_account_videos(account):
+                """Fetch videos for a single account"""
                 sec_uid = account.get('sec_uid')
                 username = account.get('username', '')
                 nickname = account.get('nickname', '')
-                
+
                 logger.info(f"Fetching videos for {nickname} (@{username})")
-                
-                # Get videos - fetch multiple pages
+
+                # Get first page of videos
                 videos_result = self.tiktok_api.get_user_videos(sec_uid)
                 if not videos_result:
                     logger.warning(f"Could not fetch videos for {username}")
-                    continue
-                
+                    return None
+
                 videos = videos_result.get('videos', [])
-                
-                # Try to fetch more videos with pagination
+
+                # Fetch more pages with pagination (up to 2 more pages)
                 cursor = videos_result.get('cursor')
                 has_more = videos_result.get('hasMore', False)
                 fetch_count = 0
                 max_fetches = 2
-                
+
                 while cursor and has_more and fetch_count < max_fetches:
                     more_videos_result = self.tiktok_api.get_user_videos(sec_uid, cursor=cursor)
                     if more_videos_result:
@@ -80,28 +84,45 @@ class TikTokCompetitorAnalyzer:
                         fetch_count += 1
                     else:
                         break
-                
+
                 logger.info(f"Fetched {len(videos)} total videos for {nickname}")
-                
+
                 # Filter by timeframe
                 filtered_videos = self.tiktok_api.filter_videos_by_timeframe(videos, days)
-                logger.info(f"After filtering by {days} days: {len(filtered_videos)} videos")
-                
+                logger.info(f"After filtering by {days} days: {len(filtered_videos)} videos for {nickname}")
+
                 # Add account info to each video
                 for video in filtered_videos:
                     video['account_nickname'] = nickname
                     video['account_username'] = username
                     video['sec_uid'] = sec_uid
-                
-                all_videos.extend(filtered_videos)
-                
-                # Store account info
-                accounts_info.append({
-                    'sec_uid': sec_uid,
-                    'nickname': nickname,
-                    'username': username,
-                    'videos_in_timeframe': len(filtered_videos)
-                })
+
+                return {
+                    'videos': filtered_videos,
+                    'account_info': {
+                        'sec_uid': sec_uid,
+                        'nickname': nickname,
+                        'username': username,
+                        'videos_in_timeframe': len(filtered_videos)
+                    }
+                }
+
+            # Fetch all accounts in parallel (max 5 workers to avoid rate limits)
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                future_to_account = {
+                    executor.submit(fetch_account_videos, account): account
+                    for account in account_data
+                }
+
+                for future in as_completed(future_to_account):
+                    try:
+                        result = future.result()
+                        if result:
+                            all_videos.extend(result['videos'])
+                            accounts_info.append(result['account_info'])
+                    except Exception as e:
+                        account = future_to_account[future]
+                        logger.error(f"Error fetching videos for {account.get('nickname')}: {e}")
             
             if not all_videos:
                 return {
@@ -338,7 +359,7 @@ class TikTokCompetitorAnalyzer:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=1200
+                max_tokens=7000
             )
             
             insights_text = response.get('content', '') if isinstance(response, dict) else str(response)

@@ -142,7 +142,7 @@ class VideoTitleGenerator:
                             {"role": "user", "content": prompt}
                         ],
                         temperature=0.9,
-                        max_tokens=800
+                        max_tokens=7000
                     )
 
                     # Extract titles from response
