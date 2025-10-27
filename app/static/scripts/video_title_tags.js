@@ -172,98 +172,27 @@ function formatFileSize(bytes) {
 }
 
 /**
- * Upload video to server
+ * Store video file reference for later upload to YouTube
  */
 async function uploadVideoToServer(file) {
     const progressContainer = document.getElementById('videoUploadProgressContainer');
-    const progressBar = document.getElementById('videoUploadProgressBar');
-    const progressPercent = document.getElementById('videoUploadPercent');
-    const progressStatus = document.getElementById('videoUploadStatus');
-    const removeBtn = document.getElementById('removeVideoBtn');
-
-    // Show progress bar
-    if (progressContainer) {
-        progressContainer.style.display = 'block';
-    }
-
-    // Disable remove button during upload
-    if (removeBtn) {
-        removeBtn.disabled = true;
-        removeBtn.style.opacity = '0.5';
-    }
 
     try {
-        // Get Firebase user ID for storage path
-        const user = firebase.auth().currentUser;
-        if (!user) {
-            throw new Error('Not authenticated');
+        // Just store the file reference - no upload yet
+        // Upload will happen directly to YouTube when user clicks "Upload to YouTube"
+        uploadedVideoPath = null; // No intermediate storage needed
+        selectedVideoFile = file; // Keep file reference for direct YouTube upload
+
+        // Hide progress bar - we don't need it for file selection
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
         }
 
-        // Generate unique filename with timestamp
-        const timestamp = Date.now();
-        const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const storagePath = `temp_videos/${user.uid}/${timestamp}_${safeFileName}`;
-
-        // Get Firebase Storage reference
-        const storageRef = firebase.storage().ref();
-        const videoRef = storageRef.child(storagePath);
-
-        // Create upload task
-        const uploadTask = videoRef.put(file);
-
-        // Monitor upload progress and wait for completion
-        await new Promise((resolve, reject) => {
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    // Progress updates
-                    const percentComplete = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-
-                    if (progressBar) {
-                        progressBar.style.width = `${percentComplete}%`;
-                    }
-                    if (progressPercent) {
-                        progressPercent.textContent = `${percentComplete}%`;
-                    }
-                    if (progressStatus) {
-                        progressStatus.textContent = 'Uploading to cloud storage...';
-                    }
-                },
-                (error) => {
-                    // Handle errors
-                    console.error('Firebase upload error:', error);
-                    reject(error);
-                },
-                () => {
-                    // Upload complete
-                    resolve();
-                }
-            );
-        });
-
-        // Store the Firebase storage path
-        uploadedVideoPath = storagePath;
-        selectedVideoFile = file; // Keep file reference
-
-        // Update UI to show success
-        if (progressStatus) {
-            progressStatus.textContent = 'Upload complete!';
-            progressStatus.style.color = '#10B981';
-        }
-        if (progressBar) {
-            progressBar.style.background = 'linear-gradient(90deg, #10B981 0%, #059669 100%)';
-        }
-
-        // Re-enable remove button
-        if (removeBtn) {
-            removeBtn.disabled = false;
-            removeBtn.style.opacity = '1';
-        }
-
-        showToast('Video uploaded successfully!', 'success');
+        showToast('Video selected! Generate titles/tags and click "Upload to YouTube"', 'success');
 
     } catch (error) {
-        console.error('Error uploading video:', error);
-        showToast('Failed to upload video: ' + error.message, 'error');
+        console.error('Error selecting video:', error);
+        showToast('Failed to select video: ' + error.message, 'error');
 
         // Hide progress and reset
         if (progressContainer) {
@@ -1335,8 +1264,8 @@ function handleStatusChange() {
  * Upload video to YouTube
  */
 async function uploadToYouTube() {
-    if (!uploadedVideoPath) {
-        showToast('Please upload a video file first', 'error');
+    if (!selectedVideoFile) {
+        showToast('Please select a video file first', 'error');
         return;
     }
 
@@ -1378,46 +1307,99 @@ async function uploadToYouTube() {
         uploadBtn.innerHTML = '<i class="ph ph-spinner"></i> Uploading...';
 
         // Update progress modal
-        updateUploadProgress('Uploading video to YouTube...', 'uploading');
+        updateUploadProgress('Preparing upload...', 'uploading');
 
-        // Send video path (already on server) to YouTube upload endpoint
-        const requestBody = {
-            video_path: uploadedVideoPath,
-            title: title,
-            description: description,
-            tags: tags,
-            privacy_status: privacyStatus === 'scheduled' ? 'private' : privacyStatus, // Scheduled videos are private until publish time
-            language: language
-        };
-
-        // Include thumbnail path if available
-        if (uploadedThumbnailPath) {
-            requestBody.thumbnail_path = uploadedThumbnailPath;
-        }
-
-        // Include scheduled time if available
-        if (scheduledTime) {
-            requestBody.scheduled_time = scheduledTime;
-        }
-
-        // Include target keyword if provided (for Optimize Video later)
+        // Get target keyword if provided
         const keywordInput = document.getElementById('keywordInput');
-        if (keywordInput && keywordInput.value.trim()) {
-            requestBody.target_keyword = keywordInput.value.trim();
-        }
+        const targetKeyword = keywordInput && keywordInput.value.trim() ? keywordInput.value.trim() : '';
 
-        const response = await fetch('/api/upload-youtube-video', {
+        // Step 1: Get YouTube upload URL from backend
+        const initResponse = await fetch('/api/init-youtube-upload', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                title: title,
+                description: description,
+                tags: tags,
+                privacy_status: privacyStatus === 'scheduled' ? 'private' : privacyStatus,
+                language: language,
+                scheduled_time: scheduledTime,
+                target_keyword: targetKeyword,
+                file_size: selectedVideoFile.size,
+                mime_type: selectedVideoFile.type
+            })
         });
 
-        const data = await response.json();
+        const initData = await initResponse.json();
 
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to upload video');
+        if (!initData.success) {
+            throw new Error(initData.error || 'Failed to initialize upload');
+        }
+
+        // Step 2: Upload video directly to YouTube with progress tracking
+        updateUploadProgress('Uploading video to YouTube...', 'uploading');
+
+        const uploadXHR = new XMLHttpRequest();
+
+        // Track upload progress
+        uploadXHR.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                updateUploadProgress(`Uploading to YouTube... ${percentComplete}%`, 'uploading');
+            }
+        });
+
+        // Upload the file
+        const uploadResult = await new Promise((resolve, reject) => {
+            uploadXHR.onload = () => {
+                if (uploadXHR.status >= 200 && uploadXHR.status < 300) {
+                    try {
+                        const response = JSON.parse(uploadXHR.responseText);
+                        resolve(response);
+                    } catch (e) {
+                        reject(new Error('Invalid response from YouTube'));
+                    }
+                } else {
+                    reject(new Error('Upload failed'));
+                }
+            };
+            uploadXHR.onerror = () => reject(new Error('Network error'));
+
+            uploadXHR.open('PUT', initData.upload_url);
+            uploadXHR.setRequestHeader('Content-Type', selectedVideoFile.type);
+            uploadXHR.send(selectedVideoFile);
+        });
+
+        // Extract video ID from YouTube response
+        const videoId = uploadResult.id;
+
+        if (!videoId) {
+            throw new Error('Failed to get video ID from YouTube');
+        }
+
+        // Step 3: Finalize upload (save metadata, handle thumbnail)
+        updateUploadProgress('Finalizing upload...', 'processing');
+
+        const finalizeData = {
+            video_id: videoId,
+            thumbnail_path: uploadedThumbnailPath,
+            target_keyword: targetKeyword
+        };
+
+        const finalizeResponse = await fetch('/api/finalize-youtube-upload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(finalizeData)
+        });
+
+        const finalData = await finalizeResponse.json();
+
+        if (!finalData.success) {
+            throw new Error(finalData.error || 'Failed to finalize upload');
         }
 
         // Update progress to processing
@@ -1428,6 +1410,8 @@ async function uploadToYouTube() {
 
         // Hide progress modal
         hideUploadProgressModal();
+
+        const data = { success: true, video_id: videoId };
 
         showToast('Video uploaded successfully to YouTube!', 'success');
 

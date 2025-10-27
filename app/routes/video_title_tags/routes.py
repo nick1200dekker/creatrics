@@ -452,125 +452,21 @@ def generate_video_description():
 @auth_required
 @require_permission('video_title')
 def upload_video_temp():
-    """Temporarily upload video to server"""
-    try:
-        user_id = get_workspace_user_id()
-
-        # Check if file is uploaded
-        if 'video' not in request.files:
-            return jsonify({
-                'success': False,
-                'error': 'No video file provided'
-            }), 400
-
-        video_file = request.files['video']
-        if video_file.filename == '':
-            return jsonify({
-                'success': False,
-                'error': 'No video file selected'
-            }), 400
-
-        # Validate file type
-        if not video_file.content_type.startswith('video/'):
-            return jsonify({
-                'success': False,
-                'error': 'Invalid file type. Please upload a video file.'
-            }), 400
-
-        # Save to temporary location
-        import tempfile
-        import os
-        from werkzeug.utils import secure_filename
-
-        # Create temp directory if it doesn't exist
-        temp_dir = os.path.join(tempfile.gettempdir(), 'video_uploads', user_id)
-        os.makedirs(temp_dir, exist_ok=True)
-
-        # Generate filename
-        filename = secure_filename(video_file.filename)
-        file_path = os.path.join(temp_dir, filename)
-
-        # Save the file
-        video_file.save(file_path)
-
-        logger.info(f"Temporarily uploaded video for user {user_id}: {filename} ({os.path.getsize(file_path)} bytes)")
-
-        return jsonify({
-            'success': True,
-            'video_path': file_path,
-            'filename': filename,
-            'message': 'Video uploaded successfully'
-        })
-
-    except Exception as e:
-        logger.error(f"Error uploading video temp: {e}")
-        return jsonify({
-            'success': False,
-            'error': f'Failed to upload video: {str(e)}'
-        }), 500
+    """Legacy endpoint - no longer needed. Videos upload directly to YouTube from browser."""
+    return jsonify({
+        'success': False,
+        'error': 'This endpoint is deprecated. Videos now upload directly to YouTube.'
+    }), 410
 
 @bp.route('/api/delete-temp-video', methods=['POST'])
 @auth_required
 @require_permission('video_title')
 def delete_temp_video():
-    """Delete temporarily uploaded video from Firebase Storage or server"""
-    try:
-        data = request.get_json()
-        video_path = data.get('video_path', '').strip()
-
-        if not video_path:
-            return jsonify({
-                'success': False,
-                'error': 'No video path provided'
-            }), 400
-
-        # Check if it's a Firebase Storage path
-        if video_path.startswith('temp_videos/'):
-            # Delete from Firebase Storage
-            from app.system.services.firebase_service import storage_bucket
-            try:
-                blob = storage_bucket.blob(video_path)
-                blob.delete()
-                logger.info(f"Deleted video from Firebase Storage: {video_path}")
-
-                return jsonify({
-                    'success': True,
-                    'message': 'Video deleted successfully from cloud storage'
-                })
-            except Exception as e:
-                logger.error(f"Error deleting from Firebase Storage: {e}")
-                return jsonify({
-                    'success': False,
-                    'error': f'Failed to delete video from cloud storage: {str(e)}'
-                }), 500
-        else:
-            # Legacy: Delete from local temp directory
-            import os
-            import tempfile
-            temp_base = os.path.join(tempfile.gettempdir(), 'video_uploads')
-            if not video_path.startswith(temp_base):
-                logger.warning(f"Attempted to delete file outside temp directory: {video_path}")
-                return jsonify({
-                    'success': False,
-                    'error': 'Invalid video path'
-                }), 400
-
-            # Delete the file if it exists
-            if os.path.exists(video_path):
-                os.unlink(video_path)
-                logger.info(f"Deleted temporary video: {video_path}")
-
-            return jsonify({
-                'success': True,
-                'message': 'Video deleted successfully'
-            })
-
-    except Exception as e:
-        logger.error(f"Error deleting temp video: {e}")
-        return jsonify({
-            'success': False,
-            'error': f'Failed to delete video: {str(e)}'
-        }), 500
+    """No-op endpoint - videos are no longer uploaded to temp storage, they're held in browser memory"""
+    return jsonify({
+        'success': True,
+        'message': 'No cleanup needed - video is only in browser memory'
+    })
 
 @bp.route('/api/upload-thumbnail-temp', methods=['POST'])
 @auth_required
@@ -656,65 +552,23 @@ def check_youtube_connection():
         logger.error(f"Error checking YouTube connection: {e}")
         return jsonify({'connected': False})
 
-@bp.route('/api/upload-youtube-video', methods=['POST'])
+@bp.route('/api/init-youtube-upload', methods=['POST'])
 @auth_required
 @require_permission('video_title')
-def upload_youtube_video():
-    """Upload a video to YouTube with title, description, and tags"""
+def init_youtube_upload():
+    """Initialize YouTube resumable upload and return upload URL"""
     try:
         user_id = get_workspace_user_id()
-
-        # Get metadata from request (now JSON instead of form)
         data = request.get_json()
 
-        video_path = data.get('video_path', '').strip()
         title = data.get('title', '').strip()
         description = data.get('description', '').strip()
         tags = data.get('tags', [])
         privacy_status = data.get('privacy_status', 'private')
-        language = data.get('language', 'en')  # Default to English
-        thumbnail_path = data.get('thumbnail_path')  # Optional server path to thumbnail
-        scheduled_time = data.get('scheduled_time')  # Optional scheduled publish time (ISO 8601 format)
-        target_keyword = data.get('target_keyword', '').strip()  # Store for Optimize Video later
-
-        # Check if video path is provided
-        if not video_path:
-            return jsonify({
-                'success': False,
-                'error': 'No video file provided'
-            }), 400
-
-        # Download video from Firebase Storage to temp file
-        import os
-        import tempfile
-        from app.system.services.firebase_service import storage_bucket
-
-        # Create temp directory
-        temp_dir = tempfile.mkdtemp()
-
-        try:
-            # Check if video_path is Firebase Storage path or local path
-            if video_path.startswith('temp_videos/'):
-                # Firebase Storage path - download it
-                blob = storage_bucket.blob(video_path)
-
-                # Extract filename from path
-                filename = os.path.basename(video_path)
-                local_video_path = os.path.join(temp_dir, filename)
-
-                # Download to local temp file
-                logger.info(f"Downloading video from Firebase Storage: {video_path}")
-                blob.download_to_filename(local_video_path)
-                logger.info(f"Downloaded video to: {local_video_path} ({os.path.getsize(local_video_path)} bytes)")
-
-                video_path = local_video_path
-            else:
-                # Local path - verify it exists
-                if not os.path.exists(video_path):
-                    return jsonify({
-                        'success': False,
-                        'error': 'Video file not found. Please upload the video again.'
-                    }), 400
+        language = data.get('language', 'en')
+        scheduled_time = data.get('scheduled_time')
+        file_size = data.get('file_size', 0)
+        mime_type = data.get('mime_type', 'video/*')
 
         if not title:
             return jsonify({
@@ -735,40 +589,17 @@ def upload_youtube_video():
         # Build YouTube Data API client
         from googleapiclient.discovery import build
         from googleapiclient.http import MediaFileUpload
+        import json
 
         youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
 
-        # Rename video file for SEO (use title as filename)
-        import re
-        # Create safe filename from title
-        safe_title = re.sub(r'[^\w\s-]', '', title)  # Remove special chars
-        safe_title = re.sub(r'[-\s]+', '-', safe_title)  # Replace spaces/dashes with single dash
-        safe_title = safe_title.strip('-')[:100]  # Limit length and trim dashes
-
-        # Get original file extension
-        original_ext = os.path.splitext(video_path)[1]
-
-        # Create new path with SEO-friendly filename
-        video_dir = os.path.dirname(video_path)
-        seo_video_path = os.path.join(video_dir, f"{safe_title}{original_ext}")
-
-        # Rename the file
-        try:
-            os.rename(video_path, seo_video_path)
-            video_path = seo_video_path
-            logger.info(f"Renamed video file for SEO: {safe_title}{original_ext}")
-        except Exception as e:
-            logger.warning(f"Could not rename video file: {e}, using original path")
-
-        # Upload video to YouTube
-        logger.info(f"Uploading video to YouTube for user {user_id}: {title}")
-
+        # Prepare video metadata
         request_body = {
             'snippet': {
                 'title': title,
                 'description': description,
-                'tags': tags[:500] if len(tags) > 500 else tags,  # YouTube allows max 500 tags
-                'categoryId': '22',  # People & Blogs category
+                'tags': tags[:500] if len(tags) > 500 else tags,
+                'categoryId': '22',
                 'defaultLanguage': language,
                 'defaultAudioLanguage': language
             },
@@ -781,7 +612,6 @@ def upload_youtube_video():
         # Add scheduled publish time if provided
         if scheduled_time:
             from datetime import datetime
-            # Convert HTML datetime-local format to YouTube API format (ISO 8601)
             try:
                 dt = datetime.fromisoformat(scheduled_time)
                 request_body['status']['publishAt'] = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
@@ -789,109 +619,134 @@ def upload_youtube_video():
             except Exception as e:
                 logger.warning(f"Could not parse scheduled time: {e}")
 
-        media_file = MediaFileUpload(video_path, resumable=True)
+        # Initialize resumable upload
+        import requests
 
-        upload_request = youtube.videos().insert(
-            part='snippet,status',
-            body=request_body,
-            media_body=media_file
+        # Get access token
+        access_token = yt_analytics.credentials.token
+
+        # Create resumable upload session
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json; charset=UTF-8',
+            'X-Upload-Content-Length': str(file_size),
+            'X-Upload-Content-Type': mime_type
+        }
+
+        init_url = 'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status'
+
+        init_response = requests.post(
+            init_url,
+            headers=headers,
+            json=request_body
         )
 
-        response = None
-        while response is None:
-            status, response = upload_request.next_chunk()
-            if status:
-                logger.info(f"Upload progress: {int(status.progress() * 100)}%")
+        if init_response.status_code not in [200, 201]:
+            logger.error(f"Failed to initialize upload: {init_response.text}")
+            return jsonify({
+                'success': False,
+                'error': 'Failed to initialize YouTube upload'
+            }), 500
 
-        video_id = response['id']
-        logger.info(f"Video uploaded successfully: {video_id}")
+        # Get upload URL from Location header
+        upload_url = init_response.headers.get('Location')
+
+        if not upload_url:
+            logger.error("No upload URL in response")
+            return jsonify({
+                'success': False,
+                'error': 'Failed to get upload URL'
+            }), 500
+
+        # Extract video ID from upload URL (we'll get it after upload completes)
+        # For now, we'll return the upload URL and handle video ID in finalize
+
+        logger.info(f"Initialized resumable upload for user {user_id}")
+
+        return jsonify({
+            'success': True,
+            'upload_url': upload_url,
+            'message': 'Upload initialized successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error initializing YouTube upload: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to initialize upload: {str(e)}'
+        }), 500
+
+@bp.route('/api/finalize-youtube-upload', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def finalize_youtube_upload():
+    """Finalize YouTube upload (handle thumbnail, store metadata)"""
+    try:
+        user_id = get_workspace_user_id()
+        data = request.get_json()
+
+        video_id = data.get('video_id', '').strip()
+        thumbnail_path = data.get('thumbnail_path')
+        target_keyword = data.get('target_keyword', '').strip()
+
+        if not video_id:
+            return jsonify({
+                'success': False,
+                'error': 'Video ID is required'
+            }), 400
+
+        # Get YouTube credentials
+        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+        yt_analytics = YouTubeAnalytics(user_id)
+
+        if not yt_analytics.credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No YouTube account connected'
+            }), 400
+
+        from googleapiclient.discovery import build
+        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
 
         # Upload thumbnail if provided
-        if thumbnail_path and os.path.exists(thumbnail_path):
-            try:
-                # Rename thumbnail file for SEO (use title as filename)
-                thumbnail_ext = os.path.splitext(thumbnail_path)[1]
-                thumbnail_dir = os.path.dirname(thumbnail_path)
-                seo_thumbnail_path = os.path.join(thumbnail_dir, f"{safe_title}-thumbnail{thumbnail_ext}")
-
+        if thumbnail_path:
+            import os
+            if os.path.exists(thumbnail_path):
                 try:
-                    os.rename(thumbnail_path, seo_thumbnail_path)
-                    thumbnail_path = seo_thumbnail_path
-                    logger.info(f"Renamed thumbnail file for SEO: {safe_title}-thumbnail{thumbnail_ext}")
+                    import mimetypes
+                    mimetype, _ = mimetypes.guess_type(thumbnail_path)
+                    if not mimetype:
+                        mimetype = 'image/jpeg'
+
+                    from googleapiclient.http import MediaFileUpload
+                    thumbnail_media = MediaFileUpload(thumbnail_path, mimetype=mimetype, resumable=True)
+
+                    youtube.thumbnails().set(
+                        videoId=video_id,
+                        media_body=thumbnail_media
+                    ).execute()
+
+                    logger.info(f"Thumbnail uploaded successfully for video {video_id}")
                 except Exception as e:
-                    logger.warning(f"Could not rename thumbnail file: {e}, using original path")
+                    logger.error(f"Error uploading thumbnail: {e}")
+                finally:
+                    # Clean up thumbnail file
+                    try:
+                        os.unlink(thumbnail_path)
+                    except Exception as e:
+                        logger.error(f"Error deleting thumbnail file: {e}")
 
-                # Detect mimetype from file extension
-                import mimetypes
-                mimetype, _ = mimetypes.guess_type(thumbnail_path)
-                if not mimetype:
-                    mimetype = 'image/jpeg'  # Default
-
-                # Upload thumbnail to YouTube
-                from googleapiclient.http import MediaFileUpload as MediaUpload
-                thumbnail_media = MediaUpload(thumbnail_path, mimetype=mimetype, resumable=True)
-
-                youtube.thumbnails().set(
-                    videoId=video_id,
-                    media_body=thumbnail_media
-                ).execute()
-
-                logger.info(f"Thumbnail uploaded successfully for video {video_id}")
-            except Exception as e:
-                logger.error(f"Error uploading thumbnail: {e}")
-            finally:
-                # Clean up thumbnail file
-                try:
-                    os.unlink(thumbnail_path)
-                except Exception as e:
-                    logger.error(f"Error deleting thumbnail file: {e}")
-
-        # Clean up temporary video file and Firebase Storage
+        # Store video metadata in Firestore
         try:
-            os.unlink(video_path)
-            logger.info(f"Cleaned up temporary video file: {video_path}")
-
-            # Delete from Firebase Storage if it was a Firebase upload
-            if data.get('video_path', '').startswith('temp_videos/'):
-                try:
-                    firebase_path = data.get('video_path', '')
-                    blob = storage_bucket.blob(firebase_path)
-                    blob.delete()
-                    logger.info(f"Deleted video from Firebase Storage: {firebase_path}")
-                except Exception as e:
-                    logger.warning(f"Error deleting video from Firebase Storage: {e}")
-
-            # Clean up temp directory
-            import shutil
-            shutil.rmtree(temp_dir, ignore_errors=True)
-
-        except Exception as e:
-            logger.error(f"Error deleting video file: {e}")
-
-        # Store video metadata in Firestore for Optimize Video later
-        try:
-            # Get thumbnail URL from YouTube response
             thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
-            if 'snippet' in response and 'thumbnails' in response['snippet']:
-                thumbnails = response['snippet']['thumbnails']
-                # Try to get highest quality thumbnail
-                if 'maxres' in thumbnails:
-                    thumbnail_url = thumbnails['maxres']['url']
-                elif 'high' in thumbnails:
-                    thumbnail_url = thumbnails['high']['url']
-                elif 'medium' in thumbnails:
-                    thumbnail_url = thumbnails['medium']['url']
 
-            # Store in Firestore
             video_metadata = {
                 'video_id': video_id,
-                'title': title,
                 'thumbnail_url': thumbnail_url,
                 'uploaded_at': datetime.now(timezone.utc),
                 'uploaded_via': 'upload_studio'
             }
 
-            # Only add target_keyword if provided
             if target_keyword:
                 video_metadata['target_keyword'] = target_keyword
 
@@ -900,52 +755,25 @@ def upload_youtube_video():
 
         except Exception as e:
             logger.error(f"Error storing video metadata in Firestore: {e}")
-            # Don't fail the upload if Firestore storage fails
 
         return jsonify({
             'success': True,
-            'video_id': video_id,
-            'message': 'Video uploaded successfully to YouTube'
+            'message': 'Upload finalized successfully'
         })
 
     except Exception as e:
-        logger.error(f"Error uploading video to YouTube: {e}")
-
-        # Clean up files on error
-        try:
-            # Clean up temp video file if it exists
-            if 'video_path' in locals() and os.path.exists(video_path):
-                os.unlink(video_path)
-                logger.info(f"Cleaned up temporary video file after error: {video_path}")
-
-            # Clean up Firebase Storage if it was uploaded there
-            if 'data' in locals() and data.get('video_path', '').startswith('temp_videos/'):
-                try:
-                    firebase_path = data.get('video_path', '')
-                    blob = storage_bucket.blob(firebase_path)
-                    blob.delete()
-                    logger.info(f"Deleted video from Firebase Storage after error: {firebase_path}")
-                except Exception as cleanup_error:
-                    logger.warning(f"Error deleting video from Firebase Storage: {cleanup_error}")
-
-            # Clean up temp directory if it exists
-            if 'temp_dir' in locals():
-                import shutil
-                shutil.rmtree(temp_dir, ignore_errors=True)
-
-        except Exception as cleanup_error:
-            logger.error(f"Error during cleanup: {cleanup_error}")
-
-        # Check for YouTube quota exceeded error
-        error_str = str(e)
-        if 'quotaExceeded' in error_str or 'exceeded your quota' in error_str:
-            return jsonify({
-                'success': False,
-                'error': 'YouTube API quota exceeded. Please try again tomorrow.',
-                'error_type': 'quota_exceeded'
-            }), 429
-
+        logger.error(f"Error finalizing YouTube upload: {e}")
         return jsonify({
             'success': False,
-            'error': f'Failed to upload video: {str(e)}'
+            'error': f'Failed to finalize upload: {str(e)}'
         }), 500
+
+@bp.route('/api/upload-youtube-video', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def upload_youtube_video():
+    """Legacy endpoint - kept for backward compatibility. Use init-youtube-upload + finalize-youtube-upload instead."""
+    return jsonify({
+        'success': False,
+        'error': 'This endpoint is deprecated. Please use the new direct upload flow.'
+    }), 410
