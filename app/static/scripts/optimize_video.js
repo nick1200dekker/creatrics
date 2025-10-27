@@ -1264,7 +1264,13 @@ async function applyCaptions() {
             applyButton.disabled = false;
         }
 
-        showToast(`❌ ${error.message}`);
+        // Check for quota exceeded error
+        const errorMessage = error.message || '';
+        if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
+            showQuotaExceededModal();
+        } else {
+            showToast(`❌ ${error.message}`);
+        }
     }
 }
 
@@ -1337,7 +1343,13 @@ async function applyPinnedComment() {
             applyButton.disabled = false;
         }
 
-        showToast(`❌ ${error.message}`);
+        // Check for quota exceeded error
+        const errorMessage = error.message || '';
+        if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
+            showQuotaExceededModal();
+        } else {
+            showToast(`❌ ${error.message}`);
+        }
     }
 }
 
@@ -1938,6 +1950,56 @@ function showConfirmModal(title, message, onConfirm) {
 }
 
 /**
+ * Show quota exceeded modal with clean "Try Tomorrow" message
+ */
+function showQuotaExceededModal() {
+    // Remove existing modal if any
+    const existingModal = document.querySelector('.confirm-modal-overlay');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'confirm-modal-overlay';
+    modal.innerHTML = `
+        <div class="confirm-modal quota-exceeded-modal">
+            <div class="confirm-modal-header quota-header">
+                <i class="ph ph-clock"></i>
+                <h3 class="confirm-modal-title">YouTube API Quota Exceeded</h3>
+            </div>
+            <div class="confirm-modal-content">
+                <p class="quota-message">Daily YouTube API quota limit hit.</p>
+                <p class="quota-submessage">We've requested more quota from YouTube. Resets at <strong>midnight Pacific Time</strong>.</p>
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-modal-btn confirm-modal-btn-confirm quota-btn">Got It, Try Tomorrow</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Show with animation
+    setTimeout(() => modal.classList.add('show'), 10);
+
+    // Handle OK button
+    const okBtn = modal.querySelector('.confirm-modal-btn-confirm');
+    okBtn.addEventListener('click', () => {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    });
+
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        }
+    });
+}
+
+/**
  * Apply title to YouTube
  */
 async function applyTitle(button, title) {
@@ -1977,7 +2039,15 @@ async function applyTitle(button, title) {
 
         } catch (error) {
             console.error('Error applying title:', error);
-            showToast('❌ Failed to apply title: ' + error.message);
+
+            // Check for quota exceeded error
+            const errorMessage = error.message || '';
+            if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
+                showQuotaExceededModal();
+            } else {
+                showToast('❌ Failed to apply title: ' + error.message);
+            }
+
             icon.className = originalIconClass;
             button.disabled = false;
         }
@@ -2036,9 +2106,8 @@ async function applyDescription(button) {
 
             // Check for specific error types
             let errorMessage = error.message;
-            if (errorMessage.includes('quota') || errorMessage.includes('Quota')) {
-                showErrorModal('YouTube API Quota Exceeded',
-                    'You have exceeded your daily YouTube API quota. The quota resets at midnight Pacific Time. Please try again tomorrow or consider upgrading your plan for higher limits.');
+            if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
+                showQuotaExceededModal();
             } else if (errorMessage.includes('403') || errorMessage.includes('not own') || errorMessage.includes('permission')) {
                 showErrorModal('Video Access Denied',
                     'You do not have permission to edit this video. Make sure you are the owner of this video and your YouTube account is properly connected.');
@@ -2100,7 +2169,15 @@ async function applyTags(button) {
 
         } catch (error) {
             console.error('Error applying tags:', error);
-            showToast('❌ Failed to apply tags: ' + error.message);
+
+            // Check for quota exceeded error
+            const errorMessage = error.message || '';
+            if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
+                showQuotaExceededModal();
+            } else {
+                showToast('❌ Failed to apply tags: ' + error.message);
+            }
+
             icon.className = originalIconClass;
             button.disabled = false;
         }

@@ -1830,3 +1830,122 @@ html.dark .upload-spinner-icon {
         max-width: 90%;
     }
 }
+
+/* Quota Exceeded Modal Styling */
+.quota-exceeded-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.quota-exceeded-modal-overlay.show {
+    opacity: 1;
+}
+
+.quota-exceeded-modal {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 560px;
+    width: 90%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: scale(0.95);
+    transition: transform 0.2s ease;
+}
+
+.quota-exceeded-modal-overlay.show .quota-exceeded-modal {
+    transform: scale(1);
+}
+
+html.dark .quota-exceeded-modal {
+    background: rgba(39, 39, 42, 0.95);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+.quota-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.quota-modal-header i {
+    color: #3B82F6;
+    font-size: 2rem;
+}
+
+html.dark .quota-modal-header i {
+    color: #60A5FA;
+}
+
+.quota-modal-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.quota-modal-content {
+    padding: 0.5rem 0;
+}
+
+.quota-message {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+}
+
+.quota-submessage {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin: 0;
+}
+
+.quota-submessage strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.quota-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.75rem;
+}
+
+.quota-modal-btn {
+    padding: 0.625rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.quota-modal-btn:hover {
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
+}
+
+.quota-modal-btn:active {
+    transform: translateY(0);
+}

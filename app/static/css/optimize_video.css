@@ -1757,6 +1757,61 @@ html.dark .confirm-modal-btn-cancel {
     transform: translateY(0);
 }
 
+/* Quota Exceeded Modal Styling */
+.quota-exceeded-modal {
+    max-width: 480px !important;
+}
+
+.quota-exceeded-modal .confirm-modal-header i {
+    color: #3B82F6 !important;
+    font-size: 2rem !important;
+}
+
+html.dark .quota-exceeded-modal .confirm-modal-header i {
+    color: #60A5FA !important;
+}
+
+.quota-exceeded-modal .confirm-modal-content {
+    margin-bottom: 0 !important;
+    padding: 0.5rem 0;
+    max-height: none !important;
+}
+
+.quota-exceeded-modal .quota-message {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+}
+
+.quota-exceeded-modal .quota-submessage {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin: 0;
+}
+
+.quota-exceeded-modal .quota-submessage strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.quota-exceeded-modal .confirm-modal-actions {
+    margin-top: 1.75rem !important;
+}
+
+.quota-exceeded-modal .quota-btn {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
+    padding: 0.625rem 1.5rem !important;
+}
+
+.quota-exceeded-modal .quota-btn:hover {
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+}
+
 /* Insufficient Credits Card */
 .insufficient-credits-card {
     text-align: center;

@@ -1454,10 +1454,59 @@ async function uploadToYouTube() {
     } catch (error) {
         console.error('Error uploading video:', error);
         hideUploadProgressModal();
-        showToast('Failed to upload video: ' + error.message, 'error');
+
+        // Check for quota exceeded error
+        const errorMessage = error.message || '';
+        if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
+            showQuotaExceededModal();
+        } else {
+            showToast('Failed to upload video: ' + error.message, 'error');
+        }
+
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = originalContent;
     }
+}
+
+/**
+ * Show quota exceeded modal with clean "Try Tomorrow" message
+ */
+function showQuotaExceededModal() {
+    // Remove existing modals if any
+    const existingModals = document.querySelectorAll('.upload-progress-modal, .quota-exceeded-modal-overlay');
+    existingModals.forEach(modal => modal.remove());
+
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'quota-exceeded-modal-overlay';
+    modal.innerHTML = `
+        <div class="quota-exceeded-modal">
+            <div class="quota-modal-header">
+                <i class="ph ph-clock"></i>
+                <h3>YouTube API Quota Exceeded</h3>
+            </div>
+            <div class="quota-modal-content">
+                <p class="quota-message">Daily YouTube API quota limit hit.</p>
+                <p class="quota-submessage">We've requested more quota from YouTube. Resets at <strong>midnight Pacific Time</strong>.</p>
+            </div>
+            <div class="quota-modal-actions">
+                <button class="quota-modal-btn" onclick="this.closest('.quota-exceeded-modal-overlay').remove()">Got It, Try Tomorrow</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Show with animation
+    setTimeout(() => modal.classList.add('show'), 10);
+
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        }
+    });
 }
 
 /**

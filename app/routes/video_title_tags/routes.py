@@ -643,6 +643,16 @@ def init_youtube_upload():
 
         if init_response.status_code not in [200, 201]:
             logger.error(f"Failed to initialize upload: {init_response.text}")
+
+            # Check for quota exceeded error
+            response_text = init_response.text.lower()
+            if 'quota' in response_text or init_response.status_code == 403:
+                return jsonify({
+                    'success': False,
+                    'error': 'YouTube API quota exceeded. Please try again tomorrow.',
+                    'error_type': 'quota_exceeded'
+                }), 403
+
             return jsonify({
                 'success': False,
                 'error': 'Failed to initialize YouTube upload'
@@ -728,7 +738,16 @@ def finalize_youtube_upload():
 
                     logger.info(f"Thumbnail uploaded successfully for video {video_id}")
                 except Exception as e:
+                    error_str = str(e).lower()
                     logger.error(f"Error uploading thumbnail: {e}")
+
+                    # Check for quota exceeded error
+                    if 'quota' in error_str or 'quotaexceeded' in error_str:
+                        return jsonify({
+                            'success': False,
+                            'error': 'YouTube API quota exceeded. Please try again tomorrow.',
+                            'error_type': 'quota_exceeded'
+                        }), 403
                 finally:
                     # Clean up thumbnail file
                     try:

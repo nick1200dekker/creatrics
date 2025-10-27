@@ -209,8 +209,15 @@ def youtube_callback():
         
         # Get YouTube channel info
         youtube = build('youtube', 'v3', credentials=credentials)
-        channels_response = youtube.channels().list(part='snippet', mine=True).execute()
-        
+        try:
+            channels_response = youtube.channels().list(part='snippet', mine=True).execute()
+        except Exception as channel_error:
+            error_str = str(channel_error).lower()
+            if 'quota' in error_str or 'quotaexceeded' in error_str:
+                flash("Daily YouTube API quota limit hit. We've requested more quota from YouTube. Resets at midnight Pacific Time.", "error")
+                return redirect(url_for('accounts.index'))
+            raise  # Re-raise other errors to be caught by outer try-except
+
         if not channels_response.get('items'):
             flash("No YouTube channel found for this account", "error")
             return redirect(url_for('accounts.index'))
