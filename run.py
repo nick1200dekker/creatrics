@@ -153,6 +153,7 @@ from app.routes.tiktok_trend_finder import bp as tiktok_trend_finder_bp
 from app.routes.tiktok_keyword_research import bp as tiktok_keyword_research_bp
 from app.routes.tiktok_analytics import bp as tiktok_analytics_bp
 from app.routes.tiktok_competitors import bp as tiktok_competitors_bp
+from app.routes.tiktok_upload_studio import bp as tiktok_upload_studio_bp
 
 # Import Teams blueprint
 from app.routes.teams import teams_bp
@@ -196,6 +197,7 @@ app.register_blueprint(tiktok_trend_finder_bp)
 app.register_blueprint(tiktok_keyword_research_bp)
 app.register_blueprint(tiktok_analytics_bp)
 app.register_blueprint(tiktok_competitors_bp)
+app.register_blueprint(tiktok_upload_studio_bp)
 app.register_blueprint(teams_bp)
 
 # Register Cron blueprint

@@ -9,7 +9,7 @@ import logging
 import firebase_admin
 from firebase_admin import firestore
 from datetime import datetime, timedelta
-from app.system.services.user_service import UserService
+from app.system.services.firebase_service import UserService
 from app.system.services.tiktok_service import TikTokService
 
 logger = logging.getLogger('tiktok_analytics')
@@ -69,7 +69,7 @@ def fetch_tiktok_analytics(user_id):
                     break
 
                 if retry < max_retries - 1:
-                    wait_time = (retry + 1) * 3  # 3s, 6s, 9s
+                    wait_time = (retry + 1) * 5  # 5s, 10s, 15s (increased from 3s)
                     logger.warning(f"Failed to fetch page {page}, retrying in {wait_time}s (attempt {retry + 1}/{max_retries})")
                     import time
                     time.sleep(wait_time)
@@ -92,9 +92,9 @@ def fetch_tiktok_analytics(user_id):
 
             cursor = posts_data.get('cursor')
 
-            # Add delay between pages to avoid rate limiting
+            # Add delay between pages to avoid rate limiting (increased from 2s to 3s)
             import time
-            time.sleep(2)
+            time.sleep(3)
 
         logger.info(f"Completed pagination: Fetched {len(all_posts)} total posts")
 
@@ -125,7 +125,7 @@ def fetch_tiktok_analytics(user_id):
 
         db = firestore.client()
 
-        # Get existing posts from Firestore
+        # Get existing posts from Firestore and merge
         posts_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('posts')
         posts_doc = posts_ref.get()
 
@@ -135,13 +135,15 @@ def fetch_tiktok_analytics(user_id):
 
         # Merge new posts with existing posts (deduplicate by ID)
         all_post_ids = set()
-        all_posts = []
+        merged_posts = []
 
         for post in recent_posts + existing_posts:
             post_id = post.get('id')
             if post_id and post_id not in all_post_ids:
                 all_post_ids.add(post_id)
-                all_posts.append(post)
+                merged_posts.append(post)
+
+        all_posts = merged_posts
 
         # Sort by create_time (newest first)
         all_posts.sort(key=lambda x: x.get('create_time', 0), reverse=True)
@@ -154,6 +156,18 @@ def fetch_tiktok_analytics(user_id):
 
         if posts_deleted > 0:
             logger.info(f"Cleaned up {posts_deleted} TikTok posts older than 6 months")
+
+        # Calculate engagement_rate for each post first
+        for post in all_posts:
+            views = post.get('views', 0)
+            likes = post.get('likes', 0)
+            comments = post.get('comments', 0)
+            shares = post.get('shares', 0)
+
+            if views > 0:
+                post['engagement_rate'] = ((likes + comments + shares) / views) * 100
+            else:
+                post['engagement_rate'] = 0
 
         # Calculate metrics from last 35 posts
         last_35_posts = all_posts[:35]
@@ -200,6 +214,7 @@ def fetch_tiktok_analytics(user_id):
         tiktok_ref.set(user_info)
 
         # Store updated posts data in Firestore
+        posts_ref = db.collection('users').document(user_id).collection('tiktok_analytics').document('posts')
         posts_ref.set({
             'posts': all_posts,
             'has_more': False,

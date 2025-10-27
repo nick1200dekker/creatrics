@@ -1175,6 +1175,16 @@
                     <span>Analytics</span>
                 </a>
                 {% endif %}
+
+                <!-- TikTok Upload Studio (always visible for owners) -->
+                {% if not workspace_info or workspace_info.is_owner %}
+                <a href="{{ url_for('tiktok_upload_studio.index') }}"
+                   class="nav-subitem {% if request.endpoint and request.endpoint.startswith('tiktok_upload_studio.') %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-upload"></i>
+                    <span>Upload Studio</span>
+                </a>
+                {% endif %}
             </div>
         </div>
         {% endif %}
