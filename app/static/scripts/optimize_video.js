@@ -464,6 +464,12 @@ async function fetchVideoInfo(videoId) {
             throw new Error(data.error || 'Failed to fetch video info');
         }
 
+        // Update hasYouTubeConnected flag from API response
+        if (data.has_youtube_connected !== undefined) {
+            hasYouTubeConnected = data.has_youtube_connected;
+            console.log('[DEBUG] Updated hasYouTubeConnected from video-info API:', hasYouTubeConnected);
+        }
+
         return data.data;
     } catch (error) {
         console.error('Error fetching video info:', error);
@@ -1202,6 +1208,17 @@ async function applyCaptions() {
             return;
         }
 
+        // Find the apply button in the captions section
+        const captionsSection = document.querySelector('.advanced-result-box:has(#captionsTextarea)');
+        const applyButton = captionsSection ? captionsSection.querySelector('.apply-btn') : null;
+        const icon = applyButton ? applyButton.querySelector('i') : null;
+        const originalIconClass = icon ? icon.className : '';
+
+        if (applyButton) {
+            applyButton.disabled = true;
+            if (icon) icon.className = 'ph ph-spinner spin';
+        }
+
         showToast('Uploading captions to YouTube...');
 
         const response = await fetch(`/optimize-video/api/apply-captions/${currentVideoId}`, {
@@ -1220,10 +1237,33 @@ async function applyCaptions() {
             throw new Error(data.error || 'Failed to apply captions');
         }
 
+        // Show success state
+        if (applyButton && icon) {
+            icon.className = 'ph ph-check';
+            applyButton.style.background = '#10B981';
+            applyButton.style.color = '#fff';
+            applyButton.innerHTML = '<i class="ph ph-check"></i> Applied to YouTube';
+
+            setTimeout(() => {
+                applyButton.disabled = true;
+            }, 2000);
+        }
+
         showToast('✅ Captions uploaded to YouTube!');
 
     } catch (error) {
         console.error('Error applying captions:', error);
+
+        // Restore button state on error
+        const captionsSection = document.querySelector('.advanced-result-box:has(#captionsTextarea)');
+        const applyButton = captionsSection ? captionsSection.querySelector('.apply-btn') : null;
+        const icon = applyButton ? applyButton.querySelector('i') : null;
+
+        if (applyButton && icon) {
+            icon.className = 'ph ph-youtube-logo';
+            applyButton.disabled = false;
+        }
+
         showToast(`❌ ${error.message}`);
     }
 }
@@ -1239,6 +1279,17 @@ async function applyPinnedComment() {
         if (!commentText) {
             showToast('❌ No comment text available');
             return;
+        }
+
+        // Find the apply button in the pinned comment section
+        const commentSection = document.querySelector('.advanced-result-box:has(#pinnedCommentPreview)');
+        const applyButton = commentSection ? commentSection.querySelector('.apply-btn') : null;
+        const icon = applyButton ? applyButton.querySelector('i') : null;
+        const originalIconClass = icon ? icon.className : '';
+
+        if (applyButton) {
+            applyButton.disabled = true;
+            if (icon) icon.className = 'ph ph-spinner spin';
         }
 
         showToast('Posting comment to YouTube...');
@@ -1259,10 +1310,33 @@ async function applyPinnedComment() {
             throw new Error(data.error || 'Failed to post comment');
         }
 
+        // Show success state
+        if (applyButton && icon) {
+            icon.className = 'ph ph-check';
+            applyButton.style.background = '#10B981';
+            applyButton.style.color = '#fff';
+            applyButton.innerHTML = '<i class="ph ph-check"></i> Applied to YouTube';
+
+            setTimeout(() => {
+                applyButton.disabled = true;
+            }, 2000);
+        }
+
         showToast('✅ Comment posted to YouTube! Remember to pin it in YouTube Studio.');
 
     } catch (error) {
         console.error('Error posting comment:', error);
+
+        // Restore button state on error
+        const commentSection = document.querySelector('.advanced-result-box:has(#pinnedCommentPreview)');
+        const applyButton = commentSection ? commentSection.querySelector('.apply-btn') : null;
+        const icon = applyButton ? applyButton.querySelector('i') : null;
+
+        if (applyButton && icon) {
+            icon.className = 'ph ph-youtube-logo';
+            applyButton.disabled = false;
+        }
+
         showToast(`❌ ${error.message}`);
     }
 }
@@ -1437,7 +1511,7 @@ function highlightDiff(original, corrected) {
 /**
  * Generate captions diff view HTML
  */
-function generateCaptionsDiff(originalSRT, correctedSRT) {
+function generateCaptionsDiff(originalSRT, correctedSRT, showAll = false) {
     const originalSegments = parseSRT(originalSRT);
     const correctedSegments = parseSRT(correctedSRT);
 
@@ -1447,10 +1521,12 @@ function generateCaptionsDiff(originalSRT, correctedSRT) {
 
     let html = '<div class="diff-container">';
 
-    // Show side-by-side comparison for first 20 segments as preview
-    const previewCount = Math.min(20, Math.min(originalSegments.length, correctedSegments.length));
+    // Show side-by-side comparison - either first 20 or all segments
+    const displayCount = showAll
+        ? Math.min(originalSegments.length, correctedSegments.length)
+        : Math.min(20, Math.min(originalSegments.length, correctedSegments.length));
 
-    for (let i = 0; i < previewCount; i++) {
+    for (let i = 0; i < displayCount; i++) {
         const original = originalSegments[i];
         const corrected = correctedSegments[i];
 
@@ -1474,12 +1550,47 @@ function generateCaptionsDiff(originalSRT, correctedSRT) {
         `;
     }
 
-    if (correctedSegments.length > previewCount) {
-        html += `<div class="diff-more">... and ${correctedSegments.length - previewCount} more segments</div>`;
+    if (!showAll && correctedSegments.length > displayCount) {
+        html += `
+            <div class="diff-more">
+                <span>... and ${correctedSegments.length - displayCount} more segments</span>
+                <button class="show-all-btn" onclick="showAllCaptions()">
+                    <i class="ph ph-arrows-out"></i>
+                    Show All
+                </button>
+            </div>
+        `;
+    } else if (showAll && correctedSegments.length > 20) {
+        html += `
+            <div class="diff-more">
+                <button class="show-all-btn" onclick="showAllCaptions(false)">
+                    <i class="ph ph-arrows-in"></i>
+                    Show Less
+                </button>
+            </div>
+        `;
     }
 
     html += '</div>';
     return html;
+}
+
+/**
+ * Show all captions in diff view or collapse back to preview
+ */
+function showAllCaptions(show = true) {
+    const diffView = document.getElementById('captionsDiffView');
+
+    // Get the original and corrected SRT from current optimization data
+    if (!currentOptimizationData || !currentOptimizationData.corrected_captions) {
+        return;
+    }
+
+    const originalSRT = currentOptimizationData.corrected_captions.original_srt || '';
+    const correctedSRT = currentOptimizationData.corrected_captions.corrected_srt || '';
+
+    // Regenerate the diff view with showAll parameter
+    diffView.innerHTML = generateCaptionsDiff(originalSRT, correctedSRT, show);
 }
 
 /**

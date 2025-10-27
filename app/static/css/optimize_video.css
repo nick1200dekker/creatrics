@@ -2848,7 +2848,39 @@ html.dark .diff-changed {
     padding: 1rem;
     color: var(--text-tertiary);
     font-size: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.diff-more span {
     font-style: italic;
+}
+
+.show-all-btn {
+    padding: 0.5rem 1.25rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.show-all-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.show-all-btn i {
+    font-size: 1rem;
 }
 
 .diff-empty {

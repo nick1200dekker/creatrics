@@ -405,6 +405,11 @@ def get_video_info(video_id):
     try:
         user_id = get_workspace_user_id()
 
+        # Check if user has YouTube connected
+        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+        yt_analytics = YouTubeAnalytics(user_id)
+        has_youtube_connected = bool(yt_analytics.credentials)
+
         # Use VideoOptimizer to fetch video info
         optimizer = VideoOptimizer()
         video_info = optimizer.get_video_info(video_id, user_id)
@@ -414,7 +419,8 @@ def get_video_info(video_id):
 
         return jsonify({
             'success': True,
-            'data': video_info
+            'data': video_info,
+            'has_youtube_connected': has_youtube_connected
         })
 
     except Exception as e:

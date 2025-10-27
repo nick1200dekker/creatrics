@@ -135,21 +135,23 @@ class CaptionCorrector:
             # Otherwise, upload to YouTube
             logger.info(f"Uploading corrected captions to YouTube...")
 
-            # Check if a "English (AI Corrected 3)" track already exists and delete it
-            try:
-                existing_corrected_caption = None
-                for caption in captions_response['items']:
-                    if caption['snippet'].get('name') == 'English (AI Corrected 3)':
-                        existing_corrected_caption = caption
-                        break
+            # Find the highest version number of existing "AI Corrected" tracks
+            highest_version = 0
+            import re
 
-                if existing_corrected_caption:
-                    # Delete the old corrected caption track (50 units)
-                    logger.info(f"Deleting existing 'English (AI Corrected 3)' track {existing_corrected_caption['id']}")
-                    youtube.captions().delete(id=existing_corrected_caption['id']).execute()
-                    logger.info(f"Successfully deleted old corrected captions")
-            except Exception as e:
-                logger.warning(f"Could not delete existing corrected track: {e}")
+            for caption in captions_response['items']:
+                caption_name = caption['snippet'].get('name', '')
+                # Match "English (AI Corrected X)" pattern
+                match = re.match(r'English \(AI Corrected (\d+)\)', caption_name)
+                if match:
+                    version = int(match.group(1))
+                    highest_version = max(highest_version, version)
+
+            # Increment version for new track
+            new_version = highest_version + 1
+            new_caption_name = f'English (AI Corrected {new_version})'
+
+            logger.info(f"Creating new caption track: {new_caption_name}")
 
             # Upload corrected captions as a new track (400 units)
             caption_file = io.BytesIO(corrected_srt.encode('utf-8'))
@@ -162,7 +164,7 @@ class CaptionCorrector:
                     'snippet': {
                         'videoId': video_id,
                         'language': 'en',
-                        'name': 'English (AI Corrected 3)',
+                        'name': new_caption_name,
                         'isDraft': False
                     }
                 },
@@ -228,29 +230,30 @@ class CaptionCorrector:
                     'error_type': 'no_youtube_connection'
                 }
 
-            # List captions to check for existing corrected track
+            # List captions to check for existing corrected tracks
             captions_response = youtube.captions().list(
                 part='snippet',
                 videoId=video_id
             ).execute()
 
-            # Check if a "English (AI Corrected 3)" track already exists and delete it
+            # Find the highest version number of existing "AI Corrected" tracks
             quota_used = 0
-            try:
-                existing_corrected_caption = None
-                for caption in captions_response.get('items', []):
-                    if caption['snippet'].get('name') == 'English (AI Corrected 3)':
-                        existing_corrected_caption = caption
-                        break
+            highest_version = 0
+            import re
 
-                if existing_corrected_caption:
-                    # Delete the old corrected caption track (50 units)
-                    logger.info(f"Deleting existing 'English (AI Corrected 3)' track {existing_corrected_caption['id']}")
-                    youtube.captions().delete(id=existing_corrected_caption['id']).execute()
-                    logger.info(f"Successfully deleted old corrected captions")
-                    quota_used += 50
-            except Exception as e:
-                logger.warning(f"Could not delete existing corrected track: {e}")
+            for caption in captions_response.get('items', []):
+                caption_name = caption['snippet'].get('name', '')
+                # Match "English (AI Corrected X)" pattern
+                match = re.match(r'English \(AI Corrected (\d+)\)', caption_name)
+                if match:
+                    version = int(match.group(1))
+                    highest_version = max(highest_version, version)
+
+            # Increment version for new track
+            new_version = highest_version + 1
+            new_caption_name = f'English (AI Corrected {new_version})'
+
+            logger.info(f"Creating new caption track: {new_caption_name}")
 
             # Upload corrected captions as a new track (400 units)
             caption_file = io.BytesIO(corrected_srt.encode('utf-8'))
@@ -261,7 +264,7 @@ class CaptionCorrector:
                     'snippet': {
                         'videoId': video_id,
                         'language': 'en',
-                        'name': 'English (AI Corrected 3)',
+                        'name': new_caption_name,
                         'isDraft': False
                     }
                 },
@@ -341,20 +344,40 @@ class CaptionCorrector:
 
             system_prompt = """You are a caption correction expert. You receive SRT subtitle files and fix them.
 
-TASK: Fix word errors, add punctuation, capitalize properly, remove filler words, and break sentences cleanly.
+TASK: Fix word errors, add punctuation, capitalize properly, remove filler words, fix overlapping timestamps, and break sentences cleanly.
 
 RULES:
 1. Keep EXACT same SRT format (sequence numbers, timestamps, blank lines)
-2. Only change the TEXT lines - NEVER change timestamps or sequence numbers
-3. Fix misheard words (e.g., "Though" → "So", "their" → "there")
-4. Add punctuation: periods, commas, question marks, exclamation points
-5. Capitalize: sentence starts, "I", proper nouns (Clash Royale, Mini Pekka, etc.)
-6. Remove filler words: "um", "uh", "like" (when filler), "you know"
-7. Keep all subtitle entries - don't merge or skip any
-8. **CRITICAL: Move words to start of next line when sentence ends mid-line**
+2. Fix TEXT content (grammar, punctuation, capitalization)
+3. **FIX OVERLAPPING TIMESTAMPS** - if segment N+1 starts before segment N ends, adjust segment N's end time to be 50-100ms before segment N+1 starts
+4. Fix misheard words (e.g., "Though" → "So", "their" → "there")
+5. Add punctuation: periods, commas, question marks, exclamation points
+6. Capitalize: sentence starts, "I", proper nouns (Clash Royale, Mini Pekka, etc.)
+7. Remove filler words: "um", "uh", "like" (when filler), "you know"
+8. Keep all subtitle entries - don't merge or skip any
+9. **CRITICAL: Move words to start of next line when sentence ends mid-line**
    - If a line ends with "can't you? Let's", move "Let's" to start of next line
    - Each line should end at natural pause or sentence end when possible
    - New sentences should start at beginning of their own line
+
+EXAMPLE OF FIXING OVERLAPPING TIMESTAMPS:
+WRONG (segment 2 starts at 1.7s while segment 1 ends at 2.8s):
+1
+00:00:00,040 --> 00:00:02,885
+Though you're not sure which cards
+
+2
+00:00:01,718 --> 00:00:04,942
+to upgrade in Clash Royale, I'm
+
+CORRECT (segment 1 ends before segment 2 starts):
+1
+00:00:00,040 --> 00:00:01,668
+So you're not sure which cards
+
+2
+00:00:01,718 --> 00:00:04,942
+to upgrade in Clash Royale? I'm
 
 EXAMPLE OF SENTENCE REFLOW:
 WRONG:
@@ -368,27 +391,23 @@ jump in. Right from the start, you
 
 CORRECT:
 14
-00:00:23,559 --> 00:00:26,639
+00:00:23,559 --> 00:00:25,309
 game and which ones can't you?
 
 15
 00:00:25,359 --> 00:00:28,579
-Let's jump in. Right from the start,
+Let's jump in. Right from the start, you
 
-16
-00:00:27,079 --> 00:00:30,280
-you get the arrows, and the
+OUTPUT: Return the complete corrected SRT file with NO overlapping timestamps and clean sentence breaks."""
 
-OUTPUT: Return the complete corrected SRT file with clean sentence breaks."""
+            user_prompt = f"""Correct this SRT subtitle file. Fix word errors, add punctuation, capitalize, remove fillers, and FIX OVERLAPPING TIMESTAMPS.
 
-            user_prompt = f"""Correct this SRT subtitle file. Fix word errors, add punctuation, capitalize, remove fillers.
-
-Keep the EXACT same format - only change text, not timestamps or numbers.
+IMPORTANT: Check each timestamp - if segment N+1 starts before segment N ends, adjust segment N's end time to be 50-100ms before segment N+1 starts.
 
 SRT FILE:
 {srt_content}
 
-Return the corrected SRT file:"""
+Return the corrected SRT file with NO overlapping timestamps:"""
 
             logger.info(f"Sending {len(srt_content)} chars to AI for SRT correction")
 
@@ -532,34 +551,35 @@ Return the corrected SRT file:"""
 
             system_prompt = """You are a caption correction expert. You receive SRT subtitle files and fix them.
 
-TASK: Fix word errors, add punctuation, capitalize properly, remove filler words, and break sentences cleanly.
+TASK: Fix word errors, add punctuation, capitalize properly, remove filler words, fix overlapping timestamps, and break sentences cleanly.
 
 RULES:
 1. Keep EXACT same SRT format (sequence numbers, timestamps, blank lines)
-2. Only change the TEXT lines - NEVER change timestamps or sequence numbers
-3. Fix misheard words (e.g., "Though" → "So", "their" → "there")
-4. Add punctuation: periods, commas, question marks, exclamation points
-5. Capitalize: sentence starts, "I", proper nouns (Clash Royale, Mini Pekka, etc.)
-6. Remove filler words: "um", "uh", "like" (when filler), "you know"
-7. Keep all subtitle entries - don't merge or skip any
-8. **CRITICAL: Move words to start of next line when sentence ends mid-line**
+2. Fix TEXT content (grammar, punctuation, capitalization)
+3. **FIX OVERLAPPING TIMESTAMPS** - if segment N+1 starts before segment N ends, adjust segment N's end time to be 50-100ms before segment N+1 starts
+4. Fix misheard words (e.g., "Though" → "So", "their" → "there")
+5. Add punctuation: periods, commas, question marks, exclamation points
+6. Capitalize: sentence starts, "I", proper nouns (Clash Royale, Mini Pekka, etc.)
+7. Remove filler words: "um", "uh", "like" (when filler), "you know"
+8. Keep all subtitle entries - don't merge or skip any
+9. **CRITICAL: Move words to start of next line when sentence ends mid-line**
    - If a line ends with "can't you? Let's", move "Let's" to start of next line
    - Each line should end at natural pause or sentence end when possible
    - New sentences should start at beginning of their own line
 
-OUTPUT: Return the complete corrected SRT with clean sentence breaks."""
+OUTPUT: Return the complete corrected SRT with NO overlapping timestamps and clean sentence breaks."""
 
             for i, batch in enumerate(batches, 1):
                 logger.info(f"Processing batch {i}/{len(batches)} ({len(batch)} chars)")
 
-                user_prompt = f"""Correct this SRT subtitle file segment. Fix word errors, add punctuation, capitalize, remove fillers.
+                user_prompt = f"""Correct this SRT subtitle file segment. Fix word errors, add punctuation, capitalize, remove fillers, and FIX OVERLAPPING TIMESTAMPS.
 
-Keep the EXACT same format - only change text, not timestamps or numbers.
+IMPORTANT: Check each timestamp - if segment N+1 starts before segment N ends, adjust segment N's end time to be 50-100ms before segment N+1 starts.
 
 SRT SEGMENT:
 {batch}
 
-Return the corrected SRT segment:"""
+Return the corrected SRT segment with NO overlapping timestamps:"""
 
                 response = ai_provider.create_completion(
                     messages=[
