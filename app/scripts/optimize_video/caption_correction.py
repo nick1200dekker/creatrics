@@ -53,15 +53,19 @@ class CaptionCorrector:
                     'error_type': 'no_captions'
                 }
 
+            # List all available caption tracks (for debugging)
+            logger.info(f"Found {len(captions_response['items'])} caption tracks for video {video_id}")
+
             # Find English caption track (prefer automatic)
             english_caption = None
             for caption in captions_response['items']:
                 lang = caption['snippet'].get('language', '')
                 track_kind = caption['snippet'].get('trackKind', '')
 
-                # Prefer ASR (automatic) English captions
-                if lang.startswith('en') and track_kind == 'ASR':
+                # Prefer ASR (automatic) English captions (case-insensitive)
+                if lang.startswith('en') and track_kind.lower() == 'asr':
                     english_caption = caption
+                    logger.info(f"✓ Selected ASR (auto-generated) English caption")
                     break
 
             # Fallback to any English caption
@@ -70,6 +74,7 @@ class CaptionCorrector:
                     lang = caption['snippet'].get('language', '')
                     if lang.startswith('en'):
                         english_caption = caption
+                        logger.info(f"⚠ Selected non-ASR English caption (manually uploaded)")
                         break
 
             if not english_caption:
@@ -80,27 +85,43 @@ class CaptionCorrector:
                 }
 
             caption_id = english_caption['id']
-            logger.info(f"Downloading English caption track {caption_id} for video {video_id}")
+            caption_name = english_caption['snippet'].get('name', '')
+            caption_kind = english_caption['snippet'].get('trackKind', '')
+            logger.info(f"Downloading caption: '{caption_name}' (Kind: {caption_kind})")
 
-            # Download caption in SRT format (200 units)
+            # Download caption in VTT format (has per-word timestamps if available)
             caption_data = youtube.captions().download(
                 id=caption_id,
-                tfmt='srt'
+                tfmt='vtt'
             ).execute()
+            vtt_content = caption_data.decode('utf-8')
 
-            # Decode SRT content
-            srt_content = caption_data.decode('utf-8')
+            logger.info(f"Downloaded VTT: {len(vtt_content)} chars")
+            logger.info(f"RAW VTT FROM YOUTUBE - First 1000 chars:\n{vtt_content[:1000]}")
 
-            # ===== DEBUG: Print raw SRT to see what YouTube gives us =====
-            logger.info("=" * 80)
-            logger.info("RAW SRT DATA FROM YOUTUBE (first 2000 chars):")
-            logger.info("=" * 80)
-            logger.info(srt_content[:2000])
-            logger.info("=" * 80)
+            # Check if VTT has per-word timestamps (<c> tags)
+            has_word_timestamps = '<c>' in vtt_content
+            logger.info(f"Has per-word timestamps (<c> tags): {has_word_timestamps}")
 
-            # Send raw SRT directly to AI for correction
-            logger.info(f"Sending raw SRT to AI for correction ({len(srt_content)} chars)")
-            corrected_srt, token_usage = self._correct_srt_with_ai(srt_content, user_id, user_subscription)
+            # Convert VTT to SRT for preview comparison
+            srt_content = self._convert_vtt_to_srt(vtt_content)
+
+            if has_word_timestamps:
+                logger.info("VTT has per-word timestamps - using word-level parsing")
+                # Parse VTT to extract per-word timestamps
+                word_level_data = self._parse_vtt_word_timestamps(vtt_content)
+
+                logger.info(f"Extracted {len(word_level_data)} words with precise timestamps")
+
+                # Send word-level data to AI for caption creation
+                corrected_srt, token_usage = self._correct_captions_with_word_timestamps(word_level_data, user_id, user_subscription)
+
+            else:
+                logger.info("VTT does NOT have per-word timestamps - using segment-level correction")
+                logger.info(f"Converted to SRT: {len(srt_content)} chars")
+
+                # Send SRT to AI for correction (old method)
+                corrected_srt, token_usage = self._correct_srt_with_ai(srt_content, user_id, user_subscription)
 
             if not corrected_srt:
                 return {
@@ -297,6 +318,492 @@ class CaptionCorrector:
                 'error': str(e)
             }
 
+    def _convert_vtt_to_srt(self, vtt_content: str) -> str:
+        """
+        Convert WebVTT format to SRT format
+        For simple VTT (no word timestamps): Just convert format
+        For complex VTT (with <c> tags): Strip tags and deduplicate
+        """
+        try:
+            import re
+
+            lines = vtt_content.split('\n')
+            srt_lines = []
+            segment_number = 1
+            skip_header = True
+
+            i = 0
+            while i < len(lines):
+                line = lines[i].strip()
+
+                # Skip VTT header
+                if skip_header:
+                    if line.startswith('WEBVTT') or line.startswith('Kind:') or line.startswith('Language:'):
+                        i += 1
+                        continue
+                    elif line == '':
+                        i += 1
+                        continue
+                    else:
+                        skip_header = False
+
+                # Skip empty lines and NOTE blocks
+                if not line or line.startswith('NOTE'):
+                    i += 1
+                    continue
+
+                # Check if this is a timestamp line (contains -->)
+                if '-->' in line:
+                    # Strip out VTT metadata (align:start position:0%, etc.)
+                    timestamp_parts = line.split()
+                    if len(timestamp_parts) >= 3:
+                        start_time = timestamp_parts[0].replace('.', ',')
+                        end_time = timestamp_parts[2].replace('.', ',')
+                        timestamp_line = f"{start_time} --> {end_time}"
+                    else:
+                        timestamp_line = line.replace('.', ',')
+
+                    # Get the text (next non-empty lines)
+                    i += 1
+                    text_lines = []
+                    while i < len(lines) and lines[i].strip():
+                        text = lines[i].strip()
+
+                        # Strip out VTT timing tags if present
+                        text = re.sub(r'<\d{2}:\d{2}:\d{2}\.\d{3}>', '', text)
+                        text = re.sub(r'</?c>', '', text)
+
+                        if text:
+                            text_lines.append(text)
+                        i += 1
+
+                    # Write SRT segment if we have text
+                    if text_lines:
+                        srt_lines.append(str(segment_number))
+                        srt_lines.append(timestamp_line)
+                        srt_lines.extend(text_lines)
+                        srt_lines.append('')  # Empty line between segments
+                        segment_number += 1
+                else:
+                    i += 1
+
+            return '\n'.join(srt_lines)
+
+        except Exception as e:
+            logger.error(f"Error converting VTT to SRT: {e}")
+            # Fallback: try to use VTT as-is
+            return vtt_content
+
+    def _timestamp_to_ms(self, timestamp: str) -> int:
+        """Convert SRT timestamp to milliseconds"""
+        # Format: 00:00:01,550
+        time_part, ms_part = timestamp.split(',')
+        h, m, s = map(int, time_part.split(':'))
+        ms = int(ms_part)
+        return (h * 3600000) + (m * 60000) + (s * 1000) + ms
+
+    def _parse_vtt_word_timestamps(self, vtt_content: str) -> List[Dict]:
+        """
+        Parse VTT format to extract ONLY per-word timestamps from <c> tags
+        YouTube VTT format example:
+        are<00:00:00.160><c> you</c><00:00:00.280><c> looking</c><00:00:00.520><c> for</c>
+
+        First word "are" has NO <c> tag, rest have <timestamp><c> word</c> format
+        """
+        import re
+
+        words_with_timestamps = []
+
+        try:
+            lines = vtt_content.split('\n')
+
+            for line in lines:
+                # Only process lines with word-level timing tags <c>
+                if '<c>' not in line:
+                    continue
+
+                # Pattern 1: Find all tagged words: <00:00:00.160><c> you</c>
+                tagged_pattern = r'<(\d{2}):(\d{2}):(\d{2})\.(\d{3})><c>\s*([^<]+)</c>'
+                tagged_matches = re.findall(tagged_pattern, line)
+
+                for match in tagged_matches:
+                    h, m, s, ms, word = match
+                    timestamp_seconds = (int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000.0)
+                    words_with_timestamps.append({
+                        'word': word.strip(),
+                        'start': timestamp_seconds
+                    })
+
+                # Pattern 2: Handle first word (no <c> tag): are<00:00:00.160>
+                # Extract word before first <
+                first_word_match = re.match(r'^([a-zA-Z\'\-]+)<\d{2}:\d{2}:\d{2}\.\d{3}>', line)
+                if first_word_match:
+                    first_word = first_word_match.group(1).strip()
+                    # Get timestamp from first tagged word (they appear in order)
+                    first_timestamp_match = re.search(r'<(\d{2}):(\d{2}):(\d{2})\.(\d{3})>', line)
+                    if first_timestamp_match:
+                        h, m, s, ms = first_timestamp_match.groups()
+                        # Estimate first word is ~100-200ms before first timestamp
+                        timestamp_seconds = (int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000.0) - 0.12
+                        words_with_timestamps.insert(0 if not words_with_timestamps else len([w for w in words_with_timestamps if w['start'] < timestamp_seconds]), {
+                            'word': first_word,
+                            'start': max(0, timestamp_seconds)  # Don't go negative
+                        })
+
+            logger.info(f"Extracted {len(words_with_timestamps)} words with PRECISE timestamps from VTT")
+
+            # Log first 50 words for debugging
+            if words_with_timestamps:
+                sample = words_with_timestamps[:50]
+                logger.info(f"SAMPLE WORDS FROM VTT (first 50): {sample}")
+
+            return words_with_timestamps
+
+        except Exception as e:
+            logger.error(f"Error parsing VTT word timestamps: {e}")
+            return []
+
+    def _correct_captions_with_word_timestamps(self, words: List[Dict], user_id: str, user_subscription: str = None) -> Tuple[Optional[str], Optional[Dict]]:
+        """
+        Create corrected SRT captions using per-word timestamps from VTT
+        The AI will use timing gaps to determine natural sentence breaks
+        Automatically batches if word list is too large
+        """
+        try:
+            # Format word list as numbered list with timestamps
+            # 1. though (00:00:00,120)
+            # 2. you're (00:00:00,240)
+            def format_timestamp(seconds):
+                h = int(seconds // 3600)
+                m = int((seconds % 3600) // 60)
+                s = int(seconds % 60)
+                ms = int((seconds % 1) * 1000)
+                return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
+            word_list_text = "\n".join([f"{i+1}. {w['word']} ({format_timestamp(w['start'])})" for i, w in enumerate(words)])
+
+            logger.info(f"Word list size: {len(word_list_text)} chars, {len(words)} words")
+            logger.info(f"SENDING TO AI - First 500 chars:\n{word_list_text[:500]}")
+            logger.info(f"================================================================================")
+            logger.info(f"FULL SYSTEM PROMPT:")
+            logger.info(f"================================================================================")
+
+            # Check if we need to batch (DeepSeek has ~25k char limit)
+            if len(word_list_text) > 20000:
+                logger.info(f"Word list too large ({len(word_list_text)} chars), using batched processing")
+                return self._correct_captions_batched(words, user_id, user_subscription)
+
+            logger.info(f"================================================================================")
+            logger.info(f"FULL SYSTEM PROMPT:")
+            logger.info(f"================================================================================")
+
+            # Single request for smaller files
+            system_prompt = """You are a caption expert. You receive a NUMBERED list of words with their EXACT spoken timestamps.
+
+YOUR TASK:
+1. Fix misheard words (e.g., "Though" → "So")
+2. Add proper punctuation (periods, commas, question marks)
+3. Capitalize properly (sentence starts, "I", proper nouns)
+4. Remove filler words ("um", "uh", "you know")
+5. Group words into natural caption segments (4-10 words based on natural flow)
+6. Use the EXACT timestamps from the list - just look up the word number
+
+HOW TO CREATE TIMESTAMPS:
+- If you group words 1-5: start time = word 1's timestamp, end time = word 6's timestamp
+- If you group words 6-10: start time = word 6's timestamp, end time = word 11's timestamp
+- For last segment: use last word's timestamp + 0.5 seconds for end time
+
+CRITICAL RULES FOR BREAKING SEGMENTS:
+- ALWAYS start a new segment after a period (.)
+- Break on commas if segment would be too long (>10 words)
+- Keep 4-10 words per segment based on natural phrasing
+- Shorter segments for questions or emphasis
+- Longer segments for flowing narration
+
+EXAMPLE INPUT:
+1. are (00:00:00,040)
+2. you (00:00:00,160)
+3. looking (00:00:00,280)
+4. for (00:00:00,520)
+5. the (00:00:00,680)
+6. best (00:00:00,960)
+7. Clash (00:00:01,240)
+8. Royale (00:00:01,879)
+9. deck (00:00:02,399)
+10. Check (00:00:03,000)
+11. out (00:00:03,200)
+12. this (00:00:03,400)
+
+EXAMPLE OUTPUT:
+
+Segment 1: Group words 1-6 "are you looking for the best"
+Start = word 1's time = 00:00:00,040
+End = word 7's time = 00:00:01,240
+
+1
+00:00:00,040 --> 00:00:01,240
+Are you looking for the best
+
+Segment 2: Group words 7-9 "Clash Royale deck."
+Start = word 7's time = 00:00:01,240
+End = word 10's time = 00:00:03,000
+
+2
+00:00:01,240 --> 00:00:03,000
+Clash Royale deck.
+
+Segment 3: Group words 10-12 "Check out this"
+Start = word 10's time = 00:00:03,000
+End = word 13's time (if exists, else word 12 + 0.5s)
+
+3
+00:00:03,000 --> 00:00:03,900
+Check out this.
+
+OUTPUT: Return ONLY the SRT file. NO explanations."""
+
+            logger.info(system_prompt)
+            logger.info(f"================================================================================")
+
+            user_prompt = f"""Create corrected SRT captions from this numbered word list. Use the exact timestamps - just look up the word number.
+
+NUMBERED WORD LIST:
+{word_list_text}
+
+Return ONLY the SRT file:"""
+
+            logger.info(f"Sending {len(words)} words to AI ({len(word_list_text)} chars)")
+
+            # Get AI provider
+            from app.system.ai_provider.ai_provider import AIProviderManager
+            from app.system.services.firebase_service import UserService
+
+            user = UserService.get_user(user_id)
+            if not user:
+                logger.error(f"User {user_id} not found")
+                return None, None
+
+            ai_provider_manager = AIProviderManager(user_subscription=user_subscription)
+
+            # Calculate max_tokens (rough estimate: input chars / 3 for output)
+            estimated_output_tokens = len(word_list_text) // 3
+            max_tokens = min(estimated_output_tokens, 8000)
+
+            response = ai_provider_manager.create_completion(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.3,
+                max_tokens=max_tokens
+            )
+
+            corrected_srt = response['content']
+            token_usage = response.get('usage', {})
+
+            logger.info(f"AI returned {len(corrected_srt)} chars of corrected SRT")
+            logger.info(f"Token usage: {token_usage}")
+            logger.info(f"AI RESPONSE - First 1000 chars:\n{corrected_srt[:1000]}")
+
+            return corrected_srt, token_usage
+
+        except Exception as e:
+            logger.error(f"Error correcting captions with word timestamps: {e}")
+            return None, None
+
+    def _correct_captions_batched(self, words: List[Dict], user_id: str, user_subscription: str) -> Tuple[Optional[str], Optional[Dict]]:
+        """
+        Batch process large word lists for caption correction
+        Splits into ~300 word chunks to stay under DeepSeek limits
+        """
+        try:
+            from app.system.ai_provider.ai_provider import AIProviderManager
+            from app.system.services.firebase_service import UserService
+
+            user = UserService.get_user(user_id)
+            if not user:
+                logger.error(f"User {user_id} not found")
+                return None, None
+
+            ai_provider_manager = AIProviderManager(user_subscription=user_subscription)
+
+            # Split words into batches of ~800 words (~19K chars each with inline timestamps)
+            # DeepSeek supports 32K tokens input, ~8K tokens output
+            # 800 words with inline format = ~19K chars + prompts = safe within limits
+            batch_size = 800
+            batches = [words[i:i + batch_size] for i in range(0, len(words), batch_size)]
+            logger.info(f"Split {len(words)} words into {len(batches)} batches of ~{batch_size} words each")
+
+            system_prompt = """You are a caption expert. You receive a NUMBERED list of words with their EXACT spoken timestamps.
+
+YOUR TASK:
+1. Fix misheard words (e.g., "Though" → "So")
+2. Add proper punctuation (periods, commas, question marks)
+3. Capitalize properly (sentence starts, "I", proper nouns)
+4. Remove filler words ("um", "uh", "you know")
+5. Group words into natural caption segments (4-10 words based on natural flow)
+6. Use the EXACT timestamps from the list - just look up the word number
+
+HOW TO CREATE TIMESTAMPS:
+- If you group words 1-5: start time = word 1's timestamp, end time = word 6's timestamp
+- If you group words 6-10: start time = word 6's timestamp, end time = word 11's timestamp
+- For last segment: use last word's timestamp + 0.5 seconds for end time
+
+CRITICAL RULES FOR BREAKING SEGMENTS:
+- ALWAYS start a new segment after a period (.)
+- Break on commas if segment would be too long (>10 words)
+- Keep 4-10 words per segment based on natural phrasing
+- Shorter segments for questions or emphasis
+- Longer segments for flowing narration
+
+EXAMPLE INPUT:
+1. are (00:00:00,040)
+2. you (00:00:00,160)
+3. looking (00:00:00,280)
+4. for (00:00:00,520)
+5. the (00:00:00,680)
+6. best (00:00:00,960)
+7. Clash (00:00:01,240)
+8. Royale (00:00:01,879)
+9. deck (00:00:02,399)
+10. Check (00:00:03,000)
+11. out (00:00:03,200)
+12. this (00:00:03,400)
+
+EXAMPLE OUTPUT:
+
+Segment 1: Group words 1-6 "are you looking for the best"
+Start = word 1's time = 00:00:00,040
+End = word 7's time = 00:00:01,240
+
+1
+00:00:00,040 --> 00:00:01,240
+Are you looking for the best
+
+Segment 2: Group words 7-9 "Clash Royale deck."
+Start = word 7's time = 00:00:01,240
+End = word 10's time = 00:00:03,000
+
+2
+00:00:01,240 --> 00:00:03,000
+Clash Royale deck.
+
+Segment 3: Group words 10-12 "Check out this"
+Start = word 10's time = 00:00:03,000
+End = word 13's time (if exists, else word 12 + 0.5s)
+
+3
+00:00:03,000 --> 00:00:03,900
+Check out this.
+
+OUTPUT: Return ONLY the SRT file. NO explanations."""
+
+            all_segments = []
+            total_input_tokens = 0
+            total_output_tokens = 0
+            model_name = 'unknown'
+
+            # Helper function to format timestamps
+            def format_timestamp(seconds):
+                h = int(seconds // 3600)
+                m = int((seconds % 3600) // 60)
+                s = int(seconds % 60)
+                ms = int((seconds % 1) * 1000)
+                return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
+            # Log system prompt once
+            if True:  # Only log on first batch
+                logger.info(f"================================================================================")
+                logger.info(f"BATCHED SYSTEM PROMPT:")
+                logger.info(f"================================================================================")
+                logger.info(system_prompt)
+                logger.info(f"================================================================================")
+
+            # Track global word index across batches
+            word_offset = 0
+
+            for batch_num, batch_words in enumerate(batches, 1):
+                word_list_text = "\n".join([f"{word_offset + i + 1}. {w['word']} ({format_timestamp(w['start'])})" for i, w in enumerate(batch_words)])
+
+                user_prompt = f"""Create corrected SRT captions from this numbered word list. Use the exact timestamps - just look up the word number.
+
+NUMBERED WORD LIST:
+{word_list_text}
+
+Return ONLY the SRT file:"""
+
+                logger.info(f"Processing batch {batch_num}/{len(batches)} ({len(batch_words)} words, {len(word_list_text)} chars)")
+                logger.info(f"BATCH {batch_num} - First 300 chars sent to AI:\n{word_list_text[:300]}")
+
+                response = ai_provider_manager.create_completion(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=7000
+                )
+
+                batch_srt = response['content'].strip()
+                usage = response.get('usage', {})
+
+                # Track token usage
+                total_input_tokens += usage.get('prompt_tokens', 0)
+                total_output_tokens += usage.get('completion_tokens', 0)
+                model_name = usage.get('model', model_name)
+
+                # Clean up AI response (remove any text before first SRT block)
+                if '\n\n' in batch_srt:
+                    # Find first block with timestamp
+                    blocks = batch_srt.split('\n\n')
+                    first_valid_block_idx = 0
+                    for i, block in enumerate(blocks):
+                        if ' --> ' in block:
+                            first_valid_block_idx = i
+                            break
+                    batch_srt = '\n\n'.join(blocks[first_valid_block_idx:])
+
+                # Parse segments from this batch
+                segments = self._parse_srt(batch_srt)
+                all_segments.extend(segments)
+
+                logger.info(f"Batch {batch_num} complete: {len(segments)} segments generated")
+                logger.info(f"BATCH {batch_num} - AI returned first 800 chars:\n{batch_srt[:800]}")
+                if segments:
+                    logger.info(f"BATCH {batch_num} - First parsed segment: {segments[0]}")
+
+                # Update word offset for next batch
+                word_offset += len(batch_words)
+
+            # Combine all segments into final SRT
+            final_srt = self._segments_to_srt(all_segments)
+
+            combined_usage = {
+                'prompt_tokens': total_input_tokens,
+                'completion_tokens': total_output_tokens,
+                'total_tokens': total_input_tokens + total_output_tokens,
+                'model': model_name
+            }
+
+            logger.info(f"Batched processing complete: {len(all_segments)} total segments")
+            logger.info(f"Combined token usage: {combined_usage}")
+
+            return final_srt, combined_usage
+
+        except Exception as e:
+            logger.error(f"Error in batched caption correction: {e}")
+            return None, None
+
+    def _segments_to_srt(self, segments: List[Dict[str, str]]) -> str:
+        """Convert segment list back to SRT format"""
+        srt_lines = []
+        for i, seg in enumerate(segments, 1):
+            srt_lines.append(str(i))
+            srt_lines.append(seg['timestamp'])
+            srt_lines.append(seg['text'])
+            srt_lines.append('')  # Empty line between segments
+        return '\n'.join(srt_lines)
+
     def _parse_srt(self, srt_content: str) -> List[Dict[str, str]]:
         """Parse SRT format into segments with timestamps"""
         segments = []
@@ -304,22 +811,34 @@ class CaptionCorrector:
         blocks = srt_content.strip().split('\n\n')
         for block in blocks:
             lines = block.strip().split('\n')
-            if len(lines) >= 3:
-                # Line 0: sequence number
-                # Line 1: timestamp (00:00:00,000 --> 00:00:05,000)
-                # Lines 2+: text
-                try:
-                    timestamp_line = lines[1]
-                    start_time, end_time = timestamp_line.split(' --> ')
-                    text = ' '.join(lines[2:])
+            if len(lines) < 2:
+                continue
 
-                    segments.append({
-                        'start': start_time.strip(),
-                        'end': end_time.strip(),
-                        'text': text.strip()
-                    })
-                except:
+            try:
+                # Find the timestamp line (contains " --> ")
+                timestamp_line = None
+                text_lines = []
+
+                for i, line in enumerate(lines):
+                    if ' --> ' in line:
+                        timestamp_line = line
+                        # Everything after this line is text
+                        text_lines = lines[i+1:]
+                        break
+
+                if not timestamp_line or not text_lines:
+                    logger.warning(f"Skipping malformed SRT block: {block[:100]}")
                     continue
+
+                text = ' '.join(text_lines)
+
+                segments.append({
+                    'timestamp': timestamp_line.strip(),
+                    'text': text.strip()
+                })
+            except Exception as e:
+                logger.warning(f"Failed to parse SRT block: {e}")
+                continue
 
         return segments
 
