@@ -59,6 +59,7 @@ try:
     # Initialize Firestore and Storage clients
     db = firestore.client()
     bucket = storage.bucket()
+    storage_bucket = bucket  # Alias for consistency
     logger.info("Firebase successfully initialized")
     
 except Exception as e:
@@ -66,6 +67,7 @@ except Exception as e:
     # Create dummy clients for development without failing
     db = None
     bucket = None
+    storage_bucket = None
     firebase_app = None
 
 class UserService:

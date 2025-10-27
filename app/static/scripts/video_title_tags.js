@@ -193,58 +193,55 @@ async function uploadVideoToServer(file) {
     }
 
     try {
-        const formData = new FormData();
-        formData.append('video', file);
-
-        const xhr = new XMLHttpRequest();
-
-        // Track upload progress
-        xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-                const percentComplete = Math.round((e.loaded / e.total) * 100);
-
-                if (progressBar) {
-                    progressBar.style.width = `${percentComplete}%`;
-                }
-                if (progressPercent) {
-                    progressPercent.textContent = `${percentComplete}%`;
-                }
-                if (progressStatus) {
-                    progressStatus.textContent = 'Uploading to server...';
-                }
-            }
-        });
-
-        const uploadPromise = new Promise((resolve, reject) => {
-            xhr.onload = () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        resolve(JSON.parse(xhr.responseText));
-                    } catch (e) {
-                        reject(new Error('Invalid response from server'));
-                    }
-                } else {
-                    try {
-                        const errorData = JSON.parse(xhr.responseText);
-                        reject(new Error(errorData.error || 'Upload failed'));
-                    } catch (e) {
-                        reject(new Error('Upload failed'));
-                    }
-                }
-            };
-            xhr.onerror = () => reject(new Error('Network error'));
-            xhr.open('POST', '/api/upload-video-temp');
-            xhr.send(formData);
-        });
-
-        const data = await uploadPromise;
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to upload video');
+        // Get Firebase user ID for storage path
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            throw new Error('Not authenticated');
         }
 
-        // Store the uploaded video path
-        uploadedVideoPath = data.video_path;
+        // Generate unique filename with timestamp
+        const timestamp = Date.now();
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const storagePath = `temp_videos/${user.uid}/${timestamp}_${safeFileName}`;
+
+        // Get Firebase Storage reference
+        const storageRef = firebase.storage().ref();
+        const videoRef = storageRef.child(storagePath);
+
+        // Create upload task
+        const uploadTask = videoRef.put(file);
+
+        // Monitor upload progress and wait for completion
+        await new Promise((resolve, reject) => {
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    // Progress updates
+                    const percentComplete = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+
+                    if (progressBar) {
+                        progressBar.style.width = `${percentComplete}%`;
+                    }
+                    if (progressPercent) {
+                        progressPercent.textContent = `${percentComplete}%`;
+                    }
+                    if (progressStatus) {
+                        progressStatus.textContent = 'Uploading to cloud storage...';
+                    }
+                },
+                (error) => {
+                    // Handle errors
+                    console.error('Firebase upload error:', error);
+                    reject(error);
+                },
+                () => {
+                    // Upload complete
+                    resolve();
+                }
+            );
+        });
+
+        // Store the Firebase storage path
+        uploadedVideoPath = storagePath;
         selectedVideoFile = file; // Keep file reference
 
         // Update UI to show success

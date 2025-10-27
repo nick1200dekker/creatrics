@@ -513,7 +513,7 @@ def upload_video_temp():
 @auth_required
 @require_permission('video_title')
 def delete_temp_video():
-    """Delete temporarily uploaded video from server"""
+    """Delete temporarily uploaded video from Firebase Storage or server"""
     try:
         data = request.get_json()
         video_path = data.get('video_path', '').strip()
@@ -524,26 +524,46 @@ def delete_temp_video():
                 'error': 'No video path provided'
             }), 400
 
-        # Security check - ensure path is in temp directory
-        import os
-        import tempfile
-        temp_base = os.path.join(tempfile.gettempdir(), 'video_uploads')
-        if not video_path.startswith(temp_base):
-            logger.warning(f"Attempted to delete file outside temp directory: {video_path}")
+        # Check if it's a Firebase Storage path
+        if video_path.startswith('temp_videos/'):
+            # Delete from Firebase Storage
+            from app.system.services.firebase_service import storage_bucket
+            try:
+                blob = storage_bucket.blob(video_path)
+                blob.delete()
+                logger.info(f"Deleted video from Firebase Storage: {video_path}")
+
+                return jsonify({
+                    'success': True,
+                    'message': 'Video deleted successfully from cloud storage'
+                })
+            except Exception as e:
+                logger.error(f"Error deleting from Firebase Storage: {e}")
+                return jsonify({
+                    'success': False,
+                    'error': f'Failed to delete video from cloud storage: {str(e)}'
+                }), 500
+        else:
+            # Legacy: Delete from local temp directory
+            import os
+            import tempfile
+            temp_base = os.path.join(tempfile.gettempdir(), 'video_uploads')
+            if not video_path.startswith(temp_base):
+                logger.warning(f"Attempted to delete file outside temp directory: {video_path}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid video path'
+                }), 400
+
+            # Delete the file if it exists
+            if os.path.exists(video_path):
+                os.unlink(video_path)
+                logger.info(f"Deleted temporary video: {video_path}")
+
             return jsonify({
-                'success': False,
-                'error': 'Invalid video path'
-            }), 400
-
-        # Delete the file if it exists
-        if os.path.exists(video_path):
-            os.unlink(video_path)
-            logger.info(f"Deleted temporary video: {video_path}")
-
-        return jsonify({
-            'success': True,
-            'message': 'Video deleted successfully'
-        })
+                'success': True,
+                'message': 'Video deleted successfully'
+            })
 
     except Exception as e:
         logger.error(f"Error deleting temp video: {e}")
@@ -664,13 +684,37 @@ def upload_youtube_video():
                 'error': 'No video file provided'
             }), 400
 
-        # Verify video file exists
+        # Download video from Firebase Storage to temp file
         import os
-        if not os.path.exists(video_path):
-            return jsonify({
-                'success': False,
-                'error': 'Video file not found. Please upload the video again.'
-            }), 400
+        import tempfile
+        from app.system.services.firebase_service import storage_bucket
+
+        # Create temp directory
+        temp_dir = tempfile.mkdtemp()
+
+        try:
+            # Check if video_path is Firebase Storage path or local path
+            if video_path.startswith('temp_videos/'):
+                # Firebase Storage path - download it
+                blob = storage_bucket.blob(video_path)
+
+                # Extract filename from path
+                filename = os.path.basename(video_path)
+                local_video_path = os.path.join(temp_dir, filename)
+
+                # Download to local temp file
+                logger.info(f"Downloading video from Firebase Storage: {video_path}")
+                blob.download_to_filename(local_video_path)
+                logger.info(f"Downloaded video to: {local_video_path} ({os.path.getsize(local_video_path)} bytes)")
+
+                video_path = local_video_path
+            else:
+                # Local path - verify it exists
+                if not os.path.exists(video_path):
+                    return jsonify({
+                        'success': False,
+                        'error': 'Video file not found. Please upload the video again.'
+                    }), 400
 
         if not title:
             return jsonify({
@@ -802,10 +846,25 @@ def upload_youtube_video():
                 except Exception as e:
                     logger.error(f"Error deleting thumbnail file: {e}")
 
-        # Clean up temporary video file
+        # Clean up temporary video file and Firebase Storage
         try:
             os.unlink(video_path)
             logger.info(f"Cleaned up temporary video file: {video_path}")
+
+            # Delete from Firebase Storage if it was a Firebase upload
+            if data.get('video_path', '').startswith('temp_videos/'):
+                try:
+                    firebase_path = data.get('video_path', '')
+                    blob = storage_bucket.blob(firebase_path)
+                    blob.delete()
+                    logger.info(f"Deleted video from Firebase Storage: {firebase_path}")
+                except Exception as e:
+                    logger.warning(f"Error deleting video from Firebase Storage: {e}")
+
+            # Clean up temp directory
+            import shutil
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
         except Exception as e:
             logger.error(f"Error deleting video file: {e}")
 
@@ -851,6 +910,31 @@ def upload_youtube_video():
 
     except Exception as e:
         logger.error(f"Error uploading video to YouTube: {e}")
+
+        # Clean up files on error
+        try:
+            # Clean up temp video file if it exists
+            if 'video_path' in locals() and os.path.exists(video_path):
+                os.unlink(video_path)
+                logger.info(f"Cleaned up temporary video file after error: {video_path}")
+
+            # Clean up Firebase Storage if it was uploaded there
+            if 'data' in locals() and data.get('video_path', '').startswith('temp_videos/'):
+                try:
+                    firebase_path = data.get('video_path', '')
+                    blob = storage_bucket.blob(firebase_path)
+                    blob.delete()
+                    logger.info(f"Deleted video from Firebase Storage after error: {firebase_path}")
+                except Exception as cleanup_error:
+                    logger.warning(f"Error deleting video from Firebase Storage: {cleanup_error}")
+
+            # Clean up temp directory if it exists
+            if 'temp_dir' in locals():
+                import shutil
+                shutil.rmtree(temp_dir, ignore_errors=True)
+
+        except Exception as cleanup_error:
+            logger.error(f"Error during cleanup: {cleanup_error}")
 
         # Check for YouTube quota exceeded error
         error_str = str(e)
