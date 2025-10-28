@@ -14,7 +14,7 @@ logger = logging.getLogger('tiktok_upload')
 class TikTokUploadService:
     """Service for uploading videos to TikTok"""
 
-    BASE_URL = "https://open.tiktokapis.com/v2/post/publish"
+    BASE_URL = "https://open.tiktokapis.com/v2/post/publish/inbox"
 
     @staticmethod
     def upload_video(user_id, video_path, title, privacy_level='SELF_ONLY'):
