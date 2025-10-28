@@ -458,25 +458,65 @@ class YouTubeAnalytics:
                     # Keep backward compatibility - use 90 days for the old traffic_sources field
                     if timeframe == '90days':
                         processed["traffic_sources"].append(source_data)
-        
-        # Process top videos for all timeframes
+
+        # Collect all unique video IDs for metadata fetching
+        all_video_ids = set()
         for timeframe, top_videos in top_videos_data.items():
             if top_videos and 'rows' in top_videos:
                 column_index = {col['name']: idx for idx, col in enumerate(top_videos['columnHeaders'])}
-                
                 for row in top_videos['rows']:
                     video_id = row[column_index['video']]
                     if '==' in video_id:
                         video_id = video_id.split('==')[1]
-                    
+                    all_video_ids.add(video_id)
+
+        # Fetch video metadata (titles and thumbnails) for all videos
+        video_metadata = {}
+        if all_video_ids:
+            try:
+                youtube_data = build('youtube', 'v3', credentials=self.credentials)
+                # YouTube API allows up to 50 video IDs per request
+                video_ids_list = list(all_video_ids)
+                for i in range(0, len(video_ids_list), 50):
+                    batch_ids = video_ids_list[i:i+50]
+                    video_details = youtube_data.videos().list(
+                        part='snippet',
+                        id=','.join(batch_ids)
+                    ).execute()
+
+                    for item in video_details.get('items', []):
+                        video_id = item['id']
+                        snippet = item['snippet']
+                        video_metadata[video_id] = {
+                            'title': snippet.get('title', f'Video {video_id}'),
+                            'thumbnail': snippet.get('thumbnails', {}).get('medium', {}).get('url', '')
+                        }
+            except Exception as e:
+                logger.warning(f"Could not fetch video metadata: {str(e)}")
+
+        # Process top videos for all timeframes
+        for timeframe, top_videos in top_videos_data.items():
+            if top_videos and 'rows' in top_videos:
+                column_index = {col['name']: idx for idx, col in enumerate(top_videos['columnHeaders'])}
+
+                for row in top_videos['rows']:
+                    video_id = row[column_index['video']]
+                    if '==' in video_id:
+                        video_id = video_id.split('==')[1]
+
                     video_views = int(row[column_index['views']])
                     video_likes = int(row[column_index.get('likes', 0)])
                     video_comments = int(row[column_index.get('comments', 0)])
                     video_shares = int(row[column_index.get('shares', 0)])
                     video_total_engagement = video_likes + video_comments + video_shares
-                    
+
+                    # Get metadata if available
+                    metadata = video_metadata.get(video_id, {})
+
                     video_data = {
                         "id": video_id,
+                        "title": metadata.get('title', f'Video {video_id}'),
+                        "thumbnail": metadata.get('thumbnail', ''),
                         "views": video_views,
                         "watch_time_minutes": int(row[column_index['estimatedMinutesWatched']]),
                         "avg_view_duration": float(row[column_index['averageViewDuration']]),
@@ -488,9 +528,9 @@ class YouTubeAnalytics:
                         "subscribers_gained": int(row[column_index.get('subscribersGained', 0)]),
                         "engagement_rate": round((video_total_engagement / video_views) * 100, 2) if video_views > 0 else 0
                     }
-                    
+
                     processed["top_videos_by_timeframe"][timeframe].append(video_data)
-                    
+
                     # Keep backward compatibility - use 30 days for the old top_videos field
                     if timeframe == '30days':
                         processed["top_videos"].append(video_data)

@@ -1075,23 +1075,35 @@ function initializeAnalytics() {
     
     function renderYouTubeVideos(videos) {
         const tbody = document.getElementById('youtube-videos-tbody');
-        
+
         if (!videos || videos.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="empty-state">No Videos Found</div></td></tr>';
             return;
         }
-        
-        tbody.innerHTML = videos.map(video => `
-            <tr>
-                <td><a href="https://youtube.com/watch?v=${video.id}" target="_blank" class="post-link">Video ${video.id}</a></td>
-                <td class="font-medium">${formatNumber(video.views || 0)}</td>
-                <td>${(video.watch_time_minutes / 60).toFixed(1)}</td>
-                <td>${Math.floor((video.avg_view_duration || 0) / 60)}:${((video.avg_view_duration || 0) % 60).toString().padStart(2, '0')}</td>
-                <td>${formatNumber(video.likes || 0)}</td>
-                <td>${formatNumber(video.comments || 0)}</td>
-                <td><span class="engagement-badge">${(video.engagement_rate || 0).toFixed(1)}%</span></td>
-            </tr>
-        `).join('');
+
+        tbody.innerHTML = videos.map(video => {
+            const thumbnailHtml = video.thumbnail
+                ? `<img src="${video.thumbnail}" alt="${video.title || 'Video'}" style="width: 80px; height: 45px; object-fit: cover; border-radius: 4px; margin-right: 12px;">`
+                : '';
+            const videoTitle = video.title || `Video ${video.id}`;
+
+            return `
+                <tr>
+                    <td>
+                        <a href="https://youtube.com/watch?v=${video.id}" target="_blank" class="post-link" style="display: flex; align-items: center; text-decoration: none;">
+                            ${thumbnailHtml}
+                            <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${videoTitle}</span>
+                        </a>
+                    </td>
+                    <td class="font-medium">${formatNumber(video.views || 0)}</td>
+                    <td>${(video.watch_time_minutes / 60).toFixed(1)}</td>
+                    <td>${Math.floor((video.avg_view_duration || 0) / 60)}:${((video.avg_view_duration || 0) % 60).toString().padStart(2, '0')}</td>
+                    <td>${formatNumber(video.likes || 0)}</td>
+                    <td>${formatNumber(video.comments || 0)}</td>
+                    <td><span class="engagement-badge">${(video.engagement_rate || 0).toFixed(1)}%</span></td>
+                </tr>
+            `;
+        }).join('');
     }
 
     // TikTok Analytics functions
