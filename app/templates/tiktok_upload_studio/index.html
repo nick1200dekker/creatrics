@@ -5,7 +5,7 @@
 <meta name="keywords" content="TikTok upload, TikTok API, video upload, TikTok publishing, content posting, TikTok automation">
 {% endblock %}
 
-{% block title %}TikTok Upload Studio | Creatrics{% endblock %}
+{% block title %}Upload Studio - TikTok | Creatrics{% endblock %}
 
 {% block additional_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/tiktok_upload_studio.css') }}">
@@ -17,200 +17,262 @@
         <!-- Header -->
         <div class="generator-header">
             <h1 class="generator-title">
-                <i class="ph ph-sparkle"></i>
-                TikTok Upload Studio
+                <i class="ph ph-upload"></i>
+                Upload Studio
             </h1>
+            <p class="generator-subtitle">Generate titles & hashtags, then upload to TikTok</p>
         </div>
 
         <!-- Content Area -->
         <div class="generator-content">
             <!-- Connection Status Card -->
             <div class="connection-card">
-                <div class="connection-status">
-                    <div class="status-indicator">
-                        <div class="status-dot {% if not is_connected %}disconnected{% endif %}"></div>
-                        <span class="status-text">{% if is_connected %}Connected to TikTok{% else %}Not Connected{% endif %}</span>
+                <div class="connection-header">
+                    <div class="connection-status">
+                        <div class="status-indicator">
+                            <div class="status-dot {% if not is_connected %}disconnected{% endif %}"></div>
+                            <span class="status-text">{% if is_connected %}Connected to TikTok{% else %}Not Connected{% endif %}</span>
+                        </div>
+
+                        <div>
+                            <button id="connectBtn" class="btn-connect" {% if is_connected %}style="display:none;"{% endif %}>
+                                <i class="ph ph-tiktok-logo"></i>
+                                Connect TikTok Account
+                            </button>
+
+                            <button id="disconnectBtn" class="btn-disconnect" {% if not is_connected %}style="display:none;"{% endif %}>
+                                <i class="ph ph-plug"></i>
+                                Disconnect
+                            </button>
+                        </div>
                     </div>
 
-                    <div>
-                        <button id="connectBtn" class="btn-tiktok" {% if is_connected %}style="display:none;"{% endif %}>
-                            <i class="ph ph-tiktok-logo"></i>
-                            Connect TikTok Account
-                        </button>
-
-                        <button id="disconnectBtn" class="btn-disconnect" {% if not is_connected %}style="display:none;"{% endif %}>
-                            <i class="ph ph-x-circle"></i>
-                            Disconnect
-                        </button>
-                    </div>
-                </div>
-
-                <!-- User Info (shown when connected) -->
-                <div id="userInfo" class="user-info" style="display:none;">
-                    <img id="userAvatar" src="/static/img/default-avatar.png" alt="User Avatar" class="user-avatar">
-                    <div class="user-details">
-                        <h3 id="userName">TikTok User</h3>
-                        <p id="userOpenId">Not connected</p>
+                    <!-- User Info (shown when connected) -->
+                    <div id="userInfo" class="user-info" {% if not is_connected %}style="display:none;"{% endif %}>
+                        <img id="userAvatar" src="/static/img/default-avatar.png" alt="User Avatar" class="user-avatar">
+                        <div class="user-details">
+                            <div class="user-name" id="userName">TikTok User</div>
+                            <div class="user-id" id="userOpenId">Not connected</div>
+                        </div>
                     </div>
                 </div>
 
                 {% if not is_connected %}
-                <div class="requirements-box">
-                    <h3>📌 Before You Connect:</h3>
-                    <ul>
-                        <li><i class="ph ph-check-circle"></i> You must be the account owner</li>
-                        <li><i class="ph ph-check-circle"></i> Your account must be eligible for posting</li>
-                        <li><i class="ph ph-check-circle"></i> You'll need to authorize Creatrics in TikTok</li>
-                        <li><i class="ph ph-check-circle"></i> Test mode: Videos will post as PRIVATE for testing</li>
-                    </ul>
+                <div class="info-notice">
+                    <i class="ph ph-info"></i>
+                    <div>
+                        <strong>Before connecting:</strong> You must be the TikTok account owner and authorized to post content. Videos will be uploaded according to your privacy settings.
+                    </div>
                 </div>
                 {% endif %}
             </div>
 
-            <!-- Upload Form -->
-            <div class="upload-section {% if is_connected %}enabled{% endif %}">
-                <h2 class="section-title">📤 Upload Video to TikTok</h2>
+            <!-- Main Upload Flow -->
+            <div class="upload-flow {% if is_connected %}enabled{% endif %}">
 
-                <form id="uploadForm" enctype="multipart/form-data">
-                    <!-- Video File Upload -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="ph ph-video"></i>
-                            Video File
-                        </label>
-
-                        <!-- Upload Area -->
-                        <div id="fileUploadArea" class="file-upload-area">
-                            <i class="ph ph-cloud-arrow-up"></i>
-                            <p class="upload-text">Click or drag and drop your video here</p>
-                            <p class="file-info">Supported: MP4, WebM, MOV (Max 4GB)</p>
-                        </div>
-
-                        <!-- Selected File Display -->
-                        <div id="selectedFile" class="selected-file" style="display:none;">
-                            <i class="ph ph-video"></i>
-                            <div class="file-details">
-                                <div class="file-name" id="fileName">video.mp4</div>
-                                <div class="file-size" id="fileSize">0 MB</div>
-                            </div>
-                            <i id="removeFile" class="ph ph-x-circle remove-file"></i>
-                        </div>
-
-                        <input type="file" id="videoFileInput" accept="video/*">
-                    </div>
-
-                    <!-- Video Title/Caption -->
-                    <div class="form-group">
-                        <label class="form-label" for="videoTitle">
-                            <i class="ph ph-text-aa"></i>
-                            Caption / Description
-                        </label>
-                        <textarea id="videoTitle" name="title" placeholder="Enter your video caption, hashtags, etc." rows="4" maxlength="2200" required></textarea>
-                        <p class="file-info">Max 2,200 characters</p>
-                    </div>
-
-                    <!-- Upload Mode -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="ph ph-upload-simple"></i>
-                            Upload Mode
-                        </label>
-                        <div class="privacy-options">
-                            <div class="privacy-option">
-                                <input type="radio" name="mode" id="modeDirect" value="direct" checked>
-                                <label for="modeDirect">
-                                    <div class="privacy-header">
-                                        <i class="ph ph-lightning"></i>
-                                        <span>Direct Post</span>
-                                    </div>
-                                    <p>Post directly with your settings (no music/effects)</p>
-                                </label>
-                            </div>
-
-                            <div class="privacy-option">
-                                <input type="radio" name="mode" id="modeInbox" value="inbox">
-                                <label for="modeInbox">
-                                    <div class="privacy-header">
-                                        <i class="ph ph-pencil-simple"></i>
-                                        <span>Inbox (Edit First)</span>
-                                    </div>
-                                    <p>Upload to TikTok inbox - add music/effects before posting</p>
-                                </label>
-                            </div>
+                <!-- Step 1: Generate Content -->
+                <div class="flow-step">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <div class="step-info">
+                            <h3>Generate Title & Hashtags</h3>
+                            <p>Use AI to create engaging captions (optional)</p>
                         </div>
                     </div>
 
-                    <!-- Privacy Level -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="ph ph-lock"></i>
-                            Privacy Level
-                        </label>
-                        <div class="privacy-options">
-                            <div class="privacy-option">
-                                <input type="radio" name="privacy" id="privacyPublic" value="PUBLIC_TO_EVERYONE" checked>
-                                <label for="privacyPublic">
-                                    <div class="privacy-header">
-                                        <i class="ph ph-globe"></i>
-                                        <span>Public</span>
-                                    </div>
-                                    <p>Everyone can see this video</p>
+                    <div class="step-content">
+                        <div class="input-grid">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Target Keywords
+                                    <span class="label-hint">(comma-separated)</span>
                                 </label>
+                                <input type="text"
+                                       class="form-input"
+                                       id="keywordsInput"
+                                       placeholder="e.g., Gaming, FPS, Battlefield 2042">
                             </div>
 
-                            <div class="privacy-option">
-                                <input type="radio" name="privacy" id="privacyFollowers" value="FOLLOWER_OF_CREATOR">
-                                <label for="privacyFollowers">
-                                    <div class="privacy-header">
-                                        <i class="ph ph-users"></i>
-                                        <span>Followers Only</span>
-                                    </div>
-                                    <p>Only your followers can see</p>
+                            <div class="form-group full-width">
+                                <label class="form-label">
+                                    Video Concept or Script
+                                    <span class="label-optional">(optional)</span>
                                 </label>
-                            </div>
-
-                            <div class="privacy-option">
-                                <input type="radio" name="privacy" id="privacyPrivate" value="SELF_ONLY">
-                                <label for="privacyPrivate">
-                                    <div class="privacy-header">
-                                        <i class="ph ph-lock"></i>
-                                        <span>Private (Self Only)</span>
-                                    </div>
-                                    <p>Only you can see this video (Use for testing)</p>
-                                </label>
+                                <textarea class="form-textarea"
+                                          id="videoConceptInput"
+                                          placeholder="Describe your video content or paste your script..."
+                                          maxlength="3000"
+                                          oninput="updateCharCount()"
+                                          rows="3"></textarea>
+                                <div class="char-count" id="charCount">0 / 3000</div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Upload Button -->
-                    <button type="submit" id="uploadBtn" class="btn-upload" {% if not is_connected %}disabled{% endif %}>
-                        <i class="ph ph-upload"></i>
-                        Upload to TikTok
-                    </button>
-                </form>
+                        <button class="btn-generate" onclick="generateTitles()" id="generateTitlesBtn" type="button">
+                            <i class="ph ph-sparkle"></i>
+                            Generate Titles & Hashtags
+                        </button>
 
-                <!-- Requirements -->
-                <div class="info-grid">
-                    <div class="requirements-box">
-                        <h3>📹 Video Requirements:</h3>
-                        <ul>
-                            <li><i class="ph ph-check-circle"></i> Format: MP4, WebM, or MOV</li>
-                            <li><i class="ph ph-check-circle"></i> Max size: 4GB</li>
-                            <li><i class="ph ph-check-circle"></i> Duration: 3 seconds to 10 minutes</li>
-                            <li><i class="ph ph-check-circle"></i> Resolution: Minimum 540p, recommended 1080p</li>
-                            <li><i class="ph ph-check-circle"></i> Aspect ratio: 9:16 (vertical), 16:9 (horizontal), or 1:1 (square)</li>
-                        </ul>
-                    </div>
-
-                    <div class="requirements-box">
-                        <h3>🎵 About Sounds & Music:</h3>
-                        <ul>
-                            <li><i class="ph ph-warning-circle"></i> TikTok API does NOT support adding sounds/music via upload</li>
-                            <li><i class="ph ph-check-circle"></i> Your video must already have audio/music in it</li>
-                            <li><i class="ph ph-check-circle"></i> Alternatively, post as draft and add sound in TikTok app</li>
-                        </ul>
+                        <!-- Generated Titles Results -->
+                        <div id="titlesResultsContainer" class="results-container" style="display: none;">
+                            <div class="results-header">
+                                <i class="ph ph-check-circle"></i>
+                                <span>Generated Titles - Click to use</span>
+                            </div>
+                            <div id="titlesList" class="titles-grid">
+                                <!-- Titles will be populated here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Step 2: Upload Video -->
+                <div class="flow-step">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <div class="step-info">
+                            <h3>Upload Video & Details</h3>
+                            <p>Select your video file and configure upload settings</p>
+                        </div>
+                    </div>
+
+                    <div class="step-content">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <!-- Video File Upload -->
+                            <div class="form-group">
+                                <label class="form-label">Video File</label>
+
+                                <!-- Upload Area -->
+                                <div id="fileUploadArea" class="file-drop-zone">
+                                    <i class="ph ph-upload-simple"></i>
+                                    <div class="drop-zone-text">
+                                        <span class="primary-text">Choose a file or drag it here</span>
+                                        <span class="secondary-text">MP4, WebM, or MOV • Max 4GB</span>
+                                    </div>
+                                </div>
+
+                                <!-- Selected File Display -->
+                                <div id="selectedFile" class="file-selected" style="display:none;">
+                                    <div class="file-icon">
+                                        <i class="ph ph-film-strip"></i>
+                                    </div>
+                                    <div class="file-info-box">
+                                        <div class="file-name" id="fileName">video.mp4</div>
+                                        <div class="file-meta">
+                                            <span id="fileSize">0 MB</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-icon" id="removeFile">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </div>
+
+                                <input type="file" id="videoFileInput" accept="video/*" hidden>
+                            </div>
+
+                            <!-- Video Caption -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Caption / Description
+                                    <span class="label-required">*</span>
+                                </label>
+                                <textarea id="videoTitle"
+                                          name="title"
+                                          class="form-textarea"
+                                          placeholder="Write your caption, add hashtags and mentions..."
+                                          rows="4"
+                                          maxlength="2200"
+                                          required></textarea>
+                                <div class="char-count">0 / 2,200</div>
+                            </div>
+
+                            <!-- Settings Grid -->
+                            <div class="settings-grid">
+                                <!-- Upload Mode -->
+                                <div class="form-group">
+                                    <label class="form-label">Upload Mode</label>
+                                    <div class="radio-group">
+                                        <label class="radio-option">
+                                            <input type="radio" name="mode" id="modeDirect" value="direct" checked>
+                                            <div class="radio-content">
+                                                <i class="ph ph-lightning"></i>
+                                                <div>
+                                                    <div class="option-title">Direct Post</div>
+                                                    <div class="option-desc">Post immediately</div>
+                                                </div>
+                                            </div>
+                                        </label>
+
+                                        <label class="radio-option">
+                                            <input type="radio" name="mode" id="modeInbox" value="inbox">
+                                            <div class="radio-content">
+                                                <i class="ph ph-pencil-simple"></i>
+                                                <div>
+                                                    <div class="option-title">Save to Inbox</div>
+                                                    <div class="option-desc">Edit before posting</div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Privacy Level -->
+                                <div class="form-group">
+                                    <label class="form-label">Who can view</label>
+                                    <div class="radio-group">
+                                        <label class="radio-option">
+                                            <input type="radio" name="privacy" id="privacyPublic" value="PUBLIC_TO_EVERYONE" checked>
+                                            <div class="radio-content">
+                                                <i class="ph ph-globe"></i>
+                                                <div>
+                                                    <div class="option-title">Public</div>
+                                                    <div class="option-desc">Everyone</div>
+                                                </div>
+                                            </div>
+                                        </label>
+
+                                        <label class="radio-option">
+                                            <input type="radio" name="privacy" id="privacyFollowers" value="FOLLOWER_OF_CREATOR">
+                                            <div class="radio-content">
+                                                <i class="ph ph-users"></i>
+                                                <div>
+                                                    <div class="option-title">Followers</div>
+                                                    <div class="option-desc">Followers only</div>
+                                                </div>
+                                            </div>
+                                        </label>
+
+                                        <label class="radio-option">
+                                            <input type="radio" name="privacy" id="privacyPrivate" value="SELF_ONLY">
+                                            <div class="radio-content">
+                                                <i class="ph ph-lock"></i>
+                                                <div>
+                                                    <div class="option-title">Private</div>
+                                                    <div class="option-desc">Only you</div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Upload Button -->
+                            <button type="submit" id="uploadBtn" class="btn-primary btn-lg" {% if not is_connected %}disabled{% endif %}>
+                                <i class="ph ph-upload"></i>
+                                Upload to TikTok
+                            </button>
+                        </form>
+
+                        <!-- Info Notice -->
+                        <div class="info-notice notice-sm">
+                            <i class="ph ph-info"></i>
+                            <div>
+                                <strong>Note:</strong> TikTok API doesn't support adding music during upload. Include audio in your video file or edit in TikTok app after uploading to inbox.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

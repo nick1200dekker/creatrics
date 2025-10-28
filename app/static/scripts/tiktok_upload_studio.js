@@ -5,10 +5,16 @@
 
 let selectedFile = null;
 let isConnected = false;
+let currentTitles = [];
+let isGeneratingTitles = false;
+let isCheckingConnection = true;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('TikTok Upload Studio initialized');
+
+    // Set initial loading state
+    setLoadingState();
 
     // Check connection status
     checkConnectionStatus();
@@ -19,6 +25,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle URL parameters (success/error messages)
     handleUrlParams();
 });
+
+/**
+ * Set loading state while checking connection
+ */
+function setLoadingState() {
+    const statusDot = document.querySelector('.status-dot');
+    const statusText = document.querySelector('.status-text');
+
+    if (statusDot && statusText) {
+        statusDot.classList.remove('disconnected');
+        statusDot.classList.add('loading');
+        statusText.textContent = 'Checking connection...';
+    }
+}
 
 /**
  * Check if user is connected to TikTok
@@ -46,7 +66,11 @@ function updateConnectionUI(data) {
     const connectBtn = document.getElementById('connectBtn');
     const disconnectBtn = document.getElementById('disconnectBtn');
     const userInfo = document.getElementById('userInfo');
-    const uploadSection = document.querySelector('.upload-section');
+    const uploadFlow = document.querySelector('.upload-flow');
+
+    // Remove loading state
+    statusDot.classList.remove('loading');
+    isCheckingConnection = false;
 
     if (data.connected) {
         // Connected state
@@ -54,14 +78,17 @@ function updateConnectionUI(data) {
         statusText.textContent = 'Connected to TikTok';
         connectBtn.style.display = 'none';
         disconnectBtn.style.display = 'inline-flex';
-        uploadSection.classList.add('enabled');
+
+        if (uploadFlow) {
+            uploadFlow.classList.add('enabled');
+        }
 
         // Show user info if available
         if (data.user_info) {
             userInfo.style.display = 'flex';
             document.getElementById('userAvatar').src = data.user_info.avatar_url || '/static/img/default-avatar.png';
             document.getElementById('userName').textContent = data.user_info.display_name || 'TikTok User';
-            document.getElementById('userOpenId').textContent = `ID: ${data.user_info.open_id}`;
+            document.getElementById('userOpenId').textContent = `@${data.user_info.open_id}`;
         }
     } else {
         // Disconnected state
@@ -70,7 +97,10 @@ function updateConnectionUI(data) {
         connectBtn.style.display = 'inline-flex';
         disconnectBtn.style.display = 'none';
         userInfo.style.display = 'none';
-        uploadSection.classList.remove('enabled');
+
+        if (uploadFlow) {
+            uploadFlow.classList.remove('enabled');
+        }
     }
 }
 
@@ -387,4 +417,127 @@ function handleUrlParams() {
     if (urlParams.has('success') || urlParams.has('error')) {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
+}
+
+/**
+ * Update character count for video concept input
+ */
+function updateCharCount() {
+    const input = document.getElementById('videoConceptInput');
+    if (input) {
+        const count = input.value.length;
+        document.getElementById('charCount').textContent = `${count} / 3000`;
+    }
+}
+
+/**
+ * Generate titles and hashtags
+ */
+async function generateTitles() {
+    const keywords = document.getElementById('keywordsInput').value.trim();
+    const videoInput = document.getElementById('videoConceptInput').value.trim();
+
+    // Validation
+    if (!keywords) {
+        showAlert('Please enter at least one target keyword', 'error');
+        return;
+    }
+
+    if (isGeneratingTitles) return;
+
+    isGeneratingTitles = true;
+    const generateBtn = document.getElementById('generateTitlesBtn');
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="ph ph-spinner"></i> Generating...';
+
+    try {
+        // Call API to generate titles
+        const response = await fetch('/tiktok-upload-studio/api/generate-titles', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                keywords: keywords,
+                video_input: videoInput
+            })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            // Check for insufficient credits
+            if (data.error_type === 'insufficient_credits') {
+                showAlert('Insufficient credits. Please upgrade your plan.', 'error');
+                return;
+            }
+            throw new Error(data.error || 'Failed to generate titles');
+        }
+
+        // Display results
+        displayGeneratedTitles(data.titles);
+        showAlert('Titles generated successfully! Click a title to use it.', 'success');
+
+    } catch (error) {
+        console.error('Error generating titles:', error);
+        showAlert('Failed to generate titles: ' + error.message, 'error');
+    } finally {
+        isGeneratingTitles = false;
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="ph ph-sparkle"></i> Generate Titles & Hashtags';
+    }
+}
+
+/**
+ * Display generated titles
+ */
+function displayGeneratedTitles(titles) {
+    currentTitles = titles;
+
+    const container = document.getElementById('titlesResultsContainer');
+    const titlesList = document.getElementById('titlesList');
+
+    let html = titles.map((title, index) => `
+        <div class="title-item" onclick="useTitle(${index})">
+            <span class="title-number">${index + 1}</span>
+            <span class="title-text">${escapeHtml(title)}</span>
+            <button class="use-title-btn" onclick="useTitle(${index}); event.stopPropagation();">
+                <i class="ph ph-arrow-down"></i> Use
+            </button>
+        </div>
+    `).join('');
+
+    titlesList.innerHTML = html;
+    container.style.display = 'block';
+}
+
+/**
+ * Use a generated title in the caption field
+ */
+function useTitle(index) {
+    const title = currentTitles[index];
+    const captionField = document.getElementById('videoTitle');
+
+    captionField.value = title;
+    captionField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Highlight the caption field briefly
+    captionField.style.border = '2px solid var(--primary-color)';
+    setTimeout(() => {
+        captionField.style.border = '';
+    }, 1500);
+
+    showAlert('Title added to caption field!', 'success');
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
 }

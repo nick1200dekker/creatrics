@@ -155,7 +155,7 @@
                     </div>
                     <div class="permission-item">
                         <input type="checkbox" id="perm_titles_hashtags">
-                        <label for="perm_titles_hashtags">Titles & Hashtags</label>
+                        <label for="perm_titles_hashtags">Upload Studio</label>
                     </div>
                     <!-- Analytics permission shared across all platforms (defined in YouTube section) -->
                 </div>
@@ -315,7 +315,7 @@ function updateUIForWorkspace() {
                 const categories = {
                     'YouTube': ['keyword_research', 'analyze_video', 'competitors', 'video_script', 'video_title', 'optimize_video', 'thumbnail'],
                     'X (Twitter)': ['x_post_editor', 'reply_guy', 'clip_spaces', 'niche'],
-                    'TikTok': ['trend_finder', 'tiktok_keyword_research', 'tiktok_competitors', 'hook_generator', 'titles_hashtags'],
+                    'TikTok': ['trend_finder', 'tiktok_keyword_research', 'tiktok_competitors', 'hook_generator', 'titles_hashtags'],  // titles_hashtags is now Upload Studio
                     'Content Hub': ['brain_dump', 'mind_map', 'content_wiki', 'content_calendar'],
                     'Analytics': ['analytics']
                 };
@@ -542,7 +542,7 @@ function editPermissions(memberId, permissions) {
                 { id: 'tiktok_keyword_research', label: 'Keyword Research' },
                 { id: 'tiktok_competitors', label: 'Competitors' },
                 { id: 'hook_generator', label: 'Hook Generator' },
-                { id: 'titles_hashtags', label: 'Titles & Hashtags' }
+                { id: 'titles_hashtags', label: 'Upload Studio' }
             ]
         },
         {

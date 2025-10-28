@@ -147,7 +147,6 @@ from app.routes.credits_history import bp as credits_history_bp
 
 # Import TikTok blueprints
 from app.routes.hook_generator import bp as hook_generator_bp
-from app.routes.titles_hashtags import bp as titles_hashtags_bp
 from app.routes.trend_finder import bp as trend_finder_bp
 from app.routes.tiktok_trend_finder import bp as tiktok_trend_finder_bp
 from app.routes.tiktok_keyword_research import bp as tiktok_keyword_research_bp
@@ -191,7 +190,6 @@ app.register_blueprint(news_tracker_bp)
 app.register_blueprint(news_tracker_cron_bp)
 app.register_blueprint(credits_history_bp)
 app.register_blueprint(hook_generator_bp)
-app.register_blueprint(titles_hashtags_bp)
 app.register_blueprint(trend_finder_bp)
 app.register_blueprint(tiktok_trend_finder_bp)
 app.register_blueprint(tiktok_keyword_research_bp)
