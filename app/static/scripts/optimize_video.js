@@ -1820,13 +1820,19 @@ function toggleEditCaptions(button) {
     const textarea = document.getElementById('captionsTextarea');
     const icon = button.querySelector('i');
 
+    // Check if we're currently in edit mode BEFORE switching view
+    const isCurrentlyEditing = !textarea.readOnly && textarea.style.display !== 'none';
+
     // Switch to corrected view if in diff view
     toggleCaptionsView('corrected');
 
-    if (textarea.readOnly) {
+    if (!isCurrentlyEditing) {
+        // Enter edit mode
         textarea.readOnly = false;
         textarea.focus();
         icon.className = 'ph ph-check';
+        button.title = 'Save';
+        textarea.style.outline = '2px solid #3B82F6';
 
         // Add input listener to reset applied status when captions are changed
         textarea.addEventListener('input', async function resetCaptionsApplied() {
@@ -1856,14 +1862,12 @@ function toggleEditCaptions(button) {
 
             textarea.removeEventListener('input', resetCaptionsApplied);
         }, { once: true });
-        button.title = 'Save';
-        button.classList.add('editing');
     } else {
+        // Exit edit mode
         textarea.readOnly = true;
         icon.className = 'ph ph-pencil-simple';
         button.title = 'Edit';
-        button.classList.remove('editing');
-        showToast('✓ Changes saved');
+        textarea.style.outline = 'none';
     }
 }
 
@@ -1879,7 +1883,7 @@ function toggleEditPinnedComment(button) {
         textarea.focus();
         icon.className = 'ph ph-check';
         button.title = 'Save';
-        button.classList.add('editing');
+        textarea.style.outline = '2px solid #3B82F6';
 
         // Add input listener to reset applied status when comment is changed
         textarea.addEventListener('input', async function resetPinnedCommentApplied() {
@@ -1913,8 +1917,7 @@ function toggleEditPinnedComment(button) {
         textarea.readOnly = true;
         icon.className = 'ph ph-pencil-simple';
         button.title = 'Edit';
-        button.classList.remove('editing');
-        showToast('✓ Changes saved');
+        textarea.style.outline = 'none';
     }
 }
 

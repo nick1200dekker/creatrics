@@ -2959,15 +2959,6 @@ html.dark .diff-changed {
     color: var(--text-tertiary);
 }
 
-/* Edit button for captions */
-.edit-btn.editing {
-    background: #10B981;
-    color: white;
-}
-
-html.dark .edit-btn.editing {
-    background: #34D399;
-}
 
 .apply-btn {
     background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);

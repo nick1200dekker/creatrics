@@ -5,13 +5,77 @@ from app.system.auth.permissions import get_workspace_user_id, require_permissio
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.tiktok_competitors.tiktok_competitor_analyzer import TikTokCompetitorAnalyzer
 from app.scripts.tiktok_competitors.tiktok_api import TikTokAPI
-from app.system.services.firebase_service import db
+from app.system.services.firebase_service import db, bucket
 from datetime import datetime, timezone
 import logging
 import os
 import requests
+import io
+import hashlib
+import asyncio
+import httpx
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
+
+async def download_and_store_avatar_async(avatar_url, user_id, sec_uid):
+    """
+    Download TikTok avatar and store permanently in Firebase Storage (async version)
+
+    Args:
+        avatar_url: Original TikTok CDN URL
+        user_id: User ID for storage path
+        sec_uid: TikTok account sec_uid for unique filename
+
+    Returns:
+        Public URL to stored avatar or None if failed
+    """
+    if not avatar_url or not bucket:
+        return None
+
+    try:
+        # Download the image asynchronously
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(avatar_url)
+            response.raise_for_status()
+
+        # Create a unique filename using sec_uid hash
+        filename_hash = hashlib.md5(sec_uid.encode()).hexdigest()[:12]
+        file_extension = 'jpg'  # TikTok avatars are typically JPEG
+        filename = f"tiktok_avatar_{filename_hash}.{file_extension}"
+
+        # Upload to Firebase Storage (blocking operation, run in thread pool)
+        blob_path = f'users/{user_id}/tiktok_avatars/{filename}'
+
+        def upload_to_firebase():
+            blob = bucket.blob(blob_path)
+            blob.upload_from_string(
+                response.content,
+                content_type=response.headers.get('content-type', 'image/jpeg')
+            )
+            blob.make_public()
+            return blob.public_url
+
+        # Run blocking Firebase upload in thread pool
+        loop = asyncio.get_event_loop()
+        public_url = await loop.run_in_executor(None, upload_to_firebase)
+
+        logger.info(f"Avatar stored successfully: {public_url}")
+        return public_url
+
+    except Exception as e:
+        logger.error(f"Error downloading/storing avatar: {e}")
+        return None
+
+def download_and_store_avatar(avatar_url, user_id, sec_uid):
+    """
+    Synchronous wrapper for download_and_store_avatar_async
+    """
+    try:
+        return asyncio.run(download_and_store_avatar_async(avatar_url, user_id, sec_uid))
+    except Exception as e:
+        logger.error(f"Error in sync wrapper: {e}")
+        return None
 
 @bp.route('/')
 @auth_required
@@ -244,6 +308,35 @@ def search_accounts():
         # Sort by follower count
         channels.sort(key=lambda x: x.get('follower_count', 0), reverse=True)
 
+        # Pre-download and store avatars in parallel for all channels
+        user_id = get_workspace_user_id()
+
+        async def download_all_avatars():
+            """Download all avatars in parallel"""
+            tasks = []
+            for channel in channels:
+                if channel.get('avatar'):
+                    tasks.append(
+                        download_and_store_avatar_async(
+                            channel['avatar'],
+                            user_id,
+                            channel['sec_uid']
+                        )
+                    )
+                else:
+                    tasks.append(asyncio.sleep(0))  # Placeholder for channels without avatars
+
+            return await asyncio.gather(*tasks, return_exceptions=True)
+
+        logger.info(f"Pre-downloading {len(channels)} avatars in parallel")
+        stored_avatars = asyncio.run(download_all_avatars())
+
+        # Update channels with stored avatar URLs
+        for i, channel in enumerate(channels):
+            if i < len(stored_avatars) and stored_avatars[i] and not isinstance(stored_avatars[i], Exception):
+                channel['avatar'] = stored_avatars[i]
+                logger.info(f"Updated avatar for {channel.get('nickname')}")
+
         return jsonify({
             'success': True,
             'channels': channels
@@ -276,12 +369,23 @@ def add_competitor():
             if not sec_uid:
                 return jsonify({'success': False, 'error': 'Account sec_uid is required'}), 400
 
+            # Check if avatar is already a Firebase URL (pre-downloaded from search)
+            original_avatar = account_data_from_search.get('avatar', '')
+            if original_avatar and 'firebasestorage.googleapis.com' in original_avatar:
+                # Already stored in Firebase, use as-is
+                avatar_url = original_avatar
+            else:
+                # Download and store avatar permanently
+                stored_avatar = download_and_store_avatar(original_avatar, user_id, sec_uid)
+                # Fallback to original if storage fails
+                avatar_url = stored_avatar if stored_avatar else original_avatar
+
             competitor_data = {
                 'sec_uid': sec_uid,
                 'username': account_data_from_search.get('username', ''),
                 'nickname': account_data_from_search.get('nickname', ''),
                 'bio': account_data_from_search.get('bio', ''),
-                'avatar': account_data_from_search.get('avatar', ''),
+                'avatar': avatar_url,
                 'follower_count': account_data_from_search.get('follower_count', 0),
                 'following_count': account_data_from_search.get('following_count', 0),
                 'video_count': account_data_from_search.get('video_count', 0),
@@ -297,7 +401,7 @@ def add_competitor():
 
             tiktok_api = TikTokAPI()
             username = tiktok_api.extract_username(account_url)
-            
+
             if not username:
                 return jsonify({'success': False, 'error': 'Invalid TikTok account URL. Use format: tiktok.com/@username'}), 400
 
@@ -309,12 +413,18 @@ def add_competitor():
             if not sec_uid:
                 return jsonify({'success': False, 'error': 'Could not get account ID from TikTok'}), 500
 
+            # Download and store avatar permanently
+            original_avatar = account_info.get('avatar', '')
+            stored_avatar = download_and_store_avatar(original_avatar, user_id, sec_uid)
+            # Fallback to original if storage fails
+            avatar_url = stored_avatar if stored_avatar else original_avatar
+
             competitor_data = {
                 'sec_uid': sec_uid,
                 'username': account_info.get('username', ''),
                 'nickname': account_info.get('nickname', ''),
                 'bio': account_info.get('bio', ''),
-                'avatar': account_info.get('avatar', ''),
+                'avatar': avatar_url,
                 'follower_count': account_info.get('follower_count', 0),
                 'following_count': account_info.get('following_count', 0),
                 'video_count': account_info.get('video_count', 0),
