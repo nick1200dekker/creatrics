@@ -152,6 +152,7 @@ def api_upload():
         video_file = request.files.get('video')
         title = request.form.get('title', '')
         privacy_level = request.form.get('privacy_level', 'SELF_ONLY')  # Default to private for testing
+        mode = request.form.get('mode', 'direct')  # 'direct' or 'inbox'
 
         if not video_file:
             return jsonify({'success': False, 'error': 'No video file provided'}), 400
@@ -164,14 +165,15 @@ def api_upload():
         temp_path = f"/tmp/{filename}"
         video_file.save(temp_path)
 
-        logger.info(f"Uploading video to TikTok for user {user_id}: {title}")
+        logger.info(f"Uploading video to TikTok for user {user_id}: {title} (mode: {mode})")
 
         # Upload to TikTok
         result = TikTokUploadService.upload_video(
             user_id=user_id,
             video_path=temp_path,
             title=title,
-            privacy_level=privacy_level
+            privacy_level=privacy_level,
+            mode=mode
         )
 
         # Clean up temp file

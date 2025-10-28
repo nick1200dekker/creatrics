@@ -136,6 +136,15 @@ function setupEventListeners() {
     if (uploadForm) {
         uploadForm.addEventListener('submit', handleUpload);
     }
+
+    // Mode selection - show/hide privacy based on mode
+    const modeRadios = document.querySelectorAll('input[name="mode"]');
+    modeRadios.forEach(radio => {
+        radio.addEventListener('change', handleModeChange);
+    });
+
+    // Initialize privacy visibility based on default mode
+    handleModeChange();
 }
 
 /**
@@ -241,6 +250,22 @@ function formatFileSize(bytes) {
 }
 
 /**
+ * Handle mode change - show/hide privacy options
+ */
+function handleModeChange() {
+    const mode = document.querySelector('input[name="mode"]:checked')?.value;
+    const privacyGroup = document.querySelector('.form-group:has(input[name="privacy"])');
+
+    if (privacyGroup) {
+        if (mode === 'inbox') {
+            privacyGroup.style.display = 'none';
+        } else {
+            privacyGroup.style.display = 'block';
+        }
+    }
+}
+
+/**
  * Handle video upload
  */
 async function handleUpload(e) {
@@ -252,7 +277,8 @@ async function handleUpload(e) {
     }
 
     const title = document.getElementById('videoTitle').value.trim();
-    const privacyLevel = document.querySelector('input[name="privacy"]:checked').value;
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    const privacyLevel = mode === 'inbox' ? 'SELF_ONLY' : document.querySelector('input[name="privacy"]:checked').value;
 
     if (!title) {
         showAlert('Please enter a title/caption', 'error');
@@ -271,6 +297,7 @@ async function handleUpload(e) {
         formData.append('video', selectedFile);
         formData.append('title', title);
         formData.append('privacy_level', privacyLevel);
+        formData.append('mode', mode);
 
         console.log('Uploading video to TikTok...');
 

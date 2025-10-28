@@ -6,6 +6,7 @@ Handles video uploading to TikTok via Content Posting API
 import os
 import requests
 import logging
+import time
 from app.scripts.tiktok_upload_studio.tiktok_oauth_service import TikTokOAuthService
 
 logger = logging.getLogger('tiktok_upload')
@@ -14,10 +15,10 @@ logger = logging.getLogger('tiktok_upload')
 class TikTokUploadService:
     """Service for uploading videos to TikTok"""
 
-    BASE_URL = "https://open.tiktokapis.com/v2/post/publish/inbox"
+    BASE_URL = "https://open.tiktokapis.com/v2/post/publish"
 
     @staticmethod
-    def upload_video(user_id, video_path, title, privacy_level='SELF_ONLY'):
+    def upload_video(user_id, video_path, title, privacy_level='SELF_ONLY', mode='direct'):
         """
         Upload video to TikTok
 
@@ -26,6 +27,7 @@ class TikTokUploadService:
             video_path: Path to video file
             title: Video caption/title
             privacy_level: PUBLIC_TO_EVERYONE, MUTUAL_FOLLOW_FRIENDS, SELF_ONLY, or FOLLOWER_OF_CREATOR
+            mode: 'direct' for direct post, 'inbox' for creator upload (allows editing)
 
         Returns:
             dict: Result with success status and publish info
@@ -39,10 +41,15 @@ class TikTokUploadService:
             # Get video file size
             file_size = os.path.getsize(video_path)
 
-            logger.info(f"Initiating TikTok upload for user {user_id}, file size: {file_size} bytes")
+            # Determine endpoint based on mode
+            if mode == 'inbox':
+                init_url = f"{TikTokUploadService.BASE_URL}/inbox/video/init/"
+                logger.info(f"Initiating TikTok inbox upload for user {user_id}, file size: {file_size} bytes")
+            else:
+                init_url = f"{TikTokUploadService.BASE_URL}/video/init/"
+                logger.info(f"Initiating TikTok direct post for user {user_id}, file size: {file_size} bytes")
 
             # Step 1: Initialize upload
-            init_url = f"{TikTokUploadService.BASE_URL}/video/init/"
 
             headers = {
                 'Authorization': f'Bearer {access_token}',
@@ -122,32 +129,80 @@ class TikTokUploadService:
 
             logger.info(f"Video file uploaded successfully")
 
-            # Step 3: Check publish status
+            # Step 3: Poll publish status until complete or failed
             status_url = "https://open.tiktokapis.com/v2/post/publish/status/fetch/"
-
             status_data = {
                 'publish_id': publish_id
             }
 
-            status_response = requests.post(status_url, json=status_data, headers=headers, timeout=30)
-            status_response.raise_for_status()
-            status_result = status_response.json()
+            max_attempts = 30  # Poll for up to 5 minutes (30 * 10 seconds)
+            attempt = 0
+            publish_status = 'PROCESSING_UPLOAD'
+            fail_reason = None
 
-            logger.info(f"Publish status: {status_result}")
+            while attempt < max_attempts:
+                attempt += 1
 
-            # Get detailed status
-            status_data_obj = status_result.get('data', {})
-            publish_status = status_data_obj.get('status', 'UNKNOWN')
-            fail_reason = status_data_obj.get('fail_reason')
+                logger.info(f"Checking publish status (attempt {attempt}/{max_attempts})")
 
-            logger.info(f"Video publish status: {publish_status}, fail_reason: {fail_reason}")
+                status_response = requests.post(status_url, json=status_data, headers=headers, timeout=30)
+                status_response.raise_for_status()
+                status_result = status_response.json()
+
+                logger.info(f"Publish status response: {status_result}")
+
+                # Get detailed status
+                status_data_obj = status_result.get('data', {})
+                publish_status = status_data_obj.get('status', 'UNKNOWN')
+                fail_reason = status_data_obj.get('fail_reason')
+
+                logger.info(f"Video publish status: {publish_status}, fail_reason: {fail_reason}")
+
+                # Check if processing is complete
+                if publish_status == 'PUBLISH_COMPLETE':
+                    if mode == 'inbox':
+                        logger.info(f"Video uploaded to TikTok inbox successfully!")
+                        return {
+                            'success': True,
+                            'publish_id': publish_id,
+                            'status': publish_status,
+                            'message': 'Video uploaded to TikTok! Check your TikTok inbox notifications and tap to add music/effects and complete the post.'
+                        }
+                    else:
+                        logger.info(f"Video published to TikTok successfully!")
+                        return {
+                            'success': True,
+                            'publish_id': publish_id,
+                            'status': publish_status,
+                            'message': 'Video published to TikTok successfully!'
+                        }
+                elif publish_status == 'FAILED':
+                    logger.error(f"Video publish failed: {fail_reason}")
+                    return {
+                        'success': False,
+                        'publish_id': publish_id,
+                        'status': publish_status,
+                        'error': f'TikTok publish failed: {fail_reason or "Unknown error"}'
+                    }
+
+                # Still processing, wait before next check
+                if attempt < max_attempts:
+                    logger.info(f"Status is {publish_status}, waiting 10 seconds before next check...")
+                    time.sleep(10)
+
+            # Timeout reached
+            logger.warning(f"Publish status check timeout after {max_attempts} attempts. Last status: {publish_status}")
+
+            if mode == 'inbox':
+                message = f'Video uploaded to TikTok inbox (status: {publish_status}). Check your TikTok inbox notifications to complete the post.'
+            else:
+                message = f'Video uploaded to TikTok but still processing (status: {publish_status}). Check your TikTok profile in a few minutes.'
 
             return {
-                'success': True,
+                'success': True,  # Upload succeeded, just still processing
                 'publish_id': publish_id,
                 'status': publish_status,
-                'fail_reason': fail_reason,
-                'message': f'Video uploaded to TikTok! Status: {publish_status}. Check your TikTok profile (may take a few moments to appear).'
+                'message': message
             }
 
         except requests.exceptions.Timeout:
