@@ -1158,15 +1158,6 @@
                 </a>
                 {% endif %}
 
-                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
-                <a href="{{ url_for('analytics.index', platform='tiktok') }}"
-                   class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and (request.args.get('platform') == 'tiktok' or (not request.args.get('platform') and current_platform == 'tiktok')) %}active{% endif %}"
-                   onclick="return BaseApp.checkGuestAccess(event, this)">
-                    <i class="ph ph-chart-line"></i>
-                    <span>Analytics</span>
-                </a>
-                {% endif %}
-
                 <!-- Upload Studio - includes titles/hashtags generation + upload (always visible for owners) -->
                 {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.titles_hashtags %}
                 <a href="{{ url_for('tiktok_upload_studio.index') }}"
@@ -1174,6 +1165,15 @@
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-upload"></i>
                     <span>Upload Studio</span>
+                </a>
+                {% endif %}
+
+                {% if not workspace_info or workspace_info.is_owner or workspace_info.permissions.analytics %}
+                <a href="{{ url_for('analytics.index', platform='tiktok') }}"
+                   class="nav-subitem {% if request.endpoint and 'analytics' in request.endpoint and (request.args.get('platform') == 'tiktok' or (not request.args.get('platform') and current_platform == 'tiktok')) %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-chart-line"></i>
+                    <span>Analytics</span>
                 </a>
                 {% endif %}
             </div>
