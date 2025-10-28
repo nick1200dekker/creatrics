@@ -184,14 +184,27 @@ Here are ALL REAL top-performing videos for this topic (from last month, {total_
             real_data_section=real_data_section
         )
 
-        response = ai_provider.create_completion(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=7000
-        )
+        # ASYNC AI call #1 - thread is freed during AI generation!
+        import asyncio
+
+        async def _call_ai_async():
+            """Wrapper to call async AI in thread pool - frees main thread!"""
+            return await ai_provider.create_completion_async(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=7000
+            )
+
+        # Run async call - thread is freed via run_in_executor internally
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            response = loop.run_until_complete(_call_ai_async())
+        finally:
+            loop.close()
 
         # Parse JSON response
         content = response['content'].strip()
@@ -289,14 +302,27 @@ HERE IS THE REAL DATA - Top performing videos for "{topic}" from the last month:
         logger.info(user_prompt)
         logger.info(f"========== END PROMPT ==========")
 
-        response = ai_provider.create_completion(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.8,
-            max_tokens=7000
-        )
+        # ASYNC AI call #2 - thread is freed during AI generation!
+        import asyncio
+
+        async def _call_ai_async():
+            """Wrapper to call async AI in thread pool - frees main thread!"""
+            return await ai_provider.create_completion_async(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.8,
+                max_tokens=7000
+            )
+
+        # Run async call - thread is freed via run_in_executor internally
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            response = loop.run_until_complete(_call_ai_async())
+        finally:
+            loop.close()
 
         # Parse JSON response
         content = response['content'].strip()
@@ -377,14 +403,27 @@ def generate_ai_insights(results: list, topic: str, context: dict, user_subscrip
             summary_text=summary_text
         )
 
-        response = ai_provider.create_completion(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=7000
-        )
+        # ASYNC AI call #3 - thread is freed during AI generation!
+        import asyncio
+
+        async def _call_ai_async():
+            """Wrapper to call async AI in thread pool - frees main thread!"""
+            return await ai_provider.create_completion_async(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=7000
+            )
+
+        # Run async call - thread is freed via run_in_executor internally
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            response = loop.run_until_complete(_call_ai_async())
+        finally:
+            loop.close()
 
         # Handle different response formats
         insights_text = response.get('content') or response.get('message', {}).get('content', '')

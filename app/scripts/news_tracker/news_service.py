@@ -299,13 +299,26 @@ Return ONLY the post content, nothing else."""
             )
 
             # Generate post using create_completion with messages format
-            response = ai_provider.create_completion(
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.8,
-                max_tokens=7000
-            )
+            # ASYNC AI call - thread is freed during AI generation!
+            import asyncio
+
+            async def _call_ai_async():
+                """Wrapper to call async AI in thread pool - frees main thread!"""
+                return await ai_provider.create_completion_async(
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.8,
+                    max_tokens=7000
+                )
+
+            # Run async call - thread is freed via run_in_executor internally
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(_call_ai_async())
+            finally:
+                loop.close()
 
             # Extract content and token usage from response
             post_content = response.get('content', '').strip()

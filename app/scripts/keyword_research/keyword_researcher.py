@@ -92,14 +92,27 @@ class KeywordResearcher:
         )
 
         try:
-            response = ai_provider.create_completion(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=7000,  # Only need 3 short lines
-                temperature=0.7
-            )
+            # ASYNC AI call - thread is freed during AI generation!
+            import asyncio
+
+            async def _call_ai_async():
+                """Wrapper to call async AI in thread pool - frees main thread!"""
+                return await ai_provider.create_completion_async(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=7000,
+                    temperature=0.7
+                )
+
+            # Run async call - thread is freed via run_in_executor internally
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(_call_ai_async())
+            finally:
+                loop.close()
 
             # Handle different response formats
             if isinstance(response, dict):

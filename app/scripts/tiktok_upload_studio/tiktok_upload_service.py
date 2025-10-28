@@ -78,10 +78,12 @@ class TikTokUploadService:
 
             # Check for errors in response
             if 'error' in init_result:
-                error_msg = init_result['error'].get('message', 'Unknown error')
                 error_code = init_result['error'].get('code', 'unknown')
-                logger.error(f"TikTok init error - code: {error_code}, message: {error_msg}")
-                return {'success': False, 'error': f"{error_code}: {error_msg}"}
+                # TikTok returns error.code='ok' for successful requests
+                if error_code != 'ok':
+                    error_msg = init_result['error'].get('message', 'Unknown error')
+                    logger.error(f"TikTok init error - code: {error_code}, message: {error_msg}")
+                    return {'success': False, 'error': f"{error_code}: {error_msg}"}
 
             # Check if data exists
             if 'data' not in init_result:
@@ -133,11 +135,19 @@ class TikTokUploadService:
 
             logger.info(f"Publish status: {status_result}")
 
+            # Get detailed status
+            status_data_obj = status_result.get('data', {})
+            publish_status = status_data_obj.get('status', 'UNKNOWN')
+            fail_reason = status_data_obj.get('fail_reason')
+
+            logger.info(f"Video publish status: {publish_status}, fail_reason: {fail_reason}")
+
             return {
                 'success': True,
                 'publish_id': publish_id,
-                'status': status_result.get('data', {}).get('status'),
-                'message': 'Video uploaded to TikTok successfully! It may take a few moments to appear.'
+                'status': publish_status,
+                'fail_reason': fail_reason,
+                'message': f'Video uploaded to TikTok! Status: {publish_status}. Check your TikTok profile (may take a few moments to appear).'
             }
 
         except requests.exceptions.Timeout:
@@ -193,7 +203,9 @@ class TikTokUploadService:
             result = response.json()
 
             if 'error' in result:
-                return {'success': False, 'error': result['error'].get('message')}
+                error_code = result['error'].get('code', 'unknown')
+                if error_code != 'ok':
+                    return {'success': False, 'error': result['error'].get('message')}
 
             status_data = result.get('data', {})
 

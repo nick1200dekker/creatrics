@@ -448,13 +448,26 @@ class SpaceProcessor:
         user_prompt_template = load_prompt('prompts.txt', 'SUMMARY_USER')
         user_prompt = user_prompt_template.format(ai_text=ai_text)
 
-        response = self.ai_provider.create_completion(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            max_tokens=7000
-        )
+        # ASYNC AI call - thread is freed during AI generation!
+        import asyncio
+
+        async def _call_ai_async():
+            """Wrapper to call async AI in thread pool - frees main thread!"""
+            return await self.ai_provider.create_completion_async(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                max_tokens=7000
+            )
+
+        # Run async call - thread is freed via run_in_executor internally
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            response = loop.run_until_complete(_call_ai_async())
+        finally:
+            loop.close()
         
         return response['content'], {
             'input_tokens': response['usage']['input_tokens'],
@@ -483,13 +496,26 @@ class SpaceProcessor:
             segments_text=segments_text
         )
         
-        highlights_response = self.ai_provider.create_completion(
-            messages=[
-                {"role": "system", "content": "You extract substantial business insights and detailed highlights from conversations. You map speaker IDs to real names when confident and focus on longer, valuable content."},
-                {"role": "user", "content": highlight_prompt}
-            ],
-            max_tokens=7000
-        )
+        # ASYNC AI call - thread is freed during AI generation!
+        import asyncio
+
+        async def _call_ai_async_highlights():
+            """Wrapper to call async AI in thread pool - frees main thread!"""
+            return await self.ai_provider.create_completion_async(
+                messages=[
+                    {"role": "system", "content": "You extract substantial business insights and detailed highlights from conversations. You map speaker IDs to real names when confident and focus on longer, valuable content."},
+                    {"role": "user", "content": highlight_prompt}
+                ],
+                max_tokens=7000
+            )
+
+        # Run async call - thread is freed via run_in_executor internally
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            highlights_response = loop.run_until_complete(_call_ai_async_highlights())
+        finally:
+            loop.close()
         
         highlights_tokens = {
             'input_tokens': highlights_response['usage']['input_tokens'],
@@ -502,13 +528,26 @@ class SpaceProcessor:
             segments_text=segments_text
         )
         
-        quotes_response = self.ai_provider.create_completion(
-            messages=[
-                {"role": "system", "content": "You extract powerful, quotable moments from conversations. You focus on short, punchy statements that could be headlines or tweets. You map speaker IDs to real names when confident."},
-                {"role": "user", "content": quotes_prompt}
-            ],
-            max_tokens=7000
-        )
+        # ASYNC AI call - thread is freed during AI generation!
+        import asyncio
+
+        async def _call_ai_async_quotes():
+            """Wrapper to call async AI in thread pool - frees main thread!"""
+            return await self.ai_provider.create_completion_async(
+                messages=[
+                    {"role": "system", "content": "You extract powerful, quotable moments from conversations. You focus on short, punchy statements that could be headlines or tweets. You map speaker IDs to real names when confident."},
+                    {"role": "user", "content": quotes_prompt}
+                ],
+                max_tokens=7000
+            )
+
+        # Run async call - thread is freed via run_in_executor internally
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            quotes_response = loop.run_until_complete(_call_ai_async_quotes())
+        finally:
+            loop.close()
         
         quotes_tokens = {
             'input_tokens': quotes_response['usage']['input_tokens'],

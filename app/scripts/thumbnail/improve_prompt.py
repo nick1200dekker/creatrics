@@ -157,11 +157,24 @@ def improve_editing_prompt(prompt_text, image_base64=None, mime_type='image/jpeg
                 {"role": "user", "content": full_prompt}
             ]
             
-            response = ai_provider.create_completion(
-                messages=messages,
-                temperature=0.7,
-                max_tokens=7000
-            )
+            # ASYNC AI call - thread is freed during AI generation!
+            import asyncio
+
+            async def _call_ai_async():
+                """Wrapper to call async AI in thread pool - frees main thread!"""
+                return await ai_provider.create_completion_async(
+                    messages=messages,
+                    temperature=0.7,
+                    max_tokens=7000
+                )
+
+            # Run async call - thread is freed via run_in_executor internally
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(_call_ai_async())
+            finally:
+                loop.close()
         
         # Extract improved prompt from unified response
         improved_prompt = response['content'].strip()

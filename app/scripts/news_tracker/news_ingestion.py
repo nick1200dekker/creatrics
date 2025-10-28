@@ -163,11 +163,25 @@ class NewsRadarService:
             max_tokens = min(len(articles) * 100, 8000)
 
             logger.info(f"Batch categorizing {len(articles)} articles in single AI call...")
-            response = ai_provider.create_completion(
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-                max_tokens=max_tokens
-            )
+
+            # ASYNC AI call - thread is freed during AI generation!
+            import asyncio
+
+            async def _call_ai_async():
+                """Wrapper to call async AI in thread pool - frees main thread!"""
+                return await ai_provider.create_completion_async(
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.3,
+                    max_tokens=max_tokens
+                )
+
+            # Run async call - thread is freed via run_in_executor internally
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(_call_ai_async())
+            finally:
+                loop.close()
 
             content = response.get('content', '').strip()
 

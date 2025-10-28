@@ -195,13 +195,26 @@ class VideoScriptGenerator:
                         max_tokens = min(8000, duration * 500)
 
                     # Generate using AI provider with simple prompt
-                    response = ai_provider.create_completion(
-                        messages=[
-                            {"role": "user", "content": simple_prompt}
-                        ],
-                        temperature=0.8,
-                        max_tokens=max_tokens
-                    )
+                    # ASYNC AI call - thread is freed during AI generation!
+                    import asyncio
+
+                    async def _call_ai_async():
+                        """Wrapper to call async AI in thread pool - frees main thread!"""
+                        return await ai_provider.create_completion_async(
+                            messages=[
+                                {"role": "user", "content": simple_prompt}
+                            ],
+                            temperature=0.8,
+                            max_tokens=max_tokens
+                        )
+
+                    # Run async call - thread is freed via run_in_executor internally
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        response = loop.run_until_complete(_call_ai_async())
+                    finally:
+                        loop.close()
 
                     # Get the content - handle both dict and string responses
                     if isinstance(response, dict):

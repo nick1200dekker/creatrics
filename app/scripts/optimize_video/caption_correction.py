@@ -632,14 +632,27 @@ Return ONLY the SRT file:"""
             estimated_output_tokens = len(word_list_text) // 3
             max_tokens = min(estimated_output_tokens, 8000)
 
-            response = ai_provider_manager.create_completion(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.3,
-                max_tokens=max_tokens
-            )
+            # ASYNC AI call - thread is freed during AI generation!
+            import asyncio
+
+            async def _call_ai_async():
+                """Wrapper to call async AI in thread pool - frees main thread!"""
+                return await ai_provider_manager.create_completion_async(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=max_tokens
+                )
+
+            # Run async call - thread is freed via run_in_executor internally
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(_call_ai_async())
+            finally:
+                loop.close()
 
             corrected_srt = response['content']
             token_usage = response.get('usage', {})
@@ -778,14 +791,27 @@ Return ONLY the SRT file:"""
                 logger.info(f"Processing batch {batch_num}/{len(batches)} ({len(batch_words)} words, {len(word_list_text)} chars)")
                 logger.info(f"BATCH {batch_num} - First 300 chars sent to AI:\n{word_list_text[:300]}")
 
-                response = ai_provider_manager.create_completion(
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.3,
-                    max_tokens=7000
-                )
+                # ASYNC AI call - thread is freed during AI generation!
+                import asyncio
+
+                async def _call_ai_async():
+                    """Wrapper to call async AI in thread pool - frees main thread!"""
+                    return await ai_provider_manager.create_completion_async(
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ],
+                        temperature=0.3,
+                        max_tokens=7000
+                    )
+
+                # Run async call - thread is freed via run_in_executor internally
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    response = loop.run_until_complete(_call_ai_async())
+                finally:
+                    loop.close()
 
                 batch_srt = response['content'].strip()
                 usage = response.get('usage', {})
@@ -1004,14 +1030,27 @@ Return the corrected SRT file with NO overlapping timestamps:"""
 
             logger.info(f"Using max_tokens={max_tokens} for caption correction (provider: {provider_name})")
 
-            response = ai_provider.create_completion(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.3,
-                max_tokens=max_tokens  # Provider-aware token limit
-            )
+            # ASYNC AI call - thread is freed during AI generation!
+            import asyncio
+
+            async def _call_ai_async():
+                """Wrapper to call async AI in thread pool - frees main thread!"""
+                return await ai_provider.create_completion_async(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=max_tokens  # Provider-aware token limit
+                )
+
+            # Run async call - thread is freed via run_in_executor internally
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(_call_ai_async())
+            finally:
+                loop.close()
 
             corrected_srt = response.get('content', '') if isinstance(response, dict) else str(response)
 
@@ -1056,14 +1095,27 @@ Return the corrected SRT file with NO overlapping timestamps:"""
 
             logger.info(f"Caption correction: Expecting {marker_count} markers (0-{max_marker})")
 
-            response = ai_provider.create_completion(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.3,
-                max_tokens=min(7000, len(text.split()) * 2)  # Ensure enough tokens for output
-            )
+            # ASYNC AI call - thread is freed during AI generation!
+            import asyncio
+
+            async def _call_ai_async():
+                """Wrapper to call async AI in thread pool - frees main thread!"""
+                return await ai_provider.create_completion_async(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=min(7000, len(text.split()) * 2)  # Ensure enough tokens for output
+                )
+
+            # Run async call - thread is freed via run_in_executor internally
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(_call_ai_async())
+            finally:
+                loop.close()
 
             corrected_text = response.get('content', '') if isinstance(response, dict) else str(response)
 
@@ -1155,14 +1207,27 @@ SRT SEGMENT:
 
 Return the corrected SRT segment with NO overlapping timestamps:"""
 
-                response = ai_provider.create_completion(
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.3,
-                    max_tokens=7000  # Increased to 20000 for all providers
-                )
+                # ASYNC AI call - thread is freed during AI generation!
+                import asyncio
+
+                async def _call_ai_async():
+                    """Wrapper to call async AI in thread pool - frees main thread!"""
+                    return await ai_provider.create_completion_async(
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ],
+                        temperature=0.3,
+                        max_tokens=7000  # Increased to 20000 for all providers
+                    )
+
+                # Run async call - thread is freed via run_in_executor internally
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    response = loop.run_until_complete(_call_ai_async())
+                finally:
+                    loop.close()
 
                 corrected_batch = response.get('content', '') if isinstance(response, dict) else str(response)
                 corrected_batches.append(corrected_batch.strip())
