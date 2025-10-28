@@ -123,7 +123,7 @@ class TikTokUploadService:
             logger.info(f"Video file uploaded successfully")
 
             # Step 3: Check publish status
-            status_url = f"{TikTokUploadService.BASE_URL}/video/status/fetch/"
+            status_url = "https://open.tiktokapis.com/v2/post/publish/status/fetch/"
 
             status_data = {
                 'publish_id': publish_id
@@ -186,11 +186,11 @@ class TikTokUploadService:
             if not access_token:
                 return {'success': False, 'error': 'Not connected to TikTok'}
 
-            status_url = f"{TikTokUploadService.BASE_URL}/video/status/fetch/"
+            status_url = "https://open.tiktokapis.com/v2/post/publish/status/fetch/"
 
             headers = {
                 'Authorization': f'Bearer {access_token}',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json; charset=UTF-8'
             }
 
             status_data = {
