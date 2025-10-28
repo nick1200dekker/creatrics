@@ -301,8 +301,11 @@ class TikTokOAuthService:
             result = response.json()
 
             if 'error' in result:
-                logger.error(f"TikTok user info error: {result.get('error')}")
-                return None
+                error_code = result['error'].get('code', 'unknown')
+                # TikTok returns error.code='ok' for successful requests
+                if error_code != 'ok':
+                    logger.error(f"TikTok user info error: {result.get('error')}")
+                    return None
 
             user_data = result.get('data', {}).get('user', {})
 
