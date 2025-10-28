@@ -1584,6 +1584,16 @@ html.dark .url-optimize-button:hover:not(:disabled) {
     animation: spin 1s linear infinite;
 }
 
+.apply-btn-icon.success {
+    background: #10B981 !important;
+    color: white !important;
+}
+
+html.dark .apply-btn-icon.success {
+    background: #10B981 !important;
+    color: white !important;
+}
+
 html.dark .apply-btn-icon:hover:not(:disabled) {
     background: rgba(96, 165, 250, 0.15);
     color: #60A5FA;
@@ -2769,6 +2779,11 @@ html.dark .comment-preview:focus {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.captions-controls .apply-btn-icon {
+    flex-shrink: 0;
 }
 
 .toggle-view-btns {

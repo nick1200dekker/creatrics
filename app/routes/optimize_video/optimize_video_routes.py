@@ -1430,3 +1430,58 @@ def apply_pinned_comment(video_id):
             'success': False,
             'error': f'Failed to apply pinned comment: {str(e)}'
         }), 500
+
+@bp.route('/api/reset-applied-status/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def reset_applied_status(video_id):
+    """Reset applied status when user edits content"""
+    try:
+        user_id = get_workspace_user_id()
+        request_data = request.get_json()
+        content_type = request_data.get('type')  # 'description', 'captions', or 'pinned_comment'
+
+        if not content_type:
+            return jsonify({
+                'success': False,
+                'error': 'Content type is required'
+            }), 400
+
+        # Get optimization document
+        optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
+        optimization_doc = optimization_ref.get()
+
+        if not optimization_doc.exists:
+            return jsonify({
+                'success': False,
+                'error': 'Optimization not found'
+            }), 404
+
+        # Update based on content type
+        update_data = {}
+        if content_type == 'description':
+            # Clear applied_description_at timestamp
+            update_data['applied_description_at'] = None
+        elif content_type == 'captions':
+            # Set preview back to true
+            update_data['corrected_captions.preview'] = True
+            update_data['corrected_captions.applied_at'] = None
+        elif content_type == 'pinned_comment':
+            # Set preview back to true
+            update_data['pinned_comment.preview'] = True
+            update_data['pinned_comment.applied_at'] = None
+
+        if update_data:
+            optimization_ref.update(update_data)
+            logger.info(f"Reset applied status for {content_type} on video {video_id}")
+
+        return jsonify({
+            'success': True
+        })
+
+    except Exception as e:
+        logger.error(f"Error resetting applied status: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

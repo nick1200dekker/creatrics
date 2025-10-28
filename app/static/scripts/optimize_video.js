@@ -10,6 +10,16 @@ let currentInputMode = 'public'; // 'public', 'private', or 'url'
 let hasYouTubeConnected = false; // Track if YouTube is connected
 let currentOptimizationData = null; // Store current optimization data to prevent loss when generating additional optimizations
 
+// Track applied optimizations to prevent duplicate API calls
+// This data comes from Firebase and is stored in currentOptimizationData
+let appliedOptimizations = {
+    title: null,
+    description: null,
+    tags: null,
+    captions: false,
+    pinnedComment: false
+};
+
 // Load videos on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Check for ongoing optimization
@@ -768,6 +778,34 @@ async function runSelectedOptimizations(videoId) {
                 return;
             }
 
+            // Check if error message contains transcript-related keywords
+            if (data.error && (data.error.toLowerCase().includes('transcript') || data.error.toLowerCase().includes('captions'))) {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('resultsSection').style.display = 'block';
+                document.getElementById('resultsSection').innerHTML = `
+                    <div class="transcript-unavailable-card" style="max-width: 600px; margin: 3rem auto;">
+                        <div class="error-icon-wrapper" style="width: 80px; height: 80px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem;">
+                            <i class="ph ph-clock-countdown" style="font-size: 2.5rem; color: #F59E0B;"></i>
+                        </div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: 700; text-align: center;">Transcript Not Available Yet</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; text-align: center; line-height: 1.6;">
+                            YouTube typically generates transcripts 15-30 minutes after upload. Please try again later.
+                        </p>
+                        <div style="display: flex; gap: 1rem; justify-content: center;">
+                            <button onclick="backToVideos()" class="selection-btn selection-btn-secondary">
+                                <i class="ph ph-arrow-left"></i>
+                                Back to Videos
+                            </button>
+                            <button onclick="runSelectedOptimizations('${currentVideoId}')" class="selection-btn selection-btn-primary">
+                                <i class="ph ph-arrow-clockwise"></i>
+                                Try Again
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
             throw new Error(data.error || 'Optimization failed');
         }
 
@@ -798,8 +836,30 @@ async function runSelectedOptimizations(videoId) {
     } catch (error) {
         console.error('Error optimizing video:', error);
         document.getElementById('loadingSection').style.display = 'none';
-        document.getElementById('videosListSection').style.display = 'block';
-        alert(`Failed to optimize video: ${error.message}`);
+        document.getElementById('resultsSection').style.display = 'block';
+
+        // Show nice error message instead of alert
+        document.getElementById('resultsSection').innerHTML = `
+            <div class="transcript-unavailable-card" style="max-width: 600px; margin: 3rem auto;">
+                <div class="error-icon-wrapper" style="width: 80px; height: 80px; background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem;">
+                    <i class="ph ph-warning-circle" style="font-size: 2.5rem; color: #EF4444;"></i>
+                </div>
+                <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: 700; text-align: center;">Optimization Failed</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; text-align: center; line-height: 1.6;">
+                    ${escapeHtml(error.message)}
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button onclick="backToVideos()" class="selection-btn selection-btn-secondary">
+                        <i class="ph ph-arrow-left"></i>
+                        Back to Videos
+                    </button>
+                    <button onclick="runSelectedOptimizations('${currentVideoId}')" class="selection-btn selection-btn-primary">
+                        <i class="ph ph-arrow-clockwise"></i>
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        `;
     }
 }
 
@@ -823,6 +883,13 @@ function displayOptimizationResults(data) {
                    JSON.stringify(data.optimized_tags) !== JSON.stringify(data.current_tags);
     const hasCaptions = data.corrected_captions && data.corrected_captions.corrected_srt;
     const hasPinnedComment = data.pinned_comment && data.pinned_comment.comment_text;
+
+    // Load applied status from Firebase data
+    appliedOptimizations.title = data.applied_title || null;
+    appliedOptimizations.description = data.applied_description_at ? data.optimized_description : null;
+    appliedOptimizations.tags = data.applied_tags_at && data.optimized_tags ? JSON.stringify(data.optimized_tags.sort()) : null;
+    appliedOptimizations.captions = data.corrected_captions && !data.corrected_captions.preview;
+    appliedOptimizations.pinnedComment = data.pinned_comment && !data.pinned_comment.preview;
 
     const html = `
         <div class="results-header">
@@ -908,7 +975,7 @@ function displayOptimizationResults(data) {
                 </div>
                 <div class="comparison-box optimized-box">
                     <div class="comparison-label">
-                        Optimized Description
+                        <span>Optimized Description</span>
                         <div class="action-btns">
                             <button class="edit-btn" onclick="toggleEditDescription(this)" title="Edit">
                                 <i class="ph ph-pencil-simple"></i>
@@ -1050,31 +1117,31 @@ function displayOptimizationResults(data) {
                             <button class="edit-btn" onclick="toggleEditCaptions(this)" title="Edit" id="editCaptionsBtn">
                                 <i class="ph ph-pencil-simple"></i>
                             </button>
+                            <button class="apply-btn-icon" onclick="applyCaptions()" title="Apply to YouTube">
+                                <i class="ph ph-youtube-logo"></i>
+                            </button>
                         </div>
                     </div>
                     <div id="captionsDiffView" class="captions-diff-view">
                         ${generateCaptionsDiff(data.corrected_captions.original_srt || '', data.corrected_captions.corrected_srt || '')}
                     </div>
                     <textarea class="caption-preview" id="captionsTextarea" style="display: none;">${escapeHtml(data.corrected_captions.corrected_srt || '')}</textarea>
-                    <button class="apply-btn" onclick="applyCaptions()">
-                        <i class="ph ph-youtube-logo"></i>
-                        Apply to YouTube
-                    </button>
                 </div>
                 ` : ''}
                 ${hasPinnedComment ? `
                 <div class="advanced-result-box">
                     <div class="captions-header">
                         <h4><i class="ph ph-chat-circle"></i> Pinned Comment</h4>
-                        <button class="edit-btn" onclick="toggleEditPinnedComment(this)" title="Edit" id="editPinnedCommentBtn">
-                            <i class="ph ph-pencil-simple"></i>
-                        </button>
+                        <div class="captions-controls">
+                            <button class="edit-btn" onclick="toggleEditPinnedComment(this)" title="Edit" id="editPinnedCommentBtn">
+                                <i class="ph ph-pencil-simple"></i>
+                            </button>
+                            <button class="apply-btn-icon" onclick="applyPinnedComment()" title="Post to YouTube">
+                                <i class="ph ph-youtube-logo"></i>
+                            </button>
+                        </div>
                     </div>
                     <textarea class="comment-preview" id="pinnedCommentPreview" readonly>${escapeHtml(data.pinned_comment.comment_text || '')}</textarea>
-                    <button class="apply-btn" onclick="applyPinnedComment()">
-                        <i class="ph ph-youtube-logo"></i>
-                        Post to YouTube
-                    </button>
                 </div>
                 ` : ''}
             </div>
@@ -1127,6 +1194,85 @@ function displayOptimizationResults(data) {
 
     // Initialize character count
     updateCharacterCount();
+
+    // Show checkmarks on already-applied optimizations
+    updateAppliedButtonStates();
+}
+
+/**
+ * Update button states to show checkmarks for already-applied optimizations
+ */
+function updateAppliedButtonStates() {
+    // Check title buttons
+    if (appliedOptimizations.title) {
+        const titleButtons = document.querySelectorAll('.suggestion-item');
+        titleButtons.forEach(item => {
+            const titleText = item.querySelector('.suggestion-text').textContent.trim();
+            if (titleText === appliedOptimizations.title) {
+                const applyBtn = item.querySelector('.apply-btn-icon');
+                if (applyBtn) {
+                    const icon = applyBtn.querySelector('i');
+                    if (icon) {
+                        icon.className = 'ph ph-check';
+                        applyBtn.classList.add('success');
+                        applyBtn.disabled = true;
+                    }
+                }
+            }
+        });
+    }
+
+    // Check description button
+    if (appliedOptimizations.description) {
+        const descriptionBtn = document.querySelector('.comparison-box.optimized-box .apply-btn-icon[onclick*="applyDescription"]');
+        if (descriptionBtn) {
+            const icon = descriptionBtn.querySelector('i');
+            if (icon) {
+                icon.className = 'ph ph-check';
+                descriptionBtn.classList.add('success');
+                descriptionBtn.disabled = true;
+            }
+        }
+    }
+
+    // Check tags button
+    if (appliedOptimizations.tags) {
+        const tagsBtn = document.querySelector('.apply-btn-icon[onclick*="applyTags"]');
+        if (tagsBtn) {
+            const icon = tagsBtn.querySelector('i');
+            if (icon) {
+                icon.className = 'ph ph-check';
+                tagsBtn.classList.add('success');
+                tagsBtn.disabled = true;
+            }
+        }
+    }
+
+    // Check captions button
+    if (appliedOptimizations.captions) {
+        const captionsBtn = document.querySelector('.advanced-result-box:has(#captionsTextarea) .apply-btn-icon');
+        if (captionsBtn) {
+            const icon = captionsBtn.querySelector('i');
+            if (icon) {
+                icon.className = 'ph ph-check';
+                captionsBtn.classList.add('success');
+                captionsBtn.disabled = true;
+            }
+        }
+    }
+
+    // Check pinned comment button
+    if (appliedOptimizations.pinnedComment) {
+        const commentBtn = document.querySelector('.advanced-result-box:has(#pinnedCommentPreview) .apply-btn-icon');
+        if (commentBtn) {
+            const icon = commentBtn.querySelector('i');
+            if (icon) {
+                icon.className = 'ph ph-check';
+                commentBtn.classList.add('success');
+                commentBtn.disabled = true;
+            }
+        }
+    }
 }
 
 /**
@@ -1199,158 +1345,197 @@ async function generateMissingOptimization(type) {
  * Apply captions to YouTube
  */
 async function applyCaptions() {
-    try {
-        const captionPreview = document.getElementById('captionsTextarea');
-        const correctedSrt = captionPreview ? captionPreview.value : null;
+    const captionPreview = document.getElementById('captionsTextarea');
+    const correctedSrt = captionPreview ? captionPreview.value : null;
 
-        if (!correctedSrt) {
-            showToast('❌ No caption data available');
-            return;
-        }
-
-        // Find the apply button in the captions section
-        const captionsSection = document.querySelector('.advanced-result-box:has(#captionsTextarea)');
-        const applyButton = captionsSection ? captionsSection.querySelector('.apply-btn') : null;
-        const icon = applyButton ? applyButton.querySelector('i') : null;
-        const originalIconClass = icon ? icon.className : '';
-
-        if (applyButton) {
-            applyButton.disabled = true;
-            if (icon) icon.className = 'ph ph-spinner spin';
-        }
-
-        showToast('Uploading captions to YouTube...');
-
-        const response = await fetch(`/optimize-video/api/apply-captions/${currentVideoId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                corrected_srt: correctedSrt
-            })
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to apply captions');
-        }
-
-        // Show success state
-        if (applyButton && icon) {
-            icon.className = 'ph ph-check';
-            applyButton.style.background = '#10B981';
-            applyButton.style.color = '#fff';
-            applyButton.innerHTML = '<i class="ph ph-check"></i> Applied to YouTube';
-
-            setTimeout(() => {
-                applyButton.disabled = true;
-            }, 2000);
-        }
-
-        showToast('✅ Captions uploaded to YouTube!');
-
-    } catch (error) {
-        console.error('Error applying captions:', error);
-
-        // Restore button state on error
-        const captionsSection = document.querySelector('.advanced-result-box:has(#captionsTextarea)');
-        const applyButton = captionsSection ? captionsSection.querySelector('.apply-btn') : null;
-        const icon = applyButton ? applyButton.querySelector('i') : null;
-
-        if (applyButton && icon) {
-            icon.className = 'ph ph-youtube-logo';
-            applyButton.disabled = false;
-        }
-
-        // Check for quota exceeded error
-        const errorMessage = error.message || '';
-        if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
-            showQuotaExceededModal();
-        } else {
-            showToast(`❌ ${error.message}`);
-        }
+    if (!correctedSrt) {
+        showToast('❌ No caption data available');
+        return;
     }
+
+    // Check if captions have already been applied
+    if (appliedOptimizations.captions) {
+        showToast('⚠️ Captions have already been applied to YouTube');
+        return;
+    }
+
+    // Find the apply button in the captions section
+    const captionsSection = document.querySelector('.advanced-result-box:has(#captionsTextarea)');
+    const applyButton = captionsSection ? captionsSection.querySelector('.apply-btn-icon') : null;
+    const icon = applyButton ? applyButton.querySelector('i') : null;
+    const originalIconClass = icon ? icon.className : '';
+
+    showConfirmModal('Apply Captions', 'Upload corrected captions to YouTube? This will replace the existing captions for this video.', async () => {
+        try {
+            if (applyButton) {
+                applyButton.disabled = true;
+                if (icon) icon.className = 'ph ph-spinner spin';
+            }
+
+            showToast('Uploading captions to YouTube...');
+
+            const response = await fetch(`/optimize-video/api/apply-captions/${currentVideoId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    corrected_srt: correctedSrt
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to apply captions');
+            }
+
+            // Mark captions as applied (will be persisted to Firebase by backend)
+            appliedOptimizations.captions = true;
+
+            // Show success state
+            if (applyButton && icon) {
+                icon.className = 'ph ph-check';
+                applyButton.classList.add('success');
+
+                setTimeout(() => {
+                    applyButton.disabled = true;
+                }, 2000);
+            }
+
+            showToast('✅ Captions uploaded to YouTube!');
+
+        } catch (error) {
+            console.error('Error applying captions:', error);
+
+            // Restore button state on error
+            if (applyButton && icon) {
+                icon.className = originalIconClass;
+                applyButton.disabled = false;
+            }
+
+            // Check for quota exceeded error
+            const errorMessage = error.message || '';
+            if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
+                showQuotaExceededModal();
+            } else {
+                showToast(`❌ ${error.message}`);
+            }
+        }
+    });
 }
 
 /**
  * Apply pinned comment to YouTube
  */
 async function applyPinnedComment() {
-    try {
-        const commentPreview = document.getElementById('pinnedCommentPreview');
-        const commentText = commentPreview ? commentPreview.value : null;
+    const commentPreview = document.getElementById('pinnedCommentPreview');
+    const commentText = commentPreview ? commentPreview.value : null;
 
-        if (!commentText) {
-            showToast('❌ No comment text available');
-            return;
-        }
-
-        // Find the apply button in the pinned comment section
-        const commentSection = document.querySelector('.advanced-result-box:has(#pinnedCommentPreview)');
-        const applyButton = commentSection ? commentSection.querySelector('.apply-btn') : null;
-        const icon = applyButton ? applyButton.querySelector('i') : null;
-        const originalIconClass = icon ? icon.className : '';
-
-        if (applyButton) {
-            applyButton.disabled = true;
-            if (icon) icon.className = 'ph ph-spinner spin';
-        }
-
-        showToast('Posting comment to YouTube...');
-
-        const response = await fetch(`/optimize-video/api/apply-pinned-comment/${currentVideoId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                comment_text: commentText
-            })
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to post comment');
-        }
-
-        // Show success state
-        if (applyButton && icon) {
-            icon.className = 'ph ph-check';
-            applyButton.style.background = '#10B981';
-            applyButton.style.color = '#fff';
-            applyButton.innerHTML = '<i class="ph ph-check"></i> Applied to YouTube';
-
-            setTimeout(() => {
-                applyButton.disabled = true;
-            }, 2000);
-        }
-
-        showToast('✅ Comment posted to YouTube! Remember to pin it in YouTube Studio.');
-
-    } catch (error) {
-        console.error('Error posting comment:', error);
-
-        // Restore button state on error
-        const commentSection = document.querySelector('.advanced-result-box:has(#pinnedCommentPreview)');
-        const applyButton = commentSection ? commentSection.querySelector('.apply-btn') : null;
-        const icon = applyButton ? applyButton.querySelector('i') : null;
-
-        if (applyButton && icon) {
-            icon.className = 'ph ph-youtube-logo';
-            applyButton.disabled = false;
-        }
-
-        // Check for quota exceeded error
-        const errorMessage = error.message || '';
-        if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
-            showQuotaExceededModal();
-        } else {
-            showToast(`❌ ${error.message}`);
-        }
+    if (!commentText) {
+        showToast('❌ No comment text available');
+        return;
     }
+
+    // Check if pinned comment has already been applied
+    if (appliedOptimizations.pinnedComment) {
+        showToast('⚠️ Comment has already been posted to YouTube');
+        return;
+    }
+
+    // Find the apply button in the pinned comment section
+    const commentSection = document.querySelector('.advanced-result-box:has(#pinnedCommentPreview)');
+    const applyButton = commentSection ? commentSection.querySelector('.apply-btn-icon') : null;
+    const icon = applyButton ? applyButton.querySelector('i') : null;
+    const originalIconClass = icon ? icon.className : '';
+
+    const preview = commentText.length > 100 ? commentText.substring(0, 100) + '...' : commentText;
+
+    showConfirmModal('Post Comment', `Post this comment to YouTube?\n\n"${preview}"\n\nRemember to pin it in YouTube Studio after posting.`, async () => {
+        try {
+            if (applyButton) {
+                applyButton.disabled = true;
+                if (icon) icon.className = 'ph ph-spinner spin';
+            }
+
+            showToast('Posting comment to YouTube...');
+
+            const response = await fetch(`/optimize-video/api/apply-pinned-comment/${currentVideoId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    comment_text: commentText
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to post comment');
+            }
+
+            // Mark pinned comment as applied (will be persisted to Firebase by backend)
+            appliedOptimizations.pinnedComment = true;
+
+            // Show success state
+            if (applyButton && icon) {
+                icon.className = 'ph ph-check';
+                applyButton.classList.add('success');
+
+                setTimeout(() => {
+                    applyButton.disabled = true;
+                }, 2000);
+            }
+
+            // Show success panel with link
+            const commentId = data.comment_id || '';
+            const videoUrl = `https://www.youtube.com/watch?v=${currentVideoId}`;
+            const commentUrl = commentId ? `${videoUrl}&lc=${commentId}` : videoUrl;
+
+            const successPanel = document.createElement('div');
+            successPanel.className = 'success-panel';
+            successPanel.style.cssText = 'margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px;';
+            successPanel.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                    <i class="ph ph-check-circle" style="font-size: 1.25rem; color: #10B981;"></i>
+                    <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary);">
+                        Comment posted successfully
+                    </span>
+                </div>
+                <p style="margin: 0 0 0.75rem 0; font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5;">
+                    Remember to pin the comment and like it in YouTube Studio to boost engagement.
+                </p>
+                <a href="${commentUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.875rem; background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: 6px; font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); text-decoration: none; transition: all 0.2s ease;">
+                    <i class="ph ph-arrow-square-out"></i>
+                    View Comment on YouTube
+                </a>
+            `;
+
+            // Insert success panel after the comment preview
+            commentSection.appendChild(successPanel);
+
+            showToast('✅ Comment posted to YouTube!');
+
+        } catch (error) {
+            console.error('Error posting comment:', error);
+
+            // Restore button state on error
+            if (applyButton && icon) {
+                icon.className = originalIconClass;
+                applyButton.disabled = false;
+            }
+
+            // Check for quota exceeded error
+            const errorMessage = error.message || '';
+            if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
+                showQuotaExceededModal();
+            } else {
+                showToast(`❌ ${error.message}`);
+            }
+        }
+    });
 }
 
 /**
@@ -1642,6 +1827,35 @@ function toggleEditCaptions(button) {
         textarea.readOnly = false;
         textarea.focus();
         icon.className = 'ph ph-check';
+
+        // Add input listener to reset applied status when captions are changed
+        textarea.addEventListener('input', async function resetCaptionsApplied() {
+            appliedOptimizations.captions = false;
+
+            // Reset button state
+            const captionsBtn = document.querySelector('.advanced-result-box:has(#captionsTextarea) .apply-btn-icon');
+            if (captionsBtn) {
+                const icon = captionsBtn.querySelector('i');
+                if (icon) {
+                    icon.className = 'ph ph-youtube-logo';
+                    captionsBtn.classList.remove('success');
+                    captionsBtn.disabled = false;
+                }
+            }
+
+            // Update Firebase to set preview back to true
+            try {
+                await fetch(`/optimize-video/api/reset-applied-status/${currentVideoId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'captions' })
+                });
+            } catch (error) {
+                console.error('Failed to reset captions applied status:', error);
+            }
+
+            textarea.removeEventListener('input', resetCaptionsApplied);
+        }, { once: true });
         button.title = 'Save';
         button.classList.add('editing');
     } else {
@@ -1666,6 +1880,35 @@ function toggleEditPinnedComment(button) {
         icon.className = 'ph ph-check';
         button.title = 'Save';
         button.classList.add('editing');
+
+        // Add input listener to reset applied status when comment is changed
+        textarea.addEventListener('input', async function resetPinnedCommentApplied() {
+            appliedOptimizations.pinnedComment = false;
+
+            // Reset button state
+            const commentBtn = document.querySelector('.advanced-result-box:has(#pinnedCommentPreview) .apply-btn-icon');
+            if (commentBtn) {
+                const icon = commentBtn.querySelector('i');
+                if (icon) {
+                    icon.className = 'ph ph-youtube-logo';
+                    commentBtn.classList.remove('success');
+                    commentBtn.disabled = false;
+                }
+            }
+
+            // Update Firebase to set preview back to true
+            try {
+                await fetch(`/optimize-video/api/reset-applied-status/${currentVideoId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'pinned_comment' })
+                });
+            } catch (error) {
+                console.error('Failed to reset pinned comment applied status:', error);
+            }
+
+            textarea.removeEventListener('input', resetPinnedCommentApplied);
+        }, { once: true });
     } else {
         textarea.readOnly = true;
         icon.className = 'ph ph-pencil-simple';
@@ -2008,6 +2251,12 @@ async function applyTitle(button, title) {
         return;
     }
 
+    // Check if this exact title has already been applied
+    if (appliedOptimizations.title === title) {
+        showToast('⚠️ This title has already been applied to YouTube');
+        return;
+    }
+
     const icon = button.querySelector('i');
     const originalIconClass = icon.className;
 
@@ -2027,6 +2276,9 @@ async function applyTitle(button, title) {
             if (!data.success) {
                 throw new Error(data.error || 'Failed to apply title');
             }
+
+            // Mark this title as applied (will be persisted to Firebase by backend)
+            appliedOptimizations.title = title;
 
             icon.className = 'ph ph-check';
             button.style.background = '#10B981';
@@ -2068,6 +2320,12 @@ async function applyDescription(button) {
         return;
     }
 
+    // Check if this exact description has already been applied
+    if (appliedOptimizations.description === currentOptimizedDescription) {
+        showToast('⚠️ This description has already been applied to YouTube');
+        return;
+    }
+
     const icon = button.querySelector('i');
     const originalIconClass = icon.className;
 
@@ -2091,6 +2349,9 @@ async function applyDescription(button) {
             if (!data.success) {
                 throw new Error(data.error || 'Failed to apply description');
             }
+
+            // Mark this description as applied (will be persisted to Firebase by backend)
+            appliedOptimizations.description = currentOptimizedDescription;
 
             icon.className = 'ph ph-check';
             button.style.background = '#10B981';
@@ -2136,6 +2397,13 @@ async function applyTags(button) {
         return;
     }
 
+    // Check if these exact tags have already been applied
+    const tagsString = JSON.stringify(tags.sort());
+    if (appliedOptimizations.tags === tagsString) {
+        showToast('⚠️ These tags have already been applied to YouTube');
+        return;
+    }
+
     const icon = button.querySelector('i');
     const originalIconClass = icon.className;
 
@@ -2157,6 +2425,9 @@ async function applyTags(button) {
             if (!data.success) {
                 throw new Error(data.error || 'Failed to apply tags');
             }
+
+            // Mark these tags as applied (will be persisted to Firebase by backend)
+            appliedOptimizations.tags = tagsString;
 
             icon.className = 'ph ph-check';
             button.style.background = '#10B981';
@@ -2276,6 +2547,35 @@ function toggleEditDescription(button) {
         icon.className = 'ph ph-check';
         button.title = 'Save';
         textarea.style.outline = '2px solid #3B82F6';
+
+        // Add input listener to reset applied status when description is changed
+        textarea.addEventListener('input', async function resetDescriptionApplied() {
+            appliedOptimizations.description = null;
+
+            // Reset button state
+            const descriptionBtn = document.querySelector('.comparison-box.optimized-box .apply-btn-icon[onclick*="applyDescription"]');
+            if (descriptionBtn) {
+                const icon = descriptionBtn.querySelector('i');
+                if (icon) {
+                    icon.className = 'ph ph-youtube-logo';
+                    descriptionBtn.classList.remove('success');
+                    descriptionBtn.disabled = false;
+                }
+            }
+
+            // Update Firebase to clear applied_description_at
+            try {
+                await fetch(`/optimize-video/api/reset-applied-status/${currentVideoId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'description' })
+                });
+            } catch (error) {
+                console.error('Failed to reset description applied status:', error);
+            }
+
+            textarea.removeEventListener('input', resetDescriptionApplied);
+        }, { once: true });
     } else {
         // Exit edit mode
         textarea.setAttribute('readonly', 'true');
