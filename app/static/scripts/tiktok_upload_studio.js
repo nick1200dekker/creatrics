@@ -31,14 +31,13 @@ document.addEventListener('DOMContentLoaded', function() {
  * Set loading state while checking connection
  */
 function setLoadingState() {
-    const statusDot = document.querySelector('.status-dot');
-    const statusText = document.querySelector('.status-text');
+    // Loading state is already set in HTML
+    // Just ensure elements are in loading state
+    const buttonSkeleton = document.getElementById('buttonSkeleton');
+    const connectionButtons = document.getElementById('connectionButtons');
 
-    if (statusDot && statusText) {
-        statusDot.classList.remove('disconnected');
-        statusDot.classList.add('loading');
-        statusText.textContent = 'Checking connection...';
-    }
+    if (buttonSkeleton) buttonSkeleton.style.display = 'block';
+    if (connectionButtons) connectionButtons.style.display = 'none';
 }
 
 /**
@@ -67,10 +66,18 @@ function updateConnectionUI(data) {
     const connectBtn = document.getElementById('connectBtn');
     const disconnectBtn = document.getElementById('disconnectBtn');
     const userInfo = document.getElementById('userInfo');
+    const uploadFlow = document.querySelector('.upload-flow');
+    const buttonSkeleton = document.getElementById('buttonSkeleton');
+    const connectionButtons = document.getElementById('connectionButtons');
+    const infoNotice = document.getElementById('infoNotice');
 
     // Remove loading state
     statusDot.classList.remove('loading');
     isCheckingConnection = false;
+
+    // Hide skeleton, show actual buttons
+    if (buttonSkeleton) buttonSkeleton.style.display = 'none';
+    if (connectionButtons) connectionButtons.style.display = 'block';
 
     if (data.connected) {
         // Connected state
@@ -78,6 +85,13 @@ function updateConnectionUI(data) {
         statusText.textContent = 'Connected to TikTok';
         connectBtn.style.display = 'none';
         disconnectBtn.style.display = 'inline-flex';
+
+        // Hide info notice
+        if (infoNotice) infoNotice.style.display = 'none';
+
+        if (uploadFlow) {
+            uploadFlow.classList.add('enabled');
+        }
 
         // Show user info if available
         if (data.user_info) {
@@ -93,6 +107,13 @@ function updateConnectionUI(data) {
         connectBtn.style.display = 'inline-flex';
         disconnectBtn.style.display = 'none';
         userInfo.style.display = 'none';
+
+        // Show info notice
+        if (infoNotice) infoNotice.style.display = 'flex';
+
+        if (uploadFlow) {
+            uploadFlow.classList.remove('enabled');
+        }
     }
 }
 
