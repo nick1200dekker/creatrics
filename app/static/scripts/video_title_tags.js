@@ -1554,14 +1554,14 @@ function showUploadProgressModal() {
                 </div>
             </div>
 
-            <div style="background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 1rem; margin: 1.5rem 0 1rem;">
+            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem; margin: 1.5rem 0 1rem;">
                 <div style="display: flex; align-items: start; gap: 0.75rem;">
-                    <i class="ph ph-warning-circle" style="color: #F59E0B; font-size: 1.25rem; margin-top: 0.125rem;"></i>
+                    <i class="ph-fill ph-warning-circle" style="color: #F59E0B; font-size: 1.5rem; margin-top: 0.125rem; flex-shrink: 0;"></i>
                     <div style="flex: 1;">
                         <p style="color: var(--text-primary); font-size: 0.875rem; font-weight: 600; margin: 0 0 0.5rem;">Don't close this page</p>
-                        <p style="color: var(--text-secondary); font-size: 0.8125rem; margin: 0 0 0.75rem;">Keep this tab open while uploading. Want to keep working?</p>
-                        <button onclick="window.open('/', '_blank')" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8125rem; font-weight: 500; transition: all 0.2s ease;">
-                            <i class="ph ph-plus-circle"></i> Open Creatrics in New Tab
+                        <p style="color: var(--text-secondary); font-size: 0.8125rem; margin: 0 0 1rem; line-height: 1.5;">Keep this tab open while uploading. Want to keep working?</p>
+                        <button onclick="window.open('/', '_blank')" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.25rem; background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(59, 130, 246, 0.3)'">
+                            <i class="ph-fill ph-plus-circle" style="font-size: 1.125rem;"></i> Open Creatrics in New Tab
                         </button>
                     </div>
                 </div>

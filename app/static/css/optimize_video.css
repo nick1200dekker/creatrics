@@ -2837,6 +2837,13 @@ html.dark .toggle-view-btn.active {
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 1rem;
+    /* Hide scrollbar while keeping scroll functionality */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.captions-diff-view::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Opera */
 }
 
 .diff-container {

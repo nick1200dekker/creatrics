@@ -67,7 +67,8 @@ class VideoTagsGenerator:
     def __init__(self):
         self.max_tags_length = 500  # YouTube's limit
         self.optimal_min_length = 400
-        self.optimal_max_length = 500
+        self.optimal_max_length = 450
+        self.max_tags_count = 20  # 15-20 tags target
 
     def get_prompt_template(self) -> str:
         """Get the prompt template for video tags generation"""
@@ -243,7 +244,7 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
                 if cleaned and len(cleaned) > 2:
                     cleaned_tags.append(cleaned)
 
-            return cleaned_tags[:30]  # Limit to 30 tags max
+            return cleaned_tags[:20]  # Limit to 20 tags max
 
         except Exception as e:
             logger.error(f"Error parsing AI response: {e}")
@@ -260,7 +261,7 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
         return tag.strip()
 
     def optimize_tags_length(self, tags: List[str]) -> List[str]:
-        """Optimize tags to fit within 400-500 characters"""
+        """Optimize tags to fit within 450 characters AND max 15 tags"""
         if not tags:
             return []
 
@@ -270,6 +271,9 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
                 return 0
             # Join with ", " separator
             return len(', '.join(tag_list))
+
+        # First, enforce max tag count
+        tags = tags[:self.max_tags_count]
 
         current_length = calculate_total_length(tags)
 

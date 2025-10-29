@@ -644,19 +644,39 @@ def init_youtube_upload():
         if init_response.status_code not in [200, 201]:
             logger.error(f"Failed to initialize upload: {init_response.text}")
 
-            # Check for quota exceeded error
-            response_text = init_response.text.lower()
-            if 'quota' in response_text or init_response.status_code == 403:
+            # Parse YouTube API error response
+            try:
+                error_response = json.loads(init_response.text)
+                error_message = error_response.get('error', {}).get('message', 'Failed to initialize upload')
+                error_reason = error_response.get('error', {}).get('errors', [{}])[0].get('reason', '')
+
+                # Check for specific errors
+                if 'quota' in error_message.lower() or init_response.status_code == 403:
+                    return jsonify({
+                        'success': False,
+                        'error': 'YouTube API quota exceeded. Please try again tomorrow.',
+                        'error_type': 'quota_exceeded'
+                    }), 403
+
+                if 'invalidTags' in error_reason or 'invalid video keywords' in error_message.lower():
+                    return jsonify({
+                        'success': False,
+                        'error': 'Invalid tags detected. Please check your tags and try again.',
+                        'error_type': 'invalid_tags'
+                    }), 400
+
+                # Return the actual YouTube error message
                 return jsonify({
                     'success': False,
-                    'error': 'YouTube API quota exceeded. Please try again tomorrow.',
-                    'error_type': 'quota_exceeded'
-                }), 403
+                    'error': error_message
+                }), 400
 
-            return jsonify({
-                'success': False,
-                'error': 'Failed to initialize YouTube upload'
-            }), 500
+            except:
+                # Fallback to generic error
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to initialize YouTube upload'
+                }), 500
 
         # Get upload URL from Location header
         upload_url = init_response.headers.get('Location')
