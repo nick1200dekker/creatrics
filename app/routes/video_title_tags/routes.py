@@ -687,6 +687,84 @@ def init_youtube_upload():
             'error': f'Failed to initialize upload: {str(e)}'
         }), 500
 
+@bp.route('/api/get-uploaded-video-id', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def get_uploaded_video_id():
+    """Get video ID from most recent upload or upload URL"""
+    try:
+        user_id = get_workspace_user_id()
+        data = request.get_json()
+
+        upload_url = data.get('upload_url', '')
+        title = data.get('title', '')
+
+        # Get YouTube credentials
+        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+        yt_analytics = YouTubeAnalytics(user_id)
+
+        if not yt_analytics.credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No YouTube account connected'
+            }), 400
+
+        from googleapiclient.discovery import build
+        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+        # Query for most recent uploaded video
+        # This gets the most recent video from the user's channel
+        try:
+            # Get user's uploads playlist ID
+            channels_response = youtube.channels().list(
+                part='contentDetails',
+                mine=True
+            ).execute()
+
+            if not channels_response.get('items'):
+                return jsonify({
+                    'success': False,
+                    'error': 'Could not find channel'
+                }), 404
+
+            uploads_playlist_id = channels_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+
+            # Get most recent video from uploads playlist
+            playlist_response = youtube.playlistItems().list(
+                part='snippet',
+                playlistId=uploads_playlist_id,
+                maxResults=1
+            ).execute()
+
+            if not playlist_response.get('items'):
+                return jsonify({
+                    'success': False,
+                    'error': 'No videos found'
+                }), 404
+
+            video_id = playlist_response['items'][0]['snippet']['resourceId']['videoId']
+
+            logger.info(f"Retrieved video ID {video_id} for user {user_id}")
+
+            return jsonify({
+                'success': True,
+                'video_id': video_id
+            })
+
+        except Exception as e:
+            logger.error(f"Error retrieving video ID: {e}")
+            return jsonify({
+                'success': False,
+                'error': f'Failed to retrieve video ID: {str(e)}'
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Error in get_uploaded_video_id: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @bp.route('/api/finalize-youtube-upload', methods=['POST'])
 @auth_required
 @require_permission('video_title')

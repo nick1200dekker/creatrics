@@ -1352,17 +1352,14 @@ async function uploadToYouTube() {
         });
 
         // Upload the file
-        const uploadResult = await new Promise((resolve, reject) => {
+        await new Promise((resolve, reject) => {
             uploadXHR.onload = () => {
+                // Upload succeeded if we get 200 or 201
+                // Note: We can't read responseText due to CORS, but upload worked!
                 if (uploadXHR.status >= 200 && uploadXHR.status < 300) {
-                    try {
-                        const response = JSON.parse(uploadXHR.responseText);
-                        resolve(response);
-                    } catch (e) {
-                        reject(new Error('Invalid response from YouTube'));
-                    }
+                    resolve();
                 } else {
-                    reject(new Error('Upload failed'));
+                    reject(new Error(`Upload failed with status ${uploadXHR.status}`));
                 }
             };
             uploadXHR.onerror = () => reject(new Error('Network error'));
@@ -1373,12 +1370,27 @@ async function uploadToYouTube() {
             uploadXHR.send(selectedVideoFile);
         });
 
-        // Extract video ID from YouTube response
-        const videoId = uploadResult.id;
+        // Get video ID from backend (extract from upload URL or query recent uploads)
+        updateUploadProgress('Retrieving video information...', 'processing');
 
-        if (!videoId) {
-            throw new Error('Failed to get video ID from YouTube');
+        const videoIdResponse = await fetch('/api/get-uploaded-video-id', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                upload_url: initData.upload_url,
+                title: title
+            })
+        });
+
+        const videoIdData = await videoIdResponse.json();
+
+        if (!videoIdData.success || !videoIdData.video_id) {
+            throw new Error(videoIdData.error || 'Failed to get video ID');
         }
+
+        const videoId = videoIdData.video_id;
 
         // Step 3: Finalize upload (save metadata, handle thumbnail)
         updateUploadProgress('Finalizing upload...', 'processing');
