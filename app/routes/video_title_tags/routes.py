@@ -676,6 +676,7 @@ def init_youtube_upload():
         return jsonify({
             'success': True,
             'upload_url': upload_url,
+            'access_token': access_token,
             'message': 'Upload initialized successfully'
         })
 

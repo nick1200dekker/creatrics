@@ -1368,6 +1368,7 @@ async function uploadToYouTube() {
             uploadXHR.onerror = () => reject(new Error('Network error'));
 
             uploadXHR.open('PUT', initData.upload_url);
+            uploadXHR.setRequestHeader('Authorization', `Bearer ${initData.access_token}`);
             uploadXHR.setRequestHeader('Content-Type', selectedVideoFile.type);
             uploadXHR.send(selectedVideoFile);
         });
