@@ -93,6 +93,30 @@ class PinnedCommentGenerator:
                     'token_usage': token_usage  # For credit deduction
                 }
 
+            # Check video privacy status before posting - private videos don't support comments
+            try:
+                video_response = youtube.videos().list(
+                    part='status',
+                    id=video_id
+                ).execute()
+
+                if video_response.get('items'):
+                    privacy_status = video_response['items'][0]['status'].get('privacyStatus', 'private')
+
+                    if privacy_status == 'private':
+                        logger.info(f"Video {video_id} is private - comment generated but cannot be posted yet")
+                        return {
+                            'success': True,
+                            'preview': True,
+                            'is_private': True,
+                            'message': 'Comment generated! Note: Your video is currently private. You can apply this comment after publishing your video.',
+                            'comment_text': comment_text,
+                            'quota_used': 0,  # No quota used since we didn't post
+                            'token_usage': token_usage  # For credit deduction
+                        }
+            except Exception as e:
+                logger.warning(f"Could not check video privacy status: {e}")
+
             # Otherwise, post comment to YouTube (50 units)
             logger.info(f"Posting pinned comment to YouTube...")
             comment_response = youtube.commentThreads().insert(
@@ -158,6 +182,25 @@ class PinnedCommentGenerator:
                     'error': 'YouTube account not connected',
                     'error_type': 'no_youtube_connection'
                 }
+
+            # Check video privacy status - private videos don't support comments
+            try:
+                video_response = youtube.videos().list(
+                    part='status',
+                    id=video_id
+                ).execute()
+
+                if video_response.get('items'):
+                    privacy_status = video_response['items'][0]['status'].get('privacyStatus', 'private')
+
+                    if privacy_status == 'private':
+                        return {
+                            'success': False,
+                            'error': 'Your video is currently private. Please change it to unlisted or public before applying the pinned comment.',
+                            'error_type': 'private_video'
+                        }
+            except Exception as e:
+                logger.warning(f"Could not check video privacy status: {e}")
 
             # Post comment to YouTube (50 units)
             logger.info(f"Posting pinned comment to video {video_id}")
