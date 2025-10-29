@@ -669,7 +669,7 @@ html.dark .video-upload-area {
 }
 
 .video-upload-area:hover {
-    border-color: var(--primary);
+    border-color: #3B82F6;
     background: rgba(59, 130, 246, 0.02);
 }
 
@@ -734,6 +734,11 @@ html.dark .remove-video-btn:hover {
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
     margin-bottom: 1.5rem;
+}
+
+/* When only one card is shown (privacy hidden in inbox mode), make it full width */
+.upload-options-grid:has(.upload-option-card:only-child) {
+    grid-template-columns: 1fr;
 }
 
 @media (max-width: 768px) {

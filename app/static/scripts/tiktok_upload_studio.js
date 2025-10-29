@@ -66,7 +66,7 @@ function updateConnectionUI(data) {
     const connectBtn = document.getElementById('connectBtn');
     const disconnectBtn = document.getElementById('disconnectBtn');
     const userInfo = document.getElementById('userInfo');
-    const uploadFlow = document.querySelector('.upload-flow');
+    const videoUploadSection = document.getElementById('videoUploadSectionStatic');
     const buttonSkeleton = document.getElementById('buttonSkeleton');
     const connectionButtons = document.getElementById('connectionButtons');
     const infoNotice = document.getElementById('infoNotice');
@@ -89,9 +89,8 @@ function updateConnectionUI(data) {
         // Hide info notice
         if (infoNotice) infoNotice.style.display = 'none';
 
-        if (uploadFlow) {
-            uploadFlow.classList.add('enabled');
-        }
+        // Show video upload section
+        if (videoUploadSection) videoUploadSection.style.display = 'block';
 
         // Show user info if available
         if (data.user_info) {
@@ -112,9 +111,8 @@ function updateConnectionUI(data) {
         // Show info notice
         if (infoNotice) infoNotice.style.display = 'flex';
 
-        if (uploadFlow) {
-            uploadFlow.classList.remove('enabled');
-        }
+        // Hide video upload section
+        if (videoUploadSection) videoUploadSection.style.display = 'none';
     }
 }
 
@@ -325,41 +323,13 @@ function renderTitlesSection(titles, visible) {
 }
 
 /**
- * Render upload section
+ * Render upload section (Right panel - without video upload, just options)
  */
 function renderUploadSection(visible) {
     return `
         <div class="results-section tab-content-section" id="uploadSection" style="${visible ? 'display: block;' : 'display: none;'}">
             <div class="upload-section-content">
                 <form id="uploadForm" enctype="multipart/form-data">
-                    <!-- Video File Upload -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="ph ph-upload"></i>
-                            Upload Video
-                        </label>
-                        <div class="video-upload-area" id="videoUploadArea" onclick="triggerVideoUpload()">
-                            <input type="file" id="videoFileInput" accept="video/*" style="display: none;">
-                            <div class="upload-content" id="uploadContent">
-                                <i class="ph ph-cloud-arrow-up" style="font-size: 2rem; color: var(--text-tertiary); margin-bottom: 0.25rem;"></i>
-                                <div style="color: var(--text-primary); font-weight: 500; margin-bottom: 0.125rem; font-size: 0.9375rem;">Click to upload video</div>
-                                <div style="color: var(--text-tertiary); font-size: 0.8125rem;">MP4, WebM, or MOV (max 4GB)</div>
-                            </div>
-                            <div class="upload-progress" id="uploadProgress" style="display: none;">
-                                <div class="upload-file-info">
-                                    <i class="ph ph-video" style="font-size: 2rem; color: var(--primary);"></i>
-                                    <div style="flex: 1;">
-                                        <div id="uploadFileName" style="color: var(--text-primary); font-weight: 500;"></div>
-                                        <div id="uploadFileSize" style="color: var(--text-tertiary); font-size: 0.875rem;"></div>
-                                    </div>
-                                </div>
-                                <button class="remove-video-btn" onclick="removeVideoFile(event)" type="button" title="Remove video">
-                                    <i class="ph ph-x"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Upload Options Grid -->
                     <div class="upload-options-grid">
                         <!-- Upload Mode -->
@@ -370,7 +340,7 @@ function renderUploadSection(visible) {
                             </label>
                             <div class="radio-group">
                                 <label class="radio-option">
-                                    <input type="radio" name="mode" id="modeDirect" value="direct" checked>
+                                    <input type="radio" name="mode" id="modeDirect" value="direct" checked onchange="handleModeChange()">
                                     <div class="radio-content">
                                         <i class="ph ph-lightning"></i>
                                         <div>
@@ -381,7 +351,7 @@ function renderUploadSection(visible) {
                                 </label>
 
                                 <label class="radio-option">
-                                    <input type="radio" name="mode" id="modeInbox" value="inbox">
+                                    <input type="radio" name="mode" id="modeInbox" value="inbox" onchange="handleModeChange()">
                                     <div class="radio-content">
                                         <i class="ph ph-pencil-simple"></i>
                                         <div>
@@ -394,7 +364,7 @@ function renderUploadSection(visible) {
                         </div>
 
                         <!-- Privacy Level -->
-                        <div class="upload-option-card">
+                        <div class="upload-option-card" id="privacyCard">
                             <label class="upload-option-label">
                                 <i class="ph ph-lock-key"></i>
                                 Who can view
@@ -666,13 +636,13 @@ function formatFileSize(bytes) {
  */
 function handleModeChange() {
     const mode = document.querySelector('input[name="mode"]:checked')?.value;
-    const privacyGroup = document.querySelector('.form-group:has(input[name="privacy"])');
+    const privacyCard = document.getElementById('privacyCard');
 
-    if (privacyGroup) {
+    if (privacyCard) {
         if (mode === 'inbox') {
-            privacyGroup.style.display = 'none';
+            privacyCard.style.display = 'none';
         } else {
-            privacyGroup.style.display = 'block';
+            privacyCard.style.display = 'block';
         }
     }
 }
@@ -815,6 +785,54 @@ function handleUrlParams() {
     if (urlParams.has('success') || urlParams.has('error')) {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
+}
+
+/**
+ * Static upload area handlers (left panel)
+ */
+function triggerVideoUploadStatic() {
+    const fileInput = document.getElementById('videoFileInputStatic');
+    if (fileInput) {
+        fileInput.click();
+    }
+}
+
+function handleVideoSelectStatic(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Store the selected file globally
+    selectedFile = file;
+
+    // Update static UI
+    const uploadContent = document.getElementById('uploadContentStatic');
+    const uploadProgress = document.getElementById('uploadProgressStatic');
+    const fileName = document.getElementById('uploadFileNameStatic');
+    const fileSize = document.getElementById('uploadFileSizeStatic');
+
+    if (uploadContent) uploadContent.style.display = 'none';
+    if (uploadProgress) uploadProgress.style.display = 'flex';
+    if (fileName) fileName.textContent = file.name;
+    if (fileSize) fileSize.textContent = formatFileSize(file.size);
+
+    showToast('Video ready to upload', 'success');
+}
+
+function removeVideoStatic(event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    selectedFile = null;
+
+    const uploadContent = document.getElementById('uploadContentStatic');
+    const uploadProgress = document.getElementById('uploadProgressStatic');
+    const fileInput = document.getElementById('videoFileInputStatic');
+
+    if (uploadContent) uploadContent.style.display = 'flex';
+    if (uploadProgress) uploadProgress.style.display = 'none';
+    if (fileInput) fileInput.value = '';
+
+    showToast('Video removed', 'info');
 }
 
 /**
