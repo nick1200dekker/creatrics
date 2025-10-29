@@ -138,13 +138,14 @@ STRUCTURE (write naturally, don't label sections):
    - Add relevant emojis if they fit the style
    - Keep each point brief (one line)
 
-3. TIMESTAMPS (Include ONLY if transcript/content shows clear sections):
-   - If you see a full transcript or detailed content breakdown with timing, add timestamps
-   - If you only see a brief video concept/idea (not a full transcript), DO NOT add timestamps
-   - Format as: 0:00 Intro, 1:23 Topic Name
+3. TIMESTAMPS (REQUIRED for all long-form videos):
+   - ALWAYS include timestamps/chapters for long videos
+   - Analyze the timestamped transcript and identify 3-8 logical sections
+   - Format as: 0:00 Intro, 1:23 Topic Name, 4:56 Next Topic
    - First timestamp MUST be 0:00 to activate YouTube chapters
    - Use keyword-rich chapter titles (e.g., "3:45 Best Clash Royale decks for Arena 10" not just "3:45 Decks")
-   - SKIP THIS SECTION if input is just a concept/idea without detailed timing information
+   - Space chapters evenly throughout the video (every 1-3 minutes)
+   - Make chapter titles descriptive and benefit-driven
 
 4. WHO IT'S FOR (1-2 sentences):
    - Quick statement about target audience
