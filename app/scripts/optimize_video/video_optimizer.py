@@ -261,6 +261,39 @@ Video Length: {'Short' if is_short else 'Long'}{target_keyword_context}
                 )
                 optimized_description = description_result.get('description', current_description)
 
+                # Auto-generate chapters for long videos and append to description
+                if not is_short:
+                    logger.info("=" * 80)
+                    logger.info("AUTO-GENERATING CHAPTERS FOR LONG VIDEO")
+                    logger.info("=" * 80)
+
+                    chapters_result = self.generate_chapters(
+                        video_id=video_id,
+                        user_id=user_id,
+                        target_keyword=target_keyword,
+                        user_subscription=user_subscription
+                    )
+
+                    if chapters_result.get('success'):
+                        chapters_format = chapters_result.get('description_format', '')
+
+                        # Append chapters to description
+                        if chapters_format:
+                            optimized_description = f"{optimized_description}\n\n{chapters_format}"
+                            logger.info(f"✓ Added {chapters_result.get('num_chapters', 0)} chapters to description")
+
+                        # Add chapter generation token usage for credit deduction
+                        if chapters_result.get('token_usage'):
+                            all_token_usages = all_token_usages if 'all_token_usages' in locals() else []
+                            all_token_usages.append({
+                                'operation': 'Chapter Generation',
+                                **chapters_result.get('token_usage', {})
+                            })
+                    else:
+                        logger.warning(f"Chapter generation failed: {chapters_result.get('error', 'Unknown error')}")
+
+                    logger.info("=" * 80)
+
             # Generate optimized tags with channel keywords
             if 'tags' in selected_optimizations:
                 logger.info("=" * 80)
