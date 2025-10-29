@@ -1542,16 +1542,33 @@ function showUploadProgressModal() {
                 <i class="ph ph-spinner upload-spinner-icon"></i>
             </div>
             <h3 id="uploadProgressTitle" style="color: var(--text-primary); margin: 1.5rem 0 0.5rem; font-size: 1.25rem; font-weight: 600;">Uploading to YouTube</h3>
-            <p id="uploadProgressMessage" style="color: var(--text-secondary); margin: 0 0 1.5rem; font-size: 0.9375rem;">Please wait while we upload your video to YouTube</p>
+            <p id="uploadProgressMessage" style="color: var(--text-secondary); margin: 0 0 1rem; font-size: 0.9375rem;">Please wait while we upload your video to YouTube</p>
 
-            <div style="margin: 1.5rem 0;">
+            <div style="margin: 1rem 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="color: var(--text-tertiary); font-size: 0.8125rem;">Progress</span>
+                    <span id="uploadProgressPercent" style="color: var(--text-primary); font-size: 0.875rem; font-weight: 600;">0%</span>
+                </div>
                 <div style="width: 100%; height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-primary);">
                     <div id="uploadProgressFill" style="height: 100%; width: 0%; background: #3B82F6; transition: width 0.3s ease;"></div>
                 </div>
             </div>
 
-            <p style="color: var(--text-tertiary); font-size: 0.8125rem; margin: 0; text-align: center;">
-                This may take a few minutes
+            <div style="background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 1rem; margin: 1.5rem 0 1rem;">
+                <div style="display: flex; align-items: start; gap: 0.75rem;">
+                    <i class="ph ph-warning-circle" style="color: #F59E0B; font-size: 1.25rem; margin-top: 0.125rem;"></i>
+                    <div style="flex: 1;">
+                        <p style="color: var(--text-primary); font-size: 0.875rem; font-weight: 600; margin: 0 0 0.5rem;">Don't close this page</p>
+                        <p style="color: var(--text-secondary); font-size: 0.8125rem; margin: 0 0 0.75rem;">Keep this tab open while uploading. Want to keep working?</p>
+                        <button onclick="window.open('/', '_blank')" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8125rem; font-weight: 500; transition: all 0.2s ease;">
+                            <i class="ph ph-plus-circle"></i> Open Creatrics in New Tab
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <p style="color: var(--text-tertiary); font-size: 0.75rem; margin: 0; text-align: center;">
+                Large videos may take several minutes to upload
             </p>
         </div>
     `;
