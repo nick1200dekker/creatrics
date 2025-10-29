@@ -6,16 +6,172 @@ Transform these raw keywords, bullet points, or rough notes into a polished X/Tw
 YOUR TASK:
 Take disconnected ideas/keywords and craft them into a cohesive, scroll-stopping post.
 
+ANALYZE THESE PROVEN VIRAL POSTS FIRST:
+
+Example 1: The Bold Promise + Proof Pattern
+---
+Writing viral posts will never be a struggle again...
+
+I packaged every context file, example, and framework that got me 4.5M+ impressions into one Claude skill.
+
+Just upload it to your project and Claude instantly references:
+- 20+ tweets with 100K+ views each
+- Proven hook formulas
+- Writing principles that actually work
+- Real feedback on what converts (and what flops)
+
+Most people prompt Claude with zero context and wonder why their posts sound generic.
+
+They're basically asking it to write blind.
+
+This skill changes that completely.
+
+You upload it once to your Claude account and it becomes part of Claude's memory.
+
+Now when you say "write a post about X," Claude pulls from battle-tested patterns.
+
+- It knows which hooks are overused and market-fatigued.
+- It understands how to structure posts for maximum engagement.
+- It references actual examples that crushed it.
+
+The skill teaches Claude to write posts that actually convert, and it never runs out of fresh angles.
+
+Claude gets better the more you use it together, because you can keep adding to the skill over time.
+
+This is the new way to add context to AI.
+
+No more copy-pasting examples into every chat.
+
+No more re-explaining your style from scratch.
+
+Follow + comment "SKILL" and I'll DM you the file
+---
+
+Example 2: The Contrarian Take Pattern
+---
+Hot Take: If you hear someone saying there are "too many coins" for alt season
+
+they are don't understand crypto
+
+There have always been "too many coins" for the existing liquidity since I got here in 2017
+
+Never once did every single coin pump, there have always been dead projects
+
+The only metric that matters is Bitcoin Dominance
+
+When there's demand for alts, it won't be hard to find winners
+
+Think of it like this:
+
+You can create a website in 5 seconds, does that make sites like Amazon less valuable? Facebook? Twitter? Google? ofc not
+
+Some websites are more valuable BECAUSE of others (i.e. search engine) 
+
+This is true of DEX coins, launchpads etc. They benefit from more coins, more trading
+
+When alts are in demand there will be HUGE winners with sustained rallies. Attention will power law to those, and boom bang pow 
+
+ALT SEASON
+
+Due to FED policy and macro flows, there's just not as much demand for high risk things right now
+
+We're seeing the end of this regime. When it fully shifts, the amount of tokens won't stop the good coins from winning 
+
+Delusional bulls will inherit the earth
+---
+
+Example 3: The Stack Reveal Pattern
+---
+My CURRENT AI tool stack:
+
+I used to use 10-15 AI tools, now literally 90%+ of the work I do is handled by TWO:
+
+1) Claude Code: I build websites, landing pages, do research, create strategies, craft content. This is my workhorse for everything that I do. 
+
+*I use two MCPs: Perplexity & Firecrawl and one skill: Voice & Copy.
+
+2) Cursor: I use the agent with GPT-5 as a research and debugging assistant. I think of it as a complement to what I do in Claude Code. Cursor is also my workspace.
+
+Sure sometimes I use ChatGPT on the web, Gemini, Claude Desktop, n8n, etc. for certain things - but they are less than 10% at this point.
+
+The more you progress, the fewer tools you need. Focus in on what drives results, ignore the rest.
+---
+
+WHAT MAKES THESE POSTS WORK:
+
+Hook Patterns:
+- Bold promises with proof ("4.5M+ impressions", "90%+ of the work")
+- Contrarian statements ("they don't understand crypto")
+- Personal revelations ("My CURRENT AI tool stack")
+- Specific numbers breed credibility
+
+Structure Analysis:
+- Opening hook → Proof/credentials → Problem → Solution → Details → Strong close with CTA
+- Controversial statement → Counter objection → Analogy → Build logic → Bold prediction
+- Personal shift → Simplification → Detailed breakdown → Philosophical ending
+
+Whitespace Strategy:
+- Line breaks after every 1-2 sentences for rhythm
+- Bullet points for scannable value (never hashtags)
+- Space before key transitions
+- Breathing room around strongest claims
+
+Voice Elements:
+- Casual confidence ("boom bang pow", "ofc not")
+- Authentic grammar quirks preserved ("they are don't understand")
+- Specific numbers (4.5M+, 10-15, 90%+)
+- Direct language, zero fluff
+
+PROVEN HOOK FORMULAS:
+
+1. The Bold Promise: "[Outcome] will never be [problem] again..."
+2. The Contrarian: "Hot Take: [common belief] is wrong"
+3. The Reveal: "My CURRENT [thing] stack:"
+4. The Pattern Interrupt: "Everyone does [X]. I did [opposite] and [result]"
+5. The Specificity Play: Lead with precise numbers/metrics
+
+WRITING PRINCIPLES THAT ACTUALLY WORK:
+
+1. Specificity over vagueness
+   Bad: "I got lots of engagement"
+   Good: "4.5M+ impressions"
+
+2. Show the transformation
+   Pattern: "I used to X, now Y"
+   Before state → After state → How
+
+3. Bullets for value delivery
+   - Use dashes for listicle content
+   - Keep each bullet tight (one clear benefit)
+   - Never use hashtags
+
+4. Strategic whitespace
+   - More line breaks = easier reading
+   - Space around transitions
+   - Visual rhythm matters
+
+5. End with momentum
+   - Question that sparks replies
+   - Bold statement that demands attention
+   - Clear CTA ("Follow + comment")
+   - Philosophical mic drop
+
+6. Authenticity beats perfection
+   - Keep natural language patterns
+   - Don't over-polish casual voice
+   - Deliberate informality works
+
 X POST OPTIMIZATION RULES:
 1. NO HASHTAGS - Never use hashtags
-2. Strategic whitespace - Add line breaks between key points for rhythm
-3. Magnetic hook - Turn the main keyword into an attention-grabbing opener
-4. Visual hierarchy - Use spacing to create easy scanning
-5. Human voice - Sound like a real person, not a robot assembling keywords
-6. Sentence variety - Mix short punchy lines with medium ones
-7. Strong close - End with insight, question, or call-to-action
-8. Direct language - Expand keywords into complete thoughts
-9. Selective emojis - Only 1-3 if they amplify key points
+2. NO MARKDOWN - Never use **, ##, headers, or any markdown formatting
+3. Strategic whitespace - Add line breaks between key points for rhythm
+4. Magnetic hook - Turn the main keyword into an attention-grabbing opener
+5. Visual hierarchy - Use spacing to create easy scanning
+6. Human voice - Sound like a real person, not a robot assembling keywords
+7. Sentence variety - Mix short punchy lines with medium ones
+8. Strong close - End with insight, question, or call-to-action
+9. Direct language - Expand keywords into complete thoughts
+10. Selective emojis - Only 1-3 if they amplify key points
 
 KEYWORD-TO-POST TRANSFORMATION:
 - Identify the core message from the keywords
@@ -47,6 +203,8 @@ User's keywords/notes:
 
 {VOICE_EXAMPLES}
 
+CRITICAL: Output plain text only. NO markdown formatting (**, ##), NO headers, NO bold text. Write like the viral examples above - natural, clean, readable.
+
 TRANSFORM THE KEYWORDS INTO A COMPLETE, ENGAGING POST. NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL POST:
 
 Optimized post:
@@ -71,6 +229,8 @@ Think: "How would a content creator clean this up without losing the vibe?"
 Original text:
 {text}
 
+CRITICAL: Output plain text only. NO markdown formatting (**, ##), NO headers, NO bold text. Keep the exact formatting style of the original.
+
 OUTPUT ONLY THE IMPROVED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE POLISHED VERSION:
 
 Improved version:
@@ -80,33 +240,64 @@ Rewrite this post using the Hook-Story-Punch framework. Make it scroll-stopping 
 
 {VOICE_CONTEXT}
 
-HOOK (First 1-2 Lines):
-- Lead with your most provocative insight
-- Create instant tension or curiosity
-- Use pattern interrupts (questions, contradictions, bold claims)
-- Make it impossible to scroll past
+THE FRAMEWORK EXPLAINED:
 
-STORY (Middle Section):
-- Build one clear idea per line
-- Use whitespace as a storytelling tool
-- Create visual rhythm that pulls readers down
-- Add momentum with progression
-- Strategic emojis that enhance (not decorate)
-- Use concrete examples over abstract concepts
+HOOK (First 1-2 Lines)
+Purpose: Stop the scroll instantly
 
-PUNCH (Final Lines):
-- Land with impact
-- Ask questions that spark comments
-- Create a "mic drop" moment
-- Make sharing feel natural
+Techniques:
+- Bold claim or promise
+- Contrarian statement
+- Specific shocking number
+- Pattern interrupt question
+- Personal transformation reveal
+
+Examples from viral posts:
+- "Writing viral posts will never be a struggle again..."
+- "Hot Take: they don't understand crypto"
+- "My CURRENT AI tool stack:"
+
+STORY (Middle 70%)
+Purpose: Build value and momentum
+
+Structure:
+- Establish credibility quickly (numbers, proof)
+- Identify the problem clearly
+- Break down your solution/insight
+- Use whitespace to control pacing
+- Add bullets for scannable value
+- Include analogies or examples
+- Build tension toward the payoff
+
+Pacing Rules:
+- Each idea = 1-2 lines max
+- Strategic line breaks create rhythm
+- Lists get bullet treatment (-)
+- Space before major transitions
+- Concrete examples over abstractions
+
+PUNCH (Final 1-3 Lines)
+Purpose: Land with impact and drive action
+
+Options:
+- Philosophical mic drop statement
+- Question that sparks comments
+- Clear call-to-action with reward
+- Bold prediction or challenge
+- Quotable closer
+
+Examples from viral posts:
+- "Follow + comment 'SKILL' and I'll DM you the file"
+- "Delusional bulls will inherit the earth"
+- "The more you progress, the fewer tools you need. Focus in on what drives results, ignore the rest."
 
 FORMATTING RULES:
 - Each thought = 1-2 lines max
 - Strategic line breaks for rhythm
 - Emojis only where they add meaning
 - Never use hashtags
-- Simple bullets (•) if needed
-- No markdown (**, ##, etc.)
+- Simple bullets (-) if needed
+- NO markdown (**, ##, etc.)
 - Match original length naturally
 - Keep all @mentions intact
 
@@ -117,7 +308,7 @@ CONTENT PRO STANDARDS:
 - Build tension then deliver payoff
 - Make the structure invisible
 
-Examples:
+Framework Example:
 
 INPUT:
 The "Punchline First" Formula - How to Instantly Hook Your Audience. Struggling to make your writing or storytelling land? The secret is the "Punchline First" approach—start strong, hook your audience, and then take them on the journey.
@@ -167,6 +358,8 @@ Original text:
 
 {VOICE_EXAMPLES}
 
+CRITICAL: Output plain text only. NO markdown formatting (**, ##), NO headers, NO bold text. Write like the viral examples - natural, clean, readable.
+
 OUTPUT ONLY THE TRANSFORMED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE FINAL SCROLL-STOPPING CONTENT:
 
 Transformed version:
@@ -209,6 +402,8 @@ Original text:
 Reference Examples:
 {VOICE_EXAMPLES}
 
+CRITICAL: Output plain text only. NO markdown formatting (**, ##), NO headers, NO bold text. Match the exact formatting style of the reference examples.
+
 REWRITE EVERY SENTENCE FROM SCRATCH. Transform this into content the reference author would actually write. Match their voice so well their audience couldn't tell the difference.
 
 OUTPUT ONLY THE REWRITTEN POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE CONTENT IN THEIR VOICE:
@@ -221,20 +416,52 @@ Transform this into compelling social content using proven storytelling techniqu
 {VOICE_CONTEXT}
 
 STORYTELLING FRAMEWORK:
-1. Emotional opener:
-   - Start with dialogue that hits feelings instantly
-   - Lead with a single powerful emotion word
-   - Choose visceral over intellectual
 
-2. Build connection:
-   - "What would you do if..." scenarios
-   - Open with unexpected action
-   - Mix dramatic with conversational for contrast
+1. EMOTIONAL OPENER
+Purpose: Hit feelings instantly, not facts
 
-3. Surprise and pivot:
-   - Subvert expectations mid-story
-   - Start with the result, then explain how
-   - Combine extremes with casual delivery
+Techniques:
+- Start with powerful action or dialogue
+- Lead with a single visceral emotion
+- Open with "What would you do if..."
+- Begin with unexpected behavior
+- Choose emotional over intellectual
+
+Examples from viral posts:
+- "Writing viral posts will never be a struggle again..." (hope/relief)
+- "Hot Take: they don't understand crypto" (controversy/challenge)
+- "I used to use 10-15 AI tools" (relatability/transformation)
+
+2. BUILD CONNECTION
+Purpose: Make it personal and relatable
+
+Techniques:
+- Show the struggle or problem clearly
+- Use "before state" that resonates
+- Include specific, concrete details
+- Create "me too" moments
+- Share the turning point
+
+Pattern:
+- Establish the old way (relatable pain)
+- Introduce the shift (what changed)
+- Show the new reality (transformation)
+
+3. SURPRISE AND PIVOT
+Purpose: Subvert expectations, create shareability
+
+Techniques:
+- Challenge conventional wisdom
+- Use unexpected analogies
+- Flip common assumptions
+- Combine dramatic with casual
+- Start with result, then explain how
+- Use contrast for impact
+
+Examples from viral posts:
+- "You can create a website in 5 seconds, does that make Amazon less valuable?"
+- "The more you progress, the fewer tools you need"
+- "Delusional bulls will inherit the earth"
 
 FORMATTING STANDARDS:
 - Short, deliberate sentences
@@ -247,7 +474,7 @@ FORMATTING STANDARDS:
 - Preserve original emojis in context
 - Match original post length naturally
 - Maintain thread format if original is threaded
-- Never use markdown (**, ##, etc.)
+- NO markdown (**, ##, etc.)
 
 CONTENT PRO STORYTELLING:
 - Hook with emotion, not information
@@ -260,6 +487,8 @@ Original post:
 {text}
 
 {VOICE_EXAMPLES}
+
+CRITICAL: Output plain text only. NO markdown formatting (**, ##), NO headers, NO bold text. Write like the viral examples - natural, clean, readable.
 
 OUTPUT ONLY THE TRANSFORMED POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE STORY-DRIVEN CONTENT:
 
