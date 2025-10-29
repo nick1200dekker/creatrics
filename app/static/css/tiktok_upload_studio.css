@@ -2,8 +2,8 @@
    UPLOAD STUDIO - TIKTOK SIDE-BY-SIDE LAYOUT
    ============================================= */
 
-/* Reset the default content-panel padding */
-.content-panel {
+/* Reset the default content-panel padding - scoped to main content only */
+.main-content .content-panel {
     padding: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
@@ -154,8 +154,8 @@ html.dark .status-dot.loading {
     color: var(--text-primary);
 }
 
-/* User Info */
-.user-info {
+/* User Info - Scoped to connection card only */
+.connection-card .user-info {
     display: flex;
     align-items: center;
     gap: 0.875rem;
@@ -165,12 +165,12 @@ html.dark .status-dot.loading {
     border: 1px solid var(--border-primary);
 }
 
-html.dark .user-info {
+html.dark .connection-card .user-info {
     background: rgba(39, 39, 42, 0.4);
     border-color: rgba(63, 63, 70, 0.6);
 }
 
-.user-avatar {
+.connection-card .user-avatar {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -178,22 +178,22 @@ html.dark .user-info {
     object-fit: cover;
 }
 
-html.dark .user-avatar {
+html.dark .connection-card .user-avatar {
     border-color: #60A5FA;
 }
 
-.user-details {
+.connection-card .user-details {
     flex: 1;
 }
 
-.user-name {
+.connection-card .user-name {
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.125rem;
 }
 
-.user-id {
+.connection-card .user-id {
     font-size: 0.75rem;
     color: var(--text-secondary);
 }
