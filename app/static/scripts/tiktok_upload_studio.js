@@ -648,7 +648,7 @@ function handleModeChange() {
 }
 
 /**
- * Handle video upload
+ * Handle video upload (async with progress tracking)
  */
 async function handleUpload(e) {
     e.preventDefault();
@@ -671,7 +671,7 @@ async function handleUpload(e) {
     const uploadBtn = document.getElementById('uploadBtn');
     const originalBtnContent = uploadBtn.innerHTML;
     uploadBtn.disabled = true;
-    uploadBtn.innerHTML = '<i class="ph ph-spinner"></i> Uploading...';
+    uploadBtn.innerHTML = '<i class="ph ph-spinner"></i> Starting upload...';
 
     try {
         // Create form data
@@ -681,8 +681,9 @@ async function handleUpload(e) {
         formData.append('privacy_level', privacyLevel);
         formData.append('mode', mode);
 
-        console.log('Uploading video to TikTok...');
+        console.log('Starting async upload to TikTok...');
 
+        // Start upload (returns immediately with upload_id)
         const response = await fetch('/tiktok-upload-studio/api/upload', {
             method: 'POST',
             body: formData
@@ -690,38 +691,189 @@ async function handleUpload(e) {
 
         const data = await response.json();
 
-        if (data.success) {
-            showToast(data.message || 'Video uploaded successfully!', 'success');
+        if (data.success && data.upload_id) {
+            // Show upload in progress notification
+            showUploadProgress(data.upload_id);
 
-            // Show success message
-            document.getElementById('resultsContainer').innerHTML = `
-                <div style="max-width: 500px; margin: 2rem auto; text-align: center; padding: 2.5rem; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 12px;">
-                    <div style="width: 64px; height: 64px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                        <i class="ph-fill ph-check" style="font-size: 2rem; color: white;"></i>
-                    </div>
-                    <h3 style="color: var(--text-primary); margin-bottom: 0.75rem; font-size: 1.5rem; font-weight: 600;">Upload Complete!</h3>
-                    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9375rem; line-height: 1.6;">
-                        Your video has been successfully uploaded to TikTok
-                    </p>
-                    <button onclick="location.reload()" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: transparent; color: var(--text-secondary); border: 1px solid var(--border-primary); border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; font-size: 0.9375rem;">
-                        <i class="ph ph-arrow-counter-clockwise"></i> Upload Another Video
-                    </button>
-                </div>
-            `;
+            // Start polling for progress
+            pollUploadProgress(data.upload_id, mode);
 
-            // Reset state
-            selectedFile = null;
-            selectedTitleIndex = null;
+            // Re-enable button immediately (upload happens in background)
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = originalBtnContent;
+
+            showToast('Upload started! You can continue working while video uploads.', 'info');
         } else {
             showToast('Upload failed: ' + data.error, 'error');
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = originalBtnContent;
         }
     } catch (error) {
         console.error('Upload error:', error);
-        showToast('Failed to upload video', 'error');
-    } finally {
-        // Re-enable button
+        showToast('Failed to start upload', 'error');
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = originalBtnContent;
+    }
+}
+
+/**
+ * Show upload progress notification
+ */
+function showUploadProgress(uploadId) {
+    // Remove existing progress notification
+    const existing = document.getElementById('uploadProgressNotification');
+    if (existing) {
+        existing.remove();
+    }
+
+    // Create progress notification
+    const notification = document.createElement('div');
+    notification.id = 'uploadProgressNotification';
+    notification.className = 'upload-progress-notification';
+    notification.innerHTML = `
+        <div class="upload-progress-content">
+            <div class="upload-progress-header">
+                <i class="ph ph-upload-simple"></i>
+                <span>Uploading to TikTok...</span>
+            </div>
+            <div class="upload-progress-bar">
+                <div class="upload-progress-fill" id="uploadProgressFill" style="width: 0%"></div>
+            </div>
+            <div class="upload-progress-text" id="uploadProgressText">Initializing...</div>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Fade in
+    setTimeout(() => notification.classList.add('show'), 100);
+}
+
+/**
+ * Poll upload progress
+ */
+async function pollUploadProgress(uploadId, mode) {
+    const maxAttempts = 120; // Poll for up to 10 minutes
+    let attempt = 0;
+
+    const poll = async () => {
+        attempt++;
+
+        try {
+            const response = await fetch(`/tiktok-upload-studio/api/upload-status/${uploadId}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                updateUploadProgress('failed', 0, 'Upload failed');
+                return;
+            }
+
+            const upload = data.upload;
+            const status = upload.status;
+            const progress = upload.progress || 0;
+
+            // Update UI
+            updateUploadProgress(status, progress, getStatusMessage(status, mode));
+
+            // Check if complete or failed
+            if (status === 'completed') {
+                setTimeout(() => hideUploadProgress(), 3000);
+
+                // Show success in results panel
+                const message = upload.message || 'Video uploaded successfully!';
+                document.getElementById('resultsContainer').innerHTML = `
+                    <div style="max-width: 500px; margin: 2rem auto; text-align: center; padding: 2.5rem; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 12px;">
+                        <div style="width: 64px; height: 64px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                            <i class="ph-fill ph-check" style="font-size: 2rem; color: white;"></i>
+                        </div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 0.75rem; font-size: 1.5rem; font-weight: 600;">Upload Complete!</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9375rem; line-height: 1.6;">
+                            ${message}
+                        </p>
+                        <button onclick="location.reload()" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: transparent; color: var(--text-secondary); border: 1px solid var(--border-primary); border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; font-size: 0.9375rem;">
+                            <i class="ph ph-arrow-counter-clockwise"></i> Upload Another Video
+                        </button>
+                    </div>
+                `;
+
+                // Reset state
+                selectedFile = null;
+                selectedTitleIndex = null;
+                return;
+
+            } else if (status === 'failed') {
+                setTimeout(() => hideUploadProgress(), 5000);
+                showToast('Upload failed: ' + (upload.error || 'Unknown error'), 'error');
+                return;
+            }
+
+            // Continue polling
+            if (attempt < maxAttempts) {
+                setTimeout(poll, 2000); // Poll every 2 seconds
+            } else {
+                updateUploadProgress('failed', 0, 'Upload timeout');
+            }
+
+        } catch (error) {
+            console.error('Error polling upload progress:', error);
+            updateUploadProgress('failed', 0, 'Error checking status');
+        }
+    };
+
+    poll();
+}
+
+/**
+ * Update upload progress UI
+ */
+function updateUploadProgress(status, progress, message) {
+    const progressFill = document.getElementById('uploadProgressFill');
+    const progressText = document.getElementById('uploadProgressText');
+    const notification = document.getElementById('uploadProgressNotification');
+
+    if (!progressFill || !progressText || !notification) return;
+
+    progressFill.style.width = `${progress}%`;
+    progressText.textContent = message;
+
+    // Update colors based on status
+    if (status === 'completed') {
+        notification.classList.add('success');
+        notification.classList.remove('error');
+    } else if (status === 'failed') {
+        notification.classList.add('error');
+        notification.classList.remove('success');
+    }
+}
+
+/**
+ * Hide upload progress notification
+ */
+function hideUploadProgress() {
+    const notification = document.getElementById('uploadProgressNotification');
+    if (notification) {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }
+}
+
+/**
+ * Get status message for display
+ */
+function getStatusMessage(status, mode) {
+    switch (status) {
+        case 'initializing':
+            return 'Preparing upload...';
+        case 'uploading':
+            return 'Uploading video to TikTok...';
+        case 'processing':
+            return 'Processing video on TikTok...';
+        case 'completed':
+            return mode === 'inbox' ? 'Uploaded to inbox!' : 'Published successfully!';
+        case 'failed':
+            return 'Upload failed';
+        default:
+            return 'Uploading...';
     }
 }
 

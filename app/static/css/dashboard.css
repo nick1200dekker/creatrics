@@ -1387,6 +1387,7 @@ html.dark .loading-icon {
 .loading-spinner {
     font-size: 1.5rem;
     color: #3B82F6;
+    margin-bottom: 0.5rem;
 }
 
 html.dark .loading-spinner {

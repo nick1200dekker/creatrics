@@ -10,6 +10,8 @@ from app.routes.tiktok_upload_studio import bp
 from app.system.auth.middleware import auth_required
 from app.scripts.tiktok_upload_studio.tiktok_oauth_service import TikTokOAuthService
 from app.scripts.tiktok_upload_studio.tiktok_upload_service import TikTokUploadService
+from app.scripts.tiktok_upload_studio.async_upload_service import TikTokAsyncUploadService
+from app.scripts.tiktok_upload_studio.upload_tracker import UploadTracker
 from app.scripts.tiktok_upload_studio.tiktok_title_generator import TikTokTitleGenerator
 from app.system.services.firebase_service import StorageService
 from app.system.auth.permissions import get_workspace_user_id
@@ -143,7 +145,7 @@ def api_status():
 @bp.route('/api/upload', methods=['POST'])
 @auth_required
 def api_upload():
-    """Upload video to TikTok"""
+    """Upload video to TikTok (async with streaming - no disk storage)"""
     try:
         user_id = g.user.get('id')
 
@@ -163,37 +165,53 @@ def api_upload():
         if not title:
             return jsonify({'success': False, 'error': 'Title is required'}), 400
 
-        # Save video temporarily
-        filename = f"{uuid.uuid4()}_{video_file.filename}"
-        temp_path = f"/tmp/{filename}"
-        video_file.save(temp_path)
+        logger.info(f"Starting async upload to TikTok for user {user_id}: {title} (mode: {mode})")
 
-        logger.info(f"Uploading video to TikTok for user {user_id}: {title} (mode: {mode})")
-
-        # Upload to TikTok
-        result = TikTokUploadService.upload_video(
+        # Start async upload (returns immediately with upload_id)
+        result = TikTokAsyncUploadService.start_upload(
             user_id=user_id,
-            video_path=temp_path,
+            video_file=video_file,
             title=title,
             privacy_level=privacy_level,
             mode=mode
         )
 
-        # Clean up temp file
-        try:
-            os.remove(temp_path)
-        except:
-            pass
-
         if result['success']:
-            logger.info(f"Video uploaded successfully: {result.get('publish_id')}")
+            logger.info(f"Async upload started: {result.get('upload_id')}")
             return jsonify(result)
         else:
-            logger.error(f"Video upload failed: {result.get('error')}")
+            logger.error(f"Failed to start upload: {result.get('error')}")
             return jsonify(result), 500
 
     except Exception as e:
         logger.error(f"Error in video upload: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/api/upload-status/<upload_id>')
+@auth_required
+def api_upload_status(upload_id):
+    """Check upload progress"""
+    try:
+        user_id = g.user.get('id')
+
+        # Get upload status
+        upload_data = UploadTracker.get_upload(upload_id)
+
+        if not upload_data:
+            return jsonify({'success': False, 'error': 'Upload not found'}), 404
+
+        # Verify user owns this upload
+        if upload_data.get('user_id') != user_id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+        return jsonify({
+            'success': True,
+            'upload': upload_data
+        })
+
+    except Exception as e:
+        logger.error(f"Error checking upload status: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 

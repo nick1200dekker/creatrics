@@ -1123,6 +1123,108 @@ html.dark .toast-notification i {
     font-size: 0.875rem;
 }
 
+/* Upload Progress Notification */
+.upload-progress-notification {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 360px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(120%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 9999;
+}
+
+html.dark .upload-progress-notification {
+    background: rgba(39, 39, 42, 0.95);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.upload-progress-notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.upload-progress-notification.success {
+    border-color: #10B981;
+}
+
+.upload-progress-notification.error {
+    border-color: #EF4444;
+}
+
+.upload-progress-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+}
+
+.upload-progress-header i {
+    font-size: 1.25rem;
+    color: #3B82F6;
+}
+
+.upload-progress-notification.success .upload-progress-header i {
+    color: #10B981;
+}
+
+.upload-progress-notification.error .upload-progress-header i {
+    color: #EF4444;
+}
+
+.upload-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+html.dark .upload-progress-bar {
+    background: rgba(39, 39, 42, 0.6);
+}
+
+.upload-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.upload-progress-notification.success .upload-progress-fill {
+    background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
+}
+
+.upload-progress-notification.error .upload-progress-fill {
+    background: linear-gradient(90deg, #EF4444 0%, #F87171 100%);
+}
+
+.upload-progress-text {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .upload-progress-notification {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+        width: auto;
+    }
+}
+
 /* Insufficient Credits Card */
 .insufficient-credits-card {
     text-align: center;
