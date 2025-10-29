@@ -1123,6 +1123,20 @@ html.dark .toast-notification i {
     font-size: 0.875rem;
 }
 
+/* Spinning icon animation */
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Upload Progress Notification */
 .upload-progress-notification {
     position: fixed;

@@ -671,7 +671,7 @@ async function handleUpload(e) {
     const uploadBtn = document.getElementById('uploadBtn');
     const originalBtnContent = uploadBtn.innerHTML;
     uploadBtn.disabled = true;
-    uploadBtn.innerHTML = '<i class="ph ph-spinner"></i> Starting upload...';
+    uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading...';
 
     try {
         // Create form data
@@ -695,12 +695,8 @@ async function handleUpload(e) {
             // Show upload in progress notification
             showUploadProgress(data.upload_id);
 
-            // Start polling for progress
-            pollUploadProgress(data.upload_id, mode);
-
-            // Re-enable button immediately (upload happens in background)
-            uploadBtn.disabled = false;
-            uploadBtn.innerHTML = originalBtnContent;
+            // Start polling for progress (pass button to re-enable when complete)
+            pollUploadProgress(data.upload_id, mode, uploadBtn, originalBtnContent);
 
             showToast('Upload started! You can continue working while video uploads.', 'info');
         } else {
@@ -752,7 +748,7 @@ function showUploadProgress(uploadId) {
 /**
  * Poll upload progress
  */
-async function pollUploadProgress(uploadId, mode) {
+async function pollUploadProgress(uploadId, mode, uploadBtn, originalBtnContent) {
     const maxAttempts = 120; // Poll for up to 10 minutes
     let attempt = 0;
 
@@ -765,6 +761,11 @@ async function pollUploadProgress(uploadId, mode) {
 
             if (!data.success) {
                 updateUploadProgress('failed', 0, 'Upload failed');
+                // Re-enable button on failure
+                if (uploadBtn) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = originalBtnContent;
+                }
                 return;
             }
 
@@ -778,6 +779,12 @@ async function pollUploadProgress(uploadId, mode) {
             // Check if complete or failed
             if (status === 'completed') {
                 setTimeout(() => hideUploadProgress(), 3000);
+
+                // Re-enable button on completion
+                if (uploadBtn) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = originalBtnContent;
+                }
 
                 // Show success in results panel
                 const message = upload.message || 'Video uploaded successfully!';
@@ -804,6 +811,12 @@ async function pollUploadProgress(uploadId, mode) {
             } else if (status === 'failed') {
                 setTimeout(() => hideUploadProgress(), 5000);
                 showToast('Upload failed: ' + (upload.error || 'Unknown error'), 'error');
+
+                // Re-enable button on failure
+                if (uploadBtn) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = originalBtnContent;
+                }
                 return;
             }
 
@@ -812,11 +825,21 @@ async function pollUploadProgress(uploadId, mode) {
                 setTimeout(poll, 2000); // Poll every 2 seconds
             } else {
                 updateUploadProgress('failed', 0, 'Upload timeout');
+                // Re-enable button on timeout
+                if (uploadBtn) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = originalBtnContent;
+                }
             }
 
         } catch (error) {
             console.error('Error polling upload progress:', error);
             updateUploadProgress('failed', 0, 'Error checking status');
+            // Re-enable button on error
+            if (uploadBtn) {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = originalBtnContent;
+            }
         }
     };
 
@@ -862,18 +885,12 @@ function hideUploadProgress() {
  */
 function getStatusMessage(status, mode) {
     switch (status) {
-        case 'initializing':
-            return 'Preparing upload...';
-        case 'uploading':
-            return 'Uploading video to TikTok...';
-        case 'processing':
-            return 'Processing video on TikTok...';
         case 'completed':
             return mode === 'inbox' ? 'Uploaded to inbox!' : 'Published successfully!';
         case 'failed':
             return 'Upload failed';
         default:
-            return 'Uploading...';
+            return 'Uploading to TikTok...';
     }
 }
 

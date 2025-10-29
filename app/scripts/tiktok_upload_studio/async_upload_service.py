@@ -227,19 +227,25 @@ class TikTokAsyncUploadService:
                 # Update progress based on status
                 progress = 60 + (attempt * 1)  # Increment slowly from 60 to 90
 
-                if publish_status == 'PUBLISH_COMPLETE':
-                    if mode == 'inbox':
-                        message = 'Video uploaded to TikTok inbox! Check your TikTok app to complete the post.'
-                    else:
-                        message = 'Video published to TikTok successfully!'
+                # Check for completion based on mode
+                is_complete = False
+                if mode == 'inbox' and publish_status == 'SEND_TO_USER_INBOX':
+                    # Inbox uploads are complete when sent to inbox
+                    is_complete = True
+                    message = 'Video uploaded to TikTok inbox! Check your TikTok app to complete the post.'
+                elif mode == 'direct' and publish_status == 'PUBLISH_COMPLETE':
+                    # Direct posts are complete when published
+                    is_complete = True
+                    message = 'Video published to TikTok successfully!'
 
+                if is_complete:
                     UploadTracker.update_status(
                         upload_id,
                         'completed',
                         progress=100,
                         message=message
                     )
-                    logger.info(f"Upload {upload_id} completed successfully")
+                    logger.info(f"Upload {upload_id} completed successfully (status: {publish_status})")
                     return
 
                 elif publish_status == 'FAILED':
