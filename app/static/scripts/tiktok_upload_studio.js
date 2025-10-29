@@ -98,7 +98,8 @@ function updateConnectionUI(data) {
             userInfo.style.display = 'flex';
             document.getElementById('userAvatar').src = data.user_info.avatar_url || '/static/img/default-avatar.png';
             document.getElementById('userName').textContent = data.user_info.display_name || 'TikTok User';
-            document.getElementById('userOpenId').textContent = `@${data.user_info.open_id}`;
+            // Hide the username handle since TikTok API doesn't provide it
+            document.getElementById('userOpenId').style.display = 'none';
         }
     } else {
         // Disconnected state
