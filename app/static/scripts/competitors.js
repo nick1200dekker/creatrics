@@ -384,10 +384,6 @@ function renderCompetitorsList() {
 
 // Remove competitor
 async function removeCompetitor(docId) {
-    if (!confirm('Remove this competitor?')) {
-        return;
-    }
-
     if (!currentListId) {
         console.error('No currentListId set');
         return;
