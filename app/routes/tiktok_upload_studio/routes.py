@@ -33,7 +33,7 @@ def index():
 
         # Get TikTok credentials from env
         client_key = os.environ.get('TIKTOK_CLIENT_KEY')
-        redirect_uri = os.environ.get('TIKTOK_REDIRECT_URI', 'https://creatrics.com/tiktok/callback')
+        redirect_uri = os.environ.get('TIKTOK_REDIRECT_URI', 'https://creatrics.com/tiktok-upload-studio/callback')
 
         return render_template(
             'tiktok_upload_studio/index.html',

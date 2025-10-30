@@ -69,7 +69,7 @@ class TikTokOAuthService:
         """
         try:
             client_key = os.environ.get('TIKTOK_CLIENT_KEY')
-            redirect_uri = os.environ.get('TIKTOK_REDIRECT_URI', 'https://creatrics.com/tiktok/callback')
+            redirect_uri = os.environ.get('TIKTOK_REDIRECT_URI', 'https://creatrics.com/tiktok-upload-studio/callback')
 
             if not client_key:
                 raise ValueError("TIKTOK_CLIENT_KEY not set")
@@ -125,7 +125,7 @@ class TikTokOAuthService:
             # Exchange code for access token
             client_key = os.environ.get('TIKTOK_CLIENT_KEY')
             client_secret = os.environ.get('TIKTOK_CLIENT_SECRET')
-            redirect_uri = os.environ.get('TIKTOK_REDIRECT_URI', 'https://creatrics.com/tiktok/callback')
+            redirect_uri = os.environ.get('TIKTOK_REDIRECT_URI', 'https://creatrics.com/tiktok-upload-studio/callback')
 
             if not client_key or not client_secret:
                 raise ValueError("TikTok credentials not set")
