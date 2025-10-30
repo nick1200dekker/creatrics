@@ -485,7 +485,7 @@ class StripeService:
                         
                 elif plan_id == 'basic' and mode == 'subscription':
                     # New Premium Creator subscription
-                    credits_to_add = 1000
+                    credits_to_add = 500
 
                     logger.info(f"Processing new Premium Creator subscription for user {user_id}")
 
@@ -499,7 +499,7 @@ class StripeService:
                     else:
                         logger.error(f"❌ Failed to update user plan")
 
-                    # Add initial 1000 credits
+                    # Add initial 500 credits
                     credit_result = credits_manager.add_credits(
                         user_id,
                         credits_to_add,
@@ -508,7 +508,7 @@ class StripeService:
                     )
 
                     if credit_result['success']:
-                        logger.info(f"✅ Successfully added 1000 initial credits to user {user_id}")
+                        logger.info(f"✅ Successfully added 500 initial credits to user {user_id}")
                         logger.info(f"New balance: {credit_result.get('credits_remaining', 'unknown')}")
 
                         # Record the transaction
@@ -743,22 +743,22 @@ class StripeService:
                     # Only process Premium Creator renewals
                     if product_id == os.environ.get('STRIPE_BASIC_PLAN_ID'):
                         logger.info(f"Processing Premium Creator renewal for user {user_id}")
-                        
+
                         credits_manager = CreditsManager()
                         credit_result = credits_manager.add_credits(
                             user_id,
-                            1000,
+                            500,
                             f"Premium Creator monthly renewal credits (invoice: {invoice_id[:20]}...)",
                             "subscription_renewal"
                         )
-                        
+
                         if credit_result['success']:
-                            logger.info(f"✅ Successfully added 1000 renewal credits to user {user_id}")
+                            logger.info(f"✅ Successfully added 500 renewal credits to user {user_id}")
                             logger.info(f"New balance: {credit_result.get('credits_remaining', 'unknown')}")
-                            
+
                             # Record the transaction
                             StripeService._record_credit_transaction(
-                                user_id, transaction_id, 1000, "Premium Creator renewal"
+                                user_id, transaction_id, 500, "Premium Creator renewal"
                             )
                         else:
                             logger.error(f"❌ Failed to add renewal credits: {credit_result.get('message', 'Unknown error')}")
