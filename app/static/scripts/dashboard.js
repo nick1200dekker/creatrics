@@ -104,11 +104,22 @@ function loadQuickActions(connectedPlatforms) {
     }
 
     // Generate HTML for action cards
-    track.innerHTML = allFeatures.map(feature => `
+    track.innerHTML = allFeatures.map(feature => {
+        let platformIcon = '';
+        if (feature.platform && feature.platform !== 'general') {
+            if (feature.platform === 'youtube') {
+                platformIcon = '<img src="/static/img/templates/yt_icon_almostblack_digital.png" alt="YouTube" style="width: 24px; height: 24px;">';
+            } else {
+                const iconType = feature.platform === 'x' ? 'x' : 'tiktok';
+                platformIcon = `<i class="ph ph-${iconType}-logo"></i>`;
+            }
+        }
+
+        return `
         <a href="${feature.url}" class="action-card">
             ${feature.platform && feature.platform !== 'general' ?
                 `<div class="platform-badge ${feature.platform}">
-                    <i class="ph ph-${feature.platform === 'youtube' ? 'youtube' : feature.platform === 'x' ? 'x' : 'tiktok'}-logo"></i>
+                    ${platformIcon}
                 </div>` : ''
             }
             <div class="action-icon-wrapper">
@@ -117,7 +128,8 @@ function loadQuickActions(connectedPlatforms) {
             <div class="action-card-title">${feature.title}</div>
             <div class="action-card-desc">${feature.desc}</div>
         </a>
-    `).join('');
+    `;
+    }).join('');
 
     // Start auto-scroll after a delay
     setTimeout(startAutoScroll, 2000);

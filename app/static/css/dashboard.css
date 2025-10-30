@@ -406,7 +406,7 @@ html.dark .channel-header {
 }
 
 .channel-icon.youtube {
-    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+    background: rgba(0, 0, 0, 0.05);
 }
 
 .channel-icon.x {
@@ -418,7 +418,7 @@ html.dark .channel-header {
 }
 
 html.dark .channel-icon.youtube {
-    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 html.dark .channel-icon.tiktok {
@@ -1293,18 +1293,18 @@ html.dark .preview-card {
     width: 64px;
     height: 64px;
     margin: 0 auto 1rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.06) 100%);
+    background: transparent;
     border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.75rem;
     color: #2563EB;
-    border: 1px solid rgba(59, 130, 246, 0.12);
+    border: none;
 }
 
 html.dark .preview-icon {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    background: transparent;
     border: none;
     color: #3B82F6;
 }

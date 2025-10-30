@@ -271,14 +271,14 @@
                 <div class="dropdown platform-dropdown">
                     <div class="dropdown-trigger" id="platform-dropdown-trigger">
                         <span id="selected-platform-text">
-                            <i class="ph-fill ph-youtube-logo"></i>
+                            <img src="{{ url_for('static', filename='img/templates/yt_icon_almostblack_digital.png') }}" alt="YouTube" style="width: 24px; height: 24px;">
                             YouTube
                         </span>
                         <i class="ph ph-caret-down dropdown-arrow"></i>
                     </div>
                     <div class="dropdown-menu" id="platform-dropdown-menu">
-                        <div class="dropdown-option platform-option-item selected" data-platform="YouTube" data-icon="ph-youtube-logo" data-color="#FF0000">
-                            <i class="ph-fill ph-youtube-logo"></i>
+                        <div class="dropdown-option platform-option-item selected" data-platform="YouTube" data-icon="yt-icon" data-color="#FF0000">
+                            <img src="{{ url_for('static', filename='img/templates/yt_icon_almostblack_digital.png') }}" alt="YouTube" style="width: 24px; height: 24px;">
                             <span>YouTube</span>
                         </div>
                         <div class="dropdown-option platform-option-item" data-platform="X" data-icon="ph-x-logo" data-color="#000000">

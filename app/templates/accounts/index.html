@@ -845,8 +845,8 @@ html.dark .modal-close-btn:hover {
             <!-- YouTube Account -->
             <div class="account-card">
                 <div class="card-header">
-                    <div class="platform-icon youtube-platform">
-                        <i class="ph ph-youtube-logo"></i>
+                    <div class="platform-icon youtube-platform" style="background: transparent !important;">
+                        <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 48px; height: 48px;">
                     </div>
                     <h2 class="platform-name">YouTube Channel</h2>
                 </div>
@@ -1039,11 +1039,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const configs = {
             'x': { icon: 'x-logo', title: 'Setting Up X' },
             'tiktok': { icon: 'tiktok-logo', title: 'Setting Up TikTok' },
-            'youtube': { icon: 'youtube-logo', title: 'Setting Up YouTube' }
+            'youtube': { icon: 'yt-icon', title: 'Setting Up YouTube' }
         };
 
         const config = configs[platform];
-        if (icon) icon.className = `ph ph-${config.icon}`;
+        if (icon) {
+            if (platform === 'youtube') {
+                icon.innerHTML = '<img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 32px; height: 32px;">';
+            } else {
+                icon.className = `ph ph-${config.icon}`;
+            }
+        }
         if (title) title.textContent = config.title;
 
         modal.style.display = 'flex';

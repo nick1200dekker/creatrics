@@ -462,9 +462,7 @@ html.dark .dropdown-option i {
     color: #FF0000 !important;
 }
 
-#selected-platform-text i.ph-youtube-logo {
-    color: #FF0000 !important;
-}
+/* YouTube icon styling is handled inline via img tag */
 
 .platform-option-item[data-platform="X"] i {
     color: #000000 !important;

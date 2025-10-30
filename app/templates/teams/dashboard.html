@@ -68,7 +68,7 @@
             <!-- YouTube Permissions -->
             <div class="permission-category">
                 <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ph ph-youtube-logo"></i> YouTube
+                    YouTube
                 </h3>
                 <div class="permissions-grid">
                     <div class="permission-item">
@@ -327,17 +327,21 @@ function updateUIForWorkspace() {
 
                     if (activePerms.length > 0) {
                         const categoryIcon = {
-                            'YouTube': 'ph-youtube-logo',
+                            'YouTube': 'yt-icon',
                             'X (Twitter)': 'ph-x-logo',
                             'TikTok': 'ph-tiktok-logo',
                             'Content Hub': 'ph-folder-open',
                             'Analytics': 'ph-chart-line'
                         }[category];
 
+                        const iconHTML = category === 'YouTube'
+                            ? ''
+                            : `<i class="ph ${categoryIcon}"></i>`;
+
                         permissionHTML += `
                             <div style="margin-bottom: 1.5rem;">
                                 <h4 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="ph ${categoryIcon}"></i> ${category}
+                                    ${iconHTML}${category === 'YouTube' ? '' : ' '}${category}
                                 </h4>
                                 <div>
                                     ${activePerms.map(perm => {
@@ -513,7 +517,7 @@ function editPermissions(memberId, permissions) {
     const categories = [
         {
             name: 'YouTube',
-            icon: 'ph-youtube-logo',
+            icon: 'yt-icon',
             features: [
                 { id: 'keyword_research', label: 'Keyword Research' },
                 { id: 'analyze_video', label: 'Analyze Video' },
@@ -564,10 +568,15 @@ function editPermissions(memberId, permissions) {
         }
     ];
 
-    content.innerHTML = categories.map(category => `
+    content.innerHTML = categories.map(category => {
+        const iconHTML = category.name === 'YouTube'
+            ? ''
+            : `<i class="ph ${category.icon}"></i>`;
+
+        return `
         <div class="permission-category" style="${categories.indexOf(category) > 0 ? 'margin-top: 1.5rem;' : ''}">
             <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="ph ${category.icon}"></i> ${category.name}
+                ${iconHTML}${category.name === 'YouTube' ? '' : ' '}${category.name}
             </h3>
             <div class="permissions-grid">
                 ${category.features.map(feature => `
@@ -578,7 +587,8 @@ function editPermissions(memberId, permissions) {
                 `).join('')}
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 
     modal.classList.add('active');
 }

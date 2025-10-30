@@ -359,7 +359,7 @@ async function loadMyVideos() {
 
         if (isNoChannelError) {
             emptyState.innerHTML = `
-                <i class="ph ph-youtube-logo"></i>
+                <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 56px; height: 56px;">
                 <p>No YouTube Channel Connected</p>
                 <span>Connect your YouTube account in Social Accounts or <strong>use the URL option above</strong> to optimize any video</span>
             `;
@@ -401,7 +401,7 @@ function updateToggleButtonsVisibility() {
             banner.className = 'youtube-connect-banner';
             banner.innerHTML = `
                 <div class="banner-content">
-                    <i class="ph ph-youtube-logo"></i>
+                    <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 32px; height: 32px;">
                     <div class="banner-text">
                         <strong>Connect your YouTube account</strong>
                         <span>Get access to all features including public and private video optimization</span>
@@ -951,7 +951,7 @@ function displayOptimizationResults(data) {
                                 <i class="ph ph-pencil-simple"></i>
                             </button>
                             <button class="apply-btn-icon" onclick="applyTitleFromElement(this)" title="Apply to YouTube">
-                                <i class="ph ph-youtube-logo"></i>
+                                <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 28px; height: 28px;">
                             </button>
                             <button class="copy-btn" onclick="copyTitleFromElement(this)">
                                 <i class="ph ph-copy"></i>
@@ -981,7 +981,7 @@ function displayOptimizationResults(data) {
                                 <i class="ph ph-pencil-simple"></i>
                             </button>
                             <button class="apply-btn-icon" onclick="applyDescription(this)" title="Apply to YouTube">
-                                <i class="ph ph-youtube-logo"></i>
+                                <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 28px; height: 28px;">
                             </button>
                             <button class="copy-btn-small" onclick="copyDescription(this)">
                                 <i class="ph ph-copy"></i>
@@ -1013,7 +1013,7 @@ function displayOptimizationResults(data) {
                             Optimized Tags
                             <div class="action-btns">
                                 <button class="apply-btn-icon" onclick="applyTags(this)" title="Apply to YouTube">
-                                    <i class="ph ph-youtube-logo"></i>
+                                    <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 28px; height: 28px;">
                                 </button>
                                 <button class="copy-btn-small" onclick="copyAllTags(this)">
                                     <i class="ph ph-copy"></i>
@@ -1118,7 +1118,7 @@ function displayOptimizationResults(data) {
                                 <i class="ph ph-pencil-simple"></i>
                             </button>
                             <button class="apply-btn-icon" onclick="applyCaptions()" title="Apply to YouTube">
-                                <i class="ph ph-youtube-logo"></i>
+                                <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 28px; height: 28px;">
                             </button>
                         </div>
                     </div>
@@ -1137,7 +1137,7 @@ function displayOptimizationResults(data) {
                                 <i class="ph ph-pencil-simple"></i>
                             </button>
                             <button class="apply-btn-icon" onclick="applyPinnedComment()" title="Post to YouTube">
-                                <i class="ph ph-youtube-logo"></i>
+                                <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 28px; height: 28px;">
                             </button>
                         </div>
                     </div>
@@ -1841,9 +1841,16 @@ function toggleEditCaptions(button) {
             // Reset button state
             const captionsBtn = document.querySelector('.advanced-result-box:has(#captionsTextarea) .apply-btn-icon');
             if (captionsBtn) {
-                const icon = captionsBtn.querySelector('i');
-                if (icon) {
-                    icon.className = 'ph ph-youtube-logo';
+                const iconElement = captionsBtn.querySelector('i, img');
+                if (iconElement) {
+                    if (iconElement.tagName === 'I') {
+                        const img = document.createElement('img');
+                        img.src = '/static/img/templates/yt_icon_red_digital.png';
+                        img.alt = 'YouTube';
+                        img.style.width = '28px';
+                        img.style.height = '28px';
+                        iconElement.replaceWith(img);
+                    }
                     captionsBtn.classList.remove('success');
                     captionsBtn.disabled = false;
                 }
@@ -1892,9 +1899,16 @@ function toggleEditPinnedComment(button) {
             // Reset button state
             const commentBtn = document.querySelector('.advanced-result-box:has(#pinnedCommentPreview) .apply-btn-icon');
             if (commentBtn) {
-                const icon = commentBtn.querySelector('i');
-                if (icon) {
-                    icon.className = 'ph ph-youtube-logo';
+                const iconElement = commentBtn.querySelector('i, img');
+                if (iconElement) {
+                    if (iconElement.tagName === 'I') {
+                        const img = document.createElement('img');
+                        img.src = '/static/img/templates/yt_icon_red_digital.png';
+                        img.alt = 'YouTube';
+                        img.style.width = '28px';
+                        img.style.height = '28px';
+                        iconElement.replaceWith(img);
+                    }
                     commentBtn.classList.remove('success');
                     commentBtn.disabled = false;
                 }
@@ -2061,7 +2075,7 @@ async function refreshTitles() {
                 <div class="suggestion-number">${index + 1}</div>
                 <div class="suggestion-text">${escapeHtml(title)}</div>
                 <button class="apply-btn-icon" onclick="applyTitle(this, \`${escapeHtml(title).replace(/`/g, '\\`').replace(/'/g, "\\'")}\`)" title="Apply to YouTube">
-                    <i class="ph ph-youtube-logo"></i>
+                    <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 28px; height: 28px;">
                 </button>
                 <button class="copy-btn" onclick="copyToClipboard(this, \`${escapeHtml(title).replace(/`/g, '\\`')}\`)">
                     <i class="ph ph-copy"></i>
@@ -2155,7 +2169,7 @@ function showConfirmModal(title, message, onConfirm) {
     modal.innerHTML = `
         <div class="confirm-modal">
             <div class="confirm-modal-header">
-                <i class="ph ph-youtube-logo"></i>
+                <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 28px; height: 28px;">
                 <h3 class="confirm-modal-title">${escapeHtml(title)}</h3>
             </div>
             <div class="confirm-modal-content">${escapeHtml(message)}</div>
@@ -2558,9 +2572,16 @@ function toggleEditDescription(button) {
             // Reset button state
             const descriptionBtn = document.querySelector('.comparison-box.optimized-box .apply-btn-icon[onclick*="applyDescription"]');
             if (descriptionBtn) {
-                const icon = descriptionBtn.querySelector('i');
-                if (icon) {
-                    icon.className = 'ph ph-youtube-logo';
+                const iconElement = descriptionBtn.querySelector('i, img');
+                if (iconElement) {
+                    if (iconElement.tagName === 'I') {
+                        const img = document.createElement('img');
+                        img.src = '/static/img/templates/yt_icon_red_digital.png';
+                        img.alt = 'YouTube';
+                        img.style.width = '28px';
+                        img.style.height = '28px';
+                        iconElement.replaceWith(img);
+                    }
                     descriptionBtn.classList.remove('success');
                     descriptionBtn.disabled = false;
                 }

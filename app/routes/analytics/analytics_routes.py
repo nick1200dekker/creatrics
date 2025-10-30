@@ -817,33 +817,36 @@ def x_posts_paginated():
 def youtube_overview():
     """Get YouTube analytics overview data"""
     user_id = get_workspace_user_id()
-    
+
     try:
         if not firebase_admin._apps:
             try:
                 firebase_admin.initialize_app()
             except ValueError:
                 pass
-        
+
         db = firestore.client()
-        
+
         # Get latest metrics
         latest_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
         latest_doc = latest_ref.get()
-        
+
         if not latest_doc.exists:
             return jsonify({'error': 'No YouTube analytics data available'}), 404
-        
+
         latest_data = latest_doc.to_dict()
-        
+
+        # Calculate data age for compliance display
+        data_age_info = calculate_data_age(latest_data)
+
         # Get historical data for trends (last 30 days)
         thirty_days_ago = datetime.now() - timedelta(days=30)
         history_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('history').collection('daily')
-        
+
         # Get all historical documents
         history_docs = history_ref.stream()
         historical_data = []
-        
+
         for doc in history_docs:
             data = doc.to_dict()
             # Parse date from document ID (YYYY-MM-DD format)
@@ -854,15 +857,16 @@ def youtube_overview():
                     historical_data.append(data)
             except:
                 pass
-        
+
         # Sort by date
         historical_data.sort(key=lambda x: x['date'])
-        
+
         return jsonify({
             'current': latest_data,
-            'historical': historical_data
+            'historical': historical_data,
+            'data_age': data_age_info  # Compliance: Show data age
         })
-        
+
     except Exception as e:
         logger.error(f"Error fetching YouTube overview: {str(e)}")
         return jsonify({'error': 'Failed to fetch analytics data'}), 500
@@ -1002,22 +1006,22 @@ def refresh_x_data():
 def refresh_youtube_data():
     """Manually refresh YouTube analytics data"""
     user_id = get_workspace_user_id()
-    
+
     try:
         # Import the YouTube analytics function
         from app.scripts.accounts.youtube_analytics import fetch_youtube_analytics
-        
+
         logger.info(f"Manual YouTube analytics refresh requested for user {user_id}")
-        
-        # Fetch fresh data
-        result = fetch_youtube_analytics(user_id)
+
+        # Force refresh (bypass 30-day cache check for manual refresh)
+        result = fetch_youtube_analytics(user_id, force_refresh=True)
 
         if result:
             logger.info(f"YouTube analytics refresh completed successfully for user {user_id}")
             return jsonify({
                 'success': True,
                 'message': 'YouTube analytics data refreshed successfully',
-                'timestamp': result.get('timestamp')
+                'timestamp': result.get('data_fetched_at')
             })
         else:
             logger.error(f"YouTube analytics refresh failed for user {user_id}")
@@ -1026,7 +1030,7 @@ def refresh_youtube_data():
                 'error': 'Failed to refresh YouTube analytics data. Your YouTube connection may have expired. Please reconnect your account in Settings.',
                 'needs_reconnect': True
             }), 401
-            
+
     except Exception as e:
         logger.error(f"Error refreshing YouTube analytics for user {user_id}: {str(e)}")
         return jsonify({
@@ -1207,6 +1211,70 @@ def refresh_tiktok_data():
             'success': False,
             'error': 'Failed to refresh analytics data'
         }), 500
+
+def calculate_data_age(data):
+    """
+    Calculate data age for YouTube policy compliance
+    Policy III.E.4.f requires displaying data age context
+
+    Returns dict with age info and warning levels
+    """
+    fetched_at = data.get('data_fetched_at')
+
+    if not fetched_at:
+        return {
+            'age_days': None,
+            'age_text': 'Unknown',
+            'warning_level': 'error',
+            'needs_refresh': True
+        }
+
+    try:
+        fetched_time = datetime.fromisoformat(fetched_at)
+        age = datetime.now() - fetched_time
+        age_days = age.days
+        age_hours = age.seconds // 3600
+
+        # Format age text
+        if age_days == 0:
+            if age_hours == 0:
+                age_text = 'Just now'
+            elif age_hours == 1:
+                age_text = '1 hour ago'
+            else:
+                age_text = f'{age_hours} hours ago'
+        elif age_days == 1:
+            age_text = '1 day ago'
+        else:
+            age_text = f'{age_days} days ago'
+
+        # Determine warning level based on age
+        if age_days >= 30:
+            warning_level = 'critical'  # Red - must refresh
+        elif age_days >= 7:
+            warning_level = 'warning'   # Yellow - should refresh
+        elif age_days >= 1:
+            warning_level = 'info'      # Neutral
+        else:
+            warning_level = 'success'   # Green - fresh
+
+        return {
+            'age_days': age_days,
+            'age_hours': age_hours,
+            'age_text': age_text,
+            'fetched_at': fetched_at,
+            'warning_level': warning_level,
+            'needs_refresh': age_days >= 30
+        }
+
+    except (ValueError, TypeError) as e:
+        logger.error(f"Error parsing data age: {e}")
+        return {
+            'age_days': None,
+            'age_text': 'Unknown',
+            'warning_level': 'error',
+            'needs_refresh': True
+        }
 
 def calculate_trends(historical_data):
     """Calculate trends from historical data"""

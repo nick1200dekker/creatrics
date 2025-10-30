@@ -897,9 +897,22 @@ function initializeAnalytics() {
         if (viewsChart) viewsChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
         if (trafficChart) trafficChart.innerHTML = '<div class="loading-container"><div class="loading-spinner"><i class="ph ph-spinner spin"></i></div></div>';
 
-        fetch(`/analytics/youtube/daily-views?timeframe=${currentTimeframe}`, {
+        // First fetch overview to get data age info
+        fetch('/analytics/youtube/overview', {
             credentials: 'include'
         })
+            .then(response => response.json())
+            .then(overviewData => {
+                // Display data age warning (YouTube compliance)
+                if (overviewData.data_age) {
+                    displayDataAgeWarning(overviewData.data_age);
+                }
+
+                // Then fetch daily data
+                return fetch(`/analytics/youtube/daily-views?timeframe=${currentTimeframe}`, {
+                    credentials: 'include'
+                });
+            })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -918,6 +931,58 @@ function initializeAnalytics() {
                 console.error('Error loading YouTube daily data:', error);
                 showYouTubeError('Failed to load analytics data');
             });
+    }
+
+    function displayDataAgeWarning(dataAge) {
+        // YouTube Policy III.E.4.f compliance: Display data age context
+        const metricsGrid = document.getElementById('youtube-metrics-grid');
+        if (!metricsGrid) return;
+
+        // Remove any existing warning
+        const existingWarning = document.getElementById('youtube-data-age-warning');
+        if (existingWarning) existingWarning.remove();
+
+        // Create warning banner based on age
+        let warningHTML = '';
+        const warningClass = {
+            'success': 'data-age-success',
+            'info': 'data-age-info',
+            'warning': 'data-age-warning',
+            'critical': 'data-age-critical',
+            'error': 'data-age-error'
+        }[dataAge.warning_level] || 'data-age-info';
+
+        const warningIcon = {
+            'success': 'ph-check-circle',
+            'info': 'ph-info',
+            'warning': 'ph-warning',
+            'critical': 'ph-warning-circle',
+            'error': 'ph-x-circle'
+        }[dataAge.warning_level] || 'ph-info';
+
+        let message = `Last updated: ${dataAge.age_text}`;
+        if (dataAge.warning_level === 'critical') {
+            message += ' - Data refresh required for compliance';
+        } else if (dataAge.warning_level === 'warning') {
+            message += ' - Consider refreshing for latest data';
+        }
+
+        warningHTML = `
+            <div id="youtube-data-age-warning" class="data-age-banner ${warningClass}" style="margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ph ${warningIcon}" style="font-size: 1.25rem;"></i>
+                    <span>${message}</span>
+                </div>
+                ${dataAge.needs_refresh ? `
+                <button onclick="refreshYouTubeData()" class="secondary-button" style="padding: 0.5rem 1rem;">
+                    <i class="ph ph-arrow-clockwise"></i>
+                    <span>Refresh Now</span>
+                </button>
+                ` : ''}
+            </div>
+        `;
+
+        metricsGrid.insertAdjacentHTML('beforebegin', warningHTML);
     }
     
     function loadYouTubeTopVideos() {

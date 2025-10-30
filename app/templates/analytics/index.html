@@ -37,7 +37,6 @@
                 </button>
                 <button class="platform-btn" data-platform="youtube"
                         onclick="{% if youtube_connected %}switchPlatform('youtube');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="YouTube Analytics">
-                    <i class="ph ph-youtube-logo"></i>
                     <span>YouTube</span>
                 </button>
                 <button class="platform-btn" data-platform="tiktok"

@@ -541,38 +541,143 @@ class YouTubeAnalytics:
         """Store analytics data in Firebase with both latest and historical data"""
         try:
             today = datetime.now().strftime('%Y-%m-%d')
-            
+            now = datetime.now()
+
+            # Add compliance timestamps
+            analytics_data['data_fetched_at'] = now.isoformat()
+            analytics_data['data_fetched_timestamp'] = now.timestamp()
+            analytics_data['next_verification_due'] = (now + timedelta(days=30)).isoformat()
+
             # Store as latest (for dashboard)
             latest_ref = self.db.collection('users').document(self.user_id).collection('youtube_analytics').document('latest')
             latest_ref.set(analytics_data)
-            
+
             # Store as historical data
             history_ref = self.db.collection('users').document(self.user_id).collection('youtube_analytics').document('history').collection('daily').document(today)
             history_ref.set(analytics_data)
-            
+
             logger.info(f"YouTube Analytics stored successfully in Firebase for user {self.user_id}")
             return True
         except Exception as e:
             logger.error(f"Error storing YouTube analytics: {str(e)}")
             return False
 
-def fetch_youtube_analytics(user_id):
-    """Fetch YouTube analytics data for a user"""
+def fetch_youtube_analytics(user_id, force_refresh=False):
+    """
+    Fetch YouTube analytics data for a user
+
+    Args:
+        user_id: User ID
+        force_refresh: Force fetch even if cached data is recent
+
+    Returns:
+        Analytics data dict or None if failed
+    """
     try:
         analytics = YouTubeAnalytics(user_id)
         if not analytics.credentials:
             logger.error(f"Failed to initialize YouTubeAnalytics - no valid credentials")
             return None
-        
+
+        # Check if we need to refresh (30-day compliance check)
+        if not force_refresh:
+            needs_refresh = check_if_refresh_needed(user_id)
+            if not needs_refresh:
+                logger.info(f"YouTube analytics for user {user_id} is recent, skipping fetch")
+                # Return cached data
+                return get_cached_analytics(user_id)
+
         result = analytics.get_analytics_data()
         if result:
             logger.info(f"YouTube analytics fetch completed successfully for user {user_id}")
         else:
             logger.error(f"YouTube analytics fetch failed for user {user_id}")
-            
+
         return result
     except Exception as e:
+        error_str = str(e).lower()
+
+        # Check for revoked access (compliance requirement)
+        if 'invalid_grant' in error_str or 'token has been expired or revoked' in error_str:
+            logger.warning(f"YouTube access revoked for user {user_id}, cleaning up data")
+            # Auto-delete data as per policy III.E.4.g
+            clean_youtube_user_data(user_id)
+            return None
+
         logger.error(f"YouTube analytics fetch exception for user {user_id}: {str(e)}")
+        return None
+
+def check_if_refresh_needed(user_id):
+    """
+    Check if analytics data needs refresh (30-day compliance check)
+    Policy: III.E.4.b - verify every 30 days
+
+    Returns:
+        True if refresh needed, False if cached data is acceptable
+    """
+    try:
+        if not firebase_admin._apps:
+            try:
+                firebase_admin.initialize_app()
+            except ValueError:
+                pass
+
+        db = firestore.client()
+        latest_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
+        latest_doc = latest_ref.get()
+
+        if not latest_doc.exists:
+            logger.info(f"No cached analytics for user {user_id}, refresh needed")
+            return True
+
+        data = latest_doc.to_dict()
+        fetched_at = data.get('data_fetched_at')
+
+        if not fetched_at:
+            logger.info(f"No fetch timestamp for user {user_id}, refresh needed")
+            return True
+
+        # Parse timestamp
+        try:
+            fetched_time = datetime.fromisoformat(fetched_at)
+            age_days = (datetime.now() - fetched_time).days
+
+            # Compliance: Refresh if >30 days old
+            if age_days >= 30:
+                logger.info(f"Analytics data for user {user_id} is {age_days} days old, refresh required")
+                return True
+
+            logger.info(f"Analytics data for user {user_id} is {age_days} days old, acceptable")
+            return False
+
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Invalid timestamp format for user {user_id}: {e}")
+            return True
+
+    except Exception as e:
+        logger.error(f"Error checking refresh status for user {user_id}: {str(e)}")
+        return True
+
+def get_cached_analytics(user_id):
+    """Get cached analytics data from Firestore"""
+    try:
+        if not firebase_admin._apps:
+            try:
+                firebase_admin.initialize_app()
+            except ValueError:
+                pass
+
+        db = firestore.client()
+        latest_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
+        latest_doc = latest_ref.get()
+
+        if latest_doc.exists:
+            return latest_doc.to_dict()
+
+        return None
+
+    except Exception as e:
+        logger.error(f"Error getting cached analytics for user {user_id}: {str(e)}")
         return None
 
 def clean_youtube_user_data(user_id):
