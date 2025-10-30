@@ -167,13 +167,14 @@
         /* Logo */
         .logo-container {
             text-align: center;
-            margin-bottom: 1rem;
-            position: relative;
-            left: -10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .logo-img {
-            height: 60px;
+            height: 80px;
             width: auto;
             display: inline-block;
             filter: brightness(0) saturate(100%) invert(27%) sepia(91%) saturate(2182%) hue-rotate(208deg) brightness(102%) contrast(95%);
@@ -485,27 +486,28 @@
             opacity: 0;
             transition: opacity 0.5s ease, border-color 0.3s ease;
         }
-        
+
         .policy-links.active {
             opacity: 1;
         }
-        
+
         .policy-links a {
             color: var(--text-tertiary);
             text-decoration: none;
-            font-size: 0.8rem;
+            font-size: 0.95rem;
             font-weight: 500;
             transition: color 0.3s ease;
             margin: 0 0.75rem;
         }
-        
+
         .policy-links a:hover {
             color: var(--text-secondary);
         }
 
         .policy-links .separator {
             color: var(--border-primary);
-            margin: 0 0.25rem;
+            margin: 0 0.5rem;
+            font-size: 0.95rem;
         }
         
         /* Page transition */
@@ -558,18 +560,22 @@
             .login-page {
                 padding: 1rem;
             }
-            
+
             .login-container {
                 padding: 2rem;
             }
-            
+
             .logo-img {
-                height: 50px;
+                height: 70px;
             }
-            
+
             .policy-links a {
-                font-size: 0.75rem;
+                font-size: 0.9rem;
                 margin: 0 0.5rem;
+            }
+
+            .policy-links .separator {
+                font-size: 0.9rem;
             }
 
             .dark-mode-toggle {
