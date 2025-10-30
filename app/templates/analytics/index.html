@@ -41,7 +41,6 @@
                 </button>
                 <button class="platform-btn" data-platform="tiktok"
                         onclick="{% if tiktok_connected %}switchPlatform('tiktok');{% else %}window.location.href='{{ url_for('accounts.index') }}';{% endif %}" title="TikTok Analytics">
-                    <i class="ph ph-tiktok-logo"></i>
                     <span>TikTok</span>
                 </button>
             </div>
