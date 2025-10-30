@@ -1619,10 +1619,14 @@ restoreNavStates();
                     
                     if (response.ok) {
                         const userData = await response.json();
-                        
+
                         const planDisplay = document.getElementById('user-plan-display');
                         if (planDisplay) {
-                            const plan = userData.subscription_plan || 'Free Plan';
+                            let plan = userData.subscription_plan || 'Free Plan';
+                            // Display "Premium" instead of "Premium Creator" in user section
+                            if (plan === 'Premium Creator') {
+                                plan = 'Premium';
+                            }
                             planDisplay.textContent = plan;
                         }
                         

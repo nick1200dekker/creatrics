@@ -179,6 +179,15 @@ class ReferralService:
                 logger.warning(f"Self-referral attempt by {new_user_id}")
                 return {'success': False, 'message': 'Cannot refer yourself'}
 
+            # IDEMPOTENCY CHECK: Check if this user has already been awarded signup bonus
+            # Check if user is already in referrer's signup_rewards list
+            rewards_claimed = referrer_data.get('referral_rewards_claimed', {})
+            signup_rewards = rewards_claimed.get('signup_rewards', [])
+
+            if new_user_id in signup_rewards:
+                logger.info(f"Signup bonus already claimed for {new_user_id}")
+                return {'success': True, 'message': 'Referral bonus already claimed'}
+
             # Link referee to referrer
             UserService.update_user(new_user_id, {
                 'referred_by': referrer_id
