@@ -94,7 +94,7 @@ function renderNicheLists() {
     if (nicheLists.length === 0) {
         container.innerHTML = `
             <div class="empty-lists">
-                <p class="empty-lists-text">No lists yet. Create one to get started!</p>
+                <p class="empty-lists-text">No lists yet.<br>Create one to get started!</p>
             </div>
         `;
         return;

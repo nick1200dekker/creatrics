@@ -45,8 +45,8 @@ async function checkYouTubeConnection() {
                         <i class="ph ph-upload"></i>
                         Upload Video
                     </label>
-                    <div style="padding: 1.25rem; background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: 10px; text-align: center;">
-                        <div style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.875rem;">Connect your YouTube account to upload videos</div>
+                    <div style="padding: 2rem 1.5rem; background: transparent; border: 1px solid var(--border-primary); border-radius: 10px; text-align: center;">
+                        <div style="color: var(--text-primary); margin-bottom: 1.25rem; font-size: 0.9375rem; font-weight: 500;">Connect your YouTube account to upload videos</div>
                         <a href="/accounts/" class="secondary-button">
                             <i class="ph ph-link"></i>
                             <span>Connect YouTube</span>
