@@ -381,7 +381,7 @@ def search_channels():
         # Extract unique channels from search results
         channels = {}
         continuation_token = None
-        max_requests = 5  # Make up to 5 API requests to get ~50 channels
+        max_requests = 10  # Make up to 10 API requests to get ~100 channels
 
         # First request
         querystring = {"query": query, "sort_by": "relevance"}
@@ -433,7 +433,7 @@ def search_channels():
 
         # Make additional requests using continuation token
         request_count = 1
-        while continuation_token and len(channels) < 50 and request_count < max_requests:
+        while continuation_token and len(channels) < 100 and request_count < max_requests:
             querystring = {"query": query, "token": continuation_token, "sort_by": "relevance"}
             response = requests.get(url, headers=headers, params=querystring)
             data = response.json()

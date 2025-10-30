@@ -250,14 +250,14 @@ def search_accounts():
                 search_id = impr_id
                 logger.info(f"Got search_id: {search_id}")
 
-            # Fetch remaining 4 pages in PARALLEL
+            # Fetch remaining 9 pages in PARALLEL (total 10 pages)
             import asyncio
             import httpx
 
             async def fetch_remaining_pages():
                 async with httpx.AsyncClient(timeout=30.0) as client:
                     tasks = []
-                    for page_num in range(1, 5):
+                    for page_num in range(1, 10):  # Pages 1-9 (plus page 0 already fetched)
                         params = {
                             "keyword": query,
                             "cursor": page_num,
@@ -266,7 +266,7 @@ def search_accounts():
                         tasks.append(client.get(url, headers=headers, params=params))
                     return await asyncio.gather(*tasks, return_exceptions=True)
 
-            logger.info("Fetching 4 more pages in parallel")
+            logger.info("Fetching 9 more pages in parallel (total 10 pages)")
             responses = asyncio.run(fetch_remaining_pages())
 
             # Process parallel responses
