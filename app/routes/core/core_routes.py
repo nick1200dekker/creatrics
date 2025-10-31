@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, jsonify, request, g, current_app, make_response, flash
 from app.system.auth.supabase import auth_required
 from app.system.auth.middleware import set_auth_cookie, clear_auth_cookie, verify_token, get_token_from_cookie, get_token_from_header, optional_auth, COOKIE_NAME, COOKIE_PATH, COOKIE_DOMAIN
-from app.system.services.firebase_service import UserService, StorageService
+from app.system.services.firebase_service import UserService, StorageService, db
 from app.system.services.email_service import email_service
 from app.system.services.welcome_email_scheduler import welcome_scheduler
 from app.config import get_config
@@ -10,6 +10,7 @@ import jwt
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from functools import wraps
+import hashlib
 
 # Setup logger
 logger = logging.getLogger('core_routes')
@@ -701,3 +702,54 @@ def privacy_policy():
 def terms_conditions():
     """Render terms and conditions page"""
     return render_template('auth/terms-conditions.html')
+
+
+@bp.route('/tiktok-data-optout', methods=['GET', 'POST'])
+def tiktok_data_optout():
+    """Allow TikTok creators to opt-out of data collection (GDPR compliance)"""
+    if request.method == 'POST':
+        try:
+            username = request.form.get('username', '').strip().lstrip('@')
+            email = request.form.get('email', '').strip()
+
+            if not username:
+                flash('TikTok username is required', 'error')
+                return render_template('tiktok_optout.html')
+
+            # Create blocklist entry
+            blocklist_ref = db.collection('tiktok_optout_blocklist').document(username.lower())
+            blocklist_ref.set({
+                'username': username,
+                'email': email if email else None,
+                'requested_at': datetime.now(),
+                'ip_address': request.remote_addr
+            })
+
+            # Find and delete any existing data for this user across all users' competitor lists
+            users_ref = db.collection('users')
+            deleted_count = 0
+
+            for user_doc in users_ref.stream():
+                # Check all niche lists for this user
+                lists_ref = user_doc.reference.collection('tiktok_niche_lists')
+                for list_doc in lists_ref.stream():
+                    # Check all accounts in each list
+                    accounts_ref = list_doc.reference.collection('accounts')
+                    accounts = accounts_ref.where('username', '==', username).stream()
+
+                    for account in accounts:
+                        account.reference.delete()
+                        deleted_count += 1
+                        logger.info(f"Deleted TikTok data for @{username}")
+
+            flash(f'Your data has been removed. Found and deleted {deleted_count} records. You will not be tracked in the future.', 'success')
+            logger.info(f"TikTok opt-out processed for @{username}, deleted {deleted_count} records")
+
+        except Exception as e:
+            logger.error(f"Error processing TikTok opt-out: {e}")
+            flash('An error occurred. Please try again or contact support@creatrics.com', 'error')
+
+        return render_template('tiktok_optout.html')
+
+    # GET request
+    return render_template('tiktok_optout.html')
