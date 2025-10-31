@@ -237,8 +237,17 @@
 
         // Show loading
         generateBtn.disabled = true;
-        generateBtn.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 0.5rem;"><div class="loading-spinner" style="width: 16px; height: 16px; border-width: 2px;"></div> Generating...</span>';
-        
+        generateBtn.style.opacity = '0.7';
+        generateBtn.style.cursor = 'not-allowed';
+
+        const buttonIcon = generateBtn.querySelector('.button-icon');
+        const buttonSpinner = generateBtn.querySelector('.button-spinner');
+        const buttonText = generateBtn.querySelector('.button-text');
+
+        if (buttonIcon) buttonIcon.style.display = 'none';
+        if (buttonSpinner) buttonSpinner.style.display = 'inline-block';
+        if (buttonText) buttonText.textContent = 'Generating...';
+
         resultContainer.classList.remove('has-result');
         resultContainer.innerHTML = `
             <div class="loading-overlay">
@@ -337,6 +346,26 @@
                             </a>
                         </div>
                     `;
+                } else if (data.error_type === 'content_policy_violation') {
+                    resultContainer.innerHTML = `
+                        <div class="error-card">
+                            <div class="error-icon-wrapper">
+                                <i class="ph ph-warning-circle"></i>
+                            </div>
+                            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.25rem; font-weight: 700;">Prompt Not Allowed</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">
+                                ${data.error}
+                            </p>
+                            <div style="background: var(--surface-secondary); padding: 1rem; border-radius: 8px; font-size: 0.875rem; color: var(--text-secondary);">
+                                <strong style="color: var(--text-primary);">Tips:</strong>
+                                <ul style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
+                                    <li>Try rephrasing to describe peaceful or neutral scenes</li>
+                                    <li>Avoid words like "fight", "attack", "violence"</li>
+                                    <li>Focus on "standing with", "observing", or "near" instead</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
                 } else {
                     throw new Error(data.error || 'Generation failed');
                 }
@@ -351,7 +380,11 @@
             `;
         } finally {
             generateBtn.disabled = false;
-            generateBtn.innerHTML = '<i class="ph ph-magic-wand"></i> Generate';
+            generateBtn.style.opacity = '1';
+            generateBtn.style.cursor = 'pointer';
+            if (buttonIcon) buttonIcon.style.display = 'inline-block';
+            if (buttonSpinner) buttonSpinner.style.display = 'none';
+            if (buttonText) buttonText.textContent = 'Generate';
         }
     }
 

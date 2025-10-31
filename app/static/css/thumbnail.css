@@ -964,6 +964,10 @@ html.dark .loading-spinner {
     to { transform: rotate(360deg); }
 }
 
+.spin {
+    animation: spin 1s linear infinite;
+}
+
 .loading-container {
     display: flex;
     flex-direction: column;
@@ -1015,6 +1019,36 @@ html.dark .loading-spinner {
 html.dark .insufficient-credits-card {
     background: rgba(39, 39, 42, 0.6);
     border-color: #F59E0B;
+}
+
+/* Error Card (Content Policy) */
+.error-card {
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-tertiary);
+    border: 2px solid #EF4444;
+    border-radius: 12px;
+}
+
+html.dark .error-card {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: #EF4444;
+}
+
+.error-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 50%;
+}
+
+.error-icon-wrapper i {
+    font-size: 2rem;
+    color: #EF4444;
 }
 
 .credit-icon-wrapper {

@@ -285,9 +285,19 @@ def generate_thumbnail():
 
         except Exception as api_error:
             logger.error(f"Fal AI API error: {str(api_error)}")
+            error_message = str(api_error)
+
+            # Check if it's a content policy violation
+            if 'Gemini could not generate' in error_message or 'prompt' in error_message.lower():
+                return jsonify({
+                    'success': False,
+                    'error': 'Your prompt was rejected by the AI safety filters. Please try rephrasing your prompt to avoid violent, dangerous, or inappropriate content.',
+                    'error_type': 'content_policy_violation'
+                }), 400
+
             return jsonify({
                 'success': False,
-                'error': f'Generation failed: {str(api_error)}'
+                'error': f'Generation failed: {error_message}'
             }), 500
 
     except Exception as e:
