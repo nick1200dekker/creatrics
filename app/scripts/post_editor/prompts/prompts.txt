@@ -240,6 +240,8 @@ Rewrite this post using the Hook-Story-Punch framework. Make it scroll-stopping 
 
 {VOICE_CONTEXT}
 
+CRITICAL LENGTH RULE: DO NOT EXPAND THE POST. Match the original post length closely. If the original is short, keep it short. If it's medium, keep it medium. Only restructure and improve - don't add unnecessary content.
+
 THE FRAMEWORK EXPLAINED:
 
 HOOK (First 1-2 Lines)
@@ -298,7 +300,7 @@ FORMATTING RULES:
 - Never use hashtags
 - Simple bullets (-) if needed
 - NO markdown (**, ##, etc.)
-- Match original length naturally
+- MATCH ORIGINAL LENGTH - Don't expand unnecessarily
 - Keep all @mentions intact
 
 CONTENT PRO STANDARDS:
@@ -369,6 +371,8 @@ COMPLETE REWRITE REQUIRED. Analyze the reference examples deeply, then rewrite t
 
 {VOICE_CONTEXT}
 
+CRITICAL LENGTH RULE: DO NOT EXPAND THE POST. Match the original post length closely. Focus on matching the voice and style, not adding more content. If original is short, keep it short.
+
 VOICE SIGNATURE ELEMENTS TO COPY EXACTLY:
 1. Grammar patterns (if examples use "completly" or "dont" - you must too)
 2. Contraction style (don't vs dont, I've vs ive)
@@ -402,9 +406,9 @@ Original text:
 Reference Examples:
 {VOICE_EXAMPLES}
 
-CRITICAL: Output plain text only. NO markdown formatting (**, ##), NO headers, NO bold text. Match the exact formatting style of the reference examples.
+CRITICAL: Output plain text only. NO markdown formatting (**, ##), NO headers, NO bold text. Match the exact formatting style of the reference examples. MAINTAIN ORIGINAL POST LENGTH - don't make it longer.
 
-REWRITE EVERY SENTENCE FROM SCRATCH. Transform this into content the reference author would actually write. Match their voice so well their audience couldn't tell the difference.
+REWRITE EVERY SENTENCE FROM SCRATCH. Transform this into content the reference author would actually write. Match their voice so well their audience couldn't tell the difference. Keep the same approximate length as the original.
 
 OUTPUT ONLY THE REWRITTEN POST - NO EXPLANATIONS, NO COMMENTARY, NO ANALYSIS. JUST THE CONTENT IN THEIR VOICE:
 
@@ -414,6 +418,8 @@ Rewritten version:
 Transform this into compelling social content using proven storytelling techniques that content pros use daily.
 
 {VOICE_CONTEXT}
+
+CRITICAL LENGTH RULE: DO NOT EXPAND THE POST. Match the original post length closely. Only improve the storytelling and flow - don't add unnecessary content or make it longer. Keep the same approximate word count.
 
 STORYTELLING FRAMEWORK:
 
@@ -472,9 +478,10 @@ FORMATTING STANDARDS:
 - Whitespace between thoughts for pacing
 - Clear call-to-action or question at end
 - Preserve original emojis in context
-- Match original post length naturally
+- CRITICAL: Match original post length - don't expand
 - Maintain thread format if original is threaded
 - NO markdown (**, ##, etc.)
+- If original is 100 words, output should be ~100 words
 
 CONTENT PRO STORYTELLING:
 - Hook with emotion, not information

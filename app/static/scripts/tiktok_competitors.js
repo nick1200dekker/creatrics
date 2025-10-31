@@ -318,17 +318,11 @@ function renderCompetitorsList() {
         </div>
         <div class="competitors-grid">
             ${competitors.map(comp => {
-                const avatarHTML = comp.avatar ?
-                    `<img src="${comp.avatar}" alt="${escapeHtml(comp.nickname || 'Account')}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="avatar-placeholder" style="display:none;">${(comp.nickname || '?')[0].toUpperCase()}</div>` :
-                    `<div class="avatar-placeholder">${(comp.nickname || '?')[0].toUpperCase()}</div>`;
-
                 return `
                     <div class="competitor-card">
-                        <div class="competitor-avatar">
-                            ${avatarHTML}
-                        </div>
-                        <div class="competitor-info">
+                        <div class="competitor-info" style="flex: 1;">
                             <div class="competitor-title">${escapeHtml(comp.nickname || 'Unknown Account')}</div>
+                            ${comp.username ? `<div class="channel-handle">@${escapeHtml(comp.username)}</div>` : ''}
                             <div class="competitor-stats">
                                 <span class="stat">
                                     <i class="ph ph-users"></i>

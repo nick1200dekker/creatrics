@@ -406,64 +406,58 @@
                 filterDrafts(e.target.value);
             });
         }
-        
+
         // Load More button
         const loadMoreBtn = document.getElementById('loadMoreBtn');
         if (loadMoreBtn) {
             loadMoreBtn.addEventListener('click', loadMoreDrafts);
         }
-        
-        // Tool selection
-        const grammarTool = document.getElementById('grammar-tool');
-        const storytellingTool = document.getElementById('storytelling-tool');
-        const hookStoryPunchTool = document.getElementById('hook-story-punch-tool');
-        const braindumpTool = document.getElementById('braindump-tool');
-        const mimicTool = document.getElementById('mimic-tool');
 
-        if (grammarTool) {
-            grammarTool.onclick = () => {
-                resetToolsActive();
-                grammarTool.classList.add('active');
-                state.enhancementPreset = 'grammar';
-                markAsChanged();
-            };
-        }
-        
-        if (storytellingTool) {
-            storytellingTool.onclick = () => {
-                resetToolsActive();
-                storytellingTool.classList.add('active');
-                state.enhancementPreset = 'storytelling';
-                markAsChanged();
-            };
-        }
-        
-        if (hookStoryPunchTool) {
-            hookStoryPunchTool.onclick = () => {
-                resetToolsActive();
-                hookStoryPunchTool.classList.add('active');
-                state.enhancementPreset = 'hook_story_punch';
-                markAsChanged();
-            };
-        }
+        // Category buttons (Create/Improve/Correct)
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
 
-        if (braindumpTool) {
-            braindumpTool.onclick = () => {
-                resetToolsActive();
-                braindumpTool.classList.add('active');
-                state.enhancementPreset = 'braindump';
-                markAsChanged();
-            };
-        }
+                // Update active category button
+                categoryBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
 
-        if (mimicTool) {
-            mimicTool.onclick = () => {
-                resetToolsActive();
-                mimicTool.classList.add('active');
-                state.enhancementPreset = 'mimic';
+                // Show relevant options container
+                document.querySelectorAll('.options-container').forEach(container => {
+                    container.classList.remove('active');
+                });
+                const activeContainer = document.querySelector(`.options-container[data-category="${category}"]`);
+                if (activeContainer) {
+                    activeContainer.classList.add('active');
+
+                    // Auto-select first visible option
+                    const firstOption = activeContainer.querySelector('.option-btn:not([style*="display: none"])');
+                    if (firstOption) {
+                        // Remove active from all options
+                        document.querySelectorAll('.option-btn').forEach(opt => opt.classList.remove('active'));
+                        firstOption.classList.add('active');
+                        state.enhancementPreset = firstOption.getAttribute('data-preset');
+                        markAsChanged();
+                    }
+                }
+            });
+        });
+
+        // Option buttons (Braindump, Hook, Storytelling, etc.)
+        const optionBtns = document.querySelectorAll('.option-btn');
+        optionBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const preset = this.getAttribute('data-preset');
+
+                // Update active option button
+                optionBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                state.enhancementPreset = preset;
                 markAsChanged();
-            };
-        }
+            });
+        });
         
         // Context modal
         const contextButton = document.getElementById('context-button');
@@ -684,14 +678,17 @@
         saveUndoState();
         
         const generateButton = document.getElementById('generate-button');
+        const buttonIcon = generateButton?.querySelector('.button-icon');
+        const buttonSpinner = generateButton?.querySelector('.button-spinner');
+        const buttonText = generateButton?.querySelector('.button-text');
+
         if (generateButton) {
             generateButton.disabled = true;
             generateButton.style.opacity = '0.7';
             generateButton.style.cursor = 'not-allowed';
-            const buttonText = generateButton.querySelector('.button-text');
-            if (buttonText) {
-                buttonText.textContent = 'Enhancing...';
-            }
+            if (buttonIcon) buttonIcon.style.display = 'none';
+            if (buttonSpinner) buttonSpinner.style.display = 'inline-block';
+            if (buttonText) buttonText.textContent = 'Enhancing...';
         }
         
         try {
@@ -740,10 +737,9 @@
                 generateButton.disabled = false;
                 generateButton.style.opacity = '';
                 generateButton.style.cursor = '';
-                const buttonText = generateButton.querySelector('.button-text');
-                if (buttonText) {
-                    buttonText.textContent = 'Enhance';
-                }
+                if (buttonIcon) buttonIcon.style.display = 'inline-block';
+                if (buttonSpinner) buttonSpinner.style.display = 'none';
+                if (buttonText) buttonText.textContent = 'Enhance';
             }
         }
     }
@@ -1122,21 +1118,23 @@
         });
     }
 
-    // Toggle Mimic button visibility based on voice selection
+    // Toggle Mimic option visibility based on voice selection
     function toggleMimicButton(selectedVoice) {
-        const mimicButton = document.getElementById('mimic-tool');
-        if (mimicButton) {
+        const mimicBtn = document.getElementById('mimic-btn');
+
+        if (mimicBtn) {
             // Show Mimic button only when a custom voice is selected (not 'creatrics')
             if (selectedVoice && selectedVoice !== 'creatrics' && selectedVoice !== 'standard') {
-                mimicButton.style.display = 'flex';
+                mimicBtn.style.display = 'flex';
             } else {
-                mimicButton.style.display = 'none';
+                mimicBtn.style.display = 'none';
                 // If mimic was active, switch to storytelling
-                if (mimicButton.classList.contains('active')) {
-                    mimicButton.classList.remove('active');
-                    const storytellingTool = document.getElementById('storytelling-tool');
-                    if (storytellingTool) {
-                        storytellingTool.classList.add('active');
+                if (state.enhancementPreset === 'mimic') {
+                    const storytellingBtn = document.querySelector('.option-btn[data-preset="storytelling"]');
+                    if (storytellingBtn) {
+                        document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
+                        storytellingBtn.classList.add('active');
+                        state.enhancementPreset = 'storytelling';
                     }
                 }
             }
@@ -1241,13 +1239,6 @@
         return container;
     }
 
-    function resetToolsActive() {
-        document.querySelectorAll('.ai-tool').forEach(tool => {
-            if (tool.id !== 'context-button') {
-                tool.classList.remove('active');
-            }
-        });
-    }
 
     function reorderPosts() {
         const posts = document.querySelectorAll('.post-item');
@@ -1354,11 +1345,25 @@
         state.hasUnsavedChanges = false;
         state.undoStack = [];
 
-        resetToolsActive();
-        document.getElementById('braindump-tool')?.classList.add('active');
+        // Reset to braindump mode (Create category)
         state.enhancementPreset = 'braindump';
         state.additionalInstructions = '';
-        
+
+        // Activate Create category
+        document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+        const createBtn = document.querySelector('.category-btn[data-category="create"]');
+        if (createBtn) createBtn.classList.add('active');
+
+        // Show Create options
+        document.querySelectorAll('.options-container').forEach(c => c.classList.remove('active'));
+        const createContainer = document.querySelector('.options-container[data-category="create"]');
+        if (createContainer) createContainer.classList.add('active');
+
+        // Activate Braindump option
+        document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
+        const braindumpBtn = document.querySelector('.option-btn[data-preset="braindump"]');
+        if (braindumpBtn) braindumpBtn.classList.add('active');
+
         const contextButton = document.getElementById('context-button');
         const contextTextarea = document.getElementById('context-textarea');
         if (contextButton) contextButton.classList.remove('active');
@@ -1403,19 +1408,31 @@
     }
 
     function updateUIFromState() {
-        resetToolsActive();
-        if (state.enhancementPreset === 'grammar') {
-            document.getElementById('grammar-tool')?.classList.add('active');
-        } else if (state.enhancementPreset === 'storytelling') {
-            document.getElementById('storytelling-tool')?.classList.add('active');
-        } else if (state.enhancementPreset === 'hook_story_punch') {
-            document.getElementById('hook-story-punch-tool')?.classList.add('active');
-        } else if (state.enhancementPreset === 'braindump') {
-            document.getElementById('braindump-tool')?.classList.add('active');
-        } else if (state.enhancementPreset === 'mimic') {
-            document.getElementById('mimic-tool')?.classList.add('active');
+        // Find and activate the correct option button
+        const activeOptionBtn = document.querySelector(`.option-btn[data-preset="${state.enhancementPreset}"]`);
+        if (activeOptionBtn) {
+            // Remove active from all option buttons
+            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
+            activeOptionBtn.classList.add('active');
+
+            // Find which category this belongs to and activate it
+            const container = activeOptionBtn.closest('.options-container');
+            if (container) {
+                const category = container.getAttribute('data-category');
+
+                // Activate the category button
+                document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                const categoryBtn = document.querySelector(`.category-btn[data-category="${category}"]`);
+                if (categoryBtn) {
+                    categoryBtn.classList.add('active');
+                }
+
+                // Show the options container
+                document.querySelectorAll('.options-container').forEach(c => c.classList.remove('active'));
+                container.classList.add('active');
+            }
         }
-        
+
         const contextButton = document.getElementById('context-button');
         const contextTextarea = document.getElementById('context-textarea');
         if (state.additionalInstructions.trim() !== '') {
@@ -1715,7 +1732,7 @@
     window.CreatorPal.PostEditor.initialize = initialize;
 
     // Auto-initialize if on post editor page
-    if (document.getElementById('grammar-tool')) {
+    if (document.getElementById('postsContainer')) {
         initialize();
     }
 
@@ -1723,7 +1740,7 @@
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.CreatorPal && window.CreatorPal.PostEditor && document.getElementById('grammar-tool')) {
+    if (window.CreatorPal && window.CreatorPal.PostEditor && document.getElementById('postsContainer')) {
         window.CreatorPal.PostEditor.initialize();
     }
 

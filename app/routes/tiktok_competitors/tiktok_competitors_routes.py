@@ -255,6 +255,11 @@ def search_accounts():
         # Sort by follower count
         channels.sort(key=lambda x: x.get('follower_count', 0), reverse=True)
 
+        # Rename avatar_url to avatar for frontend compatibility
+        for channel in channels:
+            if 'avatar_url' in channel:
+                channel['avatar'] = channel.pop('avatar_url')
+
         return jsonify({
             'success': True,
             'channels': channels
@@ -310,8 +315,8 @@ def add_competitor():
                 'sec_uid': sec_uid,
                 'username': account_data_from_search.get('username', ''),
                 'nickname': account_data_from_search.get('nickname', ''),
-                # Store avatar URL only (not the image itself)
-                'avatar_url': account_data_from_search.get('avatar_url', ''),
+                # DON'T store avatar_url - expires after a few days
+                # 'avatar_url': account_data_from_search.get('avatar_url', ''),  # ❌ Removed
                 'follower_count': account_data_from_search.get('follower_count', 0),
                 'following_count': account_data_from_search.get('following_count', 0),
                 'video_count': account_data_from_search.get('video_count', 0),
@@ -343,8 +348,8 @@ def add_competitor():
                 'sec_uid': sec_uid,
                 'username': account_info.get('username', ''),
                 'nickname': account_info.get('nickname', ''),
-                # Store avatar URL only (not the image itself)
-                'avatar_url': account_info.get('avatar', ''),
+                # DON'T store avatar_url - expires after a few days
+                # 'avatar_url': account_info.get('avatar', ''),  # ❌ Removed
                 'follower_count': account_info.get('follower_count', 0),
                 'following_count': account_info.get('following_count', 0),
                 'video_count': account_info.get('video_count', 0),
