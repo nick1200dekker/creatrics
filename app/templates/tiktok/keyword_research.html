@@ -15,37 +15,33 @@
 <div class="content-panel">
     <div class="trend-finder-wrapper">
         <!-- Header -->
-        <div class="trend-header">
+        <div class="trend-header" style="display: flex; justify-content: space-between; align-items: center; position: relative;">
             <h1 class="trend-title">
                 <i class="ph ph-magnifying-glass"></i>
                 Keyword Research
             </h1>
-            <!-- Search Mode Toggle -->
-            <div class="search-mode-toggle">
-                <button class="mode-btn active" onclick="setSearchMode('top')" id="topModeBtn">
-                    <i class="ph ph-trophy"></i>
-                    Top Videos
-                </button>
-                <button class="mode-btn" onclick="setSearchMode('video')" id="videoModeBtn">
-                    <i class="ph ph-video"></i>
-                    All Videos
-                </button>
-            </div>
-        </div>
-
-        <!-- Legal Disclaimer - Collapsible -->
-        <div style="margin-bottom: 1rem;">
-            <details style="background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 8px; overflow: hidden;">
-                <summary style="padding: 0.75rem 1rem; cursor: pointer; font-size: 0.875rem; color: #856404; font-weight: 500; user-select: none;">
-                    ⚠️ Data Source Notice (click to expand)
-                </summary>
-                <div style="padding: 0 1rem 1rem 1rem; color: #856404; font-size: 0.85rem; line-height: 1.5;">
-                    <p style="margin: 0.5rem 0 0 0;">
-                        TikTok data is collected from publicly available sources via third-party aggregation services.
-                        Data may not be real-time or 100% accurate. Creatrics is not affiliated with TikTok.
-                    </p>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <!-- Legal Disclaimer - Top Right -->
+                <details style="font-size: 0.7rem; color: var(--text-tertiary); opacity: 0.6;">
+                    <summary style="cursor: pointer; display: inline; list-style: none;">
+                        ℹ️ Data Source
+                    </summary>
+                    <div style="position: absolute; right: 0; margin-top: 0.25rem; font-size: 0.7rem; line-height: 1.5; background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.15); max-width: 300px; z-index: 10; border: 1px solid var(--border-primary);">
+                        Public TikTok data via third-party services. Not affiliated with TikTok.
+                    </div>
+                </details>
+                <!-- Search Mode Toggle -->
+                <div class="search-mode-toggle">
+                    <button class="mode-btn active" onclick="setSearchMode('top')" id="topModeBtn">
+                        <i class="ph ph-trophy"></i>
+                        Top Videos
+                    </button>
+                    <button class="mode-btn" onclick="setSearchMode('video')" id="videoModeBtn">
+                        <i class="ph ph-video"></i>
+                        All Videos
+                    </button>
                 </div>
-            </details>
+            </div>
         </div>
 
         <!-- Search Section -->
