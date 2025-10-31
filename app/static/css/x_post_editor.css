@@ -317,10 +317,17 @@ html.dark .draft-date {
     justify-content: center;
     transition: all 0.2s;
     font-size: 0.875rem;
+    opacity: 0;
+    pointer-events: none;
 }
 
 html.dark .draft-delete-btn {
     border-color: rgba(82, 82, 91, 0.6);
+}
+
+.draft-item:hover .draft-delete-btn {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .draft-delete-btn:hover {
