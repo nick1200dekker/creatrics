@@ -15,32 +15,21 @@
 <div class="content-panel">
     <div class="trend-finder-wrapper">
         <!-- Header -->
-        <div class="trend-header" style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+        <div class="trend-header">
             <h1 class="trend-title">
                 <i class="ph ph-magnifying-glass"></i>
                 Keyword Research
             </h1>
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <!-- Legal Disclaimer - Top Right -->
-                <details style="font-size: 0.7rem; color: var(--text-tertiary); opacity: 0.6;">
-                    <summary style="cursor: pointer; display: inline; list-style: none;">
-                        ℹ️ Data Source
-                    </summary>
-                    <div style="position: absolute; right: 0; margin-top: 0.25rem; font-size: 0.7rem; line-height: 1.5; background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.15); max-width: 300px; z-index: 10; border: 1px solid var(--border-primary);">
-                        Public TikTok data via third-party services. Not affiliated with TikTok.
-                    </div>
-                </details>
-                <!-- Search Mode Toggle -->
-                <div class="search-mode-toggle">
-                    <button class="mode-btn active" onclick="setSearchMode('top')" id="topModeBtn">
-                        <i class="ph ph-trophy"></i>
-                        Top Videos
-                    </button>
-                    <button class="mode-btn" onclick="setSearchMode('video')" id="videoModeBtn">
-                        <i class="ph ph-video"></i>
-                        All Videos
-                    </button>
-                </div>
+            <!-- Search Mode Toggle -->
+            <div class="search-mode-toggle">
+                <button class="mode-btn active" onclick="setSearchMode('top')" id="topModeBtn">
+                    <i class="ph ph-trophy"></i>
+                    Top Videos
+                </button>
+                <button class="mode-btn" onclick="setSearchMode('video')" id="videoModeBtn">
+                    <i class="ph ph-video"></i>
+                    All Videos
+                </button>
             </div>
         </div>
 
