@@ -2253,13 +2253,12 @@ async function applyTitle(button, title) {
         return;
     }
 
-    const icon = button.querySelector('i');
-    const originalIconClass = icon.className;
+    const originalText = button.textContent;
 
     showConfirmModal('Apply Title', `Apply this title to YouTube?\n\n"${title}"`, async () => {
         try {
             button.disabled = true;
-            icon.className = 'ph ph-spinner spin';
+            button.textContent = 'Applying...';
 
             const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
                 method: 'POST',
@@ -2276,9 +2275,8 @@ async function applyTitle(button, title) {
             // Mark this title as applied (will be persisted to Firebase by backend)
             appliedOptimizations.title = title;
 
-            icon.className = 'ph ph-check';
-            button.style.background = '#10B981';
-            button.style.color = '#fff';
+            button.textContent = 'Applied ✓';
+            button.classList.add('success');
             showToast('✅ Title updated on YouTube!');
 
             setTimeout(() => {
@@ -2296,7 +2294,7 @@ async function applyTitle(button, title) {
                 showToast('❌ Failed to apply title: ' + error.message);
             }
 
-            icon.className = originalIconClass;
+            button.textContent = originalText;
             button.disabled = false;
         }
     });
@@ -2322,8 +2320,7 @@ async function applyDescription(button) {
         return;
     }
 
-    const icon = button.querySelector('i');
-    const originalIconClass = icon.className;
+    const originalText = button.textContent;
 
     const preview = currentOptimizedDescription.length > 100
         ? currentOptimizedDescription.substring(0, 100) + '...'
@@ -2332,7 +2329,7 @@ async function applyDescription(button) {
     showConfirmModal('Apply Description', `Apply this description to YouTube?\n\n"${preview}"`, async () => {
         try {
             button.disabled = true;
-            icon.className = 'ph ph-spinner spin';
+            button.textContent = 'Applying...';
 
             const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
                 method: 'POST',
@@ -2349,9 +2346,8 @@ async function applyDescription(button) {
             // Mark this description as applied (will be persisted to Firebase by backend)
             appliedOptimizations.description = currentOptimizedDescription;
 
-            icon.className = 'ph ph-check';
-            button.style.background = '#10B981';
-            button.style.color = '#fff';
+            button.textContent = 'Applied ✓';
+            button.classList.add('success');
             showToast('✅ Description updated on YouTube!');
 
             setTimeout(() => {
@@ -2372,7 +2368,7 @@ async function applyDescription(button) {
                 showToast('❌ Failed to apply description: ' + errorMessage);
             }
 
-            icon.className = originalIconClass;
+            button.textContent = originalText;
             button.disabled = false;
         }
     });
@@ -2400,15 +2396,14 @@ async function applyTags(button) {
         return;
     }
 
-    const icon = button.querySelector('i');
-    const originalIconClass = icon.className;
+    const originalText = button.textContent;
 
     const preview = tags.slice(0, 5).join(', ') + (tags.length > 5 ? '...' : '');
 
     showConfirmModal('Apply Tags', `Apply ${tags.length} tags to YouTube?\n\n${preview}`, async () => {
         try {
             button.disabled = true;
-            icon.className = 'ph ph-spinner spin';
+            button.textContent = 'Applying...';
 
             const response = await fetch(`/optimize-video/api/apply-optimizations/${currentVideoId}`, {
                 method: 'POST',
@@ -2425,9 +2420,8 @@ async function applyTags(button) {
             // Mark these tags as applied (will be persisted to Firebase by backend)
             appliedOptimizations.tags = tagsString;
 
-            icon.className = 'ph ph-check';
-            button.style.background = '#10B981';
-            button.style.color = '#fff';
+            button.textContent = 'Applied ✓';
+            button.classList.add('success');
             showToast('✅ Tags updated on YouTube!');
 
             setTimeout(() => {
@@ -2445,7 +2439,7 @@ async function applyTags(button) {
                 showToast('❌ Failed to apply tags: ' + error.message);
             }
 
-            icon.className = originalIconClass;
+            button.textContent = originalText;
             button.disabled = false;
         }
     });
