@@ -815,7 +815,7 @@ def x_posts_paginated():
 @auth_required
 @require_permission('analytics')
 def youtube_overview():
-    """Get YouTube analytics overview data"""
+    """Get YouTube analytics overview data with 30-day authorization verification"""
     user_id = get_workspace_user_id()
 
     try:
@@ -838,6 +838,40 @@ def youtube_overview():
 
         # Calculate data age for compliance display
         data_age_info = calculate_data_age(latest_data)
+
+        # COMPLIANCE CHECK (Policy III.E.4.b): Verify authorization every 30 days
+        # If data is >= 30 days old, MUST verify token is still valid before displaying
+        if data_age_info['age_days'] is not None and data_age_info['age_days'] >= 30:
+            logger.info(f"Data is {data_age_info['age_days']} days old - verifying authorization for user {user_id}")
+
+            # Verify authorization by attempting to refresh credentials
+            from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+            try:
+                yt = YouTubeAnalytics(user_id)
+                if not yt.credentials:
+                    logger.warning(f"No valid credentials found for user {user_id} - data is stale")
+                    return jsonify({
+                        'error': 'YouTube authorization expired. Please reconnect your account.',
+                        'needs_reconnect': True
+                    }), 401
+
+                # Test if token is valid by refreshing if needed
+                if yt.credentials.expired and yt.credentials.refresh_token:
+                    yt._refresh_credentials()
+                    logger.info(f"Successfully verified authorization for user {user_id}")
+                elif yt.credentials.expired:
+                    logger.warning(f"Token expired and no refresh token for user {user_id}")
+                    return jsonify({
+                        'error': 'YouTube authorization expired. Please reconnect your account.',
+                        'needs_reconnect': True
+                    }), 401
+
+            except Exception as e:
+                logger.error(f"Authorization verification failed for user {user_id}: {str(e)}")
+                return jsonify({
+                    'error': 'YouTube authorization expired. Please reconnect your account.',
+                    'needs_reconnect': True
+                }), 401
 
         # Get historical data for trends (last 30 days)
         thirty_days_ago = datetime.now() - timedelta(days=30)
@@ -878,21 +912,34 @@ def youtube_daily_views():
     """Get YouTube daily views data with timeframe support"""
     user_id = get_workspace_user_id()
     timeframe = request.args.get('timeframe', '30days')
-    
+
     try:
         if not firebase_admin._apps:
             firebase_admin.initialize_app()
-        
+
         db = firestore.client()
-        
+
         # Get latest data which includes daily_data
         latest_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
         latest_doc = latest_ref.get()
-        
+
         if not latest_doc.exists:
             return jsonify({'error': 'No YouTube analytics data available'}), 404
-        
+
         latest_data = latest_doc.to_dict()
+
+        # COMPLIANCE CHECK: Verify authorization if data >= 30 days old
+        data_age_info = calculate_data_age(latest_data)
+        if data_age_info['age_days'] is not None and data_age_info['age_days'] >= 30:
+            from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+            try:
+                yt = YouTubeAnalytics(user_id)
+                if not yt.credentials or (yt.credentials.expired and not yt.credentials.refresh_token):
+                    return jsonify({'error': 'YouTube authorization expired', 'needs_reconnect': True}), 401
+                if yt.credentials.expired:
+                    yt._refresh_credentials()
+            except Exception:
+                return jsonify({'error': 'YouTube authorization expired', 'needs_reconnect': True}), 401
         daily_data = latest_data.get('daily_data', [])
         
         if not daily_data:
@@ -1045,21 +1092,34 @@ def youtube_top_videos():
     """Get YouTube top videos for specific timeframe"""
     user_id = get_workspace_user_id()
     timeframe = request.args.get('timeframe', '30days')
-    
+
     try:
         if not firebase_admin._apps:
             firebase_admin.initialize_app()
-        
+
         db = firestore.client()
-        
+
         # Get latest data which includes top_videos_by_timeframe
         latest_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
         latest_doc = latest_ref.get()
-        
+
         if not latest_doc.exists:
             return jsonify({'error': 'No YouTube analytics data available'}), 404
-        
+
         latest_data = latest_doc.to_dict()
+
+        # COMPLIANCE CHECK: Verify authorization if data >= 30 days old
+        data_age_info = calculate_data_age(latest_data)
+        if data_age_info['age_days'] is not None and data_age_info['age_days'] >= 30:
+            from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+            try:
+                yt = YouTubeAnalytics(user_id)
+                if not yt.credentials or (yt.credentials.expired and not yt.credentials.refresh_token):
+                    return jsonify({'error': 'YouTube authorization expired', 'needs_reconnect': True}), 401
+                if yt.credentials.expired:
+                    yt._refresh_credentials()
+            except Exception:
+                return jsonify({'error': 'YouTube authorization expired', 'needs_reconnect': True}), 401
         top_videos_by_timeframe = latest_data.get('top_videos_by_timeframe', {})
         
         # Get videos for the requested timeframe

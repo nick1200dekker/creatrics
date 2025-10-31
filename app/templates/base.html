@@ -153,7 +153,46 @@
         overflow-x: hidden;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
+    /* YouTube Icon Clear Space - Branding Compliance */
+    /* Clear space must be equal to or greater than the triangle size */
+    img[src*="yt_icon"],
+    img[alt="YouTube"] {
+        /* Add clear space around YouTube icons */
+        /* Triangle is ~33% of icon width, so we add appropriate padding */
+        box-sizing: content-box !important;
+    }
+
+    /* Small icons (20-28px) need 8px clear space */
+    img[src*="yt_icon"][style*="20px"],
+    img[src*="yt_icon"][style*="24px"],
+    img[src*="yt_icon"][style*="28px"] {
+        padding: 8px !important;
+    }
+
+    /* Medium icons (32-40px) need 10px clear space */
+    img[src*="yt_icon"][style*="32px"],
+    img[src*="yt_icon"][style*="40px"] {
+        padding: 10px !important;
+    }
+
+    /* Large icons (48-56px) need 12px clear space */
+    img[src*="yt_icon"][style*="48px"],
+    img[src*="yt_icon"][style*="56px"] {
+        padding: 12px !important;
+    }
+
+    /* Extra large icons (64-72px) need 16px clear space */
+    img[src*="yt_icon"][style*="64px"],
+    img[src*="yt_icon"][style*="72px"] {
+        padding: 16px !important;
+    }
+
+    /* Extra extra large icons (96px+) need 20px clear space */
+    img[src*="yt_icon"][style*="96px"] {
+        padding: 20px !important;
+    }
+
     /* Animated Background - Safe version */
     .animated-bg {
         position: fixed;

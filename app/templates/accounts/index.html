@@ -238,7 +238,18 @@ html.dark .account-card:hover {
 }
 
 .platform-icon.youtube-platform {
-    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+    background: transparent;
+    border-radius: 0; /* YouTube icon has its own shape, don't modify it */
+    width: auto; /* Let icon determine its own width */
+    height: auto;
+    padding: 0; /* Clear space is built into the image */
+}
+
+.platform-icon.youtube-platform img {
+    display: block;
+    /* Clear space requirement: equal to or greater than the triangle size */
+    /* For a 48px icon, triangle is ~16px, so we add 16px padding on each side */
+    padding: 12px;
 }
 
 .platform-icon.tiktok-platform {
@@ -845,8 +856,8 @@ html.dark .modal-close-btn:hover {
             <!-- YouTube Account -->
             <div class="account-card">
                 <div class="card-header">
-                    <div class="platform-icon youtube-platform" style="background: transparent !important;">
-                        <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 48px; height: 48px;">
+                    <div class="platform-icon youtube-platform">
+                        <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 72px; height: auto; padding: 0 !important;">
                     </div>
                     <h2 class="platform-name">YouTube Channel</h2>
                 </div>
@@ -1045,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const config = configs[platform];
         if (icon) {
             if (platform === 'youtube') {
-                icon.innerHTML = '<img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 32px; height: 32px;">';
+                icon.innerHTML = '<img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 56px; height: auto; padding: 0 !important;">';
             } else {
                 icon.className = `ph ph-${config.icon}`;
             }

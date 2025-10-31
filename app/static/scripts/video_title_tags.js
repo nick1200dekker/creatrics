@@ -1442,7 +1442,7 @@ async function uploadToYouTube() {
                 </p>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
                     <a href="https://studio.youtube.com/video/${data.video_id}/edit" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border-radius: 8px; text-decoration: none; font-weight: 500; transition: all 0.2s ease; font-size: 0.9375rem;">
-                        <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 20px; height: 20px;"> Open in YouTube Studio
+                        <i class="ph ph-arrow-square-out"></i> Open in YouTube Studio
                     </a>
                     <button onclick="location.reload()" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: transparent; color: var(--text-secondary); border: 1px solid var(--border-primary); border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; font-size: 0.9375rem;">
                         <i class="ph ph-arrow-counter-clockwise"></i> Upload Another Video

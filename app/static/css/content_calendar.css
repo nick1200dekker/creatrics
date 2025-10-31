@@ -459,7 +459,7 @@ html.dark .dropdown-option i {
 
 /* Platform icon colors - Brand colors always */
 .platform-option-item[data-platform="YouTube"] i {
-    color: #FF0000 !important;
+    color: #FF0033 !important;
 }
 
 /* YouTube icon styling is handled inline via img tag */
@@ -814,7 +814,7 @@ html.dark .main-panel {
 
 /* Platform colors for drag ghost */
 .drag-ghost.platform-youtube {
-    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%) !important;
+    background: linear-gradient(135deg, #FF0033 0%, #CC0029 100%) !important;
 }
 
 .drag-ghost.platform-x,
@@ -1047,8 +1047,8 @@ html.dark .fc-day-today::after {
 
 /* Platform-based coloring with gradients */
 .fc-event.platform-youtube {
-    background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%) !important;
-    border-left: 4px solid #AA0000 !important;
+    background: linear-gradient(135deg, #FF0033 0%, #CC0029 100%) !important;
+    border-left: 4px solid #AA0029 !important;
 }
 
 .fc-event.platform-x,

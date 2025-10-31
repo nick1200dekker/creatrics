@@ -901,7 +901,18 @@ function initializeAnalytics() {
         fetch('/analytics/youtube/overview', {
             credentials: 'include'
         })
-            .then(response => response.json())
+            .then(response => {
+                // Check for authorization errors (YouTube compliance)
+                if (response.status === 401) {
+                    return response.json().then(data => {
+                        if (data.needs_reconnect) {
+                            showYouTubeAuthExpired();
+                        }
+                        throw new Error('Authorization expired');
+                    });
+                }
+                return response.json();
+            })
             .then(overviewData => {
                 // Display data age warning (YouTube compliance)
                 if (overviewData.data_age) {
@@ -913,7 +924,17 @@ function initializeAnalytics() {
                     credentials: 'include'
                 });
             })
-            .then(response => response.json())
+            .then(response => {
+                if (response.status === 401) {
+                    return response.json().then(data => {
+                        if (data.needs_reconnect) {
+                            showYouTubeAuthExpired();
+                        }
+                        throw new Error('Authorization expired');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.error) {
                     showYouTubeError('No daily data available');
@@ -929,7 +950,9 @@ function initializeAnalytics() {
             })
             .catch(error => {
                 console.error('Error loading YouTube daily data:', error);
-                showYouTubeError('Failed to load analytics data');
+                if (error.message !== 'Authorization expired') {
+                    showYouTubeError('Failed to load analytics data');
+                }
             });
     }
 
@@ -1819,6 +1842,42 @@ function initializeAnalytics() {
                     <div class="empty-state-description">${message}</div>
                 </div>
             </div>
+        `;
+    }
+
+    function showYouTubeAuthExpired() {
+        // YouTube Policy III.E.4.b compliance: Show reconnection prompt when auth expires
+        document.getElementById('youtube-metrics-grid').innerHTML = `
+            <div class="col-span-full">
+                <div class="empty-state">
+                    <div class="empty-state-icon" style="color: #ff6b6b;"><i class="ph ph-warning-circle"></i></div>
+                    <div class="empty-state-title">YouTube Authorization Expired</div>
+                    <div class="empty-state-description">
+                        Your YouTube data is more than 30 days old and your authorization has expired.<br>
+                        Please reconnect your YouTube account to continue viewing analytics.
+                    </div>
+                    <a href="/accounts" class="secondary-button mt-4">
+                        <i class="ph ph-link"></i>
+                        <span>Reconnect YouTube Account</span>
+                    </a>
+                </div>
+            </div>
+        `;
+
+        // Also clear charts
+        const viewsChart = document.getElementById('youtube-views-chart');
+        const trafficChart = document.getElementById('youtube-traffic-chart');
+        const videosTable = document.getElementById('youtube-videos-tbody');
+
+        if (viewsChart) viewsChart.innerHTML = '';
+        if (trafficChart) trafficChart.innerHTML = '';
+        if (videosTable) videosTable.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-8">
+                    <i class="ph ph-warning-circle" style="font-size: 2rem; color: #ff6b6b;"></i>
+                    <p class="mt-2">Please reconnect your YouTube account</p>
+                </td>
+            </tr>
         `;
     }
 

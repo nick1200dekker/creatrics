@@ -724,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function getEventColor(event) {
         const platform = (event.platform || 'Other').toLowerCase();
         switch(platform) {
-            case 'youtube': return '#CC0000';
+            case 'youtube': return '#CC0029';
             case 'x':
             case 'twitter': return '#4A5568';
             case 'instagram': return '#C13584';
