@@ -572,7 +572,18 @@ html.dark .section-label i {
     color: #60A5FA;
 }
 
-.enhancement-section,
+.enhancement-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    flex: 2;
+    min-width: 360px;
+}
+
 .execute-section {
     display: flex;
     flex-direction: column;
@@ -582,7 +593,7 @@ html.dark .section-label i {
     border: 1px solid var(--border-primary);
     border-radius: 10px;
     flex: 1;
-    min-width: 220px;
+    min-width: 180px;
 }
 
 html.dark .enhancement-section,
@@ -662,7 +673,7 @@ html.dark .category-btn.active {
 
 .option-btn {
     flex: 1;
-    padding: 0.625rem 1rem;
+    padding: 0.625rem 0.875rem;
     background: var(--bg-secondary);
     border: 1.5px solid var(--border-primary);
     border-radius: 8px;
@@ -675,6 +686,8 @@ html.dark .category-btn.active {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    min-width: 0;
+    white-space: nowrap;
 }
 
 html.dark .option-btn {
