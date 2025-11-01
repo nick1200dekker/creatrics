@@ -119,8 +119,9 @@
             <div class="channel-card" id="x-card" style="display: none;">
                 <div class="channel-header">
                     <div class="channel-info">
-                        <div class="channel-icon x">
-                            <i class="ph ph-x-logo"></i>
+                        <div class="channel-icon x" style="background: transparent !important;">
+                            <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 32px; height: auto; padding: 0 !important;">
+                            <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 32px; height: auto; padding: 0 !important;">
                         </div>
                         <div class="channel-name">
                             <h3>X</h3>
@@ -153,8 +154,8 @@
             <div class="channel-card" id="tiktok-card" style="display: none;">
                 <div class="channel-header">
                     <div class="channel-info">
-                        <div class="channel-icon tiktok">
-                            <i class="ph ph-tiktok-logo"></i>
+                        <div class="channel-icon tiktok" style="background: transparent !important;">
+                            <img src="{{ url_for('static', filename='img/templates/TikTok_Icon_Black_Circle.png') }}" alt="TikTok" style="width: 48px; height: auto; padding: 0 !important;">
                         </div>
                         <div class="channel-name">
                             <h3>TikTok</h3>
@@ -186,7 +187,7 @@
             <!-- Connect Channel Cards -->
             <div class="channel-card connect-channel-card" id="connect-youtube" style="display: none;">
                 <div class="connect-content">
-                    <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 80px; height: auto; padding: 0 !important; margin-bottom: 0; margin-top: -0.25rem;">
+                    <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 80px; height: auto; padding: 0 !important; margin-bottom: 1rem; margin-top: -0.25rem;">
                     <h3>Connect YouTube</h3>
                     <p>Track your channel analytics and optimize your content strategy</p>
                     <a href="{{ url_for('accounts.index') }}" class="connect-btn">
@@ -198,7 +199,8 @@
 
             <div class="channel-card connect-channel-card" id="connect-x" style="display: none;">
                 <div class="connect-content">
-                    <i class="ph ph-x-logo" style="font-size: 3rem; color: var(--text-tertiary); margin-bottom: 1rem;"></i>
+                    <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 36px; height: auto; padding: 0 !important; margin-bottom: 1rem;">
+                    <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 36px; height: auto; padding: 0 !important; margin-bottom: 1rem;">
                     <h3>Add X Account</h3>
                     <p>Monitor your engagement and discover trending topics</p>
                     <a href="{{ url_for('accounts.index') }}" class="connect-btn">
@@ -210,7 +212,7 @@
 
             <div class="channel-card connect-channel-card" id="connect-tiktok" style="display: none;">
                 <div class="connect-content">
-                    <i class="ph ph-tiktok-logo" style="font-size: 3rem; color: var(--text-tertiary); margin-bottom: 1rem;"></i>
+                    <img src="{{ url_for('static', filename='img/templates/TikTok_Icon_Black_Circle.png') }}" alt="TikTok" style="width: 60px; height: auto; padding: 0 !important; margin-bottom: 1rem;">
                     <h3>Add TikTok Account</h3>
                     <p>Track your viral potential and trending content</p>
                     <a href="{{ url_for('accounts.index') }}" class="connect-btn">
@@ -325,8 +327,8 @@
             </div>
 
             <div class="preview-card">
-                <div class="preview-icon">
-                    <i class="ph ph-tiktok-logo"></i>
+                <div class="preview-icon" style="background: transparent !important;">
+                    <img src="{{ url_for('static', filename='img/templates/TikTok_Icon_Black_Circle.png') }}" alt="TikTok" style="width: 48px; height: auto;">
                 </div>
                 <h3>TikTok Tools</h3>
                 <div class="preview-features">
@@ -358,8 +360,9 @@
             </div>
 
             <div class="preview-card">
-                <div class="preview-icon">
-                    <i class="ph ph-x-logo"></i>
+                <div class="preview-icon" style="background: transparent !important;">
+                    <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 32px; height: auto;">
+                    <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 32px; height: auto;">
                 </div>
                 <h3>X Tools</h3>
                 <div class="preview-features">
@@ -391,8 +394,8 @@
             </div>
 
             <div class="preview-card">
-                <div class="preview-icon">
-                    <i class="ph ph-folder-open"></i>
+                <div class="preview-icon" style="background: transparent !important;">
+                    <i class="ph ph-squares-four" style="font-size: 2rem; color: var(--text-secondary);"></i>
                 </div>
                 <h3>Content Hub</h3>
                 <div class="preview-features">
@@ -447,7 +450,8 @@
             <p class="social-heading">Follow us on</p>
             <div class="social-links">
                 <a href="https://x.com/creatrics_" target="_blank" rel="noopener noreferrer" class="social-link">
-                    <i class="ph-fill ph-x-logo"></i>
+                    <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 18px; height: auto; padding: 0 !important;">
+                    <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 18px; height: auto; padding: 0 !important;">
                 </a>
                 <a href="https://www.youtube.com/@Creatrics" target="_blank" rel="noopener noreferrer" class="social-link">
                     <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 56px; height: auto; padding: 0 !important;">

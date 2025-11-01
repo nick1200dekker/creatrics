@@ -2116,3 +2116,20 @@ html.dark .home-footer {
         padding: 1.5rem 1rem;
     }
 }
+
+/* X Logo dark mode switching */
+.x-logo-light {
+    display: block;
+}
+
+.x-logo-dark {
+    display: none;
+}
+
+html.dark .x-logo-light {
+    display: none;
+}
+
+html.dark .x-logo-dark {
+    display: block;
+}
