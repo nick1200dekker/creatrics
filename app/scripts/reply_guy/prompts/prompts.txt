@@ -21,14 +21,17 @@ Copy @{screen_name}'s EXACT style:
 • humorous → witty observation
 • contrarian → different angle
 
-KEEP IT SHORT (under 100 chars when possible). Sound human, not AI.
+RULES:
+- KEEP IT SHORT (under 100 chars when possible)
+- Sound human, not AI
+- NEVER use hashtags (#) - even if the original tweet has them
 
 ############# MAIN_REPLY_PROMPT #############
 {brand_voice_context}{style_guide}
 Tweet by @{author}:
 {tweet_text}
 
-Write a SHORT {style} reply{match_instruction}. Keep it under 280 chars. Sound natural and human.
+Write a SHORT {style} reply{match_instruction}. Keep it under 280 chars. Sound natural and human. NO HASHTAGS.
 
 REPLY:
 
