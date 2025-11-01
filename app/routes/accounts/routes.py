@@ -369,24 +369,72 @@ def disconnect_account():
     if platform == 'x':
         # Remove X account from Firebase
         UserService.update_user(user_id, {'x_account': ''})
-        
-        # Clean up X analytics data
+
+        # Clean up X analytics data and brand voice data
         try:
             from app.scripts.accounts.x_analytics import clean_user_data
-            
+            import firebase_admin
+            from firebase_admin import firestore
+
             def clean_data_bg():
                 try:
+                    # Clean X analytics data
                     clean_user_data(user_id)
+
+                    # Clean brand voice data (x_replies collection)
+                    logger.info(f"Cleaning brand voice data for user {user_id}")
+
+                    # Initialize Firestore if needed
+                    if not firebase_admin._apps:
+                        try:
+                            firebase_admin.initialize_app()
+                        except ValueError:
+                            pass
+
+                    db = firestore.client()
+
+                    # Delete x_replies collection data
+                    x_replies_collection = db.collection('users').document(user_id).collection('x_replies')
+
+                    # Delete 'data' document (where brand voice replies are stored)
+                    data_ref = x_replies_collection.document('data')
+                    if data_ref.get().exists:
+                        data_ref.delete()
+                        logger.info(f"Deleted x_replies/data document for user {user_id}")
+
+                    # Delete any other documents in x_replies collection
+                    docs = x_replies_collection.stream()
+                    for doc in docs:
+                        doc.reference.delete()
+                        logger.info(f"Deleted x_replies/{doc.id} document for user {user_id}")
+
+                    # Clean up reply_guy collection data (lists, analyses, etc.)
+                    reply_guy_collection = db.collection('users').document(user_id).collection('reply_guy')
+
+                    # Delete lists
+                    lists_docs = reply_guy_collection.where('type', 'in', ['default', 'custom']).stream()
+                    for doc in lists_docs:
+                        doc.reference.delete()
+                        logger.info(f"Deleted reply_guy list {doc.id} for user {user_id}")
+
+                    # Delete analyses
+                    analyses_docs = reply_guy_collection.where('list_id', '!=', '').stream()
+                    for doc in analyses_docs:
+                        doc.reference.delete()
+                        logger.info(f"Deleted reply_guy analysis {doc.id} for user {user_id}")
+
+                    logger.info(f"Successfully cleaned brand voice and reply guy data for user {user_id}")
+
                 except Exception as e:
-                    logger.error(f"Error cleaning X analytics data: {str(e)}")
-            
+                    logger.error(f"Error cleaning X data: {str(e)}")
+
             thread = threading.Thread(target=clean_data_bg)
             thread.daemon = True
             thread.start()
-            
+
         except Exception as e:
             logger.error(f"Error cleaning X analytics data: {str(e)}")
-        
+
         flash("Successfully disconnected X account", "success")
         
     elif platform == 'youtube':

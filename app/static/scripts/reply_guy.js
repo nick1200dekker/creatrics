@@ -493,15 +493,19 @@
         if (e.target.classList.contains('brand-voice-checkbox')) {
             const toggle = e.target.closest('.brand-voice-toggle');
 
-            if (toggle && toggle.classList.contains('disabled')) {
+            // Prevent interaction if toggle is disabled or checkbox is disabled
+            if ((toggle && toggle.classList.contains('disabled')) || e.target.disabled) {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('Brand voice checkbox change prevented - toggle is disabled');
-                e.target.checked = !e.target.checked;
+                // Force checkbox back to unchecked
+                setTimeout(() => {
+                    e.target.checked = false;
+                }, 0);
                 return false;
             }
 
-            if (toggle && !toggle.classList.contains('disabled')) {
+            if (toggle && !toggle.classList.contains('disabled') && !e.target.disabled) {
                 const newState = e.target.checked;
                 console.log('Brand voice toggled:', newState);
 

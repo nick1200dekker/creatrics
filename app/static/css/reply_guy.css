@@ -1211,7 +1211,19 @@ html.dark .brand-voice-toggle {
 .brand-voice-toggle.disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    pointer-events: none;
+    pointer-events: none !important;
+}
+
+.brand-voice-toggle.disabled * {
+    pointer-events: none !important;
+}
+
+.brand-voice-toggle.disabled .brand-voice-checkbox {
+    cursor: not-allowed;
+}
+
+.brand-voice-toggle.disabled .toggle-slider {
+    cursor: not-allowed;
 }
 
 .brand-voice-checkbox {
