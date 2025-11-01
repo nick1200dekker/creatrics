@@ -839,22 +839,22 @@ html.dark .loading-icon {
     line-height: 1.5;
 }
 
-/* Tweet Opportunities */
+/* Tweet Opportunities - X Brand Compliant */
 .tweet-opportunity {
     border: 1px solid var(--border-primary);
     border-radius: 12px;
-    background: var(--bg-secondary);
+    background: #FFFFFF;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
     overflow: hidden;
     margin-bottom: 1.5rem;
+    position: relative;
 }
 
 html.dark .tweet-opportunity {
-    background: rgba(39, 39, 42, 0.6);
-    backdrop-filter: blur(10px);
-    border-color: rgba(63, 63, 70, 0.5);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    background: #000000;
+    border-color: #2F3336;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .tweet-opportunity:hover {
@@ -863,7 +863,36 @@ html.dark .tweet-opportunity {
 }
 
 html.dark .tweet-opportunity:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* X Logo in top-right corner of post (required by brand guidelines) */
+.tweet-content-section .tweet-x-logo {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 20px;
+    height: 20px;
+    opacity: 0.6;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Show black logo in light mode, white logo in dark mode */
+html:not(.dark) .tweet-content-section .tweet-x-logo:first-of-type {
+    display: block !important;
+}
+
+html:not(.dark) .tweet-content-section .tweet-x-logo:last-of-type {
+    display: none !important;
+}
+
+html.dark .tweet-content-section .tweet-x-logo:first-of-type {
+    display: none !important;
+}
+
+html.dark .tweet-content-section .tweet-x-logo:last-of-type {
+    display: block !important;
 }
 
 .tweet-grid {
@@ -881,12 +910,25 @@ html.dark .tweet-opportunity:hover {
 .tweet-content-section {
     padding: 1.25rem;
     border-right: 1px solid var(--border-primary);
+    background: #FFFFFF;
+    color: #0F1419;
+    position: relative;
+}
+
+html.dark .tweet-content-section {
+    background: #000000;
+    border-right-color: #2F3336;
+    color: #E7E9EA;
 }
 
 @media (max-width: 1024px) {
     .tweet-content-section {
         border-right: none;
         border-bottom: 1px solid var(--border-primary);
+    }
+
+    html.dark .tweet-content-section {
+        border-bottom-color: #2F3336;
     }
 }
 
@@ -897,16 +939,20 @@ html.dark .tweet-opportunity:hover {
 }
 
 .tweet-avatar {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     margin-right: 0.75rem;
     flex-shrink: 0;
     overflow: hidden;
-    background: var(--bg-tertiary);
+    background: #E7E9EA;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+html.dark .tweet-avatar {
+    background: #16181C;
 }
 
 .tweet-avatar img {
@@ -944,53 +990,151 @@ html.dark .tweet-opportunity:hover {
 }
 
 .tweet-author-name {
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 1rem;
+    font-weight: 700;
+    color: #0F1419;
+    font-size: 0.9375rem;
     line-height: 1.2;
     margin-bottom: 2px;
 }
 
+html.dark .tweet-author-name {
+    color: #E7E9EA;
+}
+
 .tweet-author-username {
-    color: #1DA1F2;
-    font-size: 0.875rem;
-    font-weight: 500;
+    color: #536471;
+    font-size: 0.9375rem;
+    font-weight: 400;
+}
+
+html.dark .tweet-author-username {
+    color: #71767B;
 }
 
 .tweet-text {
-    color: var(--text-secondary);
+    color: #0F1419;
     line-height: 1.5;
     margin-bottom: 1rem;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     white-space: pre-line;
 }
 
+html.dark .tweet-text {
+    color: #E7E9EA;
+}
+
 .tweet-link {
-    color: #3B82F6;
+    color: #1D9BF0;
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .tweet-link:hover {
     text-decoration: underline;
 }
 
+html.dark .tweet-link {
+    color: #1D9BF0;
+}
+
 .mention {
-    color: #1DA1F2;
-    font-weight: 500;
+    color: #1D9BF0;
+    font-weight: 400;
+}
+
+html.dark .mention {
+    color: #1D9BF0;
+}
+
+/* Hashtags in posts */
+.tweet-text a,
+.tweet-text .hashtag {
+    color: #1D9BF0;
+    text-decoration: none;
+}
+
+.tweet-text a:hover,
+.tweet-text .hashtag:hover {
+    text-decoration: underline;
+}
+
+/* Timestamp and Views below post - X style */
+.tweet-timestamp-full {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #EFF3F4;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+html.dark .tweet-timestamp-full {
+    border-top-color: #2F3336;
+}
+
+.tweet-time-link {
+    color: #536471;
+    text-decoration: none;
+    font-size: 0.9375rem;
+    transition: text-decoration 0.2s;
+}
+
+.tweet-time-link:hover {
+    text-decoration: underline;
+}
+
+html.dark .tweet-time-link {
+    color: #71767B;
+}
+
+.tweet-views {
+    color: #536471;
+    font-size: 0.9375rem;
+}
+
+html.dark .tweet-views {
+    color: #71767B;
+}
+
+.tweet-views-count {
+    font-weight: 700;
+    color: #0F1419;
+}
+
+html.dark .tweet-views-count {
+    color: #E7E9EA;
 }
 
 .tweet-engagement {
     display: flex;
-    gap: 1rem;
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
+    gap: 1.5rem;
+    font-size: 0.8125rem;
+    color: #536471;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #EFF3F4;
+}
+
+html.dark .tweet-engagement {
+    color: #71767B;
+    border-top-color: #2F3336;
 }
 
 .engagement-stat {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    font-weight: 400;
+}
+
+.engagement-stat i {
+    color: #536471;
+    font-size: 1.125rem;
+}
+
+html.dark .engagement-stat i {
+    color: #71767B;
 }
 
 /* Reply Panel */

@@ -159,6 +159,12 @@
                             <div class="tweet-grid">
                                 <!-- Tweet Content -->
                                 <div class="tweet-content-section">
+                                    <!-- X Logo (required by brand guidelines) -->
+                                    <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}"
+                                         alt="X" class="tweet-x-logo">
+                                    <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}"
+                                         alt="X" class="tweet-x-logo">
+
                                     <div class="tweet-author-info">
                                         <div class="tweet-avatar">
                                             {% if tweet.profile_image_url %}
@@ -178,9 +184,6 @@
                                             <div class="tweet-author-name">{{ tweet.name or tweet.author }}</div>
                                             <div class="tweet-author-username">
                                                 @{{ tweet.author }}
-                                                {% if tweet.created_at %}
-                                                <span style="color: var(--text-tertiary); margin-left: 0.5rem;">· <span class="tweet-timestamp" data-timestamp="{{ tweet.created_at }}"></span></span>
-                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
@@ -227,23 +230,31 @@
                                         {% endif %}
                                     </div>
                                     {% endif %}
-                                    
+
+                                    <!-- Timestamp and Views below post -->
+                                    {% if tweet.created_at %}
+                                    <div class="tweet-timestamp-full" data-timestamp="{{ tweet.created_at }}" data-views="{{ tweet.engagement.views }}">
+                                        <a href="https://twitter.com/{{ tweet.author }}/status/{{ tweet.tweet_id }}" target="_blank" rel="noopener noreferrer" class="tweet-time-link">
+                                            <span class="tweet-time"></span>
+                                        </a>
+                                        <span class="tweet-views">
+                                            <span class="tweet-views-count">{{ tweet.engagement.views }}</span> Views
+                                        </span>
+                                    </div>
+                                    {% endif %}
+
                                     <div class="tweet-engagement">
                                         <div class="engagement-stat">
-                                            <i class="ph ph-chat-circle" style="color: #8b5cf6;"></i>
+                                            <i class="ph ph-chat-centered"></i>
                                             {{ tweet.engagement.replies }}
                                         </div>
                                         <div class="engagement-stat">
-                                            <i class="ph ph-heart" style="color: #ef4444;"></i>
-                                            {{ tweet.engagement.likes }}
-                                        </div>
-                                        <div class="engagement-stat">
-                                            <i class="ph ph-arrows-counter-clockwise" style="color: #22c55e;"></i>
+                                            <i class="ph ph-repeat"></i>
                                             {{ tweet.engagement.retweets }}
                                         </div>
                                         <div class="engagement-stat">
-                                            <i class="ph ph-eye" style="color: #3b82f6;"></i>
-                                            {{ tweet.engagement.views }}
+                                            <i class="ph ph-heart"></i>
+                                            {{ tweet.engagement.likes }}
                                         </div>
                                     </div>
                                 </div>

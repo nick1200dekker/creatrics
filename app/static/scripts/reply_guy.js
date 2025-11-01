@@ -2115,33 +2115,79 @@
         console.log('Profile picture consistency fix completed');
     }
 
-    // Format tweet timestamps
-    function formatTimestamp(dateString) {
+    // Format tweet timestamps - Full format for X brand compliance
+    function formatFullTimestamp(dateString) {
         try {
             const tweetDate = new Date(dateString);
-            const now = new Date();
-            const diffMs = now - tweetDate;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
+            const hours = tweetDate.getHours();
+            const minutes = tweetDate.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            const displayMinutes = minutes.toString().padStart(2, '0');
 
-            if (diffMins < 1) return 'now';
-            if (diffMins < 60) return `${diffMins}m`;
-            if (diffHours < 24) return `${diffHours}h`;
-            if (diffDays < 7) return `${diffDays}d`;
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = monthNames[tweetDate.getMonth()];
+            const day = tweetDate.getDate();
+            const year = tweetDate.getFullYear();
 
-            return tweetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${displayHours}:${displayMinutes} ${ampm} · ${month} ${day}, ${year}`;
         } catch (e) {
             return '';
         }
     }
 
+    // Format numbers with commas (e.g., 3819 -> 3,819)
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    // Format numbers with K/M abbreviation for large numbers (X style)
+    function formatNumberAbbreviated(num) {
+        const absNum = Math.abs(num);
+
+        if (absNum >= 1000000) {
+            // Millions: 9930000 -> 9.9M
+            const millions = num / 1000000;
+            return millions.toFixed(1).replace(/\.0$/, '') + 'M';
+        } else if (absNum >= 10000) {
+            // Ten thousands and above: 99300 -> 99.3K
+            const thousands = num / 1000;
+            return thousands.toFixed(1).replace(/\.0$/, '') + 'K';
+        } else if (absNum >= 1000) {
+            // Thousands: 9930 -> 9,930 (keep with commas)
+            return formatNumber(num);
+        }
+
+        return num.toString();
+    }
+
     function updateTimestamps() {
-        const timestamps = document.querySelectorAll('.tweet-timestamp');
-        timestamps.forEach(el => {
+        // Update full timestamps and format view counts
+        document.querySelectorAll('.tweet-timestamp-full').forEach(el => {
             const timestamp = el.getAttribute('data-timestamp');
-            if (timestamp) {
-                el.textContent = formatTimestamp(timestamp);
+            const timeSpan = el.querySelector('.tweet-time');
+            if (timestamp && timeSpan) {
+                timeSpan.textContent = formatFullTimestamp(timestamp);
+            }
+
+            // Format view count with K/M abbreviation
+            const viewsCount = el.querySelector('.tweet-views-count');
+            if (viewsCount) {
+                const rawViews = viewsCount.textContent.trim();
+                if (rawViews && !isNaN(rawViews)) {
+                    viewsCount.textContent = formatNumberAbbreviated(parseInt(rawViews));
+                }
+            }
+        });
+
+        // Format all engagement stats with K/M abbreviation
+        document.querySelectorAll('.engagement-stat').forEach(stat => {
+            const textNode = Array.from(stat.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+            if (textNode) {
+                const rawNumber = textNode.textContent.trim();
+                if (rawNumber && !isNaN(rawNumber)) {
+                    textNode.textContent = formatNumberAbbreviated(parseInt(rawNumber));
+                }
             }
         });
     }
@@ -2154,9 +2200,8 @@
         setTimeout(fixProfilePictureConsistency, 1000);
     });
 
-    // Update timestamps immediately and every minute
+    // Update timestamps immediately (no need for interval - full timestamps don't change)
     updateTimestamps();
-    setInterval(updateTimestamps, 60000);
 
     // Pagination: Load More functionality with API
     const loadMoreBtn = document.getElementById('load-more-btn');
@@ -2253,9 +2298,16 @@
             </div>
         `;
 
-        // Render timestamp
-        const timestampHtml = tweet.created_at ? `
-            <span style="color: var(--text-tertiary); margin-left: 0.5rem;">· <span class="tweet-timestamp" data-timestamp="${tweet.created_at}"></span></span>
+        // Full timestamp and views below post (X brand style)
+        const timestampFullHtml = tweet.created_at ? `
+            <div class="tweet-timestamp-full" data-timestamp="${tweet.created_at}" data-views="${tweet.engagement.views || 0}">
+                <a href="https://twitter.com/${tweet.author}/status/${tweet.tweet_id}" target="_blank" rel="noopener noreferrer" class="tweet-time-link">
+                    <span class="tweet-time"></span>
+                </a>
+                <span class="tweet-views">
+                    <span class="tweet-views-count">${tweet.engagement.views || 0}</span> Views
+                </span>
+            </div>
         ` : '';
 
         // Render media (photos and videos)
@@ -2327,6 +2379,10 @@
                 <div class="tweet-grid">
                     <!-- Tweet Content -->
                     <div class="tweet-content-section">
+                        <!-- X Logo (required by brand guidelines) -->
+                        <img src="/static/img/templates/logo-black.png" alt="X" class="tweet-x-logo">
+                        <img src="/static/img/templates/logo-white.png" alt="X" class="tweet-x-logo">
+
                         <div class="tweet-author-info">
                             <div class="tweet-avatar">
                                 ${profileImageHtml}
@@ -2335,7 +2391,6 @@
                                 <div class="tweet-author-name">${tweet.name || tweet.author}</div>
                                 <div class="tweet-author-username">
                                     @${tweet.author}
-                                    ${timestampHtml}
                                 </div>
                             </div>
                         </div>
@@ -2346,22 +2401,20 @@
 
                         ${mediaHtml}
 
+                        ${timestampFullHtml}
+
                         <div class="tweet-engagement">
                             <div class="engagement-stat">
-                                <i class="ph ph-chat-circle" style="color: #8b5cf6;"></i>
+                                <i class="ph ph-chat-centered"></i>
                                 ${tweet.engagement.replies || 0}
                             </div>
                             <div class="engagement-stat">
-                                <i class="ph ph-heart" style="color: #ef4444;"></i>
-                                ${tweet.engagement.likes || 0}
-                            </div>
-                            <div class="engagement-stat">
-                                <i class="ph ph-arrows-counter-clockwise" style="color: #22c55e;"></i>
+                                <i class="ph ph-repeat"></i>
                                 ${tweet.engagement.retweets || 0}
                             </div>
                             <div class="engagement-stat">
-                                <i class="ph ph-eye" style="color: #3b82f6;"></i>
-                                ${tweet.engagement.views || 0}
+                                <i class="ph ph-heart"></i>
+                                ${tweet.engagement.likes || 0}
                             </div>
                         </div>
                     </div>
