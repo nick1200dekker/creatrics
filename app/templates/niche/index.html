@@ -92,7 +92,17 @@
                             </button>
                         </div>
                     </div>
-                    
+
+                    <!-- Last Refresh Indicator -->
+                    {% if timestamp %}
+                    <div class="last-refresh-indicator" data-timestamp="{{ timestamp }}">
+                        <i class="ph ph-clock-clockwise"></i>
+                        <span class="refresh-label">Last refreshed:</span>
+                        <span class="refresh-time" id="lastRefreshTime"></span>
+                        <span class="refresh-note">· Engagement stats are from this snapshot</span>
+                    </div>
+                    {% endif %}
+
                     <div class="panel-content">
                         <div class="hot-timeline">
                             {{ hot_on_timeline|safe }}
@@ -232,47 +242,104 @@
                     <div class="posts-grid">
                         {% for tweet in top_tweets[:40] %}
                         <div class="post-card">
+                            <!-- X Logo (required by brand guidelines) -->
+                            <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}"
+                                 alt="X" class="post-x-logo">
+                            <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}"
+                                 alt="X" class="post-x-logo">
+
                             <div class="post-header">
-                                {% if tweet.profile_image_url and tweet.profile_image_url != '' %}
-                                <img src="{{ tweet.profile_image_url }}"
-                                     alt="@{{ tweet.creator }}"
-                                     class="post-avatar"
-                                     onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                <div class="post-avatar-placeholder" style="display: none;">
-                                    <i class="ph ph-user"></i>
+                                <div class="post-avatar">
+                                    {% if tweet.profile_image_url and tweet.profile_image_url != '' %}
+                                    <img src="{{ tweet.profile_image_url }}"
+                                         alt="@{{ tweet.creator }}"
+                                         onload="this.classList.remove('error')"
+                                         onerror="this.classList.add('error')">
+                                    <div class="post-avatar-fallback">
+                                        <i class="ph ph-user"></i>
+                                    </div>
+                                    {% else %}
+                                    <div class="post-avatar-fallback" style="display: flex;">
+                                        <i class="ph ph-user"></i>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                {% else %}
-                                <div class="post-avatar-placeholder">
-                                    <i class="ph ph-user"></i>
-                                </div>
-                                {% endif %}
                                 <div class="post-author">
                                     <div class="post-name">{{ tweet.name or tweet.creator }}</div>
                                     <div class="post-handle">@{{ tweet.creator }}</div>
                                 </div>
                             </div>
+
                             <div class="post-content">
                                 {{ tweet.text }}
                             </div>
+
+                            {% if tweet.media %}
+                            <div class="post-media">
+                                {% if tweet.media.photo %}
+                                <div class="post-photos">
+                                    {% for photo in tweet.media.photo %}
+                                    <div class="post-photo">
+                                        <img src="{{ photo.media_url_https }}" alt="Post image" class="post-image" loading="lazy"
+                                             onerror="this.style.display='none'">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+
+                                {% if tweet.media.video %}
+                                <div class="post-videos">
+                                    {% for video in tweet.media.video %}
+                                    <div class="post-video">
+                                        {% if video.variants %}
+                                            {% set mp4_variant = video.variants | selectattr('content_type', 'equalto', 'video/mp4') | list | last %}
+                                            {% if mp4_variant %}
+                                            <video controls class="post-video-player" poster="{{ video.media_url_https }}">
+                                                <source src="{{ mp4_variant.url }}" type="video/mp4">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                            {% else %}
+                                            <img src="{{ video.media_url_https }}" alt="Video thumbnail" class="post-video-thumb" loading="lazy"
+                                                 onerror="this.style.display='none'">
+                                            {% endif %}
+                                        {% else %}
+                                        <img src="{{ video.media_url_https }}" alt="Video thumbnail" class="post-video-thumb" loading="lazy"
+                                             onerror="this.style.display='none'">
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Timestamp and Views -->
+                            {% if tweet.created_at %}
+                            <div class="post-timestamp-full" data-timestamp="{{ tweet.created_at }}" data-views="{{ tweet.engagement.views }}">
+                                <a href="https://x.com/{{ tweet.creator }}/status/{{ tweet.tweet_id }}" target="_blank" rel="noopener noreferrer" class="post-time-link">
+                                    <span class="post-time"></span>
+                                </a>
+                                <span class="post-views">
+                                    <span class="post-views-count">{{ tweet.engagement.views }}</span> Views
+                                </span>
+                            </div>
+                            {% endif %}
+
+                            <!-- Engagement Stats -->
                             <div class="post-stats">
                                 <div class="stat">
-                                    <i class="ph ph-heart"></i>
-                                    <span>{{ '{:,}'.format(tweet.engagement.likes) }}</span>
+                                    <i class="ph ph-chat-centered"></i>
+                                    <span>{{ tweet.engagement.replies or 0 }}</span>
                                 </div>
                                 <div class="stat">
                                     <i class="ph ph-repeat"></i>
-                                    <span>{{ '{:,}'.format(tweet.engagement.retweets) }}</span>
+                                    <span>{{ tweet.engagement.retweets or 0 }}</span>
                                 </div>
                                 <div class="stat">
-                                    <i class="ph ph-eye"></i>
-                                    <span>{{ '{:,}'.format(tweet.engagement.views) }}</span>
+                                    <i class="ph ph-heart"></i>
+                                    <span>{{ tweet.engagement.likes or 0 }}</span>
                                 </div>
                             </div>
-                            {% if tweet.tweet_id %}
-                            <a href="https://x.com/{{ tweet.creator }}/status/{{ tweet.tweet_id }}" target="_blank" class="post-link">
-                                View on X <i class="ph ph-arrow-square-out"></i>
-                            </a>
-                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>

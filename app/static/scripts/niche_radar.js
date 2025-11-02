@@ -1535,5 +1535,147 @@ function copyContentSuggestion(index) {
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         transformContentSuggestions();
+        formatPostTimestamps();
+        cleanPostContent();
+        formatLastRefresh();
     }, 500);
 });
+
+// Format timestamps and numbers for X-style posts
+function formatPostTimestamps() {
+    // Format full timestamp (e.g., "12:40 PM · Sep 11, 2025")
+    function formatFullTimestamp(dateString) {
+        try {
+            const tweetDate = new Date(dateString);
+            const hours = tweetDate.getHours();
+            const minutes = tweetDate.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            const displayMinutes = minutes.toString().padStart(2, '0');
+
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = monthNames[tweetDate.getMonth()];
+            const day = tweetDate.getDate();
+            const year = tweetDate.getFullYear();
+
+            return `${displayHours}:${displayMinutes} ${ampm} · ${month} ${day}, ${year}`;
+        } catch (e) {
+            return '';
+        }
+    }
+
+    // Format numbers with K/M abbreviation
+    function formatNumberAbbreviated(num) {
+        const absNum = Math.abs(num);
+
+        if (absNum >= 1000000) {
+            const millions = num / 1000000;
+            return millions.toFixed(1).replace(/\.0$/, '') + 'M';
+        } else if (absNum >= 10000) {
+            const thousands = num / 1000;
+            return thousands.toFixed(1).replace(/\.0$/, '') + 'K';
+        } else if (absNum >= 1000) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        return num.toString();
+    }
+
+    // Update timestamps
+    document.querySelectorAll('.post-timestamp-full').forEach(el => {
+        const timestamp = el.getAttribute('data-timestamp');
+        const timeSpan = el.querySelector('.post-time');
+        if (timestamp && timeSpan) {
+            timeSpan.textContent = formatFullTimestamp(timestamp);
+        }
+
+        // Format view count
+        const viewsCount = el.querySelector('.post-views-count');
+        if (viewsCount) {
+            const rawViews = viewsCount.textContent.trim();
+            if (rawViews && !isNaN(rawViews)) {
+                viewsCount.textContent = formatNumberAbbreviated(parseInt(rawViews));
+            }
+        }
+    });
+
+    // Format engagement stats
+    document.querySelectorAll('.post-stats .stat span').forEach(span => {
+        const rawNumber = span.textContent.trim();
+        if (rawNumber && !isNaN(rawNumber.replace(/,/g, ''))) {
+            span.textContent = formatNumberAbbreviated(parseInt(rawNumber.replace(/,/g, '')));
+        }
+    });
+}
+
+// Clean post content - remove t.co URLs
+function cleanPostContent() {
+    document.querySelectorAll('.post-content').forEach(contentEl => {
+        let text = contentEl.textContent;
+
+        // Remove t.co URLs (media links that X adds)
+        text = text.replace(/https?:\/\/t\.co\/\w+/g, '');
+
+        // Remove extra spaces but preserve line breaks
+        text = text.replace(/ +/g, ' ').trim();
+
+        // Update the text content (white-space: pre-line in CSS will preserve line breaks)
+        contentEl.textContent = text;
+    });
+}
+
+// Format last refresh timestamp with color coding
+function formatLastRefresh() {
+    const indicator = document.querySelector('.last-refresh-indicator');
+    if (!indicator) return;
+
+    const timestampStr = indicator.getAttribute('data-timestamp');
+    if (!timestampStr) return;
+
+    try {
+        // Parse timestamp (format: "2025-01-11 14:30:45")
+        // Add 'Z' to treat it as UTC, or use the browser's timezone
+        const timestamp = new Date(timestampStr.replace(' ', 'T') + 'Z');
+        const now = new Date();
+        const diffMs = now - timestamp;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        let timeText = '';
+        let freshnessClass = '';
+
+        if (diffMins < 5) {
+            timeText = 'Just now';
+            freshnessClass = 'fresh';
+        } else if (diffMins < 60) {
+            timeText = `${diffMins} minutes ago`;
+            freshnessClass = 'fresh';
+        } else if (diffHours < 6) {
+            timeText = `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+            freshnessClass = 'recent';
+        } else if (diffHours < 24) {
+            timeText = `${diffHours} hours ago`;
+            freshnessClass = 'stale';
+        } else if (diffDays < 7) {
+            timeText = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+            freshnessClass = 'old';
+        } else {
+            const weeks = Math.floor(diffDays / 7);
+            timeText = `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+            freshnessClass = 'old';
+        }
+
+        // Update the time text
+        const timeEl = document.getElementById('lastRefreshTime');
+        if (timeEl) {
+            timeEl.textContent = timeText;
+        }
+
+        // Add freshness class
+        indicator.classList.add(freshnessClass);
+
+    } catch (e) {
+        console.error('Error formatting last refresh time:', e);
+    }
+}
