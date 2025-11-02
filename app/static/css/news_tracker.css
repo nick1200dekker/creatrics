@@ -396,7 +396,7 @@ html.dark .secondary-btn:hover {
 }
 
 .progress-icon {
-    font-size: 1.5rem;
+    font-size: 2.6rem;
     color: #3B82F6;
     margin-bottom: 0.5rem;
 }
@@ -960,7 +960,7 @@ html.dark .news-image-placeholder {
 }
 
 .generating-spinner i.ph-spinner {
-    font-size: 1.5rem;
+    font-size: 2.6rem;
     color: #3B82F6;
     animation: spin 1s linear infinite;
     display: inline-block;
