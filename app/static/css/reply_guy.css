@@ -458,6 +458,108 @@ html.dark .panel-header {
     border-bottom-color: rgba(82, 82, 91, 0.5);
 }
 
+/* Last Refresh Indicator */
+.last-refresh-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.75rem 1.5rem;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-primary);
+    border-bottom: 1px solid var(--border-primary);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+html.dark .last-refresh-indicator {
+    background: rgba(39, 39, 42, 0.5);
+    border-top-color: rgba(63, 63, 70, 0.5);
+    border-bottom-color: rgba(63, 63, 70, 0.5);
+}
+
+.last-refresh-indicator i {
+    font-size: 1rem;
+    color: #6B7280;
+}
+
+html.dark .last-refresh-indicator i {
+    color: #9CA3AF;
+}
+
+.refresh-label {
+    font-weight: 500;
+    color: var(--text-tertiary);
+}
+
+.refresh-time {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.refresh-note {
+    color: var(--text-tertiary);
+    font-size: 0.8125rem;
+}
+
+/* Color coding based on freshness */
+.last-refresh-indicator.fresh {
+    border-color: #10B981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.last-refresh-indicator.fresh i {
+    color: #10B981;
+}
+
+html.dark .last-refresh-indicator.fresh {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.last-refresh-indicator.recent {
+    border-color: #3B82F6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.last-refresh-indicator.recent i {
+    color: #3B82F6;
+}
+
+html.dark .last-refresh-indicator.recent {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.last-refresh-indicator.stale {
+    border-color: #F59E0B;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.last-refresh-indicator.stale i {
+    color: #F59E0B;
+}
+
+html.dark .last-refresh-indicator.stale {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.last-refresh-indicator.old {
+    border-color: #EF4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.last-refresh-indicator.old i {
+    color: #EF4444;
+}
+
+html.dark .last-refresh-indicator.old {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
 .panel-title-section {
     display: flex;
     align-items: center;
@@ -550,6 +652,124 @@ html.dark .tooltip {
 .info-icon:hover .tooltip {
     opacity: 1;
     visibility: visible;
+}
+
+/* Compact Mode Tabs - Small Pills (positioned on the right) */
+.mode-tabs-compact {
+    display: flex;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 3px;
+}
+
+html.dark .mode-tabs-compact {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
+.mode-tab-compact {
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    white-space: nowrap;
+}
+
+.mode-tab-compact:hover:not(.active) {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+html.dark .mode-tab-compact:hover:not(.active) {
+    background: rgba(82, 82, 91, 0.5);
+}
+
+.mode-tab-compact.active {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
+}
+
+html.dark .mode-tab-compact.active {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+}
+
+.mode-tab-compact i {
+    font-size: 0.9375rem;
+}
+
+.mode-tab-compact span {
+    font-size: 0.8125rem;
+}
+
+/* Custom list dropdown - only shown when custom mode is active */
+.custom-list-dropdown {
+    min-width: 240px;
+}
+
+@media (max-width: 768px) {
+    .custom-list-dropdown {
+        min-width: 100%;
+    }
+}
+
+/* Option Icons */
+.dropdown-option .option-icon {
+    margin-right: 0.5rem;
+    color: #3B82F6;
+    font-size: 0.9375rem;
+}
+
+html.dark .dropdown-option .option-icon {
+    color: #60A5FA;
+}
+
+/* Empty dropdown state */
+.dropdown-empty {
+    padding: 1rem;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.8125rem;
+    font-style: italic;
+}
+
+/* Mode Switch Loading Indicator */
+.mode-switch-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    animation: fadeIn 0.3s ease;
+}
+
+.mode-switch-loading i {
+    color: #3B82F6;
+    font-size: 1rem;
+    animation: spin 1s linear infinite;
+}
+
+html.dark .mode-switch-loading i {
+    color: #60A5FA;
+}
+
+.mode-switch-loading span {
+    font-weight: 500;
+}
+
+/* Spin animation for loading spinner */
+.spin, i.spin {
+    animation: spin 1s linear infinite;
 }
 
 /* Dropdown */

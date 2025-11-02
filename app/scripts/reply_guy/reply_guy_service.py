@@ -365,10 +365,35 @@ class ReplyGuyService:
                 # For custom lists, check user's analysis collection
                 doc_ref = self.db.collection('users').document(str(user_id)).collection('reply_guy').document('current_analysis').collection('analyses').document(list_id)
                 doc = doc_ref.get()
-                
+
                 if doc.exists:
                     data = doc.to_dict()
-                    
+
+                    # Get timestamp - try analysis timestamp first, fallback to last_updated from settings
+                    analysis_timestamp = data.get('timestamp')
+
+                    # MIGRATION: Add timestamp if missing from old analyses
+                    if not analysis_timestamp:
+                        # Try to get last_updated from settings as fallback
+                        settings_ref = self.db.collection('users').document(str(user_id)).collection('reply_guy').document('settings')
+                        settings_doc = settings_ref.get()
+
+                        if settings_doc.exists:
+                            settings_data = settings_doc.to_dict()
+                            fallback_timestamp = settings_data.get('last_updated')
+                            if fallback_timestamp:
+                                logger.info(f"Migrating custom list {list_id} - using last_updated from settings as timestamp")
+                                doc_ref.update({'timestamp': fallback_timestamp})
+                                data['timestamp'] = fallback_timestamp
+                            else:
+                                logger.info(f"Migrating custom list {list_id} - adding current time as timestamp")
+                                doc_ref.update({'timestamp': datetime.now()})
+                                data['timestamp'] = datetime.now()
+                        else:
+                            logger.info(f"Migrating custom list {list_id} - adding current time as timestamp")
+                            doc_ref.update({'timestamp': datetime.now()})
+                            data['timestamp'] = datetime.now()
+
                     # Filter tweets by recency (last 24h by default)
                     tweets = data.get('tweet_opportunities', [])
                     filtered_tweets = self._filter_recent_tweets(tweets, hours=24)

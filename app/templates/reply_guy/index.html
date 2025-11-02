@@ -99,46 +99,80 @@
                         </div>
                         
                         <div class="panel-controls">
-                            <div id="update-button-container" style="display: none;">
+                            <!-- Update button - only visible for custom lists -->
+                            <div id="update-button-container" class="update-btn-wrapper" style="display: none;">
                                 <button id="update-btn" class="primary-btn" disabled>
                                     <i class="ph ph-arrows-clockwise"></i>
                                     Update
                                 </button>
                             </div>
-                            
-                            <div class="dropdown">
+
+                            <!-- Hidden default list options for JavaScript -->
+                            <div style="display: none;">
+                                {% if default_lists %}
+                                    {% for list in default_lists %}
+                                    <div class="dropdown-option" data-value="{{ list.id }}" data-type="default">
+                                        {{ list.name }}
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+
+                            <!-- Dropdown - only visible for custom lists -->
+                            <div class="dropdown compact-dropdown custom-list-dropdown" style="display: none;">
                                 <div class="dropdown-trigger" id="list-dropdown-trigger">
                                     <span id="selected-list-text">Choose a list...</span>
                                     <i class="ph ph-caret-down dropdown-arrow"></i>
                                 </div>
-                                <div class="dropdown-menu" id="list-dropdown-menu">
-                                    {% if default_lists or custom_lists %}
-                                        {% for list in default_lists %}
-                                        <div class="dropdown-option" data-value="{{ list.id }}" data-type="default">
-                                            {{ list.name }}
-                                        </div>
-                                        {% endfor %}
+                                <div class="dropdown-menu compact-menu" id="list-dropdown-menu">
+                                    {% if custom_lists %}
                                         {% for list in custom_lists %}
                                         <div class="dropdown-option" data-value="{{ list.id }}" data-type="custom">
+                                            <i class="ph ph-user-circle option-icon"></i>
                                             {{ list.name }}
                                         </div>
                                         {% endfor %}
-                                        <div class="dropdown-divider"></div>
-                                        <div class="dropdown-option create-new" id="create-new-list">
-                                            <i class="ph ph-plus-circle"></i>
-                                            <span>Add X List</span>
-                                        </div>
                                     {% else %}
-                                        <div class="dropdown-option create-new" id="create-new-list">
-                                            <i class="ph ph-plus-circle"></i>
-                                            <span>Add X List</span>
-                                        </div>
+                                        <div class="dropdown-empty">No custom lists yet</div>
                                     {% endif %}
+                                    <div class="dropdown-divider"></div>
+                                    <div class="dropdown-option create-new" id="create-new-list">
+                                        <i class="ph ph-plus-circle"></i>
+                                        <span>Add New X List</span>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <!-- Loading indicator for mode switching -->
+                            <div id="mode-switch-loading" class="mode-switch-loading" style="display: none;">
+                                <i class="ph ph-spinner spin"></i>
+                                <span>Loading list...</span>
+                            </div>
+
+                            <!-- Mode Tabs - Always visible on the right -->
+                            <div class="mode-tabs-compact">
+                                <button class="mode-tab-compact active" data-mode="default">
+                                    <i class="ph ph-sparkle"></i>
+                                    <span>Default</span>
+                                </button>
+                                <button class="mode-tab-compact" data-mode="custom">
+                                    <i class="ph ph-user-circle"></i>
+                                    <span>Custom</span>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- Last Refresh Indicator -->
+                    {% if current_analysis and current_analysis.timestamp %}
+                    <div class="last-refresh-indicator" data-timestamp="{{ current_analysis.timestamp }}">
+                        <i class="ph ph-clock-clockwise"></i>
+                        <span class="refresh-label">Last refreshed:</span>
+                        <span class="refresh-time" id="lastRefreshTime"></span>
+                        <span class="refresh-note">· Engagement stats are from this snapshot</span>
+                    </div>
+                    {% endif %}
+
                     <div class="panel-content" id="tweets-container">
                         <!-- Loading Section -->
                         <div class="loading-section" id="tweets-loading-section" style="display: flex;">

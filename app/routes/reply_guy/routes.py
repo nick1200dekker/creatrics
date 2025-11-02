@@ -146,7 +146,9 @@ def index():
             if current_analysis:
                 total = current_analysis.get('total_count', 0)
                 shown = len(current_analysis.get('tweet_opportunities', []))
+                timestamp = current_analysis.get('timestamp')
                 logger.info(f"Loaded {shown} of {total} opportunities for {current_selection['list_type']} list {current_selection['list_id']}")
+                logger.info(f"Analysis timestamp: {timestamp} (type: {type(timestamp).__name__})")
         
         # Get reply stats efficiently
         reply_stats = service.get_reply_stats(user_id)

@@ -113,25 +113,26 @@
             }
         }
 
-        // If no list is selected on page load, the dropdown text needs to be updated
+        // If no list is selected on page load, auto-select the first default list
         if (!state.selectedList) {
-            const firstDefaultList = document.querySelector('.dropdown-option[data-type="default"]');
-            if (firstDefaultList) {
+            const firstDefaultDropdown = document.querySelector('.dropdown-option[data-type="default"]');
+            if (firstDefaultDropdown) {
                 console.log('Auto-selecting first default list UI on page load');
-                const optionText = firstDefaultList.textContent.trim();
-                const selectedListText = document.getElementById('selected-list-text');
-                const selectedListTextEmpty = document.getElementById('selected-list-text-empty');
-                if (selectedListText) selectedListText.textContent = optionText;
-                if (selectedListTextEmpty) selectedListTextEmpty.textContent = optionText;
-
-                firstDefaultList.classList.add('selected');
-                state.selectedList = firstDefaultList.getAttribute('data-value');
-                state.selectedListType = firstDefaultList.getAttribute('data-type');
+                firstDefaultDropdown.classList.add('selected');
+                state.selectedList = firstDefaultDropdown.getAttribute('data-value');
+                state.selectedListType = 'default';
             } else {
+                // Only fall back to custom list if no default lists exist
                 const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
                 if (firstCustomList) {
-                    console.log('Auto-selecting first custom list on page load');
-                    selectListOption(firstCustomList);
+                    console.log('No default lists found, auto-selecting first custom list on page load');
+                    const optionText = firstCustomList.textContent.trim();
+                    const selectedListText = document.getElementById('selected-list-text');
+                    if (selectedListText) selectedListText.textContent = optionText;
+
+                    firstCustomList.classList.add('selected');
+                    state.selectedList = firstCustomList.getAttribute('data-value');
+                    state.selectedListType = 'custom';
                 }
             }
         }
@@ -560,6 +561,146 @@
     function setupDropdowns() {
         setupMainDropdown();
         setupReplyStyleDropdowns();
+        setupModeTabsAndListSelection();
+    }
+
+    // Setup mode tabs and list selection (compact interface)
+    function setupModeTabsAndListSelection() {
+        // Compact mode tab switching
+        const modeTabs = document.querySelectorAll('.mode-tab-compact');
+
+        if (modeTabs.length === 0) {
+            console.log('No mode tabs found - using standard dropdown');
+            return;
+        }
+
+        console.log(`Setting up ${modeTabs.length} mode tabs`);
+
+        // Function to handle mode switching
+        function switchMode(mode) {
+            console.log('switchMode called with:', mode);
+            const dropdown = document.querySelector('.custom-list-dropdown');
+            const updateBtnContainer = document.getElementById('update-button-container');
+            const loadingIndicator = document.getElementById('mode-switch-loading');
+
+            if (mode === 'default') {
+                // Hide dropdown and update button for default mode
+                if (dropdown) dropdown.style.display = 'none';
+                if (updateBtnContainer) updateBtnContainer.style.display = 'none';
+
+                // Auto-select first default list
+                const firstDefaultList = document.querySelector('.dropdown-option[data-type="default"]');
+                console.log('First default list found:', firstDefaultList);
+                if (firstDefaultList) {
+                    const listId = firstDefaultList.getAttribute('data-value');
+                    console.log('Switching to default list:', listId);
+
+                    // Show loading indicator
+                    if (loadingIndicator) {
+                        loadingIndicator.style.display = 'flex';
+                        console.log('Loading indicator shown');
+                    } else {
+                        console.log('Loading indicator not found!');
+                    }
+
+                    // Clear any dropdown selections
+                    document.querySelectorAll('.dropdown-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    firstDefaultList.classList.add('selected');
+
+                    state.selectedList = listId;
+                    state.selectedListType = 'default';
+
+                    console.log('State updated:', { selectedList: state.selectedList, selectedListType: state.selectedListType });
+
+                    // Small delay to show spinner before API call
+                    setTimeout(() => selectList(), 100);
+                } else {
+                    console.log('No default lists available');
+                }
+            } else {
+                // Show dropdown for custom mode
+                if (dropdown) dropdown.style.display = 'block';
+
+                // Auto-select first custom list
+                const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
+                console.log('First custom list found:', firstCustomList);
+                if (firstCustomList) {
+                    const optionText = firstCustomList.textContent.trim();
+                    const selectedListText = document.getElementById('selected-list-text');
+                    if (selectedListText) selectedListText.textContent = optionText;
+
+                    // Show loading indicator
+                    if (loadingIndicator) {
+                        loadingIndicator.style.display = 'flex';
+                        console.log('Loading indicator shown');
+                    } else {
+                        console.log('Loading indicator not found!');
+                    }
+
+                    // Clear any dropdown selections
+                    document.querySelectorAll('.dropdown-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+
+                    state.selectedList = firstCustomList.getAttribute('data-value');
+                    state.selectedListType = 'custom';
+                    firstCustomList.classList.add('selected');
+
+                    console.log('State updated:', { selectedList: state.selectedList, selectedListType: state.selectedListType });
+
+                    // Small delay to show spinner before API call
+                    setTimeout(() => selectList(), 100);
+                }
+
+                // Update button visibility is handled by updateButtonVisibility()
+                updateButtonVisibility();
+            }
+        }
+
+        modeTabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const mode = tab.dataset.mode;
+                console.log('Mode tab clicked:', mode);
+
+                // Remove active from all tabs
+                modeTabs.forEach(t => t.classList.remove('active'));
+                // Add active to clicked tab
+                tab.classList.add('active');
+
+                // Switch mode
+                switchMode(mode);
+            });
+        });
+
+        // Initialize based on current state or default to 'default' mode
+        const initialMode = state.selectedListType || 'default';
+        console.log('Initializing with mode:', initialMode);
+
+        // Set the correct tab as active
+        modeTabs.forEach(t => {
+            if (t.dataset.mode === initialMode) {
+                t.classList.add('active');
+            } else {
+                t.classList.remove('active');
+            }
+        });
+
+        // Show/hide UI elements based on initial mode
+        const dropdown = document.querySelector('.custom-list-dropdown');
+        const updateBtnContainer = document.getElementById('update-button-container');
+
+        if (initialMode === 'default') {
+            if (dropdown) dropdown.style.display = 'none';
+            if (updateBtnContainer) updateBtnContainer.style.display = 'none';
+        } else {
+            if (dropdown) dropdown.style.display = 'block';
+            updateButtonVisibility();
+        }
     }
 
     function setupMainDropdown() {
@@ -2196,12 +2337,96 @@
         });
     }
 
+    // Format last refresh timestamp with color coding
+    function formatLastRefresh() {
+        const indicator = document.querySelector('.last-refresh-indicator');
+        if (!indicator) {
+            console.log('No last-refresh-indicator found');
+            return;
+        }
+
+        const timestampStr = indicator.getAttribute('data-timestamp');
+        if (!timestampStr || timestampStr === 'None' || timestampStr === '') {
+            console.log('No valid timestamp, hiding indicator');
+            indicator.style.display = 'none';
+            return;
+        }
+
+        console.log('Formatting timestamp:', timestampStr);
+
+        try {
+            // Parse timestamp - handle multiple formats
+            let timestamp;
+
+            // Handle ISO format with microseconds: "2025-11-02 17:33:58.191744+00:00"
+            // Or standard ISO: "2025-11-02T17:33:58Z"
+            // Or simple format: "2025-01-11 14:30:45"
+
+            if (timestampStr.includes('T')) {
+                // ISO format with T separator
+                timestamp = new Date(timestampStr);
+            } else if (timestampStr.includes('+') || timestampStr.includes('Z')) {
+                // Space-separated with timezone - replace space with T
+                timestamp = new Date(timestampStr.replace(' ', 'T'));
+            } else {
+                // Simple format without timezone - add Z for UTC
+                timestamp = new Date(timestampStr.replace(' ', 'T') + 'Z');
+            }
+
+            // Validate timestamp
+            if (isNaN(timestamp.getTime())) {
+                console.error('Invalid timestamp format:', timestampStr);
+                indicator.style.display = 'none';
+                return;
+            }
+
+            const now = new Date();
+            const diffMs = now - timestamp;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            let timeText = '';
+            let freshnessClass = '';
+
+            // Clear and simple time display
+            if (diffMins < 1) {
+                timeText = 'just now';
+                freshnessClass = 'fresh';
+            } else if (diffMins < 60) {
+                timeText = diffMins === 1 ? '1 min ago' : `${diffMins} mins ago`;
+                freshnessClass = diffMins < 15 ? 'fresh' : (diffMins < 30 ? 'recent' : 'stale');
+            } else if (diffHours < 24) {
+                timeText = diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+                freshnessClass = 'old';
+            } else {
+                timeText = diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+                freshnessClass = 'old';
+            }
+
+            console.log('Time text:', timeText);
+
+            // Update the time text
+            const timeEl = document.getElementById('lastRefreshTime');
+            if (timeEl) {
+                timeEl.textContent = timeText;
+            }
+
+            // Add freshness class
+            indicator.classList.add(freshnessClass);
+
+        } catch (e) {
+            console.error('Error formatting last refresh time:', e);
+        }
+    }
+
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', init);
 
     // Fix profile pictures after content loads
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(fixProfilePictureConsistency, 1000);
+        formatLastRefresh();
     });
 
     // Update timestamps immediately (no need for interval - full timestamps don't change)
