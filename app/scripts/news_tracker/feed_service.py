@@ -182,7 +182,7 @@ class FeedService:
     def get_category_feed(self, category: str, limit: int = 50) -> List[Dict]:
         """
         Get articles for a specific category
-        Sorted by importance score
+        Sorted by published date (newest first)
 
         Note: Fetches ALL articles and filters in-memory (no Firestore indexes needed)
         """
@@ -211,8 +211,18 @@ class FeedService:
             logger.info(f"Category feed for '{category}': Checked {total_checked} articles, found {len(articles)} matches")
             logger.info(f"Category distribution: {category_counts}")
 
-            # Sort by importance score in-memory (handle None values)
-            articles.sort(key=lambda x: x.get('importance_score') or 0, reverse=True)
+            # Sort by published date (newest first)
+            def get_published_timestamp(article):
+                published_str = article.get('published', '') or article.get('created_at', '')
+                if not published_str:
+                    return 0
+                try:
+                    dt = datetime.fromisoformat(published_str.replace('Z', '+00:00'))
+                    return dt.timestamp()
+                except:
+                    return 0
+
+            articles.sort(key=get_published_timestamp, reverse=True)
 
             return articles[:limit]
 

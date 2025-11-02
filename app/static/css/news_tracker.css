@@ -904,6 +904,43 @@ html.dark .insufficient-credits-card {
     transform: scale(1.05);
 }
 
+/* News Image Placeholder */
+.news-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+html.dark .news-image-placeholder {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+}
+
+.news-image-placeholder::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 70%
+    );
+}
+
+.news-image-placeholder i {
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.9);
+    z-index: 1;
+}
+
 .news-content-wrapper {
     flex: 1;
     min-width: 0;
