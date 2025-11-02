@@ -724,12 +724,6 @@ function renderVideos() {
         return `
             <tr onclick="window.open('${video.video_url}', '_blank')" style="cursor: pointer;">
                 <td class="video-cell">
-                    <div class="video-thumbnail-small">
-                        ${video.cover ?
-                            `<img src="${video.cover}" alt="${escapeHtml(video.desc)}" loading="lazy">` :
-                            '<div class="thumbnail-placeholder-small"><i class="ph ph-video-camera"></i></div>'
-                        }
-                    </div>
                     <div class="video-title-cell">
                         ${escapeHtml(video.desc || 'No description')}
                     </div>
