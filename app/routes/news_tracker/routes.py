@@ -233,9 +233,12 @@ def get_category_feed(category):
     """Get articles for a specific category"""
     try:
         limit = request.args.get('limit', 50, type=int)
+        logger.info(f"Fetching category feed for: {category} (limit: {limit})")
 
         feed_service = FeedService()
         articles = feed_service.get_category_feed(category, limit)
+
+        logger.info(f"Found {len(articles)} articles for category: {category}")
 
         return jsonify({
             'success': True,

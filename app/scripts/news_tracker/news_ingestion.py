@@ -6,6 +6,7 @@ import json
 import hashlib
 import logging
 import feedparser
+import time
 from pathlib import Path
 from typing import List, Dict, Optional
 from datetime import datetime, timezone
@@ -15,6 +16,7 @@ from app.system.services.firebase_service import db
 from app.system.ai_provider.ai_provider import get_ai_provider
 from app.scripts.news_tracker.news_service import NewsService
 from app.scripts.news_tracker.feed_service import FeedService
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
 
@@ -106,27 +108,70 @@ class NewsRadarService:
             raise Exception("Firestore not initialized")
         self.db = db
         self.news_service = NewsService()
+        self.feed_service = FeedService()
+
+    def fetch_single_feed(self, feed_url: str, limit: int = 10) -> List[Dict]:
+        """Fetch news from a single RSS feed"""
+        try:
+            news_items = self.news_service.fetch_news(feed_url, limit=limit)
+
+            for item in news_items:
+                item['article_hash'] = generate_article_hash(item['title'], item['link'])
+                item['feed_url'] = feed_url
+
+            return news_items
+        except Exception as e:
+            logger.error(f"Error fetching from {feed_url}: {e}")
+            return []
 
     def fetch_all_news(self) -> List[Dict]:
-        """Fetch news from all RSS feeds"""
+        """Fetch news from all RSS feeds including Google News searches"""
         all_news = []
 
-        for feed_url in NEWS_FEEDS:
+        # Fetch traditional RSS feeds in PARALLEL (max 10 workers to avoid overwhelming servers)
+        logger.info(f"Fetching from {len(NEWS_FEEDS)} traditional RSS feeds in parallel...")
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_url = {
+                executor.submit(self.fetch_single_feed, feed_url, 10): feed_url
+                for feed_url in NEWS_FEEDS
+            }
+
+            for future in as_completed(future_to_url):
+                feed_url = future_to_url[future]
+                try:
+                    news_items = future.result()
+                    all_news.extend(news_items)
+                    logger.info(f"✓ Fetched {len(news_items)} articles from {feed_url}")
+                except Exception as e:
+                    logger.error(f"✗ Failed to fetch from {feed_url}: {e}")
+
+        logger.info(f"Fetched {len(all_news)} articles from traditional RSS feeds")
+
+        # Fetch Google News search queries SEQUENTIALLY (with rate limiting)
+        google_feeds = self.feed_service.get_all_google_news_feeds()
+        logger.info(f"Fetching from {len(google_feeds)} Google News search queries sequentially...")
+
+        for feed_info in google_feeds:
             try:
-                logger.info(f"Fetching from: {feed_url}")
-                news_items = self.news_service.fetch_news(feed_url, limit=10)
+                feed_url = feed_info['url']
+                logger.info(f"Fetching Google News: {feed_info['query']} ({feed_info['category']})")
+
+                news_items = self.news_service.fetch_news(feed_url, limit=5)
 
                 for item in news_items:
-                    # Generate unique hash
                     item['article_hash'] = generate_article_hash(item['title'], item['link'])
                     item['feed_url'] = feed_url
+                    item['search_query'] = feed_info['query']
                     all_news.append(item)
 
+                # 1 second delay between Google News requests (rate limiting)
+                time.sleep(1)
+
             except Exception as e:
-                logger.error(f"Error fetching from {feed_url}: {e}")
+                logger.error(f"Error fetching from Google News ({feed_info['query']}): {e}")
                 continue
 
-        logger.info(f"Fetched {len(all_news)} total news items from {len(NEWS_FEEDS)} feeds")
+        logger.info(f"Total: {len(all_news)} articles from {len(NEWS_FEEDS)} traditional feeds + {len(google_feeds)} Google News queries")
         return all_news
 
     def check_article_exists(self, article_hash: str) -> bool:
@@ -257,6 +302,7 @@ class NewsRadarService:
             'fetched': 0,
             'new': 0,
             'duplicate': 0,
+            'too_old': 0,
             'categorized': 0,
             'failed': 0,
             'saved': 0
@@ -266,9 +312,37 @@ class NewsRadarService:
         all_news = self.fetch_all_news()
         stats['fetched'] = len(all_news)
 
-        # Filter out duplicates FIRST (batch processing only new articles)
-        new_articles = []
+        # Filter out old articles BEFORE checking duplicates (save DB lookups)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=72)
+        logger.info(f"Filtering articles older than 72 hours (cutoff: {cutoff_time})")
+
+        recent_articles = []
         for article in all_news:
+            published_str = article.get('published', '')
+
+            if not published_str:
+                # Keep articles without date (shouldn't happen, but safe)
+                recent_articles.append(article)
+                continue
+
+            try:
+                published_date = datetime.fromisoformat(published_str.replace('Z', '+00:00'))
+
+                if published_date >= cutoff_time:
+                    recent_articles.append(article)
+                else:
+                    stats['too_old'] += 1
+                    logger.debug(f"Skipping old article: {article['title'][:50]} (published {published_str})")
+            except Exception as e:
+                # Keep articles with unparseable dates (let them through)
+                logger.warning(f"Could not parse date for article: {article['title'][:50]} - {e}")
+                recent_articles.append(article)
+
+        logger.info(f"Filtered out {stats['too_old']} old articles, {len(recent_articles)} recent articles remain")
+
+        # Filter out duplicates (batch processing only new articles)
+        new_articles = []
+        for article in recent_articles:
             if self.check_article_exists(article['article_hash']):
                 stats['duplicate'] += 1
             else:

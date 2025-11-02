@@ -64,9 +64,10 @@ Return ONLY the post content, nothing else."""
     def fetch_og_image(self, url: str) -> Optional[str]:
         """
         Fetch Open Graph image from article URL (fallback when RSS has no image)
+        Handles Google News redirects and extracts images from actual article pages
 
         Args:
-            url: Article URL
+            url: Article URL (may be a Google News redirect)
 
         Returns:
             Open Graph image URL or None
@@ -77,25 +78,54 @@ Return ONLY the post content, nothing else."""
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Language': 'en-US,en;q=0.9',
             }
-            response = requests.get(url, headers=headers, timeout=5, allow_redirects=True)
+
+            # Fetch with redirects (handles Google News redirects automatically)
+            response = requests.get(url, headers=headers, timeout=8, allow_redirects=True)
             response.raise_for_status()
 
             soup = BeautifulSoup(response.text, 'html.parser')
 
-            # Try Open Graph image
+            # Try Open Graph image (most reliable)
             og_image = soup.find('meta', property='og:image')
             if og_image and og_image.get('content'):
-                return og_image.get('content')
+                img_url = og_image.get('content')
+                # Ensure absolute URL
+                if img_url.startswith('//'):
+                    img_url = 'https:' + img_url
+                elif img_url.startswith('/'):
+                    from urllib.parse import urljoin
+                    img_url = urljoin(response.url, img_url)
+                return img_url
 
             # Try Twitter card image
             twitter_image = soup.find('meta', attrs={'name': 'twitter:image'})
             if twitter_image and twitter_image.get('content'):
-                return twitter_image.get('content')
+                img_url = twitter_image.get('content')
+                if img_url.startswith('//'):
+                    img_url = 'https:' + img_url
+                elif img_url.startswith('/'):
+                    from urllib.parse import urljoin
+                    img_url = urljoin(response.url, img_url)
+                return img_url
+
+            # Try article image tags as last resort
+            img_tag = soup.find('img', class_=lambda x: x and ('article' in x.lower() or 'hero' in x.lower()))
+            if img_tag and img_tag.get('src'):
+                img_url = img_tag.get('src')
+                if img_url.startswith('//'):
+                    img_url = 'https:' + img_url
+                elif img_url.startswith('/'):
+                    from urllib.parse import urljoin
+                    img_url = urljoin(response.url, img_url)
+                return img_url
 
             return None
 
+        except requests.Timeout:
+            logger.debug(f"Timeout fetching OG image from {url[:100]}")
+            return None
         except Exception as e:
-            logger.debug(f"Could not fetch OG image from {url}: {e}")
+            logger.debug(f"Could not fetch OG image from {url[:100]}: {e}")
             return None
 
     def fetch_news(self, feed_url: str, limit: int = 20) -> List[Dict]:
@@ -142,12 +172,21 @@ Return ONLY the post content, nothing else."""
                     # Fallback to raw string if parsed version not available
                     published_date = entry.get('published', entry.get('pubDate', ''))
 
+                # Extract source - for Google News, use the actual publisher from <source> tag
+                source = feed.feed.get('title', 'Unknown')
+                if hasattr(entry, 'source') and entry.source:
+                    # Google News includes actual publisher in <source> tag
+                    if hasattr(entry.source, 'title'):
+                        source = entry.source.title
+                    elif isinstance(entry.source, dict) and 'title' in entry.source:
+                        source = entry.source['title']
+
                 item = {
                     'title': title,
                     'link': entry.get('link', ''),
                     'description': entry.get('description', entry.get('summary', '')),
                     'published': published_date,
-                    'source': feed.feed.get('title', 'Unknown'),
+                    'source': source,
                     'image': None
                 }
 

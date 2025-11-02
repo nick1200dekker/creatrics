@@ -9,19 +9,43 @@ from app.system.services.firebase_service import db
 
 logger = logging.getLogger(__name__)
 
-# Available news categories
-NEWS_CATEGORIES = [
-    'Tech & AI',
-    'Crypto & Finance',
-    'Sports & Fitness',
-    'Gaming & Esports',
-    'Entertainment & Culture',
-    'Politics & World',
-    'Science & Innovation',
-    'Business & Startups',
-    'Health & Wellness',
-    'Climate & Environment'
-]
+# Available news categories with Google News search queries
+# Only Crypto & Finance and Gaming & Esports have Google News queries
+CATEGORY_CONFIG = {
+    'Tech & AI': {
+        'queries': []
+    },
+    'Crypto & Finance': {
+        'queries': ['crypto', 'bitcoin', 'altcoins', 'cryptocurrency']
+    },
+    'Sports & Fitness': {
+        'queries': []
+    },
+    'Gaming & Esports': {
+        'queries': ['gaming', 'video games']
+    },
+    'Entertainment & Culture': {
+        'queries': []
+    },
+    'Politics & World': {
+        'queries': []
+    },
+    'Science & Innovation': {
+        'queries': []
+    },
+    'Business & Startups': {
+        'queries': []
+    },
+    'Health & Wellness': {
+        'queries': []
+    },
+    'Climate & Environment': {
+        'queries': []
+    }
+}
+
+# List of category names
+NEWS_CATEGORIES = list(CATEGORY_CONFIG.keys())
 
 class FeedService:
     """Handles personalized news feeds and user preferences"""
@@ -167,17 +191,28 @@ class FeedService:
             all_docs = articles_ref.stream()
 
             articles = []
+            total_checked = 0
+            category_counts = {}
+
             for doc in all_docs:
                 article = doc.to_dict()
+                total_checked += 1
+
+                # Track all categories seen
+                article_category = article.get('category', 'Unknown')
+                category_counts[article_category] = category_counts.get(article_category, 0) + 1
 
                 # Filter by category in-memory
-                if article.get('category') == category:
+                if article_category == category:
                     article['id'] = doc.id
                     article['feed_score'] = self.calculate_feed_score(article)
                     articles.append(article)
 
-            # Sort by importance score in-memory
-            articles.sort(key=lambda x: x.get('importance_score', 0), reverse=True)
+            logger.info(f"Category feed for '{category}': Checked {total_checked} articles, found {len(articles)} matches")
+            logger.info(f"Category distribution: {category_counts}")
+
+            # Sort by importance score in-memory (handle None values)
+            articles.sort(key=lambda x: x.get('importance_score') or 0, reverse=True)
 
             return articles[:limit]
 
@@ -188,6 +223,28 @@ class FeedService:
     def get_all_categories(self) -> List[str]:
         """Get list of all available categories"""
         return NEWS_CATEGORIES.copy()
+
+    def get_category_queries(self, category: str) -> List[str]:
+        """Get Google News search queries for a category"""
+        return CATEGORY_CONFIG.get(category, {}).get('queries', [])
+
+    def get_google_news_url(self, query: str) -> str:
+        """Generate Google News RSS search URL for a query"""
+        from urllib.parse import quote
+        encoded_query = quote(query)
+        return f'https://news.google.com/rss/search?q={encoded_query}&hl=en-US&gl=US&ceid=US:en'
+
+    def get_all_google_news_feeds(self) -> List[Dict]:
+        """Get all Google News RSS feeds for all categories"""
+        feeds = []
+        for category, config in CATEGORY_CONFIG.items():
+            for query in config['queries']:
+                feeds.append({
+                    'category': category,
+                    'query': query,
+                    'url': self.get_google_news_url(query)
+                })
+        return feeds
 
     def cleanup_old_articles(self, hours: int = 72) -> Dict:
         """
