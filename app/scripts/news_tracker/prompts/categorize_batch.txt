@@ -26,19 +26,27 @@ Your task for EACH article:
    - Major company partnerships (EA, Valve, etc.) or industry-shaking announcements = 8-10
    - Significant financial impacts ($1B+, major market losses) = 8-10
 
+3. Generate a concise 2-3 sentence summary:
+   - Write in an engaging, informative style
+   - Capture the key points and why it matters
+   - Don't copy the description verbatim - create original content
+   - Make it valuable for someone deciding whether to read the full article
+
 IMPORTANT: Respond ONLY with valid JSON array in this exact format:
 [
   {{
     "article_id": 0,
     "category": "category_name",
     "importance_score": 7,
-    "reasoning": "brief explanation"
+    "reasoning": "brief explanation",
+    "summary": "2-3 sentence summary of the article"
   }},
   {{
     "article_id": 1,
     "category": "category_name",
     "importance_score": 5,
-    "reasoning": "brief explanation"
+    "reasoning": "brief explanation",
+    "summary": "2-3 sentence summary of the article"
   }}
 ]
 

@@ -204,8 +204,8 @@ class NewsRadarService:
                 user_subscription=None
             )
 
-            # Calculate max tokens: ~100 tokens per article for JSON response
-            max_tokens = min(len(articles) * 100, 8000)
+            # Calculate max tokens: ~200 tokens per article for JSON response (includes summary)
+            max_tokens = min(len(articles) * 200, 8000)
 
             logger.info(f"Batch categorizing {len(articles)} articles in single AI call...")
 
@@ -246,7 +246,8 @@ class NewsRadarService:
                     categorizations[article_id] = {
                         'category': result.get('category'),
                         'importance_score': result.get('importance_score'),
-                        'reasoning': result.get('reasoning', '')
+                        'reasoning': result.get('reasoning', ''),
+                        'summary': result.get('summary', '')
                     }
 
             logger.info(f"Successfully categorized {len(categorizations)}/{len(articles)} articles")
@@ -269,16 +270,15 @@ class NewsRadarService:
                 'article_hash': article_hash,
                 'title': article['title'],
                 'link': article['link'],
-                'description': article.get('description', ''),
                 'published': article.get('published', ''),
                 'source': article['source'],
-                'image': article.get('image'),
                 'feed_url': article['feed_url'],
 
-                # AI categorization
+                # AI-generated content (our original content)
                 'category': categorization['category'],
                 'importance_score': categorization['importance_score'],
                 'reasoning': categorization.get('reasoning', ''),
+                'summary': categorization.get('summary', ''),
 
                 # Metadata
                 'processed_at': firestore.SERVER_TIMESTAMP,

@@ -384,15 +384,9 @@ const NewsTracker = {
             <div class="news-card" data-index="${index}">
                 <div style="display: flex; align-items: flex-start; margin-bottom: 1rem;">
                     <div class="news-image-container">
-                        ${article.image ? `
-                            <img src="${escapeHtml(article.image)}" alt="${escapeHtml(article.title)}"
-                                 class="news-image" loading="lazy"
-                                 onerror="this.parentElement.innerHTML='<div class=\\'news-image-placeholder\\'><i class=\\'ph ph-newspaper\\'></i></div>'">
-                        ` : `
-                            <div class="news-image-placeholder">
-                                <i class="ph ph-newspaper"></i>
-                            </div>
-                        `}
+                        <div class="news-image-placeholder">
+                            <i class="ph ph-newspaper"></i>
+                        </div>
                     </div>
                     <div class="news-content-wrapper">
                         <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
@@ -404,7 +398,7 @@ const NewsTracker = {
                             <span class="news-source">${escapeHtml(article.source)}</span>
                             ${article.published ? `<span class="news-date">${formatDate(article.published)}</span>` : ''}
                         </div>
-                        ${article.description ? `<p class="news-description">${escapeHtml(article.description)}</p>` : ''}
+                        ${article.summary ? `<p class="news-description">${escapeHtml(article.summary)}</p>` : ''}
                     </div>
                 </div>
 

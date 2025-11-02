@@ -61,72 +61,6 @@ Create a compelling X post that:
 
 Return ONLY the post content, nothing else."""
 
-    def fetch_og_image(self, url: str) -> Optional[str]:
-        """
-        Fetch Open Graph image from article URL (fallback when RSS has no image)
-        Handles Google News redirects and extracts images from actual article pages
-
-        Args:
-            url: Article URL (may be a Google News redirect)
-
-        Returns:
-            Open Graph image URL or None
-        """
-        try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-            }
-
-            # Fetch with redirects (handles Google News redirects automatically)
-            response = requests.get(url, headers=headers, timeout=8, allow_redirects=True)
-            response.raise_for_status()
-
-            soup = BeautifulSoup(response.text, 'html.parser')
-
-            # Try Open Graph image (most reliable)
-            og_image = soup.find('meta', property='og:image')
-            if og_image and og_image.get('content'):
-                img_url = og_image.get('content')
-                # Ensure absolute URL
-                if img_url.startswith('//'):
-                    img_url = 'https:' + img_url
-                elif img_url.startswith('/'):
-                    from urllib.parse import urljoin
-                    img_url = urljoin(response.url, img_url)
-                return img_url
-
-            # Try Twitter card image
-            twitter_image = soup.find('meta', attrs={'name': 'twitter:image'})
-            if twitter_image and twitter_image.get('content'):
-                img_url = twitter_image.get('content')
-                if img_url.startswith('//'):
-                    img_url = 'https:' + img_url
-                elif img_url.startswith('/'):
-                    from urllib.parse import urljoin
-                    img_url = urljoin(response.url, img_url)
-                return img_url
-
-            # Try article image tags as last resort
-            img_tag = soup.find('img', class_=lambda x: x and ('article' in x.lower() or 'hero' in x.lower()))
-            if img_tag and img_tag.get('src'):
-                img_url = img_tag.get('src')
-                if img_url.startswith('//'):
-                    img_url = 'https:' + img_url
-                elif img_url.startswith('/'):
-                    from urllib.parse import urljoin
-                    img_url = urljoin(response.url, img_url)
-                return img_url
-
-            return None
-
-        except requests.Timeout:
-            logger.debug(f"Timeout fetching OG image from {url[:100]}")
-            return None
-        except Exception as e:
-            logger.debug(f"Could not fetch OG image from {url[:100]}: {e}")
-            return None
 
     def fetch_news(self, feed_url: str, limit: int = 20) -> List[Dict]:
         """
@@ -181,57 +115,23 @@ Return ONLY the post content, nothing else."""
                     elif isinstance(entry.source, dict) and 'title' in entry.source:
                         source = entry.source['title']
 
-                item = {
-                    'title': title,
-                    'link': entry.get('link', ''),
-                    'description': entry.get('description', entry.get('summary', '')),
-                    'published': published_date,
-                    'source': source,
-                    'image': None
-                }
-
-                # Extract image/thumbnail - feedparser normalizes different RSS formats
-                # Try media:thumbnail first (BBC, Wired, Forbes)
-                if hasattr(entry, 'media_thumbnail') and len(entry.media_thumbnail) > 0:
-                    item['image'] = entry.media_thumbnail[0].get('url')
-                # Try media:content (CNN, some others)
-                elif hasattr(entry, 'media_content') and len(entry.media_content) > 0:
-                    item['image'] = entry.media_content[0].get('url')
-                # Try enclosures
-                elif hasattr(entry, 'enclosures') and len(entry.enclosures) > 0:
-                    if entry.enclosures[0].get('type', '').startswith('image'):
-                        item['image'] = entry.enclosures[0].get('href')
-
-                # Try to extract from HTML content field (The Verge, some Atom feeds)
-                if not item['image'] and hasattr(entry, 'content') and len(entry.content) > 0:
-                    content_html = entry.content[0].get('value', '')
-                    if content_html:
-                        soup_temp = BeautifulSoup(content_html, 'html.parser')
-                        img_tag = soup_temp.find('img')
-                        if img_tag and img_tag.get('src'):
-                            item['image'] = img_tag.get('src')
-
-                # Try to extract from description field (fallback for other feeds)
-                if not item['image'] and item['description']:
-                    soup_temp = BeautifulSoup(item['description'], 'html.parser')
-                    img_tag = soup_temp.find('img')
-                    if img_tag and img_tag.get('src'):
-                        item['image'] = img_tag.get('src')
-
-                # Final fallback: Fetch Open Graph image from article URL
-                # (For feeds like TechCrunch, CNBC that don't include images in RSS)
-                if not item['image'] and item['link']:
-                    og_image = self.fetch_og_image(item['link'])
-                    if og_image:
-                        item['image'] = og_image
-
+                # Extract description for AI processing (not stored/displayed)
                 # Clean HTML from description and truncate to 200 chars
-                if item['description']:
-                    soup = BeautifulSoup(item['description'], 'html.parser')
+                description = entry.get('description', entry.get('summary', ''))
+                if description:
+                    soup = BeautifulSoup(description, 'html.parser')
                     clean_text = soup.get_text().strip()
                     # Decode HTML entities in description too
                     clean_text = html.unescape(clean_text)
-                    item['description'] = clean_text[:200] + '...' if len(clean_text) > 200 else clean_text
+                    description = clean_text[:200] + '...' if len(clean_text) > 200 else clean_text
+
+                item = {
+                    'title': title,
+                    'link': entry.get('link', ''),
+                    'description': description,  # Only for AI processing, not stored
+                    'published': published_date,
+                    'source': source,
+                }
 
                 news_items.append(item)
 
