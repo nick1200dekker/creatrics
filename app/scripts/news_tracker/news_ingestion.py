@@ -9,7 +9,7 @@ import feedparser
 import time
 from pathlib import Path
 from typing import List, Dict, Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from bs4 import BeautifulSoup
 from firebase_admin import firestore
 from app.system.services.firebase_service import db
