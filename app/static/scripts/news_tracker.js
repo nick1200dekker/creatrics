@@ -385,7 +385,7 @@ const NewsTracker = {
                 <div style="display: flex; align-items: flex-start; margin-bottom: 1rem;">
                     <div class="news-image-container">
                         <div class="news-image-placeholder">
-                            <i class="ph ph-newspaper"></i>
+                            <i class="${this.getCategoryIcon(article.category)}"></i>
                         </div>
                     </div>
                     <div class="news-content-wrapper">
@@ -451,6 +451,22 @@ const NewsTracker = {
         return `<span style="display: flex; gap: 2px;" title="Importance: ${score}/10">${stars}</span>`;
     },
 
+    getCategoryIcon(category) {
+        const icons = {
+            'Tech & AI': 'ph ph-cpu',
+            'Crypto & Finance': 'ph ph-coin',
+            'Sports & Fitness': 'ph ph-soccer-ball',
+            'Gaming & Esports': 'ph ph-game-controller',
+            'Entertainment & Culture': 'ph ph-film-slate',
+            'Politics & World': 'ph ph-globe-hemisphere-west',
+            'Science & Innovation': 'ph ph-atom',
+            'Business & Startups': 'ph ph-briefcase',
+            'Health & Wellness': 'ph ph-heart-straight',
+            'Climate & Environment': 'ph ph-leaf'
+        };
+        return icons[category] || 'ph ph-newspaper';
+    },
+
     async generatePost(containerId, index) {
         const articles = containerId === 'forYouList' ? this.state.forYouArticles : this.state.categoryArticles;
         const article = articles[index];
@@ -468,7 +484,8 @@ const NewsTracker = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     url: article.link,
-                    title: article.title
+                    title: article.title,
+                    summary: article.summary || ''
                 })
             });
 

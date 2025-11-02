@@ -5,7 +5,7 @@
     "post_editor/post_editor": "claude",
     "keyword_research/keyword_ai_processor": "google",
     "brain_dump/note_ai_processor": "deepseek",
-    "clip_spaces/processor": "google",
+    "clip_spaces/processor": "deepseek",
     "competitors/competitor_analyzer": "deepseek",
     "hook_generator/hook_generator": "google",
     "home/x_content_suggestions": "google",
@@ -22,6 +22,7 @@
     "video_title/video_tags": "google",
     "video_title/video_description": "claude",
     "news_tracker/news_service": "google",
-    "optimize_video/caption_correction": "deepseek"
+    "optimize_video/caption_correction": "deepseek",
+    "news_tracker/news_ingestion": "deepseek"
   }
 }

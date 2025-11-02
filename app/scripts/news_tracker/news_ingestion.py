@@ -184,6 +184,32 @@ class NewsRadarService:
             logger.error(f"Error checking article existence: {e}")
             return False
 
+    def filter_repetitive_content(self, articles: List[Dict]) -> List[Dict]:
+        """Filter out repetitive daily puzzle content"""
+
+        # Daily puzzle keywords to filter out
+        puzzle_keywords = [
+            'wordle', 'connections', 'strands', 'mini crossword',
+            'crossword hints', 'daily puzzle', 'puzzle answer',
+            'hints and answers', 'today\'s nyt'
+        ]
+
+        filtered = []
+
+        for article in articles:
+            title_lower = article['title'].lower()
+
+            # Skip daily puzzle articles
+            is_puzzle = any(keyword in title_lower for keyword in puzzle_keywords)
+            if is_puzzle:
+                logger.debug(f"Filtering out puzzle article: {article['title'][:60]}")
+                continue
+
+            # Keep article
+            filtered.append(article)
+
+        return filtered
+
     def categorize_and_score_batch(self, articles: List[Dict]) -> Dict[int, Dict]:
         """Categorize multiple articles in a single AI call (batch processing)"""
         try:
@@ -204,8 +230,8 @@ class NewsRadarService:
                 user_subscription=None
             )
 
-            # Calculate max tokens: ~200 tokens per article for JSON response (includes summary)
-            max_tokens = min(len(articles) * 200, 8000)
+            # Calculate max tokens: ~350 tokens per article for JSON response (includes longer summary)
+            max_tokens = min(len(articles) * 350, 8000)
 
             logger.info(f"Batch categorizing {len(articles)} articles in single AI call...")
 
@@ -340,9 +366,14 @@ class NewsRadarService:
 
         logger.info(f"Filtered out {stats['too_old']} old articles, {len(recent_articles)} recent articles remain")
 
+        # Filter out repetitive content (daily puzzles, similar titles from same source)
+        filtered_articles = self.filter_repetitive_content(recent_articles)
+        stats['filtered_repetitive'] = len(recent_articles) - len(filtered_articles)
+        logger.info(f"Filtered out {stats['filtered_repetitive']} repetitive articles, {len(filtered_articles)} remain")
+
         # Filter out duplicates (batch processing only new articles)
         new_articles = []
-        for article in recent_articles:
+        for article in filtered_articles:
             if self.check_article_exists(article['article_hash']):
                 stats['duplicate'] += 1
             else:
@@ -378,6 +409,13 @@ class NewsRadarService:
                         continue
 
                     stats['categorized'] += 1
+
+                    # Skip low importance articles (score 1-3)
+                    importance = cat.get('importance_score', 0)
+                    if importance <= 3:
+                        logger.debug(f"Skipping low importance article (score {importance}): {article['title'][:60]}")
+                        stats['low_importance'] = stats.get('low_importance', 0) + 1
+                        continue
 
                     # Save to database
                     if self.save_article(article, cat):

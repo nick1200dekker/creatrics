@@ -142,75 +142,14 @@ Return ONLY the post content, nothing else."""
             logger.error(f"Error fetching news: {e}", exc_info=True)
             raise
 
-    def _fetch_article_content(self, url: str) -> str:
-        """
-        Fetch and extract main content from news article
-
-        Args:
-            url: Article URL
-
-        Returns:
-            Extracted article content
-        """
-        try:
-            # Add headers to better mimic a real browser and avoid being blocked
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'DNT': '1',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'none',
-                'Cache-Control': 'max-age=0',
-            }
-
-            response = requests.get(url, headers=headers, timeout=10, allow_redirects=True)
-            response.raise_for_status()
-
-            # Parse HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
-
-            # Remove script and style elements
-            for script in soup(["script", "style", "nav", "header", "footer", "aside"]):
-                script.decompose()
-
-            # Try to find main content
-            # Common article content selectors
-            article = soup.find('article') or soup.find('div', class_='article-body') or soup.find('div', class_='story-body')
-
-            if article:
-                text = article.get_text()
-            else:
-                # Fallback to body
-                text = soup.body.get_text() if soup.body else soup.get_text()
-
-            # Clean up text
-            lines = (line.strip() for line in text.splitlines())
-            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-            text = ' '.join(chunk for chunk in chunks if chunk)
-
-            # Limit length
-            max_length = 3000
-            if len(text) > max_length:
-                text = text[:max_length] + "..."
-
-            return text
-
-        except Exception as e:
-            logger.error(f"Error fetching article content: {e}")
-            return ""
-
-    def generate_x_post(self, news_url: str, news_title: str, user_id: str) -> str:
+    def generate_x_post(self, news_url: str, news_title: str, news_summary: str, user_id: str) -> str:
         """
         Generate X post from news article
 
         Args:
             news_url: News article URL
             news_title: News article title
+            news_summary: AI-generated summary
             user_id: User ID for AI provider
 
         Returns:
@@ -219,16 +158,12 @@ Return ONLY the post content, nothing else."""
         try:
             logger.info(f"Generating X post for article: {news_title}")
 
-            # Fetch article content
-            article_content = self._fetch_article_content(news_url)
-
-            if not article_content:
-                article_content = news_title
+            content = news_summary if news_summary else news_title
 
             # Prepare prompt
             prompt = self.prompt_template.format(
                 title=news_title,
-                content=article_content
+                content=content
             )
 
             # Get AI provider with script name

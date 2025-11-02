@@ -26,27 +26,38 @@ Your task for EACH article:
    - Major company partnerships (EA, Valve, etc.) or industry-shaking announcements = 8-10
    - Significant financial impacts ($1B+, major market losses) = 8-10
 
-3. Generate a concise 2-3 sentence summary:
-   - Write in an engaging, informative style
-   - Capture the key points and why it matters
-   - Don't copy the description verbatim - create original content
-   - Make it valuable for someone deciding whether to read the full article
+3. Generate a detailed 3-4 sentence summary:
+   - Write in an engaging, informative style using YOUR OWN WORDS
+   - DO NOT start with "This article" or "The article" - write directly about the topic
+   - Include key details: who, what, when, where, why
+   - Explain the context and implications
+   - Completely rewrite the content - create original transformative content
+   - Make it informative enough to generate a compelling X post from
+   - Break summary into 2-3 short paragraphs using \\n (newline character)
+   - Keep total summary under 500 characters
+   - Use \\n for line breaks (valid JSON escape sequence)
 
-IMPORTANT: Respond ONLY with valid JSON array in this exact format:
+CRITICAL JSON RULES:
+- All text fields must use proper JSON escaping
+- Use \\n for line breaks (NOT actual line breaks in the JSON)
+- Escape quotes inside strings with \"
+- Keep summaries detailed but under 500 chars
+
+Respond ONLY with valid JSON array in this exact format:
 [
   {{
     "article_id": 0,
     "category": "category_name",
     "importance_score": 7,
-    "reasoning": "brief explanation",
-    "summary": "2-3 sentence summary of the article"
+    "reasoning": "brief explanation on one line",
+    "summary": "Will Smith's dramatic 11th-inning walk-off homer sealed the Dodgers' World Series Game 7 victory over the Blue Jays, making them the first team to win back-to-back championships in 25 years.\\n\\nThe electrifying finish came after a tense back-and-forth battle that saw five lead changes. Smith's clutch performance capped off an unforgettable series."
   }},
   {{
     "article_id": 1,
     "category": "category_name",
     "importance_score": 5,
-    "reasoning": "brief explanation",
-    "summary": "2-3 sentence summary of the article"
+    "reasoning": "brief explanation on one line",
+    "summary": "Apple has issued a strong warning to UK regulators about proposed tech regulations that would impose stricter oversight on major platforms.\\n\\nThe company argues the Digital Markets Bill could stifle innovation and increase costs for consumers, echoing concerns from other tech giants."
   }}
 ]
 

@@ -122,6 +122,7 @@ def generate_post():
         data = request.get_json()
         news_url = data.get('url')
         news_title = data.get('title')
+        news_summary = data.get('summary', '')
 
         # Get workspace user ID (handles both personal and team workspaces)
         user_id = get_workspace_user_id()
@@ -164,7 +165,7 @@ def generate_post():
 
         # Generate post
         news_service = NewsService()
-        result = news_service.generate_x_post(news_url, news_title, user_id)
+        result = news_service.generate_x_post(news_url, news_title, news_summary, user_id)
 
         # Extract post content and token usage
         post_content = result['content']
