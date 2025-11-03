@@ -240,7 +240,8 @@ def update_user_analytics(user_id, user_data):
     if user_data.get('youtube_account'):
         try:
             logger.info(f"Updating YouTube analytics for user {user_id}")
-            fetch_youtube_analytics(user_id)
+            # Always verify token by attempting refresh (YouTube API compliance)
+            fetch_youtube_analytics(user_id, force_refresh=True)
             result['youtube_updated'] = True
         except Exception as yt_error:
             error_str = str(yt_error).lower()

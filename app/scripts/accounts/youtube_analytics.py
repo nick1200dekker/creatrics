@@ -118,7 +118,7 @@ class YouTubeAnalytics:
         """Refresh OAuth credentials and update in Firebase"""
         try:
             self.credentials.refresh(Request())
-            
+
             # Update stored credentials
             creds_dict = {
                 'token': self.credentials.token,
@@ -129,15 +129,26 @@ class YouTubeAnalytics:
                 'scopes': self.credentials.scopes,
                 'expiry': self.credentials.expiry.isoformat() if self.credentials.expiry else None
             }
-            
+
             encrypted_creds = cipher_suite.encrypt(json.dumps(creds_dict).encode()).decode()
-            
+
             self.db.collection('users').document(self.user_id).update({
                 'youtube_credentials': encrypted_creds
             })
-            
+
         except Exception as e:
+            error_str = str(e).lower()
             logger.error(f"Error refreshing YouTube credentials: {str(e)}")
+
+            # If token is revoked, clean up immediately (YouTube API compliance)
+            if 'invalid_grant' in error_str or 'token has been expired or revoked' in error_str:
+                logger.warning(f"Token revoked during refresh for user {self.user_id}, cleaning up")
+                clean_youtube_user_data(self.user_id)
+                # Set credentials to None so caller knows auth failed
+                self.credentials = None
+
+            # Re-raise to notify caller that refresh failed
+            raise
     
     def get_analytics_data(self):
         """Get comprehensive analytics data for YouTube channel"""
@@ -747,6 +758,8 @@ def clean_youtube_user_data(user_id):
                     fields_to_delete['youtube_connected_at'] = firestore.DELETE_FIELD
                 if user_data.get('youtube_setup_complete'):
                     fields_to_delete['youtube_setup_complete'] = firestore.DELETE_FIELD
+                if user_data.get('youtube_channel_keywords'):
+                    fields_to_delete['youtube_channel_keywords'] = firestore.DELETE_FIELD
 
                 if fields_to_delete:
                     user_ref.update(fields_to_delete)

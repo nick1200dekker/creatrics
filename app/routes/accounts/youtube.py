@@ -355,7 +355,8 @@ def disconnect_youtube():
             'youtube_channel_id': fs.DELETE_FIELD,
             'youtube_credentials': fs.DELETE_FIELD,
             'youtube_connected_at': fs.DELETE_FIELD,
-            'youtube_setup_complete': fs.DELETE_FIELD
+            'youtube_setup_complete': fs.DELETE_FIELD,
+            'youtube_channel_keywords': fs.DELETE_FIELD
         })
         
         if cleanup_success:
