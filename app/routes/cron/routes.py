@@ -241,8 +241,14 @@ def update_user_analytics(user_id, user_data):
         try:
             logger.info(f"Updating YouTube analytics for user {user_id}")
             # Always verify token by attempting refresh (YouTube API compliance)
-            fetch_youtube_analytics(user_id, force_refresh=True)
-            result['youtube_updated'] = True
+            analytics_result = fetch_youtube_analytics(user_id, force_refresh=True)
+
+            if analytics_result:
+                result['youtube_updated'] = True
+            else:
+                # Failed to fetch - token may have been revoked and cleaned up
+                result['youtube_error'] = 'Failed to fetch analytics'
+                logger.warning(f"YouTube analytics returned None for user {user_id} - likely token revoked")
         except Exception as yt_error:
             error_str = str(yt_error).lower()
             logger.error(f"Failed to update YouTube analytics for user {user_id}: {str(yt_error)}")
