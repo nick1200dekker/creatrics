@@ -161,9 +161,10 @@ class YouTubeAnalytics:
             
             # Date ranges
             end_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            start_date_7d = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+            start_date_30d = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
             start_date_90d = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
             start_date_180d = (datetime.now() - timedelta(days=180)).strftime('%Y-%m-%d')  # 6 months
-            start_date_30d = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
             
             # Basic metrics (aggregate)
             metrics_90d = None
@@ -175,7 +176,14 @@ class YouTubeAnalytics:
                     metrics='views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,subscribersGained,subscribersLost,likes,dislikes,comments,shares'
                 ).execute()
             except Exception as e:
+                error_str = str(e).lower()
                 logger.error(f"Error fetching basic metrics: {str(e)}")
+
+                # If token is revoked, clean up and fail immediately
+                if 'invalid_grant' in error_str or 'token has been expired or revoked' in error_str:
+                    logger.error(f"Token revoked for user {self.user_id}, cleaning up data")
+                    clean_youtube_user_data(self.user_id)
+                    raise Exception("YouTube access has been revoked") from e
             
             # Daily metrics for time series (6 months for better timeframe support)
             daily_metrics = None

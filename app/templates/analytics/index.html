@@ -223,7 +223,24 @@
             <!-- YouTube Analytics Content -->
             {% if youtube_connected %}
             <div id="youtube-content" class="tab-content">
-                
+
+                <!-- Token Revoked Warning (hidden by default, shown by JS if needed) -->
+                <div id="youtube-token-revoked-warning" class="token-revoked-warning" style="display: none;">
+                    <div class="warning-content">
+                        <div class="warning-icon">
+                            <i class="ph ph-warning-circle"></i>
+                        </div>
+                        <div class="warning-text">
+                            <h3>YouTube Access Revoked</h3>
+                            <p>Your YouTube access has been revoked in Google settings. Please disconnect and reconnect your account to restore analytics.</p>
+                        </div>
+                        <a href="{{ url_for('accounts.index') }}" class="warning-button">
+                            <i class="ph ph-link"></i>
+                            <span>Manage Connections</span>
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Overview Metrics -->
                 <div class="premium-card">
                     <div class="p-4">

@@ -1847,6 +1847,14 @@ function initializeAnalytics() {
 
     function showYouTubeAuthExpired() {
         // YouTube Policy III.E.4.b compliance: Show reconnection prompt when auth expires
+
+        // Show warning banner at top
+        const warningBanner = document.getElementById('youtube-token-revoked-warning');
+        if (warningBanner) {
+            warningBanner.style.display = 'block';
+        }
+
+        // Show error in metrics grid
         document.getElementById('youtube-metrics-grid').innerHTML = `
             <div class="col-span-full">
                 <div class="empty-state">

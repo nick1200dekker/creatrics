@@ -832,6 +832,14 @@ def youtube_overview():
         latest_doc = latest_ref.get()
 
         if not latest_doc.exists:
+            # Check if user has YouTube connected but no data (token may have been revoked)
+            user_doc = db.collection('users').document(user_id).get()
+            if user_doc.exists and user_doc.to_dict().get('youtube_account'):
+                # User has YouTube connected but no analytics data - token was likely revoked
+                return jsonify({
+                    'error': 'YouTube authorization expired or revoked. Please reconnect your account.',
+                    'needs_reconnect': True
+                }), 401
             return jsonify({'error': 'No YouTube analytics data available'}), 404
 
         latest_data = latest_doc.to_dict()
