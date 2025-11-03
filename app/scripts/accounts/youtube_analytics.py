@@ -681,7 +681,10 @@ def get_cached_analytics(user_id):
         return None
 
 def clean_youtube_user_data(user_id):
-    """Clean all YouTube analytics data for a user when they disconnect their account"""
+    """
+    Clean all YouTube analytics data AND tokens for a user when they disconnect
+    or when token is revoked/expired (YouTube API compliance requirement)
+    """
     try:
         # Initialize Firestore
         if not firebase_admin._apps:
@@ -689,30 +692,30 @@ def clean_youtube_user_data(user_id):
                 firebase_admin.initialize_app()
             except ValueError:
                 pass
-        
+
         db = firestore.client()
-        
+
         deleted_count = 0
-        
+
         # Delete latest analytics document
         latest_ref = db.collection('users').document(user_id).collection('youtube_analytics').document('latest')
         if latest_ref.get().exists:
             latest_ref.delete()
             deleted_count += 1
-        
+
         # Delete historical data
         history_collection = db.collection('users').document(user_id).collection('youtube_analytics').document('history').collection('daily')
         history_docs = history_collection.stream()
         for doc in history_docs:
             doc.reference.delete()
             deleted_count += 1
-        
+
         # Delete videos document if it exists
         videos_ref = db.collection('users').document(user_id).collection('youtube_videos').document('recent')
         if videos_ref.get().exists:
             videos_ref.delete()
             deleted_count += 1
-        
+
         # Clean up legacy data in user document
         try:
             user_ref = db.collection('users').document(user_id)
@@ -723,10 +726,37 @@ def clean_youtube_user_data(user_id):
                 })
         except Exception as e:
             logger.warning(f"Error cleaning legacy youtube_analytics field: {str(e)}")
-        
+
+        # CRITICAL: Delete OAuth tokens from user document (YouTube API compliance)
+        # Must use DELETE_FIELD to physically remove from storage, not set to None
+        try:
+            user_ref = db.collection('users').document(user_id)
+            user_doc = user_ref.get()
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                fields_to_delete = {}
+
+                # Only delete fields that exist
+                if user_data.get('youtube_credentials'):
+                    fields_to_delete['youtube_credentials'] = firestore.DELETE_FIELD
+                if user_data.get('youtube_account'):
+                    fields_to_delete['youtube_account'] = firestore.DELETE_FIELD
+                if user_data.get('youtube_channel_id'):
+                    fields_to_delete['youtube_channel_id'] = firestore.DELETE_FIELD
+                if user_data.get('youtube_connected_at'):
+                    fields_to_delete['youtube_connected_at'] = firestore.DELETE_FIELD
+                if user_data.get('youtube_setup_complete'):
+                    fields_to_delete['youtube_setup_complete'] = firestore.DELETE_FIELD
+
+                if fields_to_delete:
+                    user_ref.update(fields_to_delete)
+                    logger.info(f"Deleted {len(fields_to_delete)} YouTube token fields from user {user_id}")
+        except Exception as e:
+            logger.error(f"Error deleting YouTube token fields: {str(e)}")
+
         logger.info(f"Successfully cleaned YouTube analytics data for user {user_id} - deleted {deleted_count} documents")
         return True
-        
+
     except Exception as e:
         logger.error(f"Error cleaning YouTube user data: {str(e)}")
         return False

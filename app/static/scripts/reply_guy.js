@@ -2,7 +2,7 @@
 (function() {
     'use strict';
 
-    console.log('Reply Guy JS loaded successfully');
+    
 
     // State management
     const state = {
@@ -21,7 +21,6 @@
     function init() {
         if (state.isInitialized) return;
 
-        console.log('Initializing Reply Guy...');
 
         // Load initial data
         loadInitialData();
@@ -38,7 +37,6 @@
         }, 100);
 
         state.isInitialized = true;
-        console.log('Reply Guy initialized');
     }
 
     // Load initial data from server
@@ -56,7 +54,6 @@
                         state.ongoingUpdates[listId] = updateInfo;
                     }
                 }
-                console.log('Loaded ongoing updates from session:', state.ongoingUpdates);
             }
         } catch (error) {
             console.error('Error loading from sessionStorage:', error);
@@ -117,7 +114,6 @@
         if (!state.selectedList) {
             const firstDefaultDropdown = document.querySelector('.dropdown-option[data-type="default"]');
             if (firstDefaultDropdown) {
-                console.log('Auto-selecting first default list UI on page load');
                 firstDefaultDropdown.classList.add('selected');
                 state.selectedList = firstDefaultDropdown.getAttribute('data-value');
                 state.selectedListType = 'default';
@@ -125,7 +121,6 @@
                 // Only fall back to custom list if no default lists exist
                 const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
                 if (firstCustomList) {
-                    console.log('No default lists found, auto-selecting first custom list on page load');
                     const optionText = firstCustomList.textContent.trim();
                     const selectedListText = document.getElementById('selected-list-text');
                     if (selectedListText) selectedListText.textContent = optionText;
@@ -139,7 +134,6 @@
 
         // Check if there are ongoing updates and refresh button state
         if (Object.keys(state.ongoingUpdates).length > 0) {
-            console.log('Found ongoing updates, checking their status...');
             setTimeout(() => checkOngoingUpdatesStatus(), 500);
         }
 
@@ -208,7 +202,6 @@
     function setBrandVoiceState(hasData) {
         state.hasBrandVoiceData = hasData;
 
-        console.log('Setting brand voice state:', hasData);
 
         const userPrefersBrandVoice = localStorage.getItem('preferBrandVoice');
         const shouldEnableBrandVoice = userPrefersBrandVoice === null ? true : userPrefersBrandVoice === 'true';
@@ -216,16 +209,13 @@
         document.querySelectorAll('.brand-voice-checkbox').forEach(checkbox => {
             const wasDisabled = checkbox.disabled;
             checkbox.disabled = !hasData;
-            console.log('Checkbox:', checkbox.id, 'disabled:', checkbox.disabled, 'hasData:', hasData, 'was disabled:', wasDisabled);
 
             if (hasData) {
                 if (!checkbox.hasAttribute('data-initialized')) {
                     checkbox.checked = shouldEnableBrandVoice;
                     checkbox.setAttribute('data-initialized', 'true');
-                    console.log('Initialized checkbox to:', shouldEnableBrandVoice);
 
                     checkbox.addEventListener('change', function(e) {
-                        console.log('Brand voice checkbox change event fired! New value:', this.checked);
                         localStorage.setItem('preferBrandVoice', this.checked);
                     }, { once: false });
                 }
@@ -245,7 +235,6 @@
                 toggle.classList.remove('disabled');
                 toggle.title = '';
                 toggle.style.removeProperty('pointer-events');
-                console.log('Brand voice toggle enabled');
             } else {
                 toggle.classList.add('disabled');
                 toggle.title = 'Connect your X account and ensure you have replies on your profile to enable brand voice';
@@ -256,7 +245,6 @@
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
-                        console.log('Brand voice toggle is disabled - click prevented');
                         return false;
                     }
                 };
@@ -338,19 +326,15 @@
         const createNewListEmptyBtn = document.getElementById('create-new-list-empty');
 
         if (createNewListBtn) {
-            console.log('Found create-new-list button, adding listener');
             createNewListBtn.onclick = function(e) {
                 e.preventDefault();
-                console.log('Direct click on create-new-list');
                 showCreatePanel();
             };
         }
 
         if (createNewListEmptyBtn) {
-            console.log('Found create-new-list-empty button, adding listener');
             createNewListEmptyBtn.onclick = function(e) {
                 e.preventDefault();
-                console.log('Direct click on create-new-list-empty');
                 showCreatePanel();
             };
         }
@@ -361,22 +345,17 @@
     }
 
     function handleDelegatedClicks(e) {
-        console.log('Click detected on:', e.target);
-        console.log('Closest create-new:', e.target.closest('.create-new'));
 
         // Generate reply button
         if (e.target.closest('.generate-reply-btn')) {
             e.preventDefault();
-            console.log('Generate reply button clicked');
             const btn = e.target.closest('.generate-reply-btn');
             if (btn.disabled) {
-                console.log('Button is disabled, ignoring click');
                 return;
             }
 
             btn.disabled = true;
             const tweetElement = btn.closest('.tweet-opportunity');
-            console.log('Tweet element found:', tweetElement);
             generateReply(tweetElement).finally(() => {
                 btn.disabled = false;
             });
@@ -498,7 +477,6 @@
             if ((toggle && toggle.classList.contains('disabled')) || e.target.disabled) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Brand voice checkbox change prevented - toggle is disabled');
                 // Force checkbox back to unchecked
                 setTimeout(() => {
                     e.target.checked = false;
@@ -508,7 +486,6 @@
 
             if (toggle && !toggle.classList.contains('disabled') && !e.target.disabled) {
                 const newState = e.target.checked;
-                console.log('Brand voice toggled:', newState);
 
                 document.querySelectorAll('.brand-voice-checkbox').forEach(checkbox => {
                     if (!checkbox.disabled) {
@@ -570,15 +547,12 @@
         const modeTabs = document.querySelectorAll('.mode-tab-compact');
 
         if (modeTabs.length === 0) {
-            console.log('No mode tabs found - using standard dropdown');
             return;
         }
 
-        console.log(`Setting up ${modeTabs.length} mode tabs`);
 
         // Function to handle mode switching
         function switchMode(mode) {
-            console.log('switchMode called with:', mode);
             const dropdown = document.querySelector('.custom-list-dropdown');
             const updateBtnContainer = document.getElementById('update-button-container');
             const loadingIndicator = document.getElementById('mode-switch-loading');
@@ -590,17 +564,13 @@
 
                 // Auto-select first default list
                 const firstDefaultList = document.querySelector('.dropdown-option[data-type="default"]');
-                console.log('First default list found:', firstDefaultList);
                 if (firstDefaultList) {
                     const listId = firstDefaultList.getAttribute('data-value');
-                    console.log('Switching to default list:', listId);
 
                     // Show loading indicator
                     if (loadingIndicator) {
                         loadingIndicator.style.display = 'flex';
-                        console.log('Loading indicator shown');
                     } else {
-                        console.log('Loading indicator not found!');
                     }
 
                     // Clear any dropdown selections
@@ -612,12 +582,10 @@
                     state.selectedList = listId;
                     state.selectedListType = 'default';
 
-                    console.log('State updated:', { selectedList: state.selectedList, selectedListType: state.selectedListType });
 
                     // Small delay to show spinner before API call
                     setTimeout(() => selectList(), 100);
                 } else {
-                    console.log('No default lists available');
                 }
             } else {
                 // Show dropdown for custom mode
@@ -625,7 +593,6 @@
 
                 // Auto-select first custom list
                 const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
-                console.log('First custom list found:', firstCustomList);
                 if (firstCustomList) {
                     const optionText = firstCustomList.textContent.trim();
                     const selectedListText = document.getElementById('selected-list-text');
@@ -634,9 +601,7 @@
                     // Show loading indicator
                     if (loadingIndicator) {
                         loadingIndicator.style.display = 'flex';
-                        console.log('Loading indicator shown');
                     } else {
-                        console.log('Loading indicator not found!');
                     }
 
                     // Clear any dropdown selections
@@ -648,7 +613,6 @@
                     state.selectedListType = 'custom';
                     firstCustomList.classList.add('selected');
 
-                    console.log('State updated:', { selectedList: state.selectedList, selectedListType: state.selectedListType });
 
                     // Small delay to show spinner before API call
                     setTimeout(() => selectList(), 100);
@@ -665,7 +629,6 @@
                 e.stopPropagation();
 
                 const mode = tab.dataset.mode;
-                console.log('Mode tab clicked:', mode);
 
                 // Remove active from all tabs
                 modeTabs.forEach(t => t.classList.remove('active'));
@@ -679,7 +642,6 @@
 
         // Initialize based on current state or default to 'default' mode
         const initialMode = state.selectedListType || 'default';
-        console.log('Initializing with mode:', initialMode);
 
         // Set the correct tab as active
         modeTabs.forEach(t => {
@@ -788,12 +750,6 @@
         state.selectedList = option.getAttribute('data-value');
         state.selectedListType = option.getAttribute('data-type');
 
-        console.log('List selected:', {
-            listId: state.selectedList,
-            listType: state.selectedListType,
-            optionElement: option
-        });
-
         const selectedListText = document.getElementById('selected-list-text');
         const selectedListTextEmpty = document.getElementById('selected-list-text-empty');
         const optionText = option.textContent.trim();
@@ -872,23 +828,12 @@
         const updateButtonContainerEmpty = document.getElementById('update-button-container-empty');
         const updateBtnEmpty = document.getElementById('update-btn-empty');
 
-        console.log('Update button visibility check:', {
-            selectedListType: state.selectedListType,
-            selectedList: state.selectedList,
-            regularContainerExists: !!updateButtonContainer,
-            regularButtonExists: !!updateBtn,
-            emptyContainerExists: !!updateButtonContainerEmpty,
-            emptyButtonExists: !!updateBtnEmpty
-        });
-
         if (state.selectedListType === 'custom' && state.selectedList) {
             if (updateButtonContainer) {
                 updateButtonContainer.style.display = 'block';
-                console.log('Showing regular update button for custom list');
             }
             if (updateButtonContainerEmpty) {
                 updateButtonContainerEmpty.style.display = 'block';
-                console.log('Showing empty state update button for custom list');
             }
 
             const isUpdating = state.selectedList in state.ongoingUpdates;
@@ -909,11 +854,9 @@
         } else {
             if (updateButtonContainer) {
                 updateButtonContainer.style.display = 'none';
-                console.log('Hiding regular update button - not a custom list');
             }
             if (updateButtonContainerEmpty) {
                 updateButtonContainerEmpty.style.display = 'none';
-                console.log('Hiding empty state update button - not a custom list');
             }
         }
     }
@@ -1027,20 +970,16 @@
 
     // Reply Functions - ENHANCED with GIF support
     function generateReply(tweetElement) {
-        console.log('generateReply function called with:', tweetElement);
         if (!tweetElement) {
-            console.log('No tweet element provided');
             return Promise.resolve();
         }
 
         const tweetId = tweetElement.getAttribute('data-tweet-id');
-        console.log('Tweet ID:', tweetId);
         const tweetTextElement = tweetElement.querySelector('.tweet-text');
 
         let tweetText = tweetTextElement ? tweetTextElement.innerHTML : '';
         tweetText = tweetText.replace(/<br\s*\/?>/gi, '\n').trim();
         tweetText = tweetText.replace(/<[^>]*>/g, '');
-        console.log('Tweet text:', tweetText);
 
         const authorElement = tweetElement.querySelector('.tweet-author-username');
         const author = authorElement ? authorElement.textContent.replace('@', '') : '';
@@ -1056,7 +995,6 @@
             }
         });
 
-        console.log('Author:', author, 'Style:', style, 'Brand voice:', useBrandVoice, 'Images:', imageUrls.length);
 
         const textarea = tweetElement.querySelector('.reply-textarea');
         const generateBtn = tweetElement.querySelector('.generate-reply-btn');
@@ -1071,7 +1009,6 @@
             textarea.value = imageUrls.length > 0 ? 'Analyzing images and generating reply...' : 'Generating reply...';
         }
 
-        console.log('Making API request to generate reply...');
         return fetch('/reply-guy/generate-reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2007,10 +1944,8 @@
 
     // Functions for managing create list panel
     function showCreatePanel() {
-        console.log('showCreatePanel called');
         const modal = document.getElementById('create-list-modal');
         if (modal) {
-            console.log('Modal found, applying styles');
 
             modal.classList.add('show');
 
@@ -2053,31 +1988,15 @@
                 const modalContent = modal.querySelector('.modal-content');
                 const contentComputed = modalContent ? window.getComputedStyle(modalContent) : null;
 
-                console.log('Modal final computed styles:', {
-                    display: computed.display,
-                    alignItems: computed.alignItems,
-                    justifyContent: computed.justifyContent,
-                    paddingTop: computed.paddingTop
-                });
-
                 if (contentComputed) {
-                    console.log('Modal content styles:', {
-                        marginTop: contentComputed.marginTop,
-                        marginBottom: contentComputed.marginBottom,
-                        transform: contentComputed.transform,
-                        position: contentComputed.position
-                    });
                 }
 
                 const rect = modal.getBoundingClientRect();
                 const contentRect = modalContent ? modalContent.getBoundingClientRect() : null;
-                console.log('Modal position:', rect);
                 if (contentRect) {
-                    console.log('Modal content position - top:', contentRect.top, 'height:', contentRect.height);
                 }
             }, 100);
         } else {
-            console.log('Modal not found!');
         }
     }
 
@@ -2173,7 +2092,6 @@
         const profileMap = new Map();
         const authorNameMap = new Map();
 
-        console.log('Starting profile picture consistency fix...');
 
         document.querySelectorAll('.tweet-opportunity').forEach(tweet => {
             const authorNameEl = tweet.querySelector('.tweet-author-name');
@@ -2190,13 +2108,11 @@
                     const profileUrl = img.src;
                     if (!profileMap.has(username) && profileUrl) {
                         profileMap.set(username, profileUrl);
-                        console.log(`Stored profile for @${username}:`, profileUrl);
                     }
                 }
             }
         });
 
-        console.log(`Found ${profileMap.size} unique profiles`);
 
         document.querySelectorAll('.tweet-avatar').forEach(avatar => {
             const img = avatar.querySelector('img');
@@ -2257,7 +2173,6 @@
             }
         });
 
-        console.log('Profile picture consistency fix completed');
     }
 
     // Format tweet timestamps - Full format for X brand compliance
@@ -2306,6 +2221,12 @@
         return num.toString();
     }
 
+    // Format tweet text by converting \n\n to <br><br>
+    function formatTweetText(text) {
+        if (!text) return '';
+        return text.replace(/\\n\\n/g, '<br><br>').replace(/\\n/g, '<br>');
+    }
+
     function updateTimestamps() {
         // Update full timestamps and format view counts
         document.querySelectorAll('.tweet-timestamp-full').forEach(el => {
@@ -2352,7 +2273,6 @@
             return;
         }
 
-        console.log('Formatting timestamp:', timestampStr);
 
         try {
             // Parse timestamp - handle multiple formats
@@ -2404,7 +2324,6 @@
                 freshnessClass = 'old';
             }
 
-            console.log('Time text:', timeText);
 
             // Update the time text
             const timeEl = document.getElementById('lastRefreshTime');
@@ -2625,7 +2544,7 @@
                         </div>
 
                         <div class="tweet-text" data-raw-text="${tweet.text}">
-                            ${tweet.text}
+                            ${formatTweetText(tweet.text)}
                         </div>
 
                         ${mediaHtml}
@@ -2676,11 +2595,11 @@
                         <div class="reply-footer">
                             <div class="character-count">0/280</div>
                             <div class="reply-actions">
-                                <button class="action-btn generate generate-reply-btn" title="Generate AI reply">
-                                    <i class="ph ph-sparkle"></i>
-                                </button>
                                 <button class="action-btn post post-reply-btn" title="Post reply">
                                     <i class="ph ph-paper-plane-right"></i>
+                                </button>
+                                <button class="action-btn generate generate-reply-btn" title="Generate AI reply">
+                                    <i class="ph ph-sparkle"></i>
                                 </button>
                             </div>
                         </div>
@@ -2699,12 +2618,6 @@
         const repliesPanel = document.getElementById('replies-panel');
         const emptyState = document.querySelector('.empty-state');
 
-        console.log('=== DEBUG INFO ===');
-        console.log('Found generate buttons:', generateBtns.length);
-        console.log('Found tweet opportunities:', tweetOpportunities.length);
-        console.log('Replies panel visible:', repliesPanel ? !repliesPanel.classList.contains('hidden') : 'not found');
-        console.log('Empty state visible:', emptyState ? emptyState.style.display !== 'none' : 'not found');
-        console.log('Current selected list:', state.selectedList);
 
         generateBtns.forEach((btn, index) => {
             console.log(`Button ${index}:`, btn, 'Disabled:', btn.disabled);

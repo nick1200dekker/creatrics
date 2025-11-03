@@ -243,8 +243,16 @@ def update_user_analytics(user_id, user_data):
             fetch_youtube_analytics(user_id)
             result['youtube_updated'] = True
         except Exception as yt_error:
+            error_str = str(yt_error).lower()
             logger.error(f"Failed to update YouTube analytics for user {user_id}: {str(yt_error)}")
             result['youtube_error'] = str(yt_error)
+
+            # Clean up tokens if access was revoked (YouTube API compliance)
+            if 'invalid_grant' in error_str or 'token has been expired or revoked' in error_str:
+                logger.warning(f"YouTube token revoked for user {user_id}, cleaning up")
+                from app.scripts.accounts.youtube_analytics import clean_youtube_user_data
+                clean_youtube_user_data(user_id)
+                result['youtube_token_cleaned'] = True
 
     # Update TikTok Analytics if connected
     if user_data.get('tiktok_account'):

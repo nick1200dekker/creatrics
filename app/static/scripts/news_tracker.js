@@ -398,7 +398,7 @@ const NewsTracker = {
                             <span class="news-source">${escapeHtml(article.source)}</span>
                             ${article.published ? `<span class="news-date">${formatDate(article.published)}</span>` : ''}
                         </div>
-                        ${article.summary ? `<p class="news-description">${escapeHtml(article.summary)}</p>` : ''}
+                        ${article.summary ? `<p class="news-description">${formatTextWithNewlines(article.summary)}</p>` : ''}
                     </div>
                 </div>
 
@@ -413,7 +413,7 @@ const NewsTracker = {
                 <!-- Generated Post Container -->
                 <div class="generated-post-section" id="generatedPost-${containerId}-${index}" style="display: none;">
                     <div class="post-display" id="postContent-${containerId}-${index}"></div>
-                    <div style="margin-top: 0.75rem;">
+                    <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end;">
                         <button class="suggestion-btn btn-post-x" onclick="NewsTracker.postToX('${containerId}', ${index})">
                             <i class="ph ph-x-logo"></i>
                             <span>Post on X</span>
@@ -499,7 +499,9 @@ const NewsTracker = {
             if (response.ok && data.success) {
                 const postContentEl = document.getElementById(`postContent-${containerId}-${index}`);
                 if (postContentEl && data.post) {
-                    postContentEl.textContent = data.post;
+                    // Replace literal \n\n and \n with actual newlines
+                    const formattedPost = data.post.replace(/\\n\\n/g, '\n\n').replace(/\\n/g, '\n');
+                    postContentEl.textContent = formattedPost;
                     generated.style.display = 'block';
 
                     // Update credits if available
@@ -594,6 +596,13 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function formatTextWithNewlines(text) {
+    if (!text) return '';
+    // First escape HTML, then convert \n\n to <br><br>
+    const escaped = escapeHtml(text);
+    return escaped.replace(/\\n\\n/g, '<br><br>').replace(/\\n/g, '<br>');
 }
 
 function formatDate(dateStr) {

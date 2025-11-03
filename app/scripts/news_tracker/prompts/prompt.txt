@@ -7,29 +7,33 @@ NEWS ARTICLE CONTENT:
 {content}
 
 YOUR TASK:
-Create a compelling X post based on this news article.
+Create a compelling, detailed X post based on this news article.
 
 RULES:
 ✓ Hook the reader in the first line - make them WANT to keep reading
+✓ Write 4-6 substantial sentences with full context and details
 ✓ Be human and conversational - no corporate speak
-✓ Add insight or a unique angle - don't just summarize
+✓ Add insight, analysis, or a unique angle - don't just summarize
+✓ Provide enough detail to be informative and engaging
 ✓ Make it shareable and discussion-worthy
-✓ Keep it concise and punchy
 ✓ NO hashtags unless absolutely essential
-✓ Use line breaks for readability
+✓ Use SINGLE line breaks (\n) sparingly - only between distinct thoughts or sections
 ✓ End with something that encourages engagement (question, hot take, call to action)
 
 POST STRUCTURE:
-**Hook** (attention-grabbing opener)
-Main point / insight
-Context or why it matters
-Engaging closer
+Opening hook sentence that grabs attention
+2-3 detailed sentences explaining the main points and context
+Additional insight or why it matters
+Engaging closing sentence
 
 TONE:
 - Informative but not boring
 - Conversational and authentic
+- Detailed and comprehensive
 
-IMPORTANT:
-- Posts can be OVER 280 characters
+FORMATTING:
+- Use \n for line breaks ONLY when separating major sections or distinct ideas
+- Do NOT use \n\n (double line breaks)
+- Keep most sentences flowing naturally with spaces, not line breaks
 
 OUTPUT ONLY THE POST CONTENT - NO EXPLANATIONS OR COMMENTARY

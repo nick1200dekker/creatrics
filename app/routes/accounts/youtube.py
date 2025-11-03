@@ -348,11 +348,14 @@ def disconnect_youtube():
             cleanup_success = False
         
         # Remove YouTube credentials and info from user document
+        # CRITICAL: Use DELETE_FIELD to physically remove tokens from storage (YouTube API compliance)
+        from google.cloud import firestore as fs
         UserService.update_user(user_id, {
-            'youtube_account': None,
-            'youtube_channel_id': None,
-            'youtube_credentials': None,
-            'youtube_connected_at': None
+            'youtube_account': fs.DELETE_FIELD,
+            'youtube_channel_id': fs.DELETE_FIELD,
+            'youtube_credentials': fs.DELETE_FIELD,
+            'youtube_connected_at': fs.DELETE_FIELD,
+            'youtube_setup_complete': fs.DELETE_FIELD
         })
         
         if cleanup_success:
