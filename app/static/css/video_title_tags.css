@@ -1493,7 +1493,7 @@ html.dark .upload-option-label i {
 
 .privacy-select {
     width: 100%;
-    padding: 0.75rem 0.875rem;
+    padding: 0.75rem 2.5rem 0.75rem 0.875rem;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-primary);
     border-radius: 8px;
@@ -1502,10 +1502,16 @@ html.dark .upload-option-label i {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 12px;
 }
 
 html.dark .privacy-select {
-    background: rgba(63, 63, 70, 0.6);
+    background: rgba(63, 63, 70, 0.6) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a1a1aa' d='M6 8L2 4h8z'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+    background-size: 12px;
     border-color: rgba(82, 82, 91, 0.6);
 }
 
@@ -1584,6 +1590,13 @@ html.dark .schedule-datetime-input::-webkit-calendar-picker-indicator {
 /* Make calendar icon in label blue */
 .schedule-label i {
     color: var(--primary);
+}
+
+.utc-indicator {
+    font-size: 0.75rem;
+    font-weight: 400;
+    opacity: 0.6;
+    margin-left: 0.25rem;
 }
 
 .thumbnail-upload-btn {

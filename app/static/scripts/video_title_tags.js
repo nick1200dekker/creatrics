@@ -948,7 +948,7 @@ function renderUploadSection(visible) {
                     <div class="upload-option-card" id="scheduleDateTime" style="grid-column: 2; display: none;">
                         <label class="upload-option-label schedule-label">
                             <i class="ph ph-calendar"></i>
-                            Publish Date & Time
+                            Publish Date & Time <span class="utc-indicator">(UTC)</span>
                         </label>
                         <div class="schedule-datetime-grid">
                             <select id="scheduleDateSelect" class="privacy-select">

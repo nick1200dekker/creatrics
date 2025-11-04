@@ -297,11 +297,11 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
             # Keep all existing tags and try to add variations
             optimized = tags.copy()
 
-            # Add some generic relevant tags if needed
+            # Add some generic relevant tags if needed (multi-word phrases only)
             generic_tags = [
-                'youtube', 'video', 'tutorial', 'how to', 'guide',
-                'tips', 'tricks', 'learn', 'best', 'top', 'amazing', 'must watch',
-                'viral', 'trending', 'new', 'latest', 'explained', 'for beginners'
+                'how to', 'step by step', 'for beginners', 'must watch',
+                'tips and tricks', 'best practices', 'complete guide',
+                'pro tips', 'expert advice', 'quick tutorial'
             ]
 
             for tag in generic_tags:
@@ -319,21 +319,23 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
 
     def generate_fallback_tags(self, input_text: str) -> List[str]:
         """Generate fallback tags when AI is not available"""
-        # Extract key terms from input
-        words = input_text.lower().split() if input_text else []
-
-        # Common YouTube tags
+        # Common YouTube tags (multi-word phrases only - no single words)
         base_tags = [
-            'youtube', 'video', 'content', 'tutorial', 'guide', 'how to',
-            'tips', 'tricks', 'learn', 'education',
-            'entertainment', 'viral', 'trending', 'fyp', 'for you page'
+            'how to', 'step by step', 'complete guide', 'for beginners',
+            'tips and tricks', 'best practices', 'must watch',
+            'quick tutorial', 'pro tips', 'expert advice'
         ]
 
-        # Extract meaningful words from input (3+ characters)
-        if words:
-            meaningful_words = [w for w in words if len(w) > 3 and w.isalpha()][:10]
-            # Add extracted words as tags
-            base_tags = meaningful_words + base_tags
+        # Extract multi-word phrases from input (bigrams and trigrams)
+        if input_text:
+            words = input_text.lower().split()
+            # Create bigrams (2-word phrases)
+            for i in range(len(words) - 1):
+                phrase = f"{words[i]} {words[i+1]}"
+                # Only add if both words are meaningful (3+ chars, alphabetic)
+                if len(words[i]) >= 3 and len(words[i+1]) >= 3 and words[i].isalpha() and words[i+1].isalpha():
+                    if phrase not in base_tags:
+                        base_tags.insert(0, phrase)  # Add content-specific phrases first
 
         # Remove duplicates while preserving order
         seen = set()
