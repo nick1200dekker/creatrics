@@ -499,8 +499,10 @@ const NewsTracker = {
             if (response.ok && data.success) {
                 const postContentEl = document.getElementById(`postContent-${containerId}-${index}`);
                 if (postContentEl && data.post) {
-                    // Replace literal \n\n and \n with actual newlines
-                    const formattedPost = data.post.replace(/\\n\\n/g, '\n\n').replace(/\\n/g, '\n');
+                    // Replace literal \n with actual newlines, and normalize double breaks to single
+                    let formattedPost = data.post.replace(/\\n/g, '\n');
+                    // Remove extra blank lines (convert \n\n to single \n)
+                    formattedPost = formattedPost.replace(/\n\n+/g, '\n');
                     postContentEl.textContent = formattedPost;
                     generated.style.display = 'block';
 

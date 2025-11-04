@@ -32,8 +32,19 @@ TONE:
 - Detailed and comprehensive
 
 FORMATTING:
-- Use \n for line breaks ONLY when separating major sections or distinct ideas
-- Do NOT use \n\n (double line breaks)
-- Keep most sentences flowing naturally with spaces, not line breaks
+- CRITICAL: Use SINGLE \n for line breaks between paragraphs
+- NEVER use \n\n (double line breaks) - this creates too much spacing
+- Each paragraph should be separated by exactly ONE \n
+- Keep sentences within a paragraph flowing naturally with spaces
+
+EXAMPLE OF CORRECT FORMATTING:
+First paragraph with multiple sentences here.
+Second paragraph continues the story here.
+Final paragraph wraps it up.
+
+(NOT like this with double breaks:)
+First paragraph.
+
+Second paragraph.
 
 OUTPUT ONLY THE POST CONTENT - NO EXPLANATIONS OR COMMENTARY

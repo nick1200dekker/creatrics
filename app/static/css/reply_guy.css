@@ -8,7 +8,7 @@
 
 /* Main wrapper - lighter background */
 .reply-guy-wrapper {
-    background: #fafafa;
+    background: var(--bg-secondary);
     border-radius: 12px;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-secondary);
@@ -18,7 +18,6 @@
 }
 
 html.dark .reply-guy-wrapper {
-    background: #1a1a1a;
     border-color: transparent;
 }
 
