@@ -950,7 +950,14 @@ function renderUploadSection(visible) {
                             <i class="ph ph-calendar"></i>
                             Publish Date & Time
                         </label>
-                        <input type="datetime-local" class="privacy-select schedule-datetime-input" id="scheduleInput" onclick="this.showPicker()">
+                        <div class="schedule-datetime-grid">
+                            <select id="scheduleDateSelect" class="privacy-select">
+                                <option value="">Select date</option>
+                            </select>
+                            <select id="scheduleTimeSelect" class="privacy-select">
+                                <option value="">Select time</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -1227,31 +1234,90 @@ function removeThumbnail() {
 }
 
 /**
+ * Populate schedule date dropdown (365 days)
+ */
+function populateScheduleDateDropdown() {
+    const dateSelect = document.getElementById('scheduleDateSelect');
+    if (!dateSelect) return;
+
+    // Clear existing options except first
+    dateSelect.innerHTML = '<option value="">Select date</option>';
+
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        const value = `${year}-${month}-${day}`;
+        const display = `${day}/${month}/${year}`;
+
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = display;
+        dateSelect.appendChild(option);
+    }
+}
+
+/**
+ * Populate schedule time dropdown (15-minute intervals)
+ */
+function populateScheduleTimeDropdown() {
+    const timeSelect = document.getElementById('scheduleTimeSelect');
+    if (!timeSelect) return;
+
+    // Clear existing options except first
+    timeSelect.innerHTML = '<option value="">Select time</option>';
+
+    for (let hour = 0; hour < 24; hour++) {
+        for (let minute = 0; minute < 60; minute += 15) {
+            const hourStr = String(hour).padStart(2, '0');
+            const minuteStr = String(minute).padStart(2, '0');
+            const value = `${hourStr}:${minuteStr}`;
+
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            timeSelect.appendChild(option);
+        }
+    }
+}
+
+/**
  * Handle status change (show/hide schedule datetime)
  */
 function handleStatusChange() {
     const privacySelect = document.getElementById('privacySelect');
     const scheduleDateTime = document.getElementById('scheduleDateTime');
-    const scheduleInput = document.getElementById('scheduleInput');
+    const scheduleDateSelect = document.getElementById('scheduleDateSelect');
+    const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
 
     if (privacySelect && scheduleDateTime) {
         if (privacySelect.value === 'scheduled') {
             scheduleDateTime.style.display = 'block';
 
+            // Populate dropdowns if not already done
+            if (scheduleDateSelect && scheduleDateSelect.options.length === 1) {
+                populateScheduleDateDropdown();
+            }
+            if (scheduleTimeSelect && scheduleTimeSelect.options.length === 1) {
+                populateScheduleTimeDropdown();
+            }
+
             // Set default to tomorrow at 12:00 if not already set
-            if (scheduleInput && !scheduleInput.value) {
+            if (scheduleDateSelect && !scheduleDateSelect.value) {
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
-                tomorrow.setHours(12, 0, 0, 0);
-
-                // Format as datetime-local (YYYY-MM-DDTHH:mm)
                 const year = tomorrow.getFullYear();
                 const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
                 const day = String(tomorrow.getDate()).padStart(2, '0');
-                const hours = String(tomorrow.getHours()).padStart(2, '0');
-                const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
-
-                scheduleInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                scheduleDateSelect.value = `${year}-${month}-${day}`;
+            }
+            if (scheduleTimeSelect && !scheduleTimeSelect.value) {
+                scheduleTimeSelect.value = '12:00';
             }
         } else {
             scheduleDateTime.style.display = 'none';
@@ -1287,12 +1353,18 @@ async function uploadToYouTube() {
     // Get scheduled date/time if status is scheduled
     let scheduledTime = null;
     if (privacyStatus === 'scheduled') {
-        const scheduleInput = document.getElementById('scheduleInput');
-        if (!scheduleInput || !scheduleInput.value) {
+        const scheduleDateSelect = document.getElementById('scheduleDateSelect');
+        const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
+
+        if (!scheduleDateSelect || !scheduleDateSelect.value || !scheduleTimeSelect || !scheduleTimeSelect.value) {
             showToast('Please select a publish date and time', 'error');
             return;
         }
-        scheduledTime = scheduleInput.value;
+
+        // Combine date and time, then convert to ISO string with timezone
+        const dateTime = `${scheduleDateSelect.value}T${scheduleTimeSelect.value}:00`;
+        const localDateTime = new Date(dateTime);
+        scheduledTime = localDateTime.toISOString();
     }
 
     const uploadBtn = document.getElementById('uploadBtn');

@@ -1861,6 +1861,12 @@ html.dark .upload-progress-content {
     gap: 0.75rem;
 }
 
+.schedule-datetime-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
 /* Upload spinner container */
 .upload-spinner-container {
     display: flex;

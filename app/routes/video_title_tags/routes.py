@@ -613,7 +613,8 @@ def init_youtube_upload():
         if scheduled_time:
             from datetime import datetime
             try:
-                dt = datetime.fromisoformat(scheduled_time)
+                # Parse ISO format datetime (already in UTC from frontend)
+                dt = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
                 request_body['status']['publishAt'] = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
                 logger.info(f"Video scheduled for: {request_body['status']['publishAt']}")
             except Exception as e:
@@ -940,11 +941,12 @@ def update_youtube_schedule():
         from googleapiclient.discovery import build
         youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
 
-        # Convert ISO datetime to YouTube format
+        # Convert ISO datetime to YouTube format (already in UTC from frontend)
         from datetime import datetime
         try:
             dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
             formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+            logger.info(f"Updating schedule from {new_publish_time} to {formatted_time}")
         except Exception as e:
             logger.error(f"Error parsing datetime: {e}")
             return jsonify({
