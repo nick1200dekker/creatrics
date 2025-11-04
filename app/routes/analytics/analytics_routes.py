@@ -948,11 +948,27 @@ def youtube_daily_views():
                     yt._refresh_credentials()
             except Exception:
                 return jsonify({'error': 'YouTube authorization expired', 'needs_reconnect': True}), 401
-        daily_data = latest_data.get('daily_data', [])
-        
-        if not daily_data:
-            return jsonify({'error': 'No daily data available'}), 404
-        
+        daily_data = latest_data.get('daily_data')
+
+        # Handle case where channel has no videos yet
+        if not daily_data or not isinstance(daily_data, list):
+            return jsonify({
+                'daily_data': [],
+                'calculated_metrics': {
+                    'views': 0,
+                    'watch_time_hours': 0,
+                    'subscribers_gained': 0,
+                    'avg_daily_views': 0,
+                    'avg_daily_watch_time': 0,
+                    'avg_view_duration_seconds': 0,
+                    'traffic_sources': [],
+                    'timeframe': timeframe,
+                    'date_range': 'No data available'
+                },
+                'timeframe': timeframe,
+                'no_data': True
+            })
+
         # Filter by timeframe
         timeframe_days = {
             '7days': 7,

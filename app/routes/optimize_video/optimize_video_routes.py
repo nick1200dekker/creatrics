@@ -195,15 +195,18 @@ def get_my_videos():
 
         # Extract video list
         videos = []
-        if 'data' in data:
+        if 'data' in data and data.get('data'):
             for video in data['data']:
                 # Only include actual videos (not shorts, playlists, etc.)
                 if video.get('type') == 'video':
                     video_id = video.get('videoId')
                     # Get highest resolution thumbnail from RapidAPI response
                     # Array goes from low to high resolution, last item is typically maxresdefault
-                    thumbnails = video.get('thumbnail', [])
-                    thumbnail = thumbnails[-1].get('url') if thumbnails else f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+                    thumbnails = video.get('thumbnail')
+                    if thumbnails and isinstance(thumbnails, list) and len(thumbnails) > 0:
+                        thumbnail = thumbnails[-1].get('url', f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg")
+                    else:
+                        thumbnail = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
 
                     videos.append({
                         'video_id': video_id,
@@ -219,14 +222,17 @@ def get_my_videos():
         try:
             shorts_data = shorts_response.json() if not isinstance(shorts_response, Exception) else {}
 
-            if 'data' in shorts_data:
+            if 'data' in shorts_data and shorts_data.get('data'):
                 for short in shorts_data['data']:
                     if short.get('type') == 'shorts':
                         video_id = short.get('videoId')
                         # Get highest resolution thumbnail from RapidAPI response
                         # Array goes from low to high resolution, last item is typically maxresdefault
-                        thumbnails = short.get('thumbnail', [])
-                        thumbnail = thumbnails[-1].get('url') if thumbnails else f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+                        thumbnails = short.get('thumbnail')
+                        if thumbnails and isinstance(thumbnails, list) and len(thumbnails) > 0:
+                            thumbnail = thumbnails[-1].get('url', f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg")
+                        else:
+                            thumbnail = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
 
                         videos.append({
                             'video_id': video_id,
