@@ -1479,7 +1479,9 @@ async function uploadToYouTube() {
         const finalizeData = {
             video_id: videoId,
             thumbnail_path: uploadedThumbnailPath,
-            target_keyword: targetKeyword
+            target_keyword: targetKeyword,
+            title: title,
+            scheduled_time: scheduledTime
         };
 
         const finalizeResponse = await fetch('/api/finalize-youtube-upload', {
@@ -1637,20 +1639,19 @@ function showUploadProgressModal() {
 
             <div class="upload-warning">
                 <div class="upload-warning-content">
-                    <i class="ph-fill ph-warning-circle" style="color: #F59E0B; font-size: 1.5rem; margin-top: 0.125rem; flex-shrink: 0;"></i>
-                    <div style="flex: 1;">
-                        <p style="color: var(--text-primary); font-size: 0.875rem; font-weight: 600; margin: 0 0 0.5rem;">Don't close this page</p>
-                        <p style="color: var(--text-secondary); font-size: 0.8125rem; margin: 0 0 1rem; line-height: 1.5;">Keep this tab open while uploading. Want to keep working?</p>
-                        <button onclick="window.open('/', '_blank')" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.25rem; background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(59, 130, 246, 0.3)'">
-                            <i class="ph-fill ph-plus-circle" style="font-size: 1.125rem;"></i> Open Creatrics in New Tab
+                    <i class="ph-fill ph-warning-circle warning-icon"></i>
+                    <div class="upload-warning-text">
+                        <p class="warning-title">Don't close this page</p>
+                        <p class="warning-description">Keep this tab open while uploading</p>
+                        <button class="open-tab-btn" onclick="window.open('/', '_blank')">
+                            <i class="ph-fill ph-arrow-square-out"></i>
+                            <span>Open Creatrics in New Tab</span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <p style="color: var(--text-tertiary); font-size: 0.75rem; margin: 0; text-align: center;">
-                Large videos may take several minutes to upload
-            </p>
+            <p class="upload-footer-text">Large videos may take several minutes to upload</p>
         </div>
     `;
     document.body.appendChild(modal);
