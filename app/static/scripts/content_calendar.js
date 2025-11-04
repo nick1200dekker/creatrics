@@ -200,10 +200,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update the platform dropdown
         const platformOption = document.querySelector(`[data-platform="${platform}"]`);
         if (platformOption) {
-            const icon = platformOption.getAttribute('data-icon');
-            const color = platformOption.getAttribute('data-color');
-            const iconClass = icon.includes('fill') ? `ph-fill ${icon}` : `ph ${icon}`;
-
             const selectedPlatformText = document.getElementById('selected-platform-text');
             const selectedPlatformInput = document.getElementById('selected-platform');
             const platformDropdownMenu = document.getElementById('platform-dropdown-menu');
@@ -218,10 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (selectedPlatformText) {
-                selectedPlatformText.innerHTML = `
-                    <i class="${iconClass}"></i>
-                    ${platform}
-                `;
+                selectedPlatformText.textContent = platform;
             }
 
             if (selectedPlatformInput) {
@@ -759,7 +752,7 @@ document.addEventListener('DOMContentLoaded', function() {
             row.innerHTML = `
                 <td>${event.title}${event.content_type === 'sponsored' ? ' 💰' : ''}</td>
                 <td>${event.publish_date ? new Date(event.publish_date).toLocaleDateString() : '-'}</td>
-                <td>${event.platform || '-'}</td>
+                <td></td>
                 <td><span class="kanban-tag ${event.content_type === 'sponsored' ? 'sponsored' : 'organic'}">${event.content_type === 'sponsored' ? 'Sponsored' : 'Organic'}</span></td>
                 <td><span class="status-badge status-${event.status || 'draft'}">${event.status || 'draft'}</span></td>
                 <td>
@@ -813,7 +806,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.innerHTML = `
                     <div class="kanban-card-title">${event.title}${event.content_type === 'sponsored' ? ' 💰' : ''}</div>
                     <div class="kanban-card-meta">
-                        ${event.platform ? `<span class="kanban-tag">${event.platform}</span>` : ''}
                         <span class="kanban-tag ${event.content_type === 'sponsored' ? 'sponsored' : 'organic'}">${event.content_type === 'sponsored' ? 'Sponsored' : 'Organic'}</span>
                     </div>
                     ${event.publish_date ? `
@@ -914,8 +906,6 @@ document.addEventListener('DOMContentLoaded', function() {
         platformDropdownMenu.querySelectorAll('.dropdown-option').forEach(option => {
             option.addEventListener('click', function() {
                 const platform = this.getAttribute('data-platform');
-                const icon = this.getAttribute('data-icon');
-                const color = this.getAttribute('data-color');
 
                 // Remove 'selected' class from all options
                 platformDropdownMenu.querySelectorAll('.dropdown-option').forEach(opt => {
@@ -926,11 +916,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.classList.add('selected');
 
                 // Update selected text
-                const iconClass = icon.includes('fill') ? `ph-fill ${icon}` : `ph ${icon}`;
-                selectedPlatformText.innerHTML = `
-                    <i class="${iconClass}"></i>
-                    ${platform}
-                `;
+                selectedPlatformText.textContent = platform;
 
                 // Update hidden input
                 selectedPlatformInput.value = platform;

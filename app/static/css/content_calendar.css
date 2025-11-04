@@ -761,7 +761,6 @@ html.dark .view-btn.active {
     border: 1px solid var(--border-primary);
     border-radius: 12px;
     overflow: hidden;
-    min-height: 800px;
     transition: all 0.3s ease;
     display: none;
     position: relative;
@@ -781,7 +780,6 @@ html.dark .main-panel {
 /* Calendar container */
 #calendar {
     padding: 0;
-    min-height: 700px;
     background: transparent;
     width: 100%;
     overflow: visible;
@@ -853,9 +851,10 @@ html.dark .main-panel {
     display: none !important;
 }
 
-/* Force uniform row height */
+/* Allow rows to grow based on content */
 .fc-daygrid-body-balanced .fc-daygrid-day {
-    height: 140px !important;
+    height: auto !important;
+    min-height: 140px !important;
 }
 
 .fc-daygrid-week {
@@ -879,14 +878,13 @@ html.dark .main-panel {
 }
 
 .fc-view-harness {
-    min-height: 700px !important;
     width: 100% !important;
     position: relative !important;
     z-index: 1 !important;
 }
 
 .fc-view-harness-active {
-    min-height: 700px !important;
+    height: auto !important;
 }
 
 .fc-scrollgrid {
@@ -939,10 +937,11 @@ html.dark .fc-col-header-cell {
 
 .fc-daygrid-day {
     background: var(--bg-secondary) !important;
-    height: 140px !important;
+    height: auto !important;
+    min-height: 140px !important;
     border: 1px solid var(--border-primary) !important;
     position: relative !important;
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
 html.dark .fc-daygrid-day {
@@ -951,30 +950,22 @@ html.dark .fc-daygrid-day {
 }
 
 .fc-daygrid-day-frame {
-    height: 140px !important;
+    height: auto !important;
+    min-height: 140px !important;
     cursor: pointer !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     position: relative !important;
 }
 
 .fc-daygrid-day-events {
-    position: absolute !important;
-    top: 35px !important;
-    left: 2px !important;
-    right: 2px !important;
-    bottom: 2px !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    overflow: visible !important;
     padding: 3px !important;
-}
-
-.fc-daygrid-day-events::-webkit-scrollbar {
-    width: 3px !important;
-}
-
-.fc-daygrid-day-events::-webkit-scrollbar-thumb {
-    background: var(--border-primary) !important;
-    border-radius: 2px !important;
+    margin-top: 35px !important;
 }
 
 .fc-daygrid-day:hover {
