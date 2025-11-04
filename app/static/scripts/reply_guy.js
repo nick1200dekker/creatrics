@@ -888,8 +888,8 @@
 
                 updateButtonVisibility();
 
-                if (data.has_analysis && data.opportunities_count > 0) {
-                    // showToast(`Found ${data.opportunities_count} opportunities! Refreshing...`, 'success');
+                if (data.has_analysis) {
+                    // Reload page when analysis exists (even if 0 opportunities)
                     setTimeout(() => window.location.reload(), 1000);
                 } else if (state.selectedListType === 'default') {
                     // showToast('Loading default list analysis...', 'info');
