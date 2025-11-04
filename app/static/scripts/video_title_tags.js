@@ -1459,6 +1459,7 @@ async function uploadToYouTube() {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({
                 upload_url: initData.upload_url,
                 title: title
@@ -1489,6 +1490,7 @@ async function uploadToYouTube() {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify(finalizeData)
         });
 

@@ -733,8 +733,12 @@ def get_uploaded_video_id():
         from googleapiclient.discovery import build
         youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
 
-        # Query for most recent uploaded video
-        # This gets the most recent video from the user's channel
+        # Query for most recent uploaded video with retry logic
+        # YouTube needs time to process the video after upload
+        import time
+        max_retries = 10
+        retry_delay = 2  # seconds
+
         try:
             # Get user's uploads playlist ID
             channels_response = youtube.channels().list(
@@ -750,22 +754,44 @@ def get_uploaded_video_id():
 
             uploads_playlist_id = channels_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
 
-            # Get most recent video from uploads playlist
-            playlist_response = youtube.playlistItems().list(
-                part='snippet',
-                playlistId=uploads_playlist_id,
-                maxResults=1
-            ).execute()
+            # Retry logic to wait for video to appear in uploads playlist
+            video_id = None
+            for attempt in range(max_retries):
+                logger.info(f"Attempting to retrieve video ID (attempt {attempt + 1}/{max_retries})")
 
-            if not playlist_response.get('items'):
+                # Get most recent video from uploads playlist
+                playlist_response = youtube.playlistItems().list(
+                    part='snippet',
+                    playlistId=uploads_playlist_id,
+                    maxResults=1
+                ).execute()
+
+                if playlist_response.get('items'):
+                    retrieved_video_id = playlist_response['items'][0]['snippet']['resourceId']['videoId']
+                    retrieved_title = playlist_response['items'][0]['snippet']['title']
+
+                    # Check if the title matches (to ensure it's the video we just uploaded)
+                    if title and retrieved_title == title:
+                        video_id = retrieved_video_id
+                        logger.info(f"Found matching video ID {video_id} with title '{title}'")
+                        break
+                    elif not title:
+                        # If no title provided, just use the most recent video
+                        video_id = retrieved_video_id
+                        logger.info(f"Retrieved most recent video ID {video_id}")
+                        break
+                    else:
+                        logger.info(f"Video found but title doesn't match. Expected '{title}', got '{retrieved_title}'. Retrying...")
+
+                # Wait before retrying
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+
+            if not video_id:
                 return jsonify({
                     'success': False,
-                    'error': 'No videos found'
+                    'error': 'Video not found after upload. Please check YouTube Studio.'
                 }), 404
-
-            video_id = playlist_response['items'][0]['snippet']['resourceId']['videoId']
-
-            logger.info(f"Retrieved video ID {video_id} for user {user_id}")
 
             return jsonify({
                 'success': True,
