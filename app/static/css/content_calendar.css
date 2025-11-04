@@ -1129,16 +1129,10 @@ html.dark .fc-event.platform-other {
 }
 
 /* Clock icon for YouTube scheduled videos */
-.fc-event.youtube-scheduled::before {
-    content: '🕒';
-    margin-right: 4px;
-}
-    position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.875rem;
-    line-height: 1;
+.fc-event.youtube-scheduled .clock-icon {
+    margin-right: 6px;
+    font-size: 0.875em;
+    opacity: 0.85;
 }
 
 .fc-event-main {

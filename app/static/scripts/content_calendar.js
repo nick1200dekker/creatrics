@@ -190,6 +190,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         info.el.classList.add('platform-other');
                     }
+
+                    // Add clock icon for YouTube scheduled videos
+                    if (event.youtube_video_id) {
+                        const titleEl = info.el.querySelector('.fc-event-title');
+                        if (titleEl) {
+                            const clockIcon = document.createElement('i');
+                            clockIcon.className = 'ph-fill ph-clock clock-icon';
+                            titleEl.insertBefore(clockIcon, titleEl.firstChild);
+                        }
+                    }
                 }
             }
         });
@@ -556,12 +566,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set saving flag
         isSaving = true;
 
-        // Combine date and time if both provided
+        // Combine date and time if both provided, convert to ISO string
         let publishDate = null;
         if (dateValue && timeValue) {
-            publishDate = `${dateValue}T${timeValue}:00`;
+            const localDateTime = new Date(`${dateValue}T${timeValue}:00`);
+            publishDate = localDateTime.toISOString();
         } else if (dateValue) {
-            publishDate = `${dateValue}T12:00:00`;
+            const localDateTime = new Date(`${dateValue}T12:00:00`);
+            publishDate = localDateTime.toISOString();
         }
 
         const eventData = {
@@ -588,6 +600,31 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success || data.event_id) {
+                // If this is an update to a YouTube scheduled video, update YouTube as well
+                if (eventId && publishDate) {
+                    const eventIndex = events.findIndex(e => e.id == eventId);
+                    if (eventIndex !== -1 && events[eventIndex].youtube_video_id) {
+                        return fetch('/api/update-youtube-schedule', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                video_id: events[eventIndex].youtube_video_id,
+                                publish_time: publishDate
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(ytData => {
+                            if (ytData && !ytData.success) {
+                                console.error('Failed to update YouTube schedule:', ytData.error);
+                                alert('Calendar updated but YouTube schedule update failed: ' + ytData.error);
+                            } else if (ytData && ytData.success) {
+                                console.log('YouTube schedule updated successfully');
+                            }
+                            closeEventModal();
+                            loadEvents();
+                        });
+                    }
+                }
                 closeEventModal();
                 loadEvents();
             }
@@ -784,7 +821,7 @@ document.addEventListener('DOMContentLoaded', function() {
             row.innerHTML = `
                 <td>${event.title}${event.content_type === 'sponsored' ? ' 💰' : ''}</td>
                 <td>${event.publish_date ? new Date(event.publish_date).toLocaleDateString() : '-'}</td>
-                <td></td>
+                <td>${event.platform || '-'}</td>
                 <td><span class="kanban-tag ${event.content_type === 'sponsored' ? 'sponsored' : 'organic'}">${event.content_type === 'sponsored' ? 'Sponsored' : 'Organic'}</span></td>
                 <td><span class="status-badge status-${event.status || 'draft'}">${event.status || 'draft'}</span></td>
                 <td>

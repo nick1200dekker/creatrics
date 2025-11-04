@@ -157,17 +157,41 @@ def delete_event(event_id):
     """API endpoint to delete a calendar event"""
     try:
         user_id = get_workspace_user_id()
-        
+
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
-        
-        # Delete the event
+
+        # Get event details before deleting to check for YouTube video
+        event = calendar_manager.get_event(event_id)
+
+        if not event:
+            return jsonify({"error": "Event not found"}), 404
+
+        # If this event has a YouTube video, delete it from YouTube
+        youtube_video_id = event.get('youtube_video_id')
+        if youtube_video_id:
+            try:
+                from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+                yt_analytics = YouTubeAnalytics(user_id)
+
+                if yt_analytics.credentials:
+                    from googleapiclient.discovery import build
+                    youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+                    # Delete the video from YouTube
+                    youtube.videos().delete(id=youtube_video_id).execute()
+                    current_app.logger.info(f"Deleted YouTube video {youtube_video_id}")
+            except Exception as e:
+                current_app.logger.error(f"Error deleting YouTube video {youtube_video_id}: {e}")
+                # Continue with calendar event deletion even if YouTube deletion fails
+
+        # Delete the calendar event
         success = calendar_manager.delete_event(event_id)
-        
+
         if success:
             return jsonify({"success": True})
         else:
-            return jsonify({"error": "Event not found"}), 404
+            return jsonify({"error": "Failed to delete event"}), 500
     except Exception as e:
         current_app.logger.error(f"Error deleting event: {str(e)}\n{traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
