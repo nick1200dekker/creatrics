@@ -1645,28 +1645,50 @@ html.dark .platform-select-wrapper .form-select:focus {
 
 .date-input-wrapper .form-input,
 .time-input-wrapper .form-input,
+.time-input-wrapper .form-select,
+.date-input-wrapper .form-select,
 .time-select-wrapper .form-select,
 .date-select-wrapper .form-select {
     flex: 1;
-    padding-left: 2.75rem;
-    padding-right: 1rem;
     cursor: pointer;
+}
+
+.time-input-wrapper select.form-select,
+.date-input-wrapper select.form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 1rem center !important;
+    background-size: 1rem !important;
+    padding-right: 3rem !important;
+}
+
+html.dark .time-input-wrapper select.form-select,
+html.dark .date-input-wrapper select.form-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
 }
 
 .input-icon-btn {
     position: absolute;
     left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
     background: transparent;
     border: none;
     color: #3B82F6;
     cursor: pointer;
     padding: 0;
     transition: all 0.2s ease;
-    font-size: 1.125rem;
+    font-size: 1rem;
     pointer-events: none;
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 10;
+    line-height: 1;
+    height: 1rem;
 }
 
 html.dark .input-icon-btn {
@@ -1675,7 +1697,7 @@ html.dark .input-icon-btn {
 
 .date-input-wrapper:hover .input-icon-btn,
 .time-input-wrapper:hover .input-icon-btn {
-    transform: scale(1.1);
+    transform: translateY(-50%) scale(1.1);
 }
 
 .date-input-wrapper .form-input:focus,
@@ -1710,69 +1732,12 @@ input[type="time"]::-moz-calendar-picker-indicator {
 input[type="date"],
 input[type="time"] {
     position: relative;
-    font-family: inherit;
     color-scheme: light;
-    font-size: 0.9375rem;
-    font-weight: 500;
-    letter-spacing: 0;
 }
 
 html.dark input[type="date"],
 html.dark input[type="time"] {
     color-scheme: dark;
-}
-
-input[type="date"]::-webkit-datetime-edit,
-input[type="time"]::-webkit-datetime-edit {
-    padding: 0;
-    line-height: 1.5;
-}
-
-input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-input[type="time"]::-webkit-datetime-edit-fields-wrapper {
-    padding: 0;
-    font-weight: 500;
-    line-height: 1.5;
-}
-
-input[type="date"]::-webkit-datetime-edit-text,
-input[type="time"]::-webkit-datetime-edit-text {
-    color: var(--text-tertiary);
-    padding: 0 0.125rem;
-    line-height: 1.5;
-}
-
-input[type="date"]::-webkit-datetime-edit-month-field,
-input[type="date"]::-webkit-datetime-edit-day-field,
-input[type="date"]::-webkit-datetime-edit-year-field,
-input[type="time"]::-webkit-datetime-edit-hour-field,
-input[type="time"]::-webkit-datetime-edit-minute-field,
-input[type="time"]::-webkit-datetime-edit-ampm-field {
-    color: var(--text-primary);
-    padding: 0 0.125rem;
-    border-radius: 4px;
-    line-height: 1.5;
-    font-variant-numeric: tabular-nums;
-}
-
-input[type="date"]::-webkit-datetime-edit-month-field:focus,
-input[type="date"]::-webkit-datetime-edit-day-field:focus,
-input[type="date"]::-webkit-datetime-edit-year-field:focus,
-input[type="time"]::-webkit-datetime-edit-hour-field:focus,
-input[type="time"]::-webkit-datetime-edit-minute-field:focus,
-input[type="time"]::-webkit-datetime-edit-ampm-field:focus {
-    background: rgba(59, 130, 246, 0.1);
-    color: #3B82F6;
-}
-
-html.dark input[type="date"]::-webkit-datetime-edit-month-field:focus,
-html.dark input[type="date"]::-webkit-datetime-edit-day-field:focus,
-html.dark input[type="date"]::-webkit-datetime-edit-year-field:focus,
-html.dark input[type="time"]::-webkit-datetime-edit-hour-field:focus,
-html.dark input[type="time"]::-webkit-datetime-edit-minute-field:focus,
-html.dark input[type="time"]::-webkit-datetime-edit-ampm-field:focus {
-    background: rgba(96, 165, 250, 0.15);
-    color: #60A5FA;
 }
 
 /* Custom styling for date/time picker popups */
@@ -1823,13 +1788,6 @@ html.dark .form-textarea {
     color: #E4E4E7;
 }
 
-/* Make date and time select larger and more visible */
-.date-select-wrapper .form-select,
-.time-select-wrapper .form-select {
-    font-size: 1rem;
-    font-weight: 600;
-}
-
 /* Time select zoomed in - show only 6 options */
 .time-select-wrapper .form-select[size] {
     height: auto;
@@ -1840,8 +1798,6 @@ html.dark .form-textarea {
 
 .time-select-wrapper .form-select[size] option {
     padding: 0.75rem 1rem;
-    font-size: 1rem;
-    font-weight: 600;
     cursor: pointer;
     border-radius: 4px;
     margin: 2px 0;
@@ -1867,8 +1823,7 @@ html.dark .time-select-wrapper .form-select[size] option:checked {
 
 /* Style date input calendar picker */
 .date-input-wrapper .form-input[type="date"] {
-    font-size: 1rem;
-    font-weight: 600;
+    /* Uses default form-input styling */
 }
 
 /* Hide the default calendar icon from browser */
