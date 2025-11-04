@@ -1255,7 +1255,7 @@ html.dark .insufficient-credits-card {
     display: inline-block;
     width: 16px;
     height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     border-top-color: currentColor;
     animation: spin 1s linear infinite;

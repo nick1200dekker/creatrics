@@ -793,7 +793,7 @@ html.dark .loading-container {
 }
 
 .loading-spinner i {
-    font-size: 1.5rem;
+    font-size: 2rem;
     color: #3B82F6;
     animation: spin 1s linear infinite;
 }

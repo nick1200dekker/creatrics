@@ -445,9 +445,9 @@ html.dark .loading-section {
 }
 
 .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border-primary);
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(229, 231, 235, 0.3);
     border-top-color: #3B82F6;
     border-radius: 50%;
     animation: spin 1s linear infinite;

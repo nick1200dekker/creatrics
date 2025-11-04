@@ -1933,7 +1933,7 @@ html.dark .empty-state .action-btn:hover {
 }
 
 .loading-spinner {
-    font-size: 1.5rem;
+    font-size: 2rem;
     color: #3B82F6;
 }
 
@@ -1953,11 +1953,11 @@ html.dark .loading-spinner {
 }
 
 .spinner {
-    border: 2px solid #e5e7eb;
+    border: 3px solid rgba(229, 231, 235, 0.3);
     border-top-color: #3B82F6;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     animation: spin 1s linear infinite;
 }
 

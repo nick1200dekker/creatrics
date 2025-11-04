@@ -960,7 +960,7 @@ html.dark .news-image-placeholder {
 }
 
 .generating-spinner i.ph-spinner {
-    font-size: 1.5rem;
+    font-size: 2rem;
     color: #3B82F6;
     animation: spin 1s linear infinite;
     display: inline-block;

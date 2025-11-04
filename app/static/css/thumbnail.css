@@ -946,11 +946,11 @@ html.dark .history-item:hover {
 }
 
 .loading-spinner {
-    border: 3px solid var(--border-primary);
+    border: 3px solid rgba(229, 231, 235, 0.3);
     border-radius: 50%;
     border-top-color: #3B82F6;
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     animation: spin 1s linear infinite;
     margin-bottom: 1rem;
 }

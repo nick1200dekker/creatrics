@@ -1102,7 +1102,7 @@ html.dark .folder-name-input {
 .content-loading-spinner {
     width: 48px;
     height: 48px;
-    border: 4px solid var(--bg-tertiary);
+    border: 3px solid rgba(229, 231, 235, 0.3);
     border-top-color: #3B82F6;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -1136,11 +1136,11 @@ html.dark .content-loading-spinner {
 }
 
 .spinner {
-    border: 2px solid #e5e7eb;
+    border: 3px solid rgba(229, 231, 235, 0.3);
     border-top-color: #3B82F6;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     animation: spin 1s linear infinite;
 }
 
