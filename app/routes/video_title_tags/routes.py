@@ -789,7 +789,7 @@ def get_uploaded_video_id():
 @auth_required
 @require_permission('video_title')
 def finalize_youtube_upload():
-    """Finalize YouTube upload (handle thumbnail, store metadata)"""
+    """Finalize YouTube upload (handle thumbnail, store metadata, create calendar event)"""
     try:
         user_id = get_workspace_user_id()
         data = request.get_json()
@@ -797,6 +797,8 @@ def finalize_youtube_upload():
         video_id = data.get('video_id', '').strip()
         thumbnail_path = data.get('thumbnail_path')
         target_keyword = data.get('target_keyword', '').strip()
+        title = data.get('title', '').strip()
+        scheduled_time = data.get('scheduled_time')
 
         if not video_id:
             return jsonify({
@@ -874,6 +876,27 @@ def finalize_youtube_upload():
         except Exception as e:
             logger.error(f"Error storing video metadata in Firestore: {e}")
 
+        # Create calendar event if video is scheduled
+        if scheduled_time and title:
+            try:
+                from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+                calendar_manager = ContentCalendarManager(user_id)
+
+                event_id = calendar_manager.create_event(
+                    title=title,
+                    publish_date=scheduled_time,
+                    platform='YouTube',
+                    status='ready',
+                    content_type='organic',
+                    youtube_video_id=video_id,
+                    notes=f'YouTube Video ID: {video_id}'
+                )
+
+                logger.info(f"Created calendar event {event_id} for scheduled YouTube video {video_id}")
+            except Exception as e:
+                logger.error(f"Error creating calendar event: {e}")
+                # Don't fail the whole request if calendar creation fails
+
         return jsonify({
             'success': True,
             'message': 'Upload finalized successfully'
@@ -884,6 +907,92 @@ def finalize_youtube_upload():
         return jsonify({
             'success': False,
             'error': f'Failed to finalize upload: {str(e)}'
+        }), 500
+
+@bp.route('/api/update-youtube-schedule', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def update_youtube_schedule():
+    """Update YouTube video's scheduled publish time"""
+    try:
+        user_id = get_workspace_user_id()
+        data = request.get_json()
+
+        video_id = data.get('video_id', '').strip()
+        new_publish_time = data.get('publish_time', '').strip()
+
+        if not video_id or not new_publish_time:
+            return jsonify({
+                'success': False,
+                'error': 'Video ID and publish time are required'
+            }), 400
+
+        # Get YouTube credentials
+        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+        yt_analytics = YouTubeAnalytics(user_id)
+
+        if not yt_analytics.credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No YouTube account connected'
+            }), 400
+
+        from googleapiclient.discovery import build
+        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+
+        # Convert ISO datetime to YouTube format
+        from datetime import datetime
+        try:
+            dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
+            formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        except Exception as e:
+            logger.error(f"Error parsing datetime: {e}")
+            return jsonify({
+                'success': False,
+                'error': 'Invalid datetime format'
+            }), 400
+
+        # Update video's publish time
+        try:
+            youtube.videos().update(
+                part='status',
+                body={
+                    'id': video_id,
+                    'status': {
+                        'publishAt': formatted_time,
+                        'privacyStatus': 'private'  # Keep as private until scheduled time
+                    }
+                }
+            ).execute()
+
+            logger.info(f"Updated YouTube video {video_id} schedule to {formatted_time}")
+
+            return jsonify({
+                'success': True,
+                'message': 'YouTube schedule updated successfully'
+            })
+
+        except Exception as e:
+            error_str = str(e).lower()
+            logger.error(f"Error updating YouTube schedule: {e}")
+
+            if 'quota' in error_str or 'quotaexceeded' in error_str:
+                return jsonify({
+                    'success': False,
+                    'error': 'YouTube API quota exceeded. Please try again tomorrow.',
+                    'error_type': 'quota_exceeded'
+                }), 403
+
+            return jsonify({
+                'success': False,
+                'error': f'Failed to update schedule: {str(e)}'
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Error in update_youtube_schedule: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
         }), 500
 
 @bp.route('/api/upload-youtube-video', methods=['POST'])

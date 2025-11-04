@@ -107,11 +107,13 @@ document.addEventListener('DOMContentLoaded', function() {
             eventDrop: function(info) {
                 removeDragGhost();
                 document.removeEventListener('mousemove', updateDragGhostPosition);
-                
+
+                const newDateTime = info.event.start.toISOString();
                 const eventData = {
-                    publish_date: info.event.start.toISOString()
+                    publish_date: newDateTime
                 };
-                
+
+                // Update calendar event
                 fetch(`/content-calendar/api/event/${info.event.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -121,10 +123,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (!data.success) {
                         info.revert();
+                        return;
                     }
+
                     const eventIndex = events.findIndex(e => e.id == info.event.id);
                     if (eventIndex !== -1) {
-                        events[eventIndex].publish_date = info.event.start.toISOString();
+                        events[eventIndex].publish_date = newDateTime;
+
+                        // If this is a YouTube scheduled video, update YouTube as well
+                        if (events[eventIndex].youtube_video_id) {
+                            return fetch('/api/update-youtube-schedule', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    video_id: events[eventIndex].youtube_video_id,
+                                    publish_time: newDateTime
+                                })
+                            });
+                        }
+                    }
+                })
+                .then(response => {
+                    if (response) {
+                        return response.json();
+                    }
+                })
+                .then(data => {
+                    if (data && !data.success) {
+                        console.error('Failed to update YouTube schedule:', data.error);
+                        alert('Calendar updated but YouTube schedule update failed: ' + data.error);
+                    } else if (data && data.success) {
+                        console.log('YouTube schedule updated successfully');
                     }
                 })
                 .catch(error => {
@@ -680,6 +709,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         const classNames = [];
                         if (event.content_type === 'sponsored') {
                             classNames.push('sponsored');
+                        }
+                        if (event.youtube_video_id) {
+                            classNames.push('youtube-scheduled');
                         }
                         if (event.platform) {
                             classNames.push('platform-' + event.platform.toLowerCase().replace(/[^a-z0-9]/g, ''));

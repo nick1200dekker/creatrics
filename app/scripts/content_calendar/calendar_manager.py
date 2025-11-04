@@ -66,18 +66,19 @@ class ContentCalendarManager:
             logger.error(f"Error loading events for user {self.user_id}: {str(e)}")
             return []
     
-    def create_event(self, title: str, publish_date: str, is_paid: bool = False, 
-                     is_free: bool = True, is_sponsored: bool = False, 
-                     category: str = "", audience_type: str = "Public", 
-                     content_type: str = "", platform: str = "", 
+    def create_event(self, title: str, publish_date: str, is_paid: bool = False,
+                     is_free: bool = True, is_sponsored: bool = False,
+                     category: str = "", audience_type: str = "Public",
+                     content_type: str = "", platform: str = "",
                      description: str = "", color: str = "#20D7D7",
                      content_link: str = "", status: str = "planned",
-                     comments: List[Dict] = None, notes: str = "") -> str:
+                     comments: List[Dict] = None, notes: str = "",
+                     youtube_video_id: str = "") -> str:
         """Create a new calendar event with new fields"""
         try:
             # Generate a unique ID for the event
             event_id = str(uuid.uuid4())
-            
+
             # Create the event object (no user_id needed since it's in the path)
             event_data = {
                 "id": event_id,
@@ -96,6 +97,7 @@ class ContentCalendarManager:
                 "status": status,  # New field: planned, in-progress, review, ready, posted
                 "comments": comments or [],  # New field: list of comment objects
                 "notes": notes,  # New field: concepts, requirements, research notes
+                "youtube_video_id": youtube_video_id,  # YouTube video ID for scheduled videos
                 "created_at": datetime.now(),
                 "updated_at": datetime.now()
             }

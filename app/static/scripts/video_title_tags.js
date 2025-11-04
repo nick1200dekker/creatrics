@@ -1357,11 +1357,21 @@ async function uploadToYouTube() {
                 // Note: We can't read responseText due to CORS, but upload worked!
                 if (uploadXHR.status >= 200 && uploadXHR.status < 300) {
                     resolve();
+                } else if (uploadXHR.status === 0) {
+                    // Status 0 can occur with CORS - but if we got here, upload likely succeeded
+                    // We'll verify by checking for the video in the next step
+                    console.log('Upload completed with status 0 (CORS limitation) - will verify video exists');
+                    resolve();
                 } else {
                     reject(new Error(`Upload failed with status ${uploadXHR.status}`));
                 }
             };
-            uploadXHR.onerror = () => reject(new Error('Network error'));
+            uploadXHR.onerror = () => {
+                // Network error or CORS issue - but upload may have succeeded
+                // YouTube's CORS policy prevents reading responses, triggering onerror even on success
+                console.log('XHR error triggered (likely CORS) - will verify video exists');
+                resolve(); // Continue anyway and verify video exists in next step
+            };
 
             uploadXHR.open('PUT', initData.upload_url);
             uploadXHR.setRequestHeader('Authorization', `Bearer ${initData.access_token}`);
@@ -1540,21 +1550,21 @@ function showUploadProgressModal() {
             <div class="upload-spinner-container">
                 <i class="ph ph-spinner upload-spinner-icon"></i>
             </div>
-            <h3 id="uploadProgressTitle" style="color: var(--text-primary); margin: 1.5rem 0 0.5rem; font-size: 1.25rem; font-weight: 600;">Uploading to YouTube</h3>
-            <p id="uploadProgressMessage" style="color: var(--text-secondary); margin: 0 0 1rem; font-size: 0.9375rem;">Please wait while we upload your video to YouTube</p>
+            <h3 id="uploadProgressTitle">Uploading to YouTube</h3>
+            <p id="uploadProgressMessage">Preparing upload...</p>
 
-            <div style="margin: 1rem 0;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="color: var(--text-tertiary); font-size: 0.8125rem;">Progress</span>
-                    <span id="uploadProgressPercent" style="color: var(--text-primary); font-size: 0.875rem; font-weight: 600;">0%</span>
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span class="progress-label">Progress</span>
+                    <span id="uploadProgressPercent" class="progress-percent">0%</span>
                 </div>
-                <div style="width: 100%; height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-primary);">
-                    <div id="uploadProgressFill" style="height: 100%; width: 0%; background: #3B82F6; transition: width 0.3s ease;"></div>
+                <div class="progress-bar-container">
+                    <div id="uploadProgressFill" class="progress-bar-fill"></div>
                 </div>
             </div>
 
-            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem; margin: 1.5rem 0 1rem;">
-                <div style="display: flex; align-items: start; gap: 0.75rem;">
+            <div class="upload-warning">
+                <div class="upload-warning-content">
                     <i class="ph-fill ph-warning-circle" style="color: #F59E0B; font-size: 1.5rem; margin-top: 0.125rem; flex-shrink: 0;"></i>
                     <div style="flex: 1;">
                         <p style="color: var(--text-primary); font-size: 0.875rem; font-weight: 600; margin: 0 0 0.5rem;">Don't close this page</p>
