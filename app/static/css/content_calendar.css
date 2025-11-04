@@ -810,30 +810,42 @@ html.dark .main-panel {
     backdrop-filter: blur(10px) !important;
 }
 
-/* Platform colors for drag ghost */
+/* Platform colors for drag ghost - Softer tones */
 .drag-ghost.platform-youtube {
-    background: linear-gradient(135deg, #FF0033 0%, #CC0029 100%) !important;
+    background: rgba(255, 0, 51, 0.15) !important;
+    border-left: 3px solid rgba(255, 0, 51, 0.6) !important;
+    color: #dc2626 !important;
 }
 
 .drag-ghost.platform-x,
 .drag-ghost.platform-twitter {
-    background: linear-gradient(135deg, #1DA1F2 0%, #0C85D0 100%) !important;
+    background: rgba(29, 161, 242, 0.15) !important;
+    border-left: 3px solid rgba(29, 161, 242, 0.6) !important;
+    color: #0284c7 !important;
 }
 
 .drag-ghost.platform-instagram {
-    background: linear-gradient(135deg, #E4405F 0%, #C13584 100%) !important;
+    background: rgba(228, 64, 95, 0.15) !important;
+    border-left: 3px solid rgba(228, 64, 95, 0.6) !important;
+    color: #db2777 !important;
 }
 
 .drag-ghost.platform-tiktok {
-    background: linear-gradient(135deg, #000000 0%, #111111 100%) !important;
+    background: rgba(0, 0, 0, 0.12) !important;
+    border-left: 3px solid rgba(0, 0, 0, 0.5) !important;
+    color: #18181b !important;
 }
 
 .drag-ghost.platform-blog {
-    background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%) !important;
+    background: rgba(107, 114, 128, 0.15) !important;
+    border-left: 3px solid rgba(107, 114, 128, 0.6) !important;
+    color: #4b5563 !important;
 }
 
 .drag-ghost.platform-other {
-    background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%) !important;
+    background: rgba(156, 163, 175, 0.15) !important;
+    border-left: 3px solid rgba(156, 163, 175, 0.6) !important;
+    color: #6b7280 !important;
 }
 
 /* Fix FullCalendar drag and drop */
@@ -1019,53 +1031,96 @@ html.dark .fc-day-today::after {
 /* Enhanced Premium Events */
 .fc-event {
     border: none !important;
-    border-radius: 8px !important;
-    padding: 6px 24px 6px 10px !important;
-    font-size: 0.875rem !important;
+    border-radius: 6px !important;
+    padding: 8px 24px 8px 12px !important;
+    font-size: 0.8125rem !important;
     cursor: move !important;
     margin: 3px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
     height: auto !important;
-    min-height: 28px !important;
+    min-height: 32px !important;
     line-height: 1.4 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     position: relative !important;
-    font-weight: 600 !important;
-    backdrop-filter: blur(8px) !important;
+    font-weight: 500 !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Platform-based coloring with gradients */
+/* Platform-based coloring - Softer, more elegant tones */
 .fc-event.platform-youtube {
-    background: linear-gradient(135deg, #FF0033 0%, #CC0029 100%) !important;
-    border-left: 4px solid #AA0029 !important;
+    background: linear-gradient(135deg, rgba(255, 0, 51, 0.08) 0%, rgba(255, 0, 51, 0.12) 100%) !important;
+    border-left: 3px solid rgba(255, 0, 51, 0.6) !important;
+    color: #dc2626 !important;
 }
 
 .fc-event.platform-x,
 .fc-event.platform-twitter {
-    background: linear-gradient(135deg, #1DA1F2 0%, #0C85D0 100%) !important;
-    border-left: 4px solid #0A6AA8 !important;
+    background: linear-gradient(135deg, rgba(29, 161, 242, 0.08) 0%, rgba(29, 161, 242, 0.12) 100%) !important;
+    border-left: 3px solid rgba(29, 161, 242, 0.6) !important;
+    color: #0284c7 !important;
 }
 
 .fc-event.platform-instagram {
-    background: linear-gradient(135deg, #E4405F 0%, #C13584 100%) !important;
-    border-left: 4px solid #A02D6A !important;
+    background: linear-gradient(135deg, rgba(228, 64, 95, 0.08) 0%, rgba(228, 64, 95, 0.12) 100%) !important;
+    border-left: 3px solid rgba(228, 64, 95, 0.6) !important;
+    color: #db2777 !important;
 }
 
 .fc-event.platform-tiktok {
-    background: linear-gradient(135deg, #000000 0%, #111111 100%) !important;
-    border-left: 4px solid #000000 !important;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.08) 100%) !important;
+    border-left: 3px solid rgba(0, 0, 0, 0.5) !important;
+    color: #18181b !important;
 }
 
 .fc-event.platform-blog {
-    background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%) !important;
-    border-left: 4px solid #374151 !important;
+    background: linear-gradient(135deg, rgba(107, 114, 128, 0.08) 0%, rgba(107, 114, 128, 0.12) 100%) !important;
+    border-left: 3px solid rgba(107, 114, 128, 0.6) !important;
+    color: #4b5563 !important;
 }
 
 .fc-event.platform-other {
-    background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%) !important;
-    border-left: 4px solid #4B5563 !important;
+    background: linear-gradient(135deg, rgba(156, 163, 175, 0.08) 0%, rgba(156, 163, 175, 0.12) 100%) !important;
+    border-left: 3px solid rgba(156, 163, 175, 0.6) !important;
+    color: #6b7280 !important;
+}
+
+html.dark .fc-event.platform-youtube {
+    background: linear-gradient(135deg, rgba(255, 0, 51, 0.12) 0%, rgba(255, 0, 51, 0.16) 100%) !important;
+    border-left: 3px solid rgba(255, 0, 51, 0.7) !important;
+    color: #fca5a5 !important;
+}
+
+html.dark .fc-event.platform-x,
+html.dark .fc-event.platform-twitter {
+    background: linear-gradient(135deg, rgba(29, 161, 242, 0.12) 0%, rgba(29, 161, 242, 0.16) 100%) !important;
+    border-left: 3px solid rgba(29, 161, 242, 0.7) !important;
+    color: #7dd3fc !important;
+}
+
+html.dark .fc-event.platform-instagram {
+    background: linear-gradient(135deg, rgba(228, 64, 95, 0.12) 0%, rgba(228, 64, 95, 0.16) 100%) !important;
+    border-left: 3px solid rgba(228, 64, 95, 0.7) !important;
+    color: #f9a8d4 !important;
+}
+
+html.dark .fc-event.platform-tiktok {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.12) 100%) !important;
+    border-left: 3px solid rgba(255, 255, 255, 0.5) !important;
+    color: #e4e4e7 !important;
+}
+
+html.dark .fc-event.platform-blog {
+    background: linear-gradient(135deg, rgba(156, 163, 175, 0.12) 0%, rgba(156, 163, 175, 0.16) 100%) !important;
+    border-left: 3px solid rgba(156, 163, 175, 0.6) !important;
+    color: #d1d5db !important;
+}
+
+html.dark .fc-event.platform-other {
+    background: linear-gradient(135deg, rgba(156, 163, 175, 0.12) 0%, rgba(156, 163, 175, 0.16) 100%) !important;
+    border-left: 3px solid rgba(156, 163, 175, 0.6) !important;
+    color: #d1d5db !important;
 }
 
 /* Money icon for sponsored posts */
@@ -1080,14 +1135,16 @@ html.dark .fc-day-today::after {
 }
 
 .fc-event-main {
-    color: white !important;
-    font-weight: 600 !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+    font-weight: 500 !important;
 }
 
 .fc-event:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25), 0 3px 6px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+}
+
+html.dark .fc-event:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
 .fc-daygrid-event-harness {
@@ -1655,6 +1712,9 @@ input[type="time"] {
     position: relative;
     font-family: inherit;
     color-scheme: light;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    letter-spacing: 0;
 }
 
 html.dark input[type="date"],
@@ -1665,18 +1725,21 @@ html.dark input[type="time"] {
 input[type="date"]::-webkit-datetime-edit,
 input[type="time"]::-webkit-datetime-edit {
     padding: 0;
+    line-height: 1.5;
 }
 
 input[type="date"]::-webkit-datetime-edit-fields-wrapper,
 input[type="time"]::-webkit-datetime-edit-fields-wrapper {
     padding: 0;
     font-weight: 500;
+    line-height: 1.5;
 }
 
 input[type="date"]::-webkit-datetime-edit-text,
 input[type="time"]::-webkit-datetime-edit-text {
     color: var(--text-tertiary);
-    padding: 0 0.25rem;
+    padding: 0 0.125rem;
+    line-height: 1.5;
 }
 
 input[type="date"]::-webkit-datetime-edit-month-field,
@@ -1686,8 +1749,10 @@ input[type="time"]::-webkit-datetime-edit-hour-field,
 input[type="time"]::-webkit-datetime-edit-minute-field,
 input[type="time"]::-webkit-datetime-edit-ampm-field {
     color: var(--text-primary);
-    padding: 0.125rem 0.25rem;
+    padding: 0 0.125rem;
     border-radius: 4px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
 }
 
 input[type="date"]::-webkit-datetime-edit-month-field:focus,
