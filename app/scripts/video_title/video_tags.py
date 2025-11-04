@@ -292,29 +292,8 @@ Only use the ones that make sense for THIS video - don't force irrelevant ones."
                     break
             return optimized
 
-        # If too short, try to expand tags or add more
-        if current_length < self.optimal_min_length:
-            # Keep all existing tags and try to add variations
-            optimized = tags.copy()
-
-            # Add some generic relevant tags if needed (multi-word phrases only)
-            generic_tags = [
-                'how to', 'step by step', 'for beginners', 'must watch',
-                'tips and tricks', 'best practices', 'complete guide',
-                'pro tips', 'expert advice', 'quick tutorial'
-            ]
-
-            for tag in generic_tags:
-                if tag not in optimized:
-                    test_list = optimized + [tag]
-                    test_length = calculate_total_length(test_list)
-                    if test_length <= self.optimal_max_length:
-                        optimized.append(tag)
-                        if test_length >= self.optimal_min_length:
-                            break
-
-            return optimized
-
+        # If too short, just return what we have - AI knows best
+        # Don't add generic filler tags
         return tags
 
     def generate_fallback_tags(self, input_text: str) -> List[str]:
