@@ -661,30 +661,43 @@ class StripeService:
         """Reset user to Free Plan when subscription is cancelled."""
         try:
             logger.info(f"=== CUSTOMER.SUBSCRIPTION.DELETED ===")
-            
+
             # Get customer ID
             customer_id = subscription.get('customer') if isinstance(subscription, dict) else subscription.customer
-            
+
             if not customer_id:
                 logger.error("Could not extract customer ID from subscription")
                 return
-            
+
             logger.info(f"Handling subscription deletion for customer: {customer_id}")
-            
+
             # Look up user
             user_id = StripeService._get_user_id_from_customer(customer_id)
-                
+
             if not user_id:
                 logger.error(f"User not found for Stripe customer: {customer_id}")
                 return
-            
+
+            # Delete Late.dev profile (Instagram/TikTok connections)
+            try:
+                from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+                logger.info(f"Deleting Late.dev profile for user {user_id}")
+                result = LateDevOAuthService.delete_profile(user_id)
+                if result.get('success'):
+                    logger.info(f"✅ Late.dev profile deleted: {result.get('message')}")
+                else:
+                    logger.warning(f"⚠️ Late.dev profile deletion issue: {result.get('error')}")
+            except Exception as e:
+                logger.error(f"Error deleting Late.dev profile: {str(e)}")
+                # Continue even if Late.dev deletion fails
+
             # Reset to Free Plan (keep existing credits)
             UserService.update_user(user_id, {
                 'subscription_plan': 'Free Plan'
             })
-            
+
             logger.info(f"✅ Reset user {user_id} to Free Plan after subscription cancellation")
-            
+
         except Exception as e:
             logger.error(f"Error processing subscription deletion: {str(e)}")
 

@@ -297,6 +297,66 @@ class LateDevOAuthService:
             return {'success': False, 'error': str(e)}
 
     @staticmethod
+    def delete_profile(user_id):
+        """
+        Delete the entire Late.dev profile for a user.
+        This removes all connected accounts (Instagram, TikTok, etc.) and the profile itself.
+        Called when a user downgrades from Premium to Free plan.
+
+        Args:
+            user_id: User's ID
+
+        Returns:
+            dict: Result with success status
+        """
+        try:
+            # Get user's profile ID from Firebase
+            user_data = UserService.get_user(user_id)
+            if not user_data or not user_data.get('latedev_profile_id'):
+                logger.info(f"No Late.dev profile found for user {user_id}")
+                return {'success': True, 'message': 'No profile to delete'}
+
+            profile_id = user_data.get('latedev_profile_id')
+            logger.info(f"Deleting Late.dev profile {profile_id} for user {user_id}")
+
+            headers = {
+                'Authorization': f'Bearer {LateDevOAuthService.API_KEY}'
+            }
+
+            # Delete the profile (this also removes all connected accounts)
+            response = requests.delete(
+                f"{LateDevOAuthService.BASE_URL}/profile/{profile_id}",
+                headers=headers,
+                timeout=10
+            )
+
+            if response.status_code in [200, 204]:
+                # Remove profile ID from Firebase
+                UserService.update_user(user_id, {
+                    'latedev_profile_id': None
+                })
+                logger.info(f"✅ Deleted Late.dev profile {profile_id} for user {user_id}")
+                return {'success': True, 'message': 'Profile deleted successfully'}
+            else:
+                logger.error(f"Failed to delete profile: {response.status_code} - {response.text}")
+                # Even if API call fails, clear the profile ID from Firebase
+                UserService.update_user(user_id, {
+                    'latedev_profile_id': None
+                })
+                return {'success': False, 'error': f'Failed to delete profile: {response.status_code}'}
+
+        except Exception as e:
+            logger.error(f"Error deleting Late.dev profile: {str(e)}")
+            # Clear profile ID even on error
+            try:
+                UserService.update_user(user_id, {
+                    'latedev_profile_id': None
+                })
+            except:
+                pass
+            return {'success': False, 'error': str(e)}
+
+    @staticmethod
     def get_account_id(user_id, platform='instagram'):
         """
         Get Late.dev account ID for a platform
