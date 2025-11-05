@@ -94,11 +94,28 @@ function updateConnectionUI(data) {
 
         // Show user info if available
         if (data.user_info) {
+            console.log('TikTok user info:', data.user_info);
             userInfo.style.display = 'flex';
-            document.getElementById('userAvatar').src = data.user_info.avatar_url || '/static/img/default-avatar.png';
+
+            const avatarEl = document.getElementById('userAvatar');
+            if (data.user_info.avatar_url) {
+                avatarEl.src = data.user_info.avatar_url;
+                avatarEl.style.display = 'block';
+            } else {
+                // Hide the avatar if not available
+                avatarEl.style.display = 'none';
+            }
+
             document.getElementById('userName').textContent = data.user_info.display_name || 'TikTok User';
-            // Hide the username handle since TikTok API doesn't provide it
-            document.getElementById('userOpenId').style.display = 'none';
+
+            // Show username if available
+            const userOpenIdEl = document.getElementById('userOpenId');
+            if (data.user_info.username) {
+                userOpenIdEl.textContent = '@' + data.user_info.username;
+                userOpenIdEl.style.display = 'block';
+            } else {
+                userOpenIdEl.style.display = 'none';
+            }
         }
     } else {
         // Disconnected state
@@ -360,6 +377,33 @@ function renderUploadSection(visible) {
                                         </div>
                                     </div>
                                 </label>
+
+                                <label class="radio-option">
+                                    <input type="radio" name="mode" id="modeScheduled" value="scheduled" onchange="handleModeChange()">
+                                    <div class="radio-content">
+                                        <i class="ph ph-clock"></i>
+                                        <div>
+                                            <div class="option-title">Schedule</div>
+                                            <div class="option-desc">Post at specific time</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Schedule Time (shown when scheduled mode is selected) -->
+                        <div class="upload-option-card" id="scheduleCard" style="display: none;">
+                            <label class="upload-option-label schedule-label">
+                                <i class="ph ph-calendar"></i>
+                                Publish Date & Time <span class="utc-indicator" id="timezoneIndicator">(Local Time)</span>
+                            </label>
+                            <div class="schedule-datetime-grid">
+                                <select id="scheduleDateSelect" class="privacy-select">
+                                    <option value="">Select date</option>
+                                </select>
+                                <select id="scheduleTimeSelect" class="privacy-select">
+                                    <option value="">Select time</option>
+                                </select>
                             </div>
                         </div>
 
@@ -632,23 +676,123 @@ function formatFileSize(bytes) {
 }
 
 /**
- * Handle mode change - show/hide privacy options
+ * Handle mode change - show/hide privacy options and schedule card
  */
 function handleModeChange() {
     const mode = document.querySelector('input[name="mode"]:checked')?.value;
     const privacyCard = document.getElementById('privacyCard');
+    const scheduleCard = document.getElementById('scheduleCard');
 
+    // Privacy card: hide for inbox and scheduled (inbox=draft, scheduled=always public)
     if (privacyCard) {
-        if (mode === 'inbox') {
+        if (mode === 'inbox' || mode === 'scheduled') {
             privacyCard.style.display = 'none';
         } else {
             privacyCard.style.display = 'block';
         }
     }
+
+    // Schedule card: only show for scheduled mode
+    if (scheduleCard) {
+        if (mode === 'scheduled') {
+            scheduleCard.style.display = 'block';
+
+            // Update timezone indicator
+            const timezoneIndicator = document.getElementById('timezoneIndicator');
+            if (timezoneIndicator) {
+                const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const tzAbbr = new Date().toLocaleTimeString('en-us', {timeZoneName:'short'}).split(' ')[2];
+                timezoneIndicator.textContent = `(${tzAbbr || userTimezone})`;
+            }
+
+            // Populate dropdowns if not already done
+            const scheduleDateSelect = document.getElementById('scheduleDateSelect');
+            const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
+
+            if (scheduleDateSelect && scheduleDateSelect.options.length === 1) {
+                populateScheduleDateDropdown();
+            }
+            if (scheduleTimeSelect && scheduleTimeSelect.options.length === 1) {
+                populateScheduleTimeDropdown();
+            }
+
+            // Set default to tomorrow at 12:00
+            if (scheduleDateSelect && !scheduleDateSelect.value) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const year = tomorrow.getFullYear();
+                const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                const day = String(tomorrow.getDate()).padStart(2, '0');
+                scheduleDateSelect.value = `${year}-${month}-${day}`;
+            }
+            if (scheduleTimeSelect && !scheduleTimeSelect.value) {
+                scheduleTimeSelect.value = '12:00';
+            }
+        } else {
+            scheduleCard.style.display = 'none';
+        }
+    }
 }
 
 /**
- * Handle video upload (async with progress tracking)
+ * Populate schedule date dropdown (365 days)
+ */
+function populateScheduleDateDropdown() {
+    const dateSelect = document.getElementById('scheduleDateSelect');
+    if (!dateSelect) return;
+
+    dateSelect.innerHTML = '<option value="">Select date</option>';
+
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const value = `${year}-${month}-${day}`;
+
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+        const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+        const label = `${dayName}, ${monthName} ${day}, ${year}`;
+
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        dateSelect.appendChild(option);
+    }
+}
+
+/**
+ * Populate schedule time dropdown (15-minute intervals)
+ */
+function populateScheduleTimeDropdown() {
+    const timeSelect = document.getElementById('scheduleTimeSelect');
+    if (!timeSelect) return;
+
+    timeSelect.innerHTML = '<option value="">Select time</option>';
+
+    for (let hour = 0; hour < 24; hour++) {
+        for (let minute = 0; minute < 60; minute += 15) {
+            const hourStr = String(hour).padStart(2, '0');
+            const minuteStr = String(minute).padStart(2, '0');
+            const value = `${hourStr}:${minuteStr}`;
+
+            const hour12 = hour % 12 || 12;
+            const ampm = hour < 12 ? 'AM' : 'PM';
+            const label = `${hour12}:${minuteStr} ${ampm}`;
+
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            timeSelect.appendChild(option);
+        }
+    }
+}
+
+/**
+ * Handle video upload (via Firebase Storage + Late.dev)
  */
 async function handleUpload(e) {
     e.preventDefault();
@@ -665,7 +809,48 @@ async function handleUpload(e) {
 
     const title = currentTitles[selectedTitleIndex];
     const mode = document.querySelector('input[name="mode"]:checked').value;
-    const privacyLevel = mode === 'inbox' ? 'SELF_ONLY' : document.querySelector('input[name="privacy"]:checked').value;
+
+    // Privacy level: inbox=SELF_ONLY, scheduled=PUBLIC, direct=PUBLIC (or user selected)
+    let privacyLevel;
+    if (mode === 'inbox') {
+        privacyLevel = 'SELF_ONLY';
+    } else if (mode === 'scheduled') {
+        privacyLevel = 'PUBLIC_TO_EVERYONE';  // Scheduled posts are always public
+    } else {
+        // Direct post: always public (simplest option)
+        privacyLevel = 'PUBLIC_TO_EVERYONE';
+    }
+
+    // Validate schedule time if scheduled mode
+    let scheduleTime = null;
+    let userTimezone = 'UTC';
+    if (mode === 'scheduled') {
+        const scheduleDateSelect = document.getElementById('scheduleDateSelect');
+        const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
+
+        const dateValue = scheduleDateSelect ? scheduleDateSelect.value : null;
+        const timeValue = scheduleTimeSelect ? scheduleTimeSelect.value : null;
+
+        if (!dateValue || !timeValue) {
+            showToast('Please select both date and time for scheduling', 'error');
+            return;
+        }
+
+        // Get user's local timezone
+        userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        // Combine date and time in user's local timezone
+        const localDateTime = new Date(`${dateValue}T${timeValue}:00`);
+
+        // Validate that schedule time is in the future
+        if (localDateTime <= new Date()) {
+            showToast('Schedule time must be in the future', 'error');
+            return;
+        }
+
+        // Convert to ISO format
+        scheduleTime = localDateTime.toISOString();
+    }
 
     // Disable upload button
     const uploadBtn = document.getElementById('uploadBtn');
@@ -674,39 +859,68 @@ async function handleUpload(e) {
     uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading...';
 
     try {
-        // Create form data
+        // Step 1: Upload media to Firebase Storage
         const formData = new FormData();
-        formData.append('video', selectedFile);
-        formData.append('title', title);
-        formData.append('privacy_level', privacyLevel);
-        formData.append('mode', mode);
+        formData.append('media', selectedFile);
 
-        console.log('Starting async upload to TikTok...');
-
-        // Start upload (returns immediately with upload_id)
-        const response = await fetch('/tiktok-upload-studio/api/upload', {
+        const uploadResponse = await fetch('/tiktok-upload-studio/api/upload-media', {
             method: 'POST',
             body: formData
         });
 
-        const data = await response.json();
+        const uploadData = await uploadResponse.json();
 
-        if (data.success && data.upload_id) {
-            // Show upload in progress notification
-            showUploadProgress(data.upload_id);
-
-            // Start polling for progress (pass button to re-enable when complete)
-            pollUploadProgress(data.upload_id, mode, uploadBtn, originalBtnContent);
-
-            showToast('Upload started! You can continue working while video uploads.', 'info');
-        } else {
-            showToast('Upload failed: ' + data.error, 'error');
-            uploadBtn.disabled = false;
-            uploadBtn.innerHTML = originalBtnContent;
+        if (!uploadData.success) {
+            throw new Error(uploadData.error || 'Failed to upload media');
         }
+
+        console.log('Media uploaded to Firebase:', uploadData.media_url);
+
+        // Step 2: Post to TikTok via Late.dev using the Firebase URL
+        uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Posting to TikTok...';
+
+        const postPayload = {
+            title: title,
+            media_url: uploadData.media_url,
+            mode: mode,
+            privacy_level: privacyLevel
+        };
+
+        if (mode === 'scheduled') {
+            postPayload.schedule_time = scheduleTime;
+            postPayload.timezone = userTimezone;
+        }
+
+        const postResponse = await fetch('/tiktok-upload-studio/api/upload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(postPayload)
+        });
+
+        const postData = await postResponse.json();
+
+        if (postData.success) {
+            let message = 'TikTok post successful!';
+            if (mode === 'inbox') {
+                message = 'Video saved to TikTok inbox!';
+            } else if (mode === 'scheduled') {
+                message = 'TikTok post scheduled successfully!';
+            }
+            showToast(message, 'success');
+
+            // Clear the file
+            removeVideoStatic();
+        } else {
+            throw new Error(postData.error || 'TikTok post failed');
+        }
+
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = originalBtnContent;
     } catch (error) {
         console.error('Upload error:', error);
-        showToast('Failed to start upload', 'error');
+        showToast('Upload failed: ' + error.message, 'error');
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = originalBtnContent;
     }
@@ -988,8 +1202,10 @@ function handleVideoSelectStatic(event) {
 }
 
 function removeVideoStatic(event) {
-    event.stopPropagation();
-    event.preventDefault();
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
 
     selectedFile = null;
 

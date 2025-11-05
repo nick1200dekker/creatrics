@@ -1142,6 +1142,13 @@ html.dark .fc-event.platform-other {
     opacity: 0.85;
 }
 
+/* Clock icon for TikTok scheduled posts */
+.fc-event.tiktok-scheduled .clock-icon {
+    margin-right: 6px;
+    font-size: 0.875em;
+    opacity: 0.85;
+}
+
 .fc-event-main {
     font-weight: 500 !important;
 }

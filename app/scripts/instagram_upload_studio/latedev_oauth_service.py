@@ -35,9 +35,12 @@ class LateDevOAuthService:
             # Get or create profile for this user
             profile_id = LateDevOAuthService._get_or_create_profile(user_id)
 
-            # Build callback URL
+            # Build callback URL based on platform
             callback_url = os.environ.get('BASE_URL', 'http://localhost:8080')
-            redirect_url = f"{callback_url}/instagram-upload-studio/callback"
+            if platform == 'tiktok':
+                redirect_url = f"{callback_url}/tiktok-upload-studio/callback"
+            else:
+                redirect_url = f"{callback_url}/instagram-upload-studio/callback"
 
             # Call Late.dev API to get the auth URL
             headers = {

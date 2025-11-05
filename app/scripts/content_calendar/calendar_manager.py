@@ -73,7 +73,8 @@ class ContentCalendarManager:
                      description: str = "", color: str = "#20D7D7",
                      content_link: str = "", status: str = "planned",
                      comments: List[Dict] = None, notes: str = "",
-                     youtube_video_id: str = "", instagram_post_id: str = "") -> str:
+                     youtube_video_id: str = "", instagram_post_id: str = "",
+                     tiktok_post_id: str = "") -> str:
         """Create a new calendar event with new fields"""
         try:
             # Generate a unique ID for the event
@@ -99,6 +100,7 @@ class ContentCalendarManager:
                 "notes": notes,  # New field: concepts, requirements, research notes
                 "youtube_video_id": youtube_video_id,  # YouTube video ID for scheduled videos
                 "instagram_post_id": instagram_post_id,  # Instagram post ID for scheduled posts
+                "tiktok_post_id": tiktok_post_id,  # TikTok post ID for scheduled posts
                 "created_at": datetime.now(),
                 "updated_at": datetime.now()
             }

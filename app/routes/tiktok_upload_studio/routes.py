@@ -1,6 +1,6 @@
 """
 TikTok Upload Studio Routes
-OAuth connection, token management, and video uploading
+OAuth connection via Late.dev, title generation, and scheduled video posting
 """
 
 import os
@@ -8,14 +8,13 @@ import logging
 from flask import render_template, redirect, url_for, request, jsonify, g
 from app.routes.tiktok_upload_studio import bp
 from app.system.auth.middleware import auth_required
-from app.scripts.tiktok_upload_studio.tiktok_oauth_service import TikTokOAuthService
-from app.scripts.tiktok_upload_studio.tiktok_upload_service import TikTokUploadService
-from app.scripts.tiktok_upload_studio.async_upload_service import TikTokAsyncUploadService
-from app.scripts.tiktok_upload_studio.upload_tracker import UploadTracker
+from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+from app.scripts.tiktok_upload_studio.latedev_tiktok_service import TikTokLateDevService
 from app.scripts.tiktok_upload_studio.tiktok_title_generator import TikTokTitleGenerator
 from app.system.services.firebase_service import StorageService
 from app.system.auth.permissions import get_workspace_user_id
 from app.system.credits.credits_manager import CreditsManager
+from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
 import uuid
 
 logger = logging.getLogger('tiktok_upload_studio')
@@ -28,18 +27,12 @@ def index():
     try:
         user_id = g.user.get('id')
 
-        # Check if user has TikTok connected
-        is_connected = TikTokOAuthService.is_connected(user_id)
-
-        # Get TikTok credentials from env
-        client_key = os.environ.get('TIKTOK_CLIENT_KEY')
-        redirect_uri = os.environ.get('TIKTOK_REDIRECT_URI', 'https://creatrics.com/tiktok-upload-studio/callback')
+        # Check if user has TikTok connected via Late.dev
+        is_connected = LateDevOAuthService.is_connected(user_id, 'tiktok')
 
         return render_template(
             'tiktok_upload_studio/index.html',
-            is_connected=is_connected,
-            client_key=client_key,
-            redirect_uri=redirect_uri
+            is_connected=is_connected
         )
     except Exception as e:
         logger.error(f"Error loading TikTok Upload Studio: {str(e)}")
@@ -49,50 +42,53 @@ def index():
 @bp.route('/connect')
 @auth_required
 def connect():
-    """Initiate TikTok OAuth flow"""
+    """Initiate TikTok OAuth flow via Late.dev"""
     try:
         user_id = g.user.get('id')
+        logger.info(f"TikTok connect route called for user {user_id}")
 
-        # Generate authorization URL
-        auth_url = TikTokOAuthService.get_authorization_url(user_id)
+        # Generate Late.dev authorization URL for TikTok
+        auth_url = LateDevOAuthService.get_authorization_url(user_id, 'tiktok')
+        logger.info(f"Generated auth URL: {auth_url}")
 
-        logger.info(f"Redirecting user {user_id} to TikTok OAuth: {auth_url}")
+        logger.info(f"Redirecting user {user_id} to Late.dev TikTok OAuth")
         return redirect(auth_url)
 
     except Exception as e:
-        logger.error(f"Error initiating TikTok OAuth: {str(e)}")
-        return redirect(url_for('tiktok_upload_studio.index', error='oauth_init_failed'))
+        logger.error(f"Error initiating TikTok OAuth: {str(e)}", exc_info=True)
+        error_msg = str(e)
+        return redirect(url_for('tiktok_upload_studio.index', error=error_msg))
 
 
 @bp.route('/callback')
 @auth_required
 def callback():
-    """Handle TikTok OAuth callback"""
+    """Handle Late.dev OAuth callback for TikTok"""
     try:
         user_id = g.user.get('id')
 
-        # Get authorization code and state
-        code = request.args.get('code')
-        state = request.args.get('state')
+        # Log all query params for debugging
+        logger.info(f"TikTok callback received for user {user_id}")
+        logger.info(f"Query params: {dict(request.args)}")
+
+        # Get success/error from query params
+        success = request.args.get('success')
         error = request.args.get('error')
+        connected = request.args.get('connected')
+
+        logger.info(f"success={success}, error={error}, connected={connected}")
 
         if error:
             logger.error(f"TikTok OAuth error: {error}")
-            return redirect(url_for('tiktok_upload_studio.index', error='oauth_denied'))
+            return redirect(url_for('tiktok_upload_studio.index', error=f'oauth_error_{error}'))
 
-        if not code or not state:
-            logger.error("Missing code or state in TikTok callback")
-            return redirect(url_for('tiktok_upload_studio.index', error='invalid_callback'))
-
-        # Exchange code for access token
-        result = TikTokOAuthService.handle_callback(user_id, code, state)
-
-        if result['success']:
+        # Late.dev uses 'connected' parameter to indicate success
+        if success == 'true' or connected:
             logger.info(f"TikTok connected successfully for user {user_id}")
             return redirect(url_for('tiktok_upload_studio.index', success='connected'))
         else:
-            logger.error(f"TikTok OAuth failed: {result.get('error')}")
-            return redirect(url_for('tiktok_upload_studio.index', error=result.get('error')))
+            logger.error(f"TikTok OAuth failed - no success indicator")
+            return redirect(url_for('tiktok_upload_studio.index', error='connection_failed'))
 
     except Exception as e:
         logger.error(f"Error in TikTok callback: {str(e)}")
@@ -102,11 +98,11 @@ def callback():
 @bp.route('/disconnect', methods=['POST'])
 @auth_required
 def disconnect():
-    """Disconnect TikTok account"""
+    """Disconnect TikTok account from Late.dev"""
     try:
         user_id = g.user.get('id')
 
-        result = TikTokOAuthService.disconnect(user_id)
+        result = LateDevOAuthService.disconnect(user_id, 'tiktok')
 
         if result['success']:
             return jsonify({'success': True, 'message': 'TikTok account disconnected'})
@@ -121,19 +117,27 @@ def disconnect():
 @bp.route('/api/status')
 @auth_required
 def api_status():
-    """Check TikTok connection status"""
+    """Check TikTok connection status via Late.dev"""
     try:
         user_id = g.user.get('id')
 
-        is_connected = TikTokOAuthService.is_connected(user_id)
-        user_info = None
+        account_info = LateDevOAuthService.get_account_info(user_id, 'tiktok')
 
-        if is_connected:
-            user_info = TikTokOAuthService.get_user_info(user_id)
+        logger.info(f"TikTok account info from Late.dev: {account_info}")
+
+        # Format user info for frontend
+        user_info = None
+        if account_info:
+            user_info = {
+                'display_name': account_info.get('name') or account_info.get('username') or 'TikTok User',
+                'avatar_url': account_info.get('profilePicture') or account_info.get('profilePictureUrl'),
+                'username': account_info.get('username')
+            }
+            logger.info(f"Formatted user info: {user_info}")
 
         return jsonify({
             'success': True,
-            'connected': is_connected,
+            'connected': account_info is not None,
             'user_info': user_info
         })
 
@@ -142,76 +146,134 @@ def api_status():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@bp.route('/api/upload-media', methods=['POST'])
+@auth_required
+def api_upload_media():
+    """Upload media file to Firebase Storage with long-lived URL for scheduled posts"""
+    try:
+        user_id = g.user.get('id')
+
+        # Get file from request
+        if 'media' not in request.files:
+            return jsonify({'success': False, 'error': 'No media file provided'}), 400
+
+        media_file = request.files['media']
+        if not media_file or media_file.filename == '':
+            return jsonify({'success': False, 'error': 'No media file selected'}), 400
+
+        # Generate unique filename
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_ext = os.path.splitext(media_file.filename)[1]
+        unique_filename = f"tiktok_{timestamp}_{uuid.uuid4().hex[:8]}{file_ext}"
+
+        # Upload to Firebase Storage with public URL (no expiration for scheduled posts)
+        directory = 'tiktok_uploads'
+        logger.info(f"Uploading media to Firebase: {directory}/{unique_filename}")
+
+        # Reset file pointer to beginning
+        media_file.seek(0)
+
+        # Upload as public URL for TikTok scheduled posts (never expires)
+        result = StorageService.upload_file(
+            user_id,
+            directory,
+            unique_filename,
+            media_file,
+            make_public=True  # Public URL for scheduled posts
+        )
+
+        if result:
+            # Extract URL from result (can be dict or string)
+            if isinstance(result, dict):
+                public_url = result.get('url')
+            else:
+                public_url = result
+
+            logger.info(f"Media uploaded successfully: {public_url}")
+            return jsonify({
+                'success': True,
+                'media_url': public_url
+            }), 200
+        else:
+            return jsonify({'success': False, 'error': 'Failed to upload to storage'}), 500
+
+    except Exception as e:
+        logger.error(f"Error uploading media: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @bp.route('/api/upload', methods=['POST'])
 @auth_required
 def api_upload():
-    """Upload video to TikTok (async with streaming - no disk storage)"""
+    """Post to TikTok via Late.dev using Firebase Storage URL"""
     try:
         user_id = g.user.get('id')
 
         # Check if user is connected
-        if not TikTokOAuthService.is_connected(user_id):
+        if not LateDevOAuthService.is_connected(user_id, 'tiktok'):
             return jsonify({'success': False, 'error': 'TikTok not connected'}), 403
 
-        # Get form data
-        video_file = request.files.get('video')
-        title = request.form.get('title', '')
-        privacy_level = request.form.get('privacy_level', 'SELF_ONLY')  # Default to private for testing
-        mode = request.form.get('mode', 'direct')  # 'direct' or 'inbox'
-
-        if not video_file:
-            return jsonify({'success': False, 'error': 'No video file provided'}), 400
+        # Get JSON data
+        data = request.json
+        title = data.get('title', '').strip()
+        media_url = data.get('media_url', '').strip()  # Firebase Storage URL
+        mode = data.get('mode', 'direct')  # 'direct', 'inbox', or 'scheduled'
+        privacy_level = data.get('privacy_level', 'PUBLIC_TO_EVERYONE')
+        schedule_time = data.get('schedule_time')  # ISO 8601 format or null for immediate
+        timezone = data.get('timezone', 'UTC')
 
         if not title:
             return jsonify({'success': False, 'error': 'Title is required'}), 400
 
-        logger.info(f"Starting async upload to TikTok for user {user_id}: {title} (mode: {mode})")
+        if not media_url:
+            return jsonify({'success': False, 'error': 'Media URL is required'}), 400
 
-        # Start async upload (returns immediately with upload_id)
-        result = TikTokAsyncUploadService.start_upload(
+        logger.info(f"Starting TikTok post for user {user_id}: {title[:50]}... (mode: {mode})")
+
+        # Post to TikTok via Late.dev using the Firebase URL
+        result = TikTokLateDevService.upload_video(
             user_id=user_id,
-            video_file=video_file,
+            media_url=media_url,
             title=title,
+            mode=mode,
             privacy_level=privacy_level,
-            mode=mode
+            schedule_time=schedule_time,
+            timezone=timezone
         )
 
         if result['success']:
-            logger.info(f"Async upload started: {result.get('upload_id')}")
-            return jsonify(result)
+            logger.info(f"TikTok post successful: {result.get('post_id')}")
+
+            # If scheduled, create calendar event
+            post_id = result.get('post_id')
+            if mode == 'scheduled' and schedule_time and post_id:
+                try:
+                    calendar_manager = ContentCalendarManager(user_id)
+                    event_title = title.split('\n')[0][:100] if title else 'TikTok Video'
+
+                    event_id = calendar_manager.create_event(
+                        title=event_title,
+                        publish_date=schedule_time,
+                        platform='TikTok',
+                        status='ready',
+                        content_type='organic',
+                        tiktok_post_id=post_id,
+                        notes=f'TikTok Post ID: {post_id}'
+                    )
+
+                    logger.info(f"Created calendar event {event_id} for scheduled TikTok post {post_id}")
+                except Exception as e:
+                    logger.error(f"Failed to create calendar event: {e}")
+                    # Continue even if calendar creation fails
+
+            return jsonify(result), 200
         else:
-            logger.error(f"Failed to start upload: {result.get('error')}")
+            logger.error(f"TikTok post failed: {result.get('error')}")
             return jsonify(result), 500
 
     except Exception as e:
-        logger.error(f"Error in video upload: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@bp.route('/api/upload-status/<upload_id>')
-@auth_required
-def api_upload_status(upload_id):
-    """Check upload progress"""
-    try:
-        user_id = g.user.get('id')
-
-        # Get upload status
-        upload_data = UploadTracker.get_upload(upload_id)
-
-        if not upload_data:
-            return jsonify({'success': False, 'error': 'Upload not found'}), 404
-
-        # Verify user owns this upload
-        if upload_data.get('user_id') != user_id:
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
-
-        return jsonify({
-            'success': True,
-            'upload': upload_data
-        })
-
-    except Exception as e:
-        logger.error(f"Error checking upload status: {str(e)}")
+        logger.error(f"Error in TikTok upload: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
