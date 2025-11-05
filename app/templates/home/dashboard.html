@@ -450,8 +450,8 @@
             <p class="social-heading">Follow us on</p>
             <div class="social-links">
                 <a href="https://x.com/creatrics_" target="_blank" rel="noopener noreferrer" class="social-link">
-                    <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 18px; height: auto; padding: 0 !important;">
-                    <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 18px; height: auto; padding: 0 !important;">
+                    <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 14px; height: auto; padding: 0 !important;">
+                    <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 14px; height: auto; padding: 0 !important;">
                 </a>
                 <a href="https://www.youtube.com/@Creatrics" target="_blank" rel="noopener noreferrer" class="social-link">
                     <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 56px; height: auto; padding: 0 !important;">
@@ -461,7 +461,12 @@
 
         <!-- Footer - Clean -->
         <footer class="home-footer">
-            <p>&copy; 2025 Creatrics. All rights reserved.</p>
+            <p class="footer-links">
+                <a href="{{ url_for('core.privacy_policy') }}">Privacy Policy</a>
+                <span class="separator">•</span>
+                <a href="{{ url_for('core.terms_conditions') }}">Terms & Conditions</a>
+            </p>
+            <p class="footer-copyright">&copy; 2025 Creatrics. All rights reserved.</p>
         </footer>
         {% endif %}
     </div>
