@@ -357,25 +357,40 @@ class StorageService:
             return []
     
     @staticmethod
-    def upload_file(user_id, directory, filename, file_object):
-        """Upload a file to the user's directory"""
+    def upload_file(user_id, directory, filename, file_object, expiration_seconds=604800, make_public=False):
+        """Upload a file to the user's directory with configurable URL expiration
+
+        Args:
+            user_id: User ID
+            directory: Storage directory
+            filename: Filename
+            file_object: File object to upload
+            expiration_seconds: URL expiration time in seconds (default: 7 days)
+            make_public: If True, make file publicly accessible without signed URL
+        """
         if not bucket:
             logger.error("Firebase Storage not initialized")
             return None
-            
+
         try:
             logger.info(f"Uploading file {filename} for user {user_id} to directory {directory}")
             blob = bucket.blob(f'users/{user_id}/{directory}/{filename}')
             blob.upload_from_file(file_object)
-            
-            # Generate a signed URL for access
-            url = blob.generate_signed_url(
-                version='v4',
-                expiration=3600,
-                method='GET'
-            )
-            
-            logger.info(f"File {filename} uploaded successfully for user {user_id}")
+
+            if make_public:
+                # Make the blob publicly accessible
+                blob.make_public()
+                url = blob.public_url
+                logger.info(f"File {filename} uploaded successfully for user {user_id} as public URL")
+            else:
+                # Generate a signed URL for access with configurable expiration
+                url = blob.generate_signed_url(
+                    version='v4',
+                    expiration=expiration_seconds,
+                    method='GET'
+                )
+                logger.info(f"File {filename} uploaded successfully for user {user_id} with {expiration_seconds}s URL expiration")
+
             return {
                 'path': blob.name,
                 'url': url

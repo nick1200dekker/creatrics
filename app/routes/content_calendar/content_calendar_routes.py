@@ -139,9 +139,68 @@ def update_event(event_id):
         if 'notes' in data:
             update_data['notes'] = data['notes']
         
+        # If publish_date is being updated and event has Instagram post, update Late.dev
+        if 'publish_date' in data:
+            event = calendar_manager.get_event(event_id)
+            instagram_post_id = event.get('instagram_post_id') if event else None
+
+            if instagram_post_id:
+                try:
+                    import requests
+                    import os
+                    from datetime import datetime
+                    from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+
+                    # Get Instagram account ID
+                    account_id = LateDevOAuthService.get_account_id(user_id, 'instagram')
+                    if not account_id:
+                        current_app.logger.error("Instagram account not connected, cannot update post schedule")
+                    else:
+                        # Format the new publish date
+                        new_publish_time = data['publish_date']
+                        dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
+                        formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+                        headers = {
+                            'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                            'Content-Type': 'application/json'
+                        }
+
+                        update_post_data = {
+                            'scheduledFor': formatted_time,
+                            'timezone': 'UTC',
+                            'platforms': [{
+                                'platform': 'instagram',
+                                'accountId': account_id
+                            }],
+                            'isDraft': False  # Explicitly set to not draft
+                        }
+
+                        current_app.logger.info(f"Attempting to update Instagram post {instagram_post_id} schedule to {formatted_time}")
+                        current_app.logger.info(f"Update payload: {update_post_data}")
+
+                        response = requests.put(
+                            f"https://getlate.dev/api/v1/posts/{instagram_post_id}",
+                            headers=headers,
+                            json=update_post_data,
+                            timeout=30
+                        )
+
+                        if response.status_code in [200, 201]:
+                            result = response.json()
+                            status = result.get('post', {}).get('status', 'unknown')
+                            current_app.logger.info(f"Updated Instagram post {instagram_post_id} schedule to {formatted_time}, status: {status}")
+                            current_app.logger.info(f"Response: {response.text}")
+                        else:
+                            current_app.logger.error(f"Failed to update Instagram post schedule: {response.status_code}")
+                            current_app.logger.error(f"Response body: {response.text}")
+                except Exception as e:
+                    current_app.logger.error(f"Error updating Instagram post schedule: {e}")
+                    # Continue with calendar update even if Instagram update fails
+
         # Update the event
         success = calendar_manager.update_event(event_id=event_id, **update_data)
-        
+
         if success:
             return jsonify({"success": True})
         else:
@@ -184,6 +243,32 @@ def delete_event(event_id):
             except Exception as e:
                 current_app.logger.error(f"Error deleting YouTube video {youtube_video_id}: {e}")
                 # Continue with calendar event deletion even if YouTube deletion fails
+
+        # If this event has an Instagram post, delete it from Late.dev
+        instagram_post_id = event.get('instagram_post_id')
+        if instagram_post_id:
+            try:
+                import requests
+                import os
+
+                headers = {
+                    'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                    'Content-Type': 'application/json'
+                }
+
+                response = requests.delete(
+                    f"https://getlate.dev/api/v1/posts/{instagram_post_id}",
+                    headers=headers,
+                    timeout=30
+                )
+
+                if response.status_code in [200, 201, 204]:
+                    current_app.logger.info(f"Deleted Instagram post {instagram_post_id}")
+                else:
+                    current_app.logger.error(f"Failed to delete Instagram post {instagram_post_id}: {response.status_code}")
+            except Exception as e:
+                current_app.logger.error(f"Error deleting Instagram post {instagram_post_id}: {e}")
+                # Continue with calendar event deletion even if Instagram deletion fails
 
         # Delete the calendar event
         success = calendar_manager.delete_event(event_id)

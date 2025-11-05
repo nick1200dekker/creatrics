@@ -1135,6 +1135,13 @@ html.dark .fc-event.platform-other {
     opacity: 0.85;
 }
 
+/* Clock icon for Instagram scheduled posts */
+.fc-event.instagram-scheduled .clock-icon {
+    margin-right: 6px;
+    font-size: 0.875em;
+    opacity: 0.85;
+}
+
 .fc-event-main {
     font-weight: 500 !important;
 }

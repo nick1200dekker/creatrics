@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block seo_meta %}
+<meta name="description" content="Upload videos directly to Instagram with AI-powered content creation. Connect your Instagram account and publish content with optimized captions and privacy settings.">
+<meta name="keywords" content="Instagram upload, Instagram API, video upload, Instagram publishing, content posting, Instagram automation">
+{% endblock %}
+
+{% block title %}Upload Studio | Creatrics{% endblock %}
+
+{% block additional_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/instagram_upload_studio.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="content-panel">
+    <div class="generator-wrapper">
+        <!-- Header -->
+        <div class="generator-header">
+            <h1 class="generator-title">
+                <i class="ph ph-upload"></i>
+                Upload Studio
+            </h1>
+        </div>
+
+        <!-- Content Area -->
+        <div class="generator-content">
+            <!-- Connection Status Card -->
+            <div class="connection-card">
+                <div class="connection-header">
+                    <div class="connection-status">
+                        <div class="status-indicator">
+                            <div class="status-dot loading"></div>
+                            <span class="status-text">Checking connection...</span>
+                        </div>
+
+                        <div id="connectionButtons" style="display: none;">
+                            <button id="connectBtn" class="secondary-button" style="display: none;">
+                                <i class="ph ph-link"></i>
+                                <span>Connect Instagram</span>
+                            </button>
+
+                            <button id="disconnectBtn" class="btn-disconnect" style="display: none;">
+                                <i class="ph ph-plug"></i>
+                                Disconnect
+                            </button>
+                        </div>
+
+                        <!-- Loading skeleton for buttons -->
+                        <div id="buttonSkeleton" class="skeleton-loader" style="width: 150px; height: 36px; border-radius: 8px;"></div>
+                    </div>
+
+                    <!-- User Info (shown when connected) -->
+                    <div id="userInfo" class="user-info" style="display:none;">
+                        <img id="userAvatar" src="/static/img/default-avatar.png" alt="User Avatar" class="user-avatar">
+                        <div class="user-details">
+                            <div class="user-name" id="userName">Instagram User</div>
+                            <div class="user-id" id="userOpenId">@username</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info notice (hidden by default, shown when not connected after loading) -->
+                <div id="infoNotice" class="info-notice" style="display: none;">
+                    <i class="ph ph-info"></i>
+                    <div>
+                        <strong>Before connecting:</strong> You must be the Instagram account owner and authorized to post content. Videos will be uploaded according to your privacy settings.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side-by-Side Layout -->
+            <div class="editor-grid">
+                <!-- Left Panel - Input -->
+                <div class="input-section">
+                    <div class="input-panel">
+                        <!-- Video Upload Section (Top) -->
+                        <div class="form-group" id="videoUploadSectionStatic">
+                            <label class="form-label">
+                                <i class="ph ph-upload"></i>
+                                Upload Media
+                            </label>
+                            <div class="video-upload-area" id="videoUploadAreaStatic" onclick="triggerVideoUploadStatic()">
+                                <input type="file" id="videoFileInputStatic" accept="image/*,video/*" style="display: none;" onchange="handleVideoSelectStatic(event)">
+                                <div class="upload-content" id="uploadContentStatic">
+                                    <i class="ph ph-cloud-arrow-up" style="font-size: 2rem; color: var(--text-tertiary); margin-bottom: 0.25rem;"></i>
+                                    <div style="color: var(--text-primary); font-weight: 500; margin-bottom: 0.125rem; font-size: 0.9375rem;">Click to upload video</div>
+                                    <div style="color: var(--text-tertiary); font-size: 0.8125rem;">JPG, PNG, MP4, or MOV (max 100MB)</div>
+                                </div>
+                                <div class="upload-progress" id="uploadProgressStatic" style="display: none;">
+                                    <div class="upload-file-info">
+                                        <i class="ph ph-image" style="font-size: 2rem; color: #3B82F6;"></i>
+                                        <div style="flex: 1;">
+                                            <div id="uploadFileNameStatic" style="color: var(--text-primary); font-weight: 500;"></div>
+                                            <div id="uploadFileSizeStatic" style="color: var(--text-tertiary); font-size: 0.875rem;"></div>
+                                        </div>
+                                    </div>
+                                    <button class="remove-video-btn" onclick="removeVideoStatic(event)" title="Remove video" type="button">
+                                        <i class="ph ph-x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Target Keyword -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="ph ph-key"></i>
+                                Target Keywords
+                            </label>
+                            <input type="text"
+                                   class="form-input"
+                                   id="keywordsInput"
+                                   placeholder="e.g., Gaming, FPS, Battlefield 2042">
+                        </div>
+
+                        <!-- Video Concept -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="ph ph-article"></i>
+                                Post Description
+                            </label>
+                            <textarea class="form-textarea"
+                                      id="videoConceptInput"
+                                      placeholder="Describe your image/video content or paste your script..."
+                                      maxlength="3000"
+                                      oninput="updateCharCount()"></textarea>
+                            <div class="char-count" id="charCount">0 / 3000</div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <button class="btn-generate" onclick="generateCaptions()" id="generateCaptionsBtn" type="button">
+                            <i class="ph ph-sparkle"></i>
+                            Generate Captions & Hashtags
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Results -->
+                <div class="output-section">
+                    <div class="results-panel">
+                        <div id="resultsContainer">
+                            <!-- Empty State -->
+                            <div class="empty-results">
+                                <i class="ph ph-instagram-logo empty-icon"></i>
+                                <div class="empty-title">Ready to Create</div>
+                                <div class="empty-text">Generate titles and hashtags, then upload your post to Instagram.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='scripts/instagram_upload_studio.js') }}"></script>
+{% endblock %}

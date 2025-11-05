@@ -1235,6 +1235,24 @@
         </div>
         {% endif %}
 
+        <!-- Instagram Group -->
+        <div class="nav-group" data-group="Instagram">
+            <div class="nav-group-header" onclick="toggleNavGroup(this)">
+                <div class="left-content">
+                    <span>Instagram</span>
+                </div>
+                <i class="ph ph-caret-right chevron"></i>
+            </div>
+            <div class="nav-group-items">
+                <a href="{{ url_for('instagram_upload_studio.index') }}"
+                   class="nav-subitem {% if request.endpoint and request.endpoint.startswith('instagram_upload_studio.') %}active{% endif %}"
+                   onclick="return BaseApp.checkGuestAccess(event, this)">
+                    <i class="ph ph-upload"></i>
+                    <span>Upload Studio</span>
+                </a>
+            </div>
+        </div>
+
         <!-- Content Hub Group - Only show if user has permissions for any content feature -->
         {% set has_content_permissions = not workspace_info or workspace_info.is_owner or
            workspace_info.permissions.brain_dump or

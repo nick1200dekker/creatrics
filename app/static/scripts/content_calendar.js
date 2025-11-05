@@ -200,6 +200,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             titleEl.insertBefore(clockIcon, titleEl.firstChild);
                         }
                     }
+
+                    // Add clock icon for Instagram scheduled posts
+                    if (event.instagram_post_id) {
+                        const titleEl = info.el.querySelector('.fc-event-title');
+                        if (titleEl) {
+                            const clockIcon = document.createElement('i');
+                            clockIcon.className = 'ph-fill ph-clock clock-icon';
+                            titleEl.insertBefore(clockIcon, titleEl.firstChild);
+                        }
+                    }
                 }
             }
         });
@@ -749,6 +759,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         if (event.youtube_video_id) {
                             classNames.push('youtube-scheduled');
+                        }
+                        if (event.instagram_post_id) {
+                            classNames.push('instagram-scheduled');
                         }
                         if (event.platform) {
                             classNames.push('platform-' + event.platform.toLowerCase().replace(/[^a-z0-9]/g, ''));
