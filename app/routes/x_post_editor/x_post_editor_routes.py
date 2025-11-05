@@ -274,7 +274,7 @@ def create_new_draft():
             "posts": [{"text": "", "media": []}],  # Unified to media field only
             "input_text": "",
             "output_text": "",
-            "preset": "braindump",
+            "preset": "keyword",
             "additional_context": "",
             "timestamp": datetime.now(),
             "permanent": True

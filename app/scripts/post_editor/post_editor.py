@@ -71,7 +71,7 @@ class PostEditor:
     """Enhanced PostEditor with multi-media support: Focus on content generation ONLY"""
     
     def __init__(self):
-        self.presets = ['grammar', 'storytelling', 'hook_story_punch', 'braindump', 'mimic']
+        self.presets = ['grammar', 'storytelling', 'hook_story_punch', 'keyword', 'raw_text', 'mimic']
         
         # Define supported media types and their configurations
         self.supported_media_types = {

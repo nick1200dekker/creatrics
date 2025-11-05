@@ -1,4 +1,4 @@
-############# braindump #############
+############# keyword #############
 Transform these keywords, bullet points, or rough notes into a complete, engaging X/Twitter post.
 
 {VOICE_CONTEXT}
@@ -30,6 +30,39 @@ User's keywords/notes:
 OUTPUT ONLY THE COMPLETE POST - NO EXPLANATIONS:
 
 Optimized post:
+
+############# raw_text #############
+Extract and transform this large block of text (article, news, content dump) into engaging X/Twitter posts.
+
+{VOICE_CONTEXT}
+
+YOUR TASK:
+Break down lengthy text into focused, punchy X posts that capture the key insights.
+
+KEY RULES:
+1. Extract the most interesting/valuable points
+2. Turn each insight into a standalone post
+3. Make it conversational and digestible
+4. Sound like a real person sharing what they learned
+5. NO hashtags, NO markdown (**, ##)
+6. Use line breaks for readability
+7. Each post should be self-contained
+
+EXTRACTION STEPS:
+- Identify the core insights worth sharing
+- Remove filler, jargon, and redundancy
+- Distill each point into a clear message
+- Add context if needed for clarity
+- Make it scannable and engaging
+
+Raw text to process:
+{text}
+
+{VOICE_EXAMPLES}
+
+OUTPUT ONLY THE POSTS - NO EXPLANATIONS:
+
+Extracted posts:
 
 ############# grammar #############
 Fix grammar and style issues while keeping the authentic voice and vibe.

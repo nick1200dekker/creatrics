@@ -37,7 +37,7 @@
 
     // App state
     const state = {
-        enhancementPreset: 'braindump',
+        enhancementPreset: 'keyword',
         additionalInstructions: '',
         postCount: 1,
         currentDraftId: null,
@@ -1345,8 +1345,8 @@
         state.hasUnsavedChanges = false;
         state.undoStack = [];
 
-        // Reset to braindump mode (Create category)
-        state.enhancementPreset = 'braindump';
+        // Reset to keyword mode (Create category)
+        state.enhancementPreset = 'keyword';
         state.additionalInstructions = '';
 
         // Activate Create category
@@ -1359,10 +1359,10 @@
         const createContainer = document.querySelector('.options-container[data-category="create"]');
         if (createContainer) createContainer.classList.add('active');
 
-        // Activate Braindump option
+        // Activate Keyword option
         document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
-        const braindumpBtn = document.querySelector('.option-btn[data-preset="braindump"]');
-        if (braindumpBtn) braindumpBtn.classList.add('active');
+        const keywordBtn = document.querySelector('.option-btn[data-preset="keyword"]');
+        if (keywordBtn) keywordBtn.classList.add('active');
 
         const contextButton = document.getElementById('context-button');
         const contextTextarea = document.getElementById('context-textarea');
