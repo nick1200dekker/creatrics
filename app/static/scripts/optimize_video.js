@@ -9,6 +9,7 @@ let currentOptimizedDescription = null;
 let currentInputMode = 'public'; // 'public', 'private', or 'url'
 let hasYouTubeConnected = false; // Track if YouTube is connected
 let currentOptimizationData = null; // Store current optimization data to prevent loss when generating additional optimizations
+let hasPremium = window.hasPremium || false; // Check if user has premium subscription
 
 // Track applied optimizations to prevent duplicate API calls
 // This data comes from Firebase and is stored in currentOptimizationData
@@ -22,6 +23,11 @@ let appliedOptimizations = {
 
 // Load videos on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Add class to body for CSS styling
+    if (!hasPremium) {
+        document.body.classList.add('free-user');
+    }
+
     // Check for ongoing optimization
     const ongoingOptimization = sessionStorage.getItem('optimize_video_ongoing');
     if (ongoingOptimization) {
@@ -46,7 +52,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    loadMyVideos();
+    // Only load videos for premium users
+    if (hasPremium) {
+        loadMyVideos();
+    }
 
     // Check if video_id is in URL params (from homepage)
     const urlParams = new URLSearchParams(window.location.search);
@@ -73,9 +82,21 @@ function switchInputMode(mode) {
     document.getElementById('myVideosGrid').style.display = 'none';
     document.getElementById('myShortsSection').style.display = 'none';
     document.getElementById('privateVideosContent').style.display = 'none';
-    document.getElementById('emptyVideos').style.display = 'none';
+    const emptyVideos = document.getElementById('emptyVideos');
+    if (emptyVideos) {
+        emptyVideos.style.display = 'none';
+    }
 
-    // Show appropriate section
+    // For free users, only show URL mode - premium notice is always visible
+    if (!hasPremium) {
+        if (mode === 'url') {
+            document.getElementById('urlInputSection').style.display = 'block';
+        }
+        // For public/private modes, just show the premium notice (which is always visible)
+        return;
+    }
+
+    // Premium users: Show appropriate section
     if (mode === 'public') {
         // Show public videos and shorts
         const videosGrid = document.getElementById('myVideosGrid');
@@ -88,8 +109,8 @@ function switchInputMode(mode) {
         }
 
         // Show empty state if no videos
-        if (videosGrid.children.length === 0) {
-            document.getElementById('emptyVideos').style.display = 'flex';
+        if (videosGrid.children.length === 0 && emptyVideos) {
+            emptyVideos.style.display = 'flex';
         }
     } else if (mode === 'private') {
         // Show private videos content
@@ -358,19 +379,20 @@ async function loadMyVideos() {
                                  error.message.includes('channel connected');
 
         if (isNoChannelError) {
-            emptyState.innerHTML = `
-                <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 96px; height: auto; padding: 0 !important;">
-                <p>No YouTube Channel Connected</p>
-                <span>Connect your YouTube account in Social Accounts or <strong>use the URL option above</strong> to optimize any video</span>
-            `;
+            // Only show empty state for premium users
+            // Free users see the premium notice which is always visible
+            if (hasPremium) {
+                emptyState.style.display = 'flex';
+            }
         } else {
+            // For other errors, show error message
             emptyState.innerHTML = `
                 <i class="ph ph-warning"></i>
                 <p>Failed to load videos</p>
                 <span>${escapeHtml(error.message)}</span>
             `;
+            emptyState.style.display = 'flex';
         }
-        emptyState.style.display = 'flex';
     }
 }
 

@@ -5,7 +5,7 @@ Handles user's own YouTube video optimization
 from flask import render_template, request, jsonify
 from . import bp
 from app.system.auth.middleware import auth_required
-from app.system.auth.permissions import get_workspace_user_id, require_permission, get_user_subscription
+from app.system.auth.permissions import get_workspace_user_id, require_permission, get_user_subscription, has_premium_subscription
 from app.scripts.optimize_video.video_optimizer import VideoOptimizer
 from app.system.services.firebase_service import db
 from app.system.credits.credits_manager import CreditsManager
@@ -26,7 +26,8 @@ RAPIDAPI_HOST = 'yt-api.p.rapidapi.com'
 @require_permission('optimize_video')
 def optimize_video():
     """Optimize Video main page"""
-    return render_template('optimize_video/index.html')
+    has_premium = has_premium_subscription()
+    return render_template('optimize_video/index.html', has_premium=has_premium)
 
 @bp.route('/api/get-unoptimized-videos', methods=['GET'])
 @auth_required

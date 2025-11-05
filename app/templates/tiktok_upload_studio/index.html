@@ -58,6 +58,19 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Premium Notice for Free Users -->
+                <div id="premiumNotice" class="premium-notice" style="display: none;">
+                    <div class="premium-icon">👑</div>
+                    <div class="premium-text">
+                        <strong>Premium Feature</strong>
+                        <p>TikTok Upload Studio requires a Premium Creator subscription to connect and post content.</p>
+                    </div>
+                    <a href="/payment/checkout" class="premium-upgrade-btn">
+                        <i class="ph ph-crown"></i>
+                        Upgrade to Premium
+                    </a>
+                </div>
             </div>
 
             <!-- Side-by-Side Layout -->
@@ -147,5 +160,9 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+    // Pass backend variables to JavaScript
+    window.hasPremium = {{ 'true' if has_premium else 'false' }};
+</script>
 <script src="{{ url_for('static', filename='scripts/tiktok_upload_studio.js') }}"></script>
 {% endblock %}

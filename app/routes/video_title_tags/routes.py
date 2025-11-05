@@ -1,7 +1,7 @@
 from flask import render_template, request, jsonify, g
 from . import bp
 from app.system.auth.middleware import auth_required
-from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
+from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission, has_premium_subscription
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.video_title.video_title import VideoTitleGenerator
 from app.scripts.video_title.video_tags import VideoTagsGenerator
@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 @require_permission('video_title')
 def video_title_tags():
     """Video title and tags generator page"""
-    return render_template('video_title_tags/index.html')
+    has_premium = has_premium_subscription()
+    return render_template('video_title_tags/index.html', has_premium=has_premium)
 
 @bp.route('/api/get-channel-keywords', methods=['GET'])
 @auth_required

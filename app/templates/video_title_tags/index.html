@@ -59,13 +59,22 @@
                     </div>
                 </div>
 
-                <!-- Info notice (hidden by default, shown when not connected after loading) -->
-                <div id="infoNotice" class="info-notice" style="display: none;">
-                    <i class="ph ph-info"></i>
-                    <div>
-                        <strong>Connect your YouTube channel:</strong> Link your Google account to upload videos, access analytics, and manage your content.
+                <!-- Premium Notice for Free Users -->
+                {% if not has_premium %}
+                <div class="youtube-premium-notice">
+                    <div class="premium-notice-content">
+                        <div class="premium-icon">👑</div>
+                        <div class="premium-text">
+                            <strong>YouTube Analytics Only</strong>
+                            <p>Your free plan allows YouTube connection for analytics. Upgrade to Premium Creator to upload and optimize videos directly from our app.</p>
+                        </div>
+                        <a href="/payment/checkout" class="premium-upgrade-btn-sm">
+                            <i class="ph ph-crown"></i>
+                            Upgrade
+                        </a>
                     </div>
                 </div>
+                {% endif %}
             </div>
 
             <div class="editor-grid">
@@ -73,7 +82,7 @@
                 <div class="input-section">
                     <div class="input-panel">
                         <!-- Video Upload Section -->
-                        <div class="form-group" id="videoUploadSection">
+                        <div class="form-group" id="videoUploadSection" {% if not has_premium %}style="display: none;"{% endif %}>
                             <label class="form-label">
                                 <i class="ph ph-upload"></i>
                                 Upload Video

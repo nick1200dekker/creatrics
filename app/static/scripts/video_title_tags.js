@@ -59,7 +59,6 @@ function updateConnectionUI(data) {
     const channelInfo = document.getElementById('channelInfo');
     const buttonSkeleton = document.getElementById('buttonSkeleton');
     const connectionButtons = document.getElementById('connectionButtons');
-    const infoNotice = document.getElementById('infoNotice');
 
     // Remove loading state
     if (statusDot) statusDot.classList.remove('loading');
@@ -74,9 +73,6 @@ function updateConnectionUI(data) {
         if (statusText) statusText.textContent = 'Connected to YouTube';
         if (connectBtn) connectBtn.style.display = 'none';
         if (disconnectBtn) disconnectBtn.style.display = 'inline-flex';
-
-        // Hide info notice
-        if (infoNotice) infoNotice.style.display = 'none';
 
         // Show channel info
         if (channelInfo) {
@@ -109,9 +105,6 @@ function updateConnectionUI(data) {
         if (connectBtn) connectBtn.style.display = 'inline-flex';
         if (disconnectBtn) disconnectBtn.style.display = 'none';
         if (channelInfo) channelInfo.style.display = 'none';
-
-        // Show info notice
-        if (infoNotice) infoNotice.style.display = 'flex';
     }
 }
 
