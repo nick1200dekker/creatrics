@@ -59,12 +59,17 @@
                     </div>
                 </div>
 
-                <!-- Info notice (hidden by default, shown when not connected after loading) -->
-                <div id="infoNotice" class="info-notice" style="display: none;">
-                    <i class="ph ph-info"></i>
-                    <div>
-                        <strong>Before connecting:</strong> You must be the Instagram account owner and authorized to post content. Videos will be uploaded according to your privacy settings.
+                <!-- Premium Required Notice -->
+                <div id="premiumNotice" class="premium-notice" style="display: none;">
+                    <div class="premium-icon">👑</div>
+                    <div class="premium-text">
+                        <strong>Premium Feature</strong>
+                        <p>Instagram Upload Studio requires a Premium Creator subscription to connect and post content.</p>
                     </div>
+                    <a href="/payment/checkout" class="premium-upgrade-btn">
+                        <i class="ph ph-crown"></i>
+                        Upgrade to Premium
+                    </a>
                 </div>
             </div>
 
@@ -155,5 +160,9 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+    // Pass backend variables to JavaScript
+    window.hasPremium = {{ 'true' if has_premium else 'false' }};
+</script>
 <script src="{{ url_for('static', filename='scripts/instagram_upload_studio.js') }}"></script>
 {% endblock %}

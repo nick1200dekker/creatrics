@@ -12,7 +12,7 @@ from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAu
 from app.scripts.instagram_upload_studio.instagram_upload_service import InstagramUploadService
 from app.scripts.instagram_upload_studio.instagram_title_generator import InstagramTitleGenerator
 from app.system.services.firebase_service import StorageService
-from app.system.auth.permissions import get_workspace_user_id
+from app.system.auth.permissions import get_workspace_user_id, has_premium_subscription
 from app.system.credits.credits_manager import CreditsManager
 import uuid
 
@@ -29,9 +29,13 @@ def index():
         # Check if user has Instagram connected via Late.dev
         is_connected = LateDevOAuthService.is_connected(user_id, 'instagram')
 
+        # Check subscription status (Premium Creator or admin allowed)
+        has_premium = has_premium_subscription()
+
         return render_template(
             'instagram_upload_studio/index.html',
-            is_connected=is_connected
+            is_connected=is_connected,
+            has_premium=has_premium
         )
     except Exception as e:
         logger.error(f"Error loading Instagram Upload Studio: {str(e)}")
@@ -41,8 +45,13 @@ def index():
 @bp.route('/connect')
 @auth_required
 def connect():
-    """Initiate Instagram OAuth flow via Late.dev"""
+    """Initiate Instagram OAuth flow via Late.dev (Premium only)"""
     try:
+        # Check if user has premium subscription
+        if not has_premium_subscription():
+            logger.warning(f"Non-premium user attempted to connect Instagram")
+            return redirect(url_for('instagram_upload_studio.index', error='premium_required'))
+
         user_id = g.user.get('id')
         logger.info(f"Instagram connect route called for user {user_id}")
 
@@ -198,8 +207,12 @@ def api_upload_media():
 @bp.route('/api/upload', methods=['POST'])
 @auth_required
 def api_upload():
-    """Post to Instagram via Late.dev using Firebase Storage URL"""
+    """Post to Instagram via Late.dev using Firebase Storage URL (Premium only)"""
     try:
+        # Check if user has premium subscription
+        if not has_premium_subscription():
+            return jsonify({'success': False, 'error': 'Premium subscription required', 'premium_required': True}), 403
+
         user_id = g.user.get('id')
 
         # Check if user is connected

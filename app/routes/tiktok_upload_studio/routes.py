@@ -12,7 +12,7 @@ from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAu
 from app.scripts.tiktok_upload_studio.latedev_tiktok_service import TikTokLateDevService
 from app.scripts.tiktok_upload_studio.tiktok_title_generator import TikTokTitleGenerator
 from app.system.services.firebase_service import StorageService
-from app.system.auth.permissions import get_workspace_user_id
+from app.system.auth.permissions import get_workspace_user_id, has_premium_subscription
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
 import uuid
@@ -30,9 +30,13 @@ def index():
         # Check if user has TikTok connected via Late.dev
         is_connected = LateDevOAuthService.is_connected(user_id, 'tiktok')
 
+        # Check subscription status (Premium Creator or admin allowed)
+        has_premium = has_premium_subscription()
+
         return render_template(
             'tiktok_upload_studio/index.html',
-            is_connected=is_connected
+            is_connected=is_connected,
+            has_premium=has_premium
         )
     except Exception as e:
         logger.error(f"Error loading TikTok Upload Studio: {str(e)}")
@@ -42,8 +46,13 @@ def index():
 @bp.route('/connect')
 @auth_required
 def connect():
-    """Initiate TikTok OAuth flow via Late.dev"""
+    """Initiate TikTok OAuth flow via Late.dev (Premium only)"""
     try:
+        # Check if user has premium subscription
+        if not has_premium_subscription():
+            logger.warning(f"Non-premium user attempted to connect TikTok")
+            return redirect(url_for('tiktok_upload_studio.index', error='premium_required'))
+
         user_id = g.user.get('id')
         logger.info(f"TikTok connect route called for user {user_id}")
 
@@ -206,8 +215,12 @@ def api_upload_media():
 @bp.route('/api/upload', methods=['POST'])
 @auth_required
 def api_upload():
-    """Post to TikTok via Late.dev using Firebase Storage URL"""
+    """Post to TikTok via Late.dev using Firebase Storage URL (Premium only)"""
     try:
+        # Check if user has premium subscription
+        if not has_premium_subscription():
+            return jsonify({'success': False, 'error': 'Premium subscription required', 'premium_required': True}), 403
+
         user_id = g.user.get('id')
 
         # Check if user is connected

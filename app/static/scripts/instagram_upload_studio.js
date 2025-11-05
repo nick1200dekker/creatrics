@@ -9,6 +9,7 @@ let currentCaptions = [];
 let isGeneratingCaptions = false;
 let isCheckingConnection = true;
 let selectedCaptionIndex = null;
+let hasPremium = window.hasPremium || false;  // Premium subscription status from backend
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -69,7 +70,7 @@ function updateConnectionUI(data) {
     const videoUploadSection = document.getElementById('videoUploadSectionStatic');
     const buttonSkeleton = document.getElementById('buttonSkeleton');
     const connectionButtons = document.getElementById('connectionButtons');
-    const infoNotice = document.getElementById('infoNotice');
+    const premiumNotice = document.getElementById('premiumNotice');
 
     // Remove loading state
     statusDot.classList.remove('loading');
@@ -79,15 +80,30 @@ function updateConnectionUI(data) {
     if (buttonSkeleton) buttonSkeleton.style.display = 'none';
     if (connectionButtons) connectionButtons.style.display = 'block';
 
+    // Check premium status first
+    if (!hasPremium && !data.connected) {
+        // Show premium required notice for free users
+        statusDot.classList.add('disconnected');
+        statusText.textContent = 'Premium Required';
+        connectBtn.style.display = 'none';  // Hide connect button
+        disconnectBtn.style.display = 'none';
+        userInfo.style.display = 'none';
+
+        if (premiumNotice) premiumNotice.style.display = 'flex';
+        if (videoUploadSection) videoUploadSection.style.display = 'none';
+
+        return;  // Exit early
+    }
+
+    // Hide premium notice for premium users
+    if (premiumNotice) premiumNotice.style.display = 'none';
+
     if (data.connected) {
         // Connected state
         statusDot.classList.remove('disconnected');
         statusText.textContent = 'Connected to Instagram';
         connectBtn.style.display = 'none';
         disconnectBtn.style.display = 'inline-flex';
-
-        // Hide info notice
-        if (infoNotice) infoNotice.style.display = 'none';
 
         // Show video upload section
         if (videoUploadSection) videoUploadSection.style.display = 'block';
@@ -101,15 +117,12 @@ function updateConnectionUI(data) {
             document.getElementById('userOpenId').style.display = 'block';
         }
     } else {
-        // Disconnected state
+        // Disconnected state (but has premium)
         statusDot.classList.add('disconnected');
         statusText.textContent = 'Not Connected';
         connectBtn.style.display = 'inline-flex';
         disconnectBtn.style.display = 'none';
         userInfo.style.display = 'none';
-
-        // Show info notice
-        if (infoNotice) infoNotice.style.display = 'flex';
 
         // Hide video upload section
         if (videoUploadSection) videoUploadSection.style.display = 'none';

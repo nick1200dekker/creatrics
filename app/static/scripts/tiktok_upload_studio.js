@@ -69,7 +69,6 @@ function updateConnectionUI(data) {
     const videoUploadSection = document.getElementById('videoUploadSectionStatic');
     const buttonSkeleton = document.getElementById('buttonSkeleton');
     const connectionButtons = document.getElementById('connectionButtons');
-    const infoNotice = document.getElementById('infoNotice');
 
     // Remove loading state
     statusDot.classList.remove('loading');
@@ -85,9 +84,6 @@ function updateConnectionUI(data) {
         statusText.textContent = 'Connected to TikTok';
         connectBtn.style.display = 'none';
         disconnectBtn.style.display = 'inline-flex';
-
-        // Hide info notice
-        if (infoNotice) infoNotice.style.display = 'none';
 
         // Show video upload section
         if (videoUploadSection) videoUploadSection.style.display = 'block';
@@ -124,9 +120,6 @@ function updateConnectionUI(data) {
         connectBtn.style.display = 'inline-flex';
         disconnectBtn.style.display = 'none';
         userInfo.style.display = 'none';
-
-        // Show info notice
-        if (infoNotice) infoNotice.style.display = 'flex';
 
         // Hide video upload section
         if (videoUploadSection) videoUploadSection.style.display = 'none';

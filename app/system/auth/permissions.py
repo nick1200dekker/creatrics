@@ -107,6 +107,16 @@ def get_user_subscription():
 
     return None
 
+def has_premium_subscription():
+    """
+    Check if user has a premium subscription (Premium Creator plan or admin)
+
+    Returns:
+        bool: True if user has Premium Creator subscription or admin, False otherwise
+    """
+    subscription = get_user_subscription()
+    return subscription in ['Premium Creator', 'admin'] if subscription else False
+
 def require_permission(permission_name):
     """
     Decorator to require specific permission for a route
