@@ -613,10 +613,11 @@ def init_youtube_upload():
         if scheduled_time:
             from datetime import datetime
             try:
-                # Parse ISO format datetime (already in UTC from frontend)
+                # Frontend sends ISO string in UTC (converted from user's local time)
+                # YouTube API expects RFC3339 format
                 dt = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
                 request_body['status']['publishAt'] = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
-                logger.info(f"Video scheduled for: {request_body['status']['publishAt']}")
+                logger.info(f"Video scheduled for (UTC): {request_body['status']['publishAt']}")
             except Exception as e:
                 logger.warning(f"Could not parse scheduled time: {e}")
 
@@ -1022,6 +1023,53 @@ def update_youtube_schedule():
             'success': False,
             'error': str(e)
         }), 500
+
+@bp.route('/api/upload-short-to-firebase', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def upload_short_to_firebase():
+    """Upload short video to Firebase Storage for future multi-platform posting"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get video file from request
+        if 'video' not in request.files:
+            return jsonify({'success': False, 'error': 'No video file provided'}), 400
+
+        video_file = request.files['video']
+        if not video_file or video_file.filename == '':
+            return jsonify({'success': False, 'error': 'No video file selected'}), 400
+
+        # Generate unique filename
+        import uuid
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_ext = video_file.filename.rsplit('.', 1)[1].lower() if '.' in video_file.filename else 'mp4'
+        unique_filename = f"short_{timestamp}_{uuid.uuid4().hex[:8]}.{file_ext}"
+
+        # Upload to Firebase Storage (public URL)
+        from app.system.services.firebase_service import StorageService
+        result = StorageService.upload_file(
+            user_id,
+            'youtube_shorts',  # Directory for short videos
+            unique_filename,
+            video_file,
+            make_public=True  # Public URL for future multi-platform posting
+        )
+
+        if result:
+            logger.info(f"Short video uploaded to Firebase: {result}")
+            return jsonify({
+                'success': True,
+                'firebase_url': result,
+                'filename': unique_filename
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Failed to upload to Firebase'}), 500
+
+    except Exception as e:
+        logger.error(f"Error uploading short to Firebase: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @bp.route('/api/youtube-status', methods=['GET'])
 @auth_required

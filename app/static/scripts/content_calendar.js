@@ -620,31 +620,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success || data.event_id) {
-                // If this is an update to a YouTube scheduled video, update YouTube as well
-                if (eventId && publishDate) {
-                    const eventIndex = events.findIndex(e => e.id == eventId);
-                    if (eventIndex !== -1 && events[eventIndex].youtube_video_id) {
-                        return fetch('/api/update-youtube-schedule', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                video_id: events[eventIndex].youtube_video_id,
-                                publish_time: publishDate
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(ytData => {
-                            if (ytData && !ytData.success) {
-                                console.error('Failed to update YouTube schedule:', ytData.error);
-                                alert('Calendar updated but YouTube schedule update failed: ' + ytData.error);
-                            } else if (ytData && ytData.success) {
-                                console.log('YouTube schedule updated successfully');
-                            }
-                            closeEventModal();
-                            loadEvents();
-                        });
-                    }
-                }
+                // Backend automatically handles YouTube/Instagram/TikTok schedule updates
                 closeEventModal();
                 loadEvents();
             }

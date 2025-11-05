@@ -37,24 +37,10 @@ async function checkYouTubeConnection() {
         hasYouTubeConnected = data.connected;
         updateConnectionUI(data);
 
-        if (!data.connected) {
-            // Show connection notice and hide upload section
-            const uploadSection = document.getElementById('videoUploadSection');
-            if (uploadSection) {
-                uploadSection.innerHTML = `
-                    <label class="form-label">
-                        <i class="ph ph-upload"></i>
-                        Upload Video
-                    </label>
-                    <div style="padding: 1.5rem; background: transparent; border: 1px solid var(--border-primary); border-radius: 10px; text-align: center;">
-                        <div style="color: var(--text-primary); margin-bottom: 1rem; font-size: 0.875rem; font-weight: 500;">Connect your YouTube account to upload videos<br>Or generate titles, description & tags and upload manual</div>
-                        <a href="/accounts/" class="secondary-button">
-                            <i class="ph ph-link"></i>
-                            <span>Connect YouTube</span>
-                        </a>
-                    </div>
-                `;
-            }
+        // Hide video upload section if not connected (connection status card handles messaging)
+        const uploadSection = document.getElementById('videoUploadSection');
+        if (uploadSection) {
+            uploadSection.style.display = data.connected ? 'block' : 'none';
         }
     } catch (error) {
         console.log('Could not check YouTube connection:', error);
@@ -185,8 +171,72 @@ async function handleVideoSelect(event) {
     fileName.textContent = file.name;
     fileSize.textContent = formatFileSize(file.size);
 
+    // Detect if this is a short video (≤60s OR <100MB)
+    selectedVideoFile = file;
+    const isShort = await detectIfShort(file);
+
     // Start uploading to server immediately
-    await uploadVideoToServer(file);
+    await uploadVideoToServer(file, isShort);
+}
+
+/**
+ * Upload short video to Firebase Storage for future multi-platform posting
+ */
+async function uploadShortToFirebase(file) {
+    try {
+        const formData = new FormData();
+        formData.append('video', file);
+
+        const response = await fetch('/api/upload-short-to-firebase', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log('Short video uploaded to Firebase:', data.firebase_url);
+            // Store the Firebase URL for later use
+            window.shortVideoFirebaseUrl = data.firebase_url;
+        } else {
+            console.error('Failed to upload short to Firebase:', data.error);
+        }
+    } catch (error) {
+        console.error('Error uploading short to Firebase:', error);
+        // Don't block the main flow - this is just for future use
+    }
+}
+
+/**
+ * Detect if video is a short (≤60s duration OR <100MB file size)
+ */
+async function detectIfShort(file) {
+    // Check file size first (quick check)
+    const maxSizeBytes = 100 * 1024 * 1024; // 100MB
+    if (file.size < maxSizeBytes) {
+        return true;
+    }
+
+    // Check duration (requires loading video metadata)
+    return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+
+        video.onloadedmetadata = function() {
+            window.URL.revokeObjectURL(video.src);
+            const duration = video.duration;
+            console.log(`Video duration: ${duration}s`);
+            resolve(duration <= 60);
+        };
+
+        video.onerror = function() {
+            // If we can't read metadata, fall back to file size
+            window.URL.revokeObjectURL(video.src);
+            resolve(false);
+        };
+
+        video.src = URL.createObjectURL(file);
+    });
 }
 
 /**
@@ -240,15 +290,21 @@ function formatFileSize(bytes) {
 
 /**
  * Store video file reference for later upload to YouTube
+ * If it's a short, also upload to Firebase Storage for future multi-platform posting
  */
-async function uploadVideoToServer(file) {
+async function uploadVideoToServer(file, isShort = false) {
     const progressContainer = document.getElementById('videoUploadProgressContainer');
 
     try {
-        // Just store the file reference - no upload yet
-        // Upload will happen directly to YouTube when user clicks "Upload to YouTube"
-        uploadedVideoPath = null; // No intermediate storage needed
-        selectedVideoFile = file; // Keep file reference for direct YouTube upload
+        // Keep file reference for direct YouTube upload
+        uploadedVideoPath = null;
+        selectedVideoFile = file;
+
+        // If this is a short video, also upload to Firebase Storage
+        if (isShort) {
+            console.log('Uploading short video to Firebase Storage for future multi-platform posting...');
+            await uploadShortToFirebase(file);
+        }
 
         // Hide progress bar - we don't need it for file selection
         if (progressContainer) {
@@ -1016,7 +1072,7 @@ function renderUploadSection(visible) {
                     <div class="upload-option-card" id="scheduleDateTime" style="grid-column: 2; display: none;">
                         <label class="upload-option-label schedule-label">
                             <i class="ph ph-calendar"></i>
-                            Publish Date & Time <span class="utc-indicator">(UTC)</span>
+                            Publish Date & Time <span class="utc-indicator" id="timezoneIndicator">(Local Time)</span>
                         </label>
                         <div class="schedule-datetime-grid">
                             <select id="scheduleDateSelect" class="privacy-select">
@@ -1367,6 +1423,14 @@ function handleStatusChange() {
         if (privacySelect.value === 'scheduled') {
             scheduleDateTime.style.display = 'block';
 
+            // Update timezone indicator
+            const timezoneIndicator = document.getElementById('timezoneIndicator');
+            if (timezoneIndicator) {
+                const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const tzAbbr = new Date().toLocaleTimeString('en-us', {timeZoneName:'short'}).split(' ')[2];
+                timezoneIndicator.textContent = `(${tzAbbr || userTimezone})`;
+            }
+
             // Populate dropdowns if not already done
             if (scheduleDateSelect && scheduleDateSelect.options.length === 1) {
                 populateScheduleDateDropdown();
@@ -1429,9 +1493,11 @@ async function uploadToYouTube() {
             return;
         }
 
-        // Combine date and time, then convert to ISO string with timezone
+        // Combine date and time in user's local timezone
         const dateTime = `${scheduleDateSelect.value}T${scheduleTimeSelect.value}:00`;
         const localDateTime = new Date(dateTime);
+
+        // Convert to ISO string but YouTube needs local time context
         scheduledTime = localDateTime.toISOString();
     }
 

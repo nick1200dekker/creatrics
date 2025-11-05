@@ -255,6 +255,47 @@ def update_event(event_id):
                     current_app.logger.error(f"Error updating TikTok post schedule: {e}")
                     # Continue with calendar update even if TikTok update fails
 
+            # Update YouTube video schedule
+            youtube_video_id = event.get('youtube_video_id') if event else None
+            if youtube_video_id:
+                try:
+                    from datetime import datetime
+                    from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+                    from googleapiclient.discovery import build
+
+                    # Initialize YouTube API
+                    analytics = YouTubeAnalytics(user_id)
+                    if not analytics.credentials:
+                        current_app.logger.error("YouTube credentials not found, cannot update video schedule")
+                    else:
+                        youtube = build('youtube', 'v3', credentials=analytics.credentials)
+
+                        # Format the new publish date (convert from ISO string to YouTube format)
+                        new_publish_time = data['publish_date']
+                        dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
+                        formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+                        current_app.logger.info(f"Attempting to update YouTube video {youtube_video_id} schedule to {formatted_time}")
+
+                        # Update video publish time using YouTube API
+                        youtube.videos().update(
+                            part='status',
+                            body={
+                                'id': youtube_video_id,
+                                'status': {
+                                    'privacyStatus': 'private',
+                                    'publishAt': formatted_time,
+                                    'selfDeclaredMadeForKids': False
+                                }
+                            }
+                        ).execute()
+
+                        current_app.logger.info(f"Updated YouTube video {youtube_video_id} schedule to {formatted_time}")
+
+                except Exception as e:
+                    current_app.logger.error(f"Error updating YouTube video schedule: {e}")
+                    # Continue with calendar update even if YouTube update fails
+
         # Update the event
         success = calendar_manager.update_event(event_id=event_id, **update_data)
 
