@@ -2149,17 +2149,18 @@ html.dark .connection-card {
 
 .connection-header {
     display: flex;
-    flex-direction: column;
-    gap: 0;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .connection-status {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 1rem;
+    flex: 1;
+    min-width: 250px;
 }
 
 .status-indicator {

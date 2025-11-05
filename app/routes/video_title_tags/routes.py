@@ -1023,6 +1023,73 @@ def update_youtube_schedule():
             'error': str(e)
         }), 500
 
+@bp.route('/api/youtube-status', methods=['GET'])
+@auth_required
+@require_permission('video_title')
+def youtube_status():
+    """Get YouTube connection status and channel info"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get user data from Firestore
+        user_ref = db.collection('users').document(user_id)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            return jsonify({
+                'success': True,
+                'connected': False
+            })
+
+        user_data = user_doc.to_dict()
+
+        # Check if YouTube credentials exist
+        has_credentials = bool(user_data.get('youtube_credentials'))
+        channel_name = user_data.get('youtube_account')
+        channel_id = user_data.get('youtube_channel_id')
+
+        # Try to get channel thumbnail from YouTube API if connected
+        channel_thumbnail = None
+        if has_credentials and channel_id:
+            try:
+                from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
+                analytics = YouTubeAnalytics(user_id)
+
+                if analytics.credentials:
+                    from googleapiclient.discovery import build
+                    youtube = build('youtube', 'v3', credentials=analytics.credentials)
+
+                    # Get channel info including thumbnail
+                    channel_response = youtube.channels().list(
+                        part='snippet',
+                        id=channel_id
+                    ).execute()
+
+                    if channel_response.get('items'):
+                        thumbnails = channel_response['items'][0]['snippet'].get('thumbnails', {})
+                        # Get highest quality thumbnail available
+                        channel_thumbnail = (
+                            thumbnails.get('high', {}).get('url') or
+                            thumbnails.get('medium', {}).get('url') or
+                            thumbnails.get('default', {}).get('url')
+                        )
+            except Exception as e:
+                logger.warning(f"Could not fetch YouTube channel thumbnail: {e}")
+
+        return jsonify({
+            'success': True,
+            'connected': has_credentials,
+            'channel_info': {
+                'name': channel_name,
+                'id': channel_id,
+                'thumbnail': channel_thumbnail
+            } if has_credentials else None
+        })
+
+    except Exception as e:
+        logger.error(f"Error checking YouTube status: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @bp.route('/api/upload-youtube-video', methods=['POST'])
 @auth_required
 @require_permission('video_title')

@@ -24,6 +24,50 @@
 
         <!-- Content Area -->
         <div class="generator-content">
+            <!-- Connection Status Card -->
+            <div class="connection-card">
+                <div class="connection-header">
+                    <div class="connection-status">
+                        <div class="status-indicator">
+                            <div class="status-dot loading"></div>
+                            <span class="status-text">Checking connection...</span>
+                        </div>
+
+                        <div id="connectionButtons" style="display: none;">
+                            <a href="/accounts" id="connectBtn" class="secondary-button" style="display: none;">
+                                <i class="ph ph-link"></i>
+                                <span>Connect YouTube</span>
+                            </a>
+
+                            <a href="/accounts" id="disconnectBtn" class="btn-disconnect" style="display: none;">
+                                <i class="ph ph-gear"></i>
+                                Manage Connection
+                            </a>
+                        </div>
+
+                        <!-- Loading skeleton for buttons -->
+                        <div id="buttonSkeleton" class="skeleton-loader" style="width: 150px; height: 36px; border-radius: 8px;"></div>
+                    </div>
+
+                    <!-- Channel Info (shown when connected) -->
+                    <div id="channelInfo" class="user-info" style="display:none;">
+                        <img id="channelThumbnail" src="" alt="Channel Thumbnail" class="user-avatar">
+                        <div class="user-details">
+                            <div class="user-name" id="channelName">YouTube Channel</div>
+                            <div class="user-id" id="channelId"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info notice (hidden by default, shown when not connected after loading) -->
+                <div id="infoNotice" class="info-notice" style="display: none;">
+                    <i class="ph ph-info"></i>
+                    <div>
+                        <strong>Connect your YouTube channel:</strong> Link your Google account to upload videos, access analytics, and manage your content.
+                    </div>
+                </div>
+            </div>
+
             <div class="editor-grid">
                 <!-- Left Panel - Input -->
                 <div class="input-section">

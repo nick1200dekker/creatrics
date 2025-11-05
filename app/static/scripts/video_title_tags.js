@@ -31,10 +31,11 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 async function checkYouTubeConnection() {
     try {
-        const response = await fetch('/api/check-youtube-connection');
+        const response = await fetch('/api/youtube-status');
         const data = await response.json();
 
         hasYouTubeConnected = data.connected;
+        updateConnectionUI(data);
 
         if (!data.connected) {
             // Show connection notice and hide upload section
@@ -58,6 +59,73 @@ async function checkYouTubeConnection() {
     } catch (error) {
         console.log('Could not check YouTube connection:', error);
         hasYouTubeConnected = false;
+    }
+}
+
+/**
+ * Update connection UI based on YouTube status
+ */
+function updateConnectionUI(data) {
+    const statusDot = document.querySelector('.status-dot');
+    const statusText = document.querySelector('.status-text');
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const channelInfo = document.getElementById('channelInfo');
+    const buttonSkeleton = document.getElementById('buttonSkeleton');
+    const connectionButtons = document.getElementById('connectionButtons');
+    const infoNotice = document.getElementById('infoNotice');
+
+    // Remove loading state
+    if (statusDot) statusDot.classList.remove('loading');
+
+    // Hide skeleton, show actual buttons
+    if (buttonSkeleton) buttonSkeleton.style.display = 'none';
+    if (connectionButtons) connectionButtons.style.display = 'block';
+
+    if (data.connected && data.channel_info) {
+        // Connected state
+        if (statusDot) statusDot.classList.remove('disconnected');
+        if (statusText) statusText.textContent = 'Connected to YouTube';
+        if (connectBtn) connectBtn.style.display = 'none';
+        if (disconnectBtn) disconnectBtn.style.display = 'inline-flex';
+
+        // Hide info notice
+        if (infoNotice) infoNotice.style.display = 'none';
+
+        // Show channel info
+        if (channelInfo) {
+            channelInfo.style.display = 'flex';
+
+            const thumbnailEl = document.getElementById('channelThumbnail');
+            const nameEl = document.getElementById('channelName');
+            const idEl = document.getElementById('channelId');
+
+            if (thumbnailEl && data.channel_info.thumbnail) {
+                thumbnailEl.src = data.channel_info.thumbnail;
+                thumbnailEl.style.display = 'block';
+            } else if (thumbnailEl) {
+                thumbnailEl.style.display = 'none';
+            }
+
+            if (nameEl) {
+                nameEl.textContent = data.channel_info.name || 'YouTube Channel';
+            }
+
+            // Hide the ID element (we don't need to show channel ID)
+            if (idEl) {
+                idEl.style.display = 'none';
+            }
+        }
+    } else {
+        // Disconnected state
+        if (statusDot) statusDot.classList.add('disconnected');
+        if (statusText) statusText.textContent = 'Not Connected';
+        if (connectBtn) connectBtn.style.display = 'inline-flex';
+        if (disconnectBtn) disconnectBtn.style.display = 'none';
+        if (channelInfo) channelInfo.style.display = 'none';
+
+        // Show info notice
+        if (infoNotice) infoNotice.style.display = 'flex';
     }
 }
 
