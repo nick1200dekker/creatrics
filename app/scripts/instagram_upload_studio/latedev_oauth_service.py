@@ -300,7 +300,7 @@ class LateDevOAuthService:
     def delete_profile(user_id):
         """
         Delete the entire Late.dev profile for a user.
-        This removes all connected accounts (Instagram, TikTok, etc.) and the profile itself.
+        IMPORTANT: Must disconnect all accounts BEFORE deleting the profile.
         Called when a user downgrades from Premium to Free plan.
 
         Args:
@@ -323,9 +323,45 @@ class LateDevOAuthService:
                 'Authorization': f'Bearer {LateDevOAuthService.API_KEY}'
             }
 
-            # Delete the profile (this also removes all connected accounts)
+            # Step 1: Get all connected accounts for this profile
+            try:
+                accounts_response = requests.get(
+                    f"{LateDevOAuthService.BASE_URL}/accounts",
+                    headers=headers,
+                    params={'profileId': profile_id},
+                    timeout=10
+                )
+
+                if accounts_response.status_code == 200:
+                    accounts = accounts_response.json().get('accounts', [])
+                    logger.info(f"Found {len(accounts)} connected accounts for profile {profile_id}")
+
+                    # Step 2: Disconnect each account
+                    for account in accounts:
+                        account_id = account.get('id')
+                        platform = account.get('platform', 'unknown')
+                        try:
+                            delete_response = requests.delete(
+                                f"{LateDevOAuthService.BASE_URL}/accounts/{account_id}",
+                                headers=headers,
+                                timeout=10
+                            )
+                            if delete_response.status_code in [200, 204]:
+                                logger.info(f"✅ Disconnected {platform} account {account_id}")
+                            else:
+                                logger.warning(f"⚠️ Failed to disconnect {platform} account: {delete_response.status_code}")
+                        except Exception as e:
+                            logger.error(f"Error disconnecting {platform} account: {str(e)}")
+                            # Continue with other accounts
+                else:
+                    logger.warning(f"Could not fetch accounts: {accounts_response.status_code}")
+            except Exception as e:
+                logger.error(f"Error fetching/disconnecting accounts: {str(e)}")
+                # Continue to profile deletion anyway
+
+            # Step 3: Delete the profile (must be done AFTER disconnecting all accounts)
             response = requests.delete(
-                f"{LateDevOAuthService.BASE_URL}/profile/{profile_id}",
+                f"{LateDevOAuthService.BASE_URL}/profiles/{profile_id}",
                 headers=headers,
                 timeout=10
             )
@@ -336,14 +372,14 @@ class LateDevOAuthService:
                     'latedev_profile_id': None
                 })
                 logger.info(f"✅ Deleted Late.dev profile {profile_id} for user {user_id}")
-                return {'success': True, 'message': 'Profile deleted successfully'}
+                return {'success': True, 'message': 'Profile and all accounts deleted successfully'}
             else:
                 logger.error(f"Failed to delete profile: {response.status_code} - {response.text}")
                 # Even if API call fails, clear the profile ID from Firebase
                 UserService.update_user(user_id, {
                     'latedev_profile_id': None
                 })
-                return {'success': False, 'error': f'Failed to delete profile: {response.status_code}'}
+                return {'success': False, 'error': f'Failed to delete profile: {response.status_code}', 'message': 'Profile ID cleared from database'}
 
         except Exception as e:
             logger.error(f"Error deleting Late.dev profile: {str(e)}")
