@@ -130,7 +130,7 @@ def api_status():
         if account_info:
             user_info = {
                 'display_name': account_info.get('name') or account_info.get('username') or 'TikTok User',
-                'avatar_url': account_info.get('profilePicture') or account_info.get('profilePictureUrl'),
+                'avatar_url': account_info.get('profile_picture') or account_info.get('profilePicture') or account_info.get('profilePictureUrl'),
                 'username': account_info.get('username')
             }
             logger.info(f"Formatted user info: {user_info}")
