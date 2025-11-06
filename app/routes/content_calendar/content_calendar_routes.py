@@ -144,6 +144,7 @@ def update_event(event_id):
             event = calendar_manager.get_event(event_id)
             instagram_post_id = event.get('instagram_post_id') if event else None
             tiktok_post_id = event.get('tiktok_post_id') if event else None
+            x_post_id = event.get('x_post_id') if event else None
 
             # Update Instagram post schedule
             if instagram_post_id:
@@ -254,6 +255,61 @@ def update_event(event_id):
                 except Exception as e:
                     current_app.logger.error(f"Error updating TikTok post schedule: {e}")
                     # Continue with calendar update even if TikTok update fails
+
+            # Update X post schedule
+            if x_post_id:
+                try:
+                    import requests
+                    import os
+                    from datetime import datetime
+                    from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+
+                    # Get X account ID
+                    account_id = LateDevOAuthService.get_account_id(user_id, 'x')
+                    if not account_id:
+                        current_app.logger.error("X account not connected, cannot update post schedule")
+                    else:
+                        # Format the new publish date
+                        new_publish_time = data['publish_date']
+                        dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
+                        formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+                        headers = {
+                            'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                            'Content-Type': 'application/json'
+                        }
+
+                        update_post_data = {
+                            'scheduledFor': formatted_time,
+                            'timezone': 'UTC',
+                            'platforms': [{
+                                'platform': 'twitter',
+                                'accountId': account_id
+                            }],
+                            'isDraft': False
+                        }
+
+                        current_app.logger.info(f"Attempting to update X post {x_post_id} schedule to {formatted_time}")
+                        current_app.logger.info(f"Update payload: {update_post_data}")
+
+                        response = requests.put(
+                            f"https://getlate.dev/api/v1/posts/{x_post_id}",
+                            headers=headers,
+                            json=update_post_data,
+                            timeout=30
+                        )
+
+                        if response.status_code in [200, 201]:
+                            result = response.json()
+                            status = result.get('post', {}).get('status', 'unknown')
+                            current_app.logger.info(f"Updated X post {x_post_id} schedule to {formatted_time}, status: {status}")
+                            current_app.logger.info(f"Response: {response.text}")
+                        else:
+                            current_app.logger.error(f"Failed to update X post schedule: {response.status_code}")
+                            current_app.logger.error(f"Response body: {response.text}")
+                except Exception as e:
+                    current_app.logger.error(f"Error updating X post schedule: {e}")
+                    # Continue with calendar update even if X update fails
 
             # Update YouTube video schedule
             youtube_video_id = event.get('youtube_video_id') if event else None
@@ -393,6 +449,55 @@ def delete_event(event_id):
             except Exception as e:
                 current_app.logger.error(f"Error deleting TikTok post {tiktok_post_id}: {e}")
                 # Continue with calendar event deletion even if TikTok deletion fails
+
+        # If this event has an X post, delete it from Late.dev and clear draft scheduled status
+        x_post_id = event.get('x_post_id')
+        if x_post_id:
+            try:
+                import requests
+                import os
+                from firebase_admin import firestore
+
+                headers = {
+                    'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                    'Content-Type': 'application/json'
+                }
+
+                response = requests.delete(
+                    f"https://getlate.dev/api/v1/posts/{x_post_id}",
+                    headers=headers,
+                    timeout=30
+                )
+
+                if response.status_code in [200, 201, 204]:
+                    current_app.logger.info(f"Deleted X post {x_post_id}")
+
+                    # Find and clear the draft's scheduled status
+                    # Get draft ID from event notes
+                    notes = event.get('notes', '')
+                    draft_id = None
+                    if 'Draft ID:' in notes:
+                        draft_id = notes.split('Draft ID:')[1].strip().split('\n')[0].strip()
+
+                    if draft_id:
+                        try:
+                            db = firestore.client()
+                            draft_ref = db.collection('users').document(str(user_id)).collection('post_drafts').document(draft_id)
+                            draft_ref.update({
+                                'is_scheduled': False,
+                                'late_dev_post_id': firestore.DELETE_FIELD,
+                                'scheduled_time': firestore.DELETE_FIELD,
+                                'calendar_event_id': firestore.DELETE_FIELD,
+                                'updated_at': firestore.SERVER_TIMESTAMP
+                            })
+                            current_app.logger.info(f"✅ Cleared scheduled status from draft {draft_id}")
+                        except Exception as draft_error:
+                            current_app.logger.error(f"Error clearing draft scheduled status: {draft_error}")
+                else:
+                    current_app.logger.error(f"Failed to delete X post {x_post_id}: {response.status_code}")
+            except Exception as e:
+                current_app.logger.error(f"Error deleting X post {x_post_id}: {e}")
+                # Continue with calendar event deletion even if X deletion fails
 
         # Delete the calendar event
         success = calendar_manager.delete_event(event_id)
