@@ -1368,15 +1368,32 @@ function populateScheduleDateDropdown() {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
-
         const value = `${year}-${month}-${day}`;
-        const display = `${day}/${month}/${year}`;
+
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+        const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+        const label = `${dayName}, ${monthName} ${day}, ${year}`;
 
         const option = document.createElement('option');
         option.value = value;
-        option.textContent = display;
+
+        // Add "Today" or "Tomorrow" prefix
+        if (i === 0) {
+            option.textContent = `Today - ${label}`;
+        } else if (i === 1) {
+            option.textContent = `Tomorrow - ${label}`;
+        } else {
+            option.textContent = label;
+        }
+
         dateSelect.appendChild(option);
     }
+
+    // Set default to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+    dateSelect.value = tomorrowStr;
 }
 
 /**
@@ -1395,12 +1412,19 @@ function populateScheduleTimeDropdown() {
             const minuteStr = String(minute).padStart(2, '0');
             const value = `${hourStr}:${minuteStr}`;
 
+            const hour12 = hour % 12 || 12;
+            const ampm = hour < 12 ? 'AM' : 'PM';
+            const label = `${hour12}:${minuteStr} ${ampm}`;
+
             const option = document.createElement('option');
             option.value = value;
-            option.textContent = value;
+            option.textContent = label;
             timeSelect.appendChild(option);
         }
     }
+
+    // Set default to 12:00 PM
+    timeSelect.value = '12:00';
 }
 
 /**

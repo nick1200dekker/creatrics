@@ -4,9 +4,10 @@ Thin controllers that delegate to appropriate services
 NO business logic here - just HTTP handling
 ADDED: Pagination support with offset/limit for loading more drafts
 """
-from flask import render_template, request, jsonify, current_app, g
+from flask import render_template, request, jsonify, current_app, g, redirect, url_for
 import uuid
 import json
+import requests
 from datetime import datetime
 
 from . import bp
@@ -94,6 +95,8 @@ def update_media_urls_in_posts(user_id: str, posts: list):
 def index():
     """Main Post Editor view with pagination support"""
     try:
+        from app.system.auth.permissions import has_premium_subscription
+
         user_id = get_workspace_user_id()
         # Get first 10 drafts and total count for initial load
         recent_drafts = get_user_drafts_safe(user_id, limit=10, offset=0)
@@ -118,23 +121,34 @@ def index():
                 current_app.logger.warning(f"Could not fetch x_account: {e}")
                 user_data['x_account'] = ''
 
+        # Check premium status
+        has_premium = has_premium_subscription()
+
         return render_template('x_post_editor/index.html',
                              recent_drafts=recent_drafts,
                              total_count=total_count,
                              has_more=has_more,
                              loaded_count=len(recent_drafts),
-                             user=user_data)
+                             user=user_data,
+                             has_premium=has_premium)
     except Exception as e:
         current_app.logger.error(f"Error loading post editor page: {str(e)}")
         # Get user data for template
         user_data = g.user if hasattr(g, 'user') else {}
+
+        # Check premium even in error case
+        try:
+            has_premium = has_premium_subscription()
+        except:
+            has_premium = False
 
         return render_template('x_post_editor/index.html',
                              recent_drafts=[],
                              total_count=0,
                              has_more=False,
                              loaded_count=0,
-                             user=user_data)
+                             user=user_data,
+                             has_premium=has_premium)
 
 # Add alias function for base template compatibility
 @bp.route('/editor')
@@ -213,8 +227,22 @@ def get_draft(draft_id):
         # Update media URLs to ensure they don't expire
         if 'posts' in draft_data and isinstance(draft_data['posts'], list):
             current_app.logger.info(f"Updating media URLs for {len(draft_data['posts'])} posts")
+
+            # Debug: Log media before update
+            for i, post in enumerate(draft_data['posts']):
+                media = post.get('media', [])
+                current_app.logger.info(f"Post {i} has {len(media)} media items")
+                for j, item in enumerate(media):
+                    current_app.logger.info(f"  Media {j}: filename={item.get('filename')}, has_url={bool(item.get('url'))}")
+
             update_media_urls_in_posts(user_id, draft_data['posts'])
-        
+
+            # Debug: Log media after update
+            for i, post in enumerate(draft_data['posts']):
+                media = post.get('media', [])
+                for j, item in enumerate(media):
+                    current_app.logger.info(f"  After update - Media {j}: url={item.get('url')[:50] if item.get('url') else 'NO URL'}...")
+
         current_app.logger.info(f"Successfully loaded draft {draft_id}")
         return jsonify({
             "success": True,
@@ -288,6 +316,73 @@ def create_new_draft():
         })
     except Exception as e:
         current_app.logger.error(f"Error creating new draft: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@bp.route('/drafts/<draft_id>', methods=['PUT'])
+@auth_required
+@require_permission('x_post_editor')
+def update_draft(draft_id):
+    """Update draft metadata (e.g., scheduled status)"""
+    try:
+        from firebase_admin import firestore
+
+        user_id = get_workspace_user_id()
+        data = request.json
+
+        current_app.logger.info(f"📝 Updating draft {draft_id} with data: {data}")
+
+        collection = get_user_posts_collection()
+        doc_ref = collection.document(draft_id)
+
+        if not doc_ref.get().exists:
+            return jsonify({
+                "success": False,
+                "error": "Draft not found"
+            }), 404
+
+        # Update only allowed fields
+        update_data = {}
+        # Accept both 'scheduled' and 'is_scheduled' for backwards compatibility
+        if 'scheduled' in data:
+            update_data['is_scheduled'] = data['scheduled']
+        if 'is_scheduled' in data:
+            update_data['is_scheduled'] = data['is_scheduled']
+        if 'scheduled_time' in data:
+            update_data['scheduled_time'] = data['scheduled_time']
+        if 'scheduled_post_id' in data:
+            update_data['scheduled_post_id'] = data['scheduled_post_id']
+        if 'late_dev_post_id' in data:
+            update_data['late_dev_post_id'] = data['late_dev_post_id']
+        if 'calendar_event_id' in data:
+            update_data['calendar_event_id'] = data['calendar_event_id']
+
+        current_app.logger.info(f"📝 Update data to be written: {update_data}")
+
+        if update_data:
+            doc_ref.update(update_data)
+            current_app.logger.info(f"✅ Updated draft {draft_id} with scheduled status: {update_data}")
+
+            # If rescheduling (updating scheduled_time), update the calendar event too
+            if 'scheduled_time' in data and 'calendar_event_id' in data and data['calendar_event_id']:
+                try:
+                    from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+                    calendar_manager = ContentCalendarManager(user_id)
+                    calendar_manager.update_event(
+                        data['calendar_event_id'],
+                        publish_date=data['scheduled_time']
+                    )
+                    current_app.logger.info(f"Updated calendar event {data['calendar_event_id']} with new time")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to update calendar event: {e}")
+
+        return jsonify({
+            "success": True
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error updating draft {draft_id}: {str(e)}")
         return jsonify({
             "success": False,
             "error": str(e)
@@ -526,12 +621,23 @@ def save_draft():
     """Save a draft with complete post data including media and update timestamp for reordering"""
     try:
         collection = get_user_posts_collection()
-        
+
         data = request.json
         draft_id = data.get('draft_id')
         posts = data.get('posts', [])
         preset = data.get('preset', 'braindump')
         additional_context = data.get('additional_context', '')
+
+        # Debug: Log what we received
+        current_app.logger.info(f"=== SAVE DRAFT DEBUG ===")
+        current_app.logger.info(f"Draft ID: {draft_id}")
+        current_app.logger.info(f"Number of posts: {len(posts)}")
+        for i, post in enumerate(posts):
+            media = post.get('media', [])
+            current_app.logger.info(f"  Post {i}: {len(media)} media items")
+            for j, item in enumerate(media):
+                current_app.logger.info(f"    Media {j}: {item}")
+        current_app.logger.info(f"=== END SAVE DRAFT DEBUG ===")
         
         # Store pre-AI version before any potential AI enhancement
         if draft_id and draft_id != 'new':
@@ -607,11 +713,12 @@ def save_draft():
             "timestamp": datetime.now(),
             "permanent": True
         }
-        
+
         # Save the draft
         if draft_id and draft_id != 'new':
             doc_ref = collection.document(draft_id)
-            doc_ref.set(draft_data)
+            # Use update instead of set to preserve scheduled fields
+            doc_ref.update(draft_data)
             return_draft_id = draft_id
         else:
             doc_ref = collection.add(draft_data)[1]
@@ -676,11 +783,12 @@ def save_draft_fast():
             "timestamp": datetime.now(),
             "permanent": True
         }
-        
+
         # Save the draft
         if draft_id and draft_id != 'new':
             doc_ref = collection.document(draft_id)
-            doc_ref.set(draft_data)
+            # Use update instead of set to preserve scheduled fields
+            doc_ref.update(draft_data)
             return_draft_id = draft_id
         else:
             doc_ref = collection.add(draft_data)[1]
@@ -1043,6 +1151,689 @@ def delete_custom_voice(username):
         
     except Exception as e:
         current_app.logger.error(f"Error deleting custom voice: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# ===== LATE.DEV X CONNECTION ROUTES =====
+
+@bp.route('/connect-x', methods=['POST'])
+@auth_required
+@require_permission('x_post_editor')
+def connect_x():
+    """Initiate X connection via Late.dev"""
+    try:
+        from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+        from app.system.auth.permissions import has_premium_subscription
+
+        # Check if user has premium
+        if not has_premium_subscription():
+            return jsonify({
+                "success": False,
+                "error": "X connection requires a Premium Creator subscription"
+            }), 403
+
+        user_id = get_workspace_user_id()
+        auth_url = LateDevOAuthService.get_authorization_url(user_id, 'x')
+
+        return jsonify({
+            "success": True,
+            "auth_url": auth_url
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error initiating X connection: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@bp.route('/callback', methods=['GET'])
+@auth_required
+def x_oauth_callback():
+    """Handle Late.dev OAuth callback for X"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Log all query params for debugging
+        current_app.logger.info(f"X callback received for user {user_id}")
+        current_app.logger.info(f"Query params: {dict(request.args)}")
+
+        # Get success/error from query params
+        success = request.args.get('success')
+        error = request.args.get('error')
+        connected = request.args.get('connected')
+
+        current_app.logger.info(f"success={success}, error={error}, connected={connected}")
+
+        if error:
+            current_app.logger.error(f"X OAuth error: {error}")
+            return redirect(url_for('x_post_editor.index', error=f'oauth_error_{error}'))
+
+        # Late.dev uses 'connected' parameter to indicate success
+        if success == 'true' or connected:
+            current_app.logger.info(f"X connected successfully for user {user_id}")
+            return redirect(url_for('x_post_editor.index', success='connected'))
+        else:
+            current_app.logger.error(f"X OAuth failed - no success indicator")
+            return redirect(url_for('x_post_editor.index', error='connection_failed'))
+
+    except Exception as e:
+        current_app.logger.error(f"Error in X callback: {str(e)}")
+        return redirect(url_for('x_post_editor.index', error='callback_error'))
+
+@bp.route('/disconnect-x', methods=['POST'])
+@auth_required
+@require_permission('x_post_editor')
+def disconnect_x():
+    """Disconnect X account from Late.dev"""
+    try:
+        from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+
+        user_id = get_workspace_user_id()
+        result = LateDevOAuthService.disconnect(user_id, 'x')
+
+        return jsonify(result)
+    except Exception as e:
+        current_app.logger.error(f"Error disconnecting X: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@bp.route('/x-connection-status', methods=['GET'])
+@auth_required
+@require_permission('x_post_editor')
+def x_connection_status():
+    """Check X connection status via Late.dev"""
+    try:
+        from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+
+        user_id = get_workspace_user_id()
+        is_connected = LateDevOAuthService.is_connected(user_id, 'x')
+
+        account_info = None
+        if is_connected:
+            account_info = LateDevOAuthService.get_account_info(user_id, 'x')
+
+        return jsonify({
+            'connected': is_connected,
+            'account_info': account_info
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error checking X connection status: {str(e)}")
+        return jsonify({
+            'connected': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/schedule-post', methods=['POST'])
+@auth_required
+@require_permission('x_post_editor')
+def schedule_post():
+    """Schedule X post via Late.dev API"""
+    try:
+        from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+        from app.system.auth.permissions import has_premium_subscription
+        import os
+        import requests
+
+        # Check premium
+        if not has_premium_subscription():
+            return jsonify({
+                "success": False,
+                "error": "Premium subscription required to schedule posts"
+            }), 403
+
+        user_id = get_workspace_user_id()
+
+        # Check if X is connected
+        if not LateDevOAuthService.is_connected(user_id, 'x'):
+            return jsonify({
+                "success": False,
+                "error": "X account not connected"
+            }), 400
+
+        data = request.json
+        posts = data.get('posts', [])
+        scheduled_time = data.get('scheduled_time')  # ISO 8601 format
+        timezone = data.get('timezone', 'UTC')
+
+        current_app.logger.info(f"📥 Received schedule request with {len(posts)} posts")
+        for i, post in enumerate(posts):
+            media_count = len(post.get('media', []))
+            current_app.logger.info(f"  Post {i}: {len(post.get('text', ''))} chars, {media_count} media items")
+            if media_count > 0:
+                for j, media in enumerate(post.get('media', [])):
+                    current_app.logger.info(f"    Media {j}: {media.get('filename', 'no filename')}, URL: {media.get('url', 'no url')[:80]}")
+
+        if not posts or not scheduled_time:
+            return jsonify({
+                "success": False,
+                "error": "Missing posts or scheduled time"
+            }), 400
+
+        # Get X account info
+        account_info = LateDevOAuthService.get_account_info(user_id, 'x')
+        if not account_info or not account_info.get('account_id'):
+            return jsonify({
+                "success": False,
+                "error": "Could not retrieve X account information"
+            }), 500
+
+        account_id = account_info['account_id']
+
+        # Build thread items and media items for Late.dev
+        # Per Late.dev docs: mediaItems goes at ROOT level, not inside threadItems
+        thread_items = []
+        root_media_items = []
+
+        for i, post in enumerate(posts):
+            # Thread items only contain text content
+            item = {
+                "content": post.get('text', '')
+            }
+            thread_items.append(item)
+
+            # Only first post can have media - extract it for root level
+            if i == 0 and post.get('media') and len(post['media']) > 0:
+                current_app.logger.info(f"Processing media for first post, found {len(post['media'])} media items")
+                from app.system.services.firebase_service import StorageService
+
+                for media in post['media']:
+                    media_url = media.get('url', '')
+                    filename = media.get('filename', 'media')
+                    current_app.logger.info(f"Processing media: {filename}, URL: {media_url}")
+
+                    # Move media from post_editor to x_uploads folder for permanent storage
+                    try:
+                        # Download from current URL
+                        current_app.logger.info(f"Downloading media from: {media_url}")
+                        media_response = requests.get(media_url, timeout=30)
+                        if media_response.status_code == 200:
+                            # Upload to x_uploads folder
+                            content_type = media_response.headers.get('content-type', 'image/jpeg')
+                            current_app.logger.info(f"Uploading to x_uploads folder with content-type: {content_type}")
+
+                            # Create a file-like object from the bytes
+                            from io import BytesIO
+                            file_obj = BytesIO(media_response.content)
+                            file_obj.name = filename
+
+                            permanent_url = StorageService.upload_file(
+                                user_id,
+                                'x_uploads',
+                                filename,
+                                file_obj,
+                                make_public=True
+                            )
+
+                            # Extract URL from result if it's a dict
+                            if isinstance(permanent_url, dict):
+                                permanent_url = permanent_url.get('url')
+
+                            root_media_items.append({
+                                "type": media.get('media_type', 'image'),
+                                "url": permanent_url
+                            })
+                            current_app.logger.info(f"✅ Moved media to permanent storage: {filename} -> {permanent_url}")
+                        else:
+                            current_app.logger.error(f"Failed to download media (status {media_response.status_code}) from {media_url}")
+                            # Use original URL as fallback
+                            root_media_items.append({
+                                "type": media.get('media_type', 'image'),
+                                "url": media_url
+                            })
+                    except Exception as e:
+                        current_app.logger.error(f"Error moving media to permanent storage: {e}", exc_info=True)
+                        # Use original URL as fallback
+                        root_media_items.append({
+                            "type": media.get('media_type', 'image'),
+                            "url": media_url
+                        })
+
+                if root_media_items:
+                    current_app.logger.info(f"Prepared {len(root_media_items)} media items for root level")
+                else:
+                    current_app.logger.warning("No media items were successfully processed")
+
+        # Build Late.dev API request with mediaItems at ROOT level
+        late_dev_payload = {
+            "content": thread_items[0]['content'] if thread_items else "",
+            "scheduledFor": scheduled_time,
+            "timezone": timezone,
+            "platforms": [{
+                "platform": "twitter",
+                "accountId": account_id,
+                "platformSpecificData": {
+                    "threadItems": thread_items
+                }
+            }]
+        }
+
+        # Add mediaItems at root level if present
+        if root_media_items:
+            late_dev_payload['mediaItems'] = root_media_items
+            current_app.logger.info(f"✅ Added {len(root_media_items)} media items at ROOT level of Late.dev payload")
+
+        current_app.logger.info(f"Sending to Late.dev API - Thread items: {len(thread_items)}, Account: {account_id}, Media items: {len(root_media_items)}")
+
+        # Call Late.dev API
+        headers = {
+            'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.post(
+            f"{LateDevOAuthService.BASE_URL}/posts",
+            headers=headers,
+            json=late_dev_payload,
+            timeout=30
+        )
+
+        current_app.logger.info(f"Late.dev response status: {response.status_code}")
+
+        if response.status_code in [200, 201]:
+            result = response.json()
+            current_app.logger.info(f"Late.dev response body: {result}")
+            current_app.logger.info(f"Successfully scheduled X post for user {user_id}")
+
+            # Create calendar event for scheduled post
+            # Late.dev returns the post ID as 'post._id' not 'id'
+            post_data = result.get('post', {})
+            post_id = post_data.get('_id') or result.get('_id') or result.get('id')
+            current_app.logger.info(f"Extracted post_id from Late.dev response: {post_id}")
+
+            event_id = None
+            if post_id:
+                current_app.logger.info(f"Attempting to create calendar event for post_id: {post_id}")
+                try:
+                    from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+
+                    calendar_manager = ContentCalendarManager(user_id)
+
+                    # Get first post content for title
+                    first_post_text = posts[0].get('text', '') if posts else ''
+                    event_title = first_post_text.split('\n')[0][:100] if first_post_text else 'X Post'
+
+                    # Get draft_id from request if provided (so we can link back)
+                    draft_id = data.get('draft_id', '')
+                    content_link = f"/x_post_editor?draft={draft_id}" if draft_id else ""
+
+                    current_app.logger.info(f"Creating calendar event - Title: '{event_title}', Draft ID: {draft_id}, Link: {content_link}")
+
+                    event_id = calendar_manager.create_event(
+                        title=event_title,
+                        publish_date=scheduled_time,
+                        platform='X',
+                        status='ready',
+                        content_type='organic',
+                        content_link=content_link,
+                        notes=f'X Post ID: {post_id}\nDraft ID: {draft_id}' if draft_id else f'X Post ID: {post_id}'
+                    )
+
+                    current_app.logger.info(f"✅ Created calendar event {event_id} for scheduled X post {post_id}")
+                except Exception as e:
+                    current_app.logger.error(f"❌ Failed to create calendar event: {e}", exc_info=True)
+                    # Continue even if calendar creation fails
+            else:
+                current_app.logger.warning("⚠️ No post_id in Late.dev response, skipping calendar creation")
+
+            return jsonify({
+                "success": True,
+                "post_id": post_id,  # Use the post_id we already extracted
+                "calendar_event_id": event_id,
+                "message": "Post scheduled successfully"
+            })
+        else:
+            current_app.logger.error(f"Late.dev API error: {response.status_code} - {response.text}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to schedule post: {response.text}"
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"Error scheduling X post: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@bp.route('/delete-schedule', methods=['POST'])
+@auth_required
+@require_permission('x_post_editor')
+def delete_schedule():
+    """Delete scheduled post from Late.dev and calendar"""
+    try:
+        from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+        from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+        import os
+
+        user_id = get_workspace_user_id()
+        data = request.json
+        draft_id = data.get('draft_id')
+
+        if not draft_id:
+            return jsonify({
+                "success": False,
+                "error": "Missing draft_id"
+            }), 400
+
+        # Get draft to find Late.dev post ID and calendar event ID
+        collection = get_user_posts_collection()
+        doc = collection.document(draft_id).get()
+
+        if not doc.exists:
+            return jsonify({
+                "success": False,
+                "error": "Draft not found"
+            }), 404
+
+        draft_data = doc.to_dict()
+        late_dev_post_id = draft_data.get('late_dev_post_id')
+        calendar_event_id = draft_data.get('calendar_event_id')
+
+        # Delete from Late.dev if post ID exists
+        if late_dev_post_id:
+            try:
+                import requests
+                headers = {
+                    'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                    'Content-Type': 'application/json'
+                }
+
+                delete_response = requests.delete(
+                    f"{LateDevOAuthService.BASE_URL}/posts/{late_dev_post_id}",
+                    headers=headers,
+                    timeout=30
+                )
+
+                if delete_response.status_code not in [200, 204]:
+                    current_app.logger.error(f"Failed to delete from Late.dev: {delete_response.status_code} - {delete_response.text}")
+            except Exception as e:
+                current_app.logger.error(f"Error deleting from Late.dev: {e}")
+
+        # Delete from calendar if event ID exists
+        if calendar_event_id:
+            try:
+                calendar_manager = ContentCalendarManager(user_id)
+                calendar_manager.delete_event(calendar_event_id)
+                current_app.logger.info(f"Deleted calendar event {calendar_event_id}")
+            except Exception as e:
+                current_app.logger.error(f"Error deleting calendar event: {e}")
+
+        # Update draft to remove schedule status
+        collection.document(draft_id).update({
+            'is_scheduled': False,
+            'scheduled_time': None,
+            'late_dev_post_id': None,
+            'calendar_event_id': None,
+            'updated_at': firestore.SERVER_TIMESTAMP
+        })
+
+        return jsonify({
+            "success": True,
+            "message": "Schedule deleted successfully"
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Error deleting schedule: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@bp.route('/update-scheduled-post', methods=['POST'])
+@auth_required
+@require_permission('x_post_editor')
+def update_scheduled_post():
+    """Update scheduled post on Late.dev"""
+    try:
+        from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+        from app.system.services.firebase_service import StorageService
+        from io import BytesIO
+        import os
+
+        user_id = get_workspace_user_id()
+        data = request.json
+
+        late_dev_post_id = data.get('late_dev_post_id')
+        posts = data.get('posts', [])
+        scheduled_time = data.get('scheduled_time')
+        draft_id = data.get('draft_id')
+
+        if not late_dev_post_id or not posts:
+            return jsonify({
+                "success": False,
+                "error": "Missing required parameters"
+            }), 400
+
+        current_app.logger.info(f"Updating Late.dev post {late_dev_post_id} for user {user_id}")
+
+        # Get X account info
+        account_info = LateDevOAuthService.get_account_info(user_id, 'x')
+        if not account_info or not account_info.get('account_id'):
+            return jsonify({
+                "success": False,
+                "error": "Could not retrieve X account information"
+            }), 500
+
+        account_id = account_info['account_id']
+
+        # Build thread items and media items (same as schedule-post)
+        thread_items = []
+        root_media_items = []
+
+        for i, post in enumerate(posts):
+            item = {"content": post.get('text', '')}
+            thread_items.append(item)
+
+            # Only first post can have media
+            if i == 0 and post.get('media') and len(post['media']) > 0:
+                current_app.logger.info(f"Processing media for first post, found {len(post['media'])} media items")
+
+                for media in post['media']:
+                    media_url = media.get('url', '')
+                    filename = media.get('filename', 'media')
+
+                    # Check if URL is already permanent (x_uploads) or temporary (post_editor)
+                    if 'x_uploads' in media_url:
+                        # Already permanent, use as-is
+                        root_media_items.append({
+                            "type": media.get('media_type', 'image'),
+                            "url": media_url
+                        })
+                        current_app.logger.info(f"Using existing permanent URL: {filename}")
+                    else:
+                        # Move to permanent storage
+                        try:
+                            current_app.logger.info(f"Downloading media from: {media_url}")
+                            media_response = requests.get(media_url, timeout=30)
+                            if media_response.status_code == 200:
+                                file_obj = BytesIO(media_response.content)
+                                file_obj.name = filename
+
+                                permanent_url = StorageService.upload_file(
+                                    user_id,
+                                    'x_uploads',
+                                    filename,
+                                    file_obj,
+                                    make_public=True
+                                )
+
+                                if isinstance(permanent_url, dict):
+                                    permanent_url = permanent_url.get('url')
+
+                                root_media_items.append({
+                                    "type": media.get('media_type', 'image'),
+                                    "url": permanent_url
+                                })
+                                current_app.logger.info(f"✅ Moved media to permanent storage: {filename}")
+                            else:
+                                root_media_items.append({
+                                    "type": media.get('media_type', 'image'),
+                                    "url": media_url
+                                })
+                        except Exception as e:
+                            current_app.logger.error(f"Error moving media: {e}")
+                            root_media_items.append({
+                                "type": media.get('media_type', 'image'),
+                                "url": media_url
+                            })
+
+        # Build Late.dev UPDATE payload
+        late_dev_payload = {
+            "content": thread_items[0]['content'] if thread_items else "",
+            "platforms": [{
+                "platform": "twitter",
+                "accountId": account_id,
+                "platformSpecificData": {
+                    "threadItems": thread_items
+                }
+            }]
+        }
+
+        # Add mediaItems at root level if present
+        if root_media_items:
+            late_dev_payload['mediaItems'] = root_media_items
+
+        # Add scheduled time if provided
+        if scheduled_time:
+            late_dev_payload['scheduledFor'] = scheduled_time
+            late_dev_payload['timezone'] = 'UTC'  # Or get from request
+
+        current_app.logger.info(f"Updating Late.dev post with {len(thread_items)} thread items, {len(root_media_items)} media items")
+
+        # Call Late.dev PUT endpoint
+        headers = {
+            'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.put(
+            f"{LateDevOAuthService.BASE_URL}/posts/{late_dev_post_id}",
+            headers=headers,
+            json=late_dev_payload,
+            timeout=30
+        )
+
+        current_app.logger.info(f"Late.dev update response status: {response.status_code}")
+
+        if response.status_code in [200, 201]:
+            result = response.json()
+            current_app.logger.info(f"✅ Successfully updated Late.dev post {late_dev_post_id}")
+
+            # Update draft with new content while preserving scheduled status
+            if draft_id:
+                from firebase_admin import firestore
+                collection = get_user_posts_collection()
+
+                # Get current draft to preserve all scheduled fields
+                current_draft = collection.document(draft_id).get()
+                if current_draft.exists:
+                    draft_data = current_draft.to_dict()
+
+                    # Update with new content while preserving scheduled status
+                    collection.document(draft_id).update({
+                        'posts': posts,
+                        'updated_at': firestore.SERVER_TIMESTAMP,
+                        # Preserve all scheduled status fields
+                        'is_scheduled': draft_data.get('is_scheduled', False),
+                        'late_dev_post_id': draft_data.get('late_dev_post_id'),
+                        'calendar_event_id': draft_data.get('calendar_event_id'),
+                        'scheduled_time': draft_data.get('scheduled_time')
+                    })
+                    current_app.logger.info(f"✅ Updated draft {draft_id} while preserving scheduled status")
+
+            return jsonify({
+                "success": True,
+                "message": "Post updated successfully"
+            })
+        else:
+            current_app.logger.error(f"Late.dev update error: {response.status_code} - {response.text}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to update post: {response.text}"
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"Error updating scheduled post: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@bp.route('/unschedule-post', methods=['POST'])
+@auth_required
+@require_permission('x_post_editor')
+def unschedule_post():
+    """Unschedule a post - delete from Late.dev and clear scheduled status"""
+    try:
+        data = request.json
+        current_app.logger.info(f"📥 Unschedule request data: {data}")
+        late_dev_post_id = data.get('late_dev_post_id')
+        draft_id = data.get('draft_id')
+        current_app.logger.info(f"📥 late_dev_post_id: {late_dev_post_id}, draft_id: {draft_id}")
+
+        if not late_dev_post_id:
+            current_app.logger.error(f"❌ Missing late_dev_post_id in request")
+            return jsonify({
+                "success": False,
+                "error": "Missing late_dev_post_id"
+            }), 400
+
+        # Get API key from environment (same as schedule route)
+        import os
+        late_dev_api_key = os.environ.get('LATEDEV_API_KEY')
+
+        current_app.logger.info(f"📋 Has API key: {bool(late_dev_api_key)}")
+
+        if not late_dev_api_key:
+            current_app.logger.error(f"❌ Late.dev API key not configured")
+            return jsonify({
+                "success": False,
+                "error": "Late.dev not configured"
+            }), 400
+
+        # Delete post from Late.dev
+        url = f"https://getlate.dev/api/v1/posts/{late_dev_post_id}"
+        headers = {
+            'Authorization': f'Bearer {late_dev_api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        current_app.logger.info(f"Deleting Late.dev post {late_dev_post_id}")
+        response = requests.delete(url, headers=headers, timeout=30)
+
+        if response.status_code in [200, 204]:
+            current_app.logger.info(f"✅ Successfully deleted Late.dev post {late_dev_post_id}")
+
+            # Clear scheduled status from draft
+            if draft_id:
+                from firebase_admin import firestore
+                collection = get_user_posts_collection()
+                collection.document(draft_id).update({
+                    'is_scheduled': False,
+                    'late_dev_post_id': firestore.DELETE_FIELD,
+                    'scheduled_time': firestore.DELETE_FIELD,
+                    'calendar_event_id': firestore.DELETE_FIELD,
+                    'updated_at': firestore.SERVER_TIMESTAMP
+                })
+                current_app.logger.info(f"✅ Cleared scheduled status from draft {draft_id}")
+
+            return jsonify({
+                "success": True,
+                "message": "Post unscheduled successfully"
+            })
+        else:
+            current_app.logger.error(f"Late.dev delete error: {response.status_code} - {response.text}")
+            return jsonify({
+                "success": False,
+                "error": f"Failed to delete post: {response.text}"
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"Error unscheduling post: {str(e)}")
         return jsonify({
             "success": False,
             "error": str(e)

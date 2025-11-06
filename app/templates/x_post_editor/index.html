@@ -154,24 +154,105 @@
             </div>
         </div>
 
+        <!-- Save Status (top left, only visible when saving) -->
+        <div class="save-status-toast" id="saveStatus" style="display: none;">
+            <i class="ph ph-spinner"></i>
+            <span>Saving...</span>
+        </div>
+
         <!-- Editor Content -->
         <div class="editor-content">
             <div class="posts-container" id="postsContainer">
                 <!-- Dynamic posts will appear here -->
             </div>
+
+            <!-- Schedule Card (inline, hidden by default) -->
+            <div class="upload-option-card" id="scheduleCard" style="display: none;">
+                <div class="schedule-header">
+                    <label class="upload-option-label">
+                        <i class="ph ph-calendar"></i>
+                        Publish Date & Time <span class="utc-indicator" id="timezoneIndicator">(Local Time)</span>
+                    </label>
+                    <button class="schedule-close-btn" id="scheduleCloseBtn">
+                        <i class="ph ph-x"></i>
+                    </button>
+                </div>
+                <div class="schedule-datetime-grid">
+                    <select id="scheduleDateSelect" class="schedule-select">
+                        <option value="">Select date</option>
+                    </select>
+                    <select id="scheduleTimeSelect" class="schedule-select">
+                        <option value="">Select time</option>
+                    </select>
+                </div>
+                <button id="confirmScheduleBtn" class="schedule-confirm-btn">
+                    <i class="ph ph-calendar-check"></i>
+                    Schedule Post
+                </button>
+            </div>
         </div>
 
         <!-- Editor Footer -->
-        <div class="editor-footer">
-            <div class="save-status saved" id="saveStatus">
-                <i class="ph ph-check-circle"></i>
-                <span>Saved</span>
-            </div>
-            <div class="editor-actions">
-                <button class="action-btn" id="revert-button">
-                    <i class="ph ph-arrow-counter-clockwise"></i>
-                    Undo
+        <div class="editor-footer-section">
+            <!-- Compact Connected Status (shown for premium users) -->
+            <div id="compactConnectionStatus" class="compact-connection-status">
+                <div class="compact-status-content">
+                    <div class="status-dot loading"></div>
+                    <span class="compact-status-text">Checking connection...</span>
+                </div>
+                <button id="compactDisconnectBtn" class="compact-disconnect-btn" style="display: none;">
+                    <i class="ph ph-plug"></i>
+                    Disconnect
                 </button>
+            </div>
+        </div>
+
+        <!-- X Connection Status (only shown for free users with premium notice) -->
+        <div class="connection-card" style="display: none;">
+            <div class="connection-header">
+                <div class="connection-status">
+                    <div class="status-indicator">
+                        <div class="status-dot loading"></div>
+                        <span class="status-text">Checking connection...</span>
+                    </div>
+
+                    <div id="connectionButtons" style="display: none;">
+                        <button id="connectXBtn" class="secondary-button" style="display: none;">
+                            <i class="ph ph-link"></i>
+                            <span>Connect X Account</span>
+                        </button>
+
+                        <button id="disconnectXBtn" class="btn-disconnect" style="display: none;">
+                            <i class="ph ph-plug"></i>
+                            Disconnect
+                        </button>
+                    </div>
+
+                    <!-- Loading skeleton for buttons -->
+                    <div id="buttonSkeleton" class="skeleton-loader" style="width: 150px; height: 36px; border-radius: 8px;"></div>
+                </div>
+
+                <!-- User Info (shown when connected) -->
+                <div id="userInfo" class="user-info" style="display:none;">
+                    <img id="userAvatar" src="/static/img/default-avatar.png" alt="User Avatar" class="user-avatar">
+                    <div class="user-details">
+                        <div class="user-name" id="userName">X User</div>
+                        <div class="user-id" id="userOpenId">@username</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Premium Required Notice -->
+            <div id="premiumNotice" class="premium-notice" style="display: none;">
+                <div class="premium-icon">👑</div>
+                <div class="premium-text">
+                    <strong>Premium Feature</strong>
+                    <p>X scheduling requires a Premium Creator subscription to connect and schedule posts.</p>
+                </div>
+                <a href="/payment/checkout" class="premium-upgrade-btn">
+                    <i class="ph ph-crown"></i>
+                    Upgrade to Premium
+                </a>
             </div>
         </div>
     </main>
@@ -216,6 +297,7 @@
 <script>
 // Pass user data to JavaScript
 window.userXAccount = '{{ user.x_account | default("", true) }}';
+window.hasPremium = {{ 'true' if has_premium else 'false' }};
 </script>
 <script src="{{ url_for('static', filename='scripts/x_post_editor.js') }}"></script>
 {% endblock %}

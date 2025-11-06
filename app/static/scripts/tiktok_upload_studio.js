@@ -772,9 +772,24 @@ function populateScheduleDateDropdown() {
 
         const option = document.createElement('option');
         option.value = value;
-        option.textContent = label;
+
+        // Add "Today" or "Tomorrow" prefix
+        if (i === 0) {
+            option.textContent = `Today - ${label}`;
+        } else if (i === 1) {
+            option.textContent = `Tomorrow - ${label}`;
+        } else {
+            option.textContent = label;
+        }
+
         dateSelect.appendChild(option);
     }
+
+    // Set default to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+    dateSelect.value = tomorrowStr;
 }
 
 /**
@@ -802,6 +817,9 @@ function populateScheduleTimeDropdown() {
             timeSelect.appendChild(option);
         }
     }
+
+    // Set default to 12:00 PM
+    timeSelect.value = '12:00';
 }
 
 /**

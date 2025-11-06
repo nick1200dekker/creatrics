@@ -17,6 +17,13 @@ class LateDevOAuthService:
     API_KEY = os.environ.get('LATEDEV_API_KEY')
 
     @staticmethod
+    def _map_platform_name(platform):
+        """Map internal platform names to Late.dev API platform names"""
+        if platform in ['x', 'twitter']:
+            return 'twitter'
+        return platform
+
+    @staticmethod
     def get_authorization_url(user_id, platform='instagram'):
         """
         Get Late.dev authorization URL for connecting Instagram
@@ -37,8 +44,15 @@ class LateDevOAuthService:
 
             # Build callback URL based on platform
             callback_url = os.environ.get('BASE_URL', 'http://localhost:8080')
+
+            # Map platform to Late.dev API name
+            api_platform = LateDevOAuthService._map_platform_name(platform)
+
+            # Build callback URL based on platform
             if platform == 'tiktok':
                 redirect_url = f"{callback_url}/tiktok-upload-studio/callback"
+            elif platform in ['x', 'twitter']:
+                redirect_url = f"{callback_url}/x_post_editor/callback"
             else:
                 redirect_url = f"{callback_url}/instagram-upload-studio/callback"
 
@@ -48,7 +62,7 @@ class LateDevOAuthService:
                 'Content-Type': 'application/json'
             }
 
-            connect_url = f"{LateDevOAuthService.BASE_URL}/connect/{platform}"
+            connect_url = f"{LateDevOAuthService.BASE_URL}/connect/{api_platform}"
             params = {
                 'profileId': profile_id,
                 'redirect_url': redirect_url
@@ -219,9 +233,13 @@ class LateDevOAuthService:
                 'Authorization': f'Bearer {LateDevOAuthService.API_KEY}'
             }
 
-            print(f"=== CHECKING INSTAGRAM CONNECTION ===")
+            # Map platform to Late.dev API name
+            api_platform = LateDevOAuthService._map_platform_name(platform)
+
+            print(f"=== CHECKING ACCOUNT CONNECTION ===")
             print(f"Profile ID: {profile_id}")
-            print(f"Platform: {platform}")
+            print(f"Platform (internal): {platform}")
+            print(f"Platform (API): {api_platform}")
 
             response = requests.get(
                 f"{LateDevOAuthService.BASE_URL}/accounts",
@@ -237,10 +255,10 @@ class LateDevOAuthService:
                 response_data = response.json()
                 accounts = response_data.get('accounts', response_data.get('data', []))
                 print(f"Found {len(accounts)} accounts")
-                # Find Instagram account
+                # Find matching account
                 for account in accounts:
                     print(f"Account: platform={account.get('platform')}, username={account.get('username')}")
-                    if account.get('platform') == platform:
+                    if account.get('platform') == api_platform:
                         result = {
                             'username': account.get('username'),
                             'account_id': account.get('_id') or account.get('id'),
@@ -279,18 +297,23 @@ class LateDevOAuthService:
                 'Authorization': f'Bearer {LateDevOAuthService.API_KEY}'
             }
 
+            logger.info(f"Attempting to disconnect {platform} account {account_id}")
+
             response = requests.delete(
                 f"{LateDevOAuthService.BASE_URL}/accounts/{account_id}",
                 headers=headers,
                 timeout=10
             )
 
+            logger.info(f"Disconnect response: {response.status_code}")
+            logger.info(f"Disconnect response body: {response.text}")
+
             if response.status_code in [200, 204]:
                 logger.info(f"Disconnected {platform} for user {user_id}")
                 return {'success': True}
             else:
-                logger.error(f"Failed to disconnect: {response.status_code}")
-                return {'success': False, 'error': 'Failed to disconnect account'}
+                logger.error(f"Failed to disconnect: {response.status_code} - {response.text}")
+                return {'success': False, 'error': f'Failed to disconnect account: {response.text}'}
 
         except Exception as e:
             logger.error(f"Error disconnecting account: {str(e)}")

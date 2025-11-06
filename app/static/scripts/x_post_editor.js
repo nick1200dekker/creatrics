@@ -48,11 +48,17 @@
         isLoadingDraft: false,
         currentOffset: 0,
         loadedCount: 0,
+        isXConnected: false,
+        xAccountInfo: null,
+        hasPremium: window.hasPremium || false,
         totalCount: 0,
         hasMore: false,
         isLoadingMore: false,
         isCreatingDraft: false
     };
+
+    // Schedule button retry counter
+    let scheduleButtonRetryCount = 0;
 
     // Initialize function
     function initialize() {
@@ -66,7 +72,6 @@
         setupEventListeners();
         setupInitialPost();
         setupKeyboardShortcuts();
-        updatePostToXButtonVisibility();
         loadDraftsWithSpinner();
 
         // Initialize voice tone dropdown and its event listeners
@@ -161,15 +166,26 @@
                 }
             }
 
+            // Add scheduled icon if draft is scheduled
+            const scheduledIcon = draft.is_scheduled ? '<i class="ph ph-clock draft-scheduled-icon" title="Scheduled"></i>' : '';
+
+            // Don't show delete button for scheduled drafts
+            const deleteButton = draft.is_scheduled ? '' : `
+                <button class="draft-delete-btn" title="Delete Draft">
+                    <i class="ph ph-trash"></i>
+                </button>
+            `;
+
             draftsHTML += `
-                <div class="draft-item ${isActive ? 'active' : ''}" data-id="${draft.id}">
+                <div class="draft-item ${isActive ? 'active' : ''}" data-id="${draft.id}" data-scheduled="${draft.is_scheduled || false}">
                     <div class="draft-content">
-                        <div class="draft-title">${draft.title || 'Untitled Draft'}</div>
+                        <div class="draft-title">
+                            ${scheduledIcon}
+                            ${draft.title || 'Untitled Draft'}
+                        </div>
                         ${preview ? `<div class="draft-preview">${escapeHtml(preview)}</div>` : ''}
                     </div>
-                    <button class="draft-delete-btn" title="Delete Draft">
-                        <i class="ph ph-trash"></i>
-                    </button>
+                    ${deleteButton}
                 </div>
             `;
         });
@@ -232,9 +248,8 @@
         
         if (state.hasMore && state.loadedCount > 0) {
             loadMoreContainer.style.display = 'block';
-            const remaining = state.totalCount - state.loadedCount;
-            loadMoreText.textContent = `Load More (${remaining} remaining)`;
-            console.log('Showing load more button with', remaining, 'remaining');
+            loadMoreText.textContent = 'Load More';
+            console.log('Showing load more button');
         } else {
             loadMoreContainer.style.display = 'none';
             console.log('Hiding load more button');
@@ -264,25 +279,47 @@
     function attachDraftEventListeners() {
         document.querySelectorAll('.draft-item').forEach(item => {
             const draftId = item.dataset.id;
-            
+
             // Click to load draft
             item.onclick = (e) => {
                 if (e.target.closest('.draft-delete-btn')) return;
-                
+
+                // Prevent clicking when editing a scheduled post
+                if (state.isEditingScheduled) {
+                    showToast('Please finish editing or reload the page', 'warning');
+                    return;
+                }
+
                 document.querySelectorAll('.draft-item').forEach(el => el.classList.remove('active'));
                 item.classList.add('active');
                 state.currentDraftId = draftId;
-                
+
                 loadDraft(draftId);
             };
-            
+
             // Delete button
             const deleteBtn = item.querySelector('.draft-delete-btn');
             if (deleteBtn) {
                 deleteBtn.onclick = (e) => {
                     e.stopPropagation();
+
+                    // Prevent deleting when editing a scheduled post
+                    if (state.isEditingScheduled) {
+                        showToast('Please finish editing or reload the page', 'warning');
+                        return;
+                    }
+
                     deleteDraft(draftId, item);
                 };
+            }
+
+            // Add disabled styling when in edit mode
+            if (state.isEditingScheduled) {
+                item.style.opacity = '0.5';
+                item.style.pointerEvents = 'none';
+            } else {
+                item.style.opacity = '';
+                item.style.pointerEvents = '';
             }
         });
     }
@@ -299,35 +336,98 @@
         }
     }
 
+    /**
+     * Update action buttons visibility based on:
+     * - Single post: Show both schedule and "Post to X" buttons
+     * - Thread (multiple posts): Show only schedule button on last post
+     * - If any post > 280 chars: Show only "Post to X" button (hide schedule)
+     * - Schedule button requires: premium, connected, all posts <= 280 chars
+     */
+    function updateActionButtons() {
+        const posts = document.querySelectorAll('.post-item');
+        const totalPosts = posts.length;
+
+        // Check if any post exceeds 280 characters
+        let anyPostOver280 = false;
+        posts.forEach(post => {
+            const textarea = post.querySelector('.post-editor-textarea');
+            if (textarea && textarea.value.length > 280) {
+                anyPostOver280 = true;
+            }
+        });
+
+        // Hide all buttons first
+        posts.forEach(post => {
+            const scheduleBtn = post.querySelector('.schedule-x-btn');
+            const postToXBtn = post.querySelector('.post-to-x-btn');
+            if (scheduleBtn) scheduleBtn.style.display = 'none';
+            if (postToXBtn) postToXBtn.style.display = 'none';
+        });
+
+        // Show buttons only on the last post
+        const lastPost = posts[posts.length - 1];
+        if (!lastPost) return;
+
+        const scheduleBtn = lastPost.querySelector('.schedule-x-btn');
+        const postToXBtn = lastPost.querySelector('.post-to-x-btn');
+
+        // Single post (not a thread)
+        if (totalPosts === 1) {
+            // Show "Post to X" button
+            if (postToXBtn) postToXBtn.style.display = 'inline-flex';
+
+            // Show schedule button only if no post over 280 chars
+            if (scheduleBtn && !anyPostOver280) {
+                scheduleBtn.style.display = 'inline-flex';
+                // Check premium and connection status
+                updateScheduleButtonVisibility();
+            }
+        }
+        // Thread (multiple posts)
+        else {
+            // Never show "Post to X" button in threads
+            if (postToXBtn) postToXBtn.style.display = 'none';
+
+            // Show schedule button only if no post over 280 chars
+            if (scheduleBtn && !anyPostOver280) {
+                scheduleBtn.style.display = 'inline-flex';
+                // Check premium and connection status
+                updateScheduleButtonVisibility();
+            }
+        }
+    }
+
     // Add new post
     function addNewPost() {
         const postsContainer = document.getElementById('postsContainer');
         if (!postsContainer) return;
-        
+
         state.postCount++;
-        
+        const isFirstPost = state.postCount === 1;
+
         const newPost = document.createElement('div');
         newPost.className = 'post-item';
         newPost.innerHTML = `
             <div class="post-item-header">
                 <div class="post-type">
                     <i class="ph ph-note-pencil"></i>
-                    <span>${state.postCount === 1 ? 'Post' : `Post ${state.postCount}`}</span>
+                    <span>${isFirstPost ? 'Post' : `Post ${state.postCount}`}</span>
                 </div>
                 <div class="post-actions">
+                    ${isFirstPost ? `
                     <button class="post-action media-upload-trigger" title="Add Media">
                         <i class="ph ph-paperclip"></i>
-                    </button>
-                    ${state.postCount > 1 ? `
+                    </button>` : ''}
+                    ${!isFirstPost ? `
                     <button class="post-action delete-post" title="Delete">
                         <i class="ph ph-trash"></i>
                     </button>` : ''}
                 </div>
             </div>
             <div class="post-editor-content">
-                <textarea class="post-editor-textarea" placeholder="${state.postCount === 1 ? 'Start typing your post here...' : 'Continue your thread...'}"></textarea>
+                <textarea class="post-editor-textarea" placeholder="${isFirstPost ? 'Start typing your post here...' : 'Continue your thread...'}"></textarea>
                 <div class="post-media"></div>
-                <input type="file" class="hidden-file-input" accept="image/*,video/*,.gif">
+                ${isFirstPost ? `<input type="file" class="hidden-file-input" accept="image/*,video/*,.gif">` : ''}
             </div>
             <div class="post-footer">
                 <div class="character-count">
@@ -336,18 +436,23 @@
                         <i class="ph ph-plus"></i>
                     </div>
                 </div>
-                ${state.postCount === 1 ? `
-                <button id="post-to-x-btn" class="post-action-btn">
-                    <i class="ph ph-paper-plane-right"></i>
-                    Post to X
-                </button>` : ''}
+                <div class="post-footer-actions">
+                    <button class="schedule-x-btn" style="display: none;">
+                        <i class="ph ph-calendar-plus"></i>
+                        Schedule
+                    </button>
+                    <button class="post-to-x-btn" style="display: none;">
+                        <i class="ph ph-paper-plane-right"></i>
+                        Post to X
+                    </button>
+                </div>
             </div>
         `;
-        
+
         postsContainer.appendChild(newPost);
         setupPostEventListeners(newPost);
-        updatePostToXButtonVisibility();
-        
+        updateActionButtons();
+
         return newPost;
     }
 
@@ -535,6 +640,12 @@
     
     // Load draft
     async function loadDraft(draftId) {
+        // Prevent draft switching when editing a scheduled post
+        if (state.isEditingScheduled) {
+            showToast('Please finish editing or reload the page', 'warning');
+            return;
+        }
+
         state.isLoadingDraft = true;
 
         try {
@@ -550,12 +661,45 @@
                 // Clear and load posts
                 clearEditor();
 
+                // Clear any edit mode state
+                state.isEditingScheduled = false;
+
+                // Remove any existing banners
+                const scheduledBanner = document.getElementById('scheduledBanner');
+                if (scheduledBanner) {
+                    scheduledBanner.remove();
+                }
+                const editingBanner = document.getElementById('editingScheduledBanner');
+                if (editingBanner) {
+                    editingBanner.remove();
+                }
+
                 if (draft.posts && Array.isArray(draft.posts)) {
                     loadPostsArray(draft.posts);
                 }
 
                 state.enhancementPreset = draft.preset || 'storytelling';
                 state.additionalInstructions = draft.additional_context || '';
+
+                // Store scheduled info in state
+                state.isScheduled = draft.is_scheduled || draft.scheduled || false;
+                state.calendarEventId = draft.calendar_event_id || null;
+                state.scheduledPostId = draft.late_dev_post_id || draft.scheduled_post_id || null;
+                state.scheduledTime = draft.scheduled_time || null;
+
+                // Debug logging
+                console.log('📋 Loading draft scheduled info:', {
+                    is_scheduled: draft.is_scheduled,
+                    late_dev_post_id: draft.late_dev_post_id,
+                    scheduled_post_id: draft.scheduled_post_id,
+                    scheduled_time: draft.scheduled_time,
+                    final_scheduledPostId: state.scheduledPostId
+                });
+
+                // Check if draft is scheduled
+                if (state.isScheduled) {
+                    showScheduledDraftUI(draft);
+                }
 
                 // Update UI
                 updateUIFromState();
@@ -1148,7 +1292,34 @@
             showToast('Unsupported file type', 'error');
             return;
         }
-        
+
+        // Check existing media in this post
+        const existingMedia = mediaContainer.querySelectorAll('.media-preview-container');
+        const hasVideo = Array.from(existingMedia).some(container =>
+            container.querySelector('video')
+        );
+        const imageCount = Array.from(existingMedia).filter(container =>
+            container.querySelector('img')
+        ).length;
+
+        // X/Twitter rules: max 4 images OR 1 video (no mixing)
+        if (mediaType === 'video') {
+            if (existingMedia.length > 0) {
+                showToast('Only 1 video allowed per post', 'error');
+                return;
+            }
+        } else {
+            // Image
+            if (hasVideo) {
+                showToast('Cannot mix images and video', 'error');
+                return;
+            }
+            if (imageCount >= 4) {
+                showToast('Maximum 4 images per post', 'error');
+                return;
+            }
+        }
+
         try {
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -1164,17 +1335,22 @@
                             mime_type: file.type
                         })
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         const mediaElement = createMediaElement({
                             url: data.media_url,
                             filename: data.filename,
-                            media_type: mediaType
+                            media_type: mediaType,
+                            file_size: file.size,
+                            mime_type: file.type
                         });
                         mediaContainer.appendChild(mediaElement);
                         showToast('Media uploaded', 'success');
+
+                        // Mark as changed and save draft with media
+                        markAsChanged();
                     } else {
                         showToast('Upload failed: ' + data.error, 'error');
                     }
@@ -1243,7 +1419,7 @@
     function reorderPosts() {
         const posts = document.querySelectorAll('.post-item');
         state.postCount = 0;
-        
+
         posts.forEach((post, index) => {
             state.postCount++;
             const labelElement = post.querySelector('.post-type span');
@@ -1251,39 +1427,28 @@
                 labelElement.textContent = index === 0 ? 'Post' : `Post ${index + 1}`;
             }
         });
-        
-        updatePostToXButtonVisibility();
+
+        updateActionButtons();
     }
 
     function updateCharacterCount(textarea) {
         const count = textarea.value.length;
         const countElement = textarea.closest('.post-item').querySelector('.character-count');
-        
+
         if (countElement) {
             const countText = countElement.querySelector('.character-count-text');
             if (countText) {
                 countText.textContent = `${count}/280`;
             }
-            
+
             if (count > 280) {
                 countElement.classList.add('over-limit');
             } else {
                 countElement.classList.remove('over-limit');
             }
-        }
-    }
 
-    function updatePostToXButtonVisibility() {
-        const posts = document.querySelectorAll('.post-item');
-        const postToXButton = document.getElementById('post-to-x-btn');
-        
-        if (postToXButton) {
-            if (posts.length === 1) {
-                postToXButton.classList.remove('hidden');
-                postToXButton.onclick = postToX;
-            } else {
-                postToXButton.classList.add('hidden');
-            }
+            // Update action buttons when character count changes
+            updateActionButtons();
         }
     }
 
@@ -1403,8 +1568,8 @@
                 }
             });
         }
-        
-        updatePostToXButtonVisibility();
+
+        updateActionButtons();
     }
 
     function updateUIFromState() {
@@ -1446,24 +1611,30 @@
 
     async function markAsChanged() {
         state.hasUnsavedChanges = true;
-        
+
+        // Don't auto-save if we're editing a scheduled post
+        if (state.isEditingScheduled) {
+            console.log('⏸️ Auto-save skipped - editing scheduled post');
+            return;
+        }
+
         // If no current draft and user is typing content, create a new draft first
         if (!state.currentDraftId && !state.isCreatingDraft) {
             const posts = gatherPostData();
             const hasContent = posts.some(post => post.text.trim() !== '');
-            
+
             if (hasContent) {
                 state.isCreatingDraft = true;
                 const success = await createNewDraftSilently();
                 state.isCreatingDraft = false;
-                
+
                 // If draft creation failed, don't try to save
                 if (!success) {
                     return;
                 }
             }
         }
-        
+
         // Only save if we have a current draft
         if (state.currentDraftId) {
             debouncedSave();
@@ -1471,41 +1642,39 @@
     }
 
     function updateStatusMessage(message) {
-        const statusElement = document.getElementById('saveStatus');
-        if (statusElement) {
-            const statusText = statusElement.querySelector('span');
-            const statusIcon = statusElement.querySelector('i');
-            
-            if (statusText) statusText.textContent = message;
-            if (statusIcon) statusIcon.className = 'ph ph-check-circle';
-        }
+        // Don't show status messages anymore - toast only shows when saving
+        return;
     }
 
     function updateSaveStatus(status) {
         const statusEl = document.getElementById('saveStatus');
         if (!statusEl) return;
-        
+
         const statusText = statusEl.querySelector('span');
         const statusIcon = statusEl.querySelector('i');
-        
-        statusEl.className = 'save-status ' + status;
-        
+
         switch(status) {
             case 'typing':
-                statusIcon.className = 'ph ph-circle';
-                statusText.textContent = 'Typing...';
+                // Don't show anything for typing
+                statusEl.style.display = 'none';
                 break;
             case 'saving':
-                statusIcon.className = 'ph ph-spinner spin';
+                statusIcon.className = 'ph ph-spinner';
                 statusText.textContent = 'Saving...';
+                statusEl.style.display = 'flex';
                 break;
             case 'saved':
-                statusIcon.className = 'ph ph-check-circle';
-                statusText.textContent = 'Saved';
+                // Hide the toast after saving completes
+                statusEl.style.display = 'none';
                 break;
             case 'error':
                 statusIcon.className = 'ph ph-warning-circle';
-                statusText.textContent = 'Error';
+                statusText.textContent = 'Error saving';
+                statusEl.style.display = 'flex';
+                // Auto-hide error after 3 seconds
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
                 break;
         }
     }
@@ -1526,13 +1695,13 @@
         if (!state.currentDraftId) {
             state.currentDraftId = 'new';
         }
-        
+
         const posts = gatherPostData();
-        
+
         if (posts.every(post => !post.text.trim() && (!post.media || post.media.length === 0))) {
-            return;
+            return { success: false, error: 'No content to save' };
         }
-        
+
         let title = "Untitled Draft";
         if (posts.length > 0 && posts[0].text) {
             const firstLine = posts[0].text.trim().split('\n')[0];
@@ -1541,7 +1710,7 @@
                 title += '...';
             }
         }
-        
+
         const saveData = {
             draft_id: state.currentDraftId,
             posts: posts,
@@ -1549,35 +1718,39 @@
             additional_context: state.additionalInstructions,
             title: title
         };
-        
+
         updateSaveStatus('saving');
-        
+
         try {
             const response = await fetch('/x_post_editor/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(saveData)
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 if (data.draft_id && state.currentDraftId === 'new') {
                     state.currentDraftId = data.draft_id;
                 }
-                
+
                 state.hasUnsavedChanges = false;
                 updateSaveStatus('saved');
-                
+
                 // Update draft title in sidebar and move to top
                 updateCurrentDraftTitle(title);
                 moveCurrentDraftToTop();
             } else {
                 updateSaveStatus('error');
             }
+
+            // Return response data for external callers
+            return data;
         } catch (error) {
             console.error('Save error:', error);
             updateSaveStatus('error');
+            return { success: false, error: error.message };
         }
     }
 
@@ -1728,8 +1901,16 @@
         // Toast messages disabled
     };
 
-    // Expose functions
+    // Expose functions and state
     window.CreatorPal.PostEditor.initialize = initialize;
+    window.CreatorPal.PostEditor.state = state;
+    window.CreatorPal.PostEditor.postToX = postToX;
+    window.CreatorPal.PostEditor.clearEditor = clearEditor;
+    window.CreatorPal.PostEditor.renderDrafts = renderDrafts;
+    window.CreatorPal.PostEditor.setupInitialPost = setupInitialPost;
+    window.CreatorPal.PostEditor.saveDraft = saveContent;
+    window.CreatorPal.PostEditor.attachDraftEventListeners = attachDraftEventListeners;
+    window.CreatorPal.PostEditor.loadDraft = loadDraft;
 
     // Auto-initialize if on post editor page
     if (document.getElementById('postsContainer')) {
@@ -1738,13 +1919,892 @@
 
 })();
 
+// ===== X CONNECTION & SCHEDULING =====
+
+/**
+ * Check X connection status via Late.dev
+ */
+async function checkXConnectionStatus() {
+    try {
+        const response = await fetch('/x_post_editor/x-connection-status');
+        const data = await response.json();
+
+        if (window.CreatorPal && window.CreatorPal.PostEditor) {
+            const state = window.CreatorPal.PostEditor.state;
+            if (state) {
+                state.isXConnected = data.connected;
+                state.xAccountInfo = data.account_info;
+            }
+        }
+
+        updateXConnectionUI(data.connected, data.account_info);
+        updateScheduleButtonVisibility();
+    } catch (error) {
+        console.error('Error checking X connection:', error);
+    }
+}
+
+/**
+ * Update X connection UI
+ */
+function updateXConnectionUI(isConnected, accountInfo) {
+    const compactStatus = document.getElementById('compactConnectionStatus');
+    const fullCard = document.querySelector('.connection-card');
+    const statusDot = document.querySelector('.connection-card .status-dot');
+    const statusText = document.querySelector('.status-text');
+    const connectBtn = document.getElementById('connectXBtn');
+    const disconnectBtn = document.getElementById('disconnectXBtn');
+    const userInfo = document.getElementById('userInfo');
+    const buttonSkeleton = document.getElementById('buttonSkeleton');
+    const connectionButtons = document.getElementById('connectionButtons');
+    const premiumNotice = document.getElementById('premiumNotice');
+    const hasPremium = window.hasPremium || false;
+
+    console.log('=== updateXConnectionUI Debug ===');
+    console.log('isConnected:', isConnected);
+    console.log('hasPremium:', hasPremium);
+    console.log('accountInfo:', accountInfo);
+    console.log('=== End Debug ===');
+
+    // Remove loading state
+    if (statusDot) statusDot.classList.remove('loading');
+
+    // Hide skeleton, show actual buttons
+    if (buttonSkeleton) buttonSkeleton.style.display = 'none';
+    if (connectionButtons) connectionButtons.style.display = 'block';
+
+    // Check premium and connection status
+    if (!hasPremium && !isConnected) {
+        // Free user, not connected - show full card with premium notice
+        if (compactStatus) compactStatus.style.display = 'none';
+        if (fullCard) fullCard.style.display = 'block';
+        if (statusDot) statusDot.classList.add('disconnected');
+        if (statusText) statusText.textContent = 'Premium Required';
+        if (connectBtn) connectBtn.style.display = 'none';
+        if (disconnectBtn) disconnectBtn.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
+        if (premiumNotice) premiumNotice.style.display = 'flex';
+        if (connectionButtons) connectionButtons.style.display = 'none';
+        return;
+    }
+
+    // Hide premium notice for premium users
+    if (premiumNotice) premiumNotice.style.display = 'none';
+
+    if (isConnected && accountInfo) {
+        // Connected - show compact status with username
+        if (fullCard) fullCard.style.display = 'none';
+        if (compactStatus) {
+            compactStatus.style.display = 'flex';
+            const compactDot = compactStatus.querySelector('.status-dot');
+            const compactStatusText = compactStatus.querySelector('.compact-status-text');
+            const compactDisconnectBtn = document.getElementById('compactDisconnectBtn');
+
+            if (compactDot) {
+                compactDot.classList.remove('disconnected');
+                compactDot.classList.remove('loading');
+            }
+            if (compactStatusText) compactStatusText.innerHTML = `Connected as <strong id="compactUsername">@${accountInfo.username || ''}</strong>`;
+            if (compactDisconnectBtn) {
+                compactDisconnectBtn.style.display = 'flex';
+                compactDisconnectBtn.innerHTML = '<i class="ph ph-plug"></i> Disconnect';
+                compactDisconnectBtn.dataset.action = 'disconnect';
+            }
+        }
+    } else {
+        // Not connected but has premium - show compact status with connect button
+        if (fullCard) fullCard.style.display = 'none';
+        if (compactStatus) {
+            compactStatus.style.display = 'flex';
+            const compactDot = compactStatus.querySelector('.status-dot');
+            const compactStatusText = compactStatus.querySelector('.compact-status-text');
+            const compactDisconnectBtn = document.getElementById('compactDisconnectBtn');
+
+            if (compactDot) {
+                compactDot.classList.remove('loading');
+                compactDot.classList.add('disconnected');
+            }
+            if (compactStatusText) compactStatusText.innerHTML = 'Not connected to X';
+            if (compactDisconnectBtn) {
+                compactDisconnectBtn.style.display = 'flex';
+                compactDisconnectBtn.innerHTML = '<i class="ph ph-link"></i> Connect X';
+                compactDisconnectBtn.dataset.action = 'connect';
+            }
+        }
+    }
+}
+
+/**
+ * Check if any post exceeds 280 characters
+ */
+function hasPostsOverLimit() {
+    const posts = document.querySelectorAll('.post-item');
+    for (const post of posts) {
+        const textarea = post.querySelector('.post-editor-textarea');
+        if (textarea && textarea.value.length > 280) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Update schedule button visibility (premium/connection check only)
+ * Called from updateActionButtons() which handles the main visibility logic
+ */
+function updateScheduleButtonVisibility() {
+    const state = window.CreatorPal?.PostEditor?.state;
+    if (!state) {
+        if (scheduleButtonRetryCount < 10) {
+            scheduleButtonRetryCount++;
+            setTimeout(updateScheduleButtonVisibility, 500);
+        }
+        return;
+    }
+
+    scheduleButtonRetryCount = 0;
+
+    // If editing a scheduled post, keep buttons hidden
+    if (state.isEditingScheduled || state.isScheduled) {
+        const scheduleButtons = document.querySelectorAll('.schedule-x-btn');
+        const postToXButtons = document.querySelectorAll('.post-to-x-btn');
+        scheduleButtons.forEach(btn => btn.style.display = 'none');
+        postToXButtons.forEach(btn => btn.style.display = 'none');
+        return;
+    }
+
+    // Find ALL schedule buttons (one per post)
+    const scheduleButtons = document.querySelectorAll('.schedule-x-btn');
+
+    // Check if user has premium and is connected
+    const canSchedule = state.hasPremium && state.isXConnected;
+
+    // Hide schedule button if not premium or not connected
+    scheduleButtons.forEach(btn => {
+        if (!canSchedule && btn.style.display !== 'none') {
+            btn.style.display = 'none';
+        }
+    });
+}
+
+/**
+ * Handle X connect button click
+ */
+async function handleConnectX() {
+    try {
+        const response = await fetch('/x_post_editor/connect-x', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success && data.auth_url) {
+            window.location.href = data.auth_url;
+        } else {
+            alert(data.error || 'Failed to initiate X connection');
+        }
+    } catch (error) {
+        console.error('Error connecting X:', error);
+        alert('Failed to connect X account');
+    }
+}
+
+/**
+ * Handle X disconnect button click
+ */
+async function handleDisconnectX() {
+    try {
+        const response = await fetch('/x_post_editor/disconnect-x', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            const state = window.CreatorPal?.PostEditor?.state;
+            if (state) {
+                state.isXConnected = false;
+                state.xAccountInfo = null;
+            }
+            updateXConnectionUI(false, null);
+            updateScheduleButtonVisibility();
+        } else {
+            alert(data.error || 'Failed to disconnect');
+        }
+    } catch (error) {
+        console.error('Error disconnecting X:', error);
+        alert('Failed to disconnect X account');
+    }
+}
+
+/**
+ * Show UI for scheduled draft
+ * Grey out editor and show Edit/Reschedule buttons
+ */
+function showScheduledDraftUI(draft) {
+    const postsContainer = document.getElementById('postsContainer');
+
+    if (!postsContainer) return;
+
+    // Make posts read-only and grey them out
+    const textareas = postsContainer.querySelectorAll('.post-editor-textarea');
+    textareas.forEach(textarea => {
+        textarea.setAttribute('readonly', 'readonly');
+        textarea.style.opacity = '0.6';
+        textarea.style.cursor = 'not-allowed';
+    });
+
+    // Hide ALL Schedule and Post to X buttons (using class selectors)
+    const scheduleButtons = document.querySelectorAll('.schedule-x-btn');
+    const postToXButtons = document.querySelectorAll('.post-to-x-btn');
+    scheduleButtons.forEach(btn => btn.style.display = 'none');
+    postToXButtons.forEach(btn => btn.style.display = 'none');
+    console.log('🚫 Hidden Schedule and Post to X buttons');
+
+    // Add scheduled banner if not already present
+    if (!document.getElementById('scheduledBanner')) {
+        const banner = document.createElement('div');
+        banner.id = 'scheduledBanner';
+        banner.className = 'scheduled-banner';
+
+        // Format scheduled time without seconds
+        let scheduledTime = 'Unknown';
+        if (draft.scheduled_time) {
+            const date = new Date(draft.scheduled_time);
+            const dateStr = date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+            const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+            scheduledTime = `${dateStr}, ${timeStr}`;
+        }
+
+        banner.innerHTML = `
+            <div class="scheduled-info">
+                <i class="ph ph-clock"></i>
+                <span>This draft is scheduled for ${scheduledTime}</span>
+            </div>
+            <div class="scheduled-actions">
+                <button class="action-btn btn-edit-scheduled" id="editScheduledBtn">
+                    <i class="ph ph-pencil"></i>
+                    Edit
+                </button>
+                <button class="action-btn btn-unschedule" id="unscheduleBtn">
+                    <i class="ph ph-trash"></i>
+                    Unschedule
+                </button>
+            </div>
+        `;
+
+        postsContainer.insertAdjacentElement('beforebegin', banner);
+
+        // Add event listeners
+        document.getElementById('editScheduledBtn')?.addEventListener('click', enableDraftEditing);
+        document.getElementById('unscheduleBtn')?.addEventListener('click', unschedulePost);
+    }
+}
+
+/**
+ * Enable editing for scheduled draft
+ */
+function enableDraftEditing() {
+    const postsContainer = document.getElementById('postsContainer');
+    const scheduledBanner = document.getElementById('scheduledBanner');
+    const state = window.CreatorPal?.PostEditor?.state;
+
+    if (!postsContainer || !state) return;
+
+    // Set flag to disable auto-save while editing scheduled post
+    state.isEditingScheduled = true;
+    console.log('📝 Entered scheduled post edit mode - auto-save disabled');
+
+    // Remove readonly and restore opacity
+    const textareas = postsContainer.querySelectorAll('.post-editor-textarea');
+    textareas.forEach(textarea => {
+        textarea.removeAttribute('readonly');
+        textarea.style.opacity = '1';
+        textarea.style.cursor = 'text';
+    });
+
+    // Hide Schedule and Post to X buttons during editing
+    const scheduleButtons = document.querySelectorAll('.schedule-x-btn');
+    const postToXButtons = document.querySelectorAll('.post-to-x-btn');
+    scheduleButtons.forEach(btn => btn.style.display = 'none');
+    postToXButtons.forEach(btn => btn.style.display = 'none');
+
+    // Replace banner with editing banner showing Update button
+    if (scheduledBanner) {
+        scheduledBanner.innerHTML = `
+            <div class="scheduled-info">
+                <i class="ph ph-pencil"></i>
+                <span>Editing scheduled post</span>
+            </div>
+            <div class="scheduled-actions">
+                <button class="action-btn btn-update-scheduled" id="updateScheduledBtn">
+                    <i class="ph ph-check"></i>
+                    Update
+                </button>
+            </div>
+        `;
+
+        // Add event listener for Update button
+        document.getElementById('updateScheduledBtn')?.addEventListener('click', async () => {
+            await updateScheduledPost();
+        });
+    }
+
+    // Update draft list styling to show disabled state
+    window.CreatorPal.PostEditor.attachDraftEventListeners();
+
+    // Keep schedule buttons hidden while editing
+    updateScheduleButtonVisibility();
+}
+
+/**
+ * Update scheduled post on Late.dev
+ */
+async function updateScheduledPost() {
+    console.log('🔄 updateScheduledPost called');
+    const state = window.CreatorPal?.PostEditor?.state;
+    console.log('State:', state);
+    console.log('scheduledPostId:', state?.scheduledPostId);
+
+    if (!state || !state.scheduledPostId) {
+        console.error('❌ No scheduled post ID found');
+        showToast('Error: No scheduled post found', 'error');
+        return;
+    }
+
+    const updateBtn = document.getElementById('updateScheduledBtn');
+    console.log('Update button:', updateBtn);
+    if (!updateBtn) {
+        console.error('❌ Update button not found');
+        return;
+    }
+
+    // Disable button and show loading
+    updateBtn.disabled = true;
+    updateBtn.innerHTML = '<i class="ph ph-spinner" style="animation: spin 1s linear infinite;"></i> Updating...';
+    console.log('✅ Button disabled, spinner showing');
+
+    try {
+        // STEP 1: Save the draft first (handles media upload/changes)
+        console.log('📝 Step 1: Saving draft to Firebase...');
+        const saveResponse = await window.CreatorPal.PostEditor.saveDraft();
+
+        if (!saveResponse || !saveResponse.success) {
+            throw new Error('Failed to save draft');
+        }
+        console.log('✅ Draft saved successfully');
+
+        // STEP 2: Get updated post data from the saved draft
+        const posts = [];
+        const postItems = document.querySelectorAll('.post-item');
+        console.log('Found post items:', postItems.length);
+
+        postItems.forEach(postItem => {
+            const textarea = postItem.querySelector('.post-editor-textarea');
+            const text = textarea ? textarea.value : '';
+
+            // Get media
+            const media = [];
+            const mediaContainers = postItem.querySelectorAll('.media-preview-container');
+            mediaContainers.forEach(container => {
+                const mediaElement = container.querySelector('img, video');
+                if (mediaElement) {
+                    media.push({
+                        url: mediaElement.src,
+                        media_type: mediaElement.getAttribute('data-media-type') || (mediaElement.tagName === 'VIDEO' ? 'video' : 'image'),
+                        filename: mediaElement.getAttribute('data-filename') || ''
+                    });
+                }
+            });
+
+            posts.push({ text, media });
+        });
+
+        // STEP 3: Update Late.dev with the saved content
+        console.log('📤 Step 2: Updating Late.dev...');
+        console.log('Sending update request:', {
+            late_dev_post_id: state.scheduledPostId,
+            posts_count: posts.length,
+            scheduled_time: state.scheduledTime,
+            draft_id: state.currentDraftId
+        });
+
+        const response = await fetch('/x_post_editor/update-scheduled-post', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                late_dev_post_id: state.scheduledPostId,
+                posts: posts,
+                scheduled_time: state.scheduledTime,
+                draft_id: state.currentDraftId
+            })
+        });
+
+        console.log('📥 Response status:', response.status);
+        const data = await response.json();
+        console.log('📥 Response data:', data);
+
+        if (data.success) {
+            console.log('✅ Update successful, returning to read-only view');
+            showToast('Post updated successfully!', 'success');
+
+            // Clear editing flag
+            state.isEditingScheduled = false;
+
+            // Remove both banners to ensure clean state
+            const editingBanner = document.getElementById('editingScheduledBanner');
+            if (editingBanner) {
+                editingBanner.remove();
+            }
+            const scheduledBanner = document.getElementById('scheduledBanner');
+            if (scheduledBanner) {
+                scheduledBanner.remove();
+            }
+
+            // Show the scheduled UI again (read-only with Edit button)
+            const draftData = {
+                scheduled_time: state.scheduledTime,
+                is_scheduled: true
+            };
+            showScheduledDraftUI(draftData);
+
+            // Re-enable all drafts
+            const draftItems = document.querySelectorAll('.draft-item');
+            draftItems.forEach(item => {
+                item.style.opacity = '';
+                item.style.pointerEvents = '';
+            });
+
+            // Refresh drafts list to update any changed titles/previews
+            const draftsResponse = await fetch('/x_post_editor/drafts?offset=0&limit=20');
+            const draftsData = await draftsResponse.json();
+            if (draftsData.success) {
+                window.CreatorPal.PostEditor.renderDrafts(draftsData.drafts || []);
+            }
+        } else {
+            showToast(data.error || 'Failed to update post', 'error');
+            // Re-enable editing on failure
+            state.isEditingScheduled = false;
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = '<i class="ph ph-check"></i> Update';
+        }
+    } catch (error) {
+        console.error('Error updating scheduled post:', error);
+        showToast('Failed to update post. Please try again.', 'error');
+        // Re-enable editing on error
+        state.isEditingScheduled = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = '<i class="ph ph-check"></i> Update';
+    }
+}
+
+/**
+ * Unschedule a post - delete from Late.dev and clear scheduled status
+ */
+async function unschedulePost() {
+    const state = window.CreatorPal?.PostEditor?.state;
+
+    console.log('🗑️ Unschedule clicked, state:', {
+        scheduledPostId: state?.scheduledPostId,
+        currentDraftId: state?.currentDraftId,
+        isScheduled: state?.isScheduled
+    });
+
+    if (!state || !state.scheduledPostId) {
+        console.error('❌ No scheduled post ID found');
+        showToast('Error: No scheduled post found', 'error');
+        return;
+    }
+
+    const unscheduleBtn = document.getElementById('unscheduleBtn');
+    if (unscheduleBtn) {
+        unscheduleBtn.disabled = true;
+        unscheduleBtn.innerHTML = '<i class="ph ph-spinner" style="animation: spin 1s linear infinite;"></i> Unscheduling...';
+    }
+
+    try {
+        console.log('📤 Sending unschedule request:', {
+            late_dev_post_id: state.scheduledPostId,
+            draft_id: state.currentDraftId
+        });
+
+        const response = await fetch('/x_post_editor/unschedule-post', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                late_dev_post_id: state.scheduledPostId,
+                draft_id: state.currentDraftId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Post unscheduled successfully!', 'success');
+
+            // Clear scheduled state
+            state.isScheduled = false;
+            state.scheduledPostId = null;
+            state.scheduledTime = null;
+            state.calendarEventId = null;
+
+            // Remove scheduled banner
+            const scheduledBanner = document.getElementById('scheduledBanner');
+            if (scheduledBanner) {
+                scheduledBanner.remove();
+            }
+
+            // Make posts editable again
+            const postsContainer = document.getElementById('postsContainer');
+            if (postsContainer) {
+                const textareas = postsContainer.querySelectorAll('.post-editor-textarea');
+                textareas.forEach(textarea => {
+                    textarea.removeAttribute('readonly');
+                    textarea.style.opacity = '';
+                    textarea.style.cursor = '';
+                });
+            }
+
+            // Show Schedule and Post buttons again
+            const scheduleButtons = document.querySelectorAll('.schedule-x-btn');
+            const postToXButtons = document.querySelectorAll('.post-to-x-btn');
+            scheduleButtons.forEach(btn => btn.style.display = '');
+            postToXButtons.forEach(btn => btn.style.display = '');
+
+            updateScheduleButtonVisibility();
+
+            // Refresh drafts list
+            const draftsResponse = await fetch('/x_post_editor/drafts?offset=0&limit=20');
+            const draftsData = await draftsResponse.json();
+            if (draftsData.success) {
+                window.CreatorPal.PostEditor.renderDrafts(draftsData.drafts || []);
+            }
+        } else {
+            showToast(data.error || 'Failed to unschedule post', 'error');
+            if (unscheduleBtn) {
+                unscheduleBtn.disabled = false;
+                unscheduleBtn.innerHTML = '<i class="ph ph-trash"></i> Unschedule';
+            }
+        }
+    } catch (error) {
+        console.error('Error unscheduling post:', error);
+        showToast('Failed to unschedule post. Please try again.', 'error');
+        if (unscheduleBtn) {
+            unscheduleBtn.disabled = false;
+            unscheduleBtn.innerHTML = '<i class="ph ph-trash"></i> Unschedule';
+        }
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     if (window.CreatorPal && window.CreatorPal.PostEditor && document.getElementById('postsContainer')) {
         window.CreatorPal.PostEditor.initialize();
     }
 
+    // Check X connection status
+    checkXConnectionStatus();
+
+    // Setup X connection buttons
+    const connectBtn = document.getElementById('connectXBtn');
+    const disconnectBtn = document.getElementById('disconnectXBtn');
+
+    if (connectBtn) {
+        connectBtn.addEventListener('click', handleConnectX);
+    }
+
+    if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', handleDisconnectX);
+    }
+
+    // Setup compact disconnect button (handles both connect and disconnect)
+    const compactDisconnectBtn = document.getElementById('compactDisconnectBtn');
+    if (compactDisconnectBtn) {
+        compactDisconnectBtn.addEventListener('click', (e) => {
+            const action = e.currentTarget.dataset.action;
+            if (action === 'disconnect') {
+                handleDisconnectX();
+            } else if (action === 'connect') {
+                handleConnectX();
+            }
+        });
+    }
+
+    // Setup schedule button (delegated event for dynamically created buttons in post boxes)
+    document.addEventListener('click', (e) => {
+        if (e.target && e.target.classList.contains('schedule-x-btn')) {
+            const btn = e.target;
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner" style="animation: spin 1s linear infinite;"></i> Loading...';
+
+            // Show inline schedule card and restore button
+            setTimeout(() => {
+                showScheduleCard();
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }, 300);
+        }
+
+        // Setup Post to X button (delegated event)
+        if (e.target && e.target.classList.contains('post-to-x-btn')) {
+            window.CreatorPal.PostEditor.postToX();
+        }
+
+        // Setup confirm schedule button (delegated event)
+        if (e.target && e.target.id === 'confirmScheduleBtn') {
+            handleScheduleConfirm();
+        }
+
+        // Setup close schedule card button (delegated event)
+        if (e.target && (e.target.id === 'scheduleCloseBtn' || e.target.closest('#scheduleCloseBtn'))) {
+            const scheduleCard = document.getElementById('scheduleCard');
+            if (scheduleCard) scheduleCard.style.display = 'none';
+        }
+    });
+
+    // Debug: Log premium status
+    console.log('Window hasPremium:', window.hasPremium);
+    console.log('Connect button exists:', !!connectBtn);
+    console.log('Disconnect button exists:', !!disconnectBtn);
 });
+
+/**
+ * Show inline schedule card for date/time selection
+ */
+function showScheduleCard() {
+    const scheduleCard = document.getElementById('scheduleCard');
+    if (!scheduleCard) return;
+
+    // Show the schedule card
+    scheduleCard.style.display = 'block';
+
+    // Scroll to it smoothly
+    scheduleCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Get timezone abbreviation
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const tzAbbr = new Date().toLocaleTimeString('en-us', { timeZoneName: 'short' }).split(' ')[2];
+
+    // Update timezone indicator
+    const tzIndicator = document.getElementById('timezoneIndicator');
+    if (tzIndicator) {
+        tzIndicator.textContent = `(${tzAbbr || 'Local Time'})`;
+    }
+
+    // Populate date options (next 365 days with Today/Tomorrow labels)
+    const dateSelect = document.getElementById('scheduleDateSelect');
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const value = `${year}-${month}-${day}`;
+
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+        const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+        const label = `${dayName}, ${monthName} ${day}, ${year}`;
+
+        const option = document.createElement('option');
+        option.value = value;
+
+        // Add "Today" or "Tomorrow" prefix
+        if (i === 0) {
+            option.textContent = `Today - ${label}`;
+        } else if (i === 1) {
+            option.textContent = `Tomorrow - ${label}`;
+        } else {
+            option.textContent = label;
+        }
+
+        dateSelect.appendChild(option);
+    }
+
+    // Populate time options (every 15 minutes)
+    const timeSelect = document.getElementById('scheduleTimeSelect');
+    for (let hour = 0; hour < 24; hour++) {
+        for (let minute = 0; minute < 60; minute += 15) {
+            const hourStr = String(hour).padStart(2, '0');
+            const minuteStr = String(minute).padStart(2, '0');
+            const value = `${hourStr}:${minuteStr}`;
+
+            const hour12 = hour % 12 || 12;
+            const ampm = hour < 12 ? 'AM' : 'PM';
+            const label = `${hour12}:${minuteStr} ${ampm}`;
+
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            timeSelect.appendChild(option);
+        }
+    }
+
+    // Set default to tomorrow at 12 PM
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+    dateSelect.value = tomorrowStr;
+    timeSelect.value = '12:00';
+}
+
+/**
+ * Handle schedule confirmation
+ */
+async function handleScheduleConfirm() {
+    const dateValue = document.getElementById('scheduleDateSelect').value;
+    const timeValue = document.getElementById('scheduleTimeSelect').value;
+
+    if (!dateValue || !timeValue) {
+        alert('Please select both date and time');
+        return;
+    }
+
+    // Combine date and time in local timezone
+    const [hours, minutes] = timeValue.split(':').map(Number);
+    const scheduledDate = new Date(dateValue);
+    scheduledDate.setHours(hours, minutes, 0, 0);
+
+    // Convert to ISO 8601 format
+    const scheduledTime = scheduledDate.toISOString();
+
+    // Get all posts
+    const posts = [];
+    const postItems = document.querySelectorAll('.post-item');
+
+    postItems.forEach(postItem => {
+        const textarea = postItem.querySelector('.post-editor-textarea');
+        const text = textarea ? textarea.value : '';
+
+        // Get media for this post - media is stored in .media-preview-container
+        const media = [];
+        const mediaContainers = postItem.querySelectorAll('.media-preview-container');
+        mediaContainers.forEach(container => {
+            const mediaElement = container.querySelector('img, video');
+            if (mediaElement) {
+                media.push({
+                    url: mediaElement.src,
+                    media_type: mediaElement.getAttribute('data-media-type') || (mediaElement.tagName === 'VIDEO' ? 'video' : 'image'),
+                    filename: mediaElement.getAttribute('data-filename') || ''
+                });
+            }
+        });
+
+        posts.push({ text, media });
+    });
+
+    console.log('📤 Sending posts to schedule:', posts);
+
+    // Hide Schedule and Post to X buttons
+    const scheduleButtons = document.querySelectorAll('.schedule-x-btn');
+    const postToXButtons = document.querySelectorAll('.post-to-x-btn');
+    scheduleButtons.forEach(btn => btn.style.display = 'none');
+    postToXButtons.forEach(btn => btn.style.display = 'none');
+
+    // Disable button and show loading
+    const confirmBtn = document.getElementById('confirmScheduleBtn');
+    if (!confirmBtn) {
+        console.error('Schedule button not found');
+        return;
+    }
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="ph ph-spinner" style="animation: spin 1s linear infinite;"></i> Scheduling...';
+
+    try {
+        // Access state via global
+        const state = window.CreatorPal?.PostEditor?.state;
+        if (!state) {
+            alert('Editor state not available. Please refresh the page.');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="ph ph-calendar-check"></i> Schedule Post';
+            return;
+        }
+
+        // Get user's local timezone
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        const response = await fetch('/x_post_editor/schedule-post', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                posts: posts,
+                scheduled_time: scheduledTime,
+                timezone: userTimezone,
+                draft_id: state.currentDraftId || ''
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Mark current draft as scheduled if we have a draft ID
+            if (state.currentDraftId) {
+                try {
+                    await fetch(`/x_post_editor/drafts/${state.currentDraftId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            is_scheduled: true,
+                            scheduled_time: scheduledTime,
+                            late_dev_post_id: data.post_id,
+                            calendar_event_id: data.calendar_event_id
+                        })
+                    });
+
+                    // Update state
+                    state.isScheduled = true;
+                    state.calendarEventId = data.calendar_event_id;
+                    state.scheduledPostId = data.post_id;
+                    state.scheduledTime = scheduledTime;
+
+                    // Hide schedule card
+                    const scheduleCard = document.getElementById('scheduleCard');
+                    if (scheduleCard) scheduleCard.style.display = 'none';
+
+                    // Refresh drafts list to show clock icon
+                    const draftsResponse = await fetch('/x_post_editor/drafts?offset=0&limit=20');
+                    const draftsData = await draftsResponse.json();
+                    if (draftsData.success) {
+                        window.CreatorPal.PostEditor.renderDrafts(draftsData.drafts || []);
+                    }
+
+                    // Show scheduled draft UI
+                    const draftData = {
+                        scheduled_time: scheduledTime
+                    };
+                    showScheduledDraftUI(draftData);
+
+                    // Show success message
+                    showToast('Post scheduled successfully!', 'success');
+                } catch (e) {
+                    console.error('Error updating draft scheduled status:', e);
+                }
+            }
+        } else {
+            showToast(data.error || 'Failed to schedule post', 'error');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="ph ph-calendar-check"></i> Schedule Post';
+        }
+    } catch (error) {
+        console.error('Error scheduling post:', error);
+        showToast('Failed to schedule post. Please try again.', 'error');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="ph ph-calendar-check"></i> Schedule Post';
+    }
+}
+
+// Add CSS animation for spinner
+const style = document.createElement('style');
+style.textContent = `
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+`;
+document.head.appendChild(style);
 
 /**
  * Show insufficient credits modal

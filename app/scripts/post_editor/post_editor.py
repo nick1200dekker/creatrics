@@ -131,40 +131,44 @@ class PostEditor:
             'config': config
         }
 
-    def save_media_to_storage(self, user_id: str, media_data: str, filename: str = None, 
-                             media_type: str = None, mime_type: str = None) -> str:
-        """Save media using Firebase Storage"""
+    def save_media_to_storage(self, user_id: str, media_data: str, filename: str = None,
+                             media_type: str = None, mime_type: str = None, folder: str = 'post_editor') -> str:
+        """Save media using Firebase Storage
+
+        Args:
+            folder: Storage folder ('post_editor' for drafts, 'x_uploads' for scheduled posts)
+        """
         try:
             if not filename:
                 # Add media type prefix to filename for identification
                 ext = mimetypes.guess_extension(mime_type) or '.bin'
                 media_prefix = self.supported_media_types.get(media_type, {}).get('prefix', 'med')
                 filename = f"{media_prefix}_{uuid.uuid4()}{ext}"
-            
+
             # Validate the media file
             if mime_type:
                 validation = self.validate_media_file(mime_type, len(media_data))
                 if not validation['valid']:
                     logger.error(f"Media validation failed: {validation['error']}")
                     return None
-                
+
                 media_type = validation['media_type']
-            
+
             # Extract base64 data if needed
             if media_data.startswith("data:"):
                 media_data = media_data.split("base64,")[1]
                 logger.info("Extracted base64 data from data URI")
-            
+
             media_bytes = base64.b64decode(media_data)
-            
+
             from io import BytesIO
             media_file = BytesIO(media_bytes)
-            
+
             try:
                 from firebase_admin import storage
                 bucket = storage.bucket()
-                
-                blob_path = f"users/{user_id}/post_editor/{filename}"
+
+                blob_path = f"users/{user_id}/{folder}/{filename}"
                 blob = bucket.blob(blob_path)
                 
                 # Set appropriate content type
@@ -178,10 +182,10 @@ class PostEditor:
                 
             except Exception as firebase_error:
                 logger.error(f"Firebase direct upload failed: {str(firebase_error)}")
-                
+
                 # Fallback to existing StorageService
                 from app.system.services.firebase_service import StorageService
-                result = StorageService.upload_file(user_id, 'post_editor', filename, media_file)
+                result = StorageService.upload_file(user_id, folder, filename, media_file)
                 
                 if result and result.get('url'):
                     logger.info(f"Media saved using StorageService fallback: {filename}")
@@ -195,49 +199,68 @@ class PostEditor:
             logger.error(traceback.format_exc())
             return None
 
-    def generate_public_media_url(self, user_id: str, filename: str) -> str:
+    def generate_public_media_url(self, user_id: str, filename: str, folder: str = 'post_editor') -> str:
         """Generate a permanent public URL for media in Firebase Storage"""
         try:
             from firebase_admin import storage
-            
+
             bucket = storage.bucket()
-            blob_path = f"users/{user_id}/post_editor/{filename}"
+            blob_path = f"users/{user_id}/{folder}/{filename}"
             blob = bucket.blob(blob_path)
-            
+
             if not blob.exists():
-                logger.warning(f"Media not found in storage: {blob_path}")
-                return ""
-            
+                # Try alternate folder if not found (for backward compatibility)
+                if folder == 'post_editor':
+                    alt_path = f"users/{user_id}/x_uploads/{filename}"
+                    alt_blob = bucket.blob(alt_path)
+                    if alt_blob.exists():
+                        blob = alt_blob
+                    else:
+                        logger.warning(f"Media not found in storage: {blob_path}")
+                        return ""
+                else:
+                    logger.warning(f"Media not found in storage: {blob_path}")
+                    return ""
+
             try:
                 blob.make_public()
             except Exception:
                 pass  # Might already be public
-            
+
             public_url = blob.public_url
             logger.info(f"Generated public URL for {filename}: {public_url}")
             return public_url
-            
+
         except Exception as e:
             logger.error(f"Error generating public URL for {filename}: {str(e)}")
             return ""
 
-    def delete_media_from_storage(self, user_id: str, filename: str) -> bool:
+    def delete_media_from_storage(self, user_id: str, filename: str, folder: str = 'post_editor') -> bool:
         """Delete media from Firebase Storage"""
         try:
             from firebase_admin import storage
-            
+
             bucket = storage.bucket()
-            blob_path = f"users/{user_id}/post_editor/{filename}"
+            blob_path = f"users/{user_id}/{folder}/{filename}"
             blob = bucket.blob(blob_path)
-            
+
             if blob.exists():
                 blob.delete()
                 logger.info(f"Deleted media from storage: {blob_path}")
                 return True
             else:
+                # Try alternate folder
+                if folder == 'post_editor':
+                    alt_path = f"users/{user_id}/x_uploads/{filename}"
+                    alt_blob = bucket.blob(alt_path)
+                    if alt_blob.exists():
+                        alt_blob.delete()
+                        logger.info(f"Deleted media from storage: {alt_path}")
+                        return True
+
                 logger.warning(f"Media not found for deletion: {blob_path}")
                 return False
-            
+
         except Exception as e:
             logger.error(f"Error deleting media {filename}: {str(e)}")
             return False
