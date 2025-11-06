@@ -220,6 +220,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             titleEl.insertBefore(clockIcon, titleEl.firstChild);
                         }
                     }
+
+                    // Add clock icon for X scheduled posts
+                    if (event.x_post_id) {
+                        const titleEl = info.el.querySelector('.fc-event-title');
+                        if (titleEl) {
+                            const clockIcon = document.createElement('i');
+                            clockIcon.className = 'ph-fill ph-clock clock-icon';
+                            titleEl.insertBefore(clockIcon, titleEl.firstChild);
+                        }
+                    }
                 }
             }
         });

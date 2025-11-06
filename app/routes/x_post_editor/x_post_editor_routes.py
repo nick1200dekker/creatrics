@@ -1500,7 +1500,8 @@ def schedule_post():
                         content_type='organic',
                         content_link=content_link,
                         x_post_id=post_id,
-                        notes=f'Draft ID: {draft_id}' if draft_id else ''
+                        notes=f'Draft ID: {draft_id}' if draft_id else '',
+                        content_id=content_id if content_id else ''
                     )
 
                     current_app.logger.info(f"✅ Created calendar event {event_id} for scheduled X post {post_id}")

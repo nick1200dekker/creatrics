@@ -357,6 +357,16 @@ def update_event(event_id):
                 content_id = event.get('content_id')
                 platform = event.get('platform', '').lower()
 
+                # Normalize platform names (Twitter/X can be stored as either 'x' or 'twitter')
+                platform_mapping = {
+                    'twitter': 'x',
+                    'x': 'x',
+                    'youtube': 'youtube',
+                    'tiktok': 'tiktok',
+                    'instagram': 'instagram'
+                }
+                platform = platform_mapping.get(platform, platform)
+
                 current_app.logger.info(f"Reschedule check - content_id: {content_id}, platform: {platform}")
 
                 if content_id and platform:
@@ -546,6 +556,16 @@ def delete_event(event_id):
 
                 # Get the platform from the event
                 platform = event.get('platform', '').lower()
+
+                # Normalize platform names (Twitter/X can be stored as either 'x' or 'twitter')
+                platform_mapping = {
+                    'twitter': 'x',
+                    'x': 'x',
+                    'youtube': 'youtube',
+                    'tiktok': 'tiktok',
+                    'instagram': 'instagram'
+                }
+                platform = platform_mapping.get(platform, platform)
 
                 # Get content to check remaining platforms
                 content = ContentLibraryManager.get_content_by_id(user_id, content_id)
