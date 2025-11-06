@@ -1439,3 +1439,81 @@ html.dark .secondary-button:hover {
     cursor: not-allowed;
     transform: none;
 }
+
+/* ===== SCHEDULE DROPDOWN STYLING ===== */
+.schedule-datetime-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+    .schedule-datetime-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.utc-indicator {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+/* Fix dropdown text visibility */
+.privacy-select,
+select.privacy-select,
+#scheduleDateSelect,
+#scheduleTimeSelect {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 0.875rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 12px;
+}
+
+html.dark .privacy-select,
+html.dark select.privacy-select,
+html.dark #scheduleDateSelect,
+html.dark #scheduleTimeSelect {
+    background-color: rgba(63, 63, 70, 0.6);
+    border-color: rgba(82, 82, 91, 0.6);
+    color: #e5e7eb;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e5e7eb' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+}
+
+.privacy-select:hover,
+#scheduleDateSelect:hover,
+#scheduleTimeSelect:hover {
+    border-color: #3B82F6;
+}
+
+html.dark .privacy-select:hover,
+html.dark #scheduleDateSelect:hover,
+html.dark #scheduleTimeSelect:hover {
+    border-color: #60A5FA;
+}
+
+.privacy-select option,
+#scheduleDateSelect option,
+#scheduleTimeSelect option {
+    background: white;
+    color: #1f2937;
+    padding: 0.5rem;
+}
+
+html.dark .privacy-select option,
+html.dark #scheduleDateSelect option,
+html.dark #scheduleTimeSelect option {
+    background: #27272a;
+    color: #e5e7eb;
+}

@@ -219,8 +219,11 @@ class TikTokTitleGenerator:
                     # Clean and validate titles
                     clean_titles = []
                     for title in titles:
+                        # Handle both plain strings and objects with "title" key
                         if isinstance(title, str) and title.strip():
                             clean_titles.append(title.strip())
+                        elif isinstance(title, dict) and 'title' in title:
+                            clean_titles.append(title['title'].strip())
 
                     if clean_titles:
                         logger.info(f"Successfully parsed {len(clean_titles)} titles")

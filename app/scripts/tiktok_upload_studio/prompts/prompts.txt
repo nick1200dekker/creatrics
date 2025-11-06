@@ -55,4 +55,12 @@ Examples:
 - "Gaming Tips you won't believe this trick #gamingtips #protips #gaming #viral"
 - "FPS Settings I finally found the perfect settings #fps #settings #gaming #competitive"
 
-Return ONLY a JSON array of 10 titles, nothing else.
+Return ONLY a JSON array of 10 titles as plain strings, nothing else.
+
+Correct format:
+[
+  "Keyword viral hook #hashtag1 #hashtag2 #hashtag3",
+  "Keyword another hook #hashtag1 #hashtag2 #hashtag3"
+]
+
+CRITICAL: Return plain strings in array, NOT objects with "title" key.
