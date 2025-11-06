@@ -1127,6 +1127,13 @@ html.dark .fc-event.platform-other {
 .fc-event.sponsored::after {
     content: '💰';
 }
+/* Clock icon for all scheduled posts */
+.clock-icon {
+    margin-right: 6px;
+    font-size: 0.875em;
+    opacity: 0.85;
+    vertical-align: middle;
+}
 
 /* Clock icon for YouTube scheduled videos */
 .fc-event.youtube-scheduled .clock-icon {

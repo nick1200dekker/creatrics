@@ -129,32 +129,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const eventIndex = events.findIndex(e => e.id == info.event.id);
                     if (eventIndex !== -1) {
                         events[eventIndex].publish_date = newDateTime;
-
-                        // If this is a YouTube scheduled video, update YouTube as well
-                        if (events[eventIndex].youtube_video_id) {
-                            return fetch('/api/update-youtube-schedule', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    video_id: events[eventIndex].youtube_video_id,
-                                    publish_time: newDateTime
-                                })
-                            });
-                        }
                     }
-                })
-                .then(response => {
-                    if (response) {
-                        return response.json();
-                    }
-                })
-                .then(data => {
-                    if (data && !data.success) {
-                        console.error('Failed to update YouTube schedule:', data.error);
-                        alert('Calendar updated but YouTube schedule update failed: ' + data.error);
-                    } else if (data && data.success) {
-                        console.log('YouTube schedule updated successfully');
-                    }
+                    // YouTube schedule update is now handled by the backend via Late.dev
                 })
                 .catch(error => {
                     console.error('Error updating event:', error);

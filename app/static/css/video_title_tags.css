@@ -973,6 +973,10 @@ html.dark .loading-spinner i {
     to { transform: rotate(360deg); }
 }
 
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
 .loading-text {
     color: var(--text-primary);
     font-size: 1.1rem;

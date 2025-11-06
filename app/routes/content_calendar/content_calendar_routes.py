@@ -311,45 +311,61 @@ def update_event(event_id):
                     current_app.logger.error(f"Error updating X post schedule: {e}")
                     # Continue with calendar update even if X update fails
 
-            # Update YouTube video schedule
+            # Update YouTube post schedule via Late.dev
             youtube_video_id = event.get('youtube_video_id') if event else None
             if youtube_video_id:
                 try:
+                    import requests
+                    import os
                     from datetime import datetime
-                    from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
-                    from googleapiclient.discovery import build
+                    from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
 
-                    # Initialize YouTube API
-                    analytics = YouTubeAnalytics(user_id)
-                    if not analytics.credentials:
-                        current_app.logger.error("YouTube credentials not found, cannot update video schedule")
+                    # Get YouTube account ID
+                    account_id = LateDevOAuthService.get_account_id(user_id, 'youtube')
+                    if not account_id:
+                        current_app.logger.error("YouTube account not connected, cannot update post schedule")
                     else:
-                        youtube = build('youtube', 'v3', credentials=analytics.credentials)
-
-                        # Format the new publish date (convert from ISO string to YouTube format)
+                        # Format the new publish date
                         new_publish_time = data['publish_date']
                         dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
                         formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
-                        current_app.logger.info(f"Attempting to update YouTube video {youtube_video_id} schedule to {formatted_time}")
+                        headers = {
+                            'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                            'Content-Type': 'application/json'
+                        }
 
-                        # Update video publish time using YouTube API
-                        youtube.videos().update(
-                            part='status',
-                            body={
-                                'id': youtube_video_id,
-                                'status': {
-                                    'privacyStatus': 'private',
-                                    'publishAt': formatted_time,
-                                    'selfDeclaredMadeForKids': False
-                                }
-                            }
-                        ).execute()
+                        update_post_data = {
+                            'scheduledFor': formatted_time,
+                            'timezone': 'UTC',
+                            'platforms': [{
+                                'platform': 'youtube',
+                                'accountId': account_id
+                            }],
+                            'isDraft': False
+                        }
 
-                        current_app.logger.info(f"Updated YouTube video {youtube_video_id} schedule to {formatted_time}")
+                        current_app.logger.info(f"Attempting to update YouTube post {youtube_video_id} schedule to {formatted_time}")
+                        current_app.logger.info(f"Update payload: {update_post_data}")
+
+                        response = requests.put(
+                            f"https://getlate.dev/api/v1/posts/{youtube_video_id}",
+                            headers=headers,
+                            json=update_post_data,
+                            timeout=30
+                        )
+
+                        if response.status_code in [200, 201]:
+                            result = response.json()
+                            status = result.get('post', {}).get('status', 'unknown')
+                            current_app.logger.info(f"Updated YouTube post {youtube_video_id} schedule to {formatted_time}, status: {status}")
+                            current_app.logger.info(f"Response: {response.text}")
+                        else:
+                            current_app.logger.error(f"Failed to update YouTube post schedule: {response.status_code}")
+                            current_app.logger.error(f"Response body: {response.text}")
 
                 except Exception as e:
-                    current_app.logger.error(f"Error updating YouTube video schedule: {e}")
+                    current_app.logger.error(f"Error updating YouTube post schedule: {e}")
                     # Continue with calendar update even if YouTube update fails
 
             # Update content library when rescheduling
@@ -429,22 +445,30 @@ def delete_event(event_id):
         if not event:
             return jsonify({"error": "Event not found"}), 404
 
-        # If this event has a YouTube video, delete it from YouTube
+        # If this event has a YouTube post, delete it from Late.dev
         youtube_video_id = event.get('youtube_video_id')
         if youtube_video_id:
             try:
-                from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
-                yt_analytics = YouTubeAnalytics(user_id)
+                import requests
+                import os
 
-                if yt_analytics.credentials:
-                    from googleapiclient.discovery import build
-                    youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
+                headers = {
+                    'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                    'Content-Type': 'application/json'
+                }
 
-                    # Delete the video from YouTube
-                    youtube.videos().delete(id=youtube_video_id).execute()
-                    current_app.logger.info(f"Deleted YouTube video {youtube_video_id}")
+                response = requests.delete(
+                    f"https://getlate.dev/api/v1/posts/{youtube_video_id}",
+                    headers=headers,
+                    timeout=30
+                )
+
+                if response.status_code in [200, 201, 204]:
+                    current_app.logger.info(f"Deleted YouTube post {youtube_video_id}")
+                else:
+                    current_app.logger.error(f"Failed to delete YouTube post {youtube_video_id}: {response.status_code}")
             except Exception as e:
-                current_app.logger.error(f"Error deleting YouTube video {youtube_video_id}: {e}")
+                current_app.logger.error(f"Error deleting YouTube post {youtube_video_id}: {e}")
                 # Continue with calendar event deletion even if YouTube deletion fails
 
         # If this event has an Instagram post, delete it from Late.dev

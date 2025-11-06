@@ -53,6 +53,8 @@ class LateDevOAuthService:
                 redirect_url = f"{callback_url}/tiktok-upload-studio/callback"
             elif platform in ['x', 'twitter']:
                 redirect_url = f"{callback_url}/x_post_editor/callback"
+            elif platform == 'youtube':
+                redirect_url = f"{callback_url}/video-title-tags/callback"
             else:
                 redirect_url = f"{callback_url}/instagram-upload-studio/callback"
 

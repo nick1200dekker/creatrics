@@ -1,4 +1,4 @@
-from flask import render_template, request, jsonify, g
+from flask import render_template, request, jsonify, g, redirect, url_for
 from . import bp
 from app.system.auth.middleware import auth_required
 from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission, has_premium_subscription
@@ -8,6 +8,7 @@ from app.scripts.video_title.video_tags import VideoTagsGenerator
 from app.scripts.video_title.video_description import VideoDescriptionGenerator
 from app.system.services.firebase_service import db
 from app.system.services.content_library_service import ContentLibraryManager
+from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
 from datetime import datetime, timezone
 import logging
 
@@ -18,8 +19,114 @@ logger = logging.getLogger(__name__)
 @require_permission('video_title')
 def video_title_tags():
     """Video title and tags generator page"""
+    user_id = get_workspace_user_id()
     has_premium = has_premium_subscription()
-    return render_template('video_title_tags/index.html', has_premium=has_premium)
+
+    # Check if user has YouTube connected via Late.dev
+    is_connected = LateDevOAuthService.is_connected(user_id, 'youtube')
+
+    return render_template('video_title_tags/index.html',
+                         has_premium=has_premium,
+                         is_connected=is_connected)
+
+@bp.route('/video-title-tags/connect')
+@auth_required
+@require_permission('video_title')
+def connect():
+    """Initiate YouTube OAuth flow via Late.dev"""
+    try:
+        user_id = get_workspace_user_id()
+        logger.info(f"YouTube connect route called for user {user_id}")
+
+        # Generate Late.dev authorization URL for YouTube
+        auth_url = LateDevOAuthService.get_authorization_url(user_id, 'youtube')
+        logger.info(f"Generated auth URL: {auth_url}")
+
+        logger.info(f"Redirecting user {user_id} to Late.dev YouTube OAuth")
+        return redirect(auth_url)
+
+    except Exception as e:
+        logger.error(f"Error initiating YouTube OAuth: {str(e)}", exc_info=True)
+        error_msg = str(e)
+        return redirect(url_for('video_title_tags.video_title_tags', error=error_msg))
+
+@bp.route('/video-title-tags/callback')
+@auth_required
+@require_permission('video_title')
+def callback():
+    """Handle Late.dev OAuth callback for YouTube"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Log all query params for debugging
+        logger.info(f"YouTube callback received for user {user_id}")
+        logger.info(f"Query params: {dict(request.args)}")
+
+        # Get success/error from query params
+        success = request.args.get('success')
+        error = request.args.get('error')
+        connected = request.args.get('connected')
+
+        logger.info(f"success={success}, error={error}, connected={connected}")
+
+        if error:
+            logger.error(f"YouTube OAuth error: {error}")
+            return redirect(url_for('video_title_tags.video_title_tags', error=f'oauth_error_{error}'))
+
+        # Late.dev uses 'connected' parameter to indicate success
+        if success == 'true' or connected:
+            logger.info(f"YouTube connected successfully for user {user_id}")
+            return redirect(url_for('video_title_tags.video_title_tags', success='connected'))
+        else:
+            logger.error(f"YouTube OAuth failed - no success indicator")
+            return redirect(url_for('video_title_tags.video_title_tags', error='oauth_failed'))
+
+    except Exception as e:
+        logger.error(f"Error in YouTube callback: {str(e)}", exc_info=True)
+        return redirect(url_for('video_title_tags.video_title_tags', error='callback_error'))
+
+@bp.route('/video-title-tags/disconnect', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def disconnect():
+    """Disconnect YouTube account from Late.dev"""
+    try:
+        user_id = get_workspace_user_id()
+        logger.info(f"Disconnect YouTube called for user {user_id}")
+
+        result = LateDevOAuthService.disconnect(user_id, 'youtube')
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error disconnecting YouTube: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/video-title-tags/api/youtube-latedev-status', methods=['GET'])
+@auth_required
+@require_permission('video_title')
+def youtube_latedev_status():
+    """Check if user has YouTube connected via Late.dev"""
+    try:
+        user_id = get_workspace_user_id()
+        account_info = LateDevOAuthService.get_account_info(user_id, 'youtube')
+
+        # Format user info for frontend (same format as TikTok/Instagram)
+        user_info = None
+        if account_info:
+            user_info = {
+                'display_name': account_info.get('username') or 'YouTube User',
+                'avatar_url': account_info.get('profile_picture'),
+                'username': account_info.get('username')
+            }
+
+        return jsonify({
+            'connected': account_info is not None,
+            'user_info': user_info
+        })
+
+    except Exception as e:
+        logger.error(f"Error checking YouTube Late.dev status: {str(e)}")
+        return jsonify({'connected': False, 'error': str(e)}), 500
 
 @bp.route('/api/get-channel-keywords', methods=['GET'])
 @auth_required
@@ -554,23 +661,37 @@ def check_youtube_connection():
         logger.error(f"Error checking YouTube connection: {e}")
         return jsonify({'connected': False})
 
-@bp.route('/api/init-youtube-upload', methods=['POST'])
+@bp.route('/api/upload-to-youtube', methods=['POST'])
 @auth_required
 @require_permission('video_title')
-def init_youtube_upload():
-    """Initialize YouTube resumable upload and return upload URL"""
+def upload_to_youtube():
+    """Upload video to YouTube via Late.dev"""
     try:
         user_id = get_workspace_user_id()
         data = request.get_json()
 
-        title = data.get('title', '').strip()
-        description = data.get('description', '').strip()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No data provided'
+            }), 400
+
+        # Get required fields
+        firebase_url = (data.get('firebase_url') or '').strip()
+        title = (data.get('title') or '').strip()
+        description = (data.get('description') or '').strip()
         tags = data.get('tags', [])
-        privacy_status = data.get('privacy_status', 'private')
-        language = data.get('language', 'en')
+        visibility = data.get('visibility', 'private')
         scheduled_time = data.get('scheduled_time')
-        file_size = data.get('file_size', 0)
-        mime_type = data.get('mime_type', 'video/*')
+        thumbnail_url = (data.get('thumbnail_url') or '').strip()
+        keywords = (data.get('keywords') or '').strip()
+        content_description = (data.get('content_description') or '').strip()
+
+        if not firebase_url:
+            return jsonify({
+                'success': False,
+                'error': 'Video URL is required'
+            }), 400
 
         if not title:
             return jsonify({
@@ -578,238 +699,79 @@ def init_youtube_upload():
                 'error': 'Title is required'
             }), 400
 
-        # Get YouTube credentials
-        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
-        yt_analytics = YouTubeAnalytics(user_id)
+        # Upload video via Late.dev
+        from app.scripts.video_title.latedev_youtube_service import YouTubeLateDevService
 
-        if not yt_analytics.credentials:
-            return jsonify({
-                'success': False,
-                'error': 'No YouTube account connected. Please connect your YouTube account first.'
-            }), 400
-
-        # Build YouTube Data API client
-        from googleapiclient.discovery import build
-        from googleapiclient.http import MediaFileUpload
-        import json
-
-        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
-
-        # Prepare video metadata
-        request_body = {
-            'snippet': {
-                'title': title,
-                'description': description,
-                'tags': tags[:500] if len(tags) > 500 else tags,
-                'categoryId': '22',
-                'defaultLanguage': language,
-                'defaultAudioLanguage': language
-            },
-            'status': {
-                'privacyStatus': privacy_status,
-                'selfDeclaredMadeForKids': False
-            }
-        }
-
-        # Add scheduled publish time if provided
-        if scheduled_time:
-            from datetime import datetime
-            try:
-                # Frontend sends ISO string in UTC (converted from user's local time)
-                # YouTube API expects RFC3339 format
-                dt = datetime.fromisoformat(scheduled_time.replace('Z', '+00:00'))
-                request_body['status']['publishAt'] = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
-                logger.info(f"Video scheduled for (UTC): {request_body['status']['publishAt']}")
-            except Exception as e:
-                logger.warning(f"Could not parse scheduled time: {e}")
-
-        # Initialize resumable upload
-        import requests
-
-        # Get access token
-        access_token = yt_analytics.credentials.token
-
-        # Create resumable upload session
-        headers = {
-            'Authorization': f'Bearer {access_token}',
-            'Content-Type': 'application/json; charset=UTF-8',
-            'X-Upload-Content-Length': str(file_size),
-            'X-Upload-Content-Type': mime_type
-        }
-
-        init_url = 'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status'
-
-        init_response = requests.post(
-            init_url,
-            headers=headers,
-            json=request_body
+        result = YouTubeLateDevService.upload_video(
+            user_id=user_id,
+            media_url=firebase_url,
+            title=title,
+            description=description,
+            tags=tags,
+            visibility=visibility,
+            thumbnail_url=thumbnail_url,
+            schedule_time=scheduled_time,
+            timezone='UTC'
         )
 
-        if init_response.status_code not in [200, 201]:
-            logger.error(f"Failed to initialize upload: {init_response.text}")
+        if not result.get('success'):
+            return jsonify(result), 400
 
-            # Parse YouTube API error response
+        post_id = result.get('post_id')
+
+        # Save to content library
+        content_id = None
+        if firebase_url:
             try:
-                error_response = json.loads(init_response.text)
-                error_message = error_response.get('error', {}).get('message', 'Failed to initialize upload')
-                error_reason = error_response.get('error', {}).get('errors', [{}])[0].get('reason', '')
+                content_id = ContentLibraryManager.save_content(
+                    user_id=user_id,
+                    media_url=firebase_url,
+                    media_type='video',
+                    keywords=keywords,
+                    content_description=content_description,
+                    platform='youtube',
+                    platform_data={
+                        'post_id': post_id,
+                        'scheduled_for': scheduled_time,
+                        'title': title,
+                        'status': 'scheduled' if scheduled_time else 'posted'
+                    }
+                )
+                logger.info(f"Created content library {content_id} for YouTube video {post_id}")
+            except Exception as e:
+                logger.error(f"Error creating content library: {e}")
 
-                # Check for specific errors
-                if 'quota' in error_message.lower() or init_response.status_code == 403:
-                    return jsonify({
-                        'success': False,
-                        'error': 'YouTube API quota exceeded. Please try again tomorrow.',
-                        'error_type': 'quota_exceeded'
-                    }), 403
+        # Create calendar event if video is scheduled
+        if scheduled_time and title:
+            try:
+                from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+                calendar_manager = ContentCalendarManager(user_id)
 
-                if 'invalidTags' in error_reason or 'invalid video keywords' in error_message.lower():
-                    return jsonify({
-                        'success': False,
-                        'error': 'Invalid tags detected. Please check your tags and try again.',
-                        'error_type': 'invalid_tags'
-                    }), 400
+                event_id = calendar_manager.create_event(
+                    title=title,
+                    publish_date=scheduled_time,
+                    platform='YouTube',
+                    status='ready',
+                    content_type='organic',
+                    youtube_video_id=post_id,
+                    content_id=content_id if content_id else '',
+                    notes=f'YouTube Post ID: {post_id}'
+                )
 
-                # Return the actual YouTube error message
-                return jsonify({
-                    'success': False,
-                    'error': error_message
-                }), 400
-
-            except:
-                # Fallback to generic error
-                return jsonify({
-                    'success': False,
-                    'error': 'Failed to initialize YouTube upload'
-                }), 500
-
-        # Get upload URL from Location header
-        upload_url = init_response.headers.get('Location')
-
-        if not upload_url:
-            logger.error("No upload URL in response")
-            return jsonify({
-                'success': False,
-                'error': 'Failed to get upload URL'
-            }), 500
-
-        # Extract video ID from upload URL (we'll get it after upload completes)
-        # For now, we'll return the upload URL and handle video ID in finalize
-
-        logger.info(f"Initialized resumable upload for user {user_id}")
+                logger.info(f"Created calendar event {event_id} for scheduled YouTube video {post_id}")
+            except Exception as e:
+                logger.error(f"Error creating calendar event: {e}")
+                # Don't fail the whole request if calendar creation fails
 
         return jsonify({
             'success': True,
-            'upload_url': upload_url,
-            'access_token': access_token,
-            'message': 'Upload initialized successfully'
+            'post_id': post_id,
+            'message': result.get('message', 'Video uploaded successfully'),
+            'content_id': content_id
         })
 
     except Exception as e:
-        logger.error(f"Error initializing YouTube upload: {e}")
-        return jsonify({
-            'success': False,
-            'error': f'Failed to initialize upload: {str(e)}'
-        }), 500
-
-@bp.route('/api/get-uploaded-video-id', methods=['POST'])
-@auth_required
-@require_permission('video_title')
-def get_uploaded_video_id():
-    """Get video ID from most recent upload or upload URL"""
-    try:
-        user_id = get_workspace_user_id()
-        data = request.get_json()
-
-        upload_url = data.get('upload_url', '')
-        title = data.get('title', '')
-
-        # Get YouTube credentials
-        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
-        yt_analytics = YouTubeAnalytics(user_id)
-
-        if not yt_analytics.credentials:
-            return jsonify({
-                'success': False,
-                'error': 'No YouTube account connected'
-            }), 400
-
-        from googleapiclient.discovery import build
-        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
-
-        # Query for most recent uploaded video with retry logic
-        # YouTube needs time to process the video after upload
-        import time
-        max_retries = 10
-        retry_delay = 2  # seconds
-
-        try:
-            # Get user's uploads playlist ID
-            channels_response = youtube.channels().list(
-                part='contentDetails',
-                mine=True
-            ).execute()
-
-            if not channels_response.get('items'):
-                return jsonify({
-                    'success': False,
-                    'error': 'Could not find channel'
-                }), 404
-
-            uploads_playlist_id = channels_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
-
-            # Retry logic to wait for video to appear in uploads playlist
-            video_id = None
-            for attempt in range(max_retries):
-                logger.info(f"Attempting to retrieve video ID (attempt {attempt + 1}/{max_retries})")
-
-                # Get most recent video from uploads playlist
-                playlist_response = youtube.playlistItems().list(
-                    part='snippet',
-                    playlistId=uploads_playlist_id,
-                    maxResults=1
-                ).execute()
-
-                if playlist_response.get('items'):
-                    retrieved_video_id = playlist_response['items'][0]['snippet']['resourceId']['videoId']
-                    retrieved_title = playlist_response['items'][0]['snippet']['title']
-
-                    # Check if the title matches (to ensure it's the video we just uploaded)
-                    if title and retrieved_title == title:
-                        video_id = retrieved_video_id
-                        logger.info(f"Found matching video ID {video_id} with title '{title}'")
-                        break
-                    elif not title:
-                        # If no title provided, just use the most recent video
-                        video_id = retrieved_video_id
-                        logger.info(f"Retrieved most recent video ID {video_id}")
-                        break
-                    else:
-                        logger.info(f"Video found but title doesn't match. Expected '{title}', got '{retrieved_title}'. Retrying...")
-
-                # Wait before retrying
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-
-            if not video_id:
-                return jsonify({
-                    'success': False,
-                    'error': 'Video not found after upload. Please check YouTube Studio.'
-                }), 404
-
-            return jsonify({
-                'success': True,
-                'video_id': video_id
-            })
-
-        except Exception as e:
-            logger.error(f"Error retrieving video ID: {e}")
-            return jsonify({
-                'success': False,
-                'error': f'Failed to retrieve video ID: {str(e)}'
-            }), 500
-
-    except Exception as e:
-        logger.error(f"Error in get_uploaded_video_id: {e}")
+        logger.error(f"Error uploading to YouTube: {e}", exc_info=True)
         return jsonify({
             'success': False,
             'error': str(e)
@@ -975,98 +937,11 @@ def finalize_youtube_upload():
             'error': f'Failed to finalize upload: {str(e)}'
         }), 500
 
-@bp.route('/api/update-youtube-schedule', methods=['POST'])
+@bp.route('/api/upload-video-to-firebase', methods=['POST'])
 @auth_required
 @require_permission('video_title')
-def update_youtube_schedule():
-    """Update YouTube video's scheduled publish time"""
-    try:
-        user_id = get_workspace_user_id()
-        data = request.get_json()
-
-        video_id = data.get('video_id', '').strip()
-        new_publish_time = data.get('publish_time', '').strip()
-
-        if not video_id or not new_publish_time:
-            return jsonify({
-                'success': False,
-                'error': 'Video ID and publish time are required'
-            }), 400
-
-        # Get YouTube credentials
-        from app.scripts.accounts.youtube_analytics import YouTubeAnalytics
-        yt_analytics = YouTubeAnalytics(user_id)
-
-        if not yt_analytics.credentials:
-            return jsonify({
-                'success': False,
-                'error': 'No YouTube account connected'
-            }), 400
-
-        from googleapiclient.discovery import build
-        youtube = build('youtube', 'v3', credentials=yt_analytics.credentials)
-
-        # Convert ISO datetime to YouTube format (already in UTC from frontend)
-        from datetime import datetime
-        try:
-            dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
-            formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
-            logger.info(f"Updating schedule from {new_publish_time} to {formatted_time}")
-        except Exception as e:
-            logger.error(f"Error parsing datetime: {e}")
-            return jsonify({
-                'success': False,
-                'error': 'Invalid datetime format'
-            }), 400
-
-        # Update video's publish time
-        try:
-            youtube.videos().update(
-                part='status',
-                body={
-                    'id': video_id,
-                    'status': {
-                        'publishAt': formatted_time,
-                        'privacyStatus': 'private'  # Keep as private until scheduled time
-                    }
-                }
-            ).execute()
-
-            logger.info(f"Updated YouTube video {video_id} schedule to {formatted_time}")
-
-            return jsonify({
-                'success': True,
-                'message': 'YouTube schedule updated successfully'
-            })
-
-        except Exception as e:
-            error_str = str(e).lower()
-            logger.error(f"Error updating YouTube schedule: {e}")
-
-            if 'quota' in error_str or 'quotaexceeded' in error_str:
-                return jsonify({
-                    'success': False,
-                    'error': 'YouTube API quota exceeded. Please try again tomorrow.',
-                    'error_type': 'quota_exceeded'
-                }), 403
-
-            return jsonify({
-                'success': False,
-                'error': f'Failed to update schedule: {str(e)}'
-            }), 500
-
-    except Exception as e:
-        logger.error(f"Error in update_youtube_schedule: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@bp.route('/api/upload-short-to-firebase', methods=['POST'])
-@auth_required
-@require_permission('video_title')
-def upload_short_to_firebase():
-    """Upload short video to Firebase Storage for future multi-platform posting"""
+def upload_video_to_firebase():
+    """Upload video to Firebase Storage for Late.dev posting"""
     try:
         user_id = get_workspace_user_id()
 
@@ -1087,16 +962,16 @@ def upload_short_to_firebase():
         from datetime import datetime
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         file_ext = video_file.filename.rsplit('.', 1)[1].lower() if '.' in video_file.filename else 'mp4'
-        unique_filename = f"short_{timestamp}_{uuid.uuid4().hex[:8]}.{file_ext}"
+        unique_filename = f"video_{timestamp}_{uuid.uuid4().hex[:8]}.{file_ext}"
 
         # Upload to Firebase Storage (public URL)
         from app.system.services.firebase_service import StorageService
         result = StorageService.upload_file(
             user_id,
-            'youtube_shorts',  # Directory for short videos
+            'youtube_videos',  # Directory for all YouTube videos
             unique_filename,
             video_file,
-            make_public=True  # Public URL for future multi-platform posting
+            make_public=True  # Public URL for Late.dev posting
         )
 
         if result:
@@ -1106,23 +981,31 @@ def upload_short_to_firebase():
             else:
                 firebase_url = result
 
-            logger.info(f"Short video uploaded to Firebase: {firebase_url}")
+            logger.info(f"Video uploaded to Firebase: {firebase_url}")
 
-            # Don't save to content library yet - will be saved when actually uploading to YouTube
+            # Don't save to content library yet - will be saved when actually posting via Late.dev
             # This prevents showing "Posted" status for content that hasn't been scheduled yet
 
             return jsonify({
                 'success': True,
                 'firebase_url': firebase_url,
                 'filename': unique_filename,
-                'content_id': None  # Will be created when uploading to YouTube
+                'content_id': None  # Will be created when posting to YouTube
             })
         else:
             return jsonify({'success': False, 'error': 'Failed to upload to Firebase'}), 500
 
     except Exception as e:
-        logger.error(f"Error uploading short to Firebase: {e}")
+        logger.error(f"Error uploading video to Firebase: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# Keep old endpoint for backwards compatibility
+@bp.route('/api/upload-short-to-firebase', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def upload_short_to_firebase():
+    """Legacy endpoint - redirects to new upload_video_to_firebase"""
+    return upload_video_to_firebase()
 
 @bp.route('/api/youtube-status', methods=['GET'])
 @auth_required

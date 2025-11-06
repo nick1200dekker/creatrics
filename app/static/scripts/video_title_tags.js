@@ -24,14 +24,25 @@ document.addEventListener('DOMContentLoaded', function() {
     loadChannelKeywords();
     loadReferenceDescription();
     checkYouTubeConnection();
+
+    // Set up connect/disconnect button listeners
+    const connectBtn = document.getElementById('connectBtn');
+    if (connectBtn) {
+        connectBtn.addEventListener('click', connectToYouTube);
+    }
+
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', disconnectFromYouTube);
+    }
 });
 
 /**
- * Check if user has YouTube connected
+ * Check if user has YouTube connected via Late.dev
  */
 async function checkYouTubeConnection() {
     try {
-        const response = await fetch('/api/youtube-status');
+        const response = await fetch('/video-title-tags/api/youtube-latedev-status');
         const data = await response.json();
 
         hasYouTubeConnected = data.connected;
@@ -45,6 +56,40 @@ async function checkYouTubeConnection() {
     } catch (error) {
         console.log('Could not check YouTube connection:', error);
         hasYouTubeConnected = false;
+    }
+}
+
+/**
+ * Connect to YouTube via Late.dev
+ */
+function connectToYouTube() {
+    window.location.href = '/video-title-tags/connect';
+}
+
+/**
+ * Disconnect from YouTube
+ */
+async function disconnectFromYouTube() {
+    if (!confirm('Are you sure you want to disconnect your YouTube account from the upload studio?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/video-title-tags/disconnect', {
+            method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('YouTube account disconnected successfully', 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast('Failed to disconnect: ' + data.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error disconnecting:', error);
+        showToast('Failed to disconnect from YouTube', 'error');
     }
 }
 
@@ -67,14 +112,14 @@ function updateConnectionUI(data) {
     if (buttonSkeleton) buttonSkeleton.style.display = 'none';
     if (connectionButtons) connectionButtons.style.display = 'block';
 
-    if (data.connected && data.channel_info) {
+    if (data.connected && data.user_info) {
         // Connected state
         if (statusDot) statusDot.classList.remove('disconnected');
         if (statusText) statusText.textContent = 'Connected to YouTube';
         if (connectBtn) connectBtn.style.display = 'none';
         if (disconnectBtn) disconnectBtn.style.display = 'inline-flex';
 
-        // Show channel info
+        // Show user info
         if (channelInfo) {
             channelInfo.style.display = 'flex';
 
@@ -82,19 +127,22 @@ function updateConnectionUI(data) {
             const nameEl = document.getElementById('channelName');
             const idEl = document.getElementById('channelId');
 
-            if (thumbnailEl && data.channel_info.thumbnail) {
-                thumbnailEl.src = data.channel_info.thumbnail;
+            if (thumbnailEl && data.user_info.avatar_url) {
+                thumbnailEl.src = data.user_info.avatar_url;
                 thumbnailEl.style.display = 'block';
             } else if (thumbnailEl) {
                 thumbnailEl.style.display = 'none';
             }
 
             if (nameEl) {
-                nameEl.textContent = data.channel_info.name || 'YouTube Channel';
+                nameEl.textContent = data.user_info.display_name || 'YouTube User';
             }
 
-            // Hide the ID element (we don't need to show channel ID)
-            if (idEl) {
+            // Show username if available
+            if (idEl && data.user_info.username) {
+                idEl.textContent = '@' + data.user_info.username;
+                idEl.style.display = 'block';
+            } else if (idEl) {
                 idEl.style.display = 'none';
             }
         }
@@ -1485,7 +1533,7 @@ function handleStatusChange() {
 }
 
 /**
- * Upload video to YouTube
+ * Upload video to YouTube via Late.dev
  */
 async function uploadToYouTube() {
     if (!selectedVideoFile) {
@@ -1502,12 +1550,9 @@ async function uploadToYouTube() {
     const description = currentDescription || '';
     const tags = currentTags || [];
 
-    // Get privacy status and language
+    // Get privacy status
     const privacySelect = document.getElementById('privacySelect');
     const privacyStatus = privacySelect ? privacySelect.value : 'private';
-
-    const languageSelect = document.getElementById('languageSelect');
-    const language = languageSelect ? languageSelect.value : 'en';
 
     // Get scheduled date/time if status is scheduled
     let scheduledTime = null;
@@ -1524,187 +1569,96 @@ async function uploadToYouTube() {
         const dateTime = `${scheduleDateSelect.value}T${scheduleTimeSelect.value}:00`;
         const localDateTime = new Date(dateTime);
 
-        // Convert to ISO string but YouTube needs local time context
+        // Validate that schedule time is in the future
+        if (localDateTime <= new Date()) {
+            showToast('Schedule time must be in the future', 'error');
+            return;
+        }
+
+        // Convert to ISO string
         scheduledTime = localDateTime.toISOString();
     }
 
     const uploadBtn = document.getElementById('uploadBtn');
     const originalContent = uploadBtn.innerHTML;
-
-    // Show upload progress modal
-    showUploadProgressModal();
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading...';
 
     try {
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<i class="ph ph-spinner"></i> Uploading...';
-
-        // Update progress modal
-        updateUploadProgress('Preparing upload...', 'uploading');
-
-        // Get target keyword if provided
+        // Get keywords and description
         const keywordInput = document.getElementById('keywordInput');
         const targetKeyword = keywordInput && keywordInput.value.trim() ? keywordInput.value.trim() : '';
+        const videoInput = document.getElementById('videoInput');
+        const contentDescription = videoInput ? videoInput.value.trim() : '';
 
-        // Step 1: Get YouTube upload URL from backend
-        const initResponse = await fetch('/api/init-youtube-upload', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                title: title,
-                description: description,
-                tags: tags,
-                privacy_status: privacyStatus === 'scheduled' ? 'private' : privacyStatus,
-                language: language,
-                scheduled_time: scheduledTime,
-                target_keyword: targetKeyword,
-                file_size: selectedVideoFile.size,
-                mime_type: selectedVideoFile.type
-            })
-        });
+        // Step 1: Upload video to Firebase if not already uploaded
+        let firebaseUrl = window.shortVideoFirebaseUrl;
+        if (!firebaseUrl) {
+            const formData = new FormData();
+            formData.append('video', selectedVideoFile);
+            formData.append('keywords', targetKeyword);
+            formData.append('content_description', contentDescription);
 
-        const initData = await initResponse.json();
+            uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading to storage...';
 
-        if (!initData.success) {
-            throw new Error(initData.error || 'Failed to initialize upload');
-        }
+            const uploadResponse = await fetch('/api/upload-video-to-firebase', {
+                method: 'POST',
+                body: formData
+            });
 
-        // Step 2: Upload video directly to YouTube with progress tracking
-        updateUploadProgress('Uploading video to YouTube...', 'uploading');
+            const uploadData = await uploadResponse.json();
 
-        const uploadXHR = new XMLHttpRequest();
-
-        // Track upload progress
-        uploadXHR.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-                const percentComplete = Math.round((e.loaded / e.total) * 100);
-                updateUploadProgress(`Uploading to YouTube... ${percentComplete}%`, 'uploading');
+            if (!uploadData.success) {
+                throw new Error(uploadData.error || 'Failed to upload video');
             }
-        });
 
-        // Upload the file
-        await new Promise((resolve, reject) => {
-            uploadXHR.onload = () => {
-                // Upload succeeded if we get 200 or 201
-                // Note: We can't read responseText due to CORS, but upload worked!
-                if (uploadXHR.status >= 200 && uploadXHR.status < 300) {
-                    resolve();
-                } else if (uploadXHR.status === 0) {
-                    // Status 0 can occur with CORS - but if we got here, upload likely succeeded
-                    // We'll verify by checking for the video in the next step
-                    console.log('Upload completed with status 0 (CORS limitation) - will verify video exists');
-                    resolve();
-                } else {
-                    reject(new Error(`Upload failed with status ${uploadXHR.status}`));
-                }
-            };
-            uploadXHR.onerror = () => {
-                // Network error or CORS issue - but upload may have succeeded
-                // YouTube's CORS policy prevents reading responses, triggering onerror even on success
-                console.log('XHR error triggered (likely CORS) - will verify video exists');
-                resolve(); // Continue anyway and verify video exists in next step
-            };
-
-            uploadXHR.open('PUT', initData.upload_url);
-            uploadXHR.setRequestHeader('Authorization', `Bearer ${initData.access_token}`);
-            uploadXHR.setRequestHeader('Content-Type', selectedVideoFile.type);
-            uploadXHR.send(selectedVideoFile);
-        });
-
-        // Get video ID from backend (extract from upload URL or query recent uploads)
-        updateUploadProgress('Retrieving video information...', 'processing');
-
-        const videoIdResponse = await fetch('/api/get-uploaded-video-id', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                upload_url: initData.upload_url,
-                title: title
-            })
-        });
-
-        const videoIdData = await videoIdResponse.json();
-
-        if (!videoIdData.success || !videoIdData.video_id) {
-            throw new Error(videoIdData.error || 'Failed to get video ID');
+            firebaseUrl = uploadData.firebase_url;
+            window.shortVideoFirebaseUrl = firebaseUrl;
+            console.log('Video uploaded to Firebase:', firebaseUrl);
         }
 
-        const videoId = videoIdData.video_id;
+        // Step 2: Post to YouTube via Late.dev
+        uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Posting to YouTube...';
 
-        // Step 3: Finalize upload (save metadata, handle thumbnail)
-        updateUploadProgress('Finalizing upload...', 'processing');
-
-        const finalizeData = {
-            video_id: videoId,
-            thumbnail_path: uploadedThumbnailPath,
-            target_keyword: targetKeyword,
+        const postPayload = {
+            firebase_url: firebaseUrl,
             title: title,
+            description: description,
+            tags: tags,
+            visibility: privacyStatus === 'scheduled' ? 'private' : privacyStatus,
             scheduled_time: scheduledTime,
-            firebase_url: window.shortVideoFirebaseUrl,
+            thumbnail_url: null, // TODO: Upload thumbnail to Firebase if needed
             keywords: targetKeyword,
-            content_description: videoInput ? videoInput.value.trim() : ''
+            content_description: contentDescription
         };
 
-        const finalizeResponse = await fetch('/api/finalize-youtube-upload', {
+        const postResponse = await fetch('/api/upload-to-youtube', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            credentials: 'include',
-            body: JSON.stringify(finalizeData)
+            body: JSON.stringify(postPayload)
         });
 
-        const finalData = await finalizeResponse.json();
+        const postData = await postResponse.json();
 
-        if (!finalData.success) {
-            throw new Error(finalData.error || 'Failed to finalize upload');
+        if (!postData.success) {
+            // Check if it's a quota error
+            if (postData.error && postData.error.toLowerCase().includes('quota exceeded')) {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = originalContent;
+                showQuotaExceededModal();
+                return;
+            }
+            throw new Error(postData.error || 'Failed to upload to YouTube');
         }
 
-        // Update progress to processing
-        updateUploadProgress('Processing video on YouTube...', 'processing');
-
-        // Small delay to show processing state
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Hide progress modal
-        hideUploadProgressModal();
-
-        const data = { success: true, video_id: videoId };
-
-        showToast('Video uploaded successfully to YouTube!', 'success');
-
-        const privacyLabel = privacyStatus.charAt(0).toUpperCase() + privacyStatus.slice(1);
-
-        // Show success message with video link
-        const resultsContainer = document.getElementById('resultsContainer');
-        resultsContainer.innerHTML = `
-            <div style="max-width: 500px; margin: 2rem auto; text-align: center; padding: 2.5rem; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 12px;">
-                <div style="width: 64px; height: 64px; margin: 0 auto 1.5rem; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                    <i class="ph-fill ph-check" style="font-size: 2rem; color: white;"></i>
-                </div>
-                <h3 style="color: var(--text-primary); margin-bottom: 0.75rem; font-size: 1.5rem; font-weight: 600;">Upload Complete!</h3>
-                <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9375rem; line-height: 1.6;">
-                    Your video is now live on YouTube as <strong style="color: var(--text-primary);">${privacyLabel}</strong>
-                </p>
-                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
-                    <a href="https://studio.youtube.com/video/${data.video_id}/edit" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border-radius: 8px; text-decoration: none; font-weight: 500; transition: all 0.2s ease; font-size: 0.9375rem;">
-                        <i class="ph ph-arrow-square-out"></i> Open in YouTube Studio
-                    </a>
-                    <button onclick="location.reload()" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: transparent; color: var(--text-secondary); border: 1px solid var(--border-primary); border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; font-size: 0.9375rem;">
-                        <i class="ph ph-arrow-counter-clockwise"></i> Upload Another Video
-                    </button>
-                </div>
-                <div style="padding-top: 1.5rem; border-top: 1px solid var(--border-primary);">
-                    <p style="color: var(--text-tertiary); font-size: 0.8125rem; margin: 0;">
-                        Video ID: <code style="padding: 0.125rem 0.375rem; background: var(--bg-tertiary); border-radius: 4px; font-size: 0.75rem; color: var(--text-secondary);">${data.video_id}</code>
-                    </p>
-                </div>
-            </div>
-        `;
+        // Show success message
+        let message = 'Video uploaded to YouTube successfully!';
+        if (scheduledTime) {
+            message = 'Video scheduled on YouTube successfully!';
+        }
+        showToast(message, 'success');
 
         // Reset state
         selectedVideoFile = null;
@@ -1712,18 +1666,18 @@ async function uploadToYouTube() {
         selectedTitle = null;
         uploadedVideoPath = null;
         uploadedThumbnailPath = null;
+        window.shortVideoFirebaseUrl = null;
+
+        // Reset button
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = originalContent;
+
+        // Optionally reload to clear form
+        setTimeout(() => location.reload(), 1500);
 
     } catch (error) {
         console.error('Error uploading video:', error);
-        hideUploadProgressModal();
-
-        // Check for quota exceeded error
-        const errorMessage = error.message || '';
-        if (errorMessage.includes('quota') || errorMessage.includes('Quota') || errorMessage.includes('quotaExceeded')) {
-            showQuotaExceededModal();
-        } else {
-            showToast('Failed to upload video: ' + error.message, 'error');
-        }
+        showToast('Failed to upload video: ' + error.message, 'error');
 
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = originalContent;
@@ -1745,14 +1699,14 @@ function showQuotaExceededModal() {
         <div class="quota-exceeded-modal">
             <div class="quota-modal-header">
                 <i class="ph ph-clock"></i>
-                <h3>YouTube API Quota Exceeded</h3>
+                <h3>YouTube Upload Limit Reached</h3>
             </div>
             <div class="quota-modal-content">
-                <p class="quota-message">Daily YouTube API quota limit hit.</p>
-                <p class="quota-submessage">We've requested more quota from YouTube. Resets at <strong>midnight Pacific Time</strong>.</p>
+                <p class="quota-message">Daily YouTube upload limit reached.</p>
+                <p class="quota-submessage">Please try again later or schedule your video for tomorrow.</p>
             </div>
             <div class="quota-modal-actions">
-                <button class="quota-modal-btn" onclick="this.closest('.quota-exceeded-modal-overlay').remove()">Got It, Try Tomorrow</button>
+                <button class="quota-modal-btn" onclick="this.closest('.quota-exceeded-modal-overlay').remove()">Got It</button>
             </div>
         </div>
     `;
