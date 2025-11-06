@@ -316,23 +316,15 @@ function renderCaptionsSection(captions, visible) {
                     <span>Click on a caption below to select it for your post</span>
                 </div>
             ` : ''}
-            <div class="title-cards-grid">
-                ${captions.map((captionObj, index) => {
-                    const isSelected = selectedCaptionIndex === index;
-                    return `
-                        <div class="title-card ${isSelected ? 'selected' : ''}" onclick="selectCaption(${index})">
-                            <div class="title-card-header">
-                                <div class="title-card-number">Caption ${index + 1}</div>
-                                <button class="title-copy-btn" onclick="copyCaption(event, ${index})" title="Copy caption">
-                                    <i class="ph ph-copy"></i>
-                                </button>
-                            </div>
-                            <div class="title-text">${escapeHtml(captionObj.caption || '')}</div>
-                            ${captionObj.hashtags ? `<div class="hashtags-text">${escapeHtml(captionObj.hashtags)}</div>` : ''}
-                            ${isSelected ? '<div class="selected-badge"><i class="ph ph-check"></i> Selected</div>' : ''}
+            <div class="captions-content">
+                <div class="captions-list">
+                    ${captions.map((captionObj, index) => `
+                        <div class="caption-item ${selectedCaptionIndex === index ? 'selected' : ''}" id="caption-item-${index}" onclick="selectCaption(${index})">
+                            <span class="caption-number">${index + 1}</span>
+                            <div class="caption-text">${escapeHtml(captionObj.caption || '')}</div>
                         </div>
-                    `;
-                }).join('')}
+                    `).join('')}
+                </div>
             </div>
         </div>
     `;
@@ -465,13 +457,13 @@ function setupUploadForm() {
 }
 
 /**
- * Select a title for upload
+ * Select a caption for upload
  */
 function selectCaption(index) {
     selectedCaptionIndex = index;
 
     // Update UI - highlight selected caption
-    document.querySelectorAll('.title-card').forEach((item, i) => {
+    document.querySelectorAll('.caption-item').forEach((item, i) => {
         if (i === index) {
             item.classList.add('selected');
         } else {
@@ -623,7 +615,7 @@ async function handleUpload(e) {
     }
 
     const captionObj = currentCaptions[selectedCaptionIndex];
-    const caption = `${captionObj.caption}\n\n${captionObj.hashtags || ''}`;
+    const caption = captionObj.caption || '';
     const statusSelect = document.getElementById('statusSelect');
     const scheduleDateSelect = document.getElementById('scheduleDateSelect');
     const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
@@ -1191,10 +1183,10 @@ function escapeHtml(text) {
  */
 function copyCaption(event, index) {
     event.stopPropagation();
-    
+
     const caption = currentCaptions[index];
-    const fullText = `${caption.caption}\n\n${caption.hashtags || ''}`;
-    
+    const fullText = caption.caption || '';
+
     navigator.clipboard.writeText(fullText).then(() => {
         showToast('Caption copied to clipboard!', 'success');
     }).catch(err => {

@@ -211,9 +211,9 @@ class InstagramTitleGenerator:
                     if isinstance(json_data, list):
                         for item in json_data:
                             if isinstance(item, dict) and 'caption' in item:
+                                # New format: caption includes hashtags
                                 captions.append({
-                                    'caption': item.get('caption', ''),
-                                    'hashtags': item.get('hashtags', '')
+                                    'caption': item.get('caption', '')
                                 })
                         if captions:
                             logger.info(f"Parsed {len(captions)} captions from JSON")
@@ -221,28 +221,25 @@ class InstagramTitleGenerator:
                 except json.JSONDecodeError:
                     pass
 
-            # Fallback: Parse text format
+            # Fallback: Parse text format (each line is a caption)
             lines = response_text.split('\n')
-            current_caption = None
 
             for line in lines:
                 line = line.strip()
                 if not line:
                     continue
 
-                # Look for caption markers
-                if line.startswith('Caption') or line.startswith('**Caption'):
-                    if current_caption:
-                        captions.append(current_caption)
-                    current_caption = {'caption': '', 'hashtags': ''}
-                elif line.startswith('#') and current_caption is not None:
-                    current_caption['hashtags'] = line
-                elif current_caption is not None and not current_caption['caption']:
-                    current_caption['caption'] = line
+                # Skip lines that look like headers or markers
+                if line.startswith('Caption') or line.startswith('**Caption') or line.startswith('---'):
+                    continue
 
-            # Add last caption
-            if current_caption and current_caption['caption']:
-                captions.append(current_caption)
+                # If line contains hashtags, it's likely a caption
+                if '#' in line:
+                    # Remove any numbering (1., 2., etc.)
+                    clean_line = re.sub(r'^\d+[\.\)]\s*', '', line)
+                    clean_line = clean_line.strip('"\'')
+                    if clean_line:
+                        captions.append({'caption': clean_line})
 
             logger.info(f"Parsed {len(captions)} captions from text")
             return captions
