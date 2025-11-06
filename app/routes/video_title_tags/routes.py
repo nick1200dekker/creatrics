@@ -7,6 +7,7 @@ from app.scripts.video_title.video_title import VideoTitleGenerator
 from app.scripts.video_title.video_tags import VideoTagsGenerator
 from app.scripts.video_title.video_description import VideoDescriptionGenerator
 from app.system.services.firebase_service import db
+from app.system.services.content_library_service import ContentLibraryManager
 from datetime import datetime, timezone
 import logging
 
@@ -823,11 +824,20 @@ def finalize_youtube_upload():
         user_id = get_workspace_user_id()
         data = request.get_json()
 
-        video_id = data.get('video_id', '').strip()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No data provided'
+            }), 400
+
+        video_id = (data.get('video_id') or '').strip()
         thumbnail_path = data.get('thumbnail_path')
-        target_keyword = data.get('target_keyword', '').strip()
-        title = data.get('title', '').strip()
+        target_keyword = (data.get('target_keyword') or '').strip()
+        title = (data.get('title') or '').strip()
         scheduled_time = data.get('scheduled_time')
+        firebase_url = (data.get('firebase_url') or '').strip()
+        keywords = (data.get('keywords') or '').strip()
+        content_description = (data.get('content_description') or '').strip()
 
         if not video_id:
             return jsonify({
@@ -905,6 +915,30 @@ def finalize_youtube_upload():
         except Exception as e:
             logger.error(f"Error storing video metadata in Firestore: {e}")
 
+        # Save to content library
+        content_id = None
+        if firebase_url:
+            try:
+                from app.system.services.content_library_service import ContentLibraryManager
+
+                content_id = ContentLibraryManager.save_content(
+                    user_id=user_id,
+                    media_url=firebase_url,
+                    media_type='video',
+                    keywords=keywords,
+                    content_description=content_description,
+                    platform='youtube',
+                    platform_data={
+                        'post_id': video_id,
+                        'scheduled_for': scheduled_time,
+                        'title': title,
+                        'status': 'scheduled' if scheduled_time else 'posted'
+                    }
+                )
+                logger.info(f"Created content library {content_id} for YouTube video {video_id}")
+            except Exception as e:
+                logger.error(f"Error creating content library: {e}")
+
         # Create calendar event if video is scheduled
         if scheduled_time and title:
             try:
@@ -918,6 +952,7 @@ def finalize_youtube_upload():
                     status='ready',
                     content_type='organic',
                     youtube_video_id=video_id,
+                    content_id=content_id if content_id else '',
                     notes=f'YouTube Video ID: {video_id}'
                 )
 
@@ -932,7 +967,9 @@ def finalize_youtube_upload():
         })
 
     except Exception as e:
+        import traceback
         logger.error(f"Error finalizing YouTube upload: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({
             'success': False,
             'error': f'Failed to finalize upload: {str(e)}'
@@ -1041,6 +1078,10 @@ def upload_short_to_firebase():
         if not video_file or video_file.filename == '':
             return jsonify({'success': False, 'error': 'No video file selected'}), 400
 
+        # Get keywords and description from form data
+        keywords = request.form.get('keywords', '').strip()
+        content_description = request.form.get('content_description', '').strip()
+
         # Generate unique filename
         import uuid
         from datetime import datetime
@@ -1059,11 +1100,22 @@ def upload_short_to_firebase():
         )
 
         if result:
-            logger.info(f"Short video uploaded to Firebase: {result}")
+            # Extract URL from result (can be dict or string)
+            if isinstance(result, dict):
+                firebase_url = result.get('url')
+            else:
+                firebase_url = result
+
+            logger.info(f"Short video uploaded to Firebase: {firebase_url}")
+
+            # Don't save to content library yet - will be saved when actually uploading to YouTube
+            # This prevents showing "Posted" status for content that hasn't been scheduled yet
+
             return jsonify({
                 'success': True,
-                'firebase_url': result,
-                'filename': unique_filename
+                'firebase_url': firebase_url,
+                'filename': unique_filename,
+                'content_id': None  # Will be created when uploading to YouTube
             })
         else:
             return jsonify({'success': False, 'error': 'Failed to upload to Firebase'}), 500

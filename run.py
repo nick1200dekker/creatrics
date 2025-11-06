@@ -155,6 +155,9 @@ from app.routes.tiktok_competitors import bp as tiktok_competitors_bp
 from app.routes.tiktok_upload_studio import bp as tiktok_upload_studio_bp
 from app.routes.instagram_upload_studio import bp as instagram_upload_studio_bp
 
+# Import Content Library blueprint
+from app.routes.content_library import bp as content_library_bp
+
 # Import Teams blueprint
 from app.routes.teams import teams_bp
 
@@ -198,6 +201,7 @@ app.register_blueprint(tiktok_analytics_bp)
 app.register_blueprint(tiktok_competitors_bp)
 app.register_blueprint(tiktok_upload_studio_bp)
 app.register_blueprint(instagram_upload_studio_bp)
+app.register_blueprint(content_library_bp)
 app.register_blueprint(teams_bp)
 
 # Register Cron blueprint

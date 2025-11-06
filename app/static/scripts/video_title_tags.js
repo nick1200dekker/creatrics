@@ -180,6 +180,16 @@ async function uploadShortToFirebase(file) {
         const formData = new FormData();
         formData.append('video', file);
 
+        // Add keywords and description for content library
+        const keywordInput = document.getElementById('keywordInput');
+        const videoInput = document.getElementById('videoInput');
+        if (keywordInput && keywordInput.value.trim()) {
+            formData.append('keywords', keywordInput.value.trim());
+        }
+        if (videoInput && videoInput.value.trim()) {
+            formData.append('content_description', videoInput.value.trim());
+        }
+
         const response = await fetch('/api/upload-short-to-firebase', {
             method: 'POST',
             body: formData
@@ -1633,7 +1643,10 @@ async function uploadToYouTube() {
             thumbnail_path: uploadedThumbnailPath,
             target_keyword: targetKeyword,
             title: title,
-            scheduled_time: scheduledTime
+            scheduled_time: scheduledTime,
+            firebase_url: window.shortVideoFirebaseUrl,
+            keywords: targetKeyword,
+            content_description: videoInput ? videoInput.value.trim() : ''
         };
 
         const finalizeResponse = await fetch('/api/finalize-youtube-upload', {

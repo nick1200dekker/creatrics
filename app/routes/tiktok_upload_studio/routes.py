@@ -12,6 +12,7 @@ from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAu
 from app.scripts.tiktok_upload_studio.latedev_tiktok_service import TikTokLateDevService
 from app.scripts.tiktok_upload_studio.tiktok_title_generator import TikTokTitleGenerator
 from app.system.services.firebase_service import StorageService
+from app.system.services.content_library_service import ContentLibraryManager
 from app.system.auth.permissions import get_workspace_user_id, has_premium_subscription
 from app.system.credits.credits_manager import CreditsManager
 from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
@@ -170,6 +171,10 @@ def api_upload_media():
         if not media_file or media_file.filename == '':
             return jsonify({'success': False, 'error': 'No media file selected'}), 400
 
+        # Get keywords and description from form data
+        keywords = request.form.get('keywords', '').strip()
+        content_description = request.form.get('content_description', '').strip()
+
         # Generate unique filename
         from datetime import datetime
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -200,9 +205,14 @@ def api_upload_media():
                 public_url = result
 
             logger.info(f"Media uploaded successfully: {public_url}")
+
+            # Don't save to content library yet - will be saved when actually scheduling/posting
+            # This prevents showing "Posted" status for content that hasn't been scheduled yet
+
             return jsonify({
                 'success': True,
-                'media_url': public_url
+                'media_url': public_url,
+                'content_id': None  # Will be created when scheduling/posting
             }), 200
         else:
             return jsonify({'success': False, 'error': 'Failed to upload to storage'}), 500
@@ -231,6 +241,7 @@ def api_upload():
         data = request.json
         title = data.get('title', '').strip()
         media_url = data.get('media_url', '').strip()  # Firebase Storage URL
+        content_id = data.get('content_id')  # Content library ID (optional)
         mode = data.get('mode', 'direct')  # 'direct', 'inbox', or 'scheduled'
         privacy_level = data.get('privacy_level', 'PUBLIC_TO_EVERYONE')
         schedule_time = data.get('schedule_time')  # ISO 8601 format or null for immediate
@@ -258,8 +269,48 @@ def api_upload():
         if result['success']:
             logger.info(f"TikTok post successful: {result.get('post_id')}")
 
-            # If scheduled, create calendar event
+            # Save/update content library
             post_id = result.get('post_id')
+            if content_id:
+                # Update existing content library entry
+                try:
+                    ContentLibraryManager.update_platform_status(
+                        user_id=user_id,
+                        content_id=content_id,
+                        platform='tiktok',
+                        platform_data={
+                            'post_id': post_id,
+                            'scheduled_for': schedule_time,
+                            'title': title,
+                            'status': 'scheduled' if mode == 'scheduled' else 'posted'
+                        }
+                    )
+                    logger.info(f"Updated content library {content_id} with TikTok post {post_id}")
+                except Exception as e:
+                    logger.error(f"Error updating content library: {e}")
+            else:
+                # Create new content library entry
+                try:
+                    content_id = ContentLibraryManager.save_content(
+                        user_id=user_id,
+                        media_url=media_url,
+                        media_type='video',
+                        keywords=data.get('keywords', ''),
+                        content_description=data.get('content_description', ''),
+                        platform='tiktok',
+                        platform_data={
+                            'post_id': post_id,
+                            'scheduled_for': schedule_time,
+                            'title': title,
+                            'status': 'scheduled' if mode == 'scheduled' else 'posted'
+                        }
+                    )
+                    logger.info(f"Created content library {content_id} for TikTok post {post_id}")
+                    result['content_id'] = content_id
+                except Exception as e:
+                    logger.error(f"Error creating content library: {e}")
+
+            # If scheduled, create calendar event
             if mode == 'scheduled' and schedule_time and post_id:
                 try:
                     calendar_manager = ContentCalendarManager(user_id)
@@ -272,6 +323,7 @@ def api_upload():
                         status='ready',
                         content_type='organic',
                         tiktok_post_id=post_id,
+                        content_id=content_id if content_id else '',
                         notes=f'TikTok Post ID: {post_id}'
                     )
 

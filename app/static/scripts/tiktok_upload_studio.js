@@ -10,6 +10,9 @@ let isGeneratingTitles = false;
 let isCheckingConnection = true;
 let selectedTitleIndex = null;
 let hasPremium = window.hasPremium || false;  // Premium subscription status from backend
+let tiktokRepostModal = null;  // Repost modal instance
+let uploadMode = 'upload';  // 'upload' or 'repost'
+let repostContent = null;  // Selected content from repost modal
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -26,7 +29,149 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle URL parameters (success/error messages)
     handleUrlParams();
+
+    // Initialize repost modal
+    initializeRepostModal();
 });
+
+/**
+ * Initialize the repost modal
+ */
+function initializeRepostModal() {
+    if (typeof RepostModal === 'undefined') {
+        console.error('RepostModal not loaded');
+        return;
+    }
+
+    tiktokRepostModal = new RepostModal({
+        mediaTypeFilter: 'video',  // TikTok only supports videos
+        platform: 'tiktok',
+        onSelect: function(content) {
+            handleContentSelection(content);
+        },
+        onClose: function() {
+            // Switch back to upload mode when modal is closed without selecting
+            if (uploadMode === 'repost') {
+                switchMode('upload');
+            }
+        }
+    });
+}
+
+/**
+ * Handle mode switching between upload and repost
+ */
+function switchMode(mode) {
+    uploadMode = mode;
+
+    // Update toggle button states
+    const toggleBtns = document.querySelectorAll('.toggle-btn');
+    toggleBtns.forEach(btn => {
+        if (btn.dataset.mode === mode) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    if (mode === 'repost') {
+        // Open repost modal
+        if (tiktokRepostModal) {
+            tiktokRepostModal.open();
+        }
+    } else {
+        // Reset to upload mode
+        repostContent = null;
+    }
+}
+
+/**
+ * Handle content selection from repost modal
+ */
+function handleContentSelection(content) {
+    repostContent = content;
+
+    // Pre-fill keywords
+    const keywordsInput = document.getElementById('keywordsInput');
+    if (keywordsInput && content.keywords) {
+        keywordsInput.value = content.keywords;
+    }
+
+    // Pre-fill description
+    const videoConceptInput = document.getElementById('videoConceptInput');
+    if (videoConceptInput && content.content_description) {
+        videoConceptInput.value = content.content_description;
+        updateCharCount();
+    }
+
+    // Pre-fill schedule date/time if this content has a TikTok scheduled post
+    const platforms = content.platforms_posted || {};
+    const tiktokData = platforms.tiktok;
+
+    if (tiktokData && tiktokData.scheduled_for) {
+        const scheduledDate = new Date(tiktokData.scheduled_for);
+
+        // Check if the scheduled time is in the future
+        if (scheduledDate > new Date()) {
+            // Switch to scheduled mode
+            const scheduledModeRadio = document.querySelector('input[name="mode"][value="scheduled"]');
+            if (scheduledModeRadio) {
+                scheduledModeRadio.checked = true;
+                // Trigger change event to show schedule inputs
+                handleModeChange();
+            }
+
+            // Set the date and time selects (they are <select> elements, not inputs)
+            const dateSelect = document.getElementById('scheduleDateSelect');
+            const timeSelect = document.getElementById('scheduleTimeSelect');
+
+            if (dateSelect && timeSelect) {
+                // Format date as YYYY-MM-DD
+                const year = scheduledDate.getFullYear();
+                const month = String(scheduledDate.getMonth() + 1).padStart(2, '0');
+                const day = String(scheduledDate.getDate()).padStart(2, '0');
+                const dateValue = `${year}-${month}-${day}`;
+
+                // Format time as HH:MM
+                const hours = String(scheduledDate.getHours()).padStart(2, '0');
+                const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
+                const timeValue = `${hours}:${minutes}`;
+
+                // Set the select values
+                dateSelect.value = dateValue;
+                timeSelect.value = timeValue;
+            }
+        }
+    }
+
+    // Set the video URL (we'll use this during upload)
+    // Display the video in the upload area
+    displayRepostVideo(content);
+
+    console.log('Content selected for reposting:', content);
+}
+
+/**
+ * Display repost video in the upload area
+ */
+function displayRepostVideo(content) {
+    const uploadContent = document.getElementById('uploadContentStatic');
+    const uploadProgress = document.getElementById('uploadProgressStatic');
+    const fileName = document.getElementById('uploadFileNameStatic');
+    const fileSize = document.getElementById('uploadFileSizeStatic');
+
+    if (uploadContent) uploadContent.style.display = 'none';
+    if (uploadProgress) uploadProgress.style.display = 'flex';
+
+    // Extract filename from URL
+    const urlParts = content.media_url.split('/');
+    const fullFilename = urlParts[urlParts.length - 1];
+
+    if (fileName) fileName.textContent = decodeURIComponent(fullFilename);
+    if (fileSize) fileSize.textContent = 'From library';
+
+    showToast('Content selected for reposting', 'success');
+}
 
 /**
  * Set loading state while checking connection
@@ -828,7 +973,8 @@ function populateScheduleTimeDropdown() {
 async function handleUpload(e) {
     e.preventDefault();
 
-    if (!selectedFile) {
+    // Check if we have either a selected file (upload mode) or repost content (repost mode)
+    if (!selectedFile && !(uploadMode === 'repost' && repostContent)) {
         showToast('Please select a video file', 'error');
         return;
     }
@@ -890,32 +1036,60 @@ async function handleUpload(e) {
     uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading...';
 
     try {
-        // Step 1: Upload media to Firebase Storage
-        const formData = new FormData();
-        formData.append('media', selectedFile);
+        let mediaUrl, contentId;
 
-        const uploadResponse = await fetch('/tiktok-upload-studio/api/upload-media', {
-            method: 'POST',
-            body: formData
-        });
+        // Check if we're reposting existing content or uploading new
+        if (uploadMode === 'repost' && repostContent) {
+            // Use existing media URL from content library
+            mediaUrl = repostContent.media_url;
+            contentId = repostContent.id;
+            console.log('Reposting existing content:', mediaUrl);
+            uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Posting to TikTok...';
+        } else {
+            // Step 1: Upload media to Firebase Storage
+            const formData = new FormData();
+            formData.append('media', selectedFile);
 
-        const uploadData = await uploadResponse.json();
+            // Add keywords and description to be saved in content library
+            const keywordsInput = document.getElementById('keywordsInput');
+            const videoConceptInput = document.getElementById('videoConceptInput');
+            if (keywordsInput && keywordsInput.value) {
+                formData.append('keywords', keywordsInput.value);
+            }
+            if (videoConceptInput && videoConceptInput.value) {
+                formData.append('content_description', videoConceptInput.value);
+            }
 
-        if (!uploadData.success) {
-            throw new Error(uploadData.error || 'Failed to upload media');
+            const uploadResponse = await fetch('/tiktok-upload-studio/api/upload-media', {
+                method: 'POST',
+                body: formData
+            });
+
+            const uploadData = await uploadResponse.json();
+
+            if (!uploadData.success) {
+                throw new Error(uploadData.error || 'Failed to upload media');
+            }
+
+            mediaUrl = uploadData.media_url;
+            contentId = uploadData.content_id;
+            console.log('Media uploaded to Firebase:', mediaUrl);
+
+            uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Posting to TikTok...';
         }
 
-        console.log('Media uploaded to Firebase:', uploadData.media_url);
-
         // Step 2: Post to TikTok via Late.dev using the Firebase URL
-        uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Posting to TikTok...';
-
         const postPayload = {
             title: title,
-            media_url: uploadData.media_url,
+            media_url: mediaUrl,
             mode: mode,
             privacy_level: privacyLevel
         };
+
+        // Add content_id if we have it
+        if (contentId) {
+            postPayload.content_id = contentId;
+        }
 
         if (mode === 'scheduled') {
             postPayload.schedule_time = scheduleTime;
@@ -1239,6 +1413,7 @@ function removeVideoStatic(event) {
     }
 
     selectedFile = null;
+    repostContent = null;  // Reset selected content from repost
 
     const uploadContent = document.getElementById('uploadContentStatic');
     const uploadProgress = document.getElementById('uploadProgressStatic');
@@ -1248,7 +1423,15 @@ function removeVideoStatic(event) {
     if (uploadProgress) uploadProgress.style.display = 'none';
     if (fileInput) fileInput.value = '';
 
-    showToast('Video removed', 'info');
+    // Switch back to upload mode if in repost mode
+    if (uploadMode === 'repost') {
+        switchMode('upload');
+    }
+
+    // Only show toast if user manually clicked remove (event exists)
+    if (event) {
+        showToast('Video removed', 'info');
+    }
 }
 
 /**

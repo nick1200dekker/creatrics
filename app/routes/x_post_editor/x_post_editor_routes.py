@@ -14,6 +14,7 @@ from . import bp
 from app.system.auth.middleware import auth_required
 from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission
 from app.system.services.firebase_service import UserService
+from app.system.services.content_library_service import ContentLibraryManager
 from app.scripts.accounts.x_analytics import XAnalytics
 
 def get_user_posts_collection():
@@ -1394,6 +1395,35 @@ def schedule_post():
 
                 if root_media_items:
                     current_app.logger.info(f"Prepared {len(root_media_items)} media items for root level")
+
+                    # Save to content library for cross-platform reposting
+                    try:
+                        # Extract hashtags from post text as keywords
+                        first_post_text = posts[0].get('text', '') if posts else ''
+                        hashtags = ' '.join([word for word in first_post_text.split() if word.startswith('#')])
+
+                        # Determine media type from first media item
+                        first_media_type = root_media_items[0].get('type', 'image') if root_media_items else 'image'
+                        media_type = 'video' if first_media_type == 'video' else 'image'
+
+                        # Save first media item to content library
+                        content_id = ContentLibraryManager.save_content(
+                            user_id=user_id,
+                            media_url=root_media_items[0]['url'],
+                            media_type=media_type,
+                            keywords=hashtags,
+                            content_description=first_post_text,
+                            platform='x',
+                            platform_data={
+                                'status': 'scheduled',
+                                'scheduled_for': scheduled_time,
+                                'post_id': None  # Will be updated after Late.dev response
+                            }
+                        )
+                        current_app.logger.info(f"Saved content {content_id} to library for user {user_id}")
+                    except Exception as e:
+                        current_app.logger.error(f"Error saving to content library: {e}")
+                        # Don't fail the request if library save fails
                 else:
                     current_app.logger.warning("No media items were successfully processed")
 

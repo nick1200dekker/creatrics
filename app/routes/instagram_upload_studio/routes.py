@@ -12,6 +12,7 @@ from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAu
 from app.scripts.instagram_upload_studio.instagram_upload_service import InstagramUploadService
 from app.scripts.instagram_upload_studio.instagram_title_generator import InstagramTitleGenerator
 from app.system.services.firebase_service import StorageService
+from app.system.services.content_library_service import ContentLibraryManager
 from app.system.auth.permissions import get_workspace_user_id, has_premium_subscription
 from app.system.credits.credits_manager import CreditsManager
 import uuid
@@ -162,10 +163,17 @@ def api_upload_media():
         if not media_file or media_file.filename == '':
             return jsonify({'success': False, 'error': 'No media file selected'}), 400
 
+        # Get keywords and description from form data
+        keywords = request.form.get('keywords', '').strip()
+        content_description = request.form.get('content_description', '').strip()
+
+        # Determine media type
+        file_ext = os.path.splitext(media_file.filename)[1].lower()
+        media_type = 'image' if file_ext in ['.jpg', '.jpeg', '.png', '.gif'] else 'video'
+
         # Generate unique filename
         from datetime import datetime
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        file_ext = os.path.splitext(media_file.filename)[1]
         unique_filename = f"instagram_{timestamp}_{uuid.uuid4().hex[:8]}{file_ext}"
 
         # Upload to Firebase Storage with long-lived URL (7 days)
@@ -192,9 +200,14 @@ def api_upload_media():
                 public_url = result
 
             logger.info(f"Media uploaded successfully with 7-day URL: {public_url}")
+
+            # Don't save to content library yet - will be saved when actually scheduling/posting
+            # This prevents showing "Posted" status for content that hasn't been scheduled yet
+
             return jsonify({
                 'success': True,
-                'media_url': public_url
+                'media_url': public_url,
+                'content_id': None  # Will be created when scheduling/posting
             }), 200
         else:
             return jsonify({'success': False, 'error': 'Failed to upload to storage'}), 500
@@ -223,6 +236,7 @@ def api_upload():
         data = request.json
         caption = data.get('caption', '').strip()
         media_url = data.get('media_url', '').strip()  # Firebase Storage URL
+        content_id = data.get('content_id')  # Content library ID (optional)
         schedule_time = data.get('schedule_time')  # ISO 8601 format or null for immediate
         timezone = data.get('timezone', 'UTC')
 
@@ -246,8 +260,55 @@ def api_upload():
         if result['success']:
             logger.info(f"Instagram post successful: {result.get('post_id')}")
 
-            # Create calendar event if post is scheduled
+            # Save/update content library
             post_id = result.get('post_id')
+            if content_id:
+                # Update existing content library entry
+                try:
+                    ContentLibraryManager.update_platform_status(
+                        user_id=user_id,
+                        content_id=content_id,
+                        platform='instagram',
+                        platform_data={
+                            'post_id': post_id,
+                            'scheduled_for': schedule_time,
+                            'title': caption,
+                            'status': 'scheduled' if schedule_time else 'posted'
+                        }
+                    )
+                    logger.info(f"Updated content library {content_id} with Instagram post {post_id}")
+                except Exception as e:
+                    logger.error(f"Error updating content library: {e}")
+            else:
+                # Create new content library entry
+                try:
+                    # Determine media type from URL
+                    media_type = 'image'
+                    if media_url:
+                        lower_url = media_url.lower()
+                        if any(ext in lower_url for ext in ['.mp4', '.mov', '.avi']):
+                            media_type = 'video'
+
+                    content_id = ContentLibraryManager.save_content(
+                        user_id=user_id,
+                        media_url=media_url,
+                        media_type=media_type,
+                        keywords=data.get('keywords', ''),
+                        content_description=data.get('content_description', ''),
+                        platform='instagram',
+                        platform_data={
+                            'post_id': post_id,
+                            'scheduled_for': schedule_time,
+                            'title': caption,
+                            'status': 'scheduled' if schedule_time else 'posted'
+                        }
+                    )
+                    logger.info(f"Created content library {content_id} for Instagram post {post_id}")
+                    result['content_id'] = content_id
+                except Exception as e:
+                    logger.error(f"Error creating content library: {e}")
+
+            # Create calendar event if post is scheduled
             if schedule_time and post_id:
                 try:
                     from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
@@ -263,6 +324,7 @@ def api_upload():
                         status='ready',
                         content_type='organic',
                         instagram_post_id=post_id,
+                        content_id=content_id if content_id else '',
                         notes=f'Instagram Post ID: {post_id}'
                     )
 

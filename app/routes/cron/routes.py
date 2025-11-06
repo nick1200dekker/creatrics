@@ -2,6 +2,7 @@
 
 from flask import Blueprint, jsonify, request
 from app.system.services.firebase_service import db
+from app.system.services.content_library_service import ContentLibraryManager
 import logging
 import os
 from functools import wraps
@@ -362,6 +363,42 @@ def update_all_users_analytics():
         return jsonify({
             "status": "error",
             "job": "update_all_users_analytics",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }), 500
+
+@bp.route('/cleanup-content-library')
+@verify_cron_request
+def cleanup_content_library():
+    """
+    Clean up expired content from content library
+    Runs daily to delete content older than 24 hours
+    """
+    try:
+        logger.info("Starting content library cleanup job")
+        start_time = datetime.utcnow()
+
+        # Clean up content older than 24 hours
+        deleted_count = ContentLibraryManager.cleanup_expired_content(hours=24)
+
+        end_time = datetime.utcnow()
+        duration = (end_time - start_time).total_seconds()
+
+        logger.info(f"Content library cleanup completed: {deleted_count} items deleted in {duration:.2f}s")
+
+        return jsonify({
+            "status": "success",
+            "job": "cleanup_content_library",
+            "deleted_count": deleted_count,
+            "duration_seconds": duration,
+            "timestamp": end_time.isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"Content library cleanup job failed: {e}")
+        return jsonify({
+            "status": "error",
+            "job": "cleanup_content_library",
             "error": str(e),
             "timestamp": datetime.utcnow().isoformat()
         }), 500

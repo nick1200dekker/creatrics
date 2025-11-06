@@ -74,7 +74,8 @@ class ContentCalendarManager:
                      content_link: str = "", status: str = "planned",
                      comments: List[Dict] = None, notes: str = "",
                      youtube_video_id: str = "", instagram_post_id: str = "",
-                     tiktok_post_id: str = "", x_post_id: str = "") -> str:
+                     tiktok_post_id: str = "", x_post_id: str = "",
+                     content_id: str = "") -> str:
         """Create a new calendar event with new fields"""
         try:
             # Generate a unique ID for the event
@@ -102,6 +103,7 @@ class ContentCalendarManager:
                 "instagram_post_id": instagram_post_id,  # Instagram post ID for scheduled posts
                 "tiktok_post_id": tiktok_post_id,  # TikTok post ID for scheduled posts
                 "x_post_id": x_post_id,  # X/Twitter post ID for scheduled posts
+                "content_id": content_id,  # Content library ID for tracking repost content
                 "created_at": datetime.now(),
                 "updated_at": datetime.now()
             }

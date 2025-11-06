@@ -936,6 +936,54 @@ html.dark .radio-content i {
 }
 
 /* ===== BUTTONS ===== */
+
+/* Upload/Repost Toggle */
+.upload-repost-toggle {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    border: 1px solid var(--border-primary);
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.toggle-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+}
+
+html.dark .toggle-btn.active {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    box-shadow: 0 2px 6px rgba(96, 165, 250, 0.3);
+}
+
+.toggle-btn i {
+    font-size: 1.125rem;
+}
+
 .btn-generate {
     width: 100%;
     background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);

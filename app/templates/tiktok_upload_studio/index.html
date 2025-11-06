@@ -8,7 +8,8 @@
 {% block title %}Upload Studio | Creatrics{% endblock %}
 
 {% block additional_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/tiktok_upload_studio.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tiktok_upload_studio.css') }}?v=1.1">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/repost-modal.css') }}?v=1.2">
 {% endblock %}
 
 {% block content %}
@@ -78,6 +79,20 @@
                 <!-- Left Panel - Input -->
                 <div class="input-section">
                     <div class="input-panel">
+                        <!-- Upload/Repost Toggle -->
+                        <div class="form-group">
+                            <div class="upload-repost-toggle">
+                                <button class="toggle-btn active" data-mode="upload" onclick="switchMode('upload')">
+                                    <i class="ph ph-upload"></i>
+                                    Upload New
+                                </button>
+                                <button class="toggle-btn" data-mode="repost" onclick="switchMode('repost')">
+                                    <i class="ph ph-recycle"></i>
+                                    Repost Content
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Video Upload Section (Top) -->
                         <div class="form-group" id="videoUploadSectionStatic">
                             <label class="form-label">
@@ -110,7 +125,7 @@
                         <div class="form-group">
                             <label class="form-label">
                                 <i class="ph ph-key"></i>
-                                Target Keywords
+                                Target Keyword
                             </label>
                             <input type="text"
                                    class="form-input"
@@ -122,7 +137,7 @@
                         <div class="form-group">
                             <label class="form-label">
                                 <i class="ph ph-article"></i>
-                                Video Concept or Script
+                                Video Description or Script
                             </label>
                             <textarea class="form-textarea"
                                       id="videoConceptInput"
@@ -164,5 +179,6 @@
     // Pass backend variables to JavaScript
     window.hasPremium = {{ 'true' if has_premium else 'false' }};
 </script>
-<script src="{{ url_for('static', filename='scripts/tiktok_upload_studio.js') }}"></script>
+<script src="{{ url_for('static', filename='scripts/repost-modal.js') }}?v=1.4"></script>
+<script src="{{ url_for('static', filename='scripts/tiktok_upload_studio.js') }}?v=1.3"></script>
 {% endblock %}

@@ -110,7 +110,7 @@
                         <div class="form-group">
                             <label class="form-label">
                                 <i class="ph ph-key"></i>
-                                Target Keywords
+                                Target Keyword
                             </label>
                             <input type="text"
                                    class="form-input"
@@ -164,5 +164,5 @@
     // Pass backend variables to JavaScript
     window.hasPremium = {{ 'true' if has_premium else 'false' }};
 </script>
-<script src="{{ url_for('static', filename='scripts/instagram_upload_studio.js') }}"></script>
+<script src="{{ url_for('static', filename='scripts/instagram_upload_studio.js') }}?v=1.1"></script>
 {% endblock %}

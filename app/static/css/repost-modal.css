@@ -1,0 +1,424 @@
+/* Repost Modal Styles */
+.repost-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    padding: 2rem;
+}
+
+.repost-modal-overlay.active {
+    display: flex;
+}
+
+.repost-modal {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 1200px;
+    width: 100%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+html.dark .repost-modal {
+    background: var(--bg-secondary);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.repost-modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.repost-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.repost-modal-title i {
+    font-size: 1.5rem;
+    color: #3B82F6;
+}
+
+.repost-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.repost-modal-close:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.repost-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem 2rem;
+}
+
+.repost-modal-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.repost-filter-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+html.dark .repost-filter-btn {
+    background: rgba(63, 63, 70, 0.5);
+}
+
+.repost-filter-btn:hover {
+    border-color: #3B82F6;
+    color: var(--text-primary);
+}
+
+.repost-filter-btn.active {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3B82F6;
+    color: #3B82F6;
+}
+
+.repost-content-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.repost-content-empty i {
+    font-size: 4rem;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+}
+
+.repost-content-empty h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.repost-content-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.75rem;
+}
+
+.repost-content-table thead th {
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+    padding: 0 0.75rem 0.5rem;
+}
+
+.repost-content-row {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+html.dark .repost-content-row {
+    background: rgba(63, 63, 70, 0.4);
+}
+
+.repost-content-row:hover {
+    border-color: #3B82F6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.repost-content-row td {
+    padding: 1rem 0.75rem;
+}
+
+.repost-content-row td:first-child {
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+}
+
+.repost-content-row td:last-child {
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.repost-thumbnail-cell {
+    width: 120px;
+}
+
+.repost-thumbnail-wrapper {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid var(--border-primary);
+}
+
+.repost-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.repost-thumbnail-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+}
+
+.repost-thumbnail-placeholder i {
+    font-size: 2rem;
+}
+
+html.dark .repost-thumbnail-placeholder {
+    background: linear-gradient(135deg, rgba(63, 63, 70, 0.5) 0%, rgba(39, 39, 42, 0.5) 100%);
+}
+
+.repost-video-indicator {
+    position: relative;
+    display: inline-block;
+}
+
+.repost-video-indicator::after {
+    content: '\25B6';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.repost-info-cell {
+    max-width: 300px;
+}
+
+.repost-keywords {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.repost-description {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+}
+
+.repost-platforms-cell {
+    width: 200px;
+}
+
+.repost-platforms {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.repost-platform-badge-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.repost-platform-badge {
+    padding: 0.375rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    text-align: center;
+}
+
+.platform-schedule-time {
+    font-size: 0.625rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.repost-platform-badge.posted {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22C55E;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.repost-platform-badge.not-posted {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-primary);
+}
+
+.repost-date-cell {
+    width: 140px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.repost-loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.repost-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-primary);
+    border-top-color: #3B82F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .repost-modal {
+        max-width: 95%;
+    }
+
+    .repost-info-cell {
+        max-width: 200px;
+    }
+
+    .repost-platforms-cell {
+        width: 150px;
+    }
+}
+
+@media (max-width: 768px) {
+    .repost-modal {
+        max-width: 100%;
+        max-height: 95vh;
+        margin: 1rem;
+    }
+
+    .repost-modal-header {
+        padding: 1rem 1.5rem;
+    }
+
+    .repost-modal-body {
+        padding: 1rem 1.5rem;
+    }
+
+    .repost-content-table {
+        display: block;
+        overflow-x: auto;
+    }
+
+    .repost-thumbnail-cell {
+        width: 80px;
+    }
+
+    .repost-thumbnail-wrapper {
+        width: 60px;
+        height: 60px;
+    }
+
+    .repost-platforms-cell,
+    .repost-date-cell {
+        display: none;
+    }
+}
+
+.repost-platform-cell {
+    width: 100px;
+}
+
+.repost-status-cell {
+    width: 100px;
+}
+
+.repost-time-cell {
+    width: 120px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.platform-row,
+.status-row,
+.time-row {
+    padding: 0.25rem 0;
+    font-size: 0.8125rem;
+}
+
+.status-row.scheduled {
+    color: #3B82F6;
+    font-weight: 600;
+}
+
+.status-row.posted {
+    color: #22C55E;
+    font-weight: 600;
+}
+
+.no-platforms {
+    color: var(--text-tertiary);
+    font-size: 0.8125rem;
+    font-style: italic;
+}

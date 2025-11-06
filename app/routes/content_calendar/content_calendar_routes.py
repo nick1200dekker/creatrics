@@ -352,6 +352,45 @@ def update_event(event_id):
                     current_app.logger.error(f"Error updating YouTube video schedule: {e}")
                     # Continue with calendar update even if YouTube update fails
 
+            # Update content library when rescheduling
+            if event:
+                content_id = event.get('content_id')
+                platform = event.get('platform', '').lower()
+
+                current_app.logger.info(f"Reschedule check - content_id: {content_id}, platform: {platform}")
+
+                if content_id and platform:
+                    try:
+                        from app.system.services.content_library_service import ContentLibraryManager
+
+                        # Get current content
+                        content = ContentLibraryManager.get_content_by_id(user_id, content_id)
+
+                        if content:
+                            current_app.logger.info(f"Found content in library. Platforms: {list(content.get('platforms_posted', {}).keys())}")
+                        else:
+                            current_app.logger.warning(f"Content {content_id} not found in library")
+
+                        if content and platform in content.get('platforms_posted', {}):
+                            # Update the platform's scheduled_for time and last_action_at
+                            platform_data = content['platforms_posted'][platform].copy()
+                            platform_data['scheduled_for'] = data['publish_date']
+
+                            ContentLibraryManager.update_platform_status(
+                                user_id=user_id,
+                                content_id=content_id,
+                                platform=platform,
+                                platform_data=platform_data
+                            )
+                            current_app.logger.info(f"✅ Updated content library {content_id} {platform} scheduled_for to {data['publish_date']}")
+                        else:
+                            current_app.logger.warning(f"Platform {platform} not found in content library for {content_id}")
+
+                    except Exception as e:
+                        current_app.logger.error(f"Error updating content library on reschedule: {e}")
+                else:
+                    current_app.logger.info(f"Skipping content library update - missing content_id or platform")
+
         # Update the event
         success = calendar_manager.update_event(event_id=event_id, **update_data)
 
@@ -498,6 +537,45 @@ def delete_event(event_id):
             except Exception as e:
                 current_app.logger.error(f"Error deleting X post {x_post_id}: {e}")
                 # Continue with calendar event deletion even if X deletion fails
+
+        # Update content library - remove this platform from the content
+        content_id = event.get('content_id')
+        if content_id:
+            try:
+                from app.system.services.content_library_service import ContentLibraryManager
+
+                # Get the platform from the event
+                platform = event.get('platform', '').lower()
+
+                # Get content to check remaining platforms
+                content = ContentLibraryManager.get_content_by_id(user_id, content_id)
+
+                if content:
+                    # Remove this platform from platforms_posted
+                    platforms_posted = content.get('platforms_posted', {})
+
+                    if platform in platforms_posted:
+                        from app.system.services.firebase_service import db
+                        content_ref = db.collection('users').document(user_id).collection('repost').document(content_id)
+
+                        # Delete the platform field
+                        from firebase_admin import firestore
+                        content_ref.update({
+                            f'platforms_posted.{platform}': firestore.DELETE_FIELD
+                        })
+
+                        # Remove platform from dict for checking
+                        del platforms_posted[platform]
+
+                        current_app.logger.info(f"Removed {platform} from content library {content_id}")
+
+                        # If no platforms left, delete the entire content
+                        if not platforms_posted:
+                            ContentLibraryManager.delete_content(user_id, content_id)
+                            current_app.logger.info(f"Deleted content library {content_id} - no platforms remaining")
+
+            except Exception as e:
+                current_app.logger.error(f"Error updating content library on delete: {e}")
 
         # Delete the calendar event
         success = calendar_manager.delete_event(event_id)

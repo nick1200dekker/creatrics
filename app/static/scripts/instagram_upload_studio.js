@@ -652,9 +652,17 @@ async function handleUpload(e) {
     uploadBtnText.textContent = 'Uploading to Firebase...';
 
     try {
+        // Get keywords and description for content library
+        const keywordsInput = document.getElementById('keywordsInput');
+        const videoConceptInput = document.getElementById('videoConceptInput');
+        const keywords = keywordsInput ? keywordsInput.value.trim() : '';
+        const contentDescription = videoConceptInput ? videoConceptInput.value.trim() : '';
+
         // Step 1: Upload file to Firebase Storage
         const formData = new FormData();
         formData.append('media', selectedFile);
+        formData.append('keywords', keywords);
+        formData.append('content_description', contentDescription);
 
         uploadBtnText.textContent = `Uploading ${selectedFile.name}...`;
 
@@ -678,7 +686,9 @@ async function handleUpload(e) {
                 media_url: uploadData.media_url,
                 caption: caption,
                 schedule_time: scheduleTime,
-                timezone: userTimezone  // Use user's local timezone
+                timezone: userTimezone,  // Use user's local timezone
+                keywords: keywords,
+                content_description: contentDescription
             })
         });
 
