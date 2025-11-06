@@ -1419,10 +1419,8 @@ async function applyCaptions() {
             if (applyButton && icon) {
                 icon.className = 'ph ph-check';
                 applyButton.classList.add('success');
-
-                setTimeout(() => {
-                    applyButton.disabled = true;
-                }, 2000);
+                applyButton.innerHTML = '<i class="ph ph-check"></i> Applied';
+                applyButton.disabled = true;
             }
 
             showToast('✅ Captions uploaded to YouTube!');
@@ -1856,6 +1854,22 @@ function toggleEditCaptions(button) {
         button.title = 'Save';
         textarea.style.outline = '2px solid #3B82F6';
 
+        // Add blur listener to save when clicking outside
+        textarea.addEventListener('blur', function saveCaptionsOnBlur() {
+            // Only save if still in edit mode
+            if (!textarea.readOnly) {
+                const updatedCaptions = textarea.value;
+                saveCaptionsToFirebase(currentVideoId, updatedCaptions);
+
+                // Exit edit mode
+                textarea.readOnly = true;
+                icon.className = 'ph ph-pencil-simple';
+                button.title = 'Edit';
+                textarea.style.outline = 'none';
+            }
+            textarea.removeEventListener('blur', saveCaptionsOnBlur);
+        });
+
         // Add input listener to reset applied status when captions are changed
         textarea.addEventListener('input', async function resetCaptionsApplied() {
             appliedOptimizations.captions = false;
@@ -1882,11 +1896,35 @@ function toggleEditCaptions(button) {
             textarea.removeEventListener('input', resetCaptionsApplied);
         }, { once: true });
     } else {
-        // Exit edit mode
+        // Exit edit mode and save changes
+        const updatedCaptions = textarea.value;
+
+        // Save to Firebase
+        saveCaptionsToFirebase(currentVideoId, updatedCaptions);
+
         textarea.readOnly = true;
         icon.className = 'ph ph-pencil-simple';
         button.title = 'Edit';
         textarea.style.outline = 'none';
+    }
+}
+
+/**
+ * Save captions to Firebase
+ */
+async function saveCaptionsToFirebase(videoId, captions) {
+    try {
+        const response = await fetch(`/optimize-video/api/save-captions/${videoId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ captions: captions })
+        });
+
+        if (!response.ok) {
+            console.error('Failed to save captions');
+        }
+    } catch (error) {
+        console.error('Error saving captions:', error);
     }
 }
 
@@ -1897,18 +1935,34 @@ function toggleEditPinnedComment(button) {
     const textarea = document.getElementById('pinnedCommentPreview');
     const icon = button.querySelector('i');
 
-    if (textarea.readOnly) {
+    // Check if we're currently in edit mode BEFORE switching
+    const isCurrentlyEditing = !textarea.readOnly;
+
+    if (!isCurrentlyEditing) {
+        // Enter edit mode
         textarea.readOnly = false;
         textarea.focus();
         icon.className = 'ph ph-check';
         button.title = 'Save';
         textarea.style.outline = '2px solid #3B82F6';
 
+        // Add blur listener to save when clicking outside
+        textarea.addEventListener('blur', function savePinnedCommentOnBlur() {
+            if (!textarea.readOnly) {
+                const updatedComment = textarea.value;
+                savePinnedCommentToFirebase(currentVideoId, updatedComment);
+                textarea.readOnly = true;
+                icon.className = 'ph ph-pencil-simple';
+                button.title = 'Edit';
+                textarea.style.outline = 'none';
+            }
+            textarea.removeEventListener('blur', savePinnedCommentOnBlur);
+        });
+
         // Add input listener to reset applied status when comment is changed
         textarea.addEventListener('input', async function resetPinnedCommentApplied() {
             appliedOptimizations.pinnedComment = false;
 
-            // Reset button state
             const commentBtn = document.querySelector('.advanced-result-box:has(#pinnedCommentPreview) .apply-btn-text');
             if (commentBtn) {
                 commentBtn.textContent = 'Apply to YouTube';
@@ -1916,7 +1970,6 @@ function toggleEditPinnedComment(button) {
                 commentBtn.disabled = false;
             }
 
-            // Update Firebase to set preview back to true
             try {
                 await fetch(`/optimize-video/api/reset-applied-status/${currentVideoId}`, {
                     method: 'POST',
@@ -1930,10 +1983,28 @@ function toggleEditPinnedComment(button) {
             textarea.removeEventListener('input', resetPinnedCommentApplied);
         }, { once: true });
     } else {
+        // Exit edit mode and save changes
+        const updatedComment = textarea.value;
+        savePinnedCommentToFirebase(currentVideoId, updatedComment);
         textarea.readOnly = true;
         icon.className = 'ph ph-pencil-simple';
         button.title = 'Edit';
         textarea.style.outline = 'none';
+    }
+}
+
+async function savePinnedCommentToFirebase(videoId, comment) {
+    try {
+        const response = await fetch(`/optimize-video/api/save-pinned-comment/${videoId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comment: comment })
+        });
+        if (!response.ok) {
+            console.error('Failed to save pinned comment');
+        }
+    } catch (error) {
+        console.error('Error saving pinned comment:', error);
     }
 }
 

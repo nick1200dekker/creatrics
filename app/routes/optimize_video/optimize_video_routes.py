@@ -1492,3 +1492,86 @@ def reset_applied_status(video_id):
             'success': False,
             'error': str(e)
         }), 500
+
+@bp.route('/api/save-captions/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def save_captions(video_id):
+    """Save edited captions to Firebase"""
+    try:
+        user_id = get_workspace_user_id()
+        request_data = request.get_json()
+        captions = request_data.get('captions')
+
+        if captions is None:
+            return jsonify({
+                'success': False,
+                'error': 'Captions data is required'
+            }), 400
+
+        # Get optimization document
+        optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
+        optimization_doc = optimization_ref.get()
+
+        if not optimization_doc.exists:
+            return jsonify({
+                'success': False,
+                'error': 'Optimization not found'
+            }), 404
+
+        # Update captions
+        optimization_ref.update({
+            'corrected_captions.text': captions,
+            'corrected_captions.preview': True,
+            'corrected_captions.applied_at': None
+        })
+
+        logger.info(f"Saved captions for video {video_id}")
+        return jsonify({
+            'success': True
+        })
+
+    except Exception as e:
+        logger.error(f"Error saving captions: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/api/save-pinned-comment/<video_id>', methods=['POST'])
+@auth_required
+@require_permission('optimize_video')
+def save_pinned_comment(video_id):
+    """Save edited pinned comment to Firebase"""
+    try:
+        user_id = get_workspace_user_id()
+        request_data = request.get_json()
+        comment = request_data.get('comment')
+
+        if comment is None:
+            return jsonify({
+                'success': False,
+                'error': 'Comment data is required'
+            }), 400
+
+        optimization_ref = db.collection('users').document(user_id).collection('video_optimizations').document(video_id)
+        optimization_doc = optimization_ref.get()
+
+        if not optimization_doc.exists:
+            return jsonify({
+                'success': False,
+                'error': 'Optimization not found'
+            }), 404
+
+        optimization_ref.update({
+            'pinned_comment.text': comment,
+            'pinned_comment.preview': True,
+            'pinned_comment.applied_at': None
+        })
+
+        logger.info(f"Saved pinned comment for video {video_id}")
+        return jsonify({'success': True})
+
+    except Exception as e:
+        logger.error(f"Error saving pinned comment: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
