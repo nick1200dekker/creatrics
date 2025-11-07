@@ -1860,6 +1860,29 @@ def unschedule_post():
         if response.status_code in [200, 204]:
             current_app.logger.info(f"✅ Successfully deleted Late.dev post {late_dev_post_id}")
 
+            # Get draft to find calendar event ID
+            calendar_event_id = None
+            if draft_id:
+                try:
+                    collection = get_user_posts_collection()
+                    doc = collection.document(draft_id).get()
+                    if doc.exists:
+                        draft_data = doc.to_dict()
+                        calendar_event_id = draft_data.get('calendar_event_id')
+                except Exception as e:
+                    current_app.logger.error(f"Error getting draft data: {e}")
+
+            # Delete from calendar if event ID exists (this will also update content library)
+            if calendar_event_id:
+                try:
+                    from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+                    user_id = get_workspace_user_id()
+                    calendar_manager = ContentCalendarManager(user_id)
+                    calendar_manager.delete_event(calendar_event_id)
+                    current_app.logger.info(f"✅ Deleted calendar event {calendar_event_id}")
+                except Exception as e:
+                    current_app.logger.error(f"Error deleting calendar event: {e}")
+
             # Clear scheduled status from draft
             if draft_id:
                 from firebase_admin import firestore
