@@ -355,6 +355,38 @@ html.dark .calendar-controls {
     min-width: 200px;
 }
 
+.btn-add-content {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+html.dark .btn-add-content {
+    background: rgba(63, 63, 70, 0.5);
+    border-color: rgba(82, 82, 91, 0.5);
+}
+
+.btn-add-content:hover {
+    background: var(--hover-bg);
+}
+
+html.dark .btn-add-content:hover {
+    background: rgba(82, 82, 91, 0.6);
+}
+
+.btn-add-content i {
+    font-size: 18px;
+}
+
 .dropdown-trigger {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-primary);

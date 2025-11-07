@@ -1,7 +1,10 @@
 // Content Calendar JavaScript - Updated Version
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing Content Calendar...');
-    
+
+    // Initialize Content Event Modal
+    const contentEventModal = new ContentEventModal();
+
     // Global variables
     let calendar = null;
     let events = [];
@@ -109,11 +112,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.removeEventListener('mousemove', updateDragGhostPosition);
 
                 const newDateTime = info.event.start.toISOString();
+
+                // Update local events array IMMEDIATELY (optimistic update)
+                const eventIndex = events.findIndex(e => e.id == info.event.id);
+                if (eventIndex !== -1) {
+                    events[eventIndex].publish_date = newDateTime;
+                    console.log('Optimistically updated events[' + eventIndex + '].publish_date to:', newDateTime);
+                }
+
+                // Then send to server in background
                 const eventData = {
                     publish_date: newDateTime
                 };
 
-                // Update calendar event
                 fetch(`/content-calendar/api/event/${info.event.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -122,19 +133,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (!data.success) {
+                        // Revert on failure
                         info.revert();
-                        return;
+                        loadEvents();
                     }
-
-                    const eventIndex = events.findIndex(e => e.id == info.event.id);
-                    if (eventIndex !== -1) {
-                        events[eventIndex].publish_date = newDateTime;
-                    }
-                    // YouTube schedule update is now handled by the backend via Late.dev
                 })
                 .catch(error => {
                     console.error('Error updating event:', error);
                     info.revert();
+                    loadEvents();
                 });
             },
 
@@ -144,10 +151,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const month = String(clickedDate.getMonth() + 1).padStart(2, '0');
                 const day = String(clickedDate.getDate()).padStart(2, '0');
                 const dateString = `${year}-${month}-${day}`;
-                
+
                 openNewEventModal();
-                document.getElementById('event-date').value = dateString;
-                document.getElementById('event-time').value = '12:00';
+                // Set date and time in new modal
+                setTimeout(() => {
+                    const dateSelect = document.getElementById('schedule-date');
+                    const timeSelect = document.getElementById('schedule-time');
+                    if (dateSelect) dateSelect.value = dateString;
+                    if (timeSelect) timeSelect.value = '12:00';
+                }, 100);
             },
             
             eventClick: function(info) {
@@ -178,18 +190,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
 
-                    // Add platform logo on the right side - append to the event element itself
+                    // Add platform logo based on platform field
                     let platformIcon = null;
-                    if (event.youtube_video_id) {
+                    const platform = event.platform ? event.platform.toLowerCase() : '';
+
+                    if (platform === 'youtube' || event.youtube_video_id) {
                         platformIcon = document.createElement('i');
                         platformIcon.className = 'ph-fill ph-youtube-logo platform-logo';
-                    } else if (event.instagram_post_id) {
+                    } else if (platform === 'instagram' || event.instagram_post_id) {
                         platformIcon = document.createElement('i');
                         platformIcon.className = 'ph-fill ph-instagram-logo platform-logo';
-                    } else if (event.tiktok_post_id) {
+                    } else if (platform === 'tiktok' || event.tiktok_post_id) {
                         platformIcon = document.createElement('i');
                         platformIcon.className = 'ph-fill ph-tiktok-logo platform-logo';
-                    } else if (event.x_post_id) {
+                    } else if (platform === 'x' || event.x_post_id) {
                         platformIcon = document.createElement('i');
                         platformIcon.className = 'ph-fill ph-x-logo platform-logo';
                     }
@@ -477,53 +491,27 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     window.openNewEventModal = function(contentType = 'organic') {
-        editingEventId = null;
-        document.getElementById('modal-title').textContent = 'Add New Event';
-        document.getElementById('delete-btn').style.display = 'none';
-        document.getElementById('event-id').value = '';
-        document.getElementById('event-title').value = '';
-        document.getElementById('event-date').value = '';
-        document.getElementById('event-time').value = '';
-        selectPlatform('YouTube');
-        document.getElementById('event-status').value = 'draft';
-        document.getElementById('event-notes').value = '';
-        selectContentType(contentType);
-        document.getElementById('event-modal').classList.add('show');
+        contentEventModal.open({
+            onSave: async (eventData) => {
+                await saveEvent(eventData);
+            }
+        });
     };
     
     window.openEditEventModal = function(eventId) {
-        editingEventId = eventId;
         const event = events.find(e => e.id == eventId);
-        
+
         if (!event) return;
-        
-        document.getElementById('modal-title').textContent = 'Edit Event';
-        document.getElementById('delete-btn').style.display = 'inline-flex';
-        document.getElementById('event-id').value = eventId;
-        document.getElementById('event-title').value = event.title || '';
-        
-        // Split datetime into date and time
-        if (event.publish_date) {
-            const eventDate = new Date(event.publish_date);
-            const year = eventDate.getFullYear();
-            const month = String(eventDate.getMonth() + 1).padStart(2, '0');
-            const day = String(eventDate.getDate()).padStart(2, '0');
-            const hours = String(eventDate.getHours()).padStart(2, '0');
-            const minutes = String(eventDate.getMinutes()).padStart(2, '0');
-            
-            document.getElementById('event-date').value = `${year}-${month}-${day}`;
-            document.getElementById('event-time').value = `${hours}:${minutes}`;
-        } else {
-            document.getElementById('event-date').value = '';
-            document.getElementById('event-time').value = '';
-        }
-        
-        selectPlatform(event.platform || 'YouTube');
-        document.getElementById('event-status').value = event.status || 'draft';
-        document.getElementById('event-notes').value = event.notes || '';
-        selectContentType(event.content_type === 'sponsored' ? 'sponsored' : 'organic');
-        
-        document.getElementById('event-modal').classList.add('show');
+
+        contentEventModal.open({
+            event: event,
+            onSave: async (eventData) => {
+                await saveEvent(eventData);
+            },
+            onDelete: async (id) => {
+                await deleteEvent(id);
+            }
+        });
     };
     
     window.closeEventModal = function() {
@@ -533,97 +521,80 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let isSaving = false;
 
-    window.saveEvent = function() {
+    async function saveEvent(eventData) {
         // Prevent duplicate submissions
         if (isSaving) {
             return;
         }
 
-        const eventId = document.getElementById('event-id').value;
-        const title = document.getElementById('event-title').value;
-        const dateValue = document.getElementById('event-date').value;
-        const timeValue = document.getElementById('event-time').value;
-        const platform = document.getElementById('selected-platform').value;
-        const status = document.getElementById('event-status').value;
-        const notes = document.getElementById('event-notes').value;
-        const contentType = document.querySelector('.content-type-option.selected').dataset.type;
-
-        if (!title) {
+        if (!eventData.title) {
             return;
         }
 
         // Set saving flag
         isSaving = true;
 
-        // Combine date and time if both provided, convert to ISO string
+        // Convert date to ISO string
         let publishDate = null;
-        if (dateValue && timeValue) {
-            const localDateTime = new Date(`${dateValue}T${timeValue}:00`);
-            publishDate = localDateTime.toISOString();
-        } else if (dateValue) {
-            const localDateTime = new Date(`${dateValue}T12:00:00`);
+        if (eventData.publish_date) {
+            const localDateTime = new Date(eventData.publish_date);
             publishDate = localDateTime.toISOString();
         }
 
-        const eventData = {
-            title: title,
+        const payload = {
+            title: eventData.title,
+            description: eventData.description || '',
+            tags: eventData.tags || '',
             publish_date: publishDate,
-            platform: platform,
-            status: status,
-            notes: notes,
-            content_type: contentType
+            platform: eventData.platform,
+            status: eventData.status,
+            notes: eventData.notes || '',
+            content_type: eventData.content_type
         };
 
-        const url = eventId ?
-            `/content-calendar/api/event/${eventId}` :
+        const url = eventData.id ?
+            `/content-calendar/api/event/${eventData.id}` :
             '/content-calendar/api/event';
-        const method = eventId ? 'PUT' : 'POST';
+        const method = eventData.id ? 'PUT' : 'POST';
 
-        fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(eventData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success || data.event_id) {
-                // Backend automatically handles YouTube/Instagram/TikTok schedule updates
-                closeEventModal();
-                loadEvents();
-            }
-        })
-        .catch(error => {
-            console.error('Error saving event:', error);
-        })
-        .finally(() => {
-            // Reset saving flag after request completes
-            isSaving = false;
-        });
-    };
-    
-    window.deleteEvent = function() {
-        const eventId = document.getElementById('event-id').value;
-        
-        if (!eventId) return;
-        
-        if (confirm('Are you sure you want to delete this event?')) {
-            fetch(`/content-calendar/api/event/${eventId}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    closeEventModal();
-                    loadEvents();
-                }
-            })
-            .catch(error => {
-                console.error('Error deleting event:', error);
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
             });
+
+            const data = await response.json();
+
+            if (data.success || data.event_id) {
+                await loadEvents();
+            }
+        } catch (error) {
+            console.error('Error saving event:', error);
+        } finally {
+            isSaving = false;
         }
-    };
+    }
+    
+    async function deleteEvent(eventId) {
+        if (!eventId) return;
+
+        try {
+            const response = await fetch(`/content-calendar/api/event/${eventId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                await loadEvents();
+            }
+        } catch (error) {
+            console.error('Error deleting event:', error);
+        }
+    }
     
     window.editEvent = function(eventId) {
         openEditEventModal(eventId);
@@ -694,7 +665,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function loadEvents() {
-        fetch('/content-calendar/api/events')
+        return fetch('/content-calendar/api/events')
             .then(response => response.json())
             .then(data => {
                 events = data;
@@ -757,11 +728,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function getEventColor(event) {
         const platform = (event.platform || 'Other').toLowerCase();
         switch(platform) {
-            case 'youtube': return '#CC0029';
+            case 'youtube': return '#FF0033';
             case 'x':
-            case 'twitter': return '#4A5568';
-            case 'instagram': return '#C13584';
-            case 'tiktok': return '#4A5568';
+            case 'twitter': return '#1DA1F2';
+            case 'instagram': return '#059669';
+            case 'tiktok': return '#000000';
             case 'blog': return '#6B7280';
             default: return '#9CA3AF';
         }

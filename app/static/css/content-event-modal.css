@@ -1,0 +1,611 @@
+/* Content Event Modal - Premium Styling */
+
+.event-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+.event-modal-overlay.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.event-modal {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 92%;
+    max-width: 1000px;
+    max-height: 88vh;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+}
+
+html.dark .event-modal {
+    background: #27272a;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Close Button */
+.event-modal-close {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+html.dark .event-modal-close {
+    background: #27272a;
+}
+
+.event-modal-close:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.05);
+}
+
+.event-modal-close i {
+    font-size: 18px;
+}
+
+/* Modal Body */
+.event-modal-body {
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+}
+
+.event-modal-main {
+    flex: 1;
+    padding: 2rem 2.5rem;
+    overflow-y: auto;
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 2rem 0;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+/* Form Controls */
+.form-control {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1.5px solid var(--border-primary);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+html.dark .form-control {
+    background: #3f3f46;
+    border-color: #52525b;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .form-control:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.form-control:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--bg-secondary);
+}
+
+html.dark .form-control:disabled {
+    background: #52525b;
+}
+
+select.form-control {
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 2.5rem;
+    background-image: none !important;
+}
+
+select.form-control::-ms-expand {
+    display: none;
+}
+
+/* Wrapper for select to add arrow via pseudo-element */
+.form-group {
+    position: relative;
+}
+
+select.form-control {
+    position: relative;
+}
+
+.form-group:has(select.form-control) {
+    position: relative;
+}
+
+.form-group select.form-control + *::before,
+.form-group:has(select.form-control)::after {
+    content: '';
+    position: absolute;
+    right: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #666;
+    pointer-events: none;
+}
+
+/* Position arrow relative to label height */
+.form-group:has(label):has(select.form-control)::after {
+    top: calc(50% + 1rem);
+}
+
+html.dark .form-group:has(select.form-control)::after {
+    border-top-color: #999;
+}
+
+/* Ensure options have clean styling */
+select.form-control option {
+    background-image: none !important;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 0.5rem;
+}
+
+html.dark select.form-control option {
+    background: #3f3f46;
+    color: #e5e5e5;
+}
+
+textarea.form-control {
+    resize: vertical;
+    line-height: 1.6;
+    min-height: 100px;
+}
+
+/* Scheduled Tab */
+#scheduled-tab {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%);
+    border: 1.5px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+}
+
+html.dark #scheduled-tab {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.scheduled-header {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 1rem;
+    color: #3b82f6;
+    font-weight: 600;
+    font-size: 0.9375rem;
+}
+
+.scheduled-header i {
+    font-size: 20px;
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    border-top: 1.5px solid var(--border-primary);
+}
+
+html.dark .modal-actions {
+    border-top-color: #3f3f46;
+}
+
+/* Buttons */
+.btn-save,
+.btn-delete {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-delete:disabled,
+.btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.delete-spinner,
+.save-spinner {
+    animation: spin 1s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.btn-save {
+    background: #f5f5f5;
+    color: #171717;
+    border: 1.5px solid #e5e5e5;
+}
+
+html.dark .btn-save {
+    background: #3f3f46;
+    border-color: #52525b;
+    color: #e5e5e5;
+}
+
+.btn-save:hover {
+    background: #e5e5e5;
+    border-color: #d4d4d4;
+}
+
+html.dark .btn-save:hover {
+    background: #52525b;
+    border-color: #71717a;
+}
+
+.btn-delete {
+    background: #f5f5f5;
+    color: #171717;
+    border: 1.5px solid #e5e5e5;
+}
+
+html.dark .btn-delete {
+    background: #3f3f46;
+    border-color: #52525b;
+    color: #e5e5e5;
+}
+
+.btn-delete:hover {
+    background: #e5e5e5;
+    color: #171717;
+    border-color: #d4d4d4;
+}
+
+html.dark .btn-delete:hover {
+    background: #52525b;
+    border-color: #71717a;
+    color: #e5e5e5;
+}
+
+/* Sidebar */
+.event-modal-sidebar {
+    width: 340px;
+    background: var(--bg-secondary);
+    border-left: 1.5px solid var(--border-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+html.dark .event-modal-sidebar {
+    background: #1f1f23;
+    border-left-color: #52525b;
+}
+
+.comments-header {
+    padding: 1.5rem 1.5rem 1.25rem;
+    border-bottom: 1.5px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+html.dark .comments-header {
+    border-bottom-color: #52525b;
+}
+
+.comments-header i {
+    font-size: 20px;
+    color: #3b82f6;
+}
+
+.comments-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem;
+}
+
+.comments-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.comments-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 10px;
+}
+
+.comments-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.5);
+}
+
+.no-comments {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    padding: 3rem 1.5rem;
+    opacity: 0.7;
+}
+
+.comment-item {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1.5px solid var(--border-primary);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+html.dark .comment-item {
+    border-bottom-color: #3f3f46;
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+.comment-content {
+    flex: 1;
+}
+
+.comment-time {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.comment-text {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.comment-delete-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+}
+
+.comment-item:hover .comment-delete-btn {
+    opacity: 1;
+}
+
+.comment-delete-btn:hover {
+    background: #fee;
+    color: #ef4444;
+}
+
+html.dark .comment-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+}
+
+.comment-delete-btn i {
+    font-size: 16px;
+}
+
+/* Comment Input */
+.comment-input-box {
+    padding: 1.25rem;
+    border-top: 1.5px solid var(--border-primary);
+    display: flex;
+    gap: 0.75rem;
+    background: var(--bg-primary);
+}
+
+html.dark .comment-input-box {
+    border-top-color: #52525b;
+    background: #27272a;
+}
+
+.comment-input-box textarea {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1.5px solid var(--border-primary);
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    resize: none;
+    font-family: inherit;
+    transition: all 0.2s;
+    height: 44px;
+}
+
+html.dark .comment-input-box textarea {
+    background: #3f3f46;
+    border-color: #52525b;
+    color: #e5e5e5;
+}
+
+.comment-input-box textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.comment-input-box button {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 10px;
+    background: #3b82f6;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.comment-input-box button:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+.comment-input-box button i {
+    font-size: 18px;
+}
+
+/* Scrollbar for Main */
+.event-modal-main::-webkit-scrollbar {
+    width: 8px;
+}
+
+.event-modal-main::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.event-modal-main::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 10px;
+}
+
+.event-modal-main::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .event-modal {
+        width: 96%;
+        max-height: 92vh;
+    }
+
+    .event-modal-sidebar {
+        width: 300px;
+    }
+
+    .event-modal-main {
+        padding: 1.75rem 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .event-modal-body {
+        flex-direction: column;
+    }
+
+    .event-modal-sidebar {
+        width: 100%;
+        max-height: 280px;
+        border-left: none;
+        border-top: 1.5px solid var(--border-primary);
+    }
+
+    html.dark .event-modal-sidebar {
+        border-top-color: #3f3f46;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .event-modal-main {
+        padding: 1.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+}

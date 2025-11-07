@@ -12,6 +12,7 @@
 <!-- Include FullCalendar CSS first -->
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/content_calendar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/content-event-modal.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -35,25 +36,10 @@
     <!-- Controls -->
     <div class="calendar-controls">
         <div class="control-group">
-            <div class="dropdown">
-                <div class="dropdown-trigger" id="add-event-dropdown-trigger">
-                    <span id="add-event-text">
-                        <i class="ph ph-plus-circle"></i>
-                        Add Content
-                    </span>
-                    <i class="ph ph-caret-down dropdown-arrow"></i>
-                </div>
-                <div class="dropdown-menu" id="add-event-dropdown-menu">
-                    <div class="dropdown-option" onclick="openNewEventModal('organic')">
-                        <i class="ph ph-pencil organic-icon"></i>
-                        <span>Organic Content</span>
-                    </div>
-                    <div class="dropdown-option" onclick="openNewEventModal('sponsored')">
-                        <i class="ph ph-currency-dollar sponsored-icon"></i>
-                        <span>Sponsored Content</span>
-                    </div>
-                </div>
-            </div>
+            <button class="btn-add-content" onclick="openNewEventModal('organic')">
+                <i class="ph ph-plus-circle"></i>
+                Add Content
+            </button>
         </div>
 
         <div class="view-toggle">
@@ -232,211 +218,13 @@
     </div>
 </div>
 
-<!-- Event Modal (for both new and edit) -->
-<div id="event-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modal-title">Add New Event</h2>
-        </div>
-        <div class="modal-body">
-            <input type="hidden" id="event-id" value="">
-            
-            <!-- Content Type Selector -->
-            <div class="form-group">
-                <label class="form-label">Content Type</label>
-                <div class="content-type-selector">
-                    <div class="content-type-option selected" data-type="organic" onclick="selectContentType('organic')">
-                        Organic Content
-                    </div>
-                    <div class="content-type-option" data-type="sponsored" onclick="selectContentType('sponsored')">
-                        Sponsored Content
-                    </div>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Title *</label>
-                <input type="text" id="event-title" class="form-input" placeholder="Enter event title">
-            </div>
-
-            <!-- Platform Dropdown Selector -->
-            <div class="form-group">
-                <label class="form-label">Platform</label>
-                <div class="dropdown platform-dropdown">
-                    <div class="dropdown-trigger" id="platform-dropdown-trigger">
-                        <span id="selected-platform-text">
-                            YouTube
-                        </span>
-                        <i class="ph ph-caret-down dropdown-arrow"></i>
-                    </div>
-                    <div class="dropdown-menu" id="platform-dropdown-menu">
-                        <div class="dropdown-option platform-option-item selected" data-platform="YouTube" data-icon="yt-icon" data-color="#FF0033">
-                            <span>YouTube</span>
-                        </div>
-                        <div class="dropdown-option platform-option-item" data-platform="X" data-icon="ph-x-logo" data-color="#000000">
-                            <span>X</span>
-                        </div>
-                        <div class="dropdown-option platform-option-item" data-platform="Instagram" data-icon="ph-instagram-logo" data-color="#E4405F">
-                            <span>Instagram</span>
-                        </div>
-                        <div class="dropdown-option platform-option-item" data-platform="TikTok" data-icon="ph-tiktok-logo" data-color="#010101">
-                            <span>TikTok</span>
-                        </div>
-                        <div class="dropdown-option platform-option-item" data-platform="Blog" data-icon="ph-article" data-color="#6B7280">
-                            <span>Blog</span>
-                        </div>
-                        <div class="dropdown-option platform-option-item" data-platform="Other" data-icon="ph-dots-three" data-color="#9CA3AF">
-                            <span>Other</span>
-                        </div>
-                    </div>
-                </div>
-                <input type="hidden" id="selected-platform" value="YouTube">
-            </div>
-            
-            <!-- Date & Time - Separate Inputs -->
-            <div class="form-group">
-                <label class="form-label">Publish Date</label>
-                <div class="date-time-grid">
-                    <div class="date-input-wrapper">
-                        <select id="event-date" class="form-select">
-                            <option value="">Select date</option>
-                        </select>
-                    </div>
-                    <div class="time-input-wrapper">
-                        <select id="event-time" class="form-select">
-                            <option value="">Select time</option>
-                            <option value="00:00">00:00</option>
-                            <option value="00:15">00:15</option>
-                            <option value="00:30">00:30</option>
-                            <option value="00:45">00:45</option>
-                            <option value="01:00">01:00</option>
-                            <option value="01:15">01:15</option>
-                            <option value="01:30">01:30</option>
-                            <option value="01:45">01:45</option>
-                            <option value="02:00">02:00</option>
-                            <option value="02:15">02:15</option>
-                            <option value="02:30">02:30</option>
-                            <option value="02:45">02:45</option>
-                            <option value="03:00">03:00</option>
-                            <option value="03:15">03:15</option>
-                            <option value="03:30">03:30</option>
-                            <option value="03:45">03:45</option>
-                            <option value="04:00">04:00</option>
-                            <option value="04:15">04:15</option>
-                            <option value="04:30">04:30</option>
-                            <option value="04:45">04:45</option>
-                            <option value="05:00">05:00</option>
-                            <option value="05:15">05:15</option>
-                            <option value="05:30">05:30</option>
-                            <option value="05:45">05:45</option>
-                            <option value="06:00">06:00</option>
-                            <option value="06:15">06:15</option>
-                            <option value="06:30">06:30</option>
-                            <option value="06:45">06:45</option>
-                            <option value="07:00">07:00</option>
-                            <option value="07:15">07:15</option>
-                            <option value="07:30">07:30</option>
-                            <option value="07:45">07:45</option>
-                            <option value="08:00">08:00</option>
-                            <option value="08:15">08:15</option>
-                            <option value="08:30">08:30</option>
-                            <option value="08:45">08:45</option>
-                            <option value="09:00">09:00</option>
-                            <option value="09:15">09:15</option>
-                            <option value="09:30">09:30</option>
-                            <option value="09:45">09:45</option>
-                            <option value="10:00">10:00</option>
-                            <option value="10:15">10:15</option>
-                            <option value="10:30">10:30</option>
-                            <option value="10:45">10:45</option>
-                            <option value="11:00">11:00</option>
-                            <option value="11:15">11:15</option>
-                            <option value="11:30">11:30</option>
-                            <option value="11:45">11:45</option>
-                            <option value="12:00">12:00</option>
-                            <option value="12:15">12:15</option>
-                            <option value="12:30">12:30</option>
-                            <option value="12:45">12:45</option>
-                            <option value="13:00">13:00</option>
-                            <option value="13:15">13:15</option>
-                            <option value="13:30">13:30</option>
-                            <option value="13:45">13:45</option>
-                            <option value="14:00">14:00</option>
-                            <option value="14:15">14:15</option>
-                            <option value="14:30">14:30</option>
-                            <option value="14:45">14:45</option>
-                            <option value="15:00">15:00</option>
-                            <option value="15:15">15:15</option>
-                            <option value="15:30">15:30</option>
-                            <option value="15:45">15:45</option>
-                            <option value="16:00">16:00</option>
-                            <option value="16:15">16:15</option>
-                            <option value="16:30">16:30</option>
-                            <option value="16:45">16:45</option>
-                            <option value="17:00">17:00</option>
-                            <option value="17:15">17:15</option>
-                            <option value="17:30">17:30</option>
-                            <option value="17:45">17:45</option>
-                            <option value="18:00">18:00</option>
-                            <option value="18:15">18:15</option>
-                            <option value="18:30">18:30</option>
-                            <option value="18:45">18:45</option>
-                            <option value="19:00">19:00</option>
-                            <option value="19:15">19:15</option>
-                            <option value="19:30">19:30</option>
-                            <option value="19:45">19:45</option>
-                            <option value="20:00">20:00</option>
-                            <option value="20:15">20:15</option>
-                            <option value="20:30">20:30</option>
-                            <option value="20:45">20:45</option>
-                            <option value="21:00">21:00</option>
-                            <option value="21:15">21:15</option>
-                            <option value="21:30">21:30</option>
-                            <option value="21:45">21:45</option>
-                            <option value="22:00">22:00</option>
-                            <option value="22:15">22:15</option>
-                            <option value="22:30">22:30</option>
-                            <option value="22:45">22:45</option>
-                            <option value="23:00">23:00</option>
-                            <option value="23:15">23:15</option>
-                            <option value="23:30">23:30</option>
-                            <option value="23:45">23:45</option>
-                        </select>
-                    </div>
-                </div>
-                <small style="color: var(--text-tertiary); font-size: 0.8125rem; margin-top: 0.25rem; display: block;">Optional - leave empty for drafts</small>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Status</label>
-                <select id="event-status" class="form-select">
-                    <option value="draft">Draft</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="review">Review</option>
-                    <option value="ready">Ready</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Notes</label>
-                <textarea id="event-notes" class="form-textarea" placeholder="Add notes, ideas, or important details..."></textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn" onclick="deleteEvent()" id="delete-btn" style="margin-right: auto; display: none;">
-                <i class="ph ph-trash"></i>
-                Delete
-            </button>
-            <button class="btn" onclick="closeEventModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
-        </div>
-    </div>
-</div>
+<!-- Old modal removed - using content-event-modal.js instead -->
 {% endblock %}
 
 {% block scripts %}
 <!-- Include FullCalendar JS -->
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@5.11.3/main.min.js'></script>
+<script src="{{ url_for('static', filename='scripts/content-event-modal.js') }}"></script>
 <script src="{{ url_for('static', filename='scripts/content_calendar.js') }}"></script>
 {% endblock %}
