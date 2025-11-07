@@ -1,0 +1,296 @@
+/* =============================================
+   CALENDAR LINK MODAL - Reusable Component
+   ============================================= */
+
+/* Modal Overlay */
+.calendar-link-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    visibility: hidden;
+    transition: visibility 0.3s ease;
+}
+
+.calendar-link-modal-overlay.show {
+    visibility: visible;
+}
+
+/* Modal Container */
+.calendar-link-modal {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.calendar-link-modal-overlay.show .calendar-link-modal {
+    transform: scale(1);
+}
+
+html.dark .calendar-link-modal {
+    background: rgba(39, 39, 42, 0.95);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Modal Header */
+.calendar-link-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+html.dark .calendar-link-modal-header {
+    border-bottom-color: rgba(63, 63, 70, 0.6);
+}
+
+.calendar-link-modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calendar-link-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-link-modal-close:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.calendar-link-modal-close i {
+    font-size: 1.25rem;
+}
+
+/* Modal Body */
+.calendar-link-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Loading State */
+.calendar-items-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    gap: 1rem;
+}
+
+.calendar-items-loading i {
+    font-size: 2.5rem;
+    color: #3B82F6;
+}
+
+html.dark .calendar-items-loading i {
+    color: #60A5FA;
+}
+
+.calendar-items-loading span {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Empty State */
+.calendar-items-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    text-align: center;
+    gap: 1rem;
+}
+
+.calendar-items-empty i {
+    font-size: 3.5rem;
+    color: var(--text-tertiary);
+    opacity: 0.4;
+}
+
+.calendar-items-empty h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.calendar-items-empty p {
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+    margin: 0 0 1rem 0;
+    max-width: 320px;
+}
+
+/* Calendar Items List */
+.calendar-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.calendar-items-header {
+    margin-bottom: 1rem;
+}
+
+.calendar-items-header p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Calendar Items Table */
+.calendar-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+html.dark .calendar-items-table {
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.calendar-items-table thead {
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-primary);
+}
+
+html.dark .calendar-items-table thead {
+    background: rgba(39, 39, 42, 0.6);
+    border-bottom-color: rgba(63, 63, 70, 0.6);
+}
+
+.calendar-items-table th {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.calendar-table-row {
+    border-bottom: 1px solid var(--border-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+html.dark .calendar-table-row {
+    border-bottom-color: rgba(63, 63, 70, 0.4);
+}
+
+.calendar-table-row:last-child {
+    border-bottom: none;
+}
+
+.calendar-table-row:hover {
+    background: var(--bg-tertiary);
+}
+
+html.dark .calendar-table-row:hover {
+    background: rgba(63, 63, 70, 0.5);
+}
+
+.calendar-table-cell {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+/* Success Notification Toast */
+.calendar-link-notification {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10001;
+    border-left: 4px solid #10B981;
+}
+
+html.dark .calendar-link-notification {
+    background: rgba(39, 39, 42, 0.95);
+    border: 1px solid rgba(63, 63, 70, 0.8);
+    border-left: 4px solid #10B981;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.calendar-link-notification.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.calendar-link-notification i {
+    font-size: 1.25rem;
+    color: #10B981;
+}
+
+.calendar-link-notification span {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .calendar-link-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .calendar-link-modal-header,
+    .calendar-link-modal-body {
+        padding: 1rem;
+    }
+
+    .calendar-link-notification {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: calc(100% - 2rem);
+    }
+}

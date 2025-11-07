@@ -1284,6 +1284,18 @@ function renderUploadSection(visible) {
                         <input type="file" id="thumbnailFileInput" accept="image/jpeg,image/jpg,image/png" style="display: none;" onchange="handleThumbnailSelect(event)">
                     </div>
 
+                    <!-- Content Calendar -->
+                    <div class="upload-option-card" style="grid-column: 1 / -1;">
+                        <label class="upload-option-label">
+                            <i class="ph ph-calendar-check"></i>
+                            Content Calendar
+                        </label>
+                        <select class="privacy-select" id="contentCalendarSelect" onchange="handleContentCalendarChange()">
+                            <option value="create_new" selected>Create New Calendar Item</option>
+                            <option value="link_existing">Link to Existing Calendar Item</option>
+                        </select>
+                    </div>
+
                     <!-- Privacy Status -->
                     <div class="upload-option-card" id="statusCard" style="grid-column: 1;">
                         <label class="upload-option-label">
@@ -1792,33 +1804,44 @@ async function uploadToYouTube() {
     const description = currentDescription || '';
     const tags = currentTags || [];
 
-    // Get privacy status
-    const privacySelect = document.getElementById('privacySelect');
-    const privacyStatus = privacySelect ? privacySelect.value : 'private';
-
-    // Get scheduled date/time if status is scheduled
+    // Check if calendar item is linked - if so, use its publish date
+    const linkedCalendarItem = CalendarLinkModal.getLinkedItem();
     let scheduledTime = null;
-    if (privacyStatus === 'scheduled') {
-        const scheduleDateSelect = document.getElementById('scheduleDateSelect');
-        const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
+    let privacyStatus = 'private';
 
-        if (!scheduleDateSelect || !scheduleDateSelect.value || !scheduleTimeSelect || !scheduleTimeSelect.value) {
-            showToast('Please select a publish date and time', 'error');
-            return;
+    if (linkedCalendarItem && linkedCalendarItem.publish_date) {
+        // Use the linked calendar item's publish date
+        scheduledTime = linkedCalendarItem.publish_date;
+        privacyStatus = 'scheduled';
+        console.log('Using linked calendar item publish date:', scheduledTime);
+    } else {
+        // Get privacy status from form
+        const privacySelect = document.getElementById('privacySelect');
+        privacyStatus = privacySelect ? privacySelect.value : 'private';
+
+        // Get scheduled date/time if status is scheduled
+        if (privacyStatus === 'scheduled') {
+            const scheduleDateSelect = document.getElementById('scheduleDateSelect');
+            const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
+
+            if (!scheduleDateSelect || !scheduleDateSelect.value || !scheduleTimeSelect || !scheduleTimeSelect.value) {
+                showToast('Please select a publish date and time', 'error');
+                return;
+            }
+
+            // Combine date and time in user's local timezone
+            const dateTime = `${scheduleDateSelect.value}T${scheduleTimeSelect.value}:00`;
+            const localDateTime = new Date(dateTime);
+
+            // Validate that schedule time is in the future
+            if (localDateTime <= new Date()) {
+                showToast('Schedule time must be in the future', 'error');
+                return;
+            }
+
+            // Convert to ISO string
+            scheduledTime = localDateTime.toISOString();
         }
-
-        // Combine date and time in user's local timezone
-        const dateTime = `${scheduleDateSelect.value}T${scheduleTimeSelect.value}:00`;
-        const localDateTime = new Date(dateTime);
-
-        // Validate that schedule time is in the future
-        if (localDateTime <= new Date()) {
-            showToast('Schedule time must be in the future', 'error');
-            return;
-        }
-
-        // Convert to ISO string
-        scheduledTime = localDateTime.toISOString();
     }
 
     const uploadBtn = document.getElementById('uploadBtn');
@@ -1931,6 +1954,12 @@ async function uploadToYouTube() {
             postPayload.content_id = contentId;
         }
 
+        // Add linked calendar event ID if user linked to an existing calendar item
+        const linkedItem = CalendarLinkModal.getLinkedItem();
+        if (linkedItem) {
+            postPayload.calendar_event_id = linkedItem.id;
+        }
+
         const postResponse = await fetch('/api/upload-to-youtube', {
             method: 'POST',
             headers: {
@@ -1953,6 +1982,9 @@ async function uploadToYouTube() {
             throw new Error(postData.error || 'Failed to upload to YouTube');
         }
 
+        // Note: The backend now handles updating the linked calendar item
+        // No need to update it here again
+
         // Complete progress
         if (progressBar) {
             progressFill.style.width = '100%';
@@ -1967,6 +1999,10 @@ async function uploadToYouTube() {
         let message = 'Video uploaded to YouTube successfully!';
         if (scheduledTime) {
             message = 'Video scheduled on YouTube successfully!';
+        }
+        const finalLinkedItem = CalendarLinkModal.getLinkedItem();
+        if (finalLinkedItem) {
+            message += ' Calendar item updated.';
         }
         showToast(message, 'success');
 
@@ -2144,4 +2180,38 @@ function showInsufficientCreditsError() {
             </a>
         </div>
     `;
+}
+
+// Content Calendar Integration
+// Initialize the calendar link modal for YouTube
+document.addEventListener('DOMContentLoaded', function() {
+    CalendarLinkModal.init('YouTube', function(item) {
+        // Update the select dropdown to show it's linked
+        const select = document.getElementById('contentCalendarSelect');
+        if (select) {
+            // Add custom option to show linked item
+            const existingOption = select.querySelector('option[value="linked"]');
+            if (existingOption) {
+                existingOption.remove();
+            }
+
+            const option = document.createElement('option');
+            option.value = 'linked';
+            option.selected = true;
+            option.textContent = `Linked: ${item.title || 'Untitled'}`;
+            select.appendChild(option);
+        }
+    });
+});
+
+function handleContentCalendarChange() {
+    const select = document.getElementById("contentCalendarSelect");
+    const value = select.value;
+
+    if (value === "link_existing") {
+        CalendarLinkModal.open();
+    } else if (value === "create_new") {
+        // Clear any previously linked item
+        CalendarLinkModal.clearLinkedItem();
+    }
 }

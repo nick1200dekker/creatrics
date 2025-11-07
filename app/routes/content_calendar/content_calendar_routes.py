@@ -68,6 +68,7 @@ def create_event():
             platform=data.get('platform', ''),
             description=data.get('description', ''),
             color=data.get('color', ''),
+            tags=data.get('tags', ''),
             content_link=data.get('content_link', ''),
             status=data.get('status', 'draft'),  # Default to draft
             comments=data.get('comments', []),
@@ -128,7 +129,9 @@ def update_event(event_id):
             update_data['description'] = data['description']
         if 'color' in data:
             update_data['color'] = data['color']
-        
+        if 'tags' in data:
+            update_data['tags'] = data['tags']
+
         # New fields
         if 'content_link' in data:
             update_data['content_link'] = data['content_link']

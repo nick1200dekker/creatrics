@@ -33,8 +33,50 @@ class ContentEventModal {
                     <div class="event-modal-body">
                         <!-- Left Side -->
                         <div class="event-modal-main">
+                            <!-- Tabbed Content Section -->
+                            <div class="content-tabs-wrapper">
+                                <!-- Tab Headers -->
+                                <div class="content-tabs-header">
+                                    <button class="content-tab active" data-tab="original">
+                                        <i class="ph ph-note"></i>
+                                        <span>Content Info</span>
+                                    </button>
+                                    <button class="content-tab" data-tab="youtube" id="youtube-tab-btn" style="display: none;">
+                                        <i class="ph ph-youtube-logo"></i>
+                                        <span>YouTube Metadata</span>
+                                    </button>
+                                </div>
+
+                                <!-- Tab Content -->
+                                <div class="content-tabs-body">
+                                    <!-- Content Info Tab -->
+                                    <div class="content-tab-panel active" data-panel="original">
+                                        <div class="form-group">
+                                            <label>Requirements</label>
+                                            <textarea id="content-field" class="form-control" rows="4" placeholder="Enter requirements..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- YouTube Metadata Tab -->
+                                    <div class="content-tab-panel" data-panel="youtube">
+                                        <div class="form-group">
+                                            <label>Video Title</label>
+                                            <textarea id="youtube-title-field" class="form-control" rows="2" readonly disabled></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Description</label>
+                                            <textarea id="youtube-description-field" class="form-control" rows="8" readonly disabled></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Tags</label>
+                                            <div id="youtube-tags-container" class="youtube-tags-container"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Platform -->
-                            <div class="form-group">
+                            <div class="form-group" id="platform-form-group">
                                 <label>Platform</label>
                                 <select id="platform-select" class="form-control">
                                     <option value="Not set" selected>Not set</option>
@@ -43,12 +85,6 @@ class ContentEventModal {
                                     <option value="TikTok">TikTok</option>
                                     <option value="X">X</option>
                                 </select>
-                            </div>
-
-                            <!-- Content -->
-                            <div class="form-group">
-                                <label>Requirements</label>
-                                <textarea id="content-field" class="form-control" rows="4" placeholder="Enter requirements..."></textarea>
                             </div>
 
                             <!-- Status & Type -->
@@ -172,15 +208,95 @@ class ContentEventModal {
             };
         }
 
+        // Tab switching
+        const tabButtons = document.querySelectorAll('.content-tab');
+        tabButtons.forEach(btn => {
+            btn.onclick = () => this.switchTab(btn.dataset.tab);
+        });
+
         console.log('Event listeners attached');
+    }
+
+    switchTab(tabName) {
+        console.log('Switching to tab:', tabName);
+
+        // Update tab buttons
+        document.querySelectorAll('.content-tab').forEach(tab => {
+            if (tab.dataset.tab === tabName) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+
+        // Update tab panels - REMOVE all active classes first, then add to the correct one
+        document.querySelectorAll('.content-tab-panel').forEach(panel => {
+            panel.classList.remove('active');
+            console.log('Removed active from panel:', panel.dataset.panel);
+        });
+
+        const activePanel = document.querySelector(`.content-tab-panel[data-panel="${tabName}"]`);
+        if (activePanel) {
+            activePanel.classList.add('active');
+            console.log('Added active to panel:', tabName);
+        }
+
+        // Show/hide elements below tabs based on active tab
+        const platformGroup = document.getElementById('platform-form-group');
+        const statusTypeRow = document.querySelector('#status-select')?.closest('.form-row');
+        const scheduledTab = document.getElementById('scheduled-tab');
+        const modalActions = document.querySelector('.modal-actions');
+
+        if (tabName === 'youtube') {
+            // Hide elements when YouTube tab is active for better readability
+            if (platformGroup) platformGroup.style.display = 'none';
+            if (statusTypeRow) statusTypeRow.style.display = 'none';
+            if (scheduledTab) scheduledTab.style.display = 'none';
+            if (modalActions) modalActions.style.display = 'none';
+        } else {
+            // Show elements when Content Info tab is active
+            // But respect the original visibility rules from populateFields
+            const isActuallyScheduledOnYouTube = this.currentEvent?.youtube_video_id;
+
+            if (isActuallyScheduledOnYouTube) {
+                // Keep them hidden if actually scheduled on YouTube
+                if (platformGroup) platformGroup.style.display = 'none';
+                if (statusTypeRow) statusTypeRow.style.display = 'none';
+                if (scheduledTab) scheduledTab.style.display = 'none';
+                if (modalActions) modalActions.style.display = 'none';
+            } else {
+                // Show for regular content
+                if (platformGroup) platformGroup.style.display = '';
+                if (statusTypeRow) statusTypeRow.style.display = '';
+                if (scheduledTab) scheduledTab.style.display = 'block';
+                if (modalActions) modalActions.style.display = '';
+            }
+        }
     }
 
     handleStatusChange() {
         const scheduledTab = document.getElementById('scheduled-tab');
         const platformSelect = document.getElementById('platform-select');
 
-        // Always show the Publish Date tab (acts as deadline/target date for all statuses)
-        scheduledTab.style.display = 'block';
+        // Only hide scheduled tab if actually scheduled on YouTube (has video ID)
+        const isActuallyScheduledOnYouTube = this.currentEvent && this.currentEvent.youtube_video_id;
+
+        console.log('handleStatusChange called:', {
+            currentEvent: this.currentEvent,
+            isActuallyScheduledOnYouTube: isActuallyScheduledOnYouTube,
+            scheduledTabExists: !!scheduledTab
+        });
+
+        // Show/hide scheduled tab based on whether it's actually scheduled on YouTube
+        if (isActuallyScheduledOnYouTube) {
+            // Hide for actually scheduled YouTube posts (they're in read-only mode)
+            console.log('Hiding scheduled tab for scheduled YouTube post');
+            scheduledTab.style.display = 'none';
+        } else {
+            // Always show the Publish Date tab for regular items (acts as deadline/target date for all statuses)
+            console.log('Showing scheduled tab for regular content');
+            scheduledTab.style.display = 'block';
+        }
 
         // Lock platform ONLY if it's actually scheduled on the platform (has platform post ID - the "clock" icon)
         const isActuallyScheduled = this.currentEvent && (
@@ -240,7 +356,7 @@ class ContentEventModal {
         const container = document.getElementById('comments-list');
 
         if (this.comments.length === 0) {
-            container.innerHTML = '<div class="no-comments">No comments yet</div>';
+            container.innerHTML = '';
             return;
         }
 
@@ -338,6 +454,24 @@ class ContentEventModal {
     close() {
         this.modal.classList.remove('active');
         document.body.style.overflow = '';
+
+        // Reset all UI visibility states BEFORE clearing currentEvent
+        const youtubeTabBtn = document.getElementById('youtube-tab-btn');
+        const platformGroup = document.getElementById('platform-form-group');
+        const statusTypeRow = document.querySelector('#status-select').closest('.form-row');
+        const scheduledTab = document.getElementById('scheduled-tab');
+        const modalActions = document.querySelector('.modal-actions');
+
+        if (youtubeTabBtn) youtubeTabBtn.style.display = 'none';
+        if (platformGroup) platformGroup.style.display = '';
+        if (statusTypeRow) statusTypeRow.style.display = '';
+        if (scheduledTab) scheduledTab.style.display = 'block';  // Explicitly show for new items
+        if (modalActions) modalActions.style.display = '';
+
+        // Reset to Content Info tab
+        this.switchTab('original');
+
+        // Clear currentEvent last
         this.currentEvent = null;
     }
 
@@ -349,6 +483,11 @@ class ContentEventModal {
         document.getElementById('type-select').value = 'organic';
         this.comments = [];
         this.renderComments();
+
+        // Ensure scheduled tab is visible for new items
+        const scheduledTab = document.getElementById('scheduled-tab');
+        if (scheduledTab) scheduledTab.style.display = 'block';
+
         this.handleStatusChange();
     }
 
@@ -358,7 +497,84 @@ class ContentEventModal {
         document.getElementById('status-select').value = event.status || 'ready';
         document.getElementById('type-select').value = event.content_type || 'organic';
 
+        // Handle YouTube tab visibility and UI adjustments
+        const youtubeTabBtn = document.getElementById('youtube-tab-btn');
+        const youtubeTitleField = document.getElementById('youtube-title-field');
+        const youtubeDescriptionField = document.getElementById('youtube-description-field');
+        const youtubeTagsContainer = document.getElementById('youtube-tags-container');
+        const platformGroup = document.getElementById('platform-form-group');
+        const statusTypeRow = document.querySelector('#status-select').closest('.form-row');
+        const scheduledTab = document.getElementById('scheduled-tab');
+        const modalActions = document.querySelector('.modal-actions');
+
+        // Show YouTube tab if YouTube metadata is available
+        const hasYouTubeMetadata = !!(event.description || event.tags);
+
+        if (hasYouTubeMetadata) {
+            // Show YouTube tab
+            youtubeTabBtn.style.display = 'flex';
+
+            // Only hide UI elements if it's actually scheduled on YouTube (has video ID)
+            const isActuallyScheduledOnYouTube = event.youtube_video_id;
+            if (isActuallyScheduledOnYouTube) {
+                if (platformGroup) platformGroup.style.display = 'none';
+                if (statusTypeRow) statusTypeRow.style.display = 'none';
+                if (scheduledTab) scheduledTab.style.display = 'none';
+                if (modalActions) modalActions.style.display = 'none';
+            }
+
+            // Parse the video title from the description (format: "Video Title: <title>\n\n<description>")
+            let videoTitle = event.title || '';
+            let videoDescription = event.description || '';
+
+            if (videoDescription.startsWith('Video Title: ')) {
+                const parts = videoDescription.split('\n\n');
+                videoTitle = parts[0].replace('Video Title: ', '');
+                videoDescription = parts.slice(1).join('\n\n');
+            }
+
+            if (youtubeTitleField) youtubeTitleField.value = videoTitle;
+            if (youtubeDescriptionField) youtubeDescriptionField.value = videoDescription;
+
+            // Render tags as chips
+            if (youtubeTagsContainer && event.tags) {
+                const tagsArray = event.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+                youtubeTagsContainer.innerHTML = tagsArray.map(tag =>
+                    `<span class="youtube-tag-chip">${this.escapeHtml(tag)}</span>`
+                ).join('');
+            } else if (youtubeTagsContainer) {
+                youtubeTagsContainer.innerHTML = '<span class="no-tags">No tags</span>';
+            }
+        } else {
+            // Hide YouTube tab for regular items
+            youtubeTabBtn.style.display = 'none';
+            // Show all UI elements for non-scheduled posts
+            if (platformGroup) platformGroup.style.display = '';
+            if (statusTypeRow) statusTypeRow.style.display = '';
+            if (scheduledTab) scheduledTab.style.display = 'block';  // Explicitly show
+            if (modalActions) modalActions.style.display = '';
+            // Make sure Original Info tab is active
+            this.switchTab('original');
+        }
+
         this.handleStatusChange();
+
+        // Force disable platform field if actually scheduled (belt and suspenders approach)
+        const isScheduledOnPlatform = !!(event.youtube_video_id ||
+            event.instagram_post_id ||
+            event.tiktok_post_id ||
+            event.x_post_id);
+
+        const platformSelectField = document.getElementById('platform-select');
+        if (platformSelectField) {
+            if (isScheduledOnPlatform) {
+                platformSelectField.disabled = true;
+                console.log('FORCE DISABLED platform select for scheduled post');
+            } else {
+                platformSelectField.disabled = false;
+                console.log('Platform select enabled for non-scheduled post');
+            }
+        }
 
         if (event.publish_date) {
             console.log('Populating date from event.publish_date:', event.publish_date);

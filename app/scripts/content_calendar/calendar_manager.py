@@ -71,6 +71,7 @@ class ContentCalendarManager:
                      category: str = "", audience_type: str = "Public",
                      content_type: str = "", platform: str = "",
                      description: str = "", color: str = "#20D7D7",
+                     tags: str = "",
                      content_link: str = "", status: str = "planned",
                      comments: List[Dict] = None, notes: str = "",
                      youtube_video_id: str = "", instagram_post_id: str = "",
@@ -95,6 +96,7 @@ class ContentCalendarManager:
                 "platform": platform,
                 "description": description,
                 "color": color,
+                "tags": tags,  # Tags field for YouTube/platform tags
                 "content_link": content_link,  # New field
                 "status": status,  # New field: planned, in-progress, review, ready, posted
                 "comments": comments or [],  # New field: list of comment objects
@@ -140,8 +142,8 @@ class ContentCalendarManager:
             # Only update fields that are provided and not None
             allowed_fields = [
                 'title', 'publish_date', 'is_paid', 'is_free', 'is_sponsored',
-                'category', 'audience_type', 'content_type', 'platform', 
-                'description', 'color', 'content_link', 'status', 'comments', 'notes'
+                'category', 'audience_type', 'content_type', 'platform',
+                'description', 'color', 'tags', 'content_link', 'status', 'comments', 'notes'
             ]
             
             for key, value in kwargs.items():

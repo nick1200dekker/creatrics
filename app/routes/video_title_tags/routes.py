@@ -687,6 +687,7 @@ def upload_to_youtube():
         keywords = (data.get('keywords') or '').strip()
         content_description = (data.get('content_description') or '').strip()
         content_id = data.get('content_id')  # Content library ID (optional)
+        calendar_event_id = data.get('calendar_event_id')  # Linked calendar event ID (optional)
 
         if not firebase_url:
             return jsonify({
@@ -759,7 +760,7 @@ def upload_to_youtube():
             except Exception as e:
                 logger.error(f"Error creating content library: {e}")
 
-        # Create calendar event for all videos
+        # Update linked calendar event OR create a new one
         if title and post_id:
             try:
                 from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
@@ -773,20 +774,47 @@ def upload_to_youtube():
                     status = 'posted'
                     publish_date = datetime.now(timezone.utc).isoformat()
 
-                event_id = calendar_manager.create_event(
-                    title=title,
-                    publish_date=publish_date,
-                    platform='YouTube',
-                    status=status,
-                    content_type='organic',
-                    youtube_video_id=post_id,
-                    content_id=content_id if content_id else '',
-                    notes=f'YouTube Post ID: {post_id}'
-                )
+                # Convert tags array to comma-separated string for storage
+                tags_string = ', '.join(tags) if isinstance(tags, list) else str(tags)
 
-                logger.info(f"Created calendar event {event_id} for YouTube video {post_id} (scheduled={bool(scheduled_time)})")
+                if calendar_event_id:
+                    # Update the linked calendar event
+                    # Don't update title - keep the original requirements/title from the calendar item
+                    # The YouTube video title will be stored in description/tags and shown separately
+                    success = calendar_manager.update_event(
+                        event_id=calendar_event_id,
+                        description=f"Video Title: {title}\n\n{description}",  # Prepend video title to description
+                        tags=tags_string,
+                        publish_date=publish_date,
+                        platform='YouTube',
+                        status=status,
+                        youtube_video_id=post_id,
+                        content_id=content_id if content_id else ''
+                    )
+                    if success:
+                        logger.info(f"Updated linked calendar event {calendar_event_id} for YouTube video {post_id}")
+                    else:
+                        logger.warning(f"Failed to update linked calendar event {calendar_event_id}, creating new one")
+                        calendar_event_id = None  # Fall through to create new event
+
+                if not calendar_event_id:
+                    # Create new calendar event
+                    event_id = calendar_manager.create_event(
+                        title=title,
+                        description=description,
+                        tags=tags_string,
+                        publish_date=publish_date,
+                        platform='YouTube',
+                        status=status,
+                        content_type='organic',
+                        youtube_video_id=post_id,
+                        content_id=content_id if content_id else '',
+                        notes=f'YouTube Post ID: {post_id}'
+                    )
+                    logger.info(f"Created calendar event {event_id} for YouTube video {post_id} (scheduled={bool(scheduled_time)})")
+
             except Exception as e:
-                logger.error(f"Error creating calendar event: {e}")
+                logger.error(f"Error managing calendar event: {e}")
                 # Don't fail the whole request if calendar creation fails
 
         return jsonify({

@@ -10,6 +10,7 @@
 {% block additional_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/video_title_tags.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/repost-modal.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calendar-link-modal.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -319,6 +320,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='scripts/repost-modal.js') }}"></script>
-<script src="{{ url_for('static', filename='scripts/video_title_tags.js') }}"></script>
+<script src="{{ url_for('static', filename='scripts/repost-modal.js') }}?v=3"></script>
+<script src="{{ url_for('static', filename='scripts/calendar-link-modal.js') }}?v=3"></script>
+<script src="{{ url_for('static', filename='scripts/video_title_tags.js') }}?v=4"></script>
 {% endblock %}
