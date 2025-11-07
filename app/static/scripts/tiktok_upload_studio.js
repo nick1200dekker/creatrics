@@ -13,6 +13,7 @@ let hasPremium = window.hasPremium || false;  // Premium subscription status fro
 let tiktokRepostModal = null;  // Repost modal instance
 let uploadMode = 'upload';  // 'upload' or 'repost'
 let repostContent = null;  // Selected content from repost modal
+let repostScheduledDate = null;  // Scheduled date from repost content
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -104,45 +105,27 @@ function handleContentSelection(content) {
         updateCharCount();
     }
 
-    // Pre-fill schedule date/time if this content has a TikTok scheduled post
+    // Check if this content has any platform's scheduled post date
     const platforms = content.platforms_posted || {};
-    const tiktokData = platforms.tiktok;
 
-    if (tiktokData && tiktokData.scheduled_for) {
-        const scheduledDate = new Date(tiktokData.scheduled_for);
+    // Check all platforms for a scheduled date (prioritize TikTok, then check others)
+    repostScheduledDate = null;  // Reset
+    const platformOrder = ['tiktok', 'instagram', 'youtube', 'x'];
 
-        // Check if the scheduled time is in the future
-        if (scheduledDate > new Date()) {
-            // Switch to scheduled mode
-            const scheduledModeRadio = document.querySelector('input[name="mode"][value="scheduled"]');
-            if (scheduledModeRadio) {
-                scheduledModeRadio.checked = true;
-                // Trigger change event to show schedule inputs
-                handleModeChange();
-            }
-
-            // Set the date and time selects (they are <select> elements, not inputs)
-            const dateSelect = document.getElementById('scheduleDateSelect');
-            const timeSelect = document.getElementById('scheduleTimeSelect');
-
-            if (dateSelect && timeSelect) {
-                // Format date as YYYY-MM-DD
-                const year = scheduledDate.getFullYear();
-                const month = String(scheduledDate.getMonth() + 1).padStart(2, '0');
-                const day = String(scheduledDate.getDate()).padStart(2, '0');
-                const dateValue = `${year}-${month}-${day}`;
-
-                // Format time as HH:MM
-                const hours = String(scheduledDate.getHours()).padStart(2, '0');
-                const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
-                const timeValue = `${hours}:${minutes}`;
-
-                // Set the select values
-                dateSelect.value = dateValue;
-                timeSelect.value = timeValue;
+    for (const platform of platformOrder) {
+        const platformData = platforms[platform];
+        if (platformData && platformData.scheduled_for) {
+            const date = new Date(platformData.scheduled_for);
+            // Check if the scheduled time is in the future
+            if (date > new Date()) {
+                repostScheduledDate = date;
+                console.log('Found scheduled date from', platform, ':', repostScheduledDate);
+                break;
             }
         }
     }
+
+    // Note: We'll apply the scheduled date when the upload form is rendered (after generating titles)
 
     // Set the video URL (we'll use this during upload)
     // Display the video in the upload area
@@ -705,6 +688,11 @@ function setupUploadForm() {
     modeRadios.forEach(radio => {
         radio.addEventListener('change', handleModeChange);
     });
+
+    // Apply repost scheduled date if available
+    if (repostScheduledDate) {
+        applyRepostScheduledDate();
+    }
 }
 
 /**
@@ -965,6 +953,46 @@ function populateScheduleTimeDropdown() {
 
     // Set default to 12:00 PM
     timeSelect.value = '12:00';
+}
+
+/**
+ * Apply scheduled date from repost content
+ */
+function applyRepostScheduledDate() {
+    if (!repostScheduledDate) return;
+
+    console.log('Applying repost scheduled date:', repostScheduledDate);
+
+    // Switch to scheduled mode
+    const scheduledModeRadio = document.querySelector('input[name="mode"][value="scheduled"]');
+    if (scheduledModeRadio) {
+        scheduledModeRadio.checked = true;
+        // Trigger change event to show schedule inputs
+        handleModeChange();
+    }
+
+    // Set the date and time selects
+    const dateSelect = document.getElementById('scheduleDateSelect');
+    const timeSelect = document.getElementById('scheduleTimeSelect');
+
+    if (dateSelect && timeSelect) {
+        // Format date as YYYY-MM-DD
+        const year = repostScheduledDate.getFullYear();
+        const month = String(repostScheduledDate.getMonth() + 1).padStart(2, '0');
+        const day = String(repostScheduledDate.getDate()).padStart(2, '0');
+        const dateValue = `${year}-${month}-${day}`;
+
+        // Format time as HH:MM
+        const hours = String(repostScheduledDate.getHours()).padStart(2, '0');
+        const minutes = String(repostScheduledDate.getMinutes()).padStart(2, '0');
+        const timeValue = `${hours}:${minutes}`;
+
+        // Set the select values
+        dateSelect.value = dateValue;
+        timeSelect.value = timeValue;
+
+        console.log('Set schedule to:', dateValue, timeValue);
+    }
 }
 
 /**

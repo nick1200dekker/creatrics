@@ -53,7 +53,7 @@ class RepostModal {
                         </div>
                         <div id="repostContentContainer">
                             <div class="repost-loading">
-                                <div class="repost-loading-spinner"></div>
+                                <div class="loading-spinner"><i class="ph ph-spinner"></i></div>
                                 <p>Loading recent content...</p>
                             </div>
                         </div>
@@ -119,7 +119,7 @@ class RepostModal {
         const container = document.getElementById('repostContentContainer');
         container.innerHTML = `
             <div class="repost-loading">
-                <div class="repost-loading-spinner"></div>
+                <div class="loading-spinner"><i class="ph ph-spinner"></i></div>
                 <p>Loading recent content...</p>
             </div>
         `;
