@@ -107,9 +107,15 @@ html.dark .analytics-section h3 i {
     gap: 1.5rem;
 }
 
+.analytics-compact-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr 1fr;
+    gap: 1.5rem;
+}
+
 .analytics-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
     border-radius: 12px;
     padding: 1.5rem;
     transition: all 0.3s ease;
@@ -124,12 +130,42 @@ html.dark .analytics-section h3 i {
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
 }
 
 html.dark .analytics-card {
-    background: rgba(63, 63, 70, 0.5);
-    border-color: rgba(82, 82, 91, 0.5);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.12) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.analytics-card-large {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.analytics-card-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.analytics-compact-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.analytics-compact-row:last-child {
+    border-bottom: none;
+}
+
+html.dark .analytics-compact-row {
+    border-bottom-color: rgba(63, 63, 70, 0.5);
 }
 
 .analytics-label {
@@ -137,8 +173,11 @@ html.dark .analytics-card {
     color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.75rem;
     font-weight: 600;
+}
+
+.analytics-card-large .analytics-label {
+    margin-bottom: 0.75rem;
 }
 
 .analytics-value {
@@ -146,7 +185,13 @@ html.dark .analytics-card {
     font-weight: 800;
     color: var(--text-primary);
     line-height: 1;
-    margin-bottom: 0.5rem;
+}
+
+.analytics-value-inline {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
 }
 
 .analytics-sub {
@@ -422,6 +467,12 @@ html.dark .dropdown-option:hover {
 
 html.dark .dropdown-option i {
     color: #60A5FA;
+}
+
+/* Organic/Sponsored icon colors - match text color */
+.dropdown-option i.organic-icon,
+.dropdown-option i.sponsored-icon {
+    color: var(--text-primary) !important;
 }
 
 .dropdown-option.selected {
@@ -1032,7 +1083,7 @@ html.dark .fc-day-today::after {
 .fc-event {
     border: none !important;
     border-radius: 6px !important;
-    padding: 8px 24px 8px 12px !important;
+    padding: 8px 32px 8px 12px !important;
     font-size: 0.8125rem !important;
     cursor: move !important;
     margin: 3px !important;
@@ -1048,24 +1099,32 @@ html.dark .fc-day-today::after {
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
+.fc-event-main {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    display: block !important;
+    padding-right: 8px !important;
+}
+
 /* Platform-based coloring - Softer, more elegant tones */
 .fc-event.platform-youtube {
     background: linear-gradient(135deg, rgba(255, 0, 51, 0.08) 0%, rgba(255, 0, 51, 0.12) 100%) !important;
     border-left: 3px solid rgba(255, 0, 51, 0.6) !important;
-    color: #dc2626 !important;
+    color: #18181b !important;
 }
 
 .fc-event.platform-x,
 .fc-event.platform-twitter {
     background: linear-gradient(135deg, rgba(29, 161, 242, 0.08) 0%, rgba(29, 161, 242, 0.12) 100%) !important;
     border-left: 3px solid rgba(29, 161, 242, 0.6) !important;
-    color: #0284c7 !important;
+    color: #18181b !important;
 }
 
 .fc-event.platform-instagram {
-    background: linear-gradient(135deg, rgba(228, 64, 95, 0.08) 0%, rgba(228, 64, 95, 0.12) 100%) !important;
-    border-left: 3px solid rgba(228, 64, 95, 0.6) !important;
-    color: #db2777 !important;
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(5, 150, 105, 0.12) 100%) !important;
+    border-left: 3px solid rgba(5, 150, 105, 0.6) !important;
+    color: #18181b !important;
 }
 
 .fc-event.platform-tiktok {
@@ -1077,32 +1136,32 @@ html.dark .fc-day-today::after {
 .fc-event.platform-blog {
     background: linear-gradient(135deg, rgba(107, 114, 128, 0.08) 0%, rgba(107, 114, 128, 0.12) 100%) !important;
     border-left: 3px solid rgba(107, 114, 128, 0.6) !important;
-    color: #4b5563 !important;
+    color: #18181b !important;
 }
 
 .fc-event.platform-other {
     background: linear-gradient(135deg, rgba(156, 163, 175, 0.08) 0%, rgba(156, 163, 175, 0.12) 100%) !important;
     border-left: 3px solid rgba(156, 163, 175, 0.6) !important;
-    color: #6b7280 !important;
+    color: #18181b !important;
 }
 
 html.dark .fc-event.platform-youtube {
     background: linear-gradient(135deg, rgba(255, 0, 51, 0.12) 0%, rgba(255, 0, 51, 0.16) 100%) !important;
     border-left: 3px solid rgba(255, 0, 51, 0.7) !important;
-    color: #fca5a5 !important;
+    color: #e4e4e7 !important;
 }
 
 html.dark .fc-event.platform-x,
 html.dark .fc-event.platform-twitter {
     background: linear-gradient(135deg, rgba(29, 161, 242, 0.12) 0%, rgba(29, 161, 242, 0.16) 100%) !important;
     border-left: 3px solid rgba(29, 161, 242, 0.7) !important;
-    color: #7dd3fc !important;
+    color: #e4e4e7 !important;
 }
 
 html.dark .fc-event.platform-instagram {
-    background: linear-gradient(135deg, rgba(228, 64, 95, 0.12) 0%, rgba(228, 64, 95, 0.16) 100%) !important;
-    border-left: 3px solid rgba(228, 64, 95, 0.7) !important;
-    color: #f9a8d4 !important;
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(5, 150, 105, 0.16) 100%) !important;
+    border-left: 3px solid rgba(5, 150, 105, 0.7) !important;
+    color: #e4e4e7 !important;
 }
 
 html.dark .fc-event.platform-tiktok {
@@ -1114,13 +1173,48 @@ html.dark .fc-event.platform-tiktok {
 html.dark .fc-event.platform-blog {
     background: linear-gradient(135deg, rgba(156, 163, 175, 0.12) 0%, rgba(156, 163, 175, 0.16) 100%) !important;
     border-left: 3px solid rgba(156, 163, 175, 0.6) !important;
-    color: #d1d5db !important;
+    color: #e4e4e7 !important;
 }
 
 html.dark .fc-event.platform-other {
     background: linear-gradient(135deg, rgba(156, 163, 175, 0.12) 0%, rgba(156, 163, 175, 0.16) 100%) !important;
     border-left: 3px solid rgba(156, 163, 175, 0.6) !important;
-    color: #d1d5db !important;
+    color: #e4e4e7 !important;
+}
+
+/* Platform-specific title colors */
+.fc-event.platform-youtube .fc-event-title {
+    color: #dc2626 !important;
+}
+
+.fc-event.platform-x .fc-event-title,
+.fc-event.platform-twitter .fc-event-title {
+    color: #0284c7 !important;
+}
+
+.fc-event.platform-instagram .fc-event-title {
+    color: #059669 !important;
+}
+
+.fc-event.platform-tiktok .fc-event-title {
+    color: #18181b !important;
+}
+
+html.dark .fc-event.platform-youtube .fc-event-title {
+    color: #fca5a5 !important;
+}
+
+html.dark .fc-event.platform-x .fc-event-title,
+html.dark .fc-event.platform-twitter .fc-event-title {
+    color: #7dd3fc !important;
+}
+
+html.dark .fc-event.platform-instagram .fc-event-title {
+    color: #34d399 !important;
+}
+
+html.dark .fc-event.platform-tiktok .fc-event-title {
+    color: #e4e4e7 !important;
 }
 
 /* Money icon for sponsored posts */
@@ -1131,8 +1225,55 @@ html.dark .fc-event.platform-other {
 .clock-icon {
     margin-right: 6px;
     font-size: 0.875em;
-    opacity: 0.85;
+    opacity: 0.7;
     vertical-align: middle;
+}
+
+/* Platform logo on the right side */
+.platform-logo {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    opacity: 0.9;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Platform-specific logo colors */
+.fc-event.platform-youtube .platform-logo {
+    color: #FF0033 !important;
+}
+
+html.dark .fc-event.platform-youtube .platform-logo {
+    color: #fca5a5 !important;
+}
+
+.fc-event.platform-instagram .platform-logo {
+    color: #059669 !important;
+}
+
+html.dark .fc-event.platform-instagram .platform-logo {
+    color: #34d399 !important;
+}
+
+.fc-event.platform-tiktok .platform-logo {
+    color: #010101 !important;
+}
+
+html.dark .fc-event.platform-tiktok .platform-logo {
+    color: #e4e4e7 !important;
+}
+
+.fc-event.platform-x .platform-logo,
+.fc-event.platform-twitter .platform-logo {
+    color: #0284c7 !important;
+}
+
+html.dark .fc-event.platform-x .platform-logo,
+html.dark .fc-event.platform-twitter .platform-logo {
+    color: #7dd3fc !important;
 }
 
 /* Clock icon for YouTube scheduled videos */
@@ -1994,6 +2135,10 @@ html.dark .spinner {
     }
 
     .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-compact-grid {
         grid-template-columns: 1fr;
     }
 

@@ -310,24 +310,36 @@ def api_upload():
                 except Exception as e:
                     logger.error(f"Error creating content library: {e}")
 
-            # If scheduled, create calendar event
-            if mode == 'scheduled' and schedule_time and post_id:
+            # Create calendar event for all modes
+            if post_id:
                 try:
+                    from datetime import datetime, timezone
                     calendar_manager = ContentCalendarManager(user_id)
                     event_title = title.split('\n')[0][:100] if title else 'TikTok Video'
 
+                    # Determine status and publish_date based on mode
+                    if mode == 'scheduled':
+                        status = 'ready'
+                        publish_date = schedule_time
+                    elif mode == 'direct':
+                        status = 'posted'
+                        publish_date = datetime.now(timezone.utc).isoformat()
+                    else:  # inbox
+                        status = 'draft'
+                        publish_date = datetime.now(timezone.utc).isoformat()
+
                     event_id = calendar_manager.create_event(
                         title=event_title,
-                        publish_date=schedule_time,
+                        publish_date=publish_date,
                         platform='TikTok',
-                        status='ready',
+                        status=status,
                         content_type='organic',
                         tiktok_post_id=post_id,
                         content_id=content_id if content_id else '',
                         notes=f'TikTok Post ID: {post_id}'
                     )
 
-                    logger.info(f"Created calendar event {event_id} for scheduled TikTok post {post_id}")
+                    logger.info(f"Created calendar event {event_id} for {mode} TikTok post {post_id}")
                 except Exception as e:
                     logger.error(f"Failed to create calendar event: {e}")
                     # Continue even if calendar creation fails

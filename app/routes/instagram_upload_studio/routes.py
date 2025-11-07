@@ -308,27 +308,36 @@ def api_upload():
                 except Exception as e:
                     logger.error(f"Error creating content library: {e}")
 
-            # Create calendar event if post is scheduled
-            if schedule_time and post_id:
+            # Create calendar event for all posts
+            if post_id:
                 try:
                     from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+                    from datetime import datetime, timezone as tz
                     calendar_manager = ContentCalendarManager(user_id)
 
                     # Extract first line of caption for title
                     title = caption.split('\n')[0][:100] if caption else 'Instagram Post'
 
+                    # Determine status and publish_date based on whether it's scheduled
+                    if schedule_time:
+                        status = 'ready'
+                        publish_date = schedule_time
+                    else:
+                        status = 'posted'
+                        publish_date = datetime.now(tz.utc).isoformat()
+
                     event_id = calendar_manager.create_event(
                         title=title,
-                        publish_date=schedule_time,
+                        publish_date=publish_date,
                         platform='Instagram',
-                        status='ready',
+                        status=status,
                         content_type='organic',
                         instagram_post_id=post_id,
                         content_id=content_id if content_id else '',
                         notes=f'Instagram Post ID: {post_id}'
                     )
 
-                    logger.info(f"Created calendar event {event_id} for scheduled Instagram post {post_id}")
+                    logger.info(f"Created calendar event {event_id} for Instagram post {post_id} (scheduled={bool(schedule_time)})")
                     result['calendar_event_id'] = event_id
                 except Exception as e:
                     logger.error(f"Error creating calendar event: {e}")

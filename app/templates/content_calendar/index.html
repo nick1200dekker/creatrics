@@ -39,17 +39,17 @@
                 <div class="dropdown-trigger" id="add-event-dropdown-trigger">
                     <span id="add-event-text">
                         <i class="ph ph-plus-circle"></i>
-                        Add New Event
+                        Add Content
                     </span>
                     <i class="ph ph-caret-down dropdown-arrow"></i>
                 </div>
                 <div class="dropdown-menu" id="add-event-dropdown-menu">
                     <div class="dropdown-option" onclick="openNewEventModal('organic')">
-                        <i class="ph ph-pencil"></i>
+                        <i class="ph ph-pencil organic-icon"></i>
                         <span>Organic Content</span>
                     </div>
                     <div class="dropdown-option" onclick="openNewEventModal('sponsored')">
-                        <i class="ph ph-currency-dollar"></i>
+                        <i class="ph ph-currency-dollar sponsored-icon"></i>
                         <span>Sponsored Content</span>
                     </div>
                 </div>
@@ -182,12 +182,10 @@
                 <div class="analytics-card">
                     <div class="analytics-label">Organic Content</div>
                     <div class="analytics-value" id="organic-posts">0</div>
-                    <div class="analytics-sub" id="organic-percentage">0%</div>
                 </div>
                 <div class="analytics-card">
                     <div class="analytics-label">Sponsored Content</div>
                     <div class="analytics-value" id="sponsored-posts">0</div>
-                    <div class="analytics-sub" id="sponsored-percentage">0%</div>
                 </div>
             </div>
         </div>
@@ -199,10 +197,6 @@
                 <div class="analytics-card">
                     <div class="analytics-label">Draft</div>
                     <div class="analytics-value" id="draft-posts">0</div>
-                </div>
-                <div class="analytics-card">
-                    <div class="analytics-label">Scheduled</div>
-                    <div class="analytics-value" id="scheduled-posts">0</div>
                 </div>
                 <div class="analytics-card">
                     <div class="analytics-label">In Progress</div>

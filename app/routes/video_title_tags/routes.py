@@ -759,24 +759,32 @@ def upload_to_youtube():
             except Exception as e:
                 logger.error(f"Error creating content library: {e}")
 
-        # Create calendar event if video is scheduled
-        if scheduled_time and title:
+        # Create calendar event for all videos
+        if title and post_id:
             try:
                 from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
                 calendar_manager = ContentCalendarManager(user_id)
 
+                # Determine status and publish_date based on whether it's scheduled
+                if scheduled_time:
+                    status = 'ready'
+                    publish_date = scheduled_time
+                else:
+                    status = 'posted'
+                    publish_date = datetime.now(timezone.utc).isoformat()
+
                 event_id = calendar_manager.create_event(
                     title=title,
-                    publish_date=scheduled_time,
+                    publish_date=publish_date,
                     platform='YouTube',
-                    status='ready',
+                    status=status,
                     content_type='organic',
                     youtube_video_id=post_id,
                     content_id=content_id if content_id else '',
                     notes=f'YouTube Post ID: {post_id}'
                 )
 
-                logger.info(f"Created calendar event {event_id} for scheduled YouTube video {post_id}")
+                logger.info(f"Created calendar event {event_id} for YouTube video {post_id} (scheduled={bool(scheduled_time)})")
             except Exception as e:
                 logger.error(f"Error creating calendar event: {e}")
                 # Don't fail the whole request if calendar creation fails
@@ -919,24 +927,32 @@ def finalize_youtube_upload():
             except Exception as e:
                 logger.error(f"Error creating content library: {e}")
 
-        # Create calendar event if video is scheduled
-        if scheduled_time and title:
+        # Create calendar event for all videos
+        if title and video_id:
             try:
                 from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
                 calendar_manager = ContentCalendarManager(user_id)
 
+                # Determine status and publish_date based on whether it's scheduled
+                if scheduled_time:
+                    status = 'ready'
+                    publish_date = scheduled_time
+                else:
+                    status = 'posted'
+                    publish_date = datetime.now(timezone.utc).isoformat()
+
                 event_id = calendar_manager.create_event(
                     title=title,
-                    publish_date=scheduled_time,
+                    publish_date=publish_date,
                     platform='YouTube',
-                    status='ready',
+                    status=status,
                     content_type='organic',
                     youtube_video_id=video_id,
                     content_id=content_id if content_id else '',
                     notes=f'YouTube Video ID: {video_id}'
                 )
 
-                logger.info(f"Created calendar event {event_id} for scheduled YouTube video {video_id}")
+                logger.info(f"Created calendar event {event_id} for YouTube video {video_id} (scheduled={bool(scheduled_time)})")
             except Exception as e:
                 logger.error(f"Error creating calendar event: {e}")
                 # Don't fail the whole request if calendar creation fails

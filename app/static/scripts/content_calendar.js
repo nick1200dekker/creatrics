@@ -167,44 +167,36 @@ document.addEventListener('DOMContentLoaded', function() {
                         info.el.classList.add('platform-other');
                     }
 
-                    // Add clock icon for YouTube scheduled videos
+                    // Add clock icon and platform logo
+                    const titleEl = info.el.querySelector('.fc-event-title');
+                    if (titleEl) {
+                        // Add clock icon for scheduled posts
+                        if (event.youtube_video_id || event.instagram_post_id || event.tiktok_post_id || event.x_post_id) {
+                            const clockIcon = document.createElement('i');
+                            clockIcon.className = 'ph-fill ph-clock clock-icon';
+                            titleEl.insertBefore(clockIcon, titleEl.firstChild);
+                        }
+                    }
+
+                    // Add platform logo on the right side - append to the event element itself
+                    let platformIcon = null;
                     if (event.youtube_video_id) {
-                        const titleEl = info.el.querySelector('.fc-event-title');
-                        if (titleEl) {
-                            const clockIcon = document.createElement('i');
-                            clockIcon.className = 'ph-fill ph-clock clock-icon';
-                            titleEl.insertBefore(clockIcon, titleEl.firstChild);
-                        }
+                        platformIcon = document.createElement('i');
+                        platformIcon.className = 'ph-fill ph-youtube-logo platform-logo';
+                    } else if (event.instagram_post_id) {
+                        platformIcon = document.createElement('i');
+                        platformIcon.className = 'ph-fill ph-instagram-logo platform-logo';
+                    } else if (event.tiktok_post_id) {
+                        platformIcon = document.createElement('i');
+                        platformIcon.className = 'ph-fill ph-tiktok-logo platform-logo';
+                    } else if (event.x_post_id) {
+                        platformIcon = document.createElement('i');
+                        platformIcon.className = 'ph-fill ph-x-logo platform-logo';
                     }
 
-                    // Add clock icon for Instagram scheduled posts
-                    if (event.instagram_post_id) {
-                        const titleEl = info.el.querySelector('.fc-event-title');
-                        if (titleEl) {
-                            const clockIcon = document.createElement('i');
-                            clockIcon.className = 'ph-fill ph-clock clock-icon';
-                            titleEl.insertBefore(clockIcon, titleEl.firstChild);
-                        }
-                    }
-
-                    // Add clock icon for TikTok scheduled posts
-                    if (event.tiktok_post_id) {
-                        const titleEl = info.el.querySelector('.fc-event-title');
-                        if (titleEl) {
-                            const clockIcon = document.createElement('i');
-                            clockIcon.className = 'ph-fill ph-clock clock-icon';
-                            titleEl.insertBefore(clockIcon, titleEl.firstChild);
-                        }
-                    }
-
-                    // Add clock icon for X scheduled posts
-                    if (event.x_post_id) {
-                        const titleEl = info.el.querySelector('.fc-event-title');
-                        if (titleEl) {
-                            const clockIcon = document.createElement('i');
-                            clockIcon.className = 'ph-fill ph-clock clock-icon';
-                            titleEl.insertBefore(clockIcon, titleEl.firstChild);
-                        }
+                    // Append platform logo to the event element
+                    if (platformIcon) {
+                        info.el.appendChild(platformIcon);
                     }
                 }
             }
@@ -318,18 +310,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('organic-posts').textContent = organicPosts;
         document.getElementById('sponsored-posts').textContent = sponsoredPosts;
         document.getElementById('draft-posts').textContent = draftPosts;
-        document.getElementById('scheduled-posts').textContent = scheduledPosts;
         document.getElementById('progress-posts').textContent = progressPosts;
         document.getElementById('review-posts').textContent = reviewPosts;
         document.getElementById('ready-posts').textContent = readyPosts;
-        
-        if (totalPosts > 0) {
-            document.getElementById('organic-percentage').textContent = `${Math.round((organicPosts / totalPosts) * 100)}%`;
-            document.getElementById('sponsored-percentage').textContent = `${Math.round((sponsoredPosts / totalPosts) * 100)}%`;
-        } else {
-            document.getElementById('organic-percentage').textContent = '0%';
-            document.getElementById('sponsored-percentage').textContent = '0%';
-        }
 
         generateDailyChart(monthEvents, monthStart, monthEnd);
     }
