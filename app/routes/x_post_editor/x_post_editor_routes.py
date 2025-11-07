@@ -1300,6 +1300,7 @@ def schedule_post():
         scheduled_time = data.get('scheduled_time')  # ISO 8601 format
         timezone = data.get('timezone', 'UTC')
         content_id = data.get('content_id')  # Content library ID (optional, for reposting)
+        calendar_event_id = data.get('calendar_event_id')  # Calendar event ID (optional)
 
         current_app.logger.info(f"📥 Received schedule request with {len(posts)} posts")
         for i, post in enumerate(posts):
@@ -1488,7 +1489,7 @@ def schedule_post():
             current_app.logger.info(f"Late.dev response body: {result}")
             current_app.logger.info(f"Successfully scheduled X post for user {user_id}")
 
-            # Create calendar event for scheduled post
+            # Create or update calendar event for scheduled post
             # Late.dev returns the post ID as 'post._id' not 'id'
             post_data = result.get('post', {})
             post_id = post_data.get('_id') or result.get('_id') or result.get('id')
@@ -1496,37 +1497,67 @@ def schedule_post():
 
             event_id = None
             if post_id:
-                current_app.logger.info(f"Attempting to create calendar event for post_id: {post_id}")
+                current_app.logger.info(f"Attempting to create/update calendar event for post_id: {post_id}")
                 try:
                     from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
 
                     calendar_manager = ContentCalendarManager(user_id)
 
-                    # Get first post content for title
+                    # Get first post content for title and description
                     first_post_text = posts[0].get('text', '') if posts else ''
-                    event_title = first_post_text.split('\n')[0][:100] if first_post_text else 'X Post'
 
                     # Get draft_id from request if provided (so we can link back)
                     draft_id = data.get('draft_id', '')
                     content_link = f"/x_post_editor?draft={draft_id}" if draft_id else ""
 
-                    current_app.logger.info(f"Creating calendar event - Title: '{event_title}', Draft ID: {draft_id}, Link: {content_link}")
+                    # Get first media URL for preview (if any)
+                    media_url = ''
+                    if posts and posts[0].get('media') and len(posts[0]['media']) > 0:
+                        media_url = posts[0]['media'][0].get('url', '')
 
-                    event_id = calendar_manager.create_event(
-                        title=event_title,
-                        publish_date=scheduled_time,
-                        platform='X',
-                        status='ready',
-                        content_type='organic',
-                        content_link=content_link,
-                        x_post_id=post_id,
-                        notes=f'Draft ID: {draft_id}' if draft_id else '',
-                        content_id=content_id if content_id else ''
-                    )
+                    if calendar_event_id:
+                        # Update the linked calendar event
+                        # Keep the original title (requirements), store post text in description
+                        success = calendar_manager.update_event(
+                            event_id=calendar_event_id,
+                            description=f"Post Text: {first_post_text}",  # Store X post text in description
+                            publish_date=scheduled_time,
+                            platform='X',
+                            status='ready',
+                            x_post_id=post_id,
+                            content_id=content_id if content_id else '',
+                            content_link=content_link,
+                            media_url=media_url  # Store media URL for preview
+                        )
+                        if success:
+                            current_app.logger.info(f"✅ Updated linked calendar event {calendar_event_id} for X post {post_id}")
+                            event_id = calendar_event_id
+                        else:
+                            current_app.logger.warning(f"Failed to update linked calendar event {calendar_event_id}, creating new one")
+                            calendar_event_id = None  # Fall through to create new event
 
-                    current_app.logger.info(f"✅ Created calendar event {event_id} for scheduled X post {post_id}")
+                    if not calendar_event_id:
+                        # Create new calendar event
+                        event_title = first_post_text.split('\n')[0][:100] if first_post_text else 'X Post'
+                        current_app.logger.info(f"Creating calendar event - Title: '{event_title}', Draft ID: {draft_id}, Link: {content_link}")
+
+                        event_id = calendar_manager.create_event(
+                            title=event_title,
+                            description=first_post_text,  # Store full post text in description
+                            publish_date=scheduled_time,
+                            platform='X',
+                            status='ready',
+                            content_type='organic',
+                            content_link=content_link,
+                            x_post_id=post_id,
+                            notes=f'Draft ID: {draft_id}' if draft_id else '',
+                            content_id=content_id if content_id else '',
+                            media_url=media_url  # Store media URL for preview
+                        )
+
+                        current_app.logger.info(f"✅ Created calendar event {event_id} for scheduled X post {post_id}")
                 except Exception as e:
-                    current_app.logger.error(f"❌ Failed to create calendar event: {e}", exc_info=True)
+                    current_app.logger.error(f"❌ Failed to create/update calendar event: {e}", exc_info=True)
                     # Continue even if calendar creation fails
             else:
                 current_app.logger.warning("⚠️ No post_id in Late.dev response, skipping calendar creation")

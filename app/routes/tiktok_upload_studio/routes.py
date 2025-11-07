@@ -242,6 +242,7 @@ def api_upload():
         title = data.get('title', '').strip()
         media_url = data.get('media_url', '').strip()  # Firebase Storage URL
         content_id = data.get('content_id')  # Content library ID (optional)
+        calendar_event_id = data.get('calendar_event_id')  # Calendar event ID (optional)
         mode = data.get('mode', 'direct')  # 'direct', 'inbox', or 'scheduled'
         privacy_level = data.get('privacy_level', 'PUBLIC_TO_EVERYONE')
         schedule_time = data.get('schedule_time')  # ISO 8601 format or null for immediate
@@ -310,12 +311,11 @@ def api_upload():
                 except Exception as e:
                     logger.error(f"Error creating content library: {e}")
 
-            # Create calendar event for all modes
+            # Create or update calendar event for all modes
             if post_id:
                 try:
-                    from datetime import datetime, timezone
+                    from datetime import datetime, timezone as tz
                     calendar_manager = ContentCalendarManager(user_id)
-                    event_title = title.split('\n')[0][:100] if title else 'TikTok Video'
 
                     # Determine status and publish_date based on mode
                     if mode == 'scheduled':
@@ -323,25 +323,49 @@ def api_upload():
                         publish_date = schedule_time
                     elif mode == 'direct':
                         status = 'posted'
-                        publish_date = datetime.now(timezone.utc).isoformat()
+                        publish_date = datetime.now(tz.utc).isoformat()
                     else:  # inbox
                         status = 'draft'
-                        publish_date = datetime.now(timezone.utc).isoformat()
+                        publish_date = datetime.now(tz.utc).isoformat()
 
-                    event_id = calendar_manager.create_event(
-                        title=event_title,
-                        publish_date=publish_date,
-                        platform='TikTok',
-                        status=status,
-                        content_type='organic',
-                        tiktok_post_id=post_id,
-                        content_id=content_id if content_id else '',
-                        notes=f'TikTok Post ID: {post_id}'
-                    )
+                    if calendar_event_id:
+                        # Update the linked calendar event
+                        # Keep the original title (requirements), store TikTok title in description
+                        success = calendar_manager.update_event(
+                            event_id=calendar_event_id,
+                            description=f"Video Title: {title}",  # Store TikTok title in description
+                            publish_date=publish_date,
+                            platform='TikTok',
+                            status=status,
+                            tiktok_post_id=post_id,
+                            content_id=content_id if content_id else '',
+                            media_url=media_url  # Store video URL for thumbnail display
+                        )
+                        if success:
+                            logger.info(f"Updated linked calendar event {calendar_event_id} for TikTok post {post_id}")
+                        else:
+                            logger.warning(f"Failed to update linked calendar event {calendar_event_id}, creating new one")
+                            calendar_event_id = None  # Fall through to create new event
 
-                    logger.info(f"Created calendar event {event_id} for {mode} TikTok post {post_id}")
+                    if not calendar_event_id:
+                        # Create new calendar event
+                        event_title = title.split('\n')[0][:100] if title else 'TikTok Video'
+                        event_id = calendar_manager.create_event(
+                            title=event_title,
+                            description=title,  # Store full TikTok title in description
+                            publish_date=publish_date,
+                            platform='TikTok',
+                            status=status,
+                            content_type='organic',
+                            tiktok_post_id=post_id,
+                            content_id=content_id if content_id else '',
+                            notes=f'TikTok Post ID: {post_id}',
+                            media_url=media_url  # Store video URL for thumbnail display
+                        )
+                        logger.info(f"Created calendar event {event_id} for {mode} TikTok post {post_id}")
+
                 except Exception as e:
-                    logger.error(f"Failed to create calendar event: {e}")
+                    logger.error(f"Failed to create/update calendar event: {e}")
                     # Continue even if calendar creation fails
 
             return jsonify(result), 200

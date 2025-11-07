@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize repost modal
     initializeRepostModal();
 
+    // Initialize calendar link modal
+    initializeCalendarModal();
+
     // Initialize status to trigger default scheduled setup (wait for DOM to be fully ready)
     setTimeout(() => {
         handleStatusChange();
@@ -214,6 +217,72 @@ function initializeRepostModal() {
             }
         }
     });
+}
+
+/**
+ * Initialize the calendar link modal
+ */
+function initializeCalendarModal() {
+    if (typeof CalendarLinkModal === 'undefined') {
+        console.error('CalendarLinkModal not loaded');
+        return;
+    }
+
+    CalendarLinkModal.init('Instagram', function(item) {
+        // Update the select dropdown to show it's linked
+        const select = document.getElementById('contentCalendarSelect');
+        if (select) {
+            // Add custom option to show linked item
+            const existingOption = select.querySelector('option[value="linked"]');
+            if (existingOption) {
+                existingOption.remove();
+            }
+
+            const option = document.createElement('option');
+            option.value = 'linked';
+            option.selected = true;
+            option.textContent = `Linked: ${item.title || 'Untitled'}`;
+            select.appendChild(option);
+        }
+
+        // If the linked item has a publish_date, auto-populate the schedule fields
+        if (item.publish_date) {
+            const scheduleDateSelect = document.getElementById('scheduleDateSelect');
+            const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
+
+            if (scheduleDateSelect && scheduleTimeSelect) {
+                const date = new Date(item.publish_date);
+
+                // Format date as YYYY-MM-DD
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateValue = `${year}-${month}-${day}`;
+
+                // Format time as HH:MM
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const timeValue = `${hours}:${minutes}`;
+
+                scheduleDateSelect.value = dateValue;
+                scheduleTimeSelect.value = timeValue;
+
+                console.log('Auto-populated schedule from linked calendar item:', dateValue, timeValue);
+            }
+        }
+    });
+}
+
+function handleContentCalendarChange() {
+    const select = document.getElementById("contentCalendarSelect");
+    const value = select.value;
+
+    if (value === "link_existing") {
+        CalendarLinkModal.open();
+    } else if (value === "create_new") {
+        // Clear any previously linked item
+        CalendarLinkModal.clearLinkedItem();
+    }
 }
 
 /**
@@ -508,6 +577,18 @@ function renderUploadSection(visible) {
                                 </select>
                             </div>
                         </div>
+
+                        <!-- Content Calendar Integration -->
+                        <div class="upload-option-card">
+                            <label class="upload-option-label">
+                                <i class="ph ph-calendar-check"></i>
+                                Content Calendar
+                            </label>
+                            <select id="contentCalendarSelect" class="privacy-select" onchange="handleContentCalendarChange()">
+                                <option value="create_new">Create New Calendar Item</option>
+                                <option value="link_existing">Link to Existing Item</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Upload Button -->
@@ -768,13 +849,21 @@ async function handleUpload(e) {
     const captionObj = currentCaptions[selectedCaptionIndex];
     const caption = captionObj.caption || '';
     const statusSelect = document.getElementById('statusSelect');
-    const scheduleDateSelect = document.getElementById('scheduleDateSelect');
-    const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
 
+    // Check if calendar item is linked - if so, use its publish date
+    const linkedCalendarItem = CalendarLinkModal.getLinkedItem();
     let scheduleTime = null;
     let userTimezone = 'UTC';
 
-    if (statusSelect && statusSelect.value === 'scheduled') {
+    if (linkedCalendarItem && linkedCalendarItem.publish_date) {
+        // Use the linked calendar item's publish date
+        scheduleTime = linkedCalendarItem.publish_date;
+        userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        console.log('Using linked calendar item publish date:', scheduleTime);
+    } else if (statusSelect && statusSelect.value === 'scheduled') {
+        // Only use form fields if NOT linked to calendar item
+        const scheduleDateSelect = document.getElementById('scheduleDateSelect');
+        const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
         const dateValue = scheduleDateSelect ? scheduleDateSelect.value : null;
         const timeValue = scheduleTimeSelect ? scheduleTimeSelect.value : null;
 
@@ -895,6 +984,11 @@ async function handleUpload(e) {
         // Add content_id if we have it (from repost or upload)
         if (contentId) {
             postPayload.content_id = contentId;
+        }
+
+        // Add calendar_event_id if linked
+        if (linkedCalendarItem && linkedCalendarItem.id) {
+            postPayload.calendar_event_id = linkedCalendarItem.id;
         }
 
         const postResponse = await fetch('/instagram-upload-studio/api/upload', {

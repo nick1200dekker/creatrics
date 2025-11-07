@@ -237,6 +237,7 @@ def api_upload():
         caption = data.get('caption', '').strip()
         media_url = data.get('media_url', '').strip()  # Firebase Storage URL
         content_id = data.get('content_id')  # Content library ID (optional)
+        calendar_event_id = data.get('calendar_event_id')  # Calendar event ID (optional)
         schedule_time = data.get('schedule_time')  # ISO 8601 format or null for immediate
         timezone = data.get('timezone', 'UTC')
 
@@ -308,15 +309,12 @@ def api_upload():
                 except Exception as e:
                     logger.error(f"Error creating content library: {e}")
 
-            # Create calendar event for all posts
+            # Create or update calendar event for all posts
             if post_id:
                 try:
                     from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
                     from datetime import datetime, timezone as tz
                     calendar_manager = ContentCalendarManager(user_id)
-
-                    # Extract first line of caption for title
-                    title = caption.split('\n')[0][:100] if caption else 'Instagram Post'
 
                     # Determine status and publish_date based on whether it's scheduled
                     if schedule_time:
@@ -326,21 +324,46 @@ def api_upload():
                         status = 'posted'
                         publish_date = datetime.now(tz.utc).isoformat()
 
-                    event_id = calendar_manager.create_event(
-                        title=title,
-                        publish_date=publish_date,
-                        platform='Instagram',
-                        status=status,
-                        content_type='organic',
-                        instagram_post_id=post_id,
-                        content_id=content_id if content_id else '',
-                        notes=f'Instagram Post ID: {post_id}'
-                    )
+                    if calendar_event_id:
+                        # Update the linked calendar event
+                        # Keep the original title (requirements), store Instagram caption in description
+                        success = calendar_manager.update_event(
+                            event_id=calendar_event_id,
+                            description=f"Caption: {caption}",  # Store Instagram caption in description
+                            publish_date=publish_date,
+                            platform='Instagram',
+                            status=status,
+                            instagram_post_id=post_id,
+                            content_id=content_id if content_id else '',
+                            media_url=media_url  # Store media URL for preview
+                        )
+                        if success:
+                            logger.info(f"Updated linked calendar event {calendar_event_id} for Instagram post {post_id}")
+                            result['calendar_event_id'] = calendar_event_id
+                        else:
+                            logger.warning(f"Failed to update linked calendar event {calendar_event_id}, creating new one")
+                            calendar_event_id = None  # Fall through to create new event
 
-                    logger.info(f"Created calendar event {event_id} for Instagram post {post_id} (scheduled={bool(schedule_time)})")
-                    result['calendar_event_id'] = event_id
+                    if not calendar_event_id:
+                        # Create new calendar event
+                        title = caption.split('\n')[0][:100] if caption else 'Instagram Post'
+                        event_id = calendar_manager.create_event(
+                            title=title,
+                            description=caption,  # Store full caption in description
+                            publish_date=publish_date,
+                            platform='Instagram',
+                            status=status,
+                            content_type='organic',
+                            instagram_post_id=post_id,
+                            content_id=content_id if content_id else '',
+                            notes=f'Instagram Post ID: {post_id}',
+                            media_url=media_url  # Store media URL for preview
+                        )
+                        logger.info(f"Created calendar event {event_id} for Instagram post {post_id} (scheduled={bool(schedule_time)})")
+                        result['calendar_event_id'] = event_id
+
                 except Exception as e:
-                    logger.error(f"Error creating calendar event: {e}")
+                    logger.error(f"Error creating/updating calendar event: {e}")
                     # Don't fail the whole request if calendar creation fails
 
             return jsonify(result)

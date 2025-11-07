@@ -46,6 +46,18 @@ class ContentEventModal {
                                         <i class="ph ph-youtube-logo"></i>
                                         <span>YouTube Metadata</span>
                                     </button>
+                                    <button class="content-tab" data-tab="tiktok" id="tiktok-tab-btn" style="display: none;">
+                                        <i class="ph ph-tiktok-logo"></i>
+                                        <span>TikTok Metadata</span>
+                                    </button>
+                                    <button class="content-tab" data-tab="x" id="x-tab-btn" style="display: none;">
+                                        <i class="ph ph-x-logo"></i>
+                                        <span>X/Twitter Post</span>
+                                    </button>
+                                    <button class="content-tab" data-tab="instagram" id="instagram-tab-btn" style="display: none;">
+                                        <i class="ph ph-instagram-logo"></i>
+                                        <span>Instagram Metadata</span>
+                                    </button>
                                 </div>
 
                                 <!-- Tab Content -->
@@ -75,6 +87,46 @@ class ContentEventModal {
                                         <div class="form-group">
                                             <label>Tags</label>
                                             <div id="youtube-tags-container" class="youtube-tags-container"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- TikTok Metadata Tab -->
+                                    <div class="content-tab-panel" data-panel="tiktok">
+                                        <div class="form-group" id="tiktok-video-preview" style="display: none;">
+                                            <label>Video Preview</label>
+                                            <video id="tiktok-video-element" class="tiktok-video-preview" controls></video>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Video Title / Caption</label>
+                                            <textarea id="tiktok-title-field" class="form-control" rows="6" readonly disabled></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- X/Twitter Post Tab -->
+                                    <div class="content-tab-panel" data-panel="x">
+                                        <div class="form-group" id="x-media-preview" style="display: none;">
+                                            <label>Media Preview</label>
+                                            <img id="x-media-element" class="x-media-preview" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Post Text</label>
+                                            <textarea id="x-post-field" class="form-control" rows="8" readonly disabled></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- Instagram Post Tab -->
+                                    <div class="content-tab-panel" data-panel="instagram">
+                                        <div class="form-group" id="instagram-video-preview" style="display: none;">
+                                            <label>Video Preview</label>
+                                            <video id="instagram-video-element" class="instagram-video-preview" controls></video>
+                                        </div>
+                                        <div class="form-group" id="instagram-image-preview" style="display: none;">
+                                            <label>Image Preview</label>
+                                            <img id="instagram-image-element" class="instagram-image-preview" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Caption</label>
+                                            <textarea id="instagram-caption-field" class="form-control" rows="8" readonly disabled></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -284,30 +336,18 @@ class ContentEventModal {
         const scheduledTab = document.getElementById('scheduled-tab');
         const modalActions = document.querySelector('.modal-actions');
 
-        if (tabName === 'youtube') {
-            // Hide elements when YouTube tab is active for better readability
+        if (tabName === 'youtube' || tabName === 'tiktok' || tabName === 'x' || tabName === 'instagram') {
+            // Hide elements when platform metadata tab is active for better readability
             if (platformGroup) platformGroup.style.display = 'none';
             if (statusTypeRow) statusTypeRow.style.display = 'none';
             if (scheduledTab) scheduledTab.style.display = 'none';
             if (modalActions) modalActions.style.display = 'none';
         } else {
-            // Show elements when Content Info tab is active
-            // But respect the original visibility rules from populateFields
-            const isActuallyScheduledOnYouTube = this.currentEvent?.youtube_video_id;
-
-            if (isActuallyScheduledOnYouTube) {
-                // Keep them hidden if actually scheduled on YouTube
-                if (platformGroup) platformGroup.style.display = 'none';
-                if (statusTypeRow) statusTypeRow.style.display = 'none';
-                if (scheduledTab) scheduledTab.style.display = 'none';
-                if (modalActions) modalActions.style.display = 'none';
-            } else {
-                // Show for regular content
-                if (platformGroup) platformGroup.style.display = '';
-                if (statusTypeRow) statusTypeRow.style.display = '';
-                if (scheduledTab) scheduledTab.style.display = 'block';
-                if (modalActions) modalActions.style.display = '';
-            }
+            // Show elements when Content Info tab is active (for all posts, scheduled or not)
+            if (platformGroup) platformGroup.style.display = '';
+            if (statusTypeRow) statusTypeRow.style.display = '';
+            if (scheduledTab) scheduledTab.style.display = 'block';
+            if (modalActions) modalActions.style.display = '';
         }
     }
 
@@ -648,8 +688,8 @@ class ContentEventModal {
         const scheduledTab = document.getElementById('scheduled-tab');
         const modalActions = document.querySelector('.modal-actions');
 
-        // Show YouTube tab if YouTube metadata is available
-        const hasYouTubeMetadata = !!(event.description || event.tags);
+        // Show YouTube tab if YouTube post ID exists OR if it has YouTube-specific metadata
+        const hasYouTubeMetadata = !!event.youtube_video_id || (event.platform === 'YouTube' && (event.description || event.tags));
 
         if (hasYouTubeMetadata) {
             // Show YouTube tab
@@ -699,14 +739,115 @@ class ContentEventModal {
         } else {
             // Hide YouTube tab for regular items
             youtubeTabBtn.style.display = 'none';
-            // Show all UI elements for non-scheduled posts
-            if (platformGroup) platformGroup.style.display = '';
-            if (statusTypeRow) statusTypeRow.style.display = '';
-            if (scheduledTab) scheduledTab.style.display = 'block';  // Explicitly show
-            if (modalActions) modalActions.style.display = '';
-            // Make sure Original Info tab is active
-            this.switchTab('original');
         }
+
+        // Handle TikTok tab - similar to YouTube
+        const tiktokTabBtn = document.getElementById('tiktok-tab-btn');
+        const tiktokTitleField = document.getElementById('tiktok-title-field');
+
+        // Show TikTok tab if TikTok post ID exists
+        const hasTikTokMetadata = !!event.tiktok_post_id;
+
+        if (hasTikTokMetadata) {
+            // Show TikTok tab
+            if (tiktokTabBtn) tiktokTabBtn.style.display = 'flex';
+
+            // Populate TikTok metadata
+            const tiktokTitle = event.description ? event.description.replace('Video Title: ', '') : '';
+            if (tiktokTitleField) tiktokTitleField.value = tiktokTitle;
+
+            // Show video preview if media_url is available
+            const tiktokVideoPreview = document.getElementById('tiktok-video-preview');
+            const tiktokVideoElement = document.getElementById('tiktok-video-element');
+            if (event.media_url && tiktokVideoPreview && tiktokVideoElement) {
+                tiktokVideoElement.src = event.media_url;
+                tiktokVideoPreview.style.display = 'block';
+            } else if (tiktokVideoPreview) {
+                tiktokVideoPreview.style.display = 'none';
+            }
+        } else {
+            // Hide TikTok tab for regular items
+            if (tiktokTabBtn) tiktokTabBtn.style.display = 'none';
+        }
+
+        // Handle X/Twitter tab
+        const xTabBtn = document.getElementById('x-tab-btn');
+        const xPostField = document.getElementById('x-post-field');
+
+        // Show X tab if X post ID exists
+        const hasXMetadata = !!event.x_post_id;
+
+        if (hasXMetadata) {
+            // Show X tab
+            if (xTabBtn) xTabBtn.style.display = 'flex';
+
+            // Populate X metadata
+            const xPostText = event.description ? event.description.replace('Post Text: ', '') : '';
+            if (xPostField) xPostField.value = xPostText;
+
+            // Show media preview if media_url is available
+            const xMediaPreview = document.getElementById('x-media-preview');
+            const xMediaElement = document.getElementById('x-media-element');
+            if (event.media_url && xMediaPreview && xMediaElement) {
+                xMediaElement.src = event.media_url;
+                xMediaPreview.style.display = 'block';
+            } else if (xMediaPreview) {
+                xMediaPreview.style.display = 'none';
+            }
+        } else {
+            // Hide X tab for regular items
+            if (xTabBtn) xTabBtn.style.display = 'none';
+        }
+
+        // Handle Instagram tab
+        const instagramTabBtn = document.getElementById('instagram-tab-btn');
+        const instagramCaptionField = document.getElementById('instagram-caption-field');
+
+        // Show Instagram tab if Instagram post ID exists
+        const hasInstagramMetadata = !!event.instagram_post_id;
+
+        if (hasInstagramMetadata) {
+            // Show Instagram tab
+            if (instagramTabBtn) instagramTabBtn.style.display = 'flex';
+
+            // Populate Instagram metadata
+            const instagramCaption = event.description ? event.description.replace('Caption: ', '') : '';
+            if (instagramCaptionField) instagramCaptionField.value = instagramCaption;
+
+            // Show media preview if media_url is available
+            const instagramVideoPreview = document.getElementById('instagram-video-preview');
+            const instagramVideoElement = document.getElementById('instagram-video-element');
+            const instagramImagePreview = document.getElementById('instagram-image-preview');
+            const instagramImageElement = document.getElementById('instagram-image-element');
+
+            if (event.media_url) {
+                // Detect if it's a video or image based on URL
+                const isVideo = /\.(mp4|mov|avi|webm)(\?|$)/i.test(event.media_url);
+
+                if (isVideo && instagramVideoPreview && instagramVideoElement) {
+                    instagramVideoElement.src = event.media_url;
+                    instagramVideoPreview.style.display = 'block';
+                    if (instagramImagePreview) instagramImagePreview.style.display = 'none';
+                } else if (!isVideo && instagramImagePreview && instagramImageElement) {
+                    instagramImageElement.src = event.media_url;
+                    instagramImagePreview.style.display = 'block';
+                    if (instagramVideoPreview) instagramVideoPreview.style.display = 'none';
+                }
+            } else {
+                if (instagramVideoPreview) instagramVideoPreview.style.display = 'none';
+                if (instagramImagePreview) instagramImagePreview.style.display = 'none';
+            }
+        } else {
+            // Hide Instagram tab for regular items
+            if (instagramTabBtn) instagramTabBtn.style.display = 'none';
+        }
+
+        // Always show UI elements in Content Info tab
+        // The switchTab function will hide them when viewing metadata tabs
+        if (platformGroup) platformGroup.style.display = '';
+        if (statusTypeRow) statusTypeRow.style.display = '';
+        if (scheduledTab) scheduledTab.style.display = 'block';
+        if (modalActions) modalActions.style.display = '';
 
         this.handleStatusChange();
 

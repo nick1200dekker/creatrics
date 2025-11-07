@@ -10,6 +10,7 @@
 {% block additional_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/x_post_editor.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/repost-modal.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calendar-link-modal.css') }}?v=3">
 {% endblock %}
 
 {% block content %}
@@ -186,6 +187,19 @@
                         <option value="">Select time</option>
                     </select>
                 </div>
+
+                <!-- Content Calendar Integration -->
+                <div class="upload-option-group" style="margin-top: 1rem;">
+                    <label class="upload-option-label" style="margin-bottom: 0.5rem;">
+                        <i class="ph ph-calendar-check"></i>
+                        Content Calendar
+                    </label>
+                    <select id="contentCalendarSelect" class="schedule-select" onchange="handleContentCalendarChange()">
+                        <option value="create_new">Create New Calendar Item</option>
+                        <option value="link_existing">Link to Existing Item</option>
+                    </select>
+                </div>
+
                 <button id="confirmScheduleBtn" class="schedule-confirm-btn">
                     <i class="ph ph-calendar-check"></i>
                     Schedule Post
@@ -301,5 +315,6 @@ window.userXAccount = '{{ user.x_account | default("", true) }}';
 window.hasPremium = {{ 'true' if has_premium else 'false' }};
 </script>
 <script src="{{ url_for('static', filename='scripts/repost-modal.js') }}"></script>
+<script src="{{ url_for('static', filename='scripts/calendar-link-modal.js') }}?v=3"></script>
 <script src="{{ url_for('static', filename='scripts/x_post_editor.js') }}"></script>
 {% endblock %}

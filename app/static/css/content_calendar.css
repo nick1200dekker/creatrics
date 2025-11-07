@@ -926,9 +926,9 @@ html.dark .main-panel {
 }
 
 .drag-ghost.platform-other {
-    background: rgba(156, 163, 175, 0.15) !important;
-    border-left: 3px solid rgba(156, 163, 175, 0.6) !important;
-    color: #6b7280 !important;
+    background: rgba(234, 179, 8, 0.15) !important;
+    border-left: 3px solid rgba(234, 179, 8, 0.6) !important;
+    color: #a16207 !important;
 }
 
 /* Fix FullCalendar drag and drop */
@@ -1172,8 +1172,8 @@ html.dark .fc-day-today::after {
 }
 
 .fc-event.platform-other {
-    background: linear-gradient(135deg, rgba(156, 163, 175, 0.08) 0%, rgba(156, 163, 175, 0.12) 100%) !important;
-    border-left: 3px solid rgba(156, 163, 175, 0.6) !important;
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(234, 179, 8, 0.12) 100%) !important;
+    border-left: 3px solid rgba(234, 179, 8, 0.6) !important;
     color: #18181b !important;
 }
 
@@ -1209,8 +1209,8 @@ html.dark .fc-event.platform-blog {
 }
 
 html.dark .fc-event.platform-other {
-    background: linear-gradient(135deg, rgba(156, 163, 175, 0.12) 0%, rgba(156, 163, 175, 0.16) 100%) !important;
-    border-left: 3px solid rgba(156, 163, 175, 0.6) !important;
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.12) 0%, rgba(234, 179, 8, 0.16) 100%) !important;
+    border-left: 3px solid rgba(234, 179, 8, 0.7) !important;
     color: #e4e4e7 !important;
 }
 
@@ -1232,6 +1232,10 @@ html.dark .fc-event.platform-other {
     color: #18181b !important;
 }
 
+.fc-event.platform-other .fc-event-title {
+    color: #a16207 !important;
+}
+
 html.dark .fc-event.platform-youtube .fc-event-title {
     color: #fca5a5 !important;
 }
@@ -1247,6 +1251,10 @@ html.dark .fc-event.platform-instagram .fc-event-title {
 
 html.dark .fc-event.platform-tiktok .fc-event-title {
     color: #e4e4e7 !important;
+}
+
+html.dark .fc-event.platform-other .fc-event-title {
+    color: #fde047 !important;
 }
 
 /* Money icon for sponsored posts */

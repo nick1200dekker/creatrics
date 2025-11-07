@@ -10,6 +10,7 @@
 {% block additional_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/instagram_upload_studio.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/repost-modal.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calendar-link-modal.css') }}?v=3">
 {% endblock %}
 
 {% block content %}
@@ -188,5 +189,6 @@
     window.hasPremium = {{ 'true' if has_premium else 'false' }};
 </script>
 <script src="{{ url_for('static', filename='scripts/repost-modal.js') }}"></script>
-<script src="{{ url_for('static', filename='scripts/instagram_upload_studio.js') }}?v=1.1"></script>
+<script src="{{ url_for('static', filename='scripts/calendar-link-modal.js') }}?v=3"></script>
+<script src="{{ url_for('static', filename='scripts/instagram_upload_studio.js') }}?v=1.2"></script>
 {% endblock %}
