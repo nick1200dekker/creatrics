@@ -193,6 +193,7 @@ function handleContentSelection(content) {
 
     // Check if this content has any platform's scheduled post date
     const platforms = content.platforms_posted || {};
+    console.log('Content platforms_posted:', platforms);
 
     // Check all platforms for a scheduled date (prioritize YouTube, then check others)
     repostScheduledDate = null;  // Reset
@@ -200,8 +201,11 @@ function handleContentSelection(content) {
 
     for (const platform of platformOrder) {
         const platformData = platforms[platform];
+        console.log(`Checking ${platform}:`, platformData);
         if (platformData && platformData.scheduled_for) {
             const date = new Date(platformData.scheduled_for);
+            const now = new Date();
+            console.log(`${platform} scheduled_for: ${platformData.scheduled_for}, parsed date: ${date}, now: ${now}, is future: ${date > now}`);
             // Check if the scheduled time is in the future
             if (date > new Date()) {
                 repostScheduledDate = date;
@@ -224,14 +228,8 @@ function handleContentSelection(content) {
     // Display the video in the upload area
     displayRepostVideo(content);
 
-    // Apply scheduled date if available (with delay to ensure UI is ready)
-    if (repostScheduledDate) {
-        setTimeout(() => {
-            applyRepostScheduledDate();
-        }, 500);
-    }
-
     console.log('Content selected for reposting:', content);
+    console.log('Scheduled date will be applied after content generation');
 }
 
 /**
@@ -252,8 +250,6 @@ function displayRepostVideo(content) {
 
     if (fileName) fileName.textContent = decodeURIComponent(fullFilename);
     if (fileSize) fileSize.textContent = 'From library';
-
-    showToast('Content selected for reposting', 'success');
 }
 
 /**
@@ -378,11 +374,14 @@ async function handleVideoSelect(event) {
     // Detect if this is a short video (< 3 minutes)
     selectedVideoFile = file;
     const isShort = await detectIfShort(file);
+    console.log(`Video detected as: ${isShort ? 'Short' : 'Long Form'}`);
 
     // Auto-select video type based on duration
     if (isShort) {
+        console.log('Auto-selecting Short video type');
         setVideoType('short');
     } else {
+        console.log('Auto-selecting Long Form video type');
         setVideoType('long');
     }
 
@@ -527,8 +526,6 @@ async function uploadVideoToServer(file, isShort = false) {
         if (progressContainer) {
             progressContainer.style.display = 'none';
         }
-
-        showToast('Video selected! Generate titles/tags and click "Upload to YouTube"', 'success');
 
     } catch (error) {
         console.error('Error selecting video:', error);
@@ -969,7 +966,6 @@ async function generateContent() {
 
         // Display results
         displayCombinedResults(titlesData, descriptionData, tagsData);
-        showToast('Content generated successfully!', 'success');
 
     } catch (error) {
         console.error('Error generating content:', error);
@@ -1021,7 +1017,7 @@ function displayCombinedResults(titlesData, descriptionData, tagsData) {
                 </button>
             `;
         }
-        if (selectedVideoFile && hasYouTubeConnected) {
+        if ((selectedVideoFile || repostContent) && hasYouTubeConnected) {
             html += `
                 <button class="results-tab-btn" onclick="switchTab('upload')">
                     <i class="ph ph-upload"></i> Upload
@@ -1050,11 +1046,18 @@ function displayCombinedResults(titlesData, descriptionData, tagsData) {
     }
 
     // Display Upload Section (only if YouTube connected)
-    if (selectedVideoFile && hasYouTubeConnected) {
+    if ((selectedVideoFile || repostContent) && hasYouTubeConnected) {
         html += renderUploadSection(!showTabs);
     }
 
     document.getElementById('resultsContainer').innerHTML = html;
+
+    // Apply repost scheduled date if available (after HTML is rendered)
+    if (repostScheduledDate) {
+        setTimeout(() => {
+            applyRepostScheduledDate();
+        }, 300);
+    }
 }
 
 // Render titles section
@@ -1081,7 +1084,7 @@ function renderTitlesSection(titles, visible) {
             <div class="titles-content">
                 <div class="titles-list">
                     ${titles.map((title, index) => `
-                        <div class="title-item ${selectedTitle === index ? 'selected' : ''}" id="title-item-${index}" ${selectedVideoFile && hasYouTubeConnected ? `onclick="selectTitle(${index})"` : ''}>
+                        <div class="title-item ${selectedTitle === index ? 'selected' : ''}" id="title-item-${index}" ${(selectedVideoFile || repostContent) && hasYouTubeConnected ? `onclick="selectTitle(${index})"` : ''}>
                             <span class="title-number">${index + 1}</span>
                             <div class="title-text" contenteditable="false" id="title-text-${index}">${escapeHtml(title)}</div>
                             <div class="title-actions">

@@ -152,8 +152,6 @@ function displayRepostVideo(content) {
 
     if (fileName) fileName.textContent = decodeURIComponent(fullFilename);
     if (fileSize) fileSize.textContent = 'From library';
-
-    showToast('Content selected for reposting', 'success');
 }
 
 /**
@@ -389,8 +387,6 @@ async function generateTitles() {
 
         // Display results
         displayResults(data.titles);
-        showToast('Titles generated successfully!', 'success');
-
     } catch (error) {
         console.error('Error generating titles:', error);
         document.getElementById('resultsContainer').innerHTML = `
@@ -596,6 +592,17 @@ function renderUploadSection(visible) {
                         <i class="ph ph-tiktok-logo"></i>
                         Upload to TikTok
                     </button>
+
+                    <!-- Upload Progress Bar -->
+                    <div id="uploadProgressBar" class="upload-progress-bar" style="display: none;">
+                        <div class="upload-progress-info">
+                            <span class="upload-progress-status">Uploading...</span>
+                            <span class="upload-progress-percent">0%</span>
+                        </div>
+                        <div class="upload-progress-track">
+                            <div class="upload-progress-fill" id="uploadProgressFill"></div>
+                        </div>
+                    </div>
                 </form>
 
                 <!-- Info Notice -->
@@ -709,8 +716,6 @@ function selectTitle(index) {
             item.classList.remove('selected');
         }
     });
-
-    showToast('Title selected! Switch to Upload tab when ready.', 'success');
 }
 
 /**
@@ -1109,11 +1114,19 @@ async function handleUpload(e) {
         }
 
         // Step 2: Post to TikTok via Late.dev using the Firebase URL
+        // Get keywords and description for content library
+        const keywordsInput = document.getElementById('keywordsInput');
+        const videoConceptInput = document.getElementById('videoConceptInput');
+        const keywords = keywordsInput ? keywordsInput.value.trim() : '';
+        const contentDescription = videoConceptInput ? videoConceptInput.value.trim() : '';
+
         const postPayload = {
             title: title,
             media_url: mediaUrl,
             mode: mode,
-            privacy_level: privacyLevel
+            privacy_level: privacyLevel,
+            keywords: keywords,
+            content_description: contentDescription
         };
 
         // Add content_id if we have it
@@ -1432,8 +1445,6 @@ function handleVideoSelectStatic(event) {
     if (uploadProgress) uploadProgress.style.display = 'flex';
     if (fileName) fileName.textContent = file.name;
     if (fileSize) fileSize.textContent = formatFileSize(file.size);
-
-    showToast('Video ready to upload', 'success');
 }
 
 function removeVideoStatic(event) {

@@ -223,9 +223,12 @@ class RepostModal {
         const isVideo = item.media_type === 'video';
 
         // Check if this content is already scheduled/posted on the current platform
-        const currentPlatformData = platforms[this.platform];
-        const isAlreadyScheduled = currentPlatformData &&
-            (currentPlatformData.scheduled_for || currentPlatformData.posted_at);
+        // Simple: if the platform exists in platforms_posted, it's already on that platform
+        const isAlreadyScheduled = platforms.hasOwnProperty(this.currentPlatform);
+
+        if (isAlreadyScheduled) {
+            console.log(`Content ${item.id} is already on ${this.currentPlatform} - disabling`);
+        }
 
         // Truncate keywords and description
         const keywords = (item.keywords || 'No keywords').substring(0, 50);

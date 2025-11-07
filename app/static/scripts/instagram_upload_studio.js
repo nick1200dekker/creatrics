@@ -304,8 +304,6 @@ function displayRepostContent(content) {
 
     if (fileName) fileName.textContent = decodeURIComponent(fullFilename);
     if (fileSize) fileSize.textContent = 'From library';
-
-    showToast('Content selected for reposting', 'success');
 }
 
 /**
@@ -372,8 +370,6 @@ async function generateCaptions() {
 
         // Display results
         displayResults(data.captions);
-        showToast('Captions generated successfully!', 'success');
-
     } catch (error) {
         console.error('Error generating captions:', error);
         document.getElementById('resultsContainer').innerHTML = `
@@ -605,8 +601,6 @@ function selectCaption(index) {
             item.classList.remove('selected');
         }
     });
-
-    showToast('Caption selected! Switch to Upload tab when ready.', 'success');
 }
 
 /**
@@ -1154,8 +1148,6 @@ function handleVideoSelectStatic(event) {
     if (uploadProgress) uploadProgress.style.display = 'flex';
     if (fileName) fileName.textContent = file.name;
     if (fileSize) fileSize.textContent = formatFileSize(file.size);
-
-    showToast('Video ready to upload', 'success');
 }
 
 function removeVideoStatic(event) {
