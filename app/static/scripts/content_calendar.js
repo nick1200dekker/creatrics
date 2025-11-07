@@ -726,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function getEventColor(event) {
-        const platform = (event.platform || 'Other').toLowerCase();
+        const platform = (event.platform || 'Not set').toLowerCase();
         switch(platform) {
             case 'youtube': return '#FF0033';
             case 'x':
@@ -734,6 +734,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'instagram': return '#059669';
             case 'tiktok': return '#000000';
             case 'blog': return '#6B7280';
+            case 'not set': return '#9CA3AF';
             default: return '#9CA3AF';
         }
     }

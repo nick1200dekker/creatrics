@@ -37,7 +37,7 @@ class ContentEventModal {
                             <div class="form-group">
                                 <label>Platform</label>
                                 <select id="platform-select" class="form-control">
-                                    <option value="">Select Platform</option>
+                                    <option value="Not set" selected>Not set</option>
                                     <option value="YouTube">YouTube</option>
                                     <option value="Instagram">Instagram</option>
                                     <option value="TikTok">TikTok</option>
@@ -182,8 +182,15 @@ class ContentEventModal {
         // Always show the Publish Date tab (acts as deadline/target date for all statuses)
         scheduledTab.style.display = 'block';
 
-        // Lock platform if it's a scheduled post (has publish_date)
-        if (this.currentEvent && this.currentEvent.publish_date) {
+        // Lock platform ONLY if it's actually scheduled on the platform (has platform post ID - the "clock" icon)
+        const isActuallyScheduled = this.currentEvent && (
+            this.currentEvent.youtube_video_id ||
+            this.currentEvent.instagram_post_id ||
+            this.currentEvent.tiktok_post_id ||
+            this.currentEvent.x_post_id
+        );
+
+        if (isActuallyScheduled) {
             platformSelect.disabled = true;
         } else {
             platformSelect.disabled = false;
@@ -335,7 +342,7 @@ class ContentEventModal {
     }
 
     resetFields() {
-        document.getElementById('platform-select').value = '';
+        document.getElementById('platform-select').value = 'Not set';
         document.getElementById('platform-select').disabled = false;
         document.getElementById('content-field').value = '';
         document.getElementById('status-select').value = 'draft';
@@ -346,7 +353,7 @@ class ContentEventModal {
     }
 
     populateFields(event) {
-        document.getElementById('platform-select').value = event.platform || '';
+        document.getElementById('platform-select').value = event.platform || 'Not set';
         document.getElementById('content-field').value = event.title || '';
         document.getElementById('status-select').value = event.status || 'ready';
         document.getElementById('type-select').value = event.content_type || 'organic';
@@ -396,10 +403,6 @@ class ContentEventModal {
 
     async save() {
         const platform = document.getElementById('platform-select').value;
-        if (!platform) {
-            alert('Please select a platform');
-            return;
-        }
 
         const content = document.getElementById('content-field').value.trim();
         if (!content) {
