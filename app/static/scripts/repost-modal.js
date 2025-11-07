@@ -199,9 +199,14 @@ class RepostModal {
 
         container.innerHTML = tableHTML;
 
-        // Make rows clickable
+        // Make rows clickable (except disabled ones)
         container.querySelectorAll('.repost-content-row').forEach(row => {
             row.addEventListener('click', () => {
+                // Don't allow selecting already-scheduled content
+                if (row.dataset.disabled === 'true') {
+                    return;
+                }
+
                 const contentId = row.dataset.contentId;
                 const content = this.contentData.find(c => c.id === contentId);
                 if (content && this.onSelect) {
@@ -217,12 +222,19 @@ class RepostModal {
         const platformInfo = this.getPlatformStatusInfo(platforms);
         const isVideo = item.media_type === 'video';
 
+        // Check if this content is already scheduled/posted on the current platform
+        const currentPlatformData = platforms[this.platform];
+        const isAlreadyScheduled = currentPlatformData &&
+            (currentPlatformData.scheduled_for || currentPlatformData.posted_at);
+
         // Truncate keywords and description
         const keywords = (item.keywords || 'No keywords').substring(0, 50);
         const description = (item.content_description || 'No description').substring(0, 100);
 
         return `
-            <tr class="repost-content-row" data-content-id="${item.id}">
+            <tr class="repost-content-row ${isAlreadyScheduled ? 'disabled' : ''}"
+                data-content-id="${item.id}"
+                ${isAlreadyScheduled ? 'data-disabled="true"' : ''}>
                 <td class="repost-thumbnail-cell">
                     <div class="repost-thumbnail-wrapper">
                         ${isVideo ?

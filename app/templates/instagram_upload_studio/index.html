@@ -9,6 +9,7 @@
 
 {% block additional_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/instagram_upload_studio.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/repost-modal.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -78,6 +79,20 @@
                 <!-- Left Panel - Input -->
                 <div class="input-section">
                     <div class="input-panel">
+                        <!-- Upload/Repost Toggle -->
+                        <div class="form-group" id="uploadRepostToggleSection">
+                            <div class="upload-repost-toggle">
+                                <button class="toggle-btn active" data-mode="upload" onclick="switchMode('upload')">
+                                    <i class="ph ph-upload"></i>
+                                    Upload New
+                                </button>
+                                <button class="toggle-btn" data-mode="repost" onclick="switchMode('repost')">
+                                    <i class="ph ph-recycle"></i>
+                                    Repost Content
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Video Upload Section (Top) -->
                         <div class="form-group" id="videoUploadSectionStatic">
                             <label class="form-label">
@@ -164,5 +179,6 @@
     // Pass backend variables to JavaScript
     window.hasPremium = {{ 'true' if has_premium else 'false' }};
 </script>
+<script src="{{ url_for('static', filename='scripts/repost-modal.js') }}"></script>
 <script src="{{ url_for('static', filename='scripts/instagram_upload_studio.js') }}?v=1.1"></script>
 {% endblock %}

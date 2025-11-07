@@ -170,6 +170,24 @@ html.dark .repost-content-row {
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
+/* Disabled rows (already scheduled on this platform) */
+.repost-content-row.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-tertiary);
+}
+
+html.dark .repost-content-row.disabled {
+    background: rgba(39, 39, 42, 0.4);
+}
+
+/* Allow hover but keep disabled styling */
+.repost-content-row.disabled:hover {
+    border-color: var(--border-primary);
+    transform: none;
+    box-shadow: none;
+}
+
 .repost-content-row td {
     padding: 1rem 0.75rem;
 }

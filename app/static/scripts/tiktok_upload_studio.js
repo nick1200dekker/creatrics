@@ -51,8 +51,8 @@ function initializeRepostModal() {
             handleContentSelection(content);
         },
         onClose: function() {
-            // Switch back to upload mode when modal is closed without selecting
-            if (uploadMode === 'repost') {
+            // Switch back to upload mode ONLY if no content was selected
+            if (uploadMode === 'repost' && !repostContent) {
                 switchMode('upload');
             }
         }
@@ -967,32 +967,34 @@ function applyRepostScheduledDate() {
     const scheduledModeRadio = document.querySelector('input[name="mode"][value="scheduled"]');
     if (scheduledModeRadio) {
         scheduledModeRadio.checked = true;
-        // Trigger change event to show schedule inputs
+        // Trigger change event to show schedule inputs and populate dropdowns
         handleModeChange();
     }
 
-    // Set the date and time selects
-    const dateSelect = document.getElementById('scheduleDateSelect');
-    const timeSelect = document.getElementById('scheduleTimeSelect');
+    // Need to wait a bit for handleModeChange to populate dropdowns
+    setTimeout(() => {
+        const dateSelect = document.getElementById('scheduleDateSelect');
+        const timeSelect = document.getElementById('scheduleTimeSelect');
 
-    if (dateSelect && timeSelect) {
-        // Format date as YYYY-MM-DD
-        const year = repostScheduledDate.getFullYear();
-        const month = String(repostScheduledDate.getMonth() + 1).padStart(2, '0');
-        const day = String(repostScheduledDate.getDate()).padStart(2, '0');
-        const dateValue = `${year}-${month}-${day}`;
+        if (dateSelect && timeSelect) {
+            // Format date as YYYY-MM-DD
+            const year = repostScheduledDate.getFullYear();
+            const month = String(repostScheduledDate.getMonth() + 1).padStart(2, '0');
+            const day = String(repostScheduledDate.getDate()).padStart(2, '0');
+            const dateValue = `${year}-${month}-${day}`;
 
-        // Format time as HH:MM
-        const hours = String(repostScheduledDate.getHours()).padStart(2, '0');
-        const minutes = String(repostScheduledDate.getMinutes()).padStart(2, '0');
-        const timeValue = `${hours}:${minutes}`;
+            // Format time as HH:MM
+            const hours = String(repostScheduledDate.getHours()).padStart(2, '0');
+            const minutes = String(repostScheduledDate.getMinutes()).padStart(2, '0');
+            const timeValue = `${hours}:${minutes}`;
 
-        // Set the select values
-        dateSelect.value = dateValue;
-        timeSelect.value = timeValue;
+            // Set the select values
+            dateSelect.value = dateValue;
+            timeSelect.value = timeValue;
 
-        console.log('Set schedule to:', dateValue, timeValue);
-    }
+            console.log('Set schedule to:', dateValue, timeValue);
+        }
+    }, 100);
 }
 
 /**

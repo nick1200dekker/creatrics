@@ -28,11 +28,15 @@ def get_content_library():
         hours = int(request.args.get('hours', 24))
 
         # Validate media_type
-        if media_type and media_type not in ['video', 'image']:
+        if media_type and media_type not in ['video', 'image', 'all']:
             return jsonify({
                 'success': False,
-                'error': 'Invalid media_type. Must be "video" or "image"'
+                'error': 'Invalid media_type. Must be "video", "image", or "all"'
             }), 400
+
+        # Convert 'all' to None for the service layer
+        if media_type == 'all':
+            media_type = None
 
         # Get content
         content_list = ContentLibraryManager.get_recent_content(

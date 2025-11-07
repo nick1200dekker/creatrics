@@ -10,6 +10,10 @@ let isGeneratingCaptions = false;
 let isCheckingConnection = true;
 let selectedCaptionIndex = null;
 let hasPremium = window.hasPremium || false;  // Premium subscription status from backend
+let instagramRepostModal = null;  // Repost modal instance
+let uploadMode = 'upload';  // 'upload' or 'repost'
+let repostContent = null;  // Selected content from repost modal
+let repostScheduledDate = null;  // Scheduled date from repost content
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -26,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle URL parameters (success/error messages)
     handleUrlParams();
+
+    // Initialize repost modal
+    initializeRepostModal();
 });
 
 /**
@@ -181,6 +188,127 @@ async function disconnectFromInstagram() {
 }
 
 /**
+ * Initialize the repost modal
+ */
+function initializeRepostModal() {
+    if (typeof RepostModal === 'undefined') {
+        console.error('RepostModal not loaded');
+        return;
+    }
+
+    instagramRepostModal = new RepostModal({
+        mediaTypeFilter: 'all',  // Instagram supports both images and videos
+        platform: 'instagram',
+        onSelect: function(content) {
+            handleContentSelection(content);
+        },
+        onClose: function() {
+            // Switch back to upload mode ONLY if no content was selected
+            if (uploadMode === 'repost' && !repostContent) {
+                switchMode('upload');
+            }
+        }
+    });
+}
+
+/**
+ * Handle mode switching between upload and repost
+ */
+function switchMode(mode) {
+    uploadMode = mode;
+
+    // Update toggle button states
+    const toggleBtns = document.querySelectorAll('.toggle-btn');
+    toggleBtns.forEach(btn => {
+        if (btn.dataset.mode === mode) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    if (mode === 'repost') {
+        // Open repost modal
+        if (instagramRepostModal) {
+            instagramRepostModal.open();
+        }
+    } else {
+        // Reset to upload mode
+        repostContent = null;
+        repostScheduledDate = null;
+    }
+}
+
+/**
+ * Handle content selection from repost modal
+ */
+function handleContentSelection(content) {
+    repostContent = content;
+
+    // Pre-fill keywords
+    const keywordsInput = document.getElementById('keywordsInput');
+    if (keywordsInput && content.keywords) {
+        keywordsInput.value = content.keywords;
+    }
+
+    // Pre-fill video concept
+    const videoConceptInput = document.getElementById('videoConceptInput');
+    if (videoConceptInput && content.content_description) {
+        videoConceptInput.value = content.content_description;
+        updateCharCount();
+    }
+
+    // Check if this content has any platform's scheduled post date
+    const platforms = content.platforms_posted || {};
+
+    // Check all platforms for a scheduled date (prioritize Instagram, then check others)
+    repostScheduledDate = null;  // Reset
+    const platformOrder = ['instagram', 'tiktok', 'youtube', 'x'];
+
+    for (const platform of platformOrder) {
+        const platformData = platforms[platform];
+        if (platformData && platformData.scheduled_for) {
+            const date = new Date(platformData.scheduled_for);
+            // Check if the scheduled time is in the future
+            if (date > new Date()) {
+                repostScheduledDate = date;
+                console.log('Found scheduled date from', platform, ':', repostScheduledDate);
+                break;
+            }
+        }
+    }
+
+    // Display the content in the upload area
+    displayRepostContent(content);
+
+    // Note: Scheduled date will be applied when user generates captions and upload form is rendered
+
+    console.log('Content selected for reposting:', content);
+}
+
+/**
+ * Display repost content in the upload area
+ */
+function displayRepostContent(content) {
+    const uploadContent = document.getElementById('uploadContentStatic');
+    const uploadProgress = document.getElementById('uploadProgressStatic');
+    const fileName = document.getElementById('uploadFileNameStatic');
+    const fileSize = document.getElementById('uploadFileSizeStatic');
+
+    if (uploadContent) uploadContent.style.display = 'none';
+    if (uploadProgress) uploadProgress.style.display = 'flex';
+
+    // Extract filename from URL
+    const urlParts = content.media_url.split('/');
+    const fullFilename = urlParts[urlParts.length - 1];
+
+    if (fileName) fileName.textContent = decodeURIComponent(fullFilename);
+    if (fileSize) fileSize.textContent = 'From library';
+
+    showToast('Content selected for reposting', 'success');
+}
+
+/**
  * Update character count for video concept input
  */
 function updateCharCount() {
@@ -296,6 +424,13 @@ function displayResults(captions) {
     }
 
     document.getElementById('resultsContainer').innerHTML = html;
+
+    // Apply repost scheduled date if available (after HTML is rendered)
+    if (repostScheduledDate) {
+        setTimeout(() => {
+            applyRepostScheduledDate();
+        }, 100);
+    }
 }
 
 /**
@@ -604,7 +739,8 @@ function handleModeChange() {
 async function handleUpload(e) {
     e.preventDefault();
 
-    if (!selectedFile) {
+    // Check if we have either a selected file (upload mode) or repost content (repost mode)
+    if (!selectedFile && !(uploadMode === 'repost' && repostContent)) {
         showToast('Please select a media file', 'error');
         return;
     }
@@ -658,38 +794,57 @@ async function handleUpload(e) {
         const keywords = keywordsInput ? keywordsInput.value.trim() : '';
         const contentDescription = videoConceptInput ? videoConceptInput.value.trim() : '';
 
-        // Step 1: Upload file to Firebase Storage
-        const formData = new FormData();
-        formData.append('media', selectedFile);
-        formData.append('keywords', keywords);
-        formData.append('content_description', contentDescription);
+        // Step 1: Get media URL (either from uploaded file or repost content)
+        let mediaUrl, contentId;
 
-        uploadBtnText.textContent = `Uploading ${selectedFile.name}...`;
+        if (uploadMode === 'repost' && repostContent) {
+            // Use existing media URL from content library
+            mediaUrl = repostContent.media_url;
+            contentId = repostContent.id;
+            console.log('Reposting existing content:', mediaUrl);
+            uploadBtnText.textContent = 'Posting to Instagram...';
+        } else {
+            // Upload file to Firebase Storage
+            const formData = new FormData();
+            formData.append('media', selectedFile);
+            formData.append('keywords', keywords);
+            formData.append('content_description', contentDescription);
 
-        const uploadResponse = await fetch('/instagram-upload-studio/api/upload-media', {
-            method: 'POST',
-            body: formData
-        });
+            uploadBtnText.textContent = `Uploading ${selectedFile.name}...`;
 
-        const uploadData = await uploadResponse.json();
-        if (!uploadData.success) {
-            throw new Error(uploadData.error || 'Failed to upload media');
+            const uploadResponse = await fetch('/instagram-upload-studio/api/upload-media', {
+                method: 'POST',
+                body: formData
+            });
+
+            const uploadData = await uploadResponse.json();
+            if (!uploadData.success) {
+                throw new Error(uploadData.error || 'Failed to upload media');
+            }
+
+            mediaUrl = uploadData.media_url;
+            contentId = uploadData.content_id;
+            uploadBtnText.textContent = 'Posting to Instagram...';
         }
 
-        // Step 2: Post to Instagram via Late.dev
-        uploadBtnText.textContent = 'Posting to Instagram...';
+        const postPayload = {
+            media_url: mediaUrl,
+            caption: caption,
+            schedule_time: scheduleTime,
+            timezone: userTimezone,  // Use user's local timezone
+            keywords: keywords,
+            content_description: contentDescription
+        };
+
+        // Add content_id if we have it (from repost or upload)
+        if (contentId) {
+            postPayload.content_id = contentId;
+        }
 
         const postResponse = await fetch('/instagram-upload-studio/api/upload', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                media_url: uploadData.media_url,
-                caption: caption,
-                schedule_time: scheduleTime,
-                timezone: userTimezone,  // Use user's local timezone
-                keywords: keywords,
-                content_description: contentDescription
-            })
+            body: JSON.stringify(postPayload)
         });
 
         const postData = await postResponse.json();
@@ -1041,6 +1196,56 @@ function showInsufficientCreditsError() {
     `;
 }
 
+/**
+ * Apply scheduled date from repost content
+ */
+function applyRepostScheduledDate() {
+    if (!repostScheduledDate) return;
+
+    console.log('Applying repost scheduled date:', repostScheduledDate);
+
+    // Switch to scheduled mode
+    const statusSelect = document.getElementById('statusSelect');
+    if (statusSelect) {
+        statusSelect.value = 'scheduled';
+        // Trigger change event to show schedule inputs and populate dropdowns
+        handleStatusChange();
+    }
+
+    // Need to wait longer for handleStatusChange to populate dropdowns
+    setTimeout(() => {
+        const dateSelect = document.getElementById('scheduleDateSelect');
+        const timeSelect = document.getElementById('scheduleTimeSelect');
+
+        if (dateSelect && timeSelect) {
+            // Format date as YYYY-MM-DD
+            const year = repostScheduledDate.getFullYear();
+            const month = String(repostScheduledDate.getMonth() + 1).padStart(2, '0');
+            const day = String(repostScheduledDate.getDate()).padStart(2, '0');
+            const dateValue = `${year}-${month}-${day}`;
+
+            // Format time as HH:MM
+            const hours = String(repostScheduledDate.getHours()).padStart(2, '0');
+            const minutes = String(repostScheduledDate.getMinutes()).padStart(2, '0');
+            const timeValue = `${hours}:${minutes}`;
+
+            // Set the select values (force set even if they have defaults)
+            dateSelect.value = dateValue;
+            timeSelect.value = timeValue;
+
+            console.log('Set schedule to:', dateValue, timeValue);
+
+            // Verify the values were set correctly
+            if (dateSelect.value !== dateValue || timeSelect.value !== timeValue) {
+                console.warn('Failed to set schedule values correctly');
+                console.warn('Date - Expected:', dateValue, 'Actual:', dateSelect.value);
+                console.warn('Time - Expected:', timeValue, 'Actual:', timeSelect.value);
+            }
+        } else {
+            console.warn('Schedule dropdowns not found');
+        }
+    }, 200);
+}
 
 /**
  * Handle status change (show/hide schedule datetime)

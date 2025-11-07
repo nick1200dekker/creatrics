@@ -15,6 +15,10 @@ let selectedTitle = null;
 let hasYouTubeConnected = false;
 let uploadedVideoPath = null; // Server path to uploaded video
 let uploadedThumbnailPath = null; // Server path to uploaded thumbnail
+let youtubeRepostModal = null;  // Repost modal instance
+let uploadMode = 'upload';  // 'upload' or 'repost'
+let repostContent = null;  // Selected content from repost modal
+let repostScheduledDate = null;  // Scheduled date from repost content
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -24,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadChannelKeywords();
     loadReferenceDescription();
     checkYouTubeConnection();
+    initializeRepostModal();
 
     // Set up connect/disconnect button listeners
     const connectBtn = document.getElementById('connectBtn');
@@ -91,6 +96,164 @@ async function disconnectFromYouTube() {
         console.error('Error disconnecting:', error);
         showToast('Failed to disconnect from YouTube', 'error');
     }
+}
+
+/**
+ * Initialize the repost modal
+ */
+function initializeRepostModal() {
+    if (typeof RepostModal === 'undefined') {
+        console.error('RepostModal not loaded');
+        return;
+    }
+
+    youtubeRepostModal = new RepostModal({
+        mediaTypeFilter: 'video',  // YouTube only supports videos
+        platform: 'youtube',
+        onSelect: function(content) {
+            handleContentSelection(content);
+        },
+        onClose: function() {
+            // Switch back to upload mode ONLY if no content was selected
+            if (uploadMode === 'repost' && !repostContent) {
+                switchMode('upload');
+            }
+        }
+    });
+}
+
+/**
+ * Handle mode switching between upload and repost
+ */
+function switchMode(mode) {
+    uploadMode = mode;
+
+    // Update toggle button states
+    const toggleBtns = document.querySelectorAll('.toggle-btn');
+    toggleBtns.forEach(btn => {
+        if (btn.dataset.mode === mode) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    if (mode === 'repost') {
+        // Open repost modal
+        if (youtubeRepostModal) {
+            youtubeRepostModal.open();
+        }
+    } else {
+        // Reset to upload mode
+        repostContent = null;
+        repostScheduledDate = null;
+    }
+}
+
+/**
+ * Handle content selection from repost modal
+ */
+function handleContentSelection(content) {
+    repostContent = content;
+
+    // Pre-fill keywords (Target Keyword field)
+    const keywordInput = document.getElementById('keywordInput');
+    if (keywordInput && content.keywords) {
+        keywordInput.value = content.keywords;
+    }
+
+    // Pre-fill video description
+    const videoInput = document.getElementById('videoInput');
+    if (videoInput && content.content_description) {
+        videoInput.value = content.content_description;
+        updateCharCount();
+    }
+
+    // Auto-select all generation options (Titles, Description, Tags)
+    const titlesCard = document.getElementById('titlesCard');
+    const descriptionCard = document.getElementById('descriptionCard');
+    const tagsCard = document.getElementById('tagsCard');
+
+    // Activate all cards if they're not already active
+    if (titlesCard && !titlesCard.classList.contains('active')) {
+        titlesCard.classList.add('active');
+    }
+    if (descriptionCard && !descriptionCard.classList.contains('active')) {
+        descriptionCard.classList.add('active');
+        // Show reference description section
+        const referenceSection = document.getElementById('referenceDescriptionSection');
+        if (referenceSection) referenceSection.style.display = 'block';
+    }
+    if (tagsCard && !tagsCard.classList.contains('active')) {
+        tagsCard.classList.add('active');
+        // Show channel keywords section
+        const channelKeywordsSection = document.getElementById('channelKeywordsSection');
+        if (channelKeywordsSection) channelKeywordsSection.style.display = 'block';
+    }
+
+    // Check if this content has any platform's scheduled post date
+    const platforms = content.platforms_posted || {};
+
+    // Check all platforms for a scheduled date (prioritize YouTube, then check others)
+    repostScheduledDate = null;  // Reset
+    const platformOrder = ['youtube', 'tiktok', 'instagram', 'x'];
+
+    for (const platform of platformOrder) {
+        const platformData = platforms[platform];
+        if (platformData && platformData.scheduled_for) {
+            const date = new Date(platformData.scheduled_for);
+            // Check if the scheduled time is in the future
+            if (date > new Date()) {
+                repostScheduledDate = date;
+                console.log('Found scheduled date from', platform, ':', repostScheduledDate);
+                break;
+            }
+        }
+    }
+
+    // Auto-select video type based on duration (< 3 minutes = Short)
+    if (content.duration) {
+        if (content.duration < 180) {
+            setVideoType('short');
+        } else {
+            setVideoType('long');
+        }
+        console.log(`Auto-selected video type based on ${content.duration}s duration`);
+    }
+
+    // Display the video in the upload area
+    displayRepostVideo(content);
+
+    // Apply scheduled date if available (with delay to ensure UI is ready)
+    if (repostScheduledDate) {
+        setTimeout(() => {
+            applyRepostScheduledDate();
+        }, 500);
+    }
+
+    console.log('Content selected for reposting:', content);
+}
+
+/**
+ * Display repost video in the upload area
+ */
+function displayRepostVideo(content) {
+    const uploadContent = document.getElementById('uploadContent');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const fileName = document.getElementById('uploadFileName');
+    const fileSize = document.getElementById('uploadFileSize');
+
+    if (uploadContent) uploadContent.style.display = 'none';
+    if (uploadProgress) uploadProgress.style.display = 'flex';
+
+    // Extract filename from URL
+    const urlParts = content.media_url.split('/');
+    const fullFilename = urlParts[urlParts.length - 1];
+
+    if (fileName) fileName.textContent = decodeURIComponent(fullFilename);
+    if (fileSize) fileSize.textContent = 'From library';
+
+    showToast('Content selected for reposting', 'success');
 }
 
 /**
@@ -212,9 +375,16 @@ async function handleVideoSelect(event) {
     fileName.textContent = file.name;
     fileSize.textContent = formatFileSize(file.size);
 
-    // Detect if this is a short video (≤60s OR <100MB)
+    // Detect if this is a short video (< 3 minutes)
     selectedVideoFile = file;
     const isShort = await detectIfShort(file);
+
+    // Auto-select video type based on duration
+    if (isShort) {
+        setVideoType('short');
+    } else {
+        setVideoType('long');
+    }
 
     // Start uploading to server immediately
     await uploadVideoToServer(file, isShort);
@@ -259,15 +429,9 @@ async function uploadShortToFirebase(file) {
 }
 
 /**
- * Detect if video is a short (≤60s duration OR <100MB file size)
+ * Detect if video is a short (< 3 minutes duration)
  */
 async function detectIfShort(file) {
-    // Check file size first (quick check)
-    const maxSizeBytes = 100 * 1024 * 1024; // 100MB
-    if (file.size < maxSizeBytes) {
-        return true;
-    }
-
     // Check duration (requires loading video metadata)
     return new Promise((resolve) => {
         const video = document.createElement('video');
@@ -276,8 +440,10 @@ async function detectIfShort(file) {
         video.onloadedmetadata = function() {
             window.URL.revokeObjectURL(video.src);
             const duration = video.duration;
-            console.log(`Video duration: ${duration}s`);
-            resolve(duration <= 60);
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            console.log(`Video duration: ${minutes}m ${seconds}s`);
+            resolve(duration < 180); // Less than 3 minutes = Short
         };
 
         video.onerror = function() {
@@ -1486,6 +1652,57 @@ function populateScheduleTimeDropdown() {
 }
 
 /**
+ * Apply scheduled date from repost content
+ */
+function applyRepostScheduledDate() {
+    if (!repostScheduledDate) return;
+
+    console.log('Applying repost scheduled date:', repostScheduledDate);
+
+    // Switch to scheduled mode
+    const privacySelect = document.getElementById('privacySelect');
+    if (privacySelect) {
+        privacySelect.value = 'scheduled';
+        // Trigger change event to show schedule inputs and populate dropdowns
+        handleStatusChange();
+    }
+
+    // Need to wait longer for handleStatusChange to populate dropdowns
+    setTimeout(() => {
+        const dateSelect = document.getElementById('scheduleDateSelect');
+        const timeSelect = document.getElementById('scheduleTimeSelect');
+
+        if (dateSelect && timeSelect) {
+            // Format date as YYYY-MM-DD
+            const year = repostScheduledDate.getFullYear();
+            const month = String(repostScheduledDate.getMonth() + 1).padStart(2, '0');
+            const day = String(repostScheduledDate.getDate()).padStart(2, '0');
+            const dateValue = `${year}-${month}-${day}`;
+
+            // Format time as HH:MM
+            const hours = String(repostScheduledDate.getHours()).padStart(2, '0');
+            const minutes = String(repostScheduledDate.getMinutes()).padStart(2, '0');
+            const timeValue = `${hours}:${minutes}`;
+
+            // Set the select values (force set even if they have defaults)
+            dateSelect.value = dateValue;
+            timeSelect.value = timeValue;
+
+            console.log('Set schedule to:', dateValue, timeValue);
+
+            // Verify the values were set correctly
+            if (dateSelect.value !== dateValue || timeSelect.value !== timeValue) {
+                console.warn('Failed to set schedule values correctly');
+                console.warn('Date - Expected:', dateValue, 'Actual:', dateSelect.value);
+                console.warn('Time - Expected:', timeValue, 'Actual:', timeSelect.value);
+            }
+        } else {
+            console.warn('Schedule dropdowns not found');
+        }
+    }, 200);
+}
+
+/**
  * Handle status change (show/hide schedule datetime)
  */
 function handleStatusChange() {
@@ -1536,7 +1753,8 @@ function handleStatusChange() {
  * Upload video to YouTube via Late.dev
  */
 async function uploadToYouTube() {
-    if (!selectedVideoFile) {
+    // Check if we have either a selected file (upload mode) or repost content (repost mode)
+    if (!selectedVideoFile && !(uploadMode === 'repost' && repostContent)) {
         showToast('Please select a video file first', 'error');
         return;
     }
@@ -1591,30 +1809,42 @@ async function uploadToYouTube() {
         const videoInput = document.getElementById('videoInput');
         const contentDescription = videoInput ? videoInput.value.trim() : '';
 
-        // Step 1: Upload video to Firebase if not already uploaded
-        let firebaseUrl = window.shortVideoFirebaseUrl;
-        if (!firebaseUrl) {
-            const formData = new FormData();
-            formData.append('video', selectedVideoFile);
-            formData.append('keywords', targetKeyword);
-            formData.append('content_description', contentDescription);
+        // Step 1: Get media URL (either from uploaded file or repost content)
+        let firebaseUrl;
+        let contentId;
 
-            uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading to storage...';
+        if (uploadMode === 'repost' && repostContent) {
+            // Use existing media URL from content library
+            firebaseUrl = repostContent.media_url;
+            contentId = repostContent.id;
+            console.log('Reposting existing content:', firebaseUrl);
+        } else {
+            // Upload video to Firebase if not already uploaded
+            firebaseUrl = window.shortVideoFirebaseUrl;
+            if (!firebaseUrl) {
+                const formData = new FormData();
+                formData.append('video', selectedVideoFile);
+                formData.append('keywords', targetKeyword);
+                formData.append('content_description', contentDescription);
 
-            const uploadResponse = await fetch('/api/upload-video-to-firebase', {
-                method: 'POST',
-                body: formData
-            });
+                uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading to storage...';
 
-            const uploadData = await uploadResponse.json();
+                const uploadResponse = await fetch('/api/upload-video-to-firebase', {
+                    method: 'POST',
+                    body: formData
+                });
 
-            if (!uploadData.success) {
-                throw new Error(uploadData.error || 'Failed to upload video');
+                const uploadData = await uploadResponse.json();
+
+                if (!uploadData.success) {
+                    throw new Error(uploadData.error || 'Failed to upload video');
+                }
+
+                firebaseUrl = uploadData.firebase_url;
+                contentId = uploadData.content_id;
+                window.shortVideoFirebaseUrl = firebaseUrl;
+                console.log('Video uploaded to Firebase:', firebaseUrl);
             }
-
-            firebaseUrl = uploadData.firebase_url;
-            window.shortVideoFirebaseUrl = firebaseUrl;
-            console.log('Video uploaded to Firebase:', firebaseUrl);
         }
 
         // Step 2: Post to YouTube via Late.dev
@@ -1631,6 +1861,11 @@ async function uploadToYouTube() {
             keywords: targetKeyword,
             content_description: contentDescription
         };
+
+        // Add content_id if we have it (from repost or upload)
+        if (contentId) {
+            postPayload.content_id = contentId;
+        }
 
         const postResponse = await fetch('/api/upload-to-youtube', {
             method: 'POST',
