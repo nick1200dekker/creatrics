@@ -404,7 +404,7 @@ html.dark .input-panel {
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
     border-radius: 10px;
-    overflow: hidden;
+    overflow: visible;
     min-height: 480px;
     display: flex;
     flex-direction: column;
@@ -437,6 +437,78 @@ html.dark .results-panel {
 
 html.dark .form-label i {
     color: #60A5FA;
+}
+
+/* Info Tooltip */
+.info-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.25rem;
+    cursor: help;
+}
+
+.info-tooltip i {
+    font-size: 1rem;
+    color: var(--text-tertiary);
+    transition: color 0.2s ease;
+}
+
+.info-tooltip:hover i {
+    color: #3B82F6;
+}
+
+html.dark .info-tooltip:hover i {
+    color: #60A5FA;
+}
+
+.tooltip-text {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.625rem 0.875rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: normal;
+    max-width: 250px;
+    width: max-content;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    pointer-events: none;
+    line-height: 1.4;
+}
+
+html.dark .tooltip-text {
+    background: rgba(39, 39, 42, 0.95);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip-text::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--bg-primary);
+}
+
+html.dark .tooltip-text::after {
+    border-top-color: rgba(39, 39, 42, 0.95);
+}
+
+.info-tooltip:hover .tooltip-text {
+    opacity: 1;
+    visibility: visible;
 }
 
 .label-required {
@@ -725,6 +797,7 @@ html.dark .title-number {
 /* Upload Section */
 .upload-section-content {
     padding: 1.5rem 2rem;
+    min-height: 450px;
 }
 
 /* Video Upload Section */
@@ -1061,7 +1134,7 @@ html.dark .empty-icon {
 }
 
 .loading-spinner i {
-    font-size: 3rem;
+    font-size: 2rem;
     color: #3B82F6;
     animation: spin 1s linear infinite;
 }
@@ -1271,26 +1344,6 @@ html.dark .upload-progress-notification {
 
 .upload-progress-notification.error .upload-progress-header i {
     color: #EF4444;
-}
-
-.upload-progress-bar {
-    width: 100%;
-    height: 6px;
-    background: var(--bg-tertiary);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 0.75rem;
-}
-
-html.dark .upload-progress-bar {
-    background: rgba(39, 39, 42, 0.6);
-}
-
-.upload-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #3B82F6 0%, #60A5FA 100%);
-    border-radius: 3px;
-    transition: width 0.3s ease;
 }
 
 .upload-progress-notification.success .upload-progress-fill {
@@ -1655,4 +1708,53 @@ html.dark .toggle-btn.active {
 
 .toggle-btn i {
     font-size: 1.125rem;
+}
+
+/* =============================================
+   UPLOAD PROGRESS BAR
+   ============================================= */
+
+.upload-progress-bar {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    border: 1px solid var(--border-primary);
+}
+
+.upload-progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.upload-progress-status {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.upload-progress-percent {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.upload-progress-track {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border-primary);
+}
+
+.upload-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
 }

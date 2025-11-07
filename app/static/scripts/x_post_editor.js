@@ -2154,6 +2154,25 @@ function showScheduledDraftUI(draft) {
         textarea.style.cursor = 'not-allowed';
     });
 
+    // Disable delete buttons, media upload buttons, and add post icons
+    const deleteButtons = postsContainer.querySelectorAll('.delete-post');
+    deleteButtons.forEach(btn => {
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.4';
+    });
+
+    const mediaButtons = postsContainer.querySelectorAll('.media-upload-trigger');
+    mediaButtons.forEach(btn => {
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.4';
+    });
+
+    const addPostIcons = postsContainer.querySelectorAll('.add-post-icon');
+    addPostIcons.forEach(icon => {
+        icon.style.pointerEvents = 'none';
+        icon.style.opacity = '0.4';
+    });
+
     // Hide ALL Schedule and Post to X buttons (using class selectors)
     const scheduleButtons = document.querySelectorAll('.schedule-x-btn');
     const postToXButtons = document.querySelectorAll('.post-to-x-btn');
@@ -2221,6 +2240,25 @@ function enableDraftEditing() {
         textarea.removeAttribute('readonly');
         textarea.style.opacity = '1';
         textarea.style.cursor = 'text';
+    });
+
+    // Re-enable delete buttons, media upload buttons, and add post icons
+    const deleteButtons = postsContainer.querySelectorAll('.delete-post');
+    deleteButtons.forEach(btn => {
+        btn.style.pointerEvents = '';
+        btn.style.opacity = '';
+    });
+
+    const mediaButtons = postsContainer.querySelectorAll('.media-upload-trigger');
+    mediaButtons.forEach(btn => {
+        btn.style.pointerEvents = '';
+        btn.style.opacity = '';
+    });
+
+    const addPostIcons = postsContainer.querySelectorAll('.add-post-icon');
+    addPostIcons.forEach(icon => {
+        icon.style.pointerEvents = '';
+        icon.style.opacity = '';
     });
 
     // Hide Schedule and Post to X buttons during editing
@@ -2462,6 +2500,25 @@ async function unschedulePost() {
                     textarea.removeAttribute('readonly');
                     textarea.style.opacity = '';
                     textarea.style.cursor = '';
+                });
+
+                // Re-enable delete buttons, media upload buttons, and add post icons
+                const deleteButtons = postsContainer.querySelectorAll('.delete-post');
+                deleteButtons.forEach(btn => {
+                    btn.style.pointerEvents = '';
+                    btn.style.opacity = '';
+                });
+
+                const mediaButtons = postsContainer.querySelectorAll('.media-upload-trigger');
+                mediaButtons.forEach(btn => {
+                    btn.style.pointerEvents = '';
+                    btn.style.opacity = '';
+                });
+
+                const addPostIcons = postsContainer.querySelectorAll('.add-post-icon');
+                addPostIcons.forEach(icon => {
+                    icon.style.pointerEvents = '';
+                    icon.style.opacity = '';
                 });
             }
 

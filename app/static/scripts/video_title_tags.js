@@ -30,6 +30,11 @@ document.addEventListener('DOMContentLoaded', function() {
     checkYouTubeConnection();
     initializeRepostModal();
 
+    // Initialize status to trigger default scheduled setup (wait for DOM to be fully ready)
+    setTimeout(() => {
+        handleStatusChange();
+    }, 100);
+
     // Set up connect/disconnect button listeners
     const connectBtn = document.getElementById('connectBtn');
     if (connectBtn) {
@@ -1052,6 +1057,11 @@ function displayCombinedResults(titlesData, descriptionData, tagsData) {
 
     document.getElementById('resultsContainer').innerHTML = html;
 
+    // Initialize status after rendering HTML (to show schedule card and populate defaults)
+    if ((selectedVideoFile || repostContent) && hasYouTubeConnected) {
+        handleStatusChange();
+    }
+
     // Apply repost scheduled date if available (after HTML is rendered)
     if (repostScheduledDate) {
         setTimeout(() => {
@@ -1281,15 +1291,15 @@ function renderUploadSection(visible) {
                             Status
                         </label>
                         <select class="privacy-select" id="privacySelect" onchange="handleStatusChange()">
-                            <option value="private" selected>Private</option>
+                            <option value="private">Private</option>
                             <option value="unlisted">Unlisted</option>
                             <option value="public">Public</option>
-                            <option value="scheduled">Schedule</option>
+                            <option value="scheduled" selected>Schedule</option>
                         </select>
                     </div>
 
                     <!-- Schedule Date/Time (appears when scheduled is selected) -->
-                    <div class="upload-option-card" id="scheduleDateTime" style="grid-column: 2; display: none;">
+                    <div class="upload-option-card" id="scheduleDateTime" style="grid-column: 2;">
                         <label class="upload-option-label schedule-label">
                             <i class="ph ph-calendar"></i>
                             Publish Date & Time <span class="utc-indicator" id="timezoneIndicator">(Local Time)</span>
@@ -1319,6 +1329,17 @@ function renderUploadSection(visible) {
                     <i class="ph ph-upload"></i>
                     Upload to YouTube
                 </button>
+
+                <!-- Upload Progress Bar -->
+                <div id="uploadProgressBar" class="upload-progress-bar" style="display: none;">
+                    <div class="upload-progress-info">
+                        <span class="upload-progress-status">Uploading...</span>
+                        <span class="upload-progress-percent">0%</span>
+                    </div>
+                    <div class="upload-progress-track">
+                        <div class="upload-progress-fill" id="uploadProgressFill"></div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -1805,6 +1826,19 @@ async function uploadToYouTube() {
     uploadBtn.disabled = true;
     uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading...';
 
+    // Show progress bar
+    const progressBar = document.getElementById('uploadProgressBar');
+    const progressFill = document.getElementById('uploadProgressFill');
+    const progressStatus = document.querySelector('.upload-progress-status');
+    const progressPercent = document.querySelector('.upload-progress-percent');
+
+    if (progressBar) {
+        progressBar.style.display = 'block';
+        progressFill.style.width = '0%';
+        progressStatus.textContent = 'Preparing...';
+        progressPercent.textContent = '0%';
+    }
+
     try {
         // Get keywords and description
         const keywordInput = document.getElementById('keywordInput');
@@ -1821,10 +1855,24 @@ async function uploadToYouTube() {
             firebaseUrl = repostContent.media_url;
             contentId = repostContent.id;
             console.log('Reposting existing content:', firebaseUrl);
+
+            // Update progress for repost
+            if (progressBar) {
+                progressFill.style.width = '30%';
+                progressStatus.textContent = 'Preparing to post...';
+                progressPercent.textContent = '30%';
+            }
         } else {
             // Upload video to Firebase if not already uploaded
             firebaseUrl = window.shortVideoFirebaseUrl;
             if (!firebaseUrl) {
+                // Update progress - uploading video
+                if (progressBar) {
+                    progressFill.style.width = '10%';
+                    progressStatus.textContent = 'Uploading video...';
+                    progressPercent.textContent = '10%';
+                }
+
                 const formData = new FormData();
                 formData.append('video', selectedVideoFile);
                 formData.append('keywords', targetKeyword);
@@ -1847,10 +1895,23 @@ async function uploadToYouTube() {
                 contentId = uploadData.content_id;
                 window.shortVideoFirebaseUrl = firebaseUrl;
                 console.log('Video uploaded to Firebase:', firebaseUrl);
+
+                // Update progress after video upload
+                if (progressBar) {
+                    progressFill.style.width = '50%';
+                    progressStatus.textContent = 'Video uploaded';
+                    progressPercent.textContent = '50%';
+                }
             }
         }
 
         // Step 2: Post to YouTube via Late.dev
+        if (progressBar) {
+            progressFill.style.width = '60%';
+            progressStatus.textContent = 'Posting to YouTube...';
+            progressPercent.textContent = '60%';
+        }
+
         uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Posting to YouTube...';
 
         const postPayload = {
@@ -1885,11 +1946,22 @@ async function uploadToYouTube() {
             if (postData.error && postData.error.toLowerCase().includes('quota exceeded')) {
                 uploadBtn.disabled = false;
                 uploadBtn.innerHTML = originalContent;
+                if (progressBar) progressBar.style.display = 'none';
                 showQuotaExceededModal();
                 return;
             }
             throw new Error(postData.error || 'Failed to upload to YouTube');
         }
+
+        // Complete progress
+        if (progressBar) {
+            progressFill.style.width = '100%';
+            progressStatus.textContent = 'Complete!';
+            progressPercent.textContent = '100%';
+        }
+
+        // Show success state on button
+        uploadBtn.innerHTML = '<i class="ph ph-check-circle"></i> ' + (scheduledTime ? 'Scheduled!' : 'Uploaded!');
 
         // Show success message
         let message = 'Video uploaded to YouTube successfully!';
@@ -1898,20 +1970,10 @@ async function uploadToYouTube() {
         }
         showToast(message, 'success');
 
-        // Reset state
-        selectedVideoFile = null;
-        selectedThumbnailFile = null;
-        selectedTitle = null;
-        uploadedVideoPath = null;
-        uploadedThumbnailPath = null;
-        window.shortVideoFirebaseUrl = null;
-
-        // Reset button
-        uploadBtn.disabled = false;
-        uploadBtn.innerHTML = originalContent;
-
-        // Optionally reload to clear form
-        setTimeout(() => location.reload(), 1500);
+        // Wait 2 seconds to show success state, then refresh page
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
 
     } catch (error) {
         console.error('Error uploading video:', error);
@@ -1919,6 +1981,11 @@ async function uploadToYouTube() {
 
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = originalContent;
+
+        // Hide progress bar on error
+        if (progressBar) {
+            progressBar.style.display = 'none';
+        }
     }
 }
 
@@ -1961,110 +2028,6 @@ function showQuotaExceededModal() {
             setTimeout(() => modal.remove(), 300);
         }
     });
-}
-
-/**
- * Show upload progress modal
- */
-function showUploadProgressModal() {
-    // Remove existing modal if any
-    const existingModal = document.getElementById('uploadProgressModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-
-    const modal = document.createElement('div');
-    modal.id = 'uploadProgressModal';
-    modal.className = 'upload-progress-modal';
-    modal.innerHTML = `
-        <div class="upload-progress-overlay"></div>
-        <div class="upload-progress-content">
-            <div class="upload-spinner-container">
-                <i class="ph ph-spinner upload-spinner-icon"></i>
-            </div>
-            <h3 id="uploadProgressTitle">Uploading to YouTube</h3>
-            <p id="uploadProgressMessage">Preparing upload...</p>
-
-            <div class="progress-section">
-                <div class="progress-header">
-                    <span class="progress-label">Progress</span>
-                    <span id="uploadProgressPercent" class="progress-percent">0%</span>
-                </div>
-                <div class="progress-bar-container">
-                    <div id="uploadProgressFill" class="progress-bar-fill"></div>
-                </div>
-            </div>
-
-            <div class="upload-warning">
-                <div class="upload-warning-content">
-                    <i class="ph-fill ph-warning-circle warning-icon"></i>
-                    <div class="upload-warning-text">
-                        <p class="warning-title">Don't close this page</p>
-                        <p class="warning-description">Keep this tab open while uploading</p>
-                        <button class="open-tab-btn" onclick="window.open('/', '_blank')">
-                            <i class="ph-fill ph-arrow-square-out"></i>
-                            <span>Open Creatrics in New Tab</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <p class="upload-footer-text">Large videos may take several minutes to upload</p>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    // Trigger animation
-    setTimeout(() => modal.classList.add('show'), 10);
-}
-
-/**
- * Update upload progress
- */
-function updateUploadProgress(message, stage) {
-    const titleEl = document.getElementById('uploadProgressTitle');
-    const messageEl = document.getElementById('uploadProgressMessage');
-    const percentEl = document.getElementById('uploadProgressPercent');
-    const fillEl = document.getElementById('uploadProgressFill');
-
-    if (titleEl) {
-        if (stage === 'uploading') {
-            titleEl.textContent = 'Uploading to YouTube';
-        } else if (stage === 'processing') {
-            titleEl.textContent = 'Processing Video';
-        }
-    }
-
-    if (messageEl) {
-        messageEl.textContent = message;
-    }
-
-    // Extract percentage from message if present
-    const percentMatch = message.match(/(\d+)%/);
-    if (percentMatch && percentEl && fillEl) {
-        const percent = parseInt(percentMatch[1]);
-        percentEl.textContent = `${percent}%`;
-        fillEl.style.width = `${percent}%`;
-    } else if (stage === 'processing') {
-        // Show indeterminate progress for processing
-        if (fillEl) {
-            fillEl.style.width = '100%';
-        }
-        if (percentEl) {
-            percentEl.textContent = 'Processing...';
-        }
-    }
-}
-
-/**
- * Hide upload progress modal
- */
-function hideUploadProgressModal() {
-    const modal = document.getElementById('uploadProgressModal');
-    if (modal) {
-        modal.classList.remove('show');
-        setTimeout(() => modal.remove(), 300);
-    }
 }
 
 // Copy single title

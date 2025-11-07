@@ -33,6 +33,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize repost modal
     initializeRepostModal();
+
+    // Initialize status to trigger default scheduled setup (wait for DOM to be fully ready)
+    setTimeout(() => {
+        handleStatusChange();
+    }, 100);
 });
 
 /**
@@ -421,6 +426,11 @@ function displayResults(captions) {
 
     document.getElementById('resultsContainer').innerHTML = html;
 
+    // Initialize status after rendering HTML (to show schedule card and populate defaults)
+    if (isConnected) {
+        handleStatusChange();
+    }
+
     // Apply repost scheduled date if available (after HTML is rendered)
     if (repostScheduledDate) {
         setTimeout(() => {
@@ -478,13 +488,13 @@ function renderUploadSection(visible) {
                                 Status
                             </label>
                             <select class="privacy-select" id="statusSelect" onchange="handleStatusChange()">
-                                <option value="public" selected>Publish Now</option>
-                                <option value="scheduled">Schedule</option>
+                                <option value="public">Publish Now</option>
+                                <option value="scheduled" selected>Schedule</option>
                             </select>
                         </div>
 
                         <!-- Schedule Date/Time (appears when scheduled is selected) -->
-                        <div class="upload-option-card" id="scheduleDateTime" style="display: none;">
+                        <div class="upload-option-card" id="scheduleDateTime">
                             <label class="upload-option-label schedule-label">
                                 <i class="ph ph-calendar"></i>
                                 Publish Date & Time <span class="utc-indicator" id="timezoneIndicator">(Local Time)</span>
@@ -502,9 +512,20 @@ function renderUploadSection(visible) {
 
                     <!-- Upload Button -->
                     <button type="submit" id="uploadBtn" class="btn-primary">
-                        <i class="ph ph-instagram-logo"></i>
+                        <i class="ph ph-upload"></i>
                         <span id="uploadBtnText">Publish to Instagram</span>
                     </button>
+
+                    <!-- Upload Progress Bar -->
+                    <div id="uploadProgressBar" class="upload-progress-bar" style="display: none;">
+                        <div class="upload-progress-info">
+                            <span class="upload-progress-status">Uploading...</span>
+                            <span class="upload-progress-percent">0%</span>
+                        </div>
+                        <div class="upload-progress-track">
+                            <div class="upload-progress-fill" id="uploadProgressFill"></div>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -771,15 +792,28 @@ async function handleUpload(e) {
         scheduleTime = localDateTime.toISOString();
     }
 
-    // Disable upload button
+    // Disable upload button and show progress bar
     const uploadBtn = document.getElementById('uploadBtn');
     const uploadBtnText = uploadBtn.querySelector('span') || uploadBtn;
     const uploadBtnIcon = uploadBtn.querySelector('i');
     const originalBtnContent = uploadBtn.innerHTML;
-    
+
     uploadBtn.disabled = true;
     if (uploadBtnIcon) uploadBtnIcon.className = 'ph ph-spinner spinning';
     uploadBtnText.textContent = 'Uploading to Firebase...';
+
+    // Show progress bar
+    const progressBar = document.getElementById('uploadProgressBar');
+    const progressFill = document.getElementById('uploadProgressFill');
+    const progressStatus = document.querySelector('.upload-progress-status');
+    const progressPercent = document.querySelector('.upload-progress-percent');
+
+    if (progressBar) {
+        progressBar.style.display = 'block';
+        progressFill.style.width = '0%';
+        progressStatus.textContent = 'Preparing...';
+        progressPercent.textContent = '0%';
+    }
 
     try {
         // Get keywords and description for content library
@@ -797,8 +831,21 @@ async function handleUpload(e) {
             contentId = repostContent.id;
             console.log('Reposting existing content:', mediaUrl);
             uploadBtnText.textContent = 'Posting to Instagram...';
+
+            // Update progress for repost
+            if (progressBar) {
+                progressFill.style.width = '30%';
+                progressStatus.textContent = 'Preparing to post...';
+                progressPercent.textContent = '30%';
+            }
         } else {
             // Upload file to Firebase Storage
+            if (progressBar) {
+                progressFill.style.width = '10%';
+                progressStatus.textContent = 'Uploading media...';
+                progressPercent.textContent = '10%';
+            }
+
             const formData = new FormData();
             formData.append('media', selectedFile);
             formData.append('keywords', keywords);
@@ -818,7 +865,22 @@ async function handleUpload(e) {
 
             mediaUrl = uploadData.media_url;
             contentId = uploadData.content_id;
+
+            // Update progress after media upload
+            if (progressBar) {
+                progressFill.style.width = '50%';
+                progressStatus.textContent = 'Media uploaded';
+                progressPercent.textContent = '50%';
+            }
+
             uploadBtnText.textContent = 'Posting to Instagram...';
+        }
+
+        // Update progress - posting to Instagram
+        if (progressBar) {
+            progressFill.style.width = '60%';
+            progressStatus.textContent = 'Posting to Instagram...';
+            progressPercent.textContent = '60%';
         }
 
         const postPayload = {
@@ -844,6 +906,13 @@ async function handleUpload(e) {
         const postData = await postResponse.json();
 
         if (postData.success) {
+            // Complete progress
+            if (progressBar) {
+                progressFill.style.width = '100%';
+                progressStatus.textContent = 'Complete!';
+                progressPercent.textContent = '100%';
+            }
+
             // Show success state
             if (uploadBtnIcon) uploadBtnIcon.className = 'ph ph-check-circle';
             uploadBtnText.textContent = postData.scheduled_for ? 'Scheduled!' : 'Posted!';
@@ -851,19 +920,9 @@ async function handleUpload(e) {
             const message = postData.scheduled_for ? 'Post scheduled successfully!' : 'Posted to Instagram successfully!';
             showToast(message, 'success');
 
-            // Wait a moment to show success state
+            // Wait 2 seconds to show success state, then refresh page
             setTimeout(() => {
-                // Reset form
-                selectedFile = null;
-                selectedCaptionIndex = null;
-                clearSelectedFile();
-
-                // Reset button
-                uploadBtn.disabled = false;
-                uploadBtn.innerHTML = originalBtnContent;
-
-                // Refresh to show empty state
-                checkConnectionStatus();
+                location.reload();
             }, 2000);
         } else {
             throw new Error(postData.error || 'Failed to post');
@@ -873,6 +932,11 @@ async function handleUpload(e) {
         showToast('Failed to upload: ' + error.message, 'error');
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = originalBtnContent;
+
+        // Hide progress bar on error
+        if (progressBar) {
+            progressBar.style.display = 'none';
+        }
     }
 }
 

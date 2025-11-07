@@ -686,6 +686,7 @@ def upload_to_youtube():
         thumbnail_url = (data.get('thumbnail_url') or '').strip()
         keywords = (data.get('keywords') or '').strip()
         content_description = (data.get('content_description') or '').strip()
+        content_id = data.get('content_id')  # Content library ID (optional)
 
         if not firebase_url:
             return jsonify({
@@ -719,9 +720,26 @@ def upload_to_youtube():
 
         post_id = result.get('post_id')
 
-        # Save to content library
-        content_id = None
-        if firebase_url:
+        # Save/update content library
+        if content_id:
+            # Update existing content library entry
+            try:
+                ContentLibraryManager.update_platform_status(
+                    user_id=user_id,
+                    content_id=content_id,
+                    platform='youtube',
+                    platform_data={
+                        'post_id': post_id,
+                        'scheduled_for': scheduled_time,
+                        'title': title,
+                        'status': 'scheduled' if scheduled_time else 'posted'
+                    }
+                )
+                logger.info(f"Updated content library {content_id} with YouTube video {post_id}")
+            except Exception as e:
+                logger.error(f"Error updating content library: {e}")
+        else:
+            # Create new content library entry
             try:
                 content_id = ContentLibraryManager.save_content(
                     user_id=user_id,

@@ -33,6 +33,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize repost modal
     initializeRepostModal();
+
+    // Initialize mode to trigger default scheduled setup (wait for DOM to be fully ready)
+    setTimeout(() => {
+        handleModeChange();
+    }, 100);
 });
 
 /**
@@ -437,6 +442,11 @@ function displayResults(titles) {
     }
 
     document.getElementById('resultsContainer').innerHTML = html;
+
+    // Initialize mode after rendering HTML
+    if (isConnected) {
+        handleModeChange();
+    }
 }
 
 /**
@@ -494,7 +504,7 @@ function renderUploadSection(visible) {
                             </label>
                             <div class="radio-group">
                                 <label class="radio-option">
-                                    <input type="radio" name="mode" id="modeDirect" value="direct" checked onchange="handleModeChange()">
+                                    <input type="radio" name="mode" id="modeDirect" value="direct" onchange="handleModeChange()">
                                     <div class="radio-content">
                                         <i class="ph ph-lightning"></i>
                                         <div>
@@ -516,7 +526,7 @@ function renderUploadSection(visible) {
                                 </label>
 
                                 <label class="radio-option">
-                                    <input type="radio" name="mode" id="modeScheduled" value="scheduled" onchange="handleModeChange()">
+                                    <input type="radio" name="mode" id="modeScheduled" value="scheduled" checked onchange="handleModeChange()">
                                     <div class="radio-content">
                                         <i class="ph ph-clock"></i>
                                         <div>
@@ -529,7 +539,7 @@ function renderUploadSection(visible) {
                         </div>
 
                         <!-- Schedule Time (shown when scheduled mode is selected) -->
-                        <div class="upload-option-card" id="scheduleCard" style="display: none;">
+                        <div class="upload-option-card" id="scheduleCard">
                             <label class="upload-option-label schedule-label">
                                 <i class="ph ph-calendar"></i>
                                 Publish Date & Time <span class="utc-indicator" id="timezoneIndicator">(Local Time)</span>
@@ -589,21 +599,21 @@ function renderUploadSection(visible) {
 
                     <!-- Upload Button -->
                     <button type="submit" id="uploadBtn" class="btn-primary">
-                        <i class="ph ph-tiktok-logo"></i>
+                        <i class="ph ph-upload"></i>
                         Upload to TikTok
                     </button>
-
-                    <!-- Upload Progress Bar -->
-                    <div id="uploadProgressBar" class="upload-progress-bar" style="display: none;">
-                        <div class="upload-progress-info">
-                            <span class="upload-progress-status">Uploading...</span>
-                            <span class="upload-progress-percent">0%</span>
-                        </div>
-                        <div class="upload-progress-track">
-                            <div class="upload-progress-fill" id="uploadProgressFill"></div>
-                        </div>
-                    </div>
                 </form>
+
+                <!-- Upload Progress Bar -->
+                <div id="uploadProgressBar" class="upload-progress-bar" style="display: none; margin-top: 1rem;">
+                    <div class="upload-progress-info">
+                        <span class="upload-progress-status">Uploading...</span>
+                        <span class="upload-progress-percent">0%</span>
+                    </div>
+                    <div class="upload-progress-track">
+                        <div class="upload-progress-fill" id="uploadProgressFill"></div>
+                    </div>
+                </div>
 
                 <!-- Info Notice -->
                 <div class="info-notice" style="margin-top: 1rem;">
@@ -1064,11 +1074,24 @@ async function handleUpload(e) {
         scheduleTime = localDateTime.toISOString();
     }
 
-    // Disable upload button
+    // Disable upload button and show progress bar
     const uploadBtn = document.getElementById('uploadBtn');
     const originalBtnContent = uploadBtn.innerHTML;
     uploadBtn.disabled = true;
     uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading...';
+
+    // Show progress bar
+    const progressBar = document.getElementById('uploadProgressBar');
+    const progressFill = document.getElementById('uploadProgressFill');
+    const progressStatus = document.querySelector('.upload-progress-status');
+    const progressPercent = document.querySelector('.upload-progress-percent');
+
+    if (progressBar) {
+        progressBar.style.display = 'block';
+        progressFill.style.width = '0%';
+        progressStatus.textContent = 'Preparing...';
+        progressPercent.textContent = '0%';
+    }
 
     try {
         let mediaUrl, contentId;
@@ -1080,8 +1103,21 @@ async function handleUpload(e) {
             contentId = repostContent.id;
             console.log('Reposting existing content:', mediaUrl);
             uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Posting to TikTok...';
+
+            // Update progress for repost
+            if (progressBar) {
+                progressFill.style.width = '30%';
+                progressStatus.textContent = 'Preparing to post...';
+                progressPercent.textContent = '30%';
+            }
         } else {
             // Step 1: Upload media to Firebase Storage
+            if (progressBar) {
+                progressFill.style.width = '10%';
+                progressStatus.textContent = 'Uploading video...';
+                progressPercent.textContent = '10%';
+            }
+
             const formData = new FormData();
             formData.append('media', selectedFile);
 
@@ -1110,10 +1146,22 @@ async function handleUpload(e) {
             contentId = uploadData.content_id;
             console.log('Media uploaded to Firebase:', mediaUrl);
 
+            // Update progress after media upload
+            if (progressBar) {
+                progressFill.style.width = '50%';
+                progressStatus.textContent = 'Video uploaded';
+                progressPercent.textContent = '50%';
+            }
+
             uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Posting to TikTok...';
         }
 
         // Step 2: Post to TikTok via Late.dev using the Firebase URL
+        if (progressBar) {
+            progressFill.style.width = '60%';
+            progressStatus.textContent = 'Posting to TikTok...';
+            progressPercent.textContent = '60%';
+        }
         // Get keywords and description for content library
         const keywordsInput = document.getElementById('keywordsInput');
         const videoConceptInput = document.getElementById('videoConceptInput');
@@ -1150,6 +1198,16 @@ async function handleUpload(e) {
         const postData = await postResponse.json();
 
         if (postData.success) {
+            // Complete progress
+            if (progressBar) {
+                progressFill.style.width = '100%';
+                progressStatus.textContent = 'Complete!';
+                progressPercent.textContent = '100%';
+            }
+
+            // Show success state on button
+            uploadBtn.innerHTML = '<i class="ph ph-check-circle"></i> ' + (mode === 'scheduled' ? 'Scheduled!' : 'Posted!');
+
             let message = 'TikTok post successful!';
             if (mode === 'inbox') {
                 message = 'Video saved to TikTok inbox!';
@@ -1158,19 +1216,23 @@ async function handleUpload(e) {
             }
             showToast(message, 'success');
 
-            // Clear the file
-            removeVideoStatic();
+            // Wait 2 seconds to show success state, then refresh page
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
         } else {
             throw new Error(postData.error || 'TikTok post failed');
         }
-
-        uploadBtn.disabled = false;
-        uploadBtn.innerHTML = originalBtnContent;
     } catch (error) {
         console.error('Upload error:', error);
         showToast('Upload failed: ' + error.message, 'error');
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = originalBtnContent;
+
+        // Hide progress bar on error
+        if (progressBar) {
+            progressBar.style.display = 'none';
+        }
     }
 }
 

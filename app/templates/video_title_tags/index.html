@@ -101,10 +101,6 @@
                             <label class="form-label">
                                 <i class="ph ph-upload"></i>
                                 Video
-                                <div class="info-tooltip">
-                                    <i class="ph ph-info"></i>
-                                    <span class="tooltip-text">Upload your video file to YouTube with AI-generated title, description, and tags</span>
-                                </div>
                             </label>
                             <div class="video-upload-area" id="videoUploadArea" onclick="triggerVideoUpload()">
                                 <input type="file" id="videoFileInput" accept="video/*" style="display: none;" onchange="handleVideoSelect(event)">
@@ -179,6 +175,10 @@
                             <label class="form-label">
                                 <i class="ph ph-article"></i>
                                 Video Description or Script
+                                <div class="info-tooltip">
+                                    <i class="ph ph-info"></i>
+                                    <span class="tooltip-text">The more concrete you are about the video, the better the results. Include key topics, main points, and specific details.</span>
+                                </div>
                             </label>
                             <textarea class="input-textarea"
                                       id="videoInput"

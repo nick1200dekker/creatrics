@@ -2624,8 +2624,8 @@ html.dark .btn-disconnect:hover {
 
 /* Scheduled Draft Banner */
 .scheduled-banner {
-    background: linear-gradient(135deg, rgba(249, 250, 251, 0.95) 0%, rgba(243, 244, 246, 0.95) 100%);
-    border: 1px solid rgba(229, 231, 235, 0.8);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
     border-radius: 12px;
     padding: 1rem 1.25rem;
     margin: 0 auto 1rem auto;
@@ -2634,35 +2634,36 @@ html.dark .btn-disconnect:hover {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 html.dark .scheduled-banner {
-    background: linear-gradient(135deg, rgba(39, 39, 42, 0.95) 0%, rgba(24, 24, 27, 0.95) 100%);
-    border-color: rgba(63, 63, 70, 0.8);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    background: var(--bg-secondary);
+    border-color: var(--border-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .scheduled-info {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    color: #374151;
+    color: var(--text-primary);
     font-weight: 500;
     font-size: 0.9375rem;
 }
 
 html.dark .scheduled-info {
-    color: #D1D5DB;
+    color: var(--text-primary);
 }
 
 .scheduled-info i {
     font-size: 1.25rem;
-    color: #6B7280;
+    color: #3B82F6;
 }
 
 html.dark .scheduled-info i {
-    color: #9CA3AF;
+    color: #60A5FA;
 }
 
 .scheduled-info span {
@@ -2678,9 +2679,9 @@ html.dark .scheduled-info i {
 /* Edit Button - Clean secondary style */
 .btn-edit-scheduled {
     padding: 0.625rem 1rem;
-    background: rgba(59, 130, 246, 0.08);
-    border: none;
-    border-radius: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
@@ -2688,25 +2689,27 @@ html.dark .scheduled-info i {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #3B82F6;
+    color: var(--text-primary);
     letter-spacing: -0.01em;
 }
 
 html.dark .btn-edit-scheduled {
-    background: rgba(96, 165, 250, 0.12);
-    color: #60A5FA;
+    background: var(--bg-tertiary);
+    border-color: var(--border-primary);
+    color: var(--text-primary);
 }
 
 .btn-edit-scheduled:hover {
-    background: rgba(59, 130, 246, 0.15);
-    color: #2563EB;
+    background: var(--bg-secondary);
+    border-color: #3B82F6;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 html.dark .btn-edit-scheduled:hover {
-    background: rgba(96, 165, 250, 0.2);
-    color: #93C5FD;
+    background: var(--bg-secondary);
+    border-color: #60A5FA;
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
 }
 
 /* Update Button - Primary style (more prominent) */
@@ -2739,10 +2742,10 @@ html.dark .btn-update-scheduled {
 /* Unschedule Button */
 .btn-unschedule {
     padding: 0.625rem 1rem;
-    background: rgba(220, 38, 38, 0.08);
-    border: none;
-    color: #DC2626;
-    border-radius: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+    border-radius: 10px;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
@@ -2754,20 +2757,22 @@ html.dark .btn-update-scheduled {
 }
 
 html.dark .btn-unschedule {
-    background: rgba(239, 68, 68, 0.12);
-    color: #FCA5A5;
+    background: var(--bg-tertiary);
+    border-color: var(--border-primary);
+    color: var(--text-primary);
 }
 
 .btn-unschedule:hover:not(:disabled) {
-    background: rgba(220, 38, 38, 0.15);
-    color: #B91C1C;
+    background: var(--bg-secondary);
+    border-color: var(--border-primary);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 html.dark .btn-unschedule:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.2);
-    color: #FCA5A5;
+    background: var(--bg-secondary);
+    border-color: var(--border-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 html.dark .btn-update-scheduled:hover:not(:disabled) {
