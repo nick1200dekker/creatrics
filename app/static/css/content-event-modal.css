@@ -834,7 +834,14 @@ html.dark .youtube-tag-chip {
 }
 
 /* X Media Preview */
-.x-media-preview {
+.x-video-preview {
+    width: 100%;
+    max-height: 300px;
+    border-radius: 10px;
+    object-fit: contain;
+}
+
+.x-image-preview {
     width: 100%;
     max-height: 300px;
     border-radius: 10px;

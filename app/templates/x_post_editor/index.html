@@ -171,33 +171,36 @@
             <!-- Schedule Card (inline, hidden by default) -->
             <div class="upload-option-card" id="scheduleCard" style="display: none;">
                 <div class="schedule-header">
-                    <label class="upload-option-label">
-                        <i class="ph ph-calendar"></i>
-                        Publish Date & Time <span class="utc-indicator" id="timezoneIndicator">(Local Time)</span>
-                    </label>
-                    <button class="schedule-close-btn" id="scheduleCloseBtn">
+                    <button class="schedule-close-btn" id="scheduleCloseBtn" style="margin-left: auto;">
                         <i class="ph ph-x"></i>
                     </button>
                 </div>
-                <div class="schedule-datetime-grid">
-                    <select id="scheduleDateSelect" class="schedule-select">
-                        <option value="">Select date</option>
-                    </select>
-                    <select id="scheduleTimeSelect" class="schedule-select">
-                        <option value="">Select time</option>
-                    </select>
-                </div>
-
-                <!-- Content Calendar Integration -->
-                <div class="upload-option-group" style="margin-top: 1rem;">
-                    <label class="upload-option-label" style="margin-bottom: 0.5rem;">
-                        <i class="ph ph-calendar-check"></i>
-                        Content Calendar
-                    </label>
-                    <select id="contentCalendarSelect" class="schedule-select" onchange="handleContentCalendarChange()">
-                        <option value="create_new">Create New Calendar Item</option>
-                        <option value="link_existing">Link to Existing Item</option>
-                    </select>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start;">
+                    <div>
+                        <label class="upload-option-label" style="margin-bottom: 0.5rem; display: block;">
+                            <i class="ph ph-calendar"></i>
+                            Publish Date & Time <span class="utc-indicator" id="timezoneIndicator">(Local Time)</span>
+                        </label>
+                        <div class="schedule-datetime-grid">
+                            <select id="scheduleDateSelect" class="schedule-select">
+                                <option value="">Select date</option>
+                            </select>
+                            <select id="scheduleTimeSelect" class="schedule-select">
+                                <option value="">Select time</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <!-- Content Calendar Integration -->
+                        <label class="upload-option-label" style="margin-bottom: 0.5rem; display: block;">
+                            <i class="ph ph-calendar-check"></i>
+                            Content Calendar
+                        </label>
+                        <select id="contentCalendarSelect" class="schedule-select" onchange="handleContentCalendarChange()">
+                            <option value="create_new">Create New Calendar Item</option>
+                            <option value="link_existing">Link to Existing Item</option>
+                        </select>
+                    </div>
                 </div>
 
                 <button id="confirmScheduleBtn" class="schedule-confirm-btn">

@@ -52,7 +52,7 @@ class ContentEventModal {
                                     </button>
                                     <button class="content-tab" data-tab="x" id="x-tab-btn" style="display: none;">
                                         <i class="ph ph-x-logo"></i>
-                                        <span>X/Twitter Post</span>
+                                        <span>X Metadata</span>
                                     </button>
                                     <button class="content-tab" data-tab="instagram" id="instagram-tab-btn" style="display: none;">
                                         <i class="ph ph-instagram-logo"></i>
@@ -104,9 +104,13 @@ class ContentEventModal {
 
                                     <!-- X/Twitter Post Tab -->
                                     <div class="content-tab-panel" data-panel="x">
-                                        <div class="form-group" id="x-media-preview" style="display: none;">
-                                            <label>Media Preview</label>
-                                            <img id="x-media-element" class="x-media-preview" />
+                                        <div class="form-group" id="x-video-preview" style="display: none;">
+                                            <label>Video Preview</label>
+                                            <video id="x-video-element" class="x-video-preview" controls></video>
+                                        </div>
+                                        <div class="form-group" id="x-image-preview" style="display: none;">
+                                            <label>Image Preview</label>
+                                            <img id="x-image-element" class="x-image-preview" />
                                         </div>
                                         <div class="form-group">
                                             <label>Post Text</label>
@@ -786,13 +790,27 @@ class ContentEventModal {
             if (xPostField) xPostField.value = xPostText;
 
             // Show media preview if media_url is available
-            const xMediaPreview = document.getElementById('x-media-preview');
-            const xMediaElement = document.getElementById('x-media-element');
-            if (event.media_url && xMediaPreview && xMediaElement) {
-                xMediaElement.src = event.media_url;
-                xMediaPreview.style.display = 'block';
-            } else if (xMediaPreview) {
-                xMediaPreview.style.display = 'none';
+            const xVideoPreview = document.getElementById('x-video-preview');
+            const xVideoElement = document.getElementById('x-video-element');
+            const xImagePreview = document.getElementById('x-image-preview');
+            const xImageElement = document.getElementById('x-image-element');
+
+            if (event.media_url) {
+                // Detect if it's a video or image based on URL
+                const isVideo = /\.(mp4|mov|avi|webm)(\?|$)/i.test(event.media_url);
+
+                if (isVideo && xVideoPreview && xVideoElement) {
+                    xVideoElement.src = event.media_url;
+                    xVideoPreview.style.display = 'block';
+                    if (xImagePreview) xImagePreview.style.display = 'none';
+                } else if (!isVideo && xImagePreview && xImageElement) {
+                    xImageElement.src = event.media_url;
+                    xImagePreview.style.display = 'block';
+                    if (xVideoPreview) xVideoPreview.style.display = 'none';
+                }
+            } else {
+                if (xVideoPreview) xVideoPreview.style.display = 'none';
+                if (xImagePreview) xImagePreview.style.display = 'none';
             }
         } else {
             // Hide X tab for regular items

@@ -2834,28 +2834,31 @@ function initializeCalendarModal() {
 
         // If the linked item has a publish_date, auto-populate the schedule fields
         if (item.publish_date) {
-            const scheduleDateSelect = document.getElementById('scheduleDateSelect');
-            const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
+            // Wait for dropdowns to be populated, then set the values
+            setTimeout(() => {
+                const scheduleDateSelect = document.getElementById('scheduleDateSelect');
+                const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
 
-            if (scheduleDateSelect && scheduleTimeSelect) {
-                const date = new Date(item.publish_date);
+                if (scheduleDateSelect && scheduleTimeSelect) {
+                    const date = new Date(item.publish_date);
 
-                // Format date as YYYY-MM-DD
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const dateValue = `${year}-${month}-${day}`;
+                    // Format date as YYYY-MM-DD
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const dateValue = `${year}-${month}-${day}`;
 
-                // Format time as HH:MM
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                const timeValue = `${hours}:${minutes}`;
+                    // Format time as HH:MM
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    const timeValue = `${hours}:${minutes}`;
 
-                scheduleDateSelect.value = dateValue;
-                scheduleTimeSelect.value = timeValue;
+                    scheduleDateSelect.value = dateValue;
+                    scheduleTimeSelect.value = timeValue;
 
-                console.log('Auto-populated schedule from linked calendar item:', dateValue, timeValue);
-            }
+                    console.log('Auto-populated schedule from linked calendar item:', dateValue, timeValue);
+                }
+            }, 200);
         }
     });
 }

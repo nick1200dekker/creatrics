@@ -925,7 +925,8 @@ html.dark .main-panel {
     color: #4b5563 !important;
 }
 
-.drag-ghost.platform-other {
+.drag-ghost.platform-other,
+.drag-ghost.platform-notset {
     background: rgba(234, 179, 8, 0.15) !important;
     border-left: 3px solid rgba(234, 179, 8, 0.6) !important;
     color: #a16207 !important;
@@ -1171,7 +1172,8 @@ html.dark .fc-day-today::after {
     color: #18181b !important;
 }
 
-.fc-event.platform-other {
+.fc-event.platform-other,
+.fc-event.platform-notset {
     background: linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(234, 179, 8, 0.12) 100%) !important;
     border-left: 3px solid rgba(234, 179, 8, 0.6) !important;
     color: #18181b !important;
@@ -1208,7 +1210,8 @@ html.dark .fc-event.platform-blog {
     color: #e4e4e7 !important;
 }
 
-html.dark .fc-event.platform-other {
+html.dark .fc-event.platform-other,
+html.dark .fc-event.platform-notset {
     background: linear-gradient(135deg, rgba(234, 179, 8, 0.12) 0%, rgba(234, 179, 8, 0.16) 100%) !important;
     border-left: 3px solid rgba(234, 179, 8, 0.7) !important;
     color: #e4e4e7 !important;
@@ -1232,7 +1235,8 @@ html.dark .fc-event.platform-other {
     color: #18181b !important;
 }
 
-.fc-event.platform-other .fc-event-title {
+.fc-event.platform-other .fc-event-title,
+.fc-event.platform-notset .fc-event-title {
     color: #a16207 !important;
 }
 
@@ -1253,7 +1257,8 @@ html.dark .fc-event.platform-tiktok .fc-event-title {
     color: #e4e4e7 !important;
 }
 
-html.dark .fc-event.platform-other .fc-event-title {
+html.dark .fc-event.platform-other .fc-event-title,
+html.dark .fc-event.platform-notset .fc-event-title {
     color: #fde047 !important;
 }
 
