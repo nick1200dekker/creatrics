@@ -9,6 +9,7 @@
 
 {% block additional_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/x_post_editor.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/repost-modal.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -299,5 +300,6 @@
 window.userXAccount = '{{ user.x_account | default("", true) }}';
 window.hasPremium = {{ 'true' if has_premium else 'false' }};
 </script>
+<script src="{{ url_for('static', filename='scripts/repost-modal.js') }}"></script>
 <script src="{{ url_for('static', filename='scripts/x_post_editor.js') }}"></script>
 {% endblock %}

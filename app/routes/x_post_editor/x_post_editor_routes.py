@@ -1299,6 +1299,7 @@ def schedule_post():
         posts = data.get('posts', [])
         scheduled_time = data.get('scheduled_time')  # ISO 8601 format
         timezone = data.get('timezone', 'UTC')
+        content_id = data.get('content_id')  # Content library ID (optional, for reposting)
 
         current_app.logger.info(f"📥 Received schedule request with {len(posts)} posts")
         for i, post in enumerate(posts):
@@ -1395,8 +1396,29 @@ def schedule_post():
 
                 if root_media_items:
                     current_app.logger.info(f"Prepared {len(root_media_items)} media items for root level")
+                else:
+                    current_app.logger.warning("No media items were successfully processed")
 
-                    # Save to content library for cross-platform reposting
+                # Save/update content library for cross-platform reposting
+                # This runs regardless of whether there are media items
+                if content_id:
+                    # Update existing content library entry (reposting)
+                    try:
+                        ContentLibraryManager.update_platform_status(
+                            user_id=user_id,
+                            content_id=content_id,
+                            platform='x',
+                            platform_data={
+                                'status': 'scheduled',
+                                'scheduled_for': scheduled_time,
+                                'post_id': None  # Will be updated after Late.dev response
+                            }
+                        )
+                        current_app.logger.info(f"Updated content library {content_id} with X post")
+                    except Exception as e:
+                        current_app.logger.error(f"Error updating content library: {e}")
+                elif root_media_items:
+                    # Create new content library entry (only if we have media)
                     try:
                         # Extract hashtags from post text as keywords
                         first_post_text = posts[0].get('text', '') if posts else ''
@@ -1424,8 +1446,6 @@ def schedule_post():
                     except Exception as e:
                         current_app.logger.error(f"Error saving to content library: {e}")
                         # Don't fail the request if library save fails
-                else:
-                    current_app.logger.warning("No media items were successfully processed")
 
         # Build Late.dev API request with mediaItems at ROOT level
         late_dev_payload = {

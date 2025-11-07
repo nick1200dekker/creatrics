@@ -415,6 +415,9 @@
                 </div>
                 <div class="post-actions">
                     ${isFirstPost ? `
+                    <button class="post-action repost-trigger" title="Repost Content">
+                        <i class="ph ph-recycle"></i>
+                    </button>
                     <button class="post-action media-upload-trigger" title="Add Media">
                         <i class="ph ph-paperclip"></i>
                     </button>` : ''}
@@ -461,6 +464,7 @@
         const textarea = postElement.querySelector('.post-editor-textarea');
         const fileInput = postElement.querySelector('.hidden-file-input');
         const uploadTrigger = postElement.querySelector('.media-upload-trigger');
+        const repostTrigger = postElement.querySelector('.repost-trigger');
         const deleteBtn = postElement.querySelector('.delete-post');
         const addPostIcon = postElement.querySelector('.add-post-icon');
         
@@ -483,7 +487,13 @@
                 }
             };
         }
-        
+
+        if (repostTrigger) {
+            repostTrigger.onclick = () => {
+                openRepostModal();
+            };
+        }
+
         if (deleteBtn) {
             deleteBtn.onclick = () => {
                 postElement.remove();
@@ -1919,6 +1929,245 @@
 
 })();
 
+// ===== REPOST MODAL INTEGRATION =====
+
+let repostModalInstance = null;
+let currentRepostContent = null;
+
+function openRepostModal() {
+    if (!repostModalInstance) {
+        repostModalInstance = new RepostModal({
+            platform: 'x',
+            mediaTypeFilter: null, // Allow both images and videos
+            onSelect: (content) => {
+                handleRepostContentSelect(content);
+            }
+        });
+    }
+    repostModalInstance.open();
+}
+
+function handleRepostContentSelect(content) {
+    console.log('Selected content for repost:', content);
+    currentRepostContent = content;
+
+    // Get the first post textarea
+    const postsContainer = document.getElementById('postsContainer');
+    const firstPost = postsContainer.querySelector('.post-item');
+    if (!firstPost) return;
+
+    const textarea = firstPost.querySelector('.post-editor-textarea');
+    if (!textarea) return;
+
+    // Pre-fill the textarea with keywords and description
+    let text = '';
+    if (content.keywords) {
+        text += content.keywords;
+    }
+    if (content.content_description) {
+        if (text) text += '\n\n';
+        text += content.content_description;
+    }
+
+    if (text) {
+        textarea.value = text;
+        // Trigger input event to update character count
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    // Handle media if present
+    if (content.media_url) {
+        const postMedia = firstPost.querySelector('.post-media');
+        if (postMedia) {
+            const mediaType = content.media_type || 'video';
+            let mediaHTML = '';
+
+            if (mediaType === 'video') {
+                mediaHTML = `
+                    <div class="media-preview-container">
+                        <video src="${content.media_url}" controls data-media-type="video" data-filename=""></video>
+                        <button class="remove-media-btn">
+                            <i class="ph ph-x"></i>
+                        </button>
+                    </div>
+                `;
+            } else if (mediaType === 'image') {
+                mediaHTML = `
+                    <div class="media-preview-container">
+                        <img src="${content.media_url}" alt="Media" data-media-type="image" data-filename="">
+                        <button class="remove-media-btn">
+                            <i class="ph ph-x"></i>
+                        </button>
+                    </div>
+                `;
+            }
+
+            postMedia.innerHTML = mediaHTML;
+
+            // Add remove button handler
+            const removeBtn = postMedia.querySelector('.remove-media-btn');
+            if (removeBtn) {
+                removeBtn.onclick = () => {
+                    postMedia.innerHTML = '';
+                    currentRepostContent = null;
+                };
+            }
+        }
+    }
+
+    // Show schedule card and pre-fill date/time
+    // Check if ANY platform has a scheduled_for date (prefer the first one we find)
+    let scheduledDate = null;
+
+    if (content.platforms_posted) {
+        console.log('Checking platforms_posted:', content.platforms_posted);
+
+        // Check X first
+        if (content.platforms_posted.x && content.platforms_posted.x.scheduled_for) {
+            scheduledDate = content.platforms_posted.x.scheduled_for;
+            console.log('Found X scheduled date:', scheduledDate);
+        }
+        // Otherwise check other platforms
+        else {
+            const platforms = ['youtube', 'tiktok', 'instagram'];
+            for (const platform of platforms) {
+                if (content.platforms_posted[platform] && content.platforms_posted[platform].scheduled_for) {
+                    scheduledDate = content.platforms_posted[platform].scheduled_for;
+                    console.log(`Found ${platform} scheduled date:`, scheduledDate);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (scheduledDate) {
+        console.log('Pre-filling schedule with date:', scheduledDate);
+        const scheduledFor = new Date(scheduledDate);
+        showScheduleCardWithDate(scheduledFor);
+    } else {
+        console.log('No scheduled date found in repost content');
+    }
+}
+
+function showScheduleCardWithDate(date = null) {
+    const scheduleCard = document.getElementById('scheduleCard');
+    if (!scheduleCard) {
+        console.log('Schedule card element not found');
+        return;
+    }
+
+    console.log('Showing schedule card with date:', date);
+    scheduleCard.style.display = 'block';
+
+    // Get timezone abbreviation
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const tzAbbr = new Date().toLocaleTimeString('en-us', { timeZoneName: 'short' }).split(' ')[2];
+
+    // Update timezone indicator
+    const tzIndicator = document.getElementById('timezoneIndicator');
+    if (tzIndicator) {
+        tzIndicator.textContent = `(${tzAbbr || 'Local Time'})`;
+    }
+
+    // Pre-fill the dropdowns
+    const dateSelect = document.getElementById('scheduleDateSelect');
+    const timeSelect = document.getElementById('scheduleTimeSelect');
+
+    console.log('Date select element:', dateSelect);
+    console.log('Time select element:', timeSelect);
+
+    // Check if dropdowns are already populated (more than just the placeholder)
+    const needsPopulation = dateSelect.options.length <= 1 || timeSelect.options.length <= 1;
+
+    if (needsPopulation) {
+        console.log('Populating schedule dropdowns...');
+
+        // Clear existing options
+        dateSelect.innerHTML = '<option value="">Select date</option>';
+        timeSelect.innerHTML = '<option value="">Select time</option>';
+
+        // Populate date options (next 365 days)
+        const today = new Date();
+        for (let i = 0; i < 365; i++) {
+            const optionDate = new Date(today);
+            optionDate.setDate(today.getDate() + i);
+
+            const year = optionDate.getFullYear();
+            const month = String(optionDate.getMonth() + 1).padStart(2, '0');
+            const day = String(optionDate.getDate()).padStart(2, '0');
+            const value = `${year}-${month}-${day}`;
+
+            const dayName = optionDate.toLocaleDateString('en-US', { weekday: 'short' });
+            const monthName = optionDate.toLocaleDateString('en-US', { month: 'short' });
+            const label = `${dayName}, ${monthName} ${day}, ${year}`;
+
+            const option = document.createElement('option');
+            option.value = value;
+
+            if (i === 0) {
+                option.textContent = `Today - ${label}`;
+            } else if (i === 1) {
+                option.textContent = `Tomorrow - ${label}`;
+            } else {
+                option.textContent = label;
+            }
+
+            dateSelect.appendChild(option);
+        }
+
+        // Populate time options (every 15 minutes)
+        for (let hour = 0; hour < 24; hour++) {
+            for (let minute = 0; minute < 60; minute += 15) {
+                const hourStr = String(hour).padStart(2, '0');
+                const minuteStr = String(minute).padStart(2, '0');
+                const value = `${hourStr}:${minuteStr}`;
+
+                const hour12 = hour % 12 || 12;
+                const ampm = hour < 12 ? 'AM' : 'PM';
+                const label = `${hour12}:${minuteStr} ${ampm}`;
+
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                timeSelect.appendChild(option);
+            }
+        }
+    }
+
+    // Set the date/time values
+    if (date) {
+        // The date object is already in local time after parsing the UTC string
+        // Extract local date components
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+
+        // Extract local time components
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const timeStr = `${hours}:${minutes}`;
+
+        console.log('Looking for date:', dateStr, 'time:', timeStr);
+
+        // Set the date
+        dateSelect.value = dateStr;
+        console.log('Set date to:', dateSelect.value, '(found:', dateSelect.value !== '' ? 'yes' : 'no', ')');
+
+        // Set the time
+        timeSelect.value = timeStr;
+        console.log('Set time to:', timeSelect.value, '(found:', timeSelect.value !== '' ? 'yes' : 'no', ')');
+    } else {
+        // Default to tomorrow at 12 PM
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+        dateSelect.value = tomorrowStr;
+        timeSelect.value = '12:00';
+    }
+}
+
 // ===== X CONNECTION & SCHEDULING =====
 
 /**
@@ -2790,7 +3039,8 @@ async function handleScheduleConfirm() {
                 posts: posts,
                 scheduled_time: scheduledTime,
                 timezone: userTimezone,
-                draft_id: state.currentDraftId || ''
+                draft_id: state.currentDraftId || '',
+                content_id: currentRepostContent ? currentRepostContent.id : null
             })
         });
 
