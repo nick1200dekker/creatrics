@@ -24,6 +24,11 @@
     to { opacity: 1; }
 }
 
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 .event-modal {
     background: #ffffff;
     border-radius: 16px;
@@ -473,6 +478,7 @@ html.dark .comment-delete-btn:hover {
     padding: 1.25rem;
     border-top: 1.5px solid var(--border-primary);
     display: flex;
+    flex-direction: column;
     gap: 0.75rem;
     background: var(--bg-primary);
 }
@@ -493,10 +499,8 @@ html.dark .comment-input-box {
     resize: none;
     font-family: inherit;
     transition: all 0.2s;
-    height: 44px;
+    min-height: 44px;
     line-height: 1.7;
-    display: flex;
-    align-items: center;
 }
 
 html.dark .comment-input-box textarea {
@@ -511,28 +515,126 @@ html.dark .comment-input-box textarea {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.comment-input-box button {
-    width: 44px;
-    height: 44px;
+.comment-input-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.comment-action-btn {
+    width: 36px;
+    height: 36px;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+html.dark .comment-action-btn {
+    background: #3f3f46;
+    color: #a1a1aa;
+}
+
+.comment-action-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+html.dark .comment-action-btn:hover {
+    background: #52525b;
+    color: #e5e5e5;
+}
+
+.comment-action-btn i {
+    font-size: 18px;
+}
+
+.comment-send-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
     background: #3b82f6;
     color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
     transition: all 0.2s;
 }
 
-.comment-input-box button:hover {
+.comment-send-btn:hover {
     background: #2563eb;
     transform: scale(1.05);
 }
 
-.comment-input-box button i {
+.comment-send-btn i {
     font-size: 18px;
+}
+
+/* Comment Image Preview */
+.comment-image-preview {
+    padding: 0 1.25rem 1.25rem;
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--bg-primary);
+}
+
+html.dark .comment-image-preview {
+    background: #27272a;
+}
+
+.comment-image-preview img {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.remove-preview-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+html.dark .remove-preview-btn {
+    background: #3f3f46;
+}
+
+.remove-preview-btn:hover {
+    background: #ef4444;
+    color: white;
+}
+
+/* Comment Image Display */
+.comment-image-wrapper {
+    margin-top: 0.5rem;
+}
+
+.comment-image {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.comment-image:hover {
+    transform: scale(1.02);
 }
 
 /* Hide scrollbars */
@@ -711,6 +813,15 @@ html.dark .youtube-tag-chip {
     color: var(--text-secondary);
     font-size: 0.875rem;
     font-style: italic;
+}
+
+/* YouTube Video Preview */
+.youtube-video-preview {
+    width: 100%;
+    max-height: 300px;
+    border-radius: 10px;
+    background: #000;
+    object-fit: contain;
 }
 
 /* Responsive */

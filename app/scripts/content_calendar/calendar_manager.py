@@ -76,7 +76,7 @@ class ContentCalendarManager:
                      comments: List[Dict] = None, notes: str = "",
                      youtube_video_id: str = "", instagram_post_id: str = "",
                      tiktok_post_id: str = "", x_post_id: str = "",
-                     content_id: str = "") -> str:
+                     content_id: str = "", media_url: str = "") -> str:
         """Create a new calendar event with new fields"""
         try:
             # Generate a unique ID for the event
@@ -106,6 +106,7 @@ class ContentCalendarManager:
                 "tiktok_post_id": tiktok_post_id,  # TikTok post ID for scheduled posts
                 "x_post_id": x_post_id,  # X/Twitter post ID for scheduled posts
                 "content_id": content_id,  # Content library ID for tracking repost content
+                "media_url": media_url,  # Firebase storage URL for video/image (for thumbnail display)
                 "created_at": datetime.now(),
                 "updated_at": datetime.now()
             }
@@ -143,7 +144,8 @@ class ContentCalendarManager:
             allowed_fields = [
                 'title', 'publish_date', 'is_paid', 'is_free', 'is_sponsored',
                 'category', 'audience_type', 'content_type', 'platform',
-                'description', 'color', 'tags', 'content_link', 'status', 'comments', 'notes'
+                'description', 'color', 'tags', 'content_link', 'status', 'comments', 'notes',
+                'media_url', 'youtube_video_id', 'instagram_post_id', 'tiktok_post_id', 'x_post_id', 'content_id'
             ]
             
             for key, value in kwargs.items():

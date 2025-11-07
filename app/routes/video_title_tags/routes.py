@@ -789,7 +789,8 @@ def upload_to_youtube():
                         platform='YouTube',
                         status=status,
                         youtube_video_id=post_id,
-                        content_id=content_id if content_id else ''
+                        content_id=content_id if content_id else '',
+                        media_url=firebase_url  # Store video URL for thumbnail display
                     )
                     if success:
                         logger.info(f"Updated linked calendar event {calendar_event_id} for YouTube video {post_id}")
@@ -809,7 +810,8 @@ def upload_to_youtube():
                         content_type='organic',
                         youtube_video_id=post_id,
                         content_id=content_id if content_id else '',
-                        notes=f'YouTube Post ID: {post_id}'
+                        notes=f'YouTube Post ID: {post_id}',
+                        media_url=firebase_url  # Store video URL for thumbnail display
                     )
                     logger.info(f"Created calendar event {event_id} for YouTube video {post_id} (scheduled={bool(scheduled_time)})")
 

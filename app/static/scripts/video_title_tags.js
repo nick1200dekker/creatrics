@@ -2201,6 +2201,43 @@ document.addEventListener('DOMContentLoaded', function() {
             option.textContent = `Linked: ${item.title || 'Untitled'}`;
             select.appendChild(option);
         }
+
+        // If the linked item has a publish_date, auto-populate the schedule fields
+        if (item.publish_date) {
+            // Switch to scheduled mode
+            const privacySelect = document.getElementById('privacySelect');
+            if (privacySelect) {
+                privacySelect.value = 'scheduled';
+                // Trigger change to show schedule date/time fields
+                handleStatusChange();
+            }
+
+            // Wait for dropdowns to be populated, then set the values
+            setTimeout(() => {
+                const scheduleDateSelect = document.getElementById('scheduleDateSelect');
+                const scheduleTimeSelect = document.getElementById('scheduleTimeSelect');
+
+                if (scheduleDateSelect && scheduleTimeSelect) {
+                    const date = new Date(item.publish_date);
+
+                    // Format date as YYYY-MM-DD
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const dateValue = `${year}-${month}-${day}`;
+
+                    // Format time as HH:MM
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    const timeValue = `${hours}:${minutes}`;
+
+                    scheduleDateSelect.value = dateValue;
+                    scheduleTimeSelect.value = timeValue;
+
+                    console.log('Auto-populated schedule from linked calendar item:', dateValue, timeValue);
+                }
+            }, 200);
+        }
     });
 });
 

@@ -870,3 +870,66 @@ def get_analytics(period):
     except Exception as e:
         current_app.logger.error(f"Error getting analytics: {str(e)}\n{traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
+
+@bp.route('/content-calendar/api/upload-comment-image', methods=['POST'])
+@auth_required
+@require_permission('content_calendar')
+def upload_comment_image():
+    """Upload an image for a calendar comment"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Check if image file is present
+        if 'image' not in request.files:
+            return jsonify({'success': False, 'error': 'No image file provided'}), 400
+
+        image_file = request.files['image']
+        if not image_file or image_file.filename == '':
+            return jsonify({'success': False, 'error': 'No image file selected'}), 400
+
+        # Validate file type
+        if not image_file.content_type.startswith('image/'):
+            return jsonify({'success': False, 'error': 'File must be an image'}), 400
+
+        # Validate file size (5MB limit)
+        image_file.seek(0, 2)  # Seek to end
+        file_size = image_file.tell()
+        image_file.seek(0)  # Seek back to beginning
+
+        if file_size > 5 * 1024 * 1024:
+            return jsonify({'success': False, 'error': 'Image must be smaller than 5MB'}), 400
+
+        # Generate unique filename
+        import os
+        file_ext = os.path.splitext(image_file.filename)[1].lower()
+        unique_filename = f"comment_{uuid.uuid4().hex}{file_ext}"
+
+        # Upload to Firebase Storage
+        from app.system.services.firebase_service import StorageService
+        result = StorageService.upload_file(
+            user_id,
+            'calendar_comments',  # Directory for calendar comment images
+            unique_filename,
+            image_file,
+            make_public=True  # Public URL for viewing
+        )
+
+        if result:
+            # Extract URL from result
+            if isinstance(result, dict):
+                image_url = result.get('url')
+            else:
+                image_url = result
+
+            current_app.logger.info(f"Comment image uploaded: {image_url}")
+
+            return jsonify({
+                'success': True,
+                'image_url': image_url
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Failed to upload to storage'}), 500
+
+    except Exception as e:
+        current_app.logger.error(f"Error uploading comment image: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'error': str(e)}), 500

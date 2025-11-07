@@ -9,6 +9,7 @@ class ContentEventModal {
         this.onSave = null;
         this.onDelete = null;
         this.comments = [];
+        this.isSubmittingComment = false;
         this.init();
     }
 
@@ -59,6 +60,10 @@ class ContentEventModal {
 
                                     <!-- YouTube Metadata Tab -->
                                     <div class="content-tab-panel" data-panel="youtube">
+                                        <div class="form-group" id="youtube-video-preview" style="display: none;">
+                                            <label>Video Preview</label>
+                                            <video id="youtube-video-element" class="youtube-video-preview" controls></video>
+                                        </div>
                                         <div class="form-group">
                                             <label>Video Title</label>
                                             <textarea id="youtube-title-field" class="form-control" rows="2" readonly disabled></textarea>
@@ -141,8 +146,20 @@ class ContentEventModal {
                             <div class="comments-list" id="comments-list"></div>
                             <div class="comment-input-box">
                                 <textarea id="comment-input" placeholder="Add a comment..."></textarea>
-                                <button id="send-comment">
-                                    <i class="ph ph-paper-plane-right"></i>
+                                <input type="file" id="comment-image-input" accept="image/*" style="display: none;" />
+                                <div class="comment-input-actions">
+                                    <button id="attach-image-btn" class="comment-action-btn" title="Attach image">
+                                        <i class="ph ph-image"></i>
+                                    </button>
+                                    <button id="send-comment" class="comment-send-btn">
+                                        <i class="ph ph-paper-plane-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="comment-image-preview" class="comment-image-preview" style="display: none;">
+                                <img id="comment-preview-img" />
+                                <button id="remove-comment-image" class="remove-preview-btn">
+                                    <i class="ph ph-x"></i>
                                 </button>
                             </div>
                         </div>
@@ -164,6 +181,9 @@ class ContentEventModal {
         const statusSelect = document.getElementById('status-select');
         const sendComment = document.getElementById('send-comment');
         const commentInput = document.getElementById('comment-input');
+        const attachImageBtn = document.getElementById('attach-image-btn');
+        const commentImageInput = document.getElementById('comment-image-input');
+        const removeCommentImage = document.getElementById('remove-comment-image');
 
         console.log('Delete button found:', deleteBtn);
 
@@ -205,6 +225,23 @@ class ContentEventModal {
                     e.preventDefault();
                     this.addComment();
                 }
+            };
+        }
+
+        // Image attachment handlers
+        if (attachImageBtn) {
+            attachImageBtn.onclick = () => {
+                commentImageInput.click();
+            };
+        }
+        if (commentImageInput) {
+            commentImageInput.onchange = (e) => {
+                this.handleImageSelect(e.target.files[0]);
+            };
+        }
+        if (removeCommentImage) {
+            removeCommentImage.onclick = () => {
+                this.clearCommentImage();
             };
         }
 
@@ -313,41 +350,140 @@ class ContentEventModal {
         }
     }
 
+    handleImageSelect(file) {
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file');
+            return;
+        }
+
+        // Validate file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image must be smaller than 5MB');
+            return;
+        }
+
+        this.selectedCommentImage = file;
+
+        // Show preview
+        const preview = document.getElementById('comment-image-preview');
+        const previewImg = document.getElementById('comment-preview-img');
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            preview.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    clearCommentImage() {
+        this.selectedCommentImage = null;
+        const preview = document.getElementById('comment-image-preview');
+        const imageInput = document.getElementById('comment-image-input');
+
+        preview.style.display = 'none';
+        if (imageInput) imageInput.value = '';
+    }
+
+    async uploadCommentImage(file) {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('event_id', this.currentEvent.id);
+
+        const response = await fetch('/content-calendar/api/upload-comment-image', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to upload image');
+        }
+
+        return data.image_url;
+    }
+
     async addComment() {
         console.log('addComment called');
+
+        // Prevent multiple submissions
+        if (this.isSubmittingComment) {
+            console.log('Comment submission already in progress');
+            return;
+        }
+
         const input = document.getElementById('comment-input');
         const text = input.value.trim();
         console.log('Comment text:', text);
-        if (!text) return;
 
-        // Add to beginning (newest first)
-        this.comments.unshift({
-            text: text,
-            timestamp: new Date().toISOString()
-        });
+        // Allow empty text if image is attached
+        if (!text && !this.selectedCommentImage) return;
 
-        console.log('Comments array:', this.comments);
-        this.renderComments();
-        input.value = '';
+        // Set submitting state
+        this.isSubmittingComment = true;
 
-        // Auto-save comments if editing existing event
-        if (this.currentEvent && this.currentEvent.id) {
-            console.log('Auto-saving comment to event:', this.currentEvent.id);
-            const eventData = {
-                id: this.currentEvent.id,
-                title: this.currentEvent.title,
-                description: this.currentEvent.description || '',
-                tags: this.currentEvent.tags || '',
-                platform: this.currentEvent.platform,
-                content_type: this.currentEvent.content_type,
-                status: this.currentEvent.status,
-                publish_date: this.currentEvent.publish_date,
-                notes: JSON.stringify(this.comments)
-            };
+        // Disable send button and show loading state
+        const sendBtn = document.getElementById('send-comment');
+        const originalContent = sendBtn.innerHTML;
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="ph ph-spinner" style="animation: spin 1s linear infinite;"></i>';
 
-            if (this.onSave) {
-                await this.onSave(eventData);
-                console.log('Comment auto-saved');
+        let imageUrl = null;
+
+        try {
+            // Upload image if attached
+            if (this.selectedCommentImage) {
+                try {
+                    imageUrl = await this.uploadCommentImage(this.selectedCommentImage);
+                    console.log('Image uploaded:', imageUrl);
+                } catch (error) {
+                    console.error('Error uploading image:', error);
+                    alert('Failed to upload image: ' + error.message);
+                    return;
+                }
+            }
+
+            // Add to beginning (newest first)
+            this.comments.unshift({
+                text: text,
+                timestamp: new Date().toISOString(),
+                image_url: imageUrl
+            });
+
+            console.log('Comments array:', this.comments);
+            this.renderComments();
+            input.value = '';
+            this.clearCommentImage();
+
+            // Auto-save comments if editing existing event
+            if (this.currentEvent && this.currentEvent.id) {
+                console.log('Auto-saving comment to event:', this.currentEvent.id);
+                const eventData = {
+                    id: this.currentEvent.id,
+                    title: this.currentEvent.title,
+                    description: this.currentEvent.description || '',
+                    tags: this.currentEvent.tags || '',
+                    platform: this.currentEvent.platform,
+                    content_type: this.currentEvent.content_type,
+                    status: this.currentEvent.status,
+                    publish_date: this.currentEvent.publish_date,
+                    notes: JSON.stringify(this.comments)
+                };
+
+                if (this.onSave) {
+                    await this.onSave(eventData);
+                    console.log('Comment auto-saved');
+                }
+            }
+        } finally {
+            // Re-enable send button and restore icon
+            this.isSubmittingComment = false;
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = originalContent;
             }
         }
     }
@@ -369,11 +505,16 @@ class ContentEventModal {
                 minute: '2-digit'
             });
 
+            const imageHtml = comment.image_url
+                ? `<div class="comment-image-wrapper"><img src="${comment.image_url}" class="comment-image" /></div>`
+                : '';
+
             return `
                 <div class="comment-item">
                     <div class="comment-content">
                         <div class="comment-time">${time}</div>
-                        <div class="comment-text">${this.escapeHtml(comment.text)}</div>
+                        ${comment.text ? `<div class="comment-text">${this.escapeHtml(comment.text)}</div>` : ''}
+                        ${imageHtml}
                     </div>
                     <button class="comment-delete-btn" data-index="${index}">
                         <i class="ph ph-x"></i>
@@ -535,6 +676,16 @@ class ContentEventModal {
 
             if (youtubeTitleField) youtubeTitleField.value = videoTitle;
             if (youtubeDescriptionField) youtubeDescriptionField.value = videoDescription;
+
+            // Show video preview if media_url is available
+            const videoPreview = document.getElementById('youtube-video-preview');
+            const videoElement = document.getElementById('youtube-video-element');
+            if (event.media_url && videoPreview && videoElement) {
+                videoElement.src = event.media_url;
+                videoPreview.style.display = 'block';
+            } else if (videoPreview) {
+                videoPreview.style.display = 'none';
+            }
 
             // Render tags as chips
             if (youtubeTagsContainer && event.tags) {
