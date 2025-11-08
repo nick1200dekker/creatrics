@@ -760,19 +760,24 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const platformColor = getEventColor(event);
             row.style.borderLeft = `3px solid ${platformColor}`;
-            
+
+            // Truncate title to 60 characters
+            const title = event.title || 'Untitled';
+            const truncatedTitle = title.length > 60 ? title.substring(0, 60) + '...' : title;
+
             row.innerHTML = `
-                <td>${event.title}${event.content_type === 'sponsored' ? ' 💰' : ''}</td>
+                <td title="${title}">${truncatedTitle}${event.content_type === 'sponsored' ? ' 💰' : ''}</td>
                 <td>${event.publish_date ? new Date(event.publish_date).toLocaleDateString() : '-'}</td>
                 <td>${event.platform || '-'}</td>
-                <td><span class="kanban-tag ${event.content_type === 'sponsored' ? 'sponsored' : 'organic'}">${event.content_type === 'sponsored' ? 'Sponsored' : 'Organic'}</span></td>
                 <td><span class="status-badge status-${event.status || 'draft'}">${event.status || 'draft'}</span></td>
-                <td>
-                    <button class="btn btn-icon" onclick="editEvent('${event.id}')">
-                        <i class="ph ph-pencil"></i>
-                    </button>
-                </td>
             `;
+
+            // Add click handler to open event details
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', function() {
+                editEvent(event.id);
+            });
+
             tbody.appendChild(row);
         });
     }
@@ -814,12 +819,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const platform = (event.platform || 'Other').toLowerCase();
                 card.style.borderLeft = `3px solid ${getEventColor(event)}`;
-                
+
+                // Truncate title to 50 characters
+                const cardTitle = event.title || 'Untitled';
+                const truncatedCardTitle = cardTitle.length > 50 ? cardTitle.substring(0, 50) + '...' : cardTitle;
+
                 card.innerHTML = `
-                    <div class="kanban-card-title">${event.title}${event.content_type === 'sponsored' ? ' 💰' : ''}</div>
-                    <div class="kanban-card-meta">
-                        <span class="kanban-tag ${event.content_type === 'sponsored' ? 'sponsored' : 'organic'}">${event.content_type === 'sponsored' ? 'Sponsored' : 'Organic'}</span>
-                    </div>
+                    <div class="kanban-card-title" title="${cardTitle}">${truncatedCardTitle}${event.content_type === 'sponsored' ? ' 💰' : ''}</div>
                     ${event.publish_date ? `
                         <div class="kanban-card-date">
                             <i class="ph ph-calendar"></i>

@@ -1510,10 +1510,24 @@ def schedule_post():
                     draft_id = data.get('draft_id', '')
                     content_link = f"/x_post_editor?draft={draft_id}" if draft_id else ""
 
-                    # Get first media URL for preview (if any)
+                    # Get all media URLs with types for preview
                     media_url = ''
+                    media_items = []
                     if posts and posts[0].get('media') and len(posts[0]['media']) > 0:
-                        media_url = posts[0]['media'][0].get('url', '')
+                        for media in posts[0]['media']:
+                            media_url_item = media.get('url', '')
+                            media_type = media.get('media_type', 'image')  # Default to image
+                            if media_url_item:
+                                media_items.append({
+                                    'url': media_url_item,
+                                    'type': media_type
+                                })
+                        # For backward compatibility, store first URL in media_url
+                        media_url = media_items[0]['url'] if media_items else ''
+
+                    # Store media_items as JSON string for multiple media support
+                    import json
+                    media_metadata = json.dumps(media_items) if media_items else ''
 
                     if calendar_event_id:
                         # Update the linked calendar event
@@ -1527,7 +1541,8 @@ def schedule_post():
                             x_post_id=post_id,
                             content_id=content_id if content_id else '',
                             content_link=content_link,
-                            media_url=media_url  # Store media URL for preview
+                            media_url=media_url,  # Store first media URL for backward compatibility
+                            media_metadata=media_metadata  # Store all media items with types
                         )
                         if success:
                             current_app.logger.info(f"✅ Updated linked calendar event {calendar_event_id} for X post {post_id}")
@@ -1552,7 +1567,8 @@ def schedule_post():
                             x_post_id=post_id,
                             notes=f'Draft ID: {draft_id}' if draft_id else '',
                             content_id=content_id if content_id else '',
-                            media_url=media_url  # Store media URL for preview
+                            media_url=media_url,  # Store first media URL for backward compatibility
+                            media_metadata=media_metadata  # Store all media items with types
                         )
 
                         current_app.logger.info(f"✅ Created calendar event {event_id} for scheduled X post {post_id}")

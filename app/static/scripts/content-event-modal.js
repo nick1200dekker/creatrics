@@ -104,13 +104,9 @@ class ContentEventModal {
 
                                     <!-- X/Twitter Post Tab -->
                                     <div class="content-tab-panel" data-panel="x">
-                                        <div class="form-group" id="x-video-preview" style="display: none;">
-                                            <label>Video Preview</label>
-                                            <video id="x-video-element" class="x-video-preview" controls></video>
-                                        </div>
-                                        <div class="form-group" id="x-image-preview" style="display: none;">
-                                            <label>Image Preview</label>
-                                            <img id="x-image-element" class="x-image-preview" />
+                                        <div class="form-group" id="x-media-gallery" style="display: none;">
+                                            <label>Media Preview</label>
+                                            <div id="x-media-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.375rem;"></div>
                                         </div>
                                         <div class="form-group">
                                             <label>Post Text</label>
@@ -120,13 +116,9 @@ class ContentEventModal {
 
                                     <!-- Instagram Post Tab -->
                                     <div class="content-tab-panel" data-panel="instagram">
-                                        <div class="form-group" id="instagram-video-preview" style="display: none;">
-                                            <label>Video Preview</label>
-                                            <video id="instagram-video-element" class="instagram-video-preview" controls></video>
-                                        </div>
-                                        <div class="form-group" id="instagram-image-preview" style="display: none;">
-                                            <label>Image Preview</label>
-                                            <img id="instagram-image-element" class="instagram-image-preview" />
+                                        <div class="form-group" id="instagram-media-gallery" style="display: none;">
+                                            <label>Media Preview</label>
+                                            <div id="instagram-media-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.375rem;"></div>
                                         </div>
                                         <div class="form-group">
                                             <label>Caption</label>
@@ -789,28 +781,73 @@ class ContentEventModal {
             const xPostText = event.description ? event.description.replace('Post Text: ', '') : '';
             if (xPostField) xPostField.value = xPostText;
 
-            // Show media preview if media_url is available
-            const xVideoPreview = document.getElementById('x-video-preview');
-            const xVideoElement = document.getElementById('x-video-element');
-            const xImagePreview = document.getElementById('x-image-preview');
-            const xImageElement = document.getElementById('x-image-element');
+            // Check if we have media_metadata (multiple media with types)
+            let mediaItems = [];
+            if (event.media_metadata) {
+                try {
+                    mediaItems = JSON.parse(event.media_metadata);
+                } catch (e) {
+                    console.error('Failed to parse media_metadata:', e);
+                }
+            }
 
-            if (event.media_url) {
-                // Detect if it's a video or image based on URL
-                const isVideo = /\.(mp4|mov|avi|webm)(\?|$)/i.test(event.media_url);
+            const xMediaGallery = document.getElementById('x-media-gallery');
+            const xMediaContainer = document.getElementById('x-media-container');
 
-                if (isVideo && xVideoPreview && xVideoElement) {
-                    xVideoElement.src = event.media_url;
-                    xVideoPreview.style.display = 'block';
-                    if (xImagePreview) xImagePreview.style.display = 'none';
-                } else if (!isVideo && xImagePreview && xImageElement) {
-                    xImageElement.src = event.media_url;
-                    xImagePreview.style.display = 'block';
-                    if (xVideoPreview) xVideoPreview.style.display = 'none';
+            if (mediaItems.length > 0) {
+                // Show media gallery with all media items
+                if (xMediaGallery && xMediaContainer) {
+                    xMediaContainer.innerHTML = '';
+
+                    mediaItems.forEach(media => {
+                        let mediaElement;
+                        if (media.type === 'video') {
+                            mediaElement = document.createElement('video');
+                            mediaElement.controls = true;
+                            mediaElement.style.width = '100%';
+                            mediaElement.style.maxHeight = '300px';
+                            mediaElement.style.borderRadius = '10px';
+                            mediaElement.style.objectFit = 'contain';
+                        } else {
+                            mediaElement = document.createElement('img');
+                            mediaElement.style.width = '100%';
+                            mediaElement.style.maxHeight = '300px';
+                            mediaElement.style.borderRadius = '10px';
+                            mediaElement.style.objectFit = 'contain';
+                        }
+                        mediaElement.src = media.url;
+                        xMediaContainer.appendChild(mediaElement);
+                    });
+
+                    xMediaGallery.style.display = 'block';
+                    console.log(`X post showing ${mediaItems.length} media items`);
+                }
+            } else if (event.media_url && event.media_url.trim() !== '') {
+                // Fallback to old media_url for backward compatibility
+                console.log('X media_url (legacy):', event.media_url);
+                if (xMediaGallery && xMediaContainer) {
+                    xMediaContainer.innerHTML = '';
+
+                    const isVideo = /\.(mp4|mov|avi|webm)(\?|$)/i.test(event.media_url);
+                    let mediaElement;
+
+                    if (isVideo) {
+                        mediaElement = document.createElement('video');
+                        mediaElement.controls = true;
+                    } else {
+                        mediaElement = document.createElement('img');
+                    }
+
+                    mediaElement.src = event.media_url;
+                    mediaElement.style.width = '100%';
+                    mediaElement.style.maxHeight = '300px';
+                    mediaElement.style.borderRadius = '10px';
+                    mediaElement.style.objectFit = 'contain';
+                    xMediaContainer.appendChild(mediaElement);
+                    xMediaGallery.style.display = 'block';
                 }
             } else {
-                if (xVideoPreview) xVideoPreview.style.display = 'none';
-                if (xImagePreview) xImagePreview.style.display = 'none';
+                if (xMediaGallery) xMediaGallery.style.display = 'none';
             }
         } else {
             // Hide X tab for regular items
@@ -832,28 +869,69 @@ class ContentEventModal {
             const instagramCaption = event.description ? event.description.replace('Caption: ', '') : '';
             if (instagramCaptionField) instagramCaptionField.value = instagramCaption;
 
-            // Show media preview if media_url is available
-            const instagramVideoPreview = document.getElementById('instagram-video-preview');
-            const instagramVideoElement = document.getElementById('instagram-video-element');
-            const instagramImagePreview = document.getElementById('instagram-image-preview');
-            const instagramImageElement = document.getElementById('instagram-image-element');
+            // Show media preview if media_metadata or media_url is available
+            const instagramMediaGallery = document.getElementById('instagram-media-gallery');
+            const instagramMediaContainer = document.getElementById('instagram-media-container');
 
-            if (event.media_url) {
-                // Detect if it's a video or image based on URL
-                const isVideo = /\.(mp4|mov|avi|webm)(\?|$)/i.test(event.media_url);
+            // Try to parse media_metadata first (new format)
+            if (event.media_metadata) {
+                console.log('Instagram media_metadata:', event.media_metadata);
+                let mediaItems = [];
+                try {
+                    mediaItems = JSON.parse(event.media_metadata);
+                } catch (e) {
+                    console.error('Error parsing Instagram media_metadata:', e);
+                }
 
-                if (isVideo && instagramVideoPreview && instagramVideoElement) {
-                    instagramVideoElement.src = event.media_url;
-                    instagramVideoPreview.style.display = 'block';
-                    if (instagramImagePreview) instagramImagePreview.style.display = 'none';
-                } else if (!isVideo && instagramImagePreview && instagramImageElement) {
-                    instagramImageElement.src = event.media_url;
-                    instagramImagePreview.style.display = 'block';
-                    if (instagramVideoPreview) instagramVideoPreview.style.display = 'none';
+                if (mediaItems.length > 0 && instagramMediaGallery && instagramMediaContainer) {
+                    instagramMediaContainer.innerHTML = '';
+
+                    mediaItems.forEach(media => {
+                        let mediaElement;
+                        if (media.type === 'video') {
+                            mediaElement = document.createElement('video');
+                            mediaElement.controls = true;
+                        } else {
+                            mediaElement = document.createElement('img');
+                        }
+
+                        mediaElement.src = media.url;
+                        mediaElement.style.width = '100%';
+                        mediaElement.style.maxHeight = '300px';
+                        mediaElement.style.borderRadius = '10px';
+                        mediaElement.style.objectFit = 'contain';
+                        instagramMediaContainer.appendChild(mediaElement);
+                    });
+
+                    instagramMediaGallery.style.display = 'block';
+                    console.log(`Instagram showing ${mediaItems.length} media items`);
+                }
+            } else if (event.media_url && event.media_url.trim() !== '') {
+                // Fallback to old media_url for backward compatibility
+                console.log('Instagram media_url (legacy):', event.media_url);
+                if (instagramMediaGallery && instagramMediaContainer) {
+                    instagramMediaContainer.innerHTML = '';
+
+                    const isVideo = /\.(mp4|mov|avi|webm)(\?|$)/i.test(event.media_url);
+                    let mediaElement;
+
+                    if (isVideo) {
+                        mediaElement = document.createElement('video');
+                        mediaElement.controls = true;
+                    } else {
+                        mediaElement = document.createElement('img');
+                    }
+
+                    mediaElement.src = event.media_url;
+                    mediaElement.style.width = '100%';
+                    mediaElement.style.maxHeight = '300px';
+                    mediaElement.style.borderRadius = '10px';
+                    mediaElement.style.objectFit = 'contain';
+                    instagramMediaContainer.appendChild(mediaElement);
+                    instagramMediaGallery.style.display = 'block';
                 }
             } else {
-                if (instagramVideoPreview) instagramVideoPreview.style.display = 'none';
-                if (instagramImagePreview) instagramImagePreview.style.display = 'none';
+                if (instagramMediaGallery) instagramMediaGallery.style.display = 'none';
             }
         } else {
             // Hide Instagram tab for regular items

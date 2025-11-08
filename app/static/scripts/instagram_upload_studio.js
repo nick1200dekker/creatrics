@@ -3,7 +3,7 @@
  * Handles OAuth connection, title generation, and video upload
  */
 
-let selectedFile = null;
+let selectedFiles = [];
 let isConnected = false;
 let currentCaptions = [];
 let isGeneratingCaptions = false;
@@ -835,9 +835,9 @@ function handleModeChange() {
 async function handleUpload(e) {
     e.preventDefault();
 
-    // Check if we have either a selected file (upload mode) or repost content (repost mode)
-    if (!selectedFile && !(uploadMode === 'repost' && repostContent)) {
-        showToast('Please select a media file', 'error');
+    // Check if we have either selected files (upload mode) or repost content (repost mode)
+    if (selectedFiles.length === 0 && !(uploadMode === 'repost' && repostContent)) {
+        showToast('Please select media files', 'error');
         return;
     }
 
@@ -911,14 +911,16 @@ async function handleUpload(e) {
         const keywords = keywordsInput ? keywordsInput.value.trim() : '';
         const contentDescription = videoConceptInput ? videoConceptInput.value.trim() : '';
 
-        // Step 1: Get media URL (either from uploaded file or repost content)
-        let mediaUrl, contentId;
+        // Step 1: Get media URLs (either from uploaded files or repost content)
+        let mediaItems = [];
+        let contentId;
 
         if (uploadMode === 'repost' && repostContent) {
             // Use existing media URL from content library
-            mediaUrl = repostContent.media_url;
+            const mediaType = repostContent.media_type || 'image';
+            mediaItems = [{ url: repostContent.media_url, type: mediaType }];
             contentId = repostContent.id;
-            console.log('Reposting existing content:', mediaUrl);
+            console.log('Reposting existing content:', repostContent.media_url);
             uploadBtnText.textContent = 'Posting to Instagram...';
 
             // Update progress for repost
@@ -928,38 +930,44 @@ async function handleUpload(e) {
                 progressPercent.textContent = '30%';
             }
         } else {
-            // Upload file to Firebase Storage
+            // Upload all files to Firebase Storage
             if (progressBar) {
                 progressFill.style.width = '10%';
                 progressStatus.textContent = 'Uploading media...';
                 progressPercent.textContent = '10%';
             }
 
-            const formData = new FormData();
-            formData.append('media', selectedFile);
-            formData.append('keywords', keywords);
-            formData.append('content_description', contentDescription);
+            uploadBtnText.textContent = `Uploading ${selectedFiles.length} file(s)...`;
 
-            uploadBtnText.textContent = `Uploading ${selectedFile.name}...`;
+            // Upload each file
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const formData = new FormData();
+                formData.append('media', file);
+                formData.append('keywords', keywords);
+                formData.append('content_description', contentDescription);
 
-            const uploadResponse = await fetch('/instagram-upload-studio/api/upload-media', {
-                method: 'POST',
-                body: formData
-            });
+                const uploadResponse = await fetch('/instagram-upload-studio/api/upload-media', {
+                    method: 'POST',
+                    body: formData
+                });
 
-            const uploadData = await uploadResponse.json();
-            if (!uploadData.success) {
-                throw new Error(uploadData.error || 'Failed to upload media');
-            }
+                const uploadData = await uploadResponse.json();
+                if (!uploadData.success) {
+                    throw new Error(uploadData.error || `Failed to upload ${file.name}`);
+                }
 
-            mediaUrl = uploadData.media_url;
-            contentId = uploadData.content_id;
+                // Determine media type
+                const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+                mediaItems.push({ url: uploadData.media_url, type: mediaType });
 
-            // Update progress after media upload
-            if (progressBar) {
-                progressFill.style.width = '50%';
-                progressStatus.textContent = 'Media uploaded';
-                progressPercent.textContent = '50%';
+                // Update progress for each file
+                const uploadProgress = 10 + ((i + 1) / selectedFiles.length) * 40;
+                if (progressBar) {
+                    progressFill.style.width = `${uploadProgress}%`;
+                    progressStatus.textContent = `Uploaded ${i + 1}/${selectedFiles.length}`;
+                    progressPercent.textContent = `${Math.round(uploadProgress)}%`;
+                }
             }
 
             uploadBtnText.textContent = 'Posting to Instagram...';
@@ -973,7 +981,7 @@ async function handleUpload(e) {
         }
 
         const postPayload = {
-            media_url: mediaUrl,
+            media_items: mediaItems,  // Array of { url, type }
             caption: caption,
             schedule_time: scheduleTime,
             timezone: userTimezone,  // Use user's local timezone
@@ -1127,7 +1135,7 @@ async function pollUploadProgress(uploadId, mode, uploadBtn, originalBtnContent)
                 `;
 
                 // Reset state
-                selectedFile = null;
+                selectedFiles = [];
                 selectedCaptionIndex = null;
                 return;
 
@@ -1290,39 +1298,102 @@ function triggerVideoUploadStatic() {
 }
 
 function handleVideoSelectStatic(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
 
-    // Store the selected file globally
-    selectedFile = file;
+    // Limit to 10 files (Instagram carousel limit)
+    if (files.length > 10) {
+        showToast('Maximum 10 files allowed for Instagram carousel', 'error');
+        event.target.value = '';
+        return;
+    }
+
+    // Store the selected files globally
+    selectedFiles = files;
 
     // Update static UI
     const uploadContent = document.getElementById('uploadContentStatic');
     const uploadProgress = document.getElementById('uploadProgressStatic');
-    const fileName = document.getElementById('uploadFileNameStatic');
-    const fileSize = document.getElementById('uploadFileSizeStatic');
+    const filesContainer = document.getElementById('uploadedFilesContainer');
 
     if (uploadContent) uploadContent.style.display = 'none';
-    if (uploadProgress) uploadProgress.style.display = 'flex';
-    if (fileName) fileName.textContent = file.name;
-    if (fileSize) fileSize.textContent = formatFileSize(file.size);
+    if (uploadProgress) uploadProgress.style.display = 'block';
+
+    // Clear and populate files container
+    if (filesContainer) {
+        filesContainer.innerHTML = '';
+
+        files.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'upload-file-info';
+            fileItem.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--background-secondary); border-radius: 8px;';
+
+            const icon = file.type.startsWith('video/') ? 'ph-video' : 'ph-image';
+
+            fileItem.innerHTML = `
+                <i class="ph ${icon}" style="font-size: 1.5rem; color: #3B82F6;"></i>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="color: var(--text-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                    <div style="color: var(--text-tertiary); font-size: 0.875rem;">${formatFileSize(file.size)}</div>
+                </div>
+                <button class="remove-video-btn" onclick="removeFileStatic(event, ${index})" title="Remove file" type="button" style="padding: 0.375rem; border-radius: 6px; background: var(--background-tertiary); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    <i class="ph ph-x" style="font-size: 1rem; color: var(--text-secondary);"></i>
+                </button>
+            `;
+
+            filesContainer.appendChild(fileItem);
+        });
+    }
 }
 
-function removeVideoStatic(event) {
+function removeFileStatic(event, index) {
     event.stopPropagation();
     event.preventDefault();
 
-    selectedFile = null;
+    // Remove the file at the specified index
+    selectedFiles.splice(index, 1);
 
-    const uploadContent = document.getElementById('uploadContentStatic');
-    const uploadProgress = document.getElementById('uploadProgressStatic');
-    const fileInput = document.getElementById('videoFileInputStatic');
+    if (selectedFiles.length === 0) {
+        // No files left, reset to upload state
+        const uploadContent = document.getElementById('uploadContentStatic');
+        const uploadProgress = document.getElementById('uploadProgressStatic');
+        const fileInput = document.getElementById('videoFileInputStatic');
 
-    if (uploadContent) uploadContent.style.display = 'flex';
-    if (uploadProgress) uploadProgress.style.display = 'none';
-    if (fileInput) fileInput.value = '';
+        if (uploadContent) uploadContent.style.display = 'flex';
+        if (uploadProgress) uploadProgress.style.display = 'none';
+        if (fileInput) fileInput.value = '';
 
-    showToast('Video removed', 'info');
+        showToast('All media removed', 'info');
+    } else {
+        // Re-render the files list
+        const filesContainer = document.getElementById('uploadedFilesContainer');
+        if (filesContainer) {
+            filesContainer.innerHTML = '';
+
+            selectedFiles.forEach((file, i) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'upload-file-info';
+                fileItem.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--background-secondary); border-radius: 8px;';
+
+                const icon = file.type.startsWith('video/') ? 'ph-video' : 'ph-image';
+
+                fileItem.innerHTML = `
+                    <i class="ph ${icon}" style="font-size: 1.5rem; color: #3B82F6;"></i>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="color: var(--text-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                        <div style="color: var(--text-tertiary); font-size: 0.875rem;">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button class="remove-video-btn" onclick="removeFileStatic(event, ${i})" title="Remove file" type="button" style="padding: 0.375rem; border-radius: 6px; background: var(--background-tertiary); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="ph ph-x" style="font-size: 1rem; color: var(--text-secondary);"></i>
+                    </button>
+                `;
+
+                filesContainer.appendChild(fileItem);
+            });
+        }
+
+        showToast('Media file removed', 'info');
+    }
 }
 
 /**

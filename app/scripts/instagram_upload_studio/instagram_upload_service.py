@@ -18,13 +18,13 @@ class InstagramUploadService:
     API_KEY = os.environ.get('LATEDEV_API_KEY')
 
     @staticmethod
-    def upload_media_from_url(user_id, media_url, caption, schedule_time=None, timezone='UTC'):
+    def upload_media_from_url(user_id, media_items, caption, schedule_time=None, timezone='UTC'):
         """
-        Post to Instagram via Late.dev using a media URL
+        Post to Instagram via Late.dev using media URLs (supports carousel)
 
         Args:
             user_id: User's ID
-            media_url: Public URL to media file
+            media_items: Array of {url, type} for media files (up to 10 for carousel)
             caption: Post caption with hashtags
             schedule_time: ISO 8601 datetime string (optional, None for immediate)
             timezone: Timezone for scheduling
@@ -41,16 +41,22 @@ class InstagramUploadService:
             if not account_id:
                 return {'success': False, 'error': 'Instagram account not connected'}
 
-            logger.info(f"Starting Instagram post for user {user_id} with media URL")
+            logger.info(f"Starting Instagram post for user {user_id} with {len(media_items)} media item(s)")
 
-            # Create post via Late.dev API with media URL
+            # Create post via Late.dev API with media URLs
             headers = {
                 'Authorization': f'Bearer {InstagramUploadService.API_KEY}',
                 'Content-Type': 'application/json'
             }
 
-            # Determine media type from URL extension
-            media_type = 'video' if any(ext in media_url.lower() for ext in ['.mp4', '.mov', '.avi']) else 'image'
+            # Format media items for Late.dev API
+            late_dev_media_items = [
+                {
+                    'type': item.get('type', 'image'),
+                    'url': item.get('url')
+                }
+                for item in media_items
+            ]
 
             post_data = {
                 'platforms': [{
@@ -58,10 +64,7 @@ class InstagramUploadService:
                     'accountId': account_id
                 }],
                 'content': caption,
-                'mediaItems': [{
-                    'type': media_type,
-                    'url': media_url
-                }]
+                'mediaItems': late_dev_media_items
             }
 
             # Add scheduling if specified
@@ -71,7 +74,7 @@ class InstagramUploadService:
             else:
                 post_data['publishNow'] = True
 
-            logger.info(f"Creating Instagram post via Late.dev (media_type: {media_type})")
+            logger.info(f"Creating Instagram post via Late.dev with {len(late_dev_media_items)} media items")
             response = requests.post(
                 f"{InstagramUploadService.BASE_URL}/posts",
                 headers=headers,

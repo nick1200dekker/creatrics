@@ -735,24 +735,36 @@
         if (state.hasUnsavedChanges) {
             await saveContent();
         }
-        
+
         try {
             const response = await fetch('/x_post_editor/drafts/new', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title: 'New Draft' })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 state.currentDraftId = data.draft_id;
-                
+
+                // Reset scheduled state
+                state.isScheduled = false;
+                state.scheduledTime = null;
+                state.calendarEventId = null;
+                state.isEditingScheduled = false;
+
+                // Remove scheduled/editing banners
+                const scheduledBanner = document.getElementById('scheduledBanner');
+                if (scheduledBanner) scheduledBanner.remove();
+                const editingBanner = document.getElementById('editingScheduledBanner');
+                if (editingBanner) editingBanner.remove();
+
                 clearEditor();
                 setupInitialPost();
-                
+
                 document.querySelectorAll('.draft-item').forEach(item => item.classList.remove('active'));
-                
+
                 updateStatusMessage('New draft created');
                 loadDraftsWithSpinner();
             }
@@ -1485,29 +1497,30 @@
         const posts = [];
         document.querySelectorAll('.post-item').forEach(postItem => {
             const textarea = postItem.querySelector('.post-editor-textarea');
-            const mediaContainer = postItem.querySelector('.post-media');
-            
+
             const postData = {
                 text: textarea ? textarea.value : '',
                 media: []
             };
-            
-            if (mediaContainer) {
-                const mediaElements = mediaContainer.querySelectorAll('img, video');
-                mediaElements.forEach(element => {
+
+            // Get media from .media-preview-container elements
+            const mediaContainers = postItem.querySelectorAll('.media-preview-container');
+            mediaContainers.forEach(container => {
+                const mediaElement = container.querySelector('img, video');
+                if (mediaElement) {
                     postData.media.push({
-                        url: element.src,
-                        filename: element.getAttribute('data-filename') || '',
-                        media_type: element.getAttribute('data-media-type') || (element.tagName.toLowerCase() === 'video' ? 'video' : 'image'),
-                        file_size: parseInt(element.getAttribute('data-file-size')) || 0,
-                        mime_type: element.getAttribute('data-mime-type') || ''
+                        url: mediaElement.src,
+                        filename: mediaElement.getAttribute('data-filename') || '',
+                        media_type: mediaElement.getAttribute('data-media-type') || (mediaElement.tagName.toLowerCase() === 'video' ? 'video' : 'image'),
+                        file_size: parseInt(mediaElement.getAttribute('data-file-size')) || 0,
+                        mime_type: mediaElement.getAttribute('data-mime-type') || ''
                     });
-                });
-            }
-            
+                }
+            });
+
             posts.push(postData);
         });
-        
+
         return posts;
     }
 

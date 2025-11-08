@@ -235,7 +235,7 @@ def api_upload():
         # Get JSON data
         data = request.json
         caption = data.get('caption', '').strip()
-        media_url = data.get('media_url', '').strip()  # Firebase Storage URL
+        media_items = data.get('media_items', [])  # Array of {url, type}
         content_id = data.get('content_id')  # Content library ID (optional)
         calendar_event_id = data.get('calendar_event_id')  # Calendar event ID (optional)
         schedule_time = data.get('schedule_time')  # ISO 8601 format or null for immediate
@@ -244,15 +244,15 @@ def api_upload():
         if not caption:
             return jsonify({'success': False, 'error': 'Caption is required'}), 400
 
-        if not media_url:
-            return jsonify({'success': False, 'error': 'Media URL is required'}), 400
+        if not media_items or len(media_items) == 0:
+            return jsonify({'success': False, 'error': 'At least one media item is required'}), 400
 
-        logger.info(f"Starting Instagram post for user {user_id}: {caption[:50]}...")
+        logger.info(f"Starting Instagram post for user {user_id}: {len(media_items)} media items, caption: {caption[:50]}...")
 
-        # Post to Instagram via Late.dev using the Firebase URL
+        # Post to Instagram via Late.dev using the Firebase URLs
         result = InstagramUploadService.upload_media_from_url(
             user_id=user_id,
-            media_url=media_url,
+            media_items=media_items,
             caption=caption,
             schedule_time=schedule_time,
             timezone=timezone
@@ -281,14 +281,11 @@ def api_upload():
                 except Exception as e:
                     logger.error(f"Error updating content library: {e}")
             else:
-                # Create new content library entry
+                # Create new content library entry (use first media item)
                 try:
-                    # Determine media type from URL
-                    media_type = 'image'
-                    if media_url:
-                        lower_url = media_url.lower()
-                        if any(ext in lower_url for ext in ['.mp4', '.mov', '.avi']):
-                            media_type = 'video'
+                    first_media = media_items[0] if media_items else {}
+                    media_url = first_media.get('url', '')
+                    media_type = first_media.get('type', 'image')
 
                     content_id = ContentLibraryManager.save_content(
                         user_id=user_id,
@@ -314,6 +311,7 @@ def api_upload():
                 try:
                     from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
                     from datetime import datetime, timezone as tz
+                    import json
                     calendar_manager = ContentCalendarManager(user_id)
 
                     # Determine status and publish_date based on whether it's scheduled
@@ -323,6 +321,13 @@ def api_upload():
                     else:
                         status = 'posted'
                         publish_date = datetime.now(tz.utc).isoformat()
+
+                    # Use first media URL for backward compatibility
+                    first_media = media_items[0] if media_items else {}
+                    media_url = first_media.get('url', '')
+
+                    # Store all media items as JSON metadata
+                    media_metadata = json.dumps(media_items) if media_items else ''
 
                     if calendar_event_id:
                         # Update the linked calendar event
@@ -335,7 +340,8 @@ def api_upload():
                             status=status,
                             instagram_post_id=post_id,
                             content_id=content_id if content_id else '',
-                            media_url=media_url  # Store media URL for preview
+                            media_url=media_url,  # Store first media URL for preview
+                            media_metadata=media_metadata  # Store all media items
                         )
                         if success:
                             logger.info(f"Updated linked calendar event {calendar_event_id} for Instagram post {post_id}")
@@ -357,7 +363,8 @@ def api_upload():
                             instagram_post_id=post_id,
                             content_id=content_id if content_id else '',
                             notes=f'Instagram Post ID: {post_id}',
-                            media_url=media_url  # Store media URL for preview
+                            media_url=media_url,  # Store first media URL for preview
+                            media_metadata=media_metadata  # Store all media items
                         )
                         logger.info(f"Created calendar event {event_id} for Instagram post {post_id} (scheduled={bool(schedule_time)})")
                         result['calendar_event_id'] = event_id

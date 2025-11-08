@@ -98,26 +98,17 @@
                         <div class="form-group" id="videoUploadSectionStatic">
                             <label class="form-label">
                                 <i class="ph ph-upload"></i>
-                                Video
+                                Media (up to 10 items)
                             </label>
                             <div class="video-upload-area" id="videoUploadAreaStatic" onclick="triggerVideoUploadStatic()">
-                                <input type="file" id="videoFileInputStatic" accept="image/*,video/*" style="display: none;" onchange="handleVideoSelectStatic(event)">
+                                <input type="file" id="videoFileInputStatic" accept="image/*,video/*" multiple style="display: none;" onchange="handleVideoSelectStatic(event)">
                                 <div class="upload-content" id="uploadContentStatic">
                                     <i class="ph ph-cloud-arrow-up" style="font-size: 2rem; color: var(--text-tertiary); margin-bottom: 0.25rem;"></i>
-                                    <div style="color: var(--text-primary); font-weight: 500; margin-bottom: 0.125rem; font-size: 0.9375rem;">Click to upload video</div>
-                                    <div style="color: var(--text-tertiary); font-size: 0.8125rem;">JPG, PNG, MP4, or MOV (max 100MB)</div>
+                                    <div style="color: var(--text-primary); font-weight: 500; margin-bottom: 0.125rem; font-size: 0.9375rem;">Click to upload media</div>
+                                    <div style="color: var(--text-tertiary); font-size: 0.8125rem;">Images or videos (up to 10, max 100MB each)</div>
                                 </div>
                                 <div class="upload-progress" id="uploadProgressStatic" style="display: none;">
-                                    <div class="upload-file-info">
-                                        <i class="ph ph-image" style="font-size: 2rem; color: #3B82F6;"></i>
-                                        <div style="flex: 1;">
-                                            <div id="uploadFileNameStatic" style="color: var(--text-primary); font-weight: 500;"></div>
-                                            <div id="uploadFileSizeStatic" style="color: var(--text-tertiary); font-size: 0.875rem;"></div>
-                                        </div>
-                                    </div>
-                                    <button class="remove-video-btn" onclick="removeVideoStatic(event)" title="Remove video" type="button">
-                                        <i class="ph ph-x"></i>
-                                    </button>
+                                    <div id="uploadedFilesContainer" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
                                 </div>
                             </div>
                         </div>
