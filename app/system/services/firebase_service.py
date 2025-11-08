@@ -405,21 +405,101 @@ class StorageService:
         if not bucket:
             logger.error("Firebase Storage not initialized")
             return False
-            
+
         try:
             logger.info(f"Deleting file {filename} for user {user_id} from directory {directory}")
             blob = bucket.blob(f'users/{user_id}/{directory}/{filename}')
-            
+
             if not blob.exists():
                 logger.info(f"File {filename} not found for user {user_id}")
                 return False
-                
+
             blob.delete()
             logger.info(f"File {filename} deleted successfully for user {user_id}")
             return True
         except Exception as e:
             logger.error(f"Error deleting file {filename} for user {user_id}: {str(e)}")
             return False
+
+    @staticmethod
+    def generate_upload_signed_url(user_id, directory, filename, content_type='video/mp4', expiration_seconds=3600):
+        """Generate a signed URL for direct upload to Firebase Storage from client
+
+        Note: This returns metadata for server-side upload. Direct browser uploads require CORS configuration.
+        For large files, use this to get the path, then upload server-side using upload_file_from_client.
+
+        Args:
+            user_id: User ID
+            directory: Storage directory
+            filename: Filename
+            content_type: MIME type of the file
+            expiration_seconds: URL expiration time in seconds (default: 1 hour)
+
+        Returns:
+            dict with 'file_path', 'blob_name' for server-side upload
+        """
+        if not bucket:
+            logger.error("Firebase Storage not initialized")
+            return None
+
+        try:
+            blob_path = f'users/{user_id}/{directory}/{filename}'
+            blob = bucket.blob(blob_path)
+
+            logger.info(f"Generated upload path for {blob_path}")
+
+            # Return metadata for upload - server will handle the actual upload
+            return {
+                'file_path': blob_path,
+                'blob_name': blob.name,
+                'bucket_name': bucket.name
+            }
+
+        except Exception as e:
+            logger.error(f"Error generating upload path: {str(e)}")
+            return None
+
+    @staticmethod
+    def upload_large_file_chunked(user_id, directory, filename, file_stream, content_type='video/mp4'):
+        """Upload a large file to Firebase Storage in chunks
+
+        Args:
+            user_id: User ID
+            directory: Storage directory
+            filename: Filename
+            file_stream: File stream or file-like object
+            content_type: MIME type of the file
+
+        Returns:
+            dict with 'path' and 'url' on success, None on failure
+        """
+        if not bucket:
+            logger.error("Firebase Storage not initialized")
+            return None
+
+        try:
+            blob_path = f'users/{user_id}/{directory}/{filename}'
+            blob = bucket.blob(blob_path)
+            blob.content_type = content_type
+
+            # Upload from file stream (handles large files efficiently)
+            logger.info(f"Starting chunked upload for {blob_path}")
+            blob.upload_from_file(file_stream, content_type=content_type, timeout=3600)
+
+            # Make publicly accessible
+            blob.make_public()
+            url = blob.public_url
+
+            logger.info(f"Chunked upload completed for {blob_path}")
+
+            return {
+                'path': blob.name,
+                'url': url
+            }
+
+        except Exception as e:
+            logger.error(f"Error uploading large file {filename}: {str(e)}")
+            return None
 
 
 class TikTokTrendFinderService:

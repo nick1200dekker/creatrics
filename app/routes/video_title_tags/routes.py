@@ -1001,11 +1001,143 @@ def finalize_youtube_upload():
             'error': f'Failed to finalize upload: {str(e)}'
         }), 500
 
+@bp.route('/api/init-youtube-upload', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def init_youtube_upload():
+    """Initialize YouTube upload - creates calendar item and prepares for upload"""
+    try:
+        user_id = get_workspace_user_id()
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+        # Get metadata
+        title = (data.get('title') or '').strip()
+        description = (data.get('description') or '').strip()
+        tags = data.get('tags', [])
+        visibility = data.get('visibility', 'private')
+        scheduled_time = data.get('scheduled_time')
+        keywords = (data.get('keywords') or '').strip()
+        content_description = (data.get('content_description') or '').strip()
+        calendar_event_id = data.get('calendar_event_id')
+        filename = data.get('filename', 'video.mp4')
+
+        if not title:
+            return jsonify({'success': False, 'error': 'Title is required'}), 400
+
+        # Generate unique filename
+        import uuid
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'mp4'
+        unique_filename = f"video_{timestamp}_{uuid.uuid4().hex[:8]}.{file_ext}"
+
+        # Generate upload metadata
+        from app.system.services.firebase_service import StorageService
+        upload_info = StorageService.generate_upload_signed_url(
+            user_id=user_id,
+            directory='youtube_videos',
+            filename=unique_filename,
+            content_type='video/mp4',
+            expiration_seconds=3600  # 1 hour to complete upload
+        )
+
+        if not upload_info:
+            return jsonify({'success': False, 'error': 'Failed to generate upload info'}), 500
+
+        # Generate public URL for future reference
+        public_url = f"https://storage.googleapis.com/{upload_info['bucket_name']}/{upload_info['file_path']}"
+
+        # Create content library entry with "uploading" status
+        content_id = None
+        try:
+            content_id = ContentLibraryManager.save_content(
+                user_id=user_id,
+                media_url=public_url,
+                media_type='video',
+                keywords=keywords,
+                content_description=content_description,
+                platform='youtube',
+                platform_data={
+                    'title': title,
+                    'status': 'uploading',
+                    'scheduled_for': scheduled_time,
+                    'file_path': upload_info['file_path']
+                }
+            )
+            logger.info(f"Created content library {content_id} with status 'uploading'")
+        except Exception as e:
+            logger.error(f"Error creating content library: {e}")
+
+        # Create or update calendar event
+        try:
+            from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+            calendar_manager = ContentCalendarManager(user_id)
+
+            status = 'uploading'
+            publish_date = scheduled_time if scheduled_time else datetime.now(timezone.utc).isoformat()
+            tags_string = ', '.join(tags) if isinstance(tags, list) else str(tags)
+
+            if calendar_event_id:
+                # Update existing event
+                success = calendar_manager.update_event(
+                    event_id=calendar_event_id,
+                    description=f"Video Title: {title}\n\n{description}",
+                    tags=tags_string,
+                    publish_date=publish_date,
+                    platform='YouTube',
+                    status=status,
+                    content_id=content_id if content_id else '',
+                    media_url=public_url
+                )
+                if not success:
+                    logger.warning(f"Failed to update calendar event {calendar_event_id}")
+                    calendar_event_id = None
+
+            if not calendar_event_id:
+                # Create new calendar event
+                calendar_event_id = calendar_manager.create_event(
+                    title=title,
+                    description=description,
+                    tags=tags_string,
+                    publish_date=publish_date,
+                    platform='YouTube',
+                    status=status,
+                    content_type='organic',
+                    content_id=content_id if content_id else '',
+                    media_url=public_url
+                )
+                logger.info(f"Created calendar event {calendar_event_id} with status 'uploading'")
+
+        except Exception as e:
+            logger.error(f"Error creating calendar event: {e}")
+
+        return jsonify({
+            'success': True,
+            'file_path': upload_info['file_path'],
+            'bucket_name': upload_info['bucket_name'],
+            'public_url': public_url,
+            'content_id': content_id,
+            'calendar_event_id': calendar_event_id,
+            'message': 'Ready for upload. Calendar item created.'
+        })
+
+    except Exception as e:
+        logger.error(f"Error initializing YouTube upload: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @bp.route('/api/upload-video-to-firebase', methods=['POST'])
 @auth_required
 @require_permission('video_title')
 def upload_video_to_firebase():
-    """Upload video to Firebase Storage for Late.dev posting"""
+    """DEPRECATED: Upload video to Firebase Storage for Late.dev posting
+
+    This endpoint is kept for backward compatibility but should not be used for large files.
+    Use /api/init-youtube-upload instead for direct client-side uploads.
+    """
     try:
         user_id = get_workspace_user_id()
 
@@ -1062,6 +1194,195 @@ def upload_video_to_firebase():
     except Exception as e:
         logger.error(f"Error uploading video to Firebase: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/upload-video-chunk', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def upload_video_chunk():
+    """Upload video file to Firebase in streaming fashion (no size limit)"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Get video file from request
+        if 'video' not in request.files:
+            return jsonify({'success': False, 'error': 'No video file provided'}), 400
+
+        video_file = request.files['video']
+        if not video_file or video_file.filename == '':
+            return jsonify({'success': False, 'error': 'No video file selected'}), 400
+
+        # Get metadata from form data
+        content_id = request.form.get('content_id')
+        file_path = request.form.get('file_path')
+
+        if not file_path:
+            return jsonify({'success': False, 'error': 'File path is required'}), 400
+
+        # Upload directly to Firebase using chunked upload
+        from app.system.services.firebase_service import StorageService
+
+        # Extract filename from path
+        filename = file_path.split('/')[-1]
+        directory = '/'.join(file_path.split('/')[2:-1])  # Extract directory from path
+
+        result = StorageService.upload_large_file_chunked(
+            user_id=user_id,
+            directory=directory,
+            filename=filename,
+            file_stream=video_file.stream,
+            content_type=video_file.content_type or 'video/mp4'
+        )
+
+        if not result:
+            return jsonify({'success': False, 'error': 'Failed to upload to Firebase'}), 500
+
+        firebase_url = result['url']
+        logger.info(f"Large video uploaded to Firebase: {firebase_url}")
+
+        # Update content library status to 'uploaded'
+        if content_id:
+            try:
+                ContentLibraryManager.update_platform_status(
+                    user_id=user_id,
+                    content_id=content_id,
+                    platform='youtube',
+                    platform_data={
+                        'status': 'uploaded',
+                        'media_url': firebase_url
+                    }
+                )
+            except Exception as e:
+                logger.error(f"Error updating content library: {e}")
+
+        return jsonify({
+            'success': True,
+            'firebase_url': firebase_url,
+            'message': 'Video uploaded successfully'
+        })
+
+    except Exception as e:
+        logger.error(f"Error uploading video chunk: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/api/complete-youtube-upload', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def complete_youtube_upload():
+    """Called after video is uploaded to Firebase - posts to YouTube via Late.dev"""
+    try:
+        user_id = get_workspace_user_id()
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+        firebase_url = (data.get('firebase_url') or '').strip()
+        content_id = data.get('content_id')
+        calendar_event_id = data.get('calendar_event_id')
+        title = (data.get('title') or '').strip()
+        description = (data.get('description') or '').strip()
+        tags = data.get('tags', [])
+        visibility = data.get('visibility', 'private')
+        scheduled_time = data.get('scheduled_time')
+        thumbnail_url = (data.get('thumbnail_url') or '').strip()
+
+        if not firebase_url or not title:
+            return jsonify({'success': False, 'error': 'Firebase URL and title are required'}), 400
+
+        # Upload to YouTube via Late.dev
+        from app.scripts.video_title.latedev_youtube_service import YouTubeLateDevService
+
+        result = YouTubeLateDevService.upload_video(
+            user_id=user_id,
+            media_url=firebase_url,
+            title=title,
+            description=description,
+            tags=tags,
+            visibility=visibility,
+            thumbnail_url=thumbnail_url,
+            schedule_time=scheduled_time,
+            timezone='UTC'
+        )
+
+        if not result.get('success'):
+            # Update status to 'failed' in content library and calendar
+            if content_id:
+                try:
+                    ContentLibraryManager.update_platform_status(
+                        user_id=user_id,
+                        content_id=content_id,
+                        platform='youtube',
+                        platform_data={'status': 'failed', 'error': result.get('error')}
+                    )
+                except Exception as e:
+                    logger.error(f"Error updating content library to failed: {e}")
+
+            if calendar_event_id:
+                try:
+                    from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+                    calendar_manager = ContentCalendarManager(user_id)
+                    calendar_manager.update_event(event_id=calendar_event_id, status='failed')
+                except Exception as e:
+                    logger.error(f"Error updating calendar event to failed: {e}")
+
+            return jsonify(result), 400
+
+        post_id = result.get('post_id')
+
+        # Update content library to 'scheduled' or 'posted'
+        if content_id:
+            try:
+                ContentLibraryManager.update_platform_status(
+                    user_id=user_id,
+                    content_id=content_id,
+                    platform='youtube',
+                    platform_data={
+                        'post_id': post_id,
+                        'scheduled_for': scheduled_time,
+                        'title': title,
+                        'status': 'scheduled' if scheduled_time else 'posted'
+                    }
+                )
+                logger.info(f"Updated content library {content_id} to scheduled/posted")
+            except Exception as e:
+                logger.error(f"Error updating content library: {e}")
+
+        # Update calendar event to 'ready' or 'posted'
+        if calendar_event_id:
+            try:
+                from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+                calendar_manager = ContentCalendarManager(user_id)
+
+                status = 'ready' if scheduled_time else 'posted'
+                publish_date = scheduled_time if scheduled_time else datetime.now(timezone.utc).isoformat()
+                tags_string = ', '.join(tags) if isinstance(tags, list) else str(tags)
+
+                calendar_manager.update_event(
+                    event_id=calendar_event_id,
+                    description=f"Video Title: {title}\n\n{description}",
+                    tags=tags_string,
+                    publish_date=publish_date,
+                    platform='YouTube',
+                    status=status,
+                    youtube_video_id=post_id,
+                    media_url=firebase_url
+                )
+                logger.info(f"Updated calendar event {calendar_event_id} to {status}")
+            except Exception as e:
+                logger.error(f"Error updating calendar event: {e}")
+
+        return jsonify({
+            'success': True,
+            'post_id': post_id,
+            'message': result.get('message', 'Video uploaded successfully'),
+            'content_id': content_id
+        })
+
+    except Exception as e:
+        logger.error(f"Error completing YouTube upload: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 # Keep old endpoint for backwards compatibility
 @bp.route('/api/upload-short-to-firebase', methods=['POST'])

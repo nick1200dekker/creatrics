@@ -521,11 +521,9 @@ async function uploadVideoToServer(file, isShort = false) {
         uploadedVideoPath = null;
         selectedVideoFile = file;
 
-        // If this is a short video, also upload to Firebase Storage
-        if (isShort) {
-            console.log('Uploading short video to Firebase Storage for future multi-platform posting...');
-            await uploadShortToFirebase(file);
-        }
+        // Note: We no longer pre-upload short videos to Firebase
+        // The video will be uploaded when the user clicks "Upload to YouTube"
+        // This avoids redundant uploads and timeout issues
 
         // Hide progress bar - we don't need it for file selection
         if (progressContainer) {
@@ -1793,6 +1791,55 @@ function handleStatusChange() {
 }
 
 /**
+ * Upload FormData with progress tracking via XMLHttpRequest
+ */
+async function uploadWithProgress(url, formData, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                if (onProgress) {
+                    onProgress(percentComplete);
+                }
+            }
+        });
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log('Upload completed');
+                resolve(xhr);
+            } else {
+                console.error('Upload failed:', xhr.status, xhr.responseText);
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+        });
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+            console.error('Upload error');
+            reject(new Error('Network error during upload'));
+        });
+
+        xhr.addEventListener('abort', () => {
+            console.error('Upload aborted');
+            reject(new Error('Upload aborted'));
+        });
+
+        // Open POST request to URL
+        xhr.open('POST', url, true);
+
+        // Don't set Content-Type - browser will set it with boundary for multipart/form-data
+
+        // Send the FormData
+        xhr.send(formData);
+    });
+}
+
+/**
  * Upload video to YouTube via Late.dev
  */
 async function uploadToYouTube() {
@@ -1896,33 +1943,89 @@ async function uploadToYouTube() {
             // Upload video to Firebase if not already uploaded
             firebaseUrl = window.shortVideoFirebaseUrl;
             if (!firebaseUrl) {
-                // Update progress - uploading video
+                // Update progress - initializing upload
+                if (progressBar) {
+                    progressFill.style.width = '5%';
+                    progressStatus.textContent = 'Preparing upload...';
+                    progressPercent.textContent = '5%';
+                }
+
+                uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Preparing upload...';
+
+                // Step 1: Initialize upload and create calendar item
+                const initPayload = {
+                    title: title,
+                    description: description,
+                    tags: tags,
+                    visibility: privacyStatus === 'scheduled' ? 'private' : privacyStatus,
+                    scheduled_time: scheduledTime,
+                    keywords: targetKeyword,
+                    content_description: contentDescription,
+                    filename: selectedVideoFile.name,
+                    content_type: selectedVideoFile.type || 'video/mp4'
+                };
+
+                // Add linked calendar event ID if user linked to an existing calendar item
+                const linkedItem = CalendarLinkModal.getLinkedItem();
+                if (linkedItem) {
+                    initPayload.calendar_event_id = linkedItem.id;
+                }
+
+                const initResponse = await fetch('/api/init-youtube-upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(initPayload)
+                });
+
+                const initData = await initResponse.json();
+
+                if (!initData.success) {
+                    throw new Error(initData.error || 'Failed to initialize upload');
+                }
+
+                console.log('Upload initialized. Calendar item created.');
+
+                // Step 2: Upload video to Firebase via server (streaming, no size limit)
+                uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading video...';
+
                 if (progressBar) {
                     progressFill.style.width = '10%';
                     progressStatus.textContent = 'Uploading video...';
                     progressPercent.textContent = '10%';
                 }
 
-                const formData = new FormData();
-                formData.append('video', selectedVideoFile);
-                formData.append('keywords', targetKeyword);
-                formData.append('content_description', contentDescription);
+                // Upload with progress tracking via FormData
+                const uploadFormData = new FormData();
+                uploadFormData.append('video', selectedVideoFile);
+                uploadFormData.append('content_id', initData.content_id);
+                uploadFormData.append('file_path', initData.file_path);
 
-                uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading to storage...';
+                const uploadResponse = await uploadWithProgress(
+                    '/api/upload-video-chunk',
+                    uploadFormData,
+                    (percent) => {
+                        if (progressBar) {
+                            // Map upload progress to 10-50% of total progress
+                            const totalPercent = 10 + (percent * 0.4);
+                            progressFill.style.width = `${totalPercent}%`;
+                            progressStatus.textContent = `Uploading video...`;
+                            progressPercent.textContent = `${Math.round(totalPercent)}%`;
+                        }
+                    }
+                );
 
-                const uploadResponse = await fetch('/api/upload-video-to-firebase', {
-                    method: 'POST',
-                    body: formData
-                });
+                // Parse JSON from XHR response
+                const uploadResult = JSON.parse(uploadResponse.responseText);
 
-                const uploadData = await uploadResponse.json();
-
-                if (!uploadData.success) {
-                    throw new Error(uploadData.error || 'Failed to upload video');
+                if (!uploadResult.success) {
+                    throw new Error(uploadResult.error || 'Failed to upload video');
                 }
 
-                firebaseUrl = uploadData.firebase_url;
-                contentId = uploadData.content_id;
+                firebaseUrl = uploadResult.firebase_url;
+                contentId = initData.content_id;
+                const calendarEventId = initData.calendar_event_id;
                 window.shortVideoFirebaseUrl = firebaseUrl;
                 console.log('Video uploaded to Firebase:', firebaseUrl);
 
@@ -1932,6 +2035,71 @@ async function uploadToYouTube() {
                     progressStatus.textContent = 'Video uploaded';
                     progressPercent.textContent = '50%';
                 }
+
+                // Step 3: Complete upload - post to YouTube
+                uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Posting to YouTube...';
+
+                if (progressBar) {
+                    progressFill.style.width = '60%';
+                    progressStatus.textContent = 'Posting to YouTube...';
+                    progressPercent.textContent = '60%';
+                }
+
+                const completePayload = {
+                    firebase_url: firebaseUrl,
+                    content_id: contentId,
+                    calendar_event_id: calendarEventId,
+                    title: title,
+                    description: description,
+                    tags: tags,
+                    visibility: privacyStatus === 'scheduled' ? 'private' : privacyStatus,
+                    scheduled_time: scheduledTime,
+                    thumbnail_url: null // TODO: Upload thumbnail to Firebase if needed
+                };
+
+                const completeResponse = await fetch('/api/complete-youtube-upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(completePayload)
+                });
+
+                const completeData = await completeResponse.json();
+
+                if (!completeData.success) {
+                    throw new Error(completeData.error || 'Failed to post to YouTube');
+                }
+
+                console.log('Posted to YouTube:', completeData.post_id);
+
+                // Update final progress
+                if (progressBar) {
+                    progressFill.style.width = '100%';
+                    progressStatus.textContent = scheduledTime ? 'Scheduled!' : 'Uploaded!';
+                    progressPercent.textContent = '100%';
+                }
+
+                // Show success state on button
+                uploadBtn.innerHTML = '<i class="ph ph-check-circle"></i> ' + (scheduledTime ? 'Scheduled!' : 'Uploaded!');
+
+                // Show success message
+                let message = 'Video uploaded to YouTube successfully!';
+                if (scheduledTime) {
+                    message = 'Video scheduled on YouTube successfully!';
+                }
+                const finalLinkedItem = CalendarLinkModal.getLinkedItem();
+                if (finalLinkedItem) {
+                    message += ' Calendar item updated.';
+                }
+                showToast(message, 'success');
+
+                // Wait 2 seconds to show success state, then refresh page
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+
+                return; // Exit early since we handled the full flow
             }
         }
 
