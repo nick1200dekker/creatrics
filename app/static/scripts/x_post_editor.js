@@ -63,12 +63,12 @@
     // Initialize function
     function initialize() {
         console.log('Initializing Post Editor...');
-        
+
         // Start with fresh editor (no draft created yet)
         state.currentDraftId = null;
         state.hasUnsavedChanges = false;
         state.postCount = 0; // Reset post count to ensure we start with "Post" not "Post 2"
-        
+
         setupEventListeners();
         setupInitialPost();
         setupKeyboardShortcuts();
@@ -81,10 +81,33 @@
         // Check for suggestion from dashboard
         checkForSuggestion();
 
+        // Check for draft ID in URL parameters (e.g., ?draft=abc123)
+        checkForDraftInUrl();
+
         updateStatusMessage('Ready to create content');
 
         window.CreatorPal.PostEditor.initialized = true;
         console.log('Post Editor initialized with fresh post');
+    }
+
+    // Check for draft ID in URL and load it
+    function checkForDraftInUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const draftId = urlParams.get('draft');
+
+        if (draftId) {
+            console.log(`Found draft ID in URL: ${draftId}, loading...`);
+            // Wait a bit for drafts list to load, then select the draft
+            setTimeout(() => {
+                loadDraft(draftId);
+                // Also highlight it in the drafts list
+                const draftItem = document.querySelector(`[data-id="${draftId}"]`);
+                if (draftItem) {
+                    document.querySelectorAll('.draft-item').forEach(el => el.classList.remove('active'));
+                    draftItem.classList.add('active');
+                }
+            }, 500);  // 500ms delay to ensure drafts list is loaded
+        }
     }
 
     // Check for suggestion from dashboard
@@ -2622,10 +2645,14 @@ async function updateScheduledPost() {
 
         // STEP 3: Update Late.dev with the saved content
         console.log('📤 Step 2: Updating Late.dev...');
+        // Get user's local timezone
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
         console.log('Sending update request:', {
             late_dev_post_id: state.scheduledPostId,
             posts_count: posts.length,
             scheduled_time: state.scheduledTime,
+            timezone: userTimezone,
             draft_id: state.currentDraftId
         });
 
@@ -2636,6 +2663,7 @@ async function updateScheduledPost() {
                 late_dev_post_id: state.scheduledPostId,
                 posts: posts,
                 scheduled_time: state.scheduledTime,
+                timezone: userTimezone,
                 draft_id: state.currentDraftId
             })
         });
@@ -2646,6 +2674,11 @@ async function updateScheduledPost() {
 
         if (data.success) {
             console.log('✅ Update successful, returning to read-only view');
+            console.log('Current state before restore:', {
+                isEditingScheduled: state.isEditingScheduled,
+                scheduledTime: state.scheduledTime,
+                scheduledPostId: state.scheduledPostId
+            });
             showToast('Post updated successfully!', 'success');
 
             // Clear editing flag
@@ -2680,6 +2713,24 @@ async function updateScheduledPost() {
             const draftsData = await draftsResponse.json();
             if (draftsData.success) {
                 window.CreatorPal.PostEditor.renderDrafts(draftsData.drafts || []);
+
+                // Ensure the current draft shows the scheduled icon
+                if (state.currentDraftId) {
+                    const draftItem = document.querySelector(`.draft-item[data-id="${state.currentDraftId}"]`);
+                    if (draftItem) {
+                        // Make sure it has the scheduled icon
+                        if (!draftItem.querySelector('.draft-scheduled-icon')) {
+                            const draftTitle = draftItem.querySelector('.draft-title');
+                            if (draftTitle) {
+                                const scheduledIcon = document.createElement('i');
+                                scheduledIcon.className = 'ph ph-clock draft-scheduled-icon';
+                                scheduledIcon.title = 'Scheduled';
+                                draftTitle.appendChild(scheduledIcon);
+                            }
+                        }
+                        draftItem.setAttribute('data-scheduled', 'true');
+                    }
+                }
             }
         } else {
             showToast(data.error || 'Failed to update post', 'error');
@@ -2689,10 +2740,29 @@ async function updateScheduledPost() {
             updateBtn.innerHTML = '<i class="ph ph-check"></i> Update';
         }
     } catch (error) {
-        console.error('Error updating scheduled post:', error);
+        console.error('❌ Error updating scheduled post:', error);
         showToast('Failed to update post. Please try again.', 'error');
+
         // Re-enable editing on error
         state.isEditingScheduled = false;
+
+        // Remove editing banner and restore scheduled banner
+        const editingBanner = document.getElementById('editingScheduledBanner');
+        if (editingBanner) editingBanner.remove();
+
+        const scheduledBanner = document.getElementById('scheduledBanner');
+        if (scheduledBanner) scheduledBanner.remove();
+
+        // Show scheduled UI again
+        if (state.scheduledTime) {
+            const draftData = {
+                scheduled_time: state.scheduledTime,
+                is_scheduled: true
+            };
+            showScheduledDraftUI(draftData);
+        }
+
+        // Reset button
         updateBtn.disabled = false;
         updateBtn.innerHTML = '<i class="ph ph-check"></i> Update';
     }
@@ -2791,6 +2861,17 @@ async function unschedulePost() {
             postToXButtons.forEach(btn => btn.style.display = '');
 
             updateScheduleButtonVisibility();
+
+            // Remove scheduled icon from current draft in sidebar
+            if (state.currentDraftId) {
+                const draftItem = document.querySelector(`.draft-item[data-id="${state.currentDraftId}"]`);
+                if (draftItem) {
+                    const scheduledIcon = draftItem.querySelector('.draft-scheduled-icon');
+                    if (scheduledIcon) scheduledIcon.remove();
+                    // Also update the data attribute
+                    draftItem.setAttribute('data-scheduled', 'false');
+                }
+            }
 
             // Refresh drafts list
             const draftsResponse = await fetch('/x_post_editor/drafts?offset=0&limit=20');

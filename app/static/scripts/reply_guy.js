@@ -39,38 +39,280 @@
         state.isInitialized = true;
     }
 
-    // Load initial data from server
-    function loadInitialData() {
-        // First, load from sessionStorage to persist across page navigation
+    // Load initial data from server via API
+    async function loadInitialData() {
+        const tweetsLoadingSection = document.getElementById('tweets-loading-section');
+        const tweetsSection = document.getElementById('tweets-section');
+
         try {
-            const storedUpdates = sessionStorage.getItem('reply_guy_ongoing_updates');
-            if (storedUpdates) {
-                const parsed = JSON.parse(storedUpdates);
-                // Clean up old updates (older than 5 minutes)
-                const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-                state.ongoingUpdates = {};
-                for (const [listId, updateInfo] of Object.entries(parsed)) {
-                    if (updateInfo.timestamp && updateInfo.timestamp > fiveMinutesAgo) {
-                        state.ongoingUpdates[listId] = updateInfo;
+            // Ensure loading state is visible
+            console.log('🔄 Loading initial data...');
+            if (tweetsLoadingSection) tweetsLoadingSection.style.display = 'flex';
+            if (tweetsSection) tweetsSection.style.display = 'none';
+
+            // Fetch initial data from API
+            const response = await fetch('/reply-guy/get-initial-data', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load initial data');
+            }
+
+            const data = await response.json();
+            console.log('✅ Data loaded:', data);
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to load data');
+            }
+
+            // Update state with loaded data
+            state.ongoingUpdates = data.ongoing_updates || {};
+
+            // Update progress card with reply stats
+            updateProgressCard(data.reply_stats);
+
+            // Populate custom lists dropdown
+            if (data.custom_lists && data.custom_lists.length > 0) {
+                populateCustomListsDropdown(data.custom_lists);
+            }
+
+            // Set current selection
+            if (data.current_selection) {
+                state.selectedList = data.current_selection.list_id;
+                state.selectedListType = data.current_selection.list_type;
+
+                // Update mode tabs to match current selection
+                const modeTabs = document.querySelectorAll('.mode-tab-compact');
+                modeTabs.forEach(tab => {
+                    if (tab.dataset.mode === data.current_selection.list_type) {
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
                     }
+                });
+
+                // Show/hide custom list dropdown based on mode
+                const dropdown = document.querySelector('.custom-list-dropdown');
+                if (data.current_selection.list_type === 'custom') {
+                    if (dropdown) dropdown.style.display = 'block';
+                } else {
+                    if (dropdown) dropdown.style.display = 'none';
                 }
             }
+
+            // Update panel title with list name
+            if (data.list_name) {
+                const panelTitle = document.querySelector('.panel-title');
+                if (panelTitle) {
+                    panelTitle.innerHTML = `<i class="ph ph-chat-dots"></i> Reply Opportunities - ${data.list_name}`;
+                }
+            }
+
+            // Add/update last refresh indicator
+            if (data.timestamp) {
+                updateLastRefreshIndicator(data.timestamp);
+            }
+
+            // Inject tweets HTML
+            if (data.has_tweets && data.tweets_html) {
+                console.log('💬 Injecting tweets HTML...');
+
+                // 1. Inject HTML into DOM
+                tweetsSection.innerHTML = data.tweets_html;
+
+                // 2. Show tweets section (still hidden by loading spinner overlay)
+                tweetsSection.style.display = 'block';
+
+                console.log('📝 Waiting for images and content to load...');
+
+                // 3. Wait for all images in tweets to load
+                const images = tweetsSection.querySelectorAll('img');
+                const imagePromises = Array.from(images).map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve; // Continue even if image fails
+                        setTimeout(resolve, 2000); // Timeout after 2s
+                    });
+                });
+
+                Promise.all(imagePromises).then(() => {
+                    console.log('🖼️ Images loaded, initializing interactions...');
+
+                    // 4. Initialize event listeners
+                    setupReplyInteractions();
+                    initializeTimestamps();
+
+                    console.log('✅ Everything ready, hiding spinner...');
+
+                    // 5. NOW hide the spinner - everything is actually ready
+                    if (tweetsLoadingSection) {
+                        tweetsLoadingSection.style.display = 'none';
+                    }
+                });
+
+            } else {
+                console.log('ℹ️ No tweets to display');
+                if (tweetsLoadingSection) {
+                    tweetsLoadingSection.style.display = 'none';
+                }
+            }
+
         } catch (error) {
-            console.error('Error loading from sessionStorage:', error);
-            state.ongoingUpdates = {};
+            console.error('❌ Error loading initial data:', error);
+            showToast('Failed to load data. Please refresh the page.', 'error');
+
+            // Hide loading, show empty state
+            if (tweetsLoadingSection) tweetsLoadingSection.style.display = 'none';
+        }
+    }
+
+    // Update progress card with reply stats
+    function updateProgressCard(replyStats) {
+        if (!replyStats) return;
+
+        const progressFill = document.querySelector('.progress-fill');
+        const progressPercentage = document.querySelector('.progress-percentage');
+        const progressText = document.querySelector('.progress-text');
+
+        if (progressFill) {
+            progressFill.style.width = `${replyStats.progress_percentage || 0}%`;
+        }
+        if (progressPercentage) {
+            progressPercentage.textContent = `${replyStats.progress_percentage || 0}%`;
+        }
+        if (progressText) {
+            const total = replyStats.total_replies || 0;
+            const target = replyStats.target || 50;
+            let message = `You've posted <strong>${total}</strong> out of <strong>${target}</strong> replies today. `;
+
+            if (replyStats.progress_percentage >= 100) {
+                message += "Congratulations! You've reached your daily goal!";
+            } else if (replyStats.progress_percentage >= 75) {
+                message += "You're almost there! Keep it up!";
+            } else if (replyStats.progress_percentage >= 50) {
+                message += "Great progress! You're halfway to your goal.";
+            } else {
+                message += "Let's get started on your reply goals for today.";
+            }
+            progressText.innerHTML = message;
+        }
+    }
+
+    // Update or create last refresh indicator
+    function updateLastRefreshIndicator(timestamp) {
+        // Find or create the indicator element
+        let indicator = document.querySelector('.last-refresh-indicator');
+        const panelContent = document.getElementById('tweets-container');
+
+        if (!indicator && panelContent) {
+            // Create the indicator if it doesn't exist
+            indicator = document.createElement('div');
+            indicator.className = 'last-refresh-indicator';
+            indicator.innerHTML = `
+                <i class="ph ph-clock-clockwise"></i>
+                <span class="refresh-label">Last refreshed:</span>
+                <span class="refresh-time" id="lastRefreshTime"></span>
+                <span class="refresh-note">· Engagement stats are from this snapshot</span>
+            `;
+            // Insert before tweets container
+            panelContent.parentElement.insertBefore(indicator, panelContent);
         }
 
-        // Then load server data
-        const initialDataElement = document.getElementById('initial-data');
-        if (initialDataElement) {
-            try {
-                const initialData = JSON.parse(initialDataElement.textContent);
-                // Merge with server data (server data takes precedence)
-                state.ongoingUpdates = { ...state.ongoingUpdates, ...(initialData.ongoing_updates || {}) };
-            } catch (error) {
-                console.error('Error parsing initial data:', error);
+        if (indicator) {
+            indicator.setAttribute('data-timestamp', timestamp);
+
+            // Update the time display
+            const timeElement = indicator.querySelector('.refresh-time') || indicator.querySelector('#lastRefreshTime');
+            if (timeElement) {
+                // Format the timestamp
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diff = now - date;
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(minutes / 60);
+                const days = Math.floor(hours / 24);
+
+                let timeText = '';
+                if (days > 0) {
+                    timeText = `${days} day${days > 1 ? 's' : ''} ago`;
+                } else if (hours > 0) {
+                    timeText = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                } else if (minutes > 0) {
+                    timeText = `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+                } else {
+                    timeText = 'just now';
+                }
+
+                timeElement.textContent = timeText;
             }
         }
+    }
+
+    // Populate custom lists dropdown
+    function populateCustomListsDropdown(customLists) {
+        const dropdownMenu = document.getElementById('list-dropdown-menu');
+        if (!dropdownMenu) return;
+
+        // Find the existing custom list options container
+        const existingOptions = dropdownMenu.querySelectorAll('.dropdown-option[data-type="custom"]');
+        const emptyMessage = dropdownMenu.querySelector('.dropdown-empty');
+
+        // Remove empty message if it exists
+        if (emptyMessage) {
+            emptyMessage.remove();
+        }
+
+        // Remove existing custom list options (but keep the "Add New" button)
+        existingOptions.forEach(option => {
+            if (!option.classList.contains('create-new')) {
+                option.remove();
+            }
+        });
+
+        // Find the divider and "Add New" button
+        const divider = dropdownMenu.querySelector('.dropdown-divider');
+
+        // Add custom lists before the divider
+        customLists.forEach(list => {
+            const option = document.createElement('div');
+            option.className = 'dropdown-option';
+            option.setAttribute('data-value', list.id);
+            option.setAttribute('data-type', 'custom');
+            option.innerHTML = `
+                <i class="ph ph-user-circle option-icon"></i>
+                ${list.name}
+            `;
+
+            if (divider) {
+                dropdownMenu.insertBefore(option, divider);
+            } else {
+                dropdownMenu.appendChild(option);
+            }
+        });
+
+        console.log(`✅ Populated ${customLists.length} custom lists in dropdown`);
+    }
+
+    // Render tweets in the tweets container
+    function renderTweets(analysisData) {
+        if (!analysisData || !analysisData.tweet_opportunities) return;
+
+        const tweetsContainer = document.getElementById('tweets-container');
+        const tweetsSection = document.getElementById('tweets-section');
+
+        if (!tweetsContainer || !tweetsSection) return;
+
+        // For now, since tweets are server-rendered in the template,
+        // we just need to show the section. In a full rewrite, we'd
+        // dynamically create tweet elements here.
+
+        // TODO: Full dynamic rendering of tweets
+        // For now, just ensure the section is visible
     }
 
     // Save ongoing updates to sessionStorage

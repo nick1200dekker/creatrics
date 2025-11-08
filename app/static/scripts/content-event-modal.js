@@ -10,6 +10,7 @@ class ContentEventModal {
         this.onDelete = null;
         this.comments = [];
         this.isSubmittingComment = false;
+        this.youtubeTags = [];
         this.init();
     }
 
@@ -77,16 +78,17 @@ class ContentEventModal {
                                             <video id="youtube-video-element" class="youtube-video-preview" controls></video>
                                         </div>
                                         <div class="form-group">
-                                            <label>Video Title</label>
-                                            <textarea id="youtube-title-field" class="form-control" rows="2" readonly disabled></textarea>
+                                            <label>Video Title <span id="youtube-title-count" style="color: var(--text-tertiary); font-size: 0.875rem; font-weight: 400;"></span></label>
+                                            <textarea id="youtube-title-field" class="form-control" rows="2" placeholder="Enter video title..." maxlength="100"></textarea>
                                         </div>
                                         <div class="form-group">
-                                            <label>Description</label>
-                                            <textarea id="youtube-description-field" class="form-control" rows="8" readonly disabled></textarea>
+                                            <label>Description <span id="youtube-desc-count" style="color: var(--text-tertiary); font-size: 0.875rem; font-weight: 400;"></span></label>
+                                            <textarea id="youtube-description-field" class="form-control" rows="8" placeholder="Enter video description..." maxlength="5000"></textarea>
                                         </div>
                                         <div class="form-group">
-                                            <label>Tags</label>
+                                            <label>Tags <span id="youtube-tags-counter" style="color: var(--text-secondary); font-weight: 400; font-size: 0.8rem;">(0/500)</span></label>
                                             <div id="youtube-tags-container" class="youtube-tags-container"></div>
+                                            <input type="text" id="youtube-tag-input" class="form-control" placeholder="Type a tag and press Enter..." style="margin-top: 0.5rem;">
                                         </div>
                                     </div>
 
@@ -98,7 +100,7 @@ class ContentEventModal {
                                         </div>
                                         <div class="form-group">
                                             <label>Video Title / Caption</label>
-                                            <textarea id="tiktok-title-field" class="form-control" rows="6" readonly disabled></textarea>
+                                            <textarea id="tiktok-title-field" class="form-control" rows="6" placeholder="Enter caption..."></textarea>
                                         </div>
                                     </div>
 
@@ -112,6 +114,12 @@ class ContentEventModal {
                                             <label>Post Text</label>
                                             <textarea id="x-post-field" class="form-control" rows="8" readonly disabled></textarea>
                                         </div>
+                                        <div class="form-group">
+                                            <a href="#" id="x-edit-link" class="platform-edit-link" target="_blank" style="display: none;">
+                                                <i class="ph ph-pencil-simple"></i>
+                                                Edit in X Post Editor
+                                            </a>
+                                        </div>
                                     </div>
 
                                     <!-- Instagram Post Tab -->
@@ -122,7 +130,7 @@ class ContentEventModal {
                                         </div>
                                         <div class="form-group">
                                             <label>Caption</label>
-                                            <textarea id="instagram-caption-field" class="form-control" rows="8" readonly disabled></textarea>
+                                            <textarea id="instagram-caption-field" class="form-control" rows="8" placeholder="Enter caption..."></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -298,6 +306,41 @@ class ContentEventModal {
         tabButtons.forEach(btn => {
             btn.onclick = () => this.switchTab(btn.dataset.tab);
         });
+
+        // YouTube tag input
+        const youtubeTagInput = document.getElementById('youtube-tag-input');
+        if (youtubeTagInput) {
+            youtubeTagInput.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const tag = youtubeTagInput.value.trim();
+                    if (tag) {
+                        this.addYoutubeTag(tag);
+                        youtubeTagInput.value = '';
+                    }
+                }
+            };
+        }
+
+        // YouTube character counters
+        const youtubeTitleField = document.getElementById('youtube-title-field');
+        const youtubeDescField = document.getElementById('youtube-description-field');
+        const youtubeTitleCount = document.getElementById('youtube-title-count');
+        const youtubeDescCount = document.getElementById('youtube-desc-count');
+
+        if (youtubeTitleField && youtubeTitleCount) {
+            youtubeTitleField.oninput = () => {
+                const count = youtubeTitleField.value.length;
+                youtubeTitleCount.textContent = `(${count}/100)`;
+            };
+        }
+
+        if (youtubeDescField && youtubeDescCount) {
+            youtubeDescField.oninput = () => {
+                const count = youtubeDescField.value.length;
+                youtubeDescCount.textContent = `(${count}/5000)`;
+            };
+        }
 
         console.log('Event listeners attached');
     }
@@ -710,8 +753,18 @@ class ContentEventModal {
                 videoDescription = parts.slice(1).join('\n\n');
             }
 
-            if (youtubeTitleField) youtubeTitleField.value = videoTitle;
-            if (youtubeDescriptionField) youtubeDescriptionField.value = videoDescription;
+            if (youtubeTitleField) {
+                youtubeTitleField.value = videoTitle;
+                // Trigger character counter
+                const titleCount = document.getElementById('youtube-title-count');
+                if (titleCount) titleCount.textContent = `(${videoTitle.length}/100)`;
+            }
+            if (youtubeDescriptionField) {
+                youtubeDescriptionField.value = videoDescription;
+                // Trigger character counter
+                const descCount = document.getElementById('youtube-desc-count');
+                if (descCount) descCount.textContent = `(${videoDescription.length}/5000)`;
+            }
 
             // Show video preview if media_url is available
             const videoPreview = document.getElementById('youtube-video-preview');
@@ -723,15 +776,13 @@ class ContentEventModal {
                 videoPreview.style.display = 'none';
             }
 
-            // Render tags as chips
-            if (youtubeTagsContainer && event.tags) {
-                const tagsArray = event.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
-                youtubeTagsContainer.innerHTML = tagsArray.map(tag =>
-                    `<span class="youtube-tag-chip">${this.escapeHtml(tag)}</span>`
-                ).join('');
-            } else if (youtubeTagsContainer) {
-                youtubeTagsContainer.innerHTML = '<span class="no-tags">No tags</span>';
+            // Load tags into editable tag list
+            if (event.tags) {
+                this.youtubeTags = event.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+            } else {
+                this.youtubeTags = [];
             }
+            this.renderYoutubeTags();
         } else {
             // Hide YouTube tab for regular items
             youtubeTabBtn.style.display = 'none';
@@ -780,6 +831,27 @@ class ContentEventModal {
             // Populate X metadata
             const xPostText = event.description ? event.description.replace('Post Text: ', '') : '';
             if (xPostField) xPostField.value = xPostText;
+
+            // Set up edit link to X Post Editor
+            const xEditLink = document.getElementById('x-edit-link');
+            if (xEditLink) {
+                // Check if notes contains Draft ID (string format)
+                let draftId = null;
+                if (event.notes && typeof event.notes === 'string' && event.notes.includes('Draft ID:')) {
+                    const draftIdMatch = event.notes.match(/Draft ID:\s*(\S+)/);
+                    if (draftIdMatch) {
+                        draftId = draftIdMatch[1];
+                    }
+                }
+
+                if (draftId) {
+                    xEditLink.href = `/x_post_editor?draft=${draftId}`;
+                    xEditLink.style.display = 'inline-flex';
+                    console.log('X Post Editor link set to:', xEditLink.href);
+                } else {
+                    console.log('No draft ID found in notes:', event.notes);
+                }
+            }
 
             // Check if we have media_metadata (multiple media with types)
             let mediaItems = [];
@@ -1005,6 +1077,56 @@ class ContentEventModal {
         this.renderComments();
     }
 
+    addYoutubeTag(tag) {
+        if (!this.youtubeTags.includes(tag)) {
+            this.youtubeTags.push(tag);
+            this.renderYoutubeTags();
+        }
+    }
+
+    removeYoutubeTag(tag) {
+        this.youtubeTags = this.youtubeTags.filter(t => t !== tag);
+        this.renderYoutubeTags();
+    }
+
+    renderYoutubeTags() {
+        const container = document.getElementById('youtube-tags-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        this.youtubeTags.forEach(tag => {
+            const tagEl = document.createElement('span');
+            tagEl.className = 'youtube-tag';
+
+            const tagText = document.createTextNode(tag);
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'remove-tag';
+            removeBtn.innerHTML = '<i class="ph ph-x"></i>';
+            removeBtn.onclick = () => this.removeYoutubeTag(tag);
+
+            tagEl.appendChild(tagText);
+            tagEl.appendChild(removeBtn);
+            container.appendChild(tagEl);
+        });
+
+        // Update character counter
+        const totalChars = this.youtubeTags.join(',').length;
+        const counter = document.getElementById('youtube-tags-counter');
+        if (counter) {
+            counter.textContent = `(${totalChars}/500)`;
+            // Change color if approaching or exceeding limit
+            if (totalChars > 500) {
+                counter.style.color = '#ef4444'; // Red
+            } else if (totalChars > 400) {
+                counter.style.color = '#f59e0b'; // Orange
+            } else {
+                counter.style.color = 'var(--text-secondary)';
+            }
+        }
+    }
+
     async save() {
         const platform = document.getElementById('platform-select').value;
 
@@ -1025,16 +1147,47 @@ class ContentEventModal {
             publishDate = `${dateInput.value}T${timeInput.value}`;
         }
 
+        // Gather metadata from platform-specific tabs
+        let description = '';
+        let tags = '';
+
+        // Check which platform has metadata and build description accordingly
+        const youtubeTitle = document.getElementById('youtube-title-field')?.value.trim();
+        const youtubeDescription = document.getElementById('youtube-description-field')?.value.trim();
+        const tiktokCaption = document.getElementById('tiktok-title-field')?.value.trim();
+        const instagramCaption = document.getElementById('instagram-caption-field')?.value.trim();
+
+        if (youtubeTitle || youtubeDescription) {
+            description = `Title: ${youtubeTitle}\nDescription: ${youtubeDescription}`;
+            tags = this.youtubeTags.join(',');
+        } else if (tiktokCaption) {
+            description = `Caption: ${tiktokCaption}`;
+        } else if (instagramCaption) {
+            description = `Caption: ${instagramCaption}`;
+        }
+        // Note: X post text is read-only, edit in X Post Editor
+
+        // Preserve Draft ID in notes if it exists
+        let notesValue = JSON.stringify(this.comments);
+        if (this.currentEvent && this.currentEvent.notes && typeof this.currentEvent.notes === 'string' && this.currentEvent.notes.includes('Draft ID:')) {
+            // Keep the original notes with Draft ID for X posts
+            notesValue = this.currentEvent.notes;
+        }
+
+        // Get user's timezone
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
         const eventData = {
             id: this.currentEvent?.id || null,
             title: content,
-            description: '',
-            tags: '',
+            description: description,
+            tags: tags,
             platform: platform,
             content_type: document.getElementById('type-select').value,
             status: status,
             publish_date: publishDate,
-            notes: JSON.stringify(this.comments)
+            timezone: userTimezone,
+            notes: notesValue
         };
 
         console.log('Saving event with comments:', this.comments);

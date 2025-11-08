@@ -776,7 +776,6 @@ html.dark .content-tab.active {
     color: var(--text-primary) !important;
     border-color: var(--border-primary) !important;
     cursor: default !important;
-    opacity: 0.85;
 }
 
 html.dark .content-tab-panel[data-panel="youtube"] textarea {
@@ -924,4 +923,91 @@ html.dark .youtube-tag-chip {
         font-size: 1.25rem;
         margin-bottom: 1.5rem;
     }
+}
+
+/* YouTube Tags Styling */
+.youtube-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 40px;
+    padding: 0.5rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: var(--background-secondary);
+}
+
+html.dark .youtube-tags-container {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.youtube-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.youtube-tag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.youtube-tag .remove-tag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.youtube-tag .remove-tag:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.youtube-tag .remove-tag i {
+    font-size: 0.75rem;
+    color: white;
+}
+
+#youtube-tag-input {
+    margin-top: 0.5rem;
+}
+
+/* Platform Edit Links */
+.platform-edit-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9375rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.platform-edit-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    color: white;
+}
+
+.platform-edit-link i {
+    font-size: 1.125rem;
 }

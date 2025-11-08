@@ -105,87 +105,26 @@ def validate_request_data(required_fields=None, optional_fields=None):
 @auth_required
 @require_permission('reply_guy')
 def index():
-    """Main Reply Guy dashboard - optimized with caching"""
-    user_id = get_workspace_user_id()
-    try:
-        service = ReplyGuyService()
-        
-        # Use caching for static data
-        cache_key = f"reply_guy_static_data_{user_id}"
-        
-        # Get default lists (cache for 1 hour)
-        default_lists = service.get_default_lists()
-        
-        # Get user's custom lists with minimal data
-        custom_lists = service.get_user_custom_lists(user_id)
-        
-        # Get user's current selected list and analysis
-        current_selection = service.get_current_selection(user_id)
-        current_analysis = None
+    """Main Reply Guy dashboard - renders immediately with loading state"""
+    # Static reply styles (no DB query needed)
+    reply_styles = [
+        {"id": "creatrics", "name": "Creatrics"},
+        {"id": "supportive", "name": "Supportive"},
+        {"id": "questioning", "name": "Questioning"},
+        {"id": "valueadd", "name": "Value-Add"},
+        {"id": "humorous", "name": "Humorous"},
+        {"id": "contrarian", "name": "Contrarian"}
+    ]
 
-        # If no selection exists, auto-select the first default list
-        if not current_selection and default_lists:
-            first_default_list = default_lists[0]
-            current_selection = {
-                'list_id': first_default_list['id'],
-                'list_type': 'default'
-            }
-            # Save this selection for the user
-            service.set_current_selection(user_id, first_default_list['id'], 'default')
-            logger.info(f"Auto-selected first default list: {first_default_list['id']}")
-
-        if current_selection:
-            # PERFORMANCE: Only load first 50 tweets for initial page render
-            current_analysis = service.get_current_analysis(
-                user_id,
-                current_selection['list_id'],
-                current_selection['list_type'],
-                limit=50,  # Only send first 50 to template
-                offset=0
-            )
-            if current_analysis:
-                total = current_analysis.get('total_count', 0)
-                shown = len(current_analysis.get('tweet_opportunities', []))
-                timestamp = current_analysis.get('timestamp')
-                logger.info(f"Loaded {shown} of {total} opportunities for {current_selection['list_type']} list {current_selection['list_id']}")
-                logger.info(f"Analysis timestamp: {timestamp} (type: {type(timestamp).__name__})")
-        
-        # Get reply stats efficiently
-        reply_stats = service.get_reply_stats(user_id)
-        
-        # Static reply styles (cache in memory)
-        reply_styles = [
-            {"id": "creatrics", "name": "Creatrics"},
-            {"id": "supportive", "name": "Supportive"},
-            {"id": "questioning", "name": "Questioning"},
-            {"id": "valueadd", "name": "Value-Add"},
-            {"id": "humorous", "name": "Humorous"},
-            {"id": "contrarian", "name": "Contrarian"}
-        ]
-        
-        # Check for ongoing updates efficiently
-        ongoing_updates = get_ongoing_updates(user_id)
-        
-        return render_template('reply_guy/index.html',
-                             default_lists=default_lists,
-                             custom_lists=custom_lists,
-                             current_selection=current_selection,
-                             current_analysis=current_analysis,
-                             reply_stats=reply_stats,
-                             reply_styles=reply_styles,
-                             ongoing_updates=ongoing_updates)
-                             
-    except Exception as e:
-        logger.error(f"Error loading Reply Guy dashboard: {str(e)}")
-        # Return minimal fallback data
-        return render_template('reply_guy/index.html',
-                             default_lists=[],
-                             custom_lists=[],
-                             current_selection=None,
-                             current_analysis=None,
-                             reply_stats={'total_replies': 0, 'target': 50, 'progress_percentage': 0},
-                             reply_styles=[],
-                             ongoing_updates={})
+    # Render immediately with empty data - JavaScript will load all data
+    return render_template('reply_guy/index.html',
+                         reply_styles=reply_styles,
+                         reply_stats={'total_replies': 0, 'target': 50, 'progress_percentage': 0},
+                         default_lists=[],
+                         custom_lists=[],
+                         current_selection=None,
+                         current_analysis=None,
+                         ongoing_updates={})
 
 def get_ongoing_updates(user_id):
     """Check for ongoing update operations - optimized"""
@@ -778,6 +717,101 @@ def get_custom_list_details():
     except Exception as e:
         logger.error(f"Error getting custom list details: {str(e)}")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
+
+@bp.route('/get-initial-data', methods=['GET'])
+@auth_required
+@require_permission('reply_guy')
+def get_initial_data():
+    """Get all initial data for Reply Guy dashboard - returns HTML for easy injection"""
+    user_id = get_workspace_user_id()
+    try:
+        from flask import render_template_string
+        service = ReplyGuyService()
+
+        # Get default lists (cache for 1 hour)
+        default_lists = service.get_default_lists()
+
+        # Get user's custom lists with minimal data
+        custom_lists = service.get_user_custom_lists(user_id)
+
+        # Get user's current selected list and analysis
+        current_selection = service.get_current_selection(user_id)
+        current_analysis = None
+
+        # If no selection exists, auto-select the first default list
+        if not current_selection and default_lists:
+            first_default_list = default_lists[0]
+            current_selection = {
+                'list_id': first_default_list['id'],
+                'list_type': 'default'
+            }
+            # Save this selection for the user
+            service.set_current_selection(user_id, first_default_list['id'], 'default')
+            logger.info(f"Auto-selected first default list: {first_default_list['id']}")
+
+        if current_selection:
+            # PERFORMANCE: Only load first 20 tweets for initial page render (reduced from 50)
+            current_analysis = service.get_current_analysis(
+                user_id,
+                current_selection['list_id'],
+                current_selection['list_type'],
+                limit=20,  # Reduced to 20 for faster initial load
+                offset=0
+            )
+            if current_analysis:
+                total = current_analysis.get('total_count', 0)
+                shown = len(current_analysis.get('tweet_opportunities', []))
+                timestamp = current_analysis.get('timestamp')
+                logger.info(f"Loaded {shown} of {total} opportunities for {current_selection['list_type']} list {current_selection['list_id']}")
+                logger.info(f"Analysis timestamp: {timestamp} (type: {type(timestamp).__name__})")
+
+        # Get reply stats efficiently
+        reply_stats = service.get_reply_stats(user_id)
+
+        # Static reply styles
+        reply_styles = [
+            {"id": "creatrics", "name": "Creatrics"},
+            {"id": "supportive", "name": "Supportive"},
+            {"id": "questioning", "name": "Questioning"},
+            {"id": "valueadd", "name": "Value-Add"},
+            {"id": "humorous", "name": "Humorous"},
+            {"id": "contrarian", "name": "Contrarian"}
+        ]
+
+        # Check for ongoing updates efficiently
+        ongoing_updates = get_ongoing_updates(user_id)
+
+        # Render the tweets partial template
+        tweets_html = render_template('reply_guy/_tweets.html',
+                                     current_analysis=current_analysis,
+                                     current_selection=current_selection,
+                                     reply_styles=reply_styles)
+
+        return jsonify({
+            'success': True,
+            'tweets_html': tweets_html,
+            'reply_stats': reply_stats,
+            'has_tweets': current_analysis and len(current_analysis.get('tweet_opportunities', [])) > 0,
+            'total_count': current_analysis.get('total_count', 0) if current_analysis else 0,
+            'default_lists': default_lists,
+            'custom_lists': custom_lists,
+            'current_selection': current_selection,
+            'timestamp': current_analysis.get('timestamp') if current_analysis else None,
+            'list_name': current_analysis.get('list_name', '') if current_analysis else ''
+        })
+
+    except Exception as e:
+        logger.error(f"Error loading Reply Guy initial data: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load data',
+            'tweets_html': '',
+            'reply_stats': {'total_replies': 0, 'target': 50, 'progress_percentage': 0},
+            'has_tweets': False,
+            'total_count': 0
+        }), 500
 
 @bp.route('/check-brand-voice', methods=['GET'])
 @auth_required

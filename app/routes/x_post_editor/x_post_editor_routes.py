@@ -1699,7 +1699,11 @@ def update_scheduled_post():
         late_dev_post_id = data.get('late_dev_post_id')
         posts = data.get('posts', [])
         scheduled_time = data.get('scheduled_time')
+        timezone = data.get('timezone', 'UTC')  # Get timezone from request
         draft_id = data.get('draft_id')
+
+        current_app.logger.info(f"Update request received - timezone from frontend: {timezone}")
+        current_app.logger.info(f"Request data keys: {list(data.keys())}")
 
         if not late_dev_post_id or not posts:
             return jsonify({
@@ -1792,16 +1796,21 @@ def update_scheduled_post():
             }]
         }
 
+        # Add scheduled time - REQUIRED to maintain scheduled status
+        if scheduled_time:
+            late_dev_payload['scheduledFor'] = scheduled_time
+            late_dev_payload['timezone'] = timezone
+            late_dev_payload['isDraft'] = False  # Explicitly set to not draft
+            current_app.logger.info(f"Setting scheduledFor={scheduled_time}, timezone={timezone}, isDraft=False")
+        else:
+            current_app.logger.warning(f"⚠️ No scheduled_time provided - post will become draft!")
+
         # Add mediaItems at root level if present
         if root_media_items:
             late_dev_payload['mediaItems'] = root_media_items
 
-        # Add scheduled time if provided
-        if scheduled_time:
-            late_dev_payload['scheduledFor'] = scheduled_time
-            late_dev_payload['timezone'] = 'UTC'  # Or get from request
-
         current_app.logger.info(f"Updating Late.dev post with {len(thread_items)} thread items, {len(root_media_items)} media items")
+        current_app.logger.info(f"Late.dev payload: {late_dev_payload}")
 
         # Call Late.dev PUT endpoint
         headers = {

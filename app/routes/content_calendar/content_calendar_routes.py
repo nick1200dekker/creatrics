@@ -420,6 +420,195 @@ def update_event(event_id):
                 else:
                     current_app.logger.info(f"Skipping content library update - missing content_id or platform")
 
+        # Update content (title/description/tags/caption) in Late.dev if description or tags changed
+        if 'description' in data or 'tags' in data or 'title' in data:
+            event = calendar_manager.get_event(event_id)
+            if event:
+                instagram_post_id = event.get('instagram_post_id')
+                tiktok_post_id = event.get('tiktok_post_id')
+                x_post_id = event.get('x_post_id')
+                youtube_video_id = event.get('youtube_video_id')
+
+                # Update Instagram caption
+                if instagram_post_id:
+                    try:
+                        import requests
+                        import os
+                        from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+
+                        account_id = LateDevOAuthService.get_account_id(user_id, 'instagram')
+                        if account_id:
+                            # Extract caption from description (format: "Caption: <caption text>")
+                            description = data.get('description', event.get('description', ''))
+                            caption = description.replace('Caption: ', '') if description.startswith('Caption: ') else description
+
+                            headers = {
+                                'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                                'Content-Type': 'application/json'
+                            }
+
+                            # Use user's timezone if provided, otherwise default to event's timezone or UTC
+                            timezone = data.get('timezone') or event.get('timezone') or 'UTC'
+
+                            update_post_data = {
+                                'content': caption,
+                                'platforms': [{
+                                    'platform': 'instagram',
+                                    'accountId': account_id
+                                }],
+                                'scheduledFor': event.get('publish_date'),
+                                'timezone': timezone
+                            }
+
+                            response = requests.put(
+                                f"https://getlate.dev/api/v1/posts/{instagram_post_id}",
+                                headers=headers,
+                                json=update_post_data,
+                                timeout=30
+                            )
+
+                            if response.status_code in [200, 201]:
+                                current_app.logger.info(f"Updated Instagram post {instagram_post_id} caption")
+                            else:
+                                current_app.logger.error(f"Failed to update Instagram caption: {response.status_code} - {response.text}")
+                    except Exception as e:
+                        current_app.logger.error(f"Error updating Instagram caption: {e}")
+
+                # Update TikTok caption
+                if tiktok_post_id:
+                    try:
+                        import requests
+                        import os
+                        from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+
+                        account_id = LateDevOAuthService.get_account_id(user_id, 'tiktok')
+                        if account_id:
+                            # Extract caption from description
+                            description = data.get('description', event.get('description', ''))
+                            caption = description.replace('Caption: ', '') if description.startswith('Caption: ') else description
+
+                            headers = {
+                                'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                                'Content-Type': 'application/json'
+                            }
+
+                            # Use user's timezone if provided, otherwise default to event's timezone or UTC
+                            timezone = data.get('timezone') or event.get('timezone') or 'UTC'
+
+                            update_post_data = {
+                                'content': caption,
+                                'platforms': [{
+                                    'platform': 'tiktok',
+                                    'accountId': account_id
+                                }],
+                                'scheduledFor': event.get('publish_date'),
+                                'timezone': timezone
+                            }
+
+                            response = requests.put(
+                                f"https://getlate.dev/api/v1/posts/{tiktok_post_id}",
+                                headers=headers,
+                                json=update_post_data,
+                                timeout=30
+                            )
+
+                            if response.status_code in [200, 201]:
+                                current_app.logger.info(f"Updated TikTok post {tiktok_post_id} caption")
+                            else:
+                                current_app.logger.error(f"Failed to update TikTok caption: {response.status_code} - {response.text}")
+                    except Exception as e:
+                        current_app.logger.error(f"Error updating TikTok caption: {e}")
+
+                # Note: X post text is not editable from calendar - edit in X Post Editor instead
+                # The link to X Post Editor is provided in the UI
+
+                # Update YouTube video metadata (title, description, tags)
+                current_app.logger.info(f"Checking YouTube update - youtube_video_id: {youtube_video_id}")
+                if youtube_video_id:
+                    current_app.logger.info(f"YouTube video ID found, proceeding with update")
+                    try:
+                        import requests
+                        import os
+                        from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+
+                        account_id = LateDevOAuthService.get_account_id(user_id, 'youtube')
+                        if account_id:
+                            # Use user's timezone if provided, otherwise default to event's timezone or UTC
+                            timezone = data.get('timezone') or event.get('timezone') or 'UTC'
+
+                            # Initialize YouTube title/description variables
+                            youtube_title = None
+                            youtube_description = None
+
+                            # Extract YouTube title and description from the combined description field
+                            # Frontend sends: "Title: <title>\nDescription: <description>"
+                            if 'description' in data:
+                                description_raw = data.get('description', '')
+
+                                # Parse the combined format
+                                if 'Title: ' in description_raw and 'Description: ' in description_raw:
+                                    parts = description_raw.split('\n')
+                                    for part in parts:
+                                        if part.startswith('Title: '):
+                                            youtube_title = part.replace('Title: ', '').strip()
+                                        elif part.startswith('Description: '):
+                                            youtube_description = part.replace('Description: ', '').strip()
+
+                            # Build platformSpecificData with title and description
+                            platform_specific_data = {}
+                            if youtube_title:
+                                platform_specific_data['title'] = youtube_title
+                                current_app.logger.info(f"Setting YouTube title to: {youtube_title}")
+                            if youtube_description:
+                                platform_specific_data['description'] = youtube_description
+                                current_app.logger.info(f"Setting YouTube description to: {youtube_description[:100]}...")
+
+                            update_post_data = {
+                                'platforms': [{
+                                    'platform': 'youtube',
+                                    'accountId': account_id,
+                                    'platformSpecificData': platform_specific_data
+                                }],
+                                'scheduledFor': event.get('publish_date'),
+                                'timezone': timezone,
+                                'isDraft': False  # Explicitly set to not draft
+                            }
+
+                            # Also set content at root level as fallback
+                            if youtube_description:
+                                update_post_data['content'] = youtube_description
+
+                            # Add tags if changed
+                            if 'tags' in data:
+                                tags = data.get('tags', '').split(',')
+                                tags = [tag.strip() for tag in tags if tag.strip()]
+                                update_post_data['tags'] = tags
+                                current_app.logger.info(f"Setting YouTube tags to: {tags}")
+
+                            headers = {
+                                'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                                'Content-Type': 'application/json'
+                            }
+
+                            response = requests.put(
+                                f"https://getlate.dev/api/v1/posts/{youtube_video_id}",
+                                headers=headers,
+                                json=update_post_data,
+                                timeout=30
+                            )
+
+                            if response.status_code in [200, 201]:
+                                current_app.logger.info(f"Updated YouTube video {youtube_video_id} metadata")
+
+                                # Also update the calendar event title with the YouTube title
+                                if youtube_title and 'title' not in update_data:
+                                    update_data['title'] = youtube_title
+                                    current_app.logger.info(f"Updating calendar event title to: {youtube_title}")
+                            else:
+                                current_app.logger.error(f"Failed to update YouTube metadata: {response.status_code} - {response.text}")
+                    except Exception as e:
+                        current_app.logger.error(f"Error updating YouTube metadata: {e}")
+
         # Update the event
         success = calendar_manager.update_event(event_id=event_id, **update_data)
 
@@ -552,8 +741,17 @@ def delete_event(event_id):
                     # Get draft ID from event notes
                     notes = event.get('notes', '')
                     draft_id = None
-                    if 'Draft ID:' in notes:
-                        draft_id = notes.split('Draft ID:')[1].strip().split('\n')[0].strip()
+                    if notes and 'Draft ID:' in str(notes):
+                        # Use regex to extract draft ID
+                        import re
+                        draft_id_match = re.search(r'Draft ID:\s*(\S+)', str(notes))
+                        if draft_id_match:
+                            draft_id = draft_id_match.group(1)
+                            current_app.logger.info(f"Found draft ID in notes: {draft_id}")
+                        else:
+                            current_app.logger.warning(f"Could not extract draft ID from notes: {notes}")
+                    else:
+                        current_app.logger.warning(f"No Draft ID found in notes: {notes}")
 
                     if draft_id:
                         try:
