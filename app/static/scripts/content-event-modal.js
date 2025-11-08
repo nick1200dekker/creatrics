@@ -65,8 +65,8 @@ class ContentEventModal {
                                     <!-- Content Info Tab -->
                                     <div class="content-tab-panel active" data-panel="original">
                                         <div class="form-group">
-                                            <label>Requirements</label>
-                                            <textarea id="content-field" class="form-control" rows="4" placeholder="Enter requirements..."></textarea>
+                                            <label>Details</label>
+                                            <textarea id="content-field" class="form-control" rows="4" placeholder="Enter details..."></textarea>
                                         </div>
                                     </div>
 

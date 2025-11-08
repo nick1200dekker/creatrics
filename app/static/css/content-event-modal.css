@@ -732,7 +732,7 @@ html.dark .content-tab.active {
 
 .content-tabs-body {
     flex: 1;
-    overflow: visible;
+    overflow-y: auto;
     position: relative;
 }
 
