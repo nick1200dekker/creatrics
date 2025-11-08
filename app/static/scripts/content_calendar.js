@@ -534,11 +534,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set saving flag
         isSaving = true;
 
+        console.log('🔄 saveEvent called with eventData:', eventData);
+
         // Convert date to ISO string
         let publishDate = null;
         if (eventData.publish_date) {
+            console.log('  - Original publish_date:', eventData.publish_date);
             const localDateTime = new Date(eventData.publish_date);
+            console.log('  - localDateTime object:', localDateTime);
             publishDate = localDateTime.toISOString();
+            console.log('  - Converted to ISO:', publishDate);
         }
 
         const payload = {
@@ -549,8 +554,11 @@ document.addEventListener('DOMContentLoaded', function() {
             platform: eventData.platform,
             status: eventData.status,
             notes: eventData.notes || '',
-            content_type: eventData.content_type
+            content_type: eventData.content_type,
+            timezone: eventData.timezone
         };
+
+        console.log('📤 Sending payload to backend:', payload);
 
         const url = eventData.id ?
             `/content-calendar/api/event/${eventData.id}` :

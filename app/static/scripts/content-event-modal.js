@@ -172,7 +172,8 @@ class ContentEventModal {
                             <div id="scheduled-tab" style="display: none;">
                                 <div class="scheduled-header">
                                     <i class="ph ph-calendar-check"></i>
-                                    <span>Publish Date</span>
+                                    <span>Publish Date & Time</span>
+                                    <span id="timezone-label" style="color: var(--text-tertiary); font-size: 0.875rem; font-weight: 400; margin-left: 0.5rem;"></span>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
@@ -537,7 +538,8 @@ class ContentEventModal {
                     platform: this.currentEvent.platform,
                     content_type: this.currentEvent.content_type,
                     status: this.currentEvent.status,
-                    publish_date: this.currentEvent.publish_date,
+                    publish_date: this.getCurrentPublishDate(),
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     notes: JSON.stringify(this.comments)
                 };
 
@@ -616,7 +618,8 @@ class ContentEventModal {
                 platform: this.currentEvent.platform,
                 content_type: this.currentEvent.content_type,
                 status: this.currentEvent.status,
-                publish_date: this.currentEvent.publish_date,
+                publish_date: this.getCurrentPublishDate(),
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 notes: JSON.stringify(this.comments)
             };
 
@@ -631,6 +634,28 @@ class ContentEventModal {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Helper function to get current publish_date from inputs
+    getCurrentPublishDate() {
+        const dateInput = document.getElementById('schedule-date');
+        const timeInput = document.getElementById('schedule-time');
+
+        console.log('🔍 getCurrentPublishDate called:');
+        console.log('  - dateInput:', dateInput);
+        console.log('  - dateInput.value:', dateInput?.value);
+        console.log('  - timeInput:', timeInput);
+        console.log('  - timeInput.value:', timeInput?.value);
+
+        if (dateInput && timeInput && dateInput.value && timeInput.value) {
+            const result = `${dateInput.value}T${timeInput.value}`;
+            console.log('  ✅ Returning from inputs:', result);
+            return result;
+        }
+
+        const fallback = this.currentEvent?.publish_date || null;
+        console.log('  ⚠️ Falling back to currentEvent.publish_date:', fallback);
+        return fallback;
     }
 
     open(options = {}) {
@@ -656,8 +681,24 @@ class ContentEventModal {
             this.resetFields();
         }
 
+        // Update timezone display
+        this.updateTimezoneLabel();
+
         this.modal.classList.add('active');
         document.body.style.overflow = 'hidden';
+    }
+
+    updateTimezoneLabel() {
+        const timezoneLabel = document.getElementById('timezone-label');
+        if (timezoneLabel) {
+            const now = new Date();
+            const offsetMinutes = -now.getTimezoneOffset();
+            const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+            const offsetMins = Math.abs(offsetMinutes) % 60;
+            const offsetSign = offsetMinutes >= 0 ? '+' : '-';
+            const offsetString = `GMT${offsetSign}${offsetHours}${offsetMins > 0 ? ':' + String(offsetMins).padStart(2, '0') : ''}`;
+            timezoneLabel.textContent = `(${offsetString})`;
+        }
     }
 
     close() {
@@ -1124,6 +1165,9 @@ class ContentEventModal {
 
         if (dateInput.value && timeInput.value) {
             publishDate = `${dateInput.value}T${timeInput.value}`;
+            console.log('📅 Modal publishDate created:', publishDate);
+            console.log('  - dateInput.value:', dateInput.value);
+            console.log('  - timeInput.value:', timeInput.value);
         }
 
         // Gather metadata from platform-specific tabs

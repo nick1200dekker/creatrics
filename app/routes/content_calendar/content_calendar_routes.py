@@ -87,9 +87,14 @@ def update_event(event_id):
     """API endpoint to update an existing calendar event"""
     try:
         user_id = get_workspace_user_id()
-        
+
         # Get form data
         data = request.json
+
+        current_app.logger.info(f"📥 UPDATE EVENT {event_id} - Received data:")
+        current_app.logger.info(f"  - publish_date: {data.get('publish_date')}")
+        current_app.logger.info(f"  - timezone: {data.get('timezone')}")
+        current_app.logger.info(f"  - platform: {data.get('platform')}")
         
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
@@ -167,6 +172,9 @@ def update_event(event_id):
                         dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
                         formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
+                        # Get timezone from request, otherwise from event, otherwise UTC
+                        timezone = data.get('timezone') or (event.get('timezone') if event else None) or 'UTC'
+
                         headers = {
                             'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
                             'Content-Type': 'application/json'
@@ -174,13 +182,15 @@ def update_event(event_id):
 
                         update_post_data = {
                             'scheduledFor': formatted_time,
-                            'timezone': 'UTC',
+                            'timezone': timezone,
                             'platforms': [{
                                 'platform': 'instagram',
                                 'accountId': account_id
                             }],
                             'isDraft': False  # Explicitly set to not draft
                         }
+
+                        current_app.logger.info(f"Instagram timezone: {timezone} (from request: {data.get('timezone')}, from event: {event.get('timezone') if event else None})")
 
                         current_app.logger.info(f"Attempting to update Instagram post {instagram_post_id} schedule to {formatted_time}")
                         current_app.logger.info(f"Update payload: {update_post_data}")
@@ -222,6 +232,9 @@ def update_event(event_id):
                         dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
                         formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
+                        # Get timezone from request, otherwise from event, otherwise UTC
+                        timezone = data.get('timezone') or (event.get('timezone') if event else None) or 'UTC'
+
                         headers = {
                             'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
                             'Content-Type': 'application/json'
@@ -229,7 +242,7 @@ def update_event(event_id):
 
                         update_post_data = {
                             'scheduledFor': formatted_time,
-                            'timezone': 'UTC',
+                            'timezone': timezone,
                             'platforms': [{
                                 'platform': 'tiktok',
                                 'accountId': account_id
@@ -237,6 +250,7 @@ def update_event(event_id):
                             'isDraft': False  # Explicitly set to not draft
                         }
 
+                        current_app.logger.info(f"TikTok timezone: {timezone} (from request: {data.get('timezone')}, from event: {event.get('timezone') if event else None})")
                         current_app.logger.info(f"Attempting to update TikTok post {tiktok_post_id} schedule to {formatted_time}")
                         current_app.logger.info(f"Update payload: {update_post_data}")
 
@@ -277,6 +291,9 @@ def update_event(event_id):
                         dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
                         formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
+                        # Get timezone from request, otherwise from event, otherwise UTC
+                        timezone = data.get('timezone') or (event.get('timezone') if event else None) or 'UTC'
+
                         headers = {
                             'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
                             'Content-Type': 'application/json'
@@ -284,7 +301,7 @@ def update_event(event_id):
 
                         update_post_data = {
                             'scheduledFor': formatted_time,
-                            'timezone': 'UTC',
+                            'timezone': timezone,
                             'platforms': [{
                                 'platform': 'twitter',
                                 'accountId': account_id
@@ -292,6 +309,7 @@ def update_event(event_id):
                             'isDraft': False
                         }
 
+                        current_app.logger.info(f"X timezone: {timezone} (from request: {data.get('timezone')}, from event: {event.get('timezone') if event else None})")
                         current_app.logger.info(f"Attempting to update X post {x_post_id} schedule to {formatted_time}")
                         current_app.logger.info(f"Update payload: {update_post_data}")
 
@@ -333,6 +351,9 @@ def update_event(event_id):
                         dt = datetime.fromisoformat(new_publish_time.replace('Z', '+00:00'))
                         formatted_time = dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
+                        # Get timezone from request, otherwise from event, otherwise UTC
+                        timezone = data.get('timezone') or (event.get('timezone') if event else None) or 'UTC'
+
                         headers = {
                             'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
                             'Content-Type': 'application/json'
@@ -340,7 +361,7 @@ def update_event(event_id):
 
                         update_post_data = {
                             'scheduledFor': formatted_time,
-                            'timezone': 'UTC',
+                            'timezone': timezone,
                             'platforms': [{
                                 'platform': 'youtube',
                                 'accountId': account_id
@@ -348,6 +369,7 @@ def update_event(event_id):
                             'isDraft': False
                         }
 
+                        current_app.logger.info(f"YouTube timezone: {timezone} (from request: {data.get('timezone')}, from event: {event.get('timezone') if event else None})")
                         current_app.logger.info(f"Attempting to update YouTube post {youtube_video_id} schedule to {formatted_time}")
                         current_app.logger.info(f"Update payload: {update_post_data}")
 
@@ -450,16 +472,21 @@ def update_event(event_id):
                             # Use user's timezone if provided, otherwise default to event's timezone or UTC
                             timezone = data.get('timezone') or event.get('timezone') or 'UTC'
 
+                            # Use new publish_date if provided, otherwise keep existing
+                            scheduled_for = data.get('publish_date') or event.get('publish_date')
+
                             update_post_data = {
                                 'content': caption,
                                 'platforms': [{
                                     'platform': 'instagram',
                                     'accountId': account_id
                                 }],
-                                'scheduledFor': event.get('publish_date'),
+                                'scheduledFor': scheduled_for,
                                 'timezone': timezone,
                                 'isDraft': False  # Explicitly set to not draft
                             }
+
+                            current_app.logger.info(f"Instagram caption update - using scheduledFor: {scheduled_for}")
 
                             response = requests.put(
                                 f"https://getlate.dev/api/v1/posts/{instagram_post_id}",
@@ -496,16 +523,21 @@ def update_event(event_id):
                             # Use user's timezone if provided, otherwise default to event's timezone or UTC
                             timezone = data.get('timezone') or event.get('timezone') or 'UTC'
 
+                            # Use new publish_date if provided, otherwise keep existing
+                            scheduled_for = data.get('publish_date') or event.get('publish_date')
+
                             update_post_data = {
                                 'content': caption,
                                 'platforms': [{
                                     'platform': 'tiktok',
                                     'accountId': account_id
                                 }],
-                                'scheduledFor': event.get('publish_date'),
+                                'scheduledFor': scheduled_for,
                                 'timezone': timezone,
                                 'isDraft': False  # Explicitly set to not draft
                             }
+
+                            current_app.logger.info(f"TikTok caption update - using scheduledFor: {scheduled_for}")
 
                             response = requests.put(
                                 f"https://getlate.dev/api/v1/posts/{tiktok_post_id}",
@@ -565,16 +597,21 @@ def update_event(event_id):
                                 platform_specific_data['description'] = youtube_description
                                 current_app.logger.info(f"Setting YouTube description to: {youtube_description[:100]}...")
 
+                            # Use new publish_date if provided, otherwise keep existing
+                            scheduled_for = data.get('publish_date') or event.get('publish_date')
+
                             update_post_data = {
                                 'platforms': [{
                                     'platform': 'youtube',
                                     'accountId': account_id,
                                     'platformSpecificData': platform_specific_data
                                 }],
-                                'scheduledFor': event.get('publish_date'),
+                                'scheduledFor': scheduled_for,
                                 'timezone': timezone,
                                 'isDraft': False  # Explicitly set to not draft
                             }
+
+                            current_app.logger.info(f"YouTube metadata update - using scheduledFor: {scheduled_for}")
 
                             # Also set content at root level as fallback
                             if youtube_description:
