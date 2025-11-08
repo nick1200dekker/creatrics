@@ -457,7 +457,8 @@ def update_event(event_id):
                                     'accountId': account_id
                                 }],
                                 'scheduledFor': event.get('publish_date'),
-                                'timezone': timezone
+                                'timezone': timezone,
+                                'isDraft': False  # Explicitly set to not draft
                             }
 
                             response = requests.put(
@@ -502,7 +503,8 @@ def update_event(event_id):
                                     'accountId': account_id
                                 }],
                                 'scheduledFor': event.get('publish_date'),
-                                'timezone': timezone
+                                'timezone': timezone,
+                                'isDraft': False  # Explicitly set to not draft
                             }
 
                             response = requests.put(

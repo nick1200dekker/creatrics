@@ -366,18 +366,51 @@ function handleContentSelection(content) {
 function displayRepostContent(content) {
     const uploadContent = document.getElementById('uploadContentStatic');
     const uploadProgress = document.getElementById('uploadProgressStatic');
-    const fileName = document.getElementById('uploadFileNameStatic');
-    const fileSize = document.getElementById('uploadFileSizeStatic');
+    const filesContainer = document.getElementById('uploadedFilesContainer');
 
     if (uploadContent) uploadContent.style.display = 'none';
-    if (uploadProgress) uploadProgress.style.display = 'flex';
+    if (uploadProgress) uploadProgress.style.display = 'block';
 
-    // Extract filename from URL
-    const urlParts = content.media_url.split('/');
-    const fullFilename = urlParts[urlParts.length - 1];
+    // Get all media URLs (support both single and multiple media items)
+    let mediaUrls = [];
+    if (content.media_urls && Array.isArray(content.media_urls)) {
+        // Multiple media items (carousel)
+        mediaUrls = content.media_urls;
+    } else if (content.media_url) {
+        // Single media item
+        mediaUrls = [content.media_url];
+    }
 
-    if (fileName) fileName.textContent = decodeURIComponent(fullFilename);
-    if (fileSize) fileSize.textContent = 'From library';
+    // Populate the files container with all media items
+    if (filesContainer && mediaUrls.length > 0) {
+        filesContainer.innerHTML = '';
+
+        mediaUrls.forEach((url, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'upload-file-info';
+            fileItem.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--background-secondary); border-radius: 8px;';
+
+            // Determine media type from URL or content.media_type
+            const mediaType = content.media_type || 'image';
+            const icon = mediaType === 'video' ? 'ph-video' : 'ph-image';
+
+            // Extract filename from URL
+            const urlParts = url.split('/');
+            const fullFilename = urlParts[urlParts.length - 1];
+            const filename = decodeURIComponent(fullFilename);
+
+            fileItem.innerHTML = `
+                <i class="ph ${icon}" style="font-size: 1.5rem; color: var(--primary);"></i>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 500; font-size: 0.9375rem; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</div>
+                    <div style="font-size: 0.8125rem; color: var(--text-tertiary);">From library</div>
+                </div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap;">${mediaUrls.length > 1 ? `${index + 1}/${mediaUrls.length}` : ''}</div>
+            `;
+
+            filesContainer.appendChild(fileItem);
+        });
+    }
 }
 
 /**
@@ -916,11 +949,20 @@ async function handleUpload(e) {
         let contentId;
 
         if (uploadMode === 'repost' && repostContent) {
-            // Use existing media URL from content library
+            // Use existing media URLs from content library (support both single and multiple)
             const mediaType = repostContent.media_type || 'image';
-            mediaItems = [{ url: repostContent.media_url, type: mediaType }];
+
+            if (repostContent.media_urls && Array.isArray(repostContent.media_urls)) {
+                // Multiple media items (carousel)
+                mediaItems = repostContent.media_urls.map(url => ({ url: url, type: mediaType }));
+                console.log('Reposting carousel content with', mediaItems.length, 'items');
+            } else if (repostContent.media_url) {
+                // Single media item
+                mediaItems = [{ url: repostContent.media_url, type: mediaType }];
+                console.log('Reposting single media content:', repostContent.media_url);
+            }
+
             contentId = repostContent.id;
-            console.log('Reposting existing content:', repostContent.media_url);
             uploadBtnText.textContent = 'Posting to Instagram...';
 
             // Update progress for repost
