@@ -1062,9 +1062,13 @@ def init_youtube_upload():
                 platform='youtube',
                 platform_data={
                     'title': title,
+                    'description': description,
+                    'tags': tags,
+                    'visibility': visibility,
                     'status': 'uploading',
                     'scheduled_for': scheduled_time,
-                    'file_path': upload_info['file_path']
+                    'file_path': upload_info['file_path'],
+                    'calendar_event_id': calendar_event_id
                 }
             )
             logger.info(f"Created content library {content_id} with status 'uploading'")
@@ -1237,27 +1241,126 @@ def upload_video_chunk():
             return jsonify({'success': False, 'error': 'Failed to upload to Firebase'}), 500
 
         firebase_url = result['url']
+        thumbnail_url = result.get('thumbnail_url')
         logger.info(f"Large video uploaded to Firebase: {firebase_url}")
+        if thumbnail_url:
+            logger.info(f"Thumbnail generated: {thumbnail_url}")
 
-        # Update content library status to 'uploaded'
+        # Get the content library entry to retrieve scheduling metadata
+        content = None
         if content_id:
             try:
-                ContentLibraryManager.update_platform_status(
-                    user_id=user_id,
-                    content_id=content_id,
-                    platform='youtube',
-                    platform_data={
-                        'status': 'uploaded',
-                        'media_url': firebase_url
-                    }
-                )
+                content = ContentLibraryManager.get_content_by_id(user_id, content_id)
             except Exception as e:
-                logger.error(f"Error updating content library: {e}")
+                logger.error(f"Error getting content library: {e}")
+
+        # Automatically schedule to Late.dev after upload completes
+        if content:
+            try:
+                platforms_posted = content.get('platforms_posted', {})
+                youtube_data = platforms_posted.get('youtube', {})
+
+                title = youtube_data.get('title')
+                description = youtube_data.get('description', '')
+                tags = youtube_data.get('tags', [])
+                visibility = youtube_data.get('visibility', 'private')
+                scheduled_time = youtube_data.get('scheduled_for')
+                calendar_event_id = youtube_data.get('calendar_event_id')
+
+                if title:
+                    logger.info(f"Auto-scheduling video to YouTube via Late.dev: {title}")
+
+                    # Upload to YouTube via Late.dev
+                    from app.scripts.video_title.latedev_youtube_service import YouTubeLateDevService
+
+                    result = YouTubeLateDevService.upload_video(
+                        user_id=user_id,
+                        media_url=firebase_url,
+                        title=title,
+                        description=description,
+                        tags=tags,
+                        visibility=visibility,
+                        thumbnail_url=thumbnail_url,
+                        schedule_time=scheduled_time,
+                        timezone='UTC'
+                    )
+
+                    if result.get('success'):
+                        post_id = result.get('post_id')
+                        logger.info(f"Video scheduled to YouTube successfully: {post_id}")
+
+                        # Update content library to 'scheduled' or 'posted'
+                        new_status = 'scheduled' if scheduled_time else 'posted'
+                        ContentLibraryManager.update_platform_status(
+                            user_id=user_id,
+                            content_id=content_id,
+                            platform='youtube',
+                            platform_data={
+                                'status': new_status,
+                                'post_id': post_id,
+                                'media_url': firebase_url,
+                                'thumbnail_url': thumbnail_url
+                            }
+                        )
+
+                        # Update calendar event status
+                        if calendar_event_id:
+                            try:
+                                from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+                                calendar_manager = ContentCalendarManager(user_id)
+                                calendar_manager.update_event(
+                                    event_id=calendar_event_id,
+                                    status=new_status,
+                                    media_url=firebase_url
+                                )
+                            except Exception as e:
+                                logger.error(f"Error updating calendar event: {e}")
+                    else:
+                        # Schedule failed - update status to 'failed'
+                        logger.error(f"Failed to schedule video: {result.get('error')}")
+                        ContentLibraryManager.update_platform_status(
+                            user_id=user_id,
+                            content_id=content_id,
+                            platform='youtube',
+                            platform_data={
+                                'status': 'failed',
+                                'error': result.get('error'),
+                                'media_url': firebase_url,
+                                'thumbnail_url': thumbnail_url
+                            }
+                        )
+
+                        if calendar_event_id:
+                            try:
+                                from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+                                calendar_manager = ContentCalendarManager(user_id)
+                                calendar_manager.update_event(event_id=calendar_event_id, status='failed')
+                            except Exception as e:
+                                logger.error(f"Error updating calendar event to failed: {e}")
+            except Exception as e:
+                logger.error(f"Error auto-scheduling to YouTube: {e}", exc_info=True)
+                # Update to failed status
+                if content_id:
+                    try:
+                        ContentLibraryManager.update_platform_status(
+                            user_id=user_id,
+                            content_id=content_id,
+                            platform='youtube',
+                            platform_data={
+                                'status': 'failed',
+                                'error': str(e),
+                                'media_url': firebase_url,
+                                'thumbnail_url': thumbnail_url
+                            }
+                        )
+                    except:
+                        pass
 
         return jsonify({
             'success': True,
             'firebase_url': firebase_url,
-            'message': 'Video uploaded successfully'
+            'thumbnail_url': thumbnail_url,
+            'message': 'Video uploaded and scheduled successfully'
         })
 
     except Exception as e:
@@ -1391,6 +1494,92 @@ def complete_youtube_upload():
 def upload_short_to_firebase():
     """Legacy endpoint - redirects to new upload_video_to_firebase"""
     return upload_video_to_firebase()
+
+@bp.route('/api/check-ongoing-uploads', methods=['GET'])
+@auth_required
+def check_ongoing_uploads():
+    """Check if user has any uploads in 'uploading' status"""
+    try:
+        user_id = get_workspace_user_id()
+
+        # Check content library for uploads with status 'uploading'
+        ongoing_uploads = []
+        try:
+            from app.system.services.content_library_service import ContentLibraryManager
+
+            # Get recent content items (last 3 days)
+            content_items = ContentLibraryManager.get_recent_content(user_id, hours=72)
+
+            for item in content_items:
+                platforms_posted = item.get('platforms_posted', {})
+                youtube_data = platforms_posted.get('youtube', {})
+
+                if youtube_data.get('status') == 'uploading':
+                    ongoing_uploads.append({
+                        'content_id': item.get('id'),
+                        'title': youtube_data.get('title', 'Untitled'),
+                        'created_at': item.get('created_at')
+                    })
+        except Exception as e:
+            logger.error(f"Error checking ongoing uploads: {e}", exc_info=True)
+
+        return jsonify({
+            'success': True,
+            'has_ongoing_uploads': len(ongoing_uploads) > 0,
+            'uploads': ongoing_uploads
+        })
+
+    except Exception as e:
+        logger.error(f"Error checking ongoing uploads: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/api/cancel-upload', methods=['POST'])
+@auth_required
+def cancel_upload():
+    """Cancel an ongoing upload by removing content library entry and calendar event"""
+    try:
+        user_id = get_workspace_user_id()
+        data = request.get_json()
+        content_id = data.get('content_id')
+
+        if not content_id:
+            return jsonify({'success': False, 'error': 'Content ID required'}), 400
+
+        from app.system.services.content_library_service import ContentLibraryManager
+        from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+
+        # Get content to find associated calendar event
+        content = ContentLibraryManager.get_content_by_id(user_id, content_id)
+
+        if content:
+            # Delete from content library
+            ContentLibraryManager.delete_content(user_id, content_id)
+
+            # Find and delete associated calendar event
+            platforms_posted = content.get('platforms_posted', {})
+            youtube_data = platforms_posted.get('youtube', {})
+
+            # Calendar events are linked by checking for matching content
+            # Search uploading events for this content_id
+            calendar_manager = ContentCalendarManager(user_id)
+            events = calendar_manager.get_events_by_status('uploading')
+
+            for event in events:
+                if event.get('content_id') == content_id or event.get('title') == youtube_data.get('title'):
+                    calendar_manager.delete_event(event.get('id'))
+                    logger.info(f"Deleted calendar event {event.get('id')} for cancelled upload")
+                    break
+
+            logger.info(f"Cancelled upload {content_id} for user {user_id}")
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Content not found'}), 404
+
+    except Exception as e:
+        logger.error(f"Error cancelling upload: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @bp.route('/api/youtube-status', methods=['GET'])
 @auth_required

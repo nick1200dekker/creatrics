@@ -471,7 +471,7 @@ class StorageService:
             content_type: MIME type of the file
 
         Returns:
-            dict with 'path' and 'url' on success, None on failure
+            dict with 'path', 'url', and 'thumbnail_url' on success, None on failure
         """
         if not bucket:
             logger.error("Firebase Storage not initialized")
@@ -492,13 +492,97 @@ class StorageService:
 
             logger.info(f"Chunked upload completed for {blob_path}")
 
+            # Generate thumbnail from first frame
+            thumbnail_url = None
+            try:
+                thumbnail_url = StorageService.generate_video_thumbnail(user_id, directory, filename, blob_path)
+            except Exception as e:
+                logger.warning(f"Could not generate thumbnail for {filename}: {e}")
+
             return {
                 'path': blob.name,
-                'url': url
+                'url': url,
+                'thumbnail_url': thumbnail_url
             }
 
         except Exception as e:
             logger.error(f"Error uploading large file {filename}: {str(e)}")
+            return None
+
+    @staticmethod
+    def generate_video_thumbnail(user_id, directory, filename, video_blob_path):
+        """Generate thumbnail from first frame of video using ffmpeg
+
+        Args:
+            user_id: User ID
+            directory: Storage directory
+            filename: Original video filename
+            video_blob_path: Path to video blob in Firebase Storage
+
+        Returns:
+            str: Public URL of generated thumbnail, or None on failure
+        """
+        import tempfile
+        import subprocess
+        import os
+
+        if not bucket:
+            logger.error("Firebase Storage not initialized")
+            return None
+
+        try:
+            # Download video to temp file
+            video_blob = bucket.blob(video_blob_path)
+            temp_video = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+            temp_video.close()
+
+            logger.info(f"Downloading video for thumbnail generation: {video_blob_path}")
+            video_blob.download_to_filename(temp_video.name)
+
+            # Generate thumbnail using ffmpeg (extract first frame)
+            thumbnail_filename = filename.rsplit('.', 1)[0] + '_thumb.jpg'
+            temp_thumbnail = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+            temp_thumbnail.close()
+
+            logger.info(f"Generating thumbnail from first frame")
+            subprocess.run([
+                'ffmpeg',
+                '-i', temp_video.name,
+                '-vframes', '1',  # Extract only 1 frame
+                '-vf', 'scale=320:-1',  # Scale to 320px width, maintain aspect ratio
+                '-y',  # Overwrite output file
+                temp_thumbnail.name
+            ], check=True, capture_output=True, timeout=30)
+
+            # Upload thumbnail to Firebase
+            thumbnail_blob_path = f'users/{user_id}/{directory}/thumbnails/{thumbnail_filename}'
+            thumbnail_blob = bucket.blob(thumbnail_blob_path)
+
+            with open(temp_thumbnail.name, 'rb') as f:
+                thumbnail_blob.upload_from_file(f, content_type='image/jpeg')
+
+            thumbnail_blob.make_public()
+            thumbnail_url = thumbnail_blob.public_url
+
+            logger.info(f"Thumbnail generated and uploaded: {thumbnail_url}")
+
+            # Cleanup temp files
+            try:
+                os.unlink(temp_video.name)
+                os.unlink(temp_thumbnail.name)
+            except Exception as e:
+                logger.warning(f"Could not delete temp files: {e}")
+
+            return thumbnail_url
+
+        except subprocess.TimeoutExpired:
+            logger.error("Thumbnail generation timed out")
+            return None
+        except subprocess.CalledProcessError as e:
+            logger.error(f"ffmpeg error generating thumbnail: {e.stderr}")
+            return None
+        except Exception as e:
+            logger.error(f"Error generating thumbnail: {str(e)}")
             return None
 
 

@@ -462,3 +462,90 @@ def api_generate_titles():
     except Exception as e:
         logger.error(f"Error generating TikTok titles: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/api/check-ongoing-uploads', methods=['GET'])
+@auth_required
+def check_ongoing_uploads():
+    """Check if user has any uploads in 'uploading' status for TikTok"""
+    try:
+        user_id = g.user.get('id')
+
+        # Check content library for uploads with status 'uploading'
+        ongoing_uploads = []
+        try:
+            from app.system.services.content_library_service import ContentLibraryManager
+
+            # Get recent content items (last 3 days)
+            content_items = ContentLibraryManager.get_recent_content(user_id, hours=72)
+
+            for item in content_items:
+                platforms_posted = item.get('platforms_posted', {})
+                tiktok_data = platforms_posted.get('tiktok', {})
+
+                if tiktok_data.get('status') == 'uploading':
+                    ongoing_uploads.append({
+                        'content_id': item.get('id'),
+                        'title': tiktok_data.get('title', 'Untitled')[:50],
+                        'created_at': item.get('created_at')
+                    })
+        except Exception as e:
+            logger.error(f"Error checking ongoing uploads: {e}", exc_info=True)
+
+        return jsonify({
+            'success': True,
+            'has_ongoing_uploads': len(ongoing_uploads) > 0,
+            'uploads': ongoing_uploads
+        })
+
+    except Exception as e:
+        logger.error(f"Error checking ongoing uploads: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/api/cancel-upload', methods=['POST'])
+@auth_required
+def cancel_upload():
+    """Cancel an ongoing upload by removing content library entry and calendar event"""
+    try:
+        user_id = g.user.get('id')
+        data = request.get_json()
+        content_id = data.get('content_id')
+
+        if not content_id:
+            return jsonify({'success': False, 'error': 'Content ID required'}), 400
+
+        from app.system.services.content_library_service import ContentLibraryManager
+        from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+
+        # Get content to find associated calendar event
+        content = ContentLibraryManager.get_content_by_id(user_id, content_id)
+
+        if content:
+            # Delete from content library
+            ContentLibraryManager.delete_content(user_id, content_id)
+
+            # Find and delete associated calendar event
+            platforms_posted = content.get('platforms_posted', {})
+            tiktok_data = platforms_posted.get('tiktok', {})
+
+            # Calendar events are linked by checking for matching content
+            # Search uploading events for this content_id
+            calendar_manager = ContentCalendarManager(user_id)
+            events = calendar_manager.get_events_by_status('uploading')
+
+            for event in events:
+                title = tiktok_data.get('title', '')
+                if event.get('content_id') == content_id or event.get('title') == title:
+                    calendar_manager.delete_event(event.get('id'))
+                    logger.info(f"Deleted calendar event {event.get('id')} for cancelled upload")
+                    break
+
+            logger.info(f"Cancelled upload {content_id} for user {user_id}")
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Content not found'}), 404
+
+    except Exception as e:
+        logger.error(f"Error cancelling upload: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500

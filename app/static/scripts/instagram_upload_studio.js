@@ -41,6 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         handleStatusChange();
     }, 100);
+
+    // Check for ongoing uploads
+    checkForOngoingUploads();
 });
 
 /**
@@ -1678,4 +1681,116 @@ function copyCaption(event, index) {
         console.error('Failed to copy:', err);
         showToast('Failed to copy caption', 'error');
     });
+}
+
+/**
+ * Check for ongoing uploads
+ */
+async function checkForOngoingUploads() {
+    try {
+        const response = await fetch('/instagram-upload-studio/api/check-ongoing-uploads');
+        const data = await response.json();
+
+        if (data.has_ongoing_uploads) {
+            showOngoingUploadBanner(data.uploads);
+        }
+    } catch (error) {
+        console.log('Could not check for ongoing uploads:', error);
+    }
+}
+
+/**
+ * Show banner for ongoing uploads
+ */
+function showOngoingUploadBanner(uploads) {
+    // Remove existing banner if present
+    const existingBanner = document.getElementById('ongoingUploadBanner');
+    if (existingBanner) {
+        existingBanner.remove();
+    }
+
+    const banner = document.createElement('div');
+    banner.id = 'ongoingUploadBanner';
+    banner.style.cssText = `
+        position: fixed;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        font-size: 14px;
+        max-width: 600px;
+        min-width: 400px;
+    `;
+
+    const count = uploads.length;
+    const uploadText = count === 1 ? '1 video upload' : `${count} video uploads`;
+
+    // Build upload list HTML
+    const uploadListHTML = uploads.map(upload => {
+        const title = upload.title || 'Untitled';
+        const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.2);">
+                <span style="flex: 1;">${truncatedTitle}</span>
+                <button onclick="cancelUpload('${upload.content_id}')"
+                        style="background: rgba(255,100,100,0.8); border: none; color: white; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                    Cancel
+                </button>
+            </div>
+        `;
+    }).join('');
+
+    banner.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <i class="ph ph-circle-notch spinning" style="font-size: 18px;"></i>
+            <span><strong>${uploadText} in progress...</strong> You can safely navigate away.</span>
+            <button onclick="document.getElementById('ongoingUploadBanner').remove()"
+                    style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 4px 12px; border-radius: 4px; cursor: pointer; margin-left: auto; font-size: 12px;">
+                Dismiss
+            </button>
+        </div>
+        ${uploadListHTML}
+    `;
+
+    document.body.appendChild(banner);
+
+    // Auto-refresh to check status every 30 seconds
+    setTimeout(() => {
+        checkForOngoingUploads();
+    }, 30000);
+}
+
+/**
+ * Cancel an upload
+ */
+async function cancelUpload(contentId) {
+    if (!confirm('Are you sure you want to cancel this upload? The calendar item will be removed.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/instagram-upload-studio/api/cancel-upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content_id: contentId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Upload cancelled successfully');
+            // Refresh the banner
+            checkForOngoingUploads();
+        } else {
+            alert('Failed to cancel upload: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error cancelling upload:', error);
+        alert('Failed to cancel upload');
+    }
 }
