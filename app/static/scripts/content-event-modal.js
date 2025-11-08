@@ -394,25 +394,14 @@ class ContentEventModal {
         const scheduledTab = document.getElementById('scheduled-tab');
         const platformSelect = document.getElementById('platform-select');
 
-        // Only hide scheduled tab if actually scheduled on YouTube (has video ID)
-        const isActuallyScheduledOnYouTube = this.currentEvent && this.currentEvent.youtube_video_id;
-
         console.log('handleStatusChange called:', {
             currentEvent: this.currentEvent,
-            isActuallyScheduledOnYouTube: isActuallyScheduledOnYouTube,
             scheduledTabExists: !!scheduledTab
         });
 
-        // Show/hide scheduled tab based on whether it's actually scheduled on YouTube
-        if (isActuallyScheduledOnYouTube) {
-            // Hide for actually scheduled YouTube posts (they're in read-only mode)
-            console.log('Hiding scheduled tab for scheduled YouTube post');
-            scheduledTab.style.display = 'none';
-        } else {
-            // Always show the Publish Date tab for regular items (acts as deadline/target date for all statuses)
-            console.log('Showing scheduled tab for regular content');
-            scheduledTab.style.display = 'block';
-        }
+        // Always show the Publish Date tab for all posts (scheduled or not)
+        console.log('Showing scheduled tab');
+        if (scheduledTab) scheduledTab.style.display = 'block';
 
         // Lock platform ONLY if it's actually scheduled on the platform (has platform post ID - the "clock" icon)
         const isActuallyScheduled = this.currentEvent && (
@@ -717,6 +706,22 @@ class ContentEventModal {
         document.getElementById('status-select').value = event.status || 'ready';
         document.getElementById('type-select').value = event.content_type || 'organic';
 
+        // Populate publish date FIRST (before tab visibility logic)
+        if (event.publish_date) {
+            console.log('Populating date from event.publish_date:', event.publish_date);
+            const date = new Date(event.publish_date);
+            const dateStr = date.toISOString().split('T')[0];
+            const timeStr = date.toTimeString().slice(0, 5);
+            console.log('Parsed dateStr:', dateStr, 'timeStr:', timeStr);
+
+            const dateSelect = document.getElementById('schedule-date');
+            const timeSelect = document.getElementById('schedule-time');
+
+            if (dateSelect) dateSelect.value = dateStr;
+            if (timeSelect) timeSelect.value = timeStr;
+            console.log('Set date select value:', dateSelect?.value, 'time select value:', timeSelect?.value);
+        }
+
         // Handle YouTube tab visibility and UI adjustments
         const youtubeTabBtn = document.getElementById('youtube-tab-btn');
         const youtubeTitleField = document.getElementById('youtube-title-field');
@@ -733,15 +738,6 @@ class ContentEventModal {
         if (hasYouTubeMetadata) {
             // Show YouTube tab
             youtubeTabBtn.style.display = 'flex';
-
-            // Only hide UI elements if it's actually scheduled on YouTube (has video ID)
-            const isActuallyScheduledOnYouTube = event.youtube_video_id;
-            if (isActuallyScheduledOnYouTube) {
-                if (platformGroup) platformGroup.style.display = 'none';
-                if (statusTypeRow) statusTypeRow.style.display = 'none';
-                if (scheduledTab) scheduledTab.style.display = 'none';
-                if (modalActions) modalActions.style.display = 'none';
-            }
 
             // Parse the video title from the description (format: "Video Title: <title>\n\n<description>")
             let videoTitle = event.title || '';
@@ -1034,23 +1030,6 @@ class ContentEventModal {
                 platformSelectField.disabled = false;
                 console.log('Platform select enabled for non-scheduled post');
             }
-        }
-
-        if (event.publish_date) {
-            console.log('Populating date from event.publish_date:', event.publish_date);
-            const date = new Date(event.publish_date);
-            const dateStr = date.toISOString().split('T')[0];
-            const timeStr = date.toTimeString().slice(0, 5);
-            console.log('Parsed dateStr:', dateStr, 'timeStr:', timeStr);
-
-            setTimeout(() => {
-                const dateSelect = document.getElementById('schedule-date');
-                const timeSelect = document.getElementById('schedule-time');
-
-                if (dateSelect) dateSelect.value = dateStr;
-                if (timeSelect) timeSelect.value = timeStr;
-                console.log('Set date select value:', dateSelect?.value, 'time select value:', timeSelect?.value);
-            }, 100);
         }
 
         try {
