@@ -446,10 +446,17 @@ async function generateCaptions() {
 
     // Show loading state
     document.getElementById('resultsContainer').innerHTML = `
-        <div class="loading-container">
-            <div class="loading-spinner"><i class="ph ph-spinner"></i></div>
+        <div class="loading-container premium-loading">
+            <div class="premium-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-core">
+                    <i class="ph ph-sparkle"></i>
+                </div>
+            </div>
             <div class="loading-text">Creating Your Content</div>
-            <div class="loading-subtext">Generating captions and hashtags...</div>
+            <div class="loading-subtext">Generating captions and hashtags<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></div>
         </div>
     `;
 
