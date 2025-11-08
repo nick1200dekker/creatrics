@@ -78,15 +78,33 @@ const CalendarLinkModal = {
             const response = await fetch('/content-calendar/api/events');
             const data = await response.json();
 
+            // Get current time in user's local timezone
+            const now = new Date();
+
             // Filter to only show items that are NOT scheduled (no clock icon)
             // i.e., items without youtube_video_id, instagram_post_id, tiktok_post_id, x_post_id
-            const unscheduledItems = data.filter(item =>
-                !item.youtube_video_id &&
-                !item.instagram_post_id &&
-                !item.tiktok_post_id &&
-                !item.x_post_id &&
-                (item.platform === this.platform || item.platform === 'Not set')
-            );
+            // Also filter out items with publish_date in the past (in user's local timezone)
+            const unscheduledItems = data.filter(item => {
+                // Check if already scheduled on any platform
+                const isScheduled = item.youtube_video_id ||
+                    item.instagram_post_id ||
+                    item.tiktok_post_id ||
+                    item.x_post_id;
+
+                if (isScheduled) return false;
+
+                // Check platform match
+                const platformMatch = item.platform === this.platform || item.platform === 'Not set';
+                if (!platformMatch) return false;
+
+                // Check if publish_date is in the future (or no date set)
+                if (item.publish_date) {
+                    const publishDate = new Date(item.publish_date);
+                    if (publishDate < now) return false; // Filter out past dates
+                }
+
+                return true;
+            });
 
             return unscheduledItems;
         } catch (error) {
@@ -131,9 +149,13 @@ const CalendarLinkModal = {
 
             const platform = item.platform || 'Not set';
 
+            // Truncate title to 50 characters
+            const title = item.title || 'Untitled';
+            const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
+
             return `
                 <tr class="calendar-table-row" data-item-id="${item.id}">
-                    <td class="calendar-table-cell">${this.escapeHtml(item.title || 'Untitled')}</td>
+                    <td class="calendar-table-cell" title="${this.escapeHtml(title)}">${this.escapeHtml(truncatedTitle)}</td>
                     <td class="calendar-table-cell">${this.escapeHtml(platform)}</td>
                     <td class="calendar-table-cell">${date}</td>
                 </tr>

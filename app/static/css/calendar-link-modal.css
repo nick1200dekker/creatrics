@@ -175,40 +175,44 @@ html.dark .calendar-items-loading i {
 /* Calendar Items Table */
 .calendar-items-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 html.dark .calendar-items-table {
     border-color: rgba(63, 63, 70, 0.6);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .calendar-items-table thead {
-    background: var(--bg-secondary);
+    background: linear-gradient(to bottom, #f9fafb 0%, #f3f4f6 100%);
     border-bottom: 2px solid var(--border-primary);
 }
 
 html.dark .calendar-items-table thead {
-    background: rgba(39, 39, 42, 0.6);
+    background: linear-gradient(to bottom, rgba(52, 52, 56, 0.8) 0%, rgba(39, 39, 42, 0.8) 100%);
     border-bottom-color: rgba(63, 63, 70, 0.6);
 }
 
 .calendar-items-table th {
-    padding: 0.875rem 1rem;
+    padding: 1rem 1.25rem;
     text-align: left;
     font-size: 0.8125rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.025em;
+    letter-spacing: 0.05em;
 }
 
 .calendar-table-row {
     border-bottom: 1px solid var(--border-primary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
+    background: var(--bg-primary);
 }
 
 html.dark .calendar-table-row {
@@ -220,17 +224,27 @@ html.dark .calendar-table-row {
 }
 
 .calendar-table-row:hover {
-    background: var(--bg-tertiary);
+    background: linear-gradient(to right, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
+    transform: translateX(2px);
 }
 
 html.dark .calendar-table-row:hover {
-    background: rgba(63, 63, 70, 0.5);
+    background: linear-gradient(to right, rgba(96, 165, 250, 0.08) 0%, rgba(96, 165, 250, 0.03) 100%);
+}
+
+.calendar-table-row:active {
+    transform: translateX(0);
 }
 
 .calendar-table-cell {
-    padding: 0.875rem 1rem;
-    font-size: 0.875rem;
+    padding: 1rem 1.25rem;
+    font-size: 0.9rem;
     color: var(--text-primary);
+    font-weight: 500;
+}
+
+.calendar-table-cell:first-child {
+    font-weight: 600;
 }
 
 /* Success Notification Toast */
