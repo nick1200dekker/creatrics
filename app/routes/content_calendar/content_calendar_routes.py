@@ -95,6 +95,8 @@ def update_event(event_id):
         current_app.logger.info(f"  - publish_date: {data.get('publish_date')}")
         current_app.logger.info(f"  - timezone: {data.get('timezone')}")
         current_app.logger.info(f"  - platform: {data.get('platform')}")
+        current_app.logger.info(f"  - title: {data.get('title')}")
+        current_app.logger.info(f"  - details: {data.get('details')}")
         
         # Initialize calendar manager
         calendar_manager = ContentCalendarManager(user_id)
@@ -146,13 +148,25 @@ def update_event(event_id):
             update_data['comments'] = data['comments']
         if 'notes' in data:
             update_data['notes'] = data['notes']
+        if 'details' in data:
+            update_data['details'] = data['details']
         
         # If publish_date is being updated and event has Instagram or TikTok post, update Late.dev
         if 'publish_date' in data:
             event = calendar_manager.get_event(event_id)
-            instagram_post_id = event.get('instagram_post_id') if event else None
-            tiktok_post_id = event.get('tiktok_post_id') if event else None
-            x_post_id = event.get('x_post_id') if event else None
+
+            # Only update if publish_date actually changed
+            if event and data.get('publish_date') != event.get('publish_date'):
+                instagram_post_id = event.get('instagram_post_id') if event else None
+                tiktok_post_id = event.get('tiktok_post_id') if event else None
+                x_post_id = event.get('x_post_id') if event else None
+                youtube_video_id = event.get('youtube_video_id') if event else None
+            else:
+                current_app.logger.info(f"Publish date unchanged ({data.get('publish_date')}), skipping schedule updates")
+                instagram_post_id = None
+                tiktok_post_id = None
+                x_post_id = None
+                youtube_video_id = None
 
             # Update Instagram post schedule
             if instagram_post_id:
@@ -333,7 +347,7 @@ def update_event(event_id):
                     # Continue with calendar update even if X update fails
 
             # Update YouTube post schedule via Late.dev
-            youtube_video_id = event.get('youtube_video_id') if event else None
+            # Note: youtube_video_id is already set above based on whether publish_date changed
             if youtube_video_id:
                 try:
                     import requests
@@ -446,10 +460,24 @@ def update_event(event_id):
         if 'description' in data or 'tags' in data or 'title' in data:
             event = calendar_manager.get_event(event_id)
             if event:
-                instagram_post_id = event.get('instagram_post_id')
-                tiktok_post_id = event.get('tiktok_post_id')
-                x_post_id = event.get('x_post_id')
-                youtube_video_id = event.get('youtube_video_id')
+                # Check if content actually changed
+                content_changed = (
+                    ('description' in data and data.get('description') != event.get('description')) or
+                    ('tags' in data and data.get('tags') != event.get('tags')) or
+                    ('title' in data and data.get('title') != event.get('title'))
+                )
+
+                if content_changed:
+                    instagram_post_id = event.get('instagram_post_id')
+                    tiktok_post_id = event.get('tiktok_post_id')
+                    x_post_id = event.get('x_post_id')
+                    youtube_video_id = event.get('youtube_video_id')
+                else:
+                    current_app.logger.info(f"Content unchanged, skipping caption/metadata updates")
+                    instagram_post_id = None
+                    tiktok_post_id = None
+                    x_post_id = None
+                    youtube_video_id = None
 
                 # Update Instagram caption
                 if instagram_post_id:
@@ -556,97 +584,90 @@ def update_event(event_id):
                 # Note: X post text is not editable from calendar - edit in X Post Editor instead
                 # The link to X Post Editor is provided in the UI
 
-                # Update YouTube video metadata (title, description, tags)
+                # Update YouTube video metadata (title, description, tags) - ONLY if they changed
                 current_app.logger.info(f"Checking YouTube update - youtube_video_id: {youtube_video_id}")
                 if youtube_video_id:
-                    current_app.logger.info(f"YouTube video ID found, proceeding with update")
-                    try:
-                        import requests
-                        import os
-                        from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
+                    # Check if YouTube metadata fields actually changed
+                    youtube_metadata_changed = (
+                        ('title' in data and data.get('title') != event.get('title')) or
+                        ('description' in data and data.get('description') != event.get('description')) or
+                        ('tags' in data and data.get('tags') != event.get('tags')) or
+                        ('publish_date' in data and data.get('publish_date') != event.get('publish_date'))
+                    )
 
-                        account_id = LateDevOAuthService.get_account_id(user_id, 'youtube')
-                        if account_id:
-                            # Use user's timezone if provided, otherwise default to event's timezone or UTC
-                            timezone = data.get('timezone') or event.get('timezone') or 'UTC'
+                    if youtube_metadata_changed:
+                        current_app.logger.info(f"YouTube metadata changed, proceeding with update")
+                        try:
+                            import requests
+                            import os
+                            from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
 
-                            # Initialize YouTube title/description variables
-                            youtube_title = None
-                            youtube_description = None
+                            account_id = LateDevOAuthService.get_account_id(user_id, 'youtube')
+                            if account_id:
+                                # Use user's timezone if provided, otherwise default to event's timezone or UTC
+                                timezone = data.get('timezone') or event.get('timezone') or 'UTC'
 
-                            # Extract YouTube title and description from the combined description field
-                            # Frontend sends: "Title: <title>\nDescription: <description>"
-                            if 'description' in data:
-                                description_raw = data.get('description', '')
+                                # Get YouTube title and description directly from fields
+                                # Title comes from calendar event title, description from description field
+                                youtube_title = data.get('title')
+                                youtube_description = data.get('description')
 
-                                # Parse the combined format
-                                if 'Title: ' in description_raw and 'Description: ' in description_raw:
-                                    parts = description_raw.split('\n')
-                                    for part in parts:
-                                        if part.startswith('Title: '):
-                                            youtube_title = part.replace('Title: ', '').strip()
-                                        elif part.startswith('Description: '):
-                                            youtube_description = part.replace('Description: ', '').strip()
+                                # Build platformSpecificData with title and description
+                                platform_specific_data = {}
+                                if youtube_title:
+                                    platform_specific_data['title'] = youtube_title
+                                    current_app.logger.info(f"Setting YouTube title to: {youtube_title}")
+                                if youtube_description:
+                                    platform_specific_data['description'] = youtube_description
+                                    current_app.logger.info(f"Setting YouTube description to: {youtube_description[:100]}...")
 
-                            # Build platformSpecificData with title and description
-                            platform_specific_data = {}
-                            if youtube_title:
-                                platform_specific_data['title'] = youtube_title
-                                current_app.logger.info(f"Setting YouTube title to: {youtube_title}")
-                            if youtube_description:
-                                platform_specific_data['description'] = youtube_description
-                                current_app.logger.info(f"Setting YouTube description to: {youtube_description[:100]}...")
+                                # Use new publish_date if provided, otherwise keep existing
+                                scheduled_for = data.get('publish_date') or event.get('publish_date')
 
-                            # Use new publish_date if provided, otherwise keep existing
-                            scheduled_for = data.get('publish_date') or event.get('publish_date')
+                                update_post_data = {
+                                    'platforms': [{
+                                        'platform': 'youtube',
+                                        'accountId': account_id,
+                                        'platformSpecificData': platform_specific_data
+                                    }],
+                                    'scheduledFor': scheduled_for,
+                                    'timezone': timezone,
+                                    'isDraft': False  # Explicitly set to not draft
+                                }
 
-                            update_post_data = {
-                                'platforms': [{
-                                    'platform': 'youtube',
-                                    'accountId': account_id,
-                                    'platformSpecificData': platform_specific_data
-                                }],
-                                'scheduledFor': scheduled_for,
-                                'timezone': timezone,
-                                'isDraft': False  # Explicitly set to not draft
-                            }
+                                current_app.logger.info(f"YouTube metadata update - using scheduledFor: {scheduled_for}")
 
-                            current_app.logger.info(f"YouTube metadata update - using scheduledFor: {scheduled_for}")
+                                # Also set content at root level as fallback
+                                if youtube_description:
+                                    update_post_data['content'] = youtube_description
 
-                            # Also set content at root level as fallback
-                            if youtube_description:
-                                update_post_data['content'] = youtube_description
+                                # Add tags if changed
+                                if 'tags' in data:
+                                    tags = data.get('tags', '').split(',')
+                                    tags = [tag.strip() for tag in tags if tag.strip()]
+                                    update_post_data['tags'] = tags
+                                    current_app.logger.info(f"Setting YouTube tags to: {tags}")
 
-                            # Add tags if changed
-                            if 'tags' in data:
-                                tags = data.get('tags', '').split(',')
-                                tags = [tag.strip() for tag in tags if tag.strip()]
-                                update_post_data['tags'] = tags
-                                current_app.logger.info(f"Setting YouTube tags to: {tags}")
+                                headers = {
+                                    'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
+                                    'Content-Type': 'application/json'
+                                }
 
-                            headers = {
-                                'Authorization': f'Bearer {os.environ.get("LATEDEV_API_KEY")}',
-                                'Content-Type': 'application/json'
-                            }
+                                response = requests.put(
+                                    f"https://getlate.dev/api/v1/posts/{youtube_video_id}",
+                                    headers=headers,
+                                    json=update_post_data,
+                                    timeout=30
+                                )
 
-                            response = requests.put(
-                                f"https://getlate.dev/api/v1/posts/{youtube_video_id}",
-                                headers=headers,
-                                json=update_post_data,
-                                timeout=30
-                            )
-
-                            if response.status_code in [200, 201]:
-                                current_app.logger.info(f"Updated YouTube video {youtube_video_id} metadata")
-
-                                # Also update the calendar event title with the YouTube title
-                                if youtube_title and 'title' not in update_data:
-                                    update_data['title'] = youtube_title
-                                    current_app.logger.info(f"Updating calendar event title to: {youtube_title}")
-                            else:
-                                current_app.logger.error(f"Failed to update YouTube metadata: {response.status_code} - {response.text}")
-                    except Exception as e:
-                        current_app.logger.error(f"Error updating YouTube metadata: {e}")
+                                if response.status_code in [200, 201]:
+                                    current_app.logger.info(f"Updated YouTube video {youtube_video_id} metadata")
+                                else:
+                                    current_app.logger.error(f"Failed to update YouTube metadata: {response.status_code} - {response.text}")
+                        except Exception as e:
+                            current_app.logger.error(f"Error updating YouTube metadata: {e}")
+                    else:
+                        current_app.logger.info(f"YouTube metadata unchanged, skipping Late.dev API call")
 
         # Update the event
         success = calendar_manager.update_event(event_id=event_id, **update_data)

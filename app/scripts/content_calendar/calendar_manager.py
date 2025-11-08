@@ -145,7 +145,7 @@ class ContentCalendarManager:
             allowed_fields = [
                 'title', 'publish_date', 'is_paid', 'is_free', 'is_sponsored',
                 'category', 'audience_type', 'content_type', 'platform',
-                'description', 'color', 'tags', 'content_link', 'status', 'comments', 'notes',
+                'description', 'color', 'tags', 'content_link', 'status', 'comments', 'notes', 'details',
                 'media_url', 'media_metadata', 'youtube_video_id', 'instagram_post_id', 'tiktok_post_id', 'x_post_id', 'content_id'
             ]
             

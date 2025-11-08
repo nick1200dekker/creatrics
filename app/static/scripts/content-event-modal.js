@@ -743,7 +743,13 @@ class ContentEventModal {
 
     populateFields(event) {
         document.getElementById('platform-select').value = event.platform || 'Not set';
-        document.getElementById('content-field').value = event.title || '';
+        // For YouTube events, keep Details field separate from title
+        if (event.platform === 'YouTube') {
+            // Use details field if it exists, otherwise leave empty (don't use title as fallback)
+            document.getElementById('content-field').value = event.details || '';
+        } else {
+            document.getElementById('content-field').value = event.title || '';
+        }
         document.getElementById('status-select').value = event.status || 'ready';
         document.getElementById('type-select').value = event.content_type || 'organic';
 
@@ -1173,6 +1179,7 @@ class ContentEventModal {
         // Gather metadata from platform-specific tabs
         let description = '';
         let tags = '';
+        let title = content; // Default to content field
 
         // Check which platform has metadata and build description accordingly
         const youtubeTitle = document.getElementById('youtube-title-field')?.value.trim();
@@ -1181,12 +1188,13 @@ class ContentEventModal {
         const instagramCaption = document.getElementById('instagram-caption-field')?.value.trim();
 
         if (youtubeTitle || youtubeDescription) {
-            description = `Title: ${youtubeTitle}\nDescription: ${youtubeDescription}`;
+            title = youtubeTitle; // Use YouTube title as calendar event title
+            description = youtubeDescription; // Just the description
             tags = this.youtubeTags.join(',');
         } else if (tiktokCaption) {
-            description = `Caption: ${tiktokCaption}`;
+            description = tiktokCaption;
         } else if (instagramCaption) {
-            description = `Caption: ${instagramCaption}`;
+            description = instagramCaption;
         }
         // Note: X post text is read-only, edit in X Post Editor
 
@@ -1202,7 +1210,7 @@ class ContentEventModal {
 
         const eventData = {
             id: this.currentEvent?.id || null,
-            title: content,
+            title: title,
             description: description,
             tags: tags,
             platform: platform,
@@ -1213,8 +1221,17 @@ class ContentEventModal {
             notes: notesValue
         };
 
+        // For YouTube, save Details field separately
+        if (platform === 'YouTube') {
+            eventData.details = content;
+            console.log('📝 YouTube event - saving details:', content);
+        }
+
         console.log('Saving event with comments:', this.comments);
         console.log('Event data:', eventData);
+        console.log('  - title:', eventData.title);
+        console.log('  - description:', eventData.description);
+        console.log('  - details:', eventData.details);
 
         const saveBtn = document.getElementById('save-btn');
         const originalText = saveBtn.textContent;

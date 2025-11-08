@@ -558,6 +558,11 @@ document.addEventListener('DOMContentLoaded', function() {
             timezone: eventData.timezone
         };
 
+        // Add details field for YouTube
+        if (eventData.details !== undefined) {
+            payload.details = eventData.details;
+        }
+
         console.log('📤 Sending payload to backend:', payload);
 
         const url = eventData.id ?
@@ -706,9 +711,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             classNames.push('platform-other');
                         }
 
+                        // For YouTube events, prefer details over title for display
+                        const displayTitle = (event.platform === 'YouTube' && event.details) ? event.details : event.title;
+
                         calendar.addEvent({
                             id: event.id,
-                            title: event.title,
+                            title: displayTitle,
                             start: event.publish_date,
                             backgroundColor: backgroundColor,
                             classNames: classNames,
@@ -769,12 +777,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const platformColor = getEventColor(event);
             row.style.borderLeft = `3px solid ${platformColor}`;
 
+            // For YouTube events, prefer details over title for display
+            const displayTitle = (event.platform === 'YouTube' && event.details) ? event.details : (event.title || 'Untitled');
+
             // Truncate title to 60 characters
-            const title = event.title || 'Untitled';
-            const truncatedTitle = title.length > 60 ? title.substring(0, 60) + '...' : title;
+            const truncatedTitle = displayTitle.length > 60 ? displayTitle.substring(0, 60) + '...' : displayTitle;
 
             row.innerHTML = `
-                <td title="${title}">${truncatedTitle}${event.content_type === 'sponsored' ? ' 💰' : ''}</td>
+                <td title="${displayTitle}">${truncatedTitle}${event.content_type === 'sponsored' ? ' 💰' : ''}</td>
                 <td>${event.publish_date ? new Date(event.publish_date).toLocaleDateString() : '-'}</td>
                 <td>${event.platform || '-'}</td>
                 <td><span class="status-badge status-${event.status || 'draft'}">${event.status || 'draft'}</span></td>
@@ -828,8 +838,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const platform = (event.platform || 'Other').toLowerCase();
                 card.style.borderLeft = `3px solid ${getEventColor(event)}`;
 
+                // For YouTube events, prefer details over title for display
+                const cardTitle = (event.platform === 'YouTube' && event.details) ? event.details : (event.title || 'Untitled');
+
                 // Truncate title to 50 characters
-                const cardTitle = event.title || 'Untitled';
                 const truncatedCardTitle = cardTitle.length > 50 ? cardTitle.substring(0, 50) + '...' : cardTitle;
 
                 card.innerHTML = `
