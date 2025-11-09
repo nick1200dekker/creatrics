@@ -1072,13 +1072,33 @@ def init_youtube_upload():
         signed_upload_url = None
         try:
             from google.cloud import storage as gcs_storage
+            from google.oauth2 import service_account
             from datetime import timedelta
+            import os
 
             # Get bucket name
             bucket_name = upload_info['bucket_name']
 
-            # Initialize GCS client
-            gcs_client = gcs_storage.Client()
+            # Use Firebase service account credentials (has private key for signing)
+            cred_path = os.environ.get('FIREBASE_CREDENTIALS', '/secrets/firebase-credentials.json')
+
+            # Check fallback locations
+            if not os.path.exists(cred_path):
+                fallback_locations = [
+                    './firebase-credentials.json',
+                    '/secrets/firebase-credentials.json',
+                    '/app/secrets/firebase-credentials.json'
+                ]
+                for fallback_path in fallback_locations:
+                    if os.path.exists(fallback_path):
+                        cred_path = fallback_path
+                        break
+
+            # Load service account credentials
+            credentials = service_account.Credentials.from_service_account_file(cred_path)
+
+            # Initialize GCS client with service account credentials
+            gcs_client = gcs_storage.Client(credentials=credentials, project=credentials.project_id)
             bucket = gcs_client.bucket(bucket_name)
             blob = bucket.blob(upload_info['file_path'])
 
