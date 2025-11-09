@@ -585,6 +585,42 @@ class StorageService:
             logger.error(f"Error generating thumbnail: {str(e)}")
             return None
 
+    @staticmethod
+    def generate_thumbnail_from_firebase(user_id, directory, filename):
+        """Generate thumbnail from video already uploaded to Firebase
+
+        Args:
+            user_id: User ID
+            directory: Storage directory
+            filename: Filename
+
+        Returns:
+            dict with 'url' and 'thumbnail_url' on success, None on failure
+        """
+        if not bucket:
+            logger.error("Firebase Storage not initialized")
+            return None
+
+        try:
+            blob_path = f'users/{user_id}/{directory}/{filename}'
+
+            # Generate thumbnail
+            thumbnail_url = StorageService.generate_video_thumbnail(user_id, directory, filename, blob_path)
+
+            # Get video URL
+            blob = bucket.blob(blob_path)
+            blob.make_public()
+            video_url = blob.public_url
+
+            return {
+                'url': video_url,
+                'thumbnail_url': thumbnail_url
+            }
+
+        except Exception as e:
+            logger.error(f"Error generating thumbnail from Firebase video: {e}")
+            return None
+
 
 class TikTokTrendFinderService:
     """

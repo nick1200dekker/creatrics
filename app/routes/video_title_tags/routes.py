@@ -1050,94 +1050,54 @@ def init_youtube_upload():
         # Generate public URL for future reference
         public_url = f"https://storage.googleapis.com/{upload_info['bucket_name']}/{upload_info['file_path']}"
 
-        # Create content library entry with "uploading" status
-        content_id = None
+        # Store upload metadata in session or return to frontend
+        # DO NOT create calendar item yet - wait until Late.dev confirms success
+        upload_metadata = {
+            'title': title,
+            'description': description,
+            'tags': tags,
+            'visibility': visibility,
+            'scheduled_time': scheduled_time,
+            'keywords': keywords,
+            'content_description': content_description,
+            'calendar_event_id': calendar_event_id,  # User-linked calendar item (if any)
+            'file_path': upload_info['file_path']
+        }
+
+        logger.info(f"Upload initialized. Calendar item will be created after Late.dev success.")
+
+        # Generate a signed URL for direct browser-to-Firebase upload (bypasses Cloud Run 32MB limit)
+        resumable_url = None
         try:
-            content_id = ContentLibraryManager.save_content(
-                user_id=user_id,
-                media_url=public_url,
-                media_type='video',
-                keywords=keywords,
-                content_description=content_description,
-                platform='youtube',
-                platform_data={
-                    'title': title,
-                    'description': description,
-                    'tags': tags,
-                    'visibility': visibility,
-                    'status': 'uploading',
-                    'scheduled_for': scheduled_time,
-                    'file_path': upload_info['file_path'],
-                    'calendar_event_id': calendar_event_id
-                }
+            from google.cloud import storage as gcs_storage
+
+            # Get bucket name
+            bucket_name = upload_info['bucket_name']
+
+            # Initialize GCS client
+            gcs_client = gcs_storage.Client()
+            bucket = gcs_client.bucket(bucket_name)
+            blob = bucket.blob(upload_info['file_path'])
+
+            # Generate resumable upload session URL (valid for 1 hour)
+            resumable_url = blob.create_resumable_upload_session(
+                content_type=content_type,
+                timeout=3600
             )
-            logger.info(f"Created content library {content_id} with status 'uploading'")
+
+            logger.info(f"Generated resumable upload URL for direct browser upload: {upload_info['file_path']}")
         except Exception as e:
-            logger.error(f"Error creating content library: {e}")
-
-        # Create or update calendar event
-        try:
-            from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
-            calendar_manager = ContentCalendarManager(user_id)
-
-            status = 'uploading'
-            publish_date = scheduled_time if scheduled_time else datetime.now(timezone.utc).isoformat()
-            tags_string = ', '.join(tags) if isinstance(tags, list) else str(tags)
-
-            if calendar_event_id:
-                # Update existing event
-                success = calendar_manager.update_event(
-                    event_id=calendar_event_id,
-                    description=f"Video Title: {title}\n\n{description}",
-                    tags=tags_string,
-                    publish_date=publish_date,
-                    platform='YouTube',
-                    status=status,
-                    content_id=content_id if content_id else '',
-                    media_url=public_url
-                )
-                if not success:
-                    logger.warning(f"Failed to update calendar event {calendar_event_id}")
-                    calendar_event_id = None
-
-            if not calendar_event_id:
-                # Create new calendar event
-                calendar_event_id = calendar_manager.create_event(
-                    title=title,
-                    description=description,
-                    tags=tags_string,
-                    publish_date=publish_date,
-                    platform='YouTube',
-                    status=status,
-                    content_type='organic',
-                    content_id=content_id if content_id else '',
-                    media_url=public_url
-                )
-                logger.info(f"Created calendar event {calendar_event_id} with status 'uploading'")
-
-                # Update content library with calendar_event_id
-                if content_id and calendar_event_id:
-                    try:
-                        ContentLibraryManager.update_platform_status(
-                            user_id=user_id,
-                            content_id=content_id,
-                            platform='youtube',
-                            platform_data={'calendar_event_id': calendar_event_id}
-                        )
-                    except Exception as e:
-                        logger.error(f"Error updating content library with calendar_event_id: {e}")
-
-        except Exception as e:
-            logger.error(f"Error creating calendar event: {e}")
+            logger.error(f"Error generating resumable upload URL: {e}")
+            # Continue without resumable URL - will fall back to old method
 
         return jsonify({
             'success': True,
             'file_path': upload_info['file_path'],
             'bucket_name': upload_info['bucket_name'],
             'public_url': public_url,
-            'content_id': content_id,
-            'calendar_event_id': calendar_event_id,
-            'message': 'Ready for upload. Calendar item created.'
+            'upload_metadata': upload_metadata,  # Metadata to pass to complete endpoint
+            'resumable_url': resumable_url,  # Browser will upload directly to Firebase using this URL
+            'message': 'Ready for upload. Calendar item will be created after Late.dev success.'
         })
 
     except Exception as e:
@@ -1210,6 +1170,65 @@ def upload_video_to_firebase():
     except Exception as e:
         logger.error(f"Error uploading video to Firebase: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/confirm-firebase-upload', methods=['POST'])
+@auth_required
+@require_permission('video_title')
+def confirm_firebase_upload():
+    """Called by browser after direct Firebase upload completes - generates thumbnail and returns URLs"""
+    try:
+        user_id = get_workspace_user_id()
+        data = request.get_json()
+
+        content_id = data.get('content_id')
+        file_path = data.get('file_path')
+
+        if not file_path:
+            return jsonify({'success': False, 'error': 'File path is required'}), 400
+
+        logger.info(f"Confirming Firebase upload for: {file_path}")
+
+        # Generate thumbnail from uploaded video
+        from app.system.services.firebase_service import StorageService
+
+        # Extract filename from path
+        filename = file_path.split('/')[-1]
+        directory = '/'.join(file_path.split('/')[2:-1])
+
+        # Generate thumbnail and get URLs
+        result = StorageService.generate_thumbnail_from_firebase(user_id, directory, filename)
+
+        if not result:
+            # If thumbnail generation fails, still return the video URL
+            import os
+            bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET', '').replace('gs://', '')
+            firebase_url = f"https://storage.googleapis.com/{bucket_name}/{file_path}"
+
+            return jsonify({
+                'success': True,
+                'firebase_url': firebase_url,
+                'thumbnail_url': None,
+                'message': 'Upload confirmed (thumbnail generation failed)'
+            })
+
+        firebase_url = result.get('url')
+        thumbnail_url = result.get('thumbnail_url')
+
+        logger.info(f"Firebase upload confirmed: {firebase_url}")
+        if thumbnail_url:
+            logger.info(f"Thumbnail generated: {thumbnail_url}")
+
+        return jsonify({
+            'success': True,
+            'firebase_url': firebase_url,
+            'thumbnail_url': thumbnail_url,
+            'message': 'Upload confirmed and thumbnail generated'
+        })
+
+    except Exception as e:
+        logger.error(f"Error confirming Firebase upload: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @bp.route('/api/upload-video-chunk', methods=['POST'])
 @auth_required
@@ -1444,48 +1463,99 @@ def complete_youtube_upload():
             return jsonify(result), 400
 
         post_id = result.get('post_id')
+        new_status = 'scheduled' if scheduled_time else 'posted'
 
-        # Update content library to 'scheduled' or 'posted'
-        if content_id:
-            try:
-                ContentLibraryManager.update_platform_status(
-                    user_id=user_id,
-                    content_id=content_id,
-                    platform='youtube',
-                    platform_data={
-                        'post_id': post_id,
-                        'scheduled_for': scheduled_time,
-                        'title': title,
-                        'status': 'scheduled' if scheduled_time else 'posted'
-                    }
-                )
-                logger.info(f"Updated content library {content_id} to scheduled/posted")
-            except Exception as e:
-                logger.error(f"Error updating content library: {e}")
+        # Get upload metadata (keywords, content_description, etc.)
+        upload_metadata = data.get('upload_metadata', {})
+        keywords = upload_metadata.get('keywords', '')
+        content_description = upload_metadata.get('content_description', '')
+        user_calendar_event_id = upload_metadata.get('calendar_event_id')  # User-linked existing calendar item
 
-        # Update calendar event to 'ready' or 'posted'
-        if calendar_event_id:
-            try:
-                from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
-                calendar_manager = ContentCalendarManager(user_id)
+        # CREATE content library entry NOW (after Late.dev success)
+        content_id = None
+        try:
+            content_id = ContentLibraryManager.save_content(
+                user_id=user_id,
+                media_url=firebase_url,
+                media_type='video',
+                keywords=keywords,
+                content_description=content_description,
+                platform='youtube',
+                platform_data={
+                    'post_id': post_id,
+                    'scheduled_for': scheduled_time,
+                    'title': title,
+                    'description': description,
+                    'tags': tags,
+                    'visibility': visibility,
+                    'status': new_status,
+                    'media_url': firebase_url,
+                    'thumbnail_url': thumbnail_url
+                }
+            )
+            logger.info(f"Created content library {content_id} with status '{new_status}' after Late.dev success")
+        except Exception as e:
+            logger.error(f"Error creating content library: {e}")
 
-                status = 'ready' if scheduled_time else 'posted'
-                publish_date = scheduled_time if scheduled_time else datetime.now(timezone.utc).isoformat()
-                tags_string = ', '.join(tags) if isinstance(tags, list) else str(tags)
+        # CREATE or UPDATE calendar event NOW (after Late.dev success)
+        calendar_event_id = None
+        try:
+            from app.scripts.content_calendar.calendar_manager import ContentCalendarManager
+            calendar_manager = ContentCalendarManager(user_id)
 
-                calendar_manager.update_event(
-                    event_id=calendar_event_id,
+            status = 'ready' if scheduled_time else 'posted'
+            publish_date = scheduled_time if scheduled_time else datetime.now(timezone.utc).isoformat()
+            tags_string = ', '.join(tags) if isinstance(tags, list) else str(tags)
+
+            if user_calendar_event_id:
+                # Update user-linked existing calendar item
+                success = calendar_manager.update_event(
+                    event_id=user_calendar_event_id,
                     description=f"Video Title: {title}\n\n{description}",
                     tags=tags_string,
                     publish_date=publish_date,
                     platform='YouTube',
                     status=status,
                     youtube_video_id=post_id,
-                    media_url=firebase_url
+                    media_url=firebase_url,
+                    content_id=content_id if content_id else ''
                 )
-                logger.info(f"Updated calendar event {calendar_event_id} to {status}")
-            except Exception as e:
-                logger.error(f"Error updating calendar event: {e}")
+                if success:
+                    calendar_event_id = user_calendar_event_id
+                    logger.info(f"Updated user-linked calendar event {calendar_event_id} to {status}")
+                else:
+                    logger.warning(f"Failed to update user-linked calendar event {user_calendar_event_id}")
+
+            if not calendar_event_id:
+                # Create new calendar event
+                calendar_event_id = calendar_manager.create_event(
+                    title=title,
+                    description=description,
+                    tags=tags_string,
+                    publish_date=publish_date,
+                    platform='YouTube',
+                    status=status,
+                    content_type='organic',
+                    youtube_video_id=post_id,
+                    media_url=firebase_url,
+                    content_id=content_id if content_id else ''
+                )
+                logger.info(f"Created calendar event {calendar_event_id} with status '{status}' after Late.dev success")
+
+            # Update content library with calendar_event_id
+            if content_id and calendar_event_id:
+                try:
+                    ContentLibraryManager.update_platform_status(
+                        user_id=user_id,
+                        content_id=content_id,
+                        platform='youtube',
+                        platform_data={'calendar_event_id': calendar_event_id}
+                    )
+                except Exception as e:
+                    logger.error(f"Error updating content library with calendar_event_id: {e}")
+
+        except Exception as e:
+            logger.error(f"Error creating/updating calendar event: {e}")
 
         return jsonify({
             'success': True,

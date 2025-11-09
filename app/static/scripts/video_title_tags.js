@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadReferenceDescription();
     checkYouTubeConnection();
     initializeRepostModal();
-    checkForOngoingUploads();  // Check if uploads are in progress
+    // Removed checkForOngoingUploads() - doesn't work with current flow (uploads get cancelled when navigating away)
 
     // Initialize status to trigger default scheduled setup (wait for DOM to be fully ready)
     setTimeout(() => {
@@ -51,7 +51,9 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * Check for ongoing uploads from calendar/content library
  */
-async function checkForOngoingUploads() {
+// DEPRECATED: Ongoing upload tracking doesn't work because uploads get cancelled when navigating away
+// Keeping function for backwards compatibility but it's not called anymore
+async function checkForOngoingUploads_DEPRECATED() {
     try {
         const response = await fetch('/api/check-ongoing-uploads');
         const data = await response.json();
@@ -2104,7 +2106,7 @@ async function uploadToYouTube() {
 
                 console.log('Upload initialized. Calendar item created.');
 
-                // Step 2: Upload video to Firebase via server (streaming, no size limit)
+                // Step 2: Upload video to Firebase (direct or via server)
                 uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Uploading video...';
 
                 if (progressBar) {
@@ -2113,28 +2115,75 @@ async function uploadToYouTube() {
                     progressPercent.textContent = '10%';
                 }
 
-                // Upload with progress tracking via FormData
-                const uploadFormData = new FormData();
-                uploadFormData.append('video', selectedVideoFile);
-                uploadFormData.append('content_id', initData.content_id);
-                uploadFormData.append('file_path', initData.file_path);
+                // Prevent navigation during upload
+                const beforeUnloadHandler = (e) => {
+                    e.preventDefault();
+                    e.returnValue = 'Upload in progress. Are you sure you want to leave?';
+                    return e.returnValue;
+                };
+                window.addEventListener('beforeunload', beforeUnloadHandler);
 
-                const uploadResponse = await uploadWithProgress(
-                    '/api/upload-video-chunk',
-                    uploadFormData,
-                    (percent) => {
-                        if (progressBar) {
-                            // Map upload progress to 10-50% of total progress
-                            const totalPercent = 10 + (percent * 0.4);
-                            progressFill.style.width = `${totalPercent}%`;
-                            progressStatus.textContent = `Uploading video...`;
-                            progressPercent.textContent = `${Math.round(totalPercent)}%`;
-                        }
+                let uploadResult;
+                try {
+                    // Check if we have a resumable URL (for direct Firebase upload, bypasses Cloud Run 32MB limit)
+                    if (initData.resumable_url) {
+                        console.log('Using direct Firebase upload via resumable URL');
+
+                        // Upload directly to Firebase Storage using resumable upload
+                        await uploadToFirebaseResumable(
+                            initData.resumable_url,
+                            selectedVideoFile,
+                            (percent) => {
+                                if (progressBar) {
+                                    // Map upload progress to 10-50% of total progress
+                                    const totalPercent = 10 + (percent * 0.4);
+                                    progressFill.style.width = `${totalPercent}%`;
+                                    progressStatus.textContent = `Uploading video...`;
+                                    progressPercent.textContent = `${Math.round(totalPercent)}%`;
+                                }
+                            }
+                        );
+
+                        // Notify backend that upload is complete so it can generate thumbnail
+                        const confirmResponse = await fetch('/api/confirm-firebase-upload', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                content_id: initData.content_id,
+                                file_path: initData.file_path
+                            })
+                        });
+
+                        uploadResult = await confirmResponse.json();
+                    } else {
+                        // Fallback to server-side upload (will fail for files > 32MB on Cloud Run)
+                        console.log('Using server-side upload (may fail for large files on Cloud Run)');
+
+                        const uploadFormData = new FormData();
+                        uploadFormData.append('video', selectedVideoFile);
+                        uploadFormData.append('content_id', initData.content_id);
+                        uploadFormData.append('file_path', initData.file_path);
+
+                        const uploadResponse = await uploadWithProgress(
+                            '/api/upload-video-chunk',
+                            uploadFormData,
+                            (percent) => {
+                                if (progressBar) {
+                                    // Map upload progress to 10-50% of total progress
+                                    const totalPercent = 10 + (percent * 0.4);
+                                    progressFill.style.width = `${totalPercent}%`;
+                                    progressStatus.textContent = `Uploading video...`;
+                                    progressPercent.textContent = `${Math.round(totalPercent)}%`;
+                                }
+                            }
+                        );
+
+                        uploadResult = JSON.parse(uploadResponse.responseText);
                     }
-                );
-
-                // Parse JSON from XHR response
-                const uploadResult = JSON.parse(uploadResponse.responseText);
+                } finally {
+                    // Remove navigation blocker after upload completes (or fails)
+                    window.removeEventListener('beforeunload', beforeUnloadHandler);
+                }
 
                 if (!uploadResult.success) {
                     throw new Error(uploadResult.error || 'Failed to upload video');
@@ -2142,8 +2191,6 @@ async function uploadToYouTube() {
 
                 firebaseUrl = uploadResult.firebase_url;
                 const thumbnailUrl = uploadResult.thumbnail_url;  // Auto-generated from first frame
-                contentId = initData.content_id;
-                const calendarEventId = initData.calendar_event_id;
                 window.shortVideoFirebaseUrl = firebaseUrl;
                 console.log('Video uploaded to Firebase:', firebaseUrl);
                 if (thumbnailUrl) {
@@ -2157,7 +2204,7 @@ async function uploadToYouTube() {
                     progressPercent.textContent = '50%';
                 }
 
-                // Step 3: Complete upload - post to YouTube
+                // Step 3: Complete upload - post to YouTube via Late.dev (calendar item created AFTER success)
                 uploadBtn.innerHTML = '<i class="ph ph-circle-notch spinning"></i> Posting to YouTube...';
 
                 if (progressBar) {
@@ -2168,8 +2215,7 @@ async function uploadToYouTube() {
 
                 const completePayload = {
                     firebase_url: firebaseUrl,
-                    content_id: contentId,
-                    calendar_event_id: calendarEventId,
+                    upload_metadata: initData.upload_metadata,  // Pass metadata for calendar/content creation
                     title: title,
                     description: description,
                     tags: tags,
@@ -2547,4 +2593,53 @@ function handleContentCalendarChange() {
         // Clear any previously linked item
         CalendarLinkModal.clearLinkedItem();
     }
+}
+
+/**
+ * Upload file directly to Firebase Storage using Google Cloud Storage resumable upload protocol
+ * This bypasses Cloud Run's 32MB request limit by uploading directly to GCS
+ */
+async function uploadToFirebaseResumable(resumableUrl, file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                if (onProgress) {
+                    onProgress(percentComplete);
+                }
+            }
+        });
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log('Direct Firebase upload completed');
+                resolve();
+            } else {
+                console.error('Direct Firebase upload failed:', xhr.status, xhr.responseText);
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+        });
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+            console.error('Direct Firebase upload error');
+            reject(new Error('Upload failed due to network error'));
+        });
+
+        xhr.addEventListener('abort', () => {
+            console.error('Direct Firebase upload aborted');
+            reject(new Error('Upload was aborted'));
+        });
+
+        // Open PUT request to resumable URL
+        xhr.open('PUT', resumableUrl, true);
+        xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+
+        // Send the file
+        xhr.send(file);
+    });
 }
