@@ -1023,6 +1023,7 @@ def init_youtube_upload():
         content_description = (data.get('content_description') or '').strip()
         calendar_event_id = data.get('calendar_event_id')
         filename = data.get('filename', 'video.mp4')
+        content_type = data.get('content_type', 'video/mp4')
 
         if not title:
             return jsonify({'success': False, 'error': 'Title is required'}), 400
