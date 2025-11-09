@@ -1366,46 +1366,92 @@
         }
 
         try {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const response = await fetch('/x_post_editor/upload-media', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            media_data: e.target.result,
-                            filename: `${Date.now()}_${file.name}`,
-                            media_type: mediaType,
-                            file_size: file.size,
-                            mime_type: file.type
-                        })
-                    });
+            // First, try to initialize upload and get signed URL
+            const initResponse = await fetch('/x_post_editor/init-media-upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    content_type: file.type
+                })
+            });
 
-                    const data = await response.json();
+            const initData = await initResponse.json();
+            if (!initData.success) {
+                throw new Error(initData.error || 'Failed to initialize upload');
+            }
 
-                    if (data.success) {
-                        const mediaElement = createMediaElement({
-                            url: data.media_url,
-                            filename: data.filename,
-                            media_type: mediaType,
-                            file_size: file.size,
-                            mime_type: file.type
-                        });
-                        mediaContainer.appendChild(mediaElement);
-                        showToast('Media uploaded', 'success');
+            let mediaUrl;
+            const filename = `${Date.now()}_${file.name}`;
 
-                        // Mark as changed and save draft with media
-                        markAsChanged();
-                    } else {
-                        showToast('Upload failed: ' + data.error, 'error');
-                    }
-                } catch (uploadError) {
-                    showToast('Upload error: ' + uploadError.message, 'error');
+            // Check if we have a signed upload URL (for large files, bypasses Cloud Run 32MB limit)
+            if (initData.signed_upload_url) {
+                console.log('Using direct Firebase upload via signed URL');
+
+                // Upload directly to Firebase Storage using signed URL
+                await uploadToFirebaseSigned(initData.signed_upload_url, file);
+
+                // Confirm upload completed
+                const confirmResponse = await fetch('/x_post_editor/confirm-media-upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        file_path: initData.file_path
+                    })
+                });
+
+                const confirmData = await confirmResponse.json();
+                if (!confirmData.success) {
+                    throw new Error(confirmData.error || 'Failed to confirm upload');
                 }
-            };
-            reader.readAsDataURL(file);
+
+                mediaUrl = confirmData.media_url;
+            } else {
+                // Fallback to base64 upload for small files
+                console.log('Using server-side upload (base64)');
+                const reader = new FileReader();
+                const base64Data = await new Promise((resolve, reject) => {
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+
+                const response = await fetch('/x_post_editor/upload-media', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        media_data: base64Data,
+                        filename: filename,
+                        media_type: mediaType,
+                        file_size: file.size,
+                        mime_type: file.type
+                    })
+                });
+
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Upload failed');
+                }
+
+                mediaUrl = data.media_url;
+            }
+
+            // Create media element with uploaded URL
+            const mediaElement = createMediaElement({
+                url: mediaUrl,
+                filename: filename,
+                media_type: mediaType,
+                file_size: file.size,
+                mime_type: file.type
+            });
+            mediaContainer.appendChild(mediaElement);
+            showToast('Media uploaded', 'success');
+
+            // Mark as changed and save draft with media
+            markAsChanged();
+
         } catch (error) {
-            showToast('File reading error: ' + error.message, 'error');
+            showToast('Upload error: ' + error.message, 'error');
         }
     }
 
@@ -2978,8 +3024,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check X connection status
     checkXConnectionStatus();
 
-    // Check for ongoing uploads
-    checkForOngoingUploads();
+    // Removed checkForOngoingUploads() - doesn't work with signed URL flow (uploads get cancelled when navigating away)
 
     // Setup X connection buttons
     const connectBtn = document.getElementById('connectXBtn');
@@ -3339,8 +3384,9 @@ function showInsufficientCreditsModal() {
 
 /**
  * Check for ongoing uploads
+ * DEPRECATED: Doesn't work with signed URL flow (uploads get cancelled when navigating away)
  */
-async function checkForOngoingUploads() {
+async function checkForOngoingUploads_DEPRECATED() {
     try {
         const response = await fetch('/x-post-editor/api/check-ongoing-uploads');
         const data = await response.json();
@@ -3413,10 +3459,10 @@ function showOngoingUploadBanner(uploads) {
 
     document.body.appendChild(banner);
 
-    // Auto-refresh to check status every 30 seconds
-    setTimeout(() => {
-        checkForOngoingUploads();
-    }, 30000);
+    // Auto-refresh removed - ongoing uploads not supported with signed URL flow
+    // setTimeout(() => {
+    //     checkForOngoingUploads();
+    // }, 30000);
 }
 
 /**
@@ -3443,10 +3489,10 @@ async function cancelUpload(contentId) {
                 banner.remove();
             }
 
-            // Refresh after a short delay to show updated list (if any other uploads exist)
-            setTimeout(() => {
-                checkForOngoingUploads();
-            }, 500);
+            // Refresh removed - ongoing uploads not supported with signed URL flow
+            // setTimeout(() => {
+            //     checkForOngoingUploads();
+            // }, 500);
         } else {
             alert('Failed to cancel upload: ' + (data.error || 'Unknown error'));
         }
@@ -3454,4 +3500,53 @@ async function cancelUpload(contentId) {
         console.error('Error cancelling upload:', error);
         alert('Failed to cancel upload');
     }
+}
+
+/**
+ * Upload file directly to Firebase Storage using signed URL (simple PUT request)
+ * This bypasses Cloud Run's 32MB request limit by uploading directly to GCS
+ */
+async function uploadToFirebaseSigned(signedUrl, file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                if (onProgress) {
+                    onProgress(percentComplete);
+                }
+            }
+        });
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log('Direct Firebase upload completed via signed URL');
+                resolve();
+            } else {
+                console.error('Direct Firebase upload failed:', xhr.status, xhr.responseText);
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+        });
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+            console.error('Direct Firebase upload error');
+            reject(new Error('Upload failed due to network error'));
+        });
+
+        xhr.addEventListener('abort', () => {
+            console.error('Direct Firebase upload aborted');
+            reject(new Error('Upload was aborted'));
+        });
+
+        // Open PUT request to signed URL
+        xhr.open('PUT', signedUrl, true);
+        xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+
+        // Send the file
+        xhr.send(file);
+    });
 }

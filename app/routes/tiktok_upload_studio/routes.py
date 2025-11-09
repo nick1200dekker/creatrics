@@ -156,10 +156,161 @@ def api_status():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@bp.route('/api/init-tiktok-upload', methods=['POST'])
+@auth_required
+def init_tiktok_upload():
+    """Initialize TikTok upload - generates signed URL for direct browser-to-Firebase upload"""
+    try:
+        user_id = g.user.get('id')
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+        filename = data.get('filename', 'video.mp4')
+        content_type = data.get('content_type', 'video/mp4')
+
+        # Generate unique filename
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_ext = os.path.splitext(filename)[1]
+        unique_filename = f"tiktok_{timestamp}_{uuid.uuid4().hex[:8]}{file_ext}"
+
+        # Generate file path
+        directory = 'tiktok_uploads'
+        file_path = f'users/{user_id}/{directory}/{unique_filename}'
+
+        # Get bucket name
+        bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET', '').replace('gs://', '')
+        public_url = f"https://storage.googleapis.com/{bucket_name}/{file_path}"
+
+        # Generate signed upload URL (bypasses Cloud Run 32MB limit)
+        signed_upload_url = None
+        try:
+            from google.cloud import storage as gcs_storage
+            from google.oauth2 import service_account
+            from datetime import timedelta
+
+            # Use Firebase service account credentials (has private key for signing)
+            cred_path = os.environ.get('FIREBASE_CREDENTIALS', '/secrets/firebase-credentials.json')
+
+            # Check fallback locations
+            if not os.path.exists(cred_path):
+                fallback_locations = [
+                    './firebase-credentials.json',
+                    '/secrets/firebase-credentials.json',
+                    '/app/secrets/firebase-credentials.json'
+                ]
+                for fallback_path in fallback_locations:
+                    if os.path.exists(fallback_path):
+                        cred_path = fallback_path
+                        break
+
+            # Load service account credentials
+            credentials = service_account.Credentials.from_service_account_file(cred_path)
+
+            # Initialize GCS client with service account credentials
+            gcs_client = gcs_storage.Client(credentials=credentials, project=credentials.project_id)
+            bucket = gcs_client.bucket(bucket_name)
+            blob = bucket.blob(file_path)
+
+            # Generate a signed URL for PUT upload (valid for 1 hour)
+            signed_upload_url = blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(hours=1),
+                method="PUT",
+                content_type=content_type
+            )
+
+            logger.info(f"Generated signed upload URL for TikTok direct browser upload: {file_path}")
+        except Exception as e:
+            logger.error(f"Error generating signed upload URL for TikTok: {e}")
+            # Continue without signed URL - will fall back to old method
+
+        return jsonify({
+            'success': True,
+            'file_path': file_path,
+            'public_url': public_url,
+            'signed_upload_url': signed_upload_url
+        })
+
+    except Exception as e:
+        logger.error(f"Error initializing TikTok upload: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/api/confirm-tiktok-upload', methods=['POST'])
+@auth_required
+def confirm_tiktok_upload():
+    """Called after direct Firebase upload completes - makes blob public and returns URL"""
+    try:
+        user_id = g.user.get('id')
+        data = request.get_json()
+
+        file_path = data.get('file_path')
+
+        if not file_path:
+            return jsonify({'success': False, 'error': 'File path is required'}), 400
+
+        logger.info(f"Confirming TikTok upload for: {file_path}")
+
+        # Make the uploaded file public
+        try:
+            from google.cloud import storage as gcs_storage
+            from google.oauth2 import service_account
+
+            # Use Firebase service account credentials
+            cred_path = os.environ.get('FIREBASE_CREDENTIALS', '/secrets/firebase-credentials.json')
+
+            if not os.path.exists(cred_path):
+                fallback_locations = [
+                    './firebase-credentials.json',
+                    '/secrets/firebase-credentials.json',
+                    '/app/secrets/firebase-credentials.json'
+                ]
+                for fallback_path in fallback_locations:
+                    if os.path.exists(fallback_path):
+                        cred_path = fallback_path
+                        break
+
+            credentials = service_account.Credentials.from_service_account_file(cred_path)
+            gcs_client = gcs_storage.Client(credentials=credentials, project=credentials.project_id)
+
+            bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET', '').replace('gs://', '')
+            bucket = gcs_client.bucket(bucket_name)
+            blob = bucket.blob(file_path)
+
+            # Make public
+            blob.make_public()
+            public_url = blob.public_url
+
+            logger.info(f"TikTok media made public: {public_url}")
+
+            return jsonify({
+                'success': True,
+                'media_url': public_url
+            })
+
+        except Exception as e:
+            logger.error(f"Error making TikTok media public: {e}")
+            # Fallback to constructing URL
+            bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET', '').replace('gs://', '')
+            public_url = f"https://storage.googleapis.com/{bucket_name}/{file_path}"
+
+            return jsonify({
+                'success': True,
+                'media_url': public_url
+            })
+
+    except Exception as e:
+        logger.error(f"Error confirming TikTok upload: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @bp.route('/api/upload-media', methods=['POST'])
 @auth_required
 def api_upload_media():
-    """Upload media file to Firebase Storage with long-lived URL for scheduled posts"""
+    """DEPRECATED: Upload media file to Firebase Storage (use /api/init-tiktok-upload for large files)"""
     try:
         user_id = g.user.get('id')
 

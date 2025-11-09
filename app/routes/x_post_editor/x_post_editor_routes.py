@@ -450,11 +450,135 @@ def delete_draft(draft_id):
             "error": str(e)
         }), 500
 
+@bp.route('/init-media-upload', methods=['POST'])
+@auth_required
+@require_permission('x_post_editor')
+def init_media_upload():
+    """Initialize media upload - generates signed URL for direct browser-to-Firebase upload"""
+    try:
+        import os
+        import uuid as uuid_lib
+        from datetime import timedelta
+
+        data = request.json
+        filename = data.get('filename')
+        content_type = data.get('content_type', 'video/mp4')
+
+        if not filename:
+            return jsonify({'success': False, 'error': 'No filename provided'}), 400
+
+        user_id = get_workspace_user_id()
+
+        # Generate unique filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_ext = os.path.splitext(filename)[1]
+        unique_filename = f"x_{timestamp}_{uuid_lib.uuid4().hex[:8]}{file_ext}"
+
+        # Generate file path
+        directory = 'x_media'
+        file_path = f'users/{user_id}/{directory}/{unique_filename}'
+
+        # Get bucket name
+        bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET', '').replace('gs://', '')
+        public_url = f"https://storage.googleapis.com/{bucket_name}/{file_path}"
+
+        # Generate signed upload URL (bypasses Cloud Run 32MB limit)
+        signed_upload_url = None
+        try:
+            from google.cloud import storage as gcs_storage
+            from google.oauth2 import service_account
+
+            # Use Firebase service account credentials (has private key for signing)
+            cred_path = os.environ.get('FIREBASE_CREDENTIALS', '/secrets/firebase-credentials.json')
+
+            # Check fallback locations
+            if not os.path.exists(cred_path):
+                fallback_locations = [
+                    './firebase-credentials.json',
+                    '/secrets/firebase-credentials.json',
+                    '/app/secrets/firebase-credentials.json'
+                ]
+                for fallback_path in fallback_locations:
+                    if os.path.exists(fallback_path):
+                        cred_path = fallback_path
+                        break
+
+            # Load service account credentials
+            credentials = service_account.Credentials.from_service_account_file(cred_path)
+
+            # Initialize GCS client with service account credentials
+            gcs_client = gcs_storage.Client(credentials=credentials, project=credentials.project_id)
+            bucket = gcs_client.bucket(bucket_name)
+            blob = bucket.blob(file_path)
+
+            # Generate a signed URL for PUT upload (valid for 1 hour)
+            signed_upload_url = blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(hours=1),
+                method="PUT",
+                content_type=content_type
+            )
+
+            current_app.logger.info(f"Generated signed upload URL for X media direct browser upload: {file_path}")
+        except Exception as e:
+            current_app.logger.error(f"Error generating signed upload URL for X media: {e}")
+            # Continue without signed URL - will fall back to old method
+
+        return jsonify({
+            'success': True,
+            'file_path': file_path,
+            'public_url': public_url,
+            'signed_upload_url': signed_upload_url
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Error initializing X media upload: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/confirm-media-upload', methods=['POST'])
+@auth_required
+@require_permission('x_post_editor')
+def confirm_media_upload():
+    """Confirm media upload completed - makes blob public"""
+    try:
+        import os
+
+        data = request.json
+        file_path = data.get('file_path')
+
+        if not file_path:
+            return jsonify({'success': False, 'error': 'No file_path provided'}), 400
+
+        # Make blob public
+        from google.cloud import storage as gcs_storage
+        bucket_name = os.environ.get('FIREBASE_STORAGE_BUCKET', '').replace('gs://', '')
+
+        # Use default credentials (works in Cloud Run)
+        gcs_client = gcs_storage.Client()
+        bucket = gcs_client.bucket(bucket_name)
+        blob = bucket.blob(file_path)
+        blob.make_public()
+
+        public_url = blob.public_url
+        current_app.logger.info(f"Made X media upload public: {public_url}")
+
+        return jsonify({
+            'success': True,
+            'media_url': public_url
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Error confirming X media upload: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @bp.route('/upload-media', methods=['POST'])
 @auth_required
 @require_permission('x_post_editor')
 def upload_media():
-    """Upload media files (images, videos, GIFs) using Firebase Storage"""
+    """DEPRECATED: Use init-media-upload + confirm-media-upload for large files
+    Upload media files (images, videos, GIFs) using Firebase Storage"""
     try:
         data = request.json
         media_data = data.get('media_data')

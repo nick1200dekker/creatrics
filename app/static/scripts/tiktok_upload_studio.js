@@ -42,8 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
         handleModeChange();
     }, 100);
 
-    // Check for ongoing uploads
-    checkForOngoingUploads();
+    // Removed checkForOngoingUploads() - doesn't work with signed URL flow (uploads get cancelled when navigating away)
 });
 
 /**
@@ -1220,39 +1219,115 @@ async function handleUpload(e) {
                 progressPercent.textContent = '30%';
             }
         } else {
-            // Step 1: Upload media to Firebase Storage
+            // Step 1: Initialize upload - get signed URL
+            if (progressBar) {
+                progressFill.style.width = '5%';
+                progressStatus.textContent = 'Initializing upload...';
+                progressPercent.textContent = '5%';
+            }
+
+            const initResponse = await fetch('/tiktok-upload-studio/api/init-tiktok-upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: selectedFile.name,
+                    content_type: selectedFile.type || 'video/mp4'
+                })
+            });
+
+            const initData = await initResponse.json();
+
+            if (!initData.success) {
+                throw new Error(initData.error || 'Failed to initialize upload');
+            }
+
+            console.log('TikTok upload initialized');
+
+            // Step 2: Upload media to Firebase
             if (progressBar) {
                 progressFill.style.width = '10%';
                 progressStatus.textContent = 'Uploading video...';
                 progressPercent.textContent = '10%';
             }
 
-            const formData = new FormData();
-            formData.append('media', selectedFile);
+            // Prevent navigation during upload
+            const beforeUnloadHandler = (e) => {
+                e.preventDefault();
+                e.returnValue = 'Upload in progress. Are you sure you want to leave?';
+                return e.returnValue;
+            };
+            window.addEventListener('beforeunload', beforeUnloadHandler);
 
-            // Add keywords and description to be saved in content library
-            const keywordsInput = document.getElementById('keywordsInput');
-            const videoConceptInput = document.getElementById('videoConceptInput');
-            if (keywordsInput && keywordsInput.value) {
-                formData.append('keywords', keywordsInput.value);
+            try {
+                // Check if we have a signed upload URL (for direct Firebase upload, bypasses Cloud Run 32MB limit)
+                if (initData.signed_upload_url) {
+                    console.log('Using direct Firebase upload via signed URL');
+
+                    // Upload directly to Firebase Storage using signed URL
+                    await uploadToFirebaseSigned(
+                        initData.signed_upload_url,
+                        selectedFile,
+                        (percent) => {
+                            if (progressBar) {
+                                const totalPercent = 10 + (percent * 0.4);
+                                progressFill.style.width = `${totalPercent}%`;
+                                progressStatus.textContent = `Uploading video...`;
+                                progressPercent.textContent = `${Math.round(totalPercent)}%`;
+                            }
+                        }
+                    );
+
+                    // Confirm upload and get public URL
+                    const confirmResponse = await fetch('/tiktok-upload-studio/api/confirm-tiktok-upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            file_path: initData.file_path
+                        })
+                    });
+
+                    const confirmData = await confirmResponse.json();
+
+                    if (!confirmData.success) {
+                        throw new Error(confirmData.error || 'Failed to confirm upload');
+                    }
+
+                    mediaUrl = confirmData.media_url;
+                } else {
+                    // Fallback to server-side upload (may fail for large files on Cloud Run)
+                    console.log('Using server-side upload (may fail for large files on Cloud Run)');
+
+                    const formData = new FormData();
+                    formData.append('media', selectedFile);
+
+                    const keywordsInput = document.getElementById('keywordsInput');
+                    const videoConceptInput = document.getElementById('videoConceptInput');
+                    if (keywordsInput && keywordsInput.value) {
+                        formData.append('keywords', keywordsInput.value);
+                    }
+                    if (videoConceptInput && videoConceptInput.value) {
+                        formData.append('content_description', videoConceptInput.value);
+                    }
+
+                    const uploadResponse = await fetch('/tiktok-upload-studio/api/upload-media', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const uploadData = await uploadResponse.json();
+
+                    if (!uploadData.success) {
+                        throw new Error(uploadData.error || 'Failed to upload media');
+                    }
+
+                    mediaUrl = uploadData.media_url;
+                    contentId = uploadData.content_id;
+                }
+            } finally {
+                // Remove navigation blocker after upload completes (or fails)
+                window.removeEventListener('beforeunload', beforeUnloadHandler);
             }
-            if (videoConceptInput && videoConceptInput.value) {
-                formData.append('content_description', videoConceptInput.value);
-            }
 
-            const uploadResponse = await fetch('/tiktok-upload-studio/api/upload-media', {
-                method: 'POST',
-                body: formData
-            });
-
-            const uploadData = await uploadResponse.json();
-
-            if (!uploadData.success) {
-                throw new Error(uploadData.error || 'Failed to upload media');
-            }
-
-            mediaUrl = uploadData.media_url;
-            contentId = uploadData.content_id;
             console.log('Media uploaded to Firebase:', mediaUrl);
 
             // Update progress after media upload
@@ -1691,8 +1766,9 @@ function escapeHtml(text) {
 
 /**
  * Check for ongoing uploads
+ * DEPRECATED: Doesn't work with signed URL flow (uploads get cancelled when navigating away)
  */
-async function checkForOngoingUploads() {
+async function checkForOngoingUploads_DEPRECATED() {
     try {
         const response = await fetch('/tiktok-upload-studio/api/check-ongoing-uploads');
         const data = await response.json();
@@ -1765,10 +1841,10 @@ function showOngoingUploadBanner(uploads) {
 
     document.body.appendChild(banner);
 
-    // Auto-refresh to check status every 30 seconds
-    setTimeout(() => {
-        checkForOngoingUploads();
-    }, 30000);
+    // Auto-refresh removed - ongoing uploads not supported with signed URL flow
+    // setTimeout(() => {
+    //     checkForOngoingUploads();
+    // }, 30000);
 }
 
 /**
@@ -1795,10 +1871,10 @@ async function cancelUpload(contentId) {
                 banner.remove();
             }
 
-            // Refresh after a short delay to show updated list (if any other uploads exist)
-            setTimeout(() => {
-                checkForOngoingUploads();
-            }, 500);
+            // Refresh removed - ongoing uploads not supported with signed URL flow
+            // setTimeout(() => {
+            //     checkForOngoingUploads();
+            // }, 500);
         } else {
             alert('Failed to cancel upload: ' + (data.error || 'Unknown error'));
         }
@@ -1806,4 +1882,53 @@ async function cancelUpload(contentId) {
         console.error('Error cancelling upload:', error);
         alert('Failed to cancel upload');
     }
+}
+
+/**
+ * Upload file directly to Firebase Storage using signed URL (simple PUT request)
+ * This bypasses Cloud Run's 32MB request limit by uploading directly to GCS
+ */
+async function uploadToFirebaseSigned(signedUrl, file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                if (onProgress) {
+                    onProgress(percentComplete);
+                }
+            }
+        });
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log('Direct Firebase upload completed via signed URL');
+                resolve();
+            } else {
+                console.error('Direct Firebase upload failed:', xhr.status, xhr.responseText);
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+        });
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+            console.error('Direct Firebase upload error');
+            reject(new Error('Upload failed due to network error'));
+        });
+
+        xhr.addEventListener('abort', () => {
+            console.error('Direct Firebase upload aborted');
+            reject(new Error('Upload was aborted'));
+        });
+
+        // Open PUT request to signed URL
+        xhr.open('PUT', signedUrl, true);
+        xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+
+        // Send the file
+        xhr.send(file);
+    });
 }

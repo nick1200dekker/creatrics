@@ -42,8 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
         handleStatusChange();
     }, 100);
 
-    // Check for ongoing uploads
-    checkForOngoingUploads();
+    // Removed checkForOngoingUploads() - doesn't work with signed URL flow (uploads get cancelled when navigating away)
 });
 
 /**
@@ -948,6 +947,14 @@ async function handleUpload(e) {
     }
 
     try {
+        // Warn user if they try to leave during upload
+        const beforeUnloadHandler = (e) => {
+            e.preventDefault();
+            e.returnValue = '';
+            return '';
+        };
+        window.addEventListener('beforeunload', beforeUnloadHandler);
+
         // Get keywords and description for content library
         const keywordsInput = document.getElementById('keywordsInput');
         const videoConceptInput = document.getElementById('videoConceptInput');
@@ -994,24 +1001,81 @@ async function handleUpload(e) {
             // Upload each file
             for (let i = 0; i < selectedFiles.length; i++) {
                 const file = selectedFiles[i];
-                const formData = new FormData();
-                formData.append('media', file);
-                formData.append('keywords', keywords);
-                formData.append('content_description', contentDescription);
 
-                const uploadResponse = await fetch('/instagram-upload-studio/api/upload-media', {
+                // Initialize upload - get signed URL
+                const initResponse = await fetch('/instagram-upload-studio/api/init-instagram-upload', {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: file.name,
+                        content_type: file.type
+                    })
                 });
 
-                const uploadData = await uploadResponse.json();
-                if (!uploadData.success) {
-                    throw new Error(uploadData.error || `Failed to upload ${file.name}`);
+                const initData = await initResponse.json();
+                if (!initData.success) {
+                    throw new Error(initData.error || `Failed to initialize upload for ${file.name}`);
+                }
+
+                let mediaUrl;
+
+                // Check if we have a signed upload URL (for large files, bypasses Cloud Run 32MB limit)
+                if (initData.signed_upload_url) {
+                    console.log(`Using direct Firebase upload via signed URL for file ${i + 1}`);
+
+                    // Upload directly to Firebase Storage using signed URL
+                    await uploadToFirebaseSigned(
+                        initData.signed_upload_url,
+                        file,
+                        (percent) => {
+                            const fileProgress = 10 + (i / selectedFiles.length) * 40 + (percent * 0.4 / selectedFiles.length);
+                            if (progressBar) {
+                                progressFill.style.width = `${fileProgress}%`;
+                                progressStatus.textContent = `Uploading ${i + 1}/${selectedFiles.length}`;
+                                progressPercent.textContent = `${Math.round(fileProgress)}%`;
+                            }
+                        }
+                    );
+
+                    // Confirm upload completed
+                    const confirmResponse = await fetch('/instagram-upload-studio/api/confirm-instagram-upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            file_path: initData.file_path
+                        })
+                    });
+
+                    const confirmData = await confirmResponse.json();
+                    if (!confirmData.success) {
+                        throw new Error(confirmData.error || `Failed to confirm upload for ${file.name}`);
+                    }
+
+                    mediaUrl = confirmData.media_url;
+                } else {
+                    // Fallback to server-side upload for small files
+                    console.log(`Using server-side upload for file ${i + 1}`);
+                    const formData = new FormData();
+                    formData.append('media', file);
+                    formData.append('keywords', keywords);
+                    formData.append('content_description', contentDescription);
+
+                    const uploadResponse = await fetch('/instagram-upload-studio/api/upload-media', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const uploadData = await uploadResponse.json();
+                    if (!uploadData.success) {
+                        throw new Error(uploadData.error || `Failed to upload ${file.name}`);
+                    }
+
+                    mediaUrl = uploadData.media_url;
                 }
 
                 // Determine media type
                 const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
-                mediaItems.push({ url: uploadData.media_url, type: mediaType });
+                mediaItems.push({ url: mediaUrl, type: mediaType });
 
                 // Update progress for each file
                 const uploadProgress = 10 + ((i + 1) / selectedFiles.length) * 40;
@@ -1091,6 +1155,9 @@ async function handleUpload(e) {
         if (progressBar) {
             progressBar.style.display = 'none';
         }
+    } finally {
+        // Remove beforeunload warning
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
     }
 }
 
@@ -1685,8 +1752,9 @@ function copyCaption(event, index) {
 
 /**
  * Check for ongoing uploads
+ * DEPRECATED: Doesn't work with signed URL flow (uploads get cancelled when navigating away)
  */
-async function checkForOngoingUploads() {
+async function checkForOngoingUploads_DEPRECATED() {
     try {
         const response = await fetch('/instagram-upload-studio/api/check-ongoing-uploads');
         const data = await response.json();
@@ -1759,10 +1827,10 @@ function showOngoingUploadBanner(uploads) {
 
     document.body.appendChild(banner);
 
-    // Auto-refresh to check status every 30 seconds
-    setTimeout(() => {
-        checkForOngoingUploads();
-    }, 30000);
+    // Auto-refresh removed - ongoing uploads not supported with signed URL flow
+    // setTimeout(() => {
+    //     checkForOngoingUploads();
+    // }, 30000);
 }
 
 /**
@@ -1789,10 +1857,10 @@ async function cancelUpload(contentId) {
                 banner.remove();
             }
 
-            // Refresh after a short delay to show updated list (if any other uploads exist)
-            setTimeout(() => {
-                checkForOngoingUploads();
-            }, 500);
+            // Refresh removed - ongoing uploads not supported with signed URL flow
+            // setTimeout(() => {
+            //     checkForOngoingUploads();
+            // }, 500);
         } else {
             alert('Failed to cancel upload: ' + (data.error || 'Unknown error'));
         }
@@ -1800,4 +1868,53 @@ async function cancelUpload(contentId) {
         console.error('Error cancelling upload:', error);
         alert('Failed to cancel upload');
     }
+}
+
+/**
+ * Upload file directly to Firebase Storage using signed URL (simple PUT request)
+ * This bypasses Cloud Run's 32MB request limit by uploading directly to GCS
+ */
+async function uploadToFirebaseSigned(signedUrl, file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                if (onProgress) {
+                    onProgress(percentComplete);
+                }
+            }
+        });
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log('Direct Firebase upload completed via signed URL');
+                resolve();
+            } else {
+                console.error('Direct Firebase upload failed:', xhr.status, xhr.responseText);
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+        });
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+            console.error('Direct Firebase upload error');
+            reject(new Error('Upload failed due to network error'));
+        });
+
+        xhr.addEventListener('abort', () => {
+            console.error('Direct Firebase upload aborted');
+            reject(new Error('Upload was aborted'));
+        });
+
+        // Open PUT request to signed URL
+        xhr.open('PUT', signedUrl, true);
+        xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+
+        // Send the file
+        xhr.send(file);
+    });
 }
