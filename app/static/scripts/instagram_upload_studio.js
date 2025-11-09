@@ -946,13 +946,14 @@ async function handleUpload(e) {
         progressPercent.textContent = '0%';
     }
 
+    // Warn user if they try to leave during upload (defined outside try so finally can access it)
+    const beforeUnloadHandler = (e) => {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    };
+
     try {
-        // Warn user if they try to leave during upload
-        const beforeUnloadHandler = (e) => {
-            e.preventDefault();
-            e.returnValue = '';
-            return '';
-        };
         window.addEventListener('beforeunload', beforeUnloadHandler);
 
         // Get keywords and description for content library
@@ -1137,6 +1138,9 @@ async function handleUpload(e) {
 
             const message = postData.scheduled_for ? 'Post scheduled successfully!' : 'Posted to Instagram successfully!';
             showToast(message, 'success');
+
+            // Remove beforeunload warning before reload
+            window.removeEventListener('beforeunload', beforeUnloadHandler);
 
             // Wait 2 seconds to show success state, then refresh page
             setTimeout(() => {

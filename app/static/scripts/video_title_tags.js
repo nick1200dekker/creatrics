@@ -2261,6 +2261,9 @@ async function uploadToYouTube() {
                 }
                 showToast(message, 'success');
 
+                // Remove beforeunload warning before reload
+                window.removeEventListener('beforeunload', beforeUnloadHandler);
+
                 // Wait 2 seconds to show success state, then refresh page
                 setTimeout(() => {
                     location.reload();
@@ -2347,6 +2350,9 @@ async function uploadToYouTube() {
             message += ' Calendar item updated.';
         }
         showToast(message, 'success');
+
+        // Remove beforeunload warning before reload
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
 
         // Wait 2 seconds to show success state, then refresh page
         setTimeout(() => {

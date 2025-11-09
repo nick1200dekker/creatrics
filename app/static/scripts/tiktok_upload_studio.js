@@ -1408,6 +1408,9 @@ async function handleUpload(e) {
             }
             showToast(message, 'success');
 
+            // Remove beforeunload warning before reload
+            window.removeEventListener('beforeunload', beforeUnloadHandler);
+
             // Wait 2 seconds to show success state, then refresh page
             setTimeout(() => {
                 location.reload();
