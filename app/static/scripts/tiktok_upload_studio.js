@@ -328,6 +328,7 @@ function updateConnectionUI(data) {
             const avatarEl = document.getElementById('userAvatar');
             if (data.user_info.avatar_url) {
                 avatarEl.src = data.user_info.avatar_url;
+                avatarEl.referrerPolicy = 'no-referrer'; // Fix TikTok CDN 403 errors
                 avatarEl.style.display = 'block';
             } else {
                 // Hide the avatar if not available
