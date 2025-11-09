@@ -2125,13 +2125,13 @@ async function uploadToYouTube() {
 
                 let uploadResult;
                 try {
-                    // Check if we have a resumable URL (for direct Firebase upload, bypasses Cloud Run 32MB limit)
-                    if (initData.resumable_url) {
-                        console.log('Using direct Firebase upload via resumable URL');
+                    // Check if we have a signed upload URL (for direct Firebase upload, bypasses Cloud Run 32MB limit)
+                    if (initData.signed_upload_url) {
+                        console.log('Using direct Firebase upload via signed URL');
 
-                        // Upload directly to Firebase Storage using resumable upload
-                        await uploadToFirebaseResumable(
-                            initData.resumable_url,
+                        // Upload directly to Firebase Storage using signed URL (simple PUT request)
+                        await uploadToFirebaseSigned(
+                            initData.signed_upload_url,
                             selectedVideoFile,
                             (percent) => {
                                 if (progressBar) {
@@ -2596,10 +2596,10 @@ function handleContentCalendarChange() {
 }
 
 /**
- * Upload file directly to Firebase Storage using Google Cloud Storage resumable upload protocol
+ * Upload file directly to Firebase Storage using signed URL (simple PUT request)
  * This bypasses Cloud Run's 32MB request limit by uploading directly to GCS
  */
-async function uploadToFirebaseResumable(resumableUrl, file, onProgress) {
+async function uploadToFirebaseSigned(signedUrl, file, onProgress) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
@@ -2616,7 +2616,7 @@ async function uploadToFirebaseResumable(resumableUrl, file, onProgress) {
         // Handle completion
         xhr.addEventListener('load', () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-                console.log('Direct Firebase upload completed');
+                console.log('Direct Firebase upload completed via signed URL');
                 resolve();
             } else {
                 console.error('Direct Firebase upload failed:', xhr.status, xhr.responseText);
@@ -2635,8 +2635,8 @@ async function uploadToFirebaseResumable(resumableUrl, file, onProgress) {
             reject(new Error('Upload was aborted'));
         });
 
-        // Open PUT request to resumable URL
-        xhr.open('PUT', resumableUrl, true);
+        // Open PUT request to signed URL
+        xhr.open('PUT', signedUrl, true);
         xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
 
         // Send the file

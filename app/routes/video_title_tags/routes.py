@@ -1067,10 +1067,12 @@ def init_youtube_upload():
 
         logger.info(f"Upload initialized. Calendar item will be created after Late.dev success.")
 
-        # Generate a signed URL for direct browser-to-Firebase upload (bypasses Cloud Run 32MB limit)
-        resumable_url = None
+        # Generate a signed upload URL for direct browser-to-Firebase upload (bypasses Cloud Run 32MB limit)
+        # Note: Using signed URL instead of resumable session to avoid CORS issues
+        signed_upload_url = None
         try:
             from google.cloud import storage as gcs_storage
+            from datetime import timedelta
 
             # Get bucket name
             bucket_name = upload_info['bucket_name']
@@ -1080,16 +1082,18 @@ def init_youtube_upload():
             bucket = gcs_client.bucket(bucket_name)
             blob = bucket.blob(upload_info['file_path'])
 
-            # Generate resumable upload session URL (valid for 1 hour)
-            resumable_url = blob.create_resumable_upload_session(
-                content_type=content_type,
-                timeout=3600
+            # Generate a signed URL for PUT upload (valid for 1 hour)
+            signed_upload_url = blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(hours=1),
+                method="PUT",
+                content_type=content_type
             )
 
-            logger.info(f"Generated resumable upload URL for direct browser upload: {upload_info['file_path']}")
+            logger.info(f"Generated signed upload URL for direct browser upload: {upload_info['file_path']}")
         except Exception as e:
-            logger.error(f"Error generating resumable upload URL: {e}")
-            # Continue without resumable URL - will fall back to old method
+            logger.error(f"Error generating signed upload URL: {e}")
+            # Continue without signed URL - will fall back to old method
 
         return jsonify({
             'success': True,
@@ -1097,7 +1101,7 @@ def init_youtube_upload():
             'bucket_name': upload_info['bucket_name'],
             'public_url': public_url,
             'upload_metadata': upload_metadata,  # Metadata to pass to complete endpoint
-            'resumable_url': resumable_url,  # Browser will upload directly to Firebase using this URL
+            'signed_upload_url': signed_upload_url,  # Browser will upload directly to Firebase using signed URL
             'message': 'Ready for upload. Calendar item will be created after Late.dev success.'
         })
 
