@@ -1783,9 +1783,16 @@ async function cancelUpload(contentId) {
         const data = await response.json();
 
         if (data.success) {
-            alert('Upload cancelled successfully');
-            // Refresh the banner
-            checkForOngoingUploads();
+            // Remove the banner immediately (don't wait for refresh)
+            const banner = document.getElementById('ongoingUploadBanner');
+            if (banner) {
+                banner.remove();
+            }
+
+            // Refresh after a short delay to show updated list (if any other uploads exist)
+            setTimeout(() => {
+                checkForOngoingUploads();
+            }, 500);
         } else {
             alert('Failed to cancel upload: ' + (data.error || 'Unknown error'));
         }

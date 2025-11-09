@@ -665,25 +665,31 @@ def cancel_upload():
         content = ContentLibraryManager.get_content_by_id(user_id, content_id)
 
         if content:
+            # Check if upload is actually in progress or already completed
+            platforms_posted = content.get('platforms_posted', {})
+            instagram_data = platforms_posted.get('instagram', {})
+            status = instagram_data.get('status')
+
+            # Only allow cancellation if status is 'uploading'
+            if status != 'uploading':
+                return jsonify({
+                    'success': False,
+                    'error': f'Cannot cancel - upload has already completed with status: {status}'
+                }), 400
+
             # Delete from content library
             ContentLibraryManager.delete_content(user_id, content_id)
 
-            # Find and delete associated calendar event
-            platforms_posted = content.get('platforms_posted', {})
-            instagram_data = platforms_posted.get('instagram', {})
+            # Find and delete associated calendar event using stored calendar_event_id
+            calendar_event_id = instagram_data.get('calendar_event_id')
 
-            # Calendar events are linked by checking for matching content
-            # Search uploading events for this content_id
-            calendar_manager = ContentCalendarManager(user_id)
-            events = calendar_manager.get_events_by_status('uploading')
-
-            for event in events:
-                caption = instagram_data.get('caption', '')
-                title = instagram_data.get('title', '')
-                if event.get('content_id') == content_id or event.get('title') == caption or event.get('title') == title:
-                    calendar_manager.delete_event(event.get('id'))
-                    logger.info(f"Deleted calendar event {event.get('id')} for cancelled upload")
-                    break
+            if calendar_event_id:
+                try:
+                    calendar_manager = ContentCalendarManager(user_id)
+                    calendar_manager.delete_event(calendar_event_id)
+                    logger.info(f"Deleted calendar event {calendar_event_id} for cancelled upload")
+                except Exception as e:
+                    logger.error(f"Error deleting calendar event: {e}")
 
             logger.info(f"Cancelled upload {content_id} for user {user_id}")
             return jsonify({'success': True})
