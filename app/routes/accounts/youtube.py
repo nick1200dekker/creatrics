@@ -259,12 +259,19 @@ def youtube_callback():
 
         logger.info(f"Successfully connected YouTube channel: {channel_title}")
         flash(f"Successfully connected YouTube channel: {channel_title}", "success")
-        return redirect(url_for('accounts.index'))
+        # Force Turbo to do a full page reload
+        from flask import make_response
+        response = make_response(redirect(url_for('accounts.index')))
+        response.headers['Turbo-Visit-Control'] = 'reload'
+        return response
     
     except Exception as e:
         logger.error(f"Error in YouTube callback: {str(e)}")
         flash("Failed to complete YouTube connection. Please try again.", "error")
-        return redirect(url_for('accounts.index'))
+        from flask import make_response
+        response = make_response(redirect(url_for('accounts.index')))
+        response.headers['Turbo-Visit-Control'] = 'reload'
+        return response
     finally:
         # Clean up temporary file if created
         cleanup_temp_file(client_secrets_file)

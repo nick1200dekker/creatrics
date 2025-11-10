@@ -183,9 +183,14 @@ class XAnalytics:
         logger.info(f"[X_SETUP] Fetching {'initial historical' if is_initial else 'last 7 days'} timeline data for @{username} (target: {target_posts} posts)")
 
         page_num = 0
+        consecutive_empty_pages = 0
+        max_empty_pages = 5  # Stop if we get 5 pages with no original posts
+
         # We need to paginate until we have enough posts or reach the time cutoff
         while len(all_posts) < target_posts:
             page_num += 1
+            posts_before_page = len(all_posts)
+
             # Try up to 2 times for each page (initial attempt + 1 retry)
             max_attempts = 2
             for attempt in range(max_attempts):
@@ -217,7 +222,12 @@ class XAnalytics:
                     # Process successful response
                     data = response.json()
                     tweets = data.get('timeline', [])
-                    
+
+                    # If we got an empty page, stop paginating (account has no more posts)
+                    if not tweets or len(tweets) == 0:
+                        logger.info(f"[X_SETUP] Got empty page {page_num}, stopping with {len(all_posts)} posts")
+                        return all_posts if all_posts else []
+
                     # Process tweets to ensure IDs are properly captured
                     for tweet in tweets:
                         # Parse created_at to check time cutoffs
@@ -256,6 +266,20 @@ class XAnalytics:
                             all_posts.append(tweet)
                     
                     logger.info(f"[X_SETUP] Page {page_num}: Fetched {len(tweets)} tweets, now have {len(all_posts)} total non-RT posts")
+
+                    # Check if this page added any new original posts
+                    posts_added_this_page = len(all_posts) - posts_before_page
+                    if posts_added_this_page == 0:
+                        consecutive_empty_pages += 1
+                        logger.info(f"[X_SETUP] Page {page_num} had no original posts (consecutive empty: {consecutive_empty_pages}/{max_empty_pages})")
+
+                        # Stop if we've seen too many pages with no original posts
+                        if consecutive_empty_pages >= max_empty_pages:
+                            logger.info(f"[X_SETUP] Reached {max_empty_pages} consecutive pages with no original posts, stopping with {len(all_posts)} posts")
+                            return all_posts if all_posts else []
+                    else:
+                        # Reset counter when we find original posts
+                        consecutive_empty_pages = 0
 
                     # Check if we need to fetch more pages
                     if 'next_cursor' in data and len(all_posts) < target_posts:

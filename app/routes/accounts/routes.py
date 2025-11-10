@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, g, jsonify
 from app.system.auth.middleware import auth_required
 from app.system.services.firebase_service import UserService
+from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
 from google.cloud import firestore
 import firebase_admin
 import logging
@@ -139,15 +140,25 @@ def index():
     # Fetch user data from Firebase
     user_data = UserService.get_user(user_id)
     
-    # Check if accounts are connected
-    x_connected = bool(user_data.get('x_account', '')) if user_data else False
-    youtube_connected = bool(user_data.get('youtube_account', '')) if user_data else False
-    tiktok_connected = bool(user_data.get('tiktok_account', '')) if user_data else False
-    
+    # Check if accounts are connected via Late.dev (for X, TikTok, Instagram, YouTube posting)
+    x_latedev_info = LateDevOAuthService.get_account_info(user_id, 'x')
+    tiktok_latedev_info = LateDevOAuthService.get_account_info(user_id, 'tiktok')
+    instagram_latedev_info = LateDevOAuthService.get_account_info(user_id, 'instagram')
+    youtube_latedev_info = LateDevOAuthService.get_account_info(user_id, 'youtube')
+
+    # Check connection status
+    x_connected = bool(x_latedev_info and x_latedev_info.get('username'))
+    youtube_analytics_connected = bool(user_data.get('youtube_account', '')) if user_data else False
+    youtube_posting_connected = bool(youtube_latedev_info and youtube_latedev_info.get('username'))
+    tiktok_connected = bool(tiktok_latedev_info and tiktok_latedev_info.get('username'))
+    instagram_connected = bool(instagram_latedev_info and instagram_latedev_info.get('username'))
+
     # Get account usernames
-    x_username = user_data.get('x_account', '') if user_data else ''
+    x_username = x_latedev_info.get('username', '').lstrip('@') if x_latedev_info else ''
     youtube_channel = user_data.get('youtube_account', '') if user_data else ''
-    tiktok_username = user_data.get('tiktok_account', '') if user_data else ''
+    youtube_posting_username = youtube_latedev_info.get('username', '').lstrip('@') if youtube_latedev_info else ''
+    tiktok_username = tiktok_latedev_info.get('username', '').lstrip('@') if tiktok_latedev_info else ''
+    instagram_username = instagram_latedev_info.get('username', '').lstrip('@') if instagram_latedev_info else ''
 
     # Check setup completion status
     x_setup_complete = user_data.get('x_setup_complete', True) if user_data else True
@@ -160,11 +171,15 @@ def index():
     return render_template(
         'accounts/index.html',
         x_connected=x_connected,
-        youtube_connected=youtube_connected,
+        youtube_analytics_connected=youtube_analytics_connected,
+        youtube_posting_connected=youtube_posting_connected,
         tiktok_connected=tiktok_connected,
+        instagram_connected=instagram_connected,
         x_username=x_username,
         youtube_channel=youtube_channel,
+        youtube_posting_username=youtube_posting_username,
         tiktok_username=tiktok_username,
+        instagram_username=instagram_username,
         x_setup_complete=x_setup_complete,
         tiktok_setup_complete=tiktok_setup_complete,
         youtube_setup_complete=youtube_setup_complete,
@@ -172,91 +187,130 @@ def index():
         user_data=user_data
     )
 
-@bp.route('/connect', methods=['POST'])
+@bp.route('/connect/<platform>')
 @auth_required
-def connect_account():
-    """Connect a social media account"""
-    user_id = g.user.get('id')
-    platform = request.form.get('platform')
-    
-    if platform == 'x':
-        username = request.form.get('x_username', '').strip()
-        # Remove @ symbol if user included it
-        username = username.lstrip('@')
-        if not username:
-            flash("Please enter your X username", "error")
+def connect_platform(platform):
+    """Initiate OAuth flow via Late.dev for X, TikTok, Instagram, or YouTube posting"""
+    try:
+        user_id = g.user.get('id')
+        logger.info(f"Connect {platform} route called for user {user_id}")
+
+        # Validate platform
+        if platform not in ['x', 'tiktok', 'instagram', 'youtube']:
+            flash("Invalid platform specified", "error")
             return redirect(url_for('accounts.index'))
 
-        # Store X account in Firebase
-        UserService.update_user(user_id, {'x_account': username})
-        
-        # Mark account as newly connected for initial fetch
-        UserService.update_user(user_id, {
-            'x_account': username,
-            'x_connected_at': datetime.now().isoformat(),
-            'x_setup_complete': False
-        })
-        
-        # Start background process to fetch X analytics with 6 months of historical data
-        try:
-            from app.scripts.accounts.x_analytics import fetch_x_analytics
+        # Generate Late.dev authorization URL
+        auth_url = LateDevOAuthService.get_authorization_url(user_id, platform)
+        logger.info(f"Generated auth URL for {platform}: {auth_url}")
 
-            def fetch_analytics_bg():
-                try:
-                    # Initial fetch with 6 months of historical data
-                    logger.info(f"[X_SETUP] Starting initial X analytics fetch for user {user_id} with 6 months of data")
-                    fetch_x_analytics(user_id, is_initial=True)
-                    logger.info(f"[X_SETUP] Completed initial X analytics fetch for user {user_id}")
-                except Exception as e:
-                    import traceback
-                    logger.error(f"[X_SETUP] Error fetching initial X analytics for user {user_id}: {str(e)}")
-                    logger.error(traceback.format_exc())
-                    # Mark setup as complete even on error so UI isn't stuck
-                    try:
-                        UserService.update_user(user_id, {'x_setup_complete': True})
-                        logger.info(f"[X_SETUP] Marked setup as complete after error for user {user_id}")
-                    except:
-                        pass
+        logger.info(f"Redirecting user {user_id} to Late.dev {platform} OAuth")
+        return redirect(auth_url)
 
-            bg_thread = threading.Thread(target=fetch_analytics_bg)
-            bg_thread.daemon = True
-            bg_thread.start()
-
-        except Exception as e:
-            import traceback
-            logger.error(f"Error setting up X analytics: {str(e)}")
-            logger.error(traceback.format_exc())
-        
-        # Just redirect back without query params - modal will show via JavaScript
-        flash(f"Successfully connected X account @{username}", "success")
+    except Exception as e:
+        logger.error(f"Error initiating {platform} OAuth: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        flash(f"Error connecting {platform} account. Please try again.", "error")
         return redirect(url_for('accounts.index'))
-        
-    elif platform == 'tiktok':
-        username = request.form.get('tiktok_username', '').strip()
-        # Remove @ symbol if user included it
-        username = username.lstrip('@')
-        if not username:
-            flash("Please enter your TikTok username", "error")
+
+@bp.route('/callback/<platform>')
+@auth_required
+def oauth_callback(platform):
+    """Handle Late.dev OAuth callback for all platforms"""
+    try:
+        user_id = g.user.get('id')
+        logger.info(f"{platform.capitalize()} callback received for user {user_id}")
+        logger.info(f"Query params: {dict(request.args)}")
+
+        # Get success/error from query params
+        success = request.args.get('success')
+        error = request.args.get('error')
+        connected = request.args.get('connected')
+
+        if error:
+            logger.error(f"{platform.capitalize()} OAuth error: {error}")
+            flash(f"Error connecting {platform} account: {error}", "error")
             return redirect(url_for('accounts.index'))
 
-        # Store TikTok account in Firebase
-        UserService.update_user(user_id, {
-            'tiktok_account': username,
-            'tiktok_setup_complete': False
-        })
+        # Late.dev uses 'connected' parameter to indicate success
+        if success == 'true' or connected:
+            logger.info(f"{platform.capitalize()} connected successfully for user {user_id}")
 
-        # Start initial TikTok data fetch in background
-        logger.info(f"Starting initial TikTok analytics fetch for user {user_id}")
-        bg_thread = threading.Thread(target=fetch_initial_tiktok_data, args=(user_id, username))
-        bg_thread.daemon = True
-        bg_thread.start()
+            # Get username from Late.dev API
+            account_info = LateDevOAuthService.get_account_info(user_id, platform)
 
-        # Just redirect back without query params - modal will show via JavaScript
-        flash(f"Successfully connected TikTok account @{username}", "success")
-        return redirect(url_for('accounts.index'))
-        
-    else:
-        flash("Invalid platform specified", "error")
+            if account_info and account_info.get('username'):
+                username = account_info.get('username').lstrip('@')
+                logger.info(f"Got username from Late.dev: {username}")
+
+                # Store username and mark setup as incomplete
+                if platform == 'x':
+                    UserService.update_user(user_id, {
+                        'x_account': username,
+                        'x_connected_at': datetime.now().isoformat(),
+                        'x_setup_complete': False
+                    })
+
+                    # Start background analytics fetch
+                    from app.scripts.accounts.x_analytics import fetch_x_analytics
+                    def fetch_analytics_bg():
+                        try:
+                            logger.info(f"[X_SETUP] Starting initial X analytics fetch for user {user_id}")
+                            fetch_x_analytics(user_id, is_initial=True)
+                            logger.info(f"[X_SETUP] Completed initial X analytics fetch for user {user_id}")
+                        except Exception as e:
+                            import traceback
+                            logger.error(f"[X_SETUP] Error: {str(e)}")
+                            logger.error(traceback.format_exc())
+                            try:
+                                UserService.update_user(user_id, {'x_setup_complete': True})
+                            except:
+                                pass
+
+                    bg_thread = threading.Thread(target=fetch_analytics_bg)
+                    bg_thread.daemon = True
+                    bg_thread.start()
+
+                elif platform == 'tiktok':
+                    UserService.update_user(user_id, {
+                        'tiktok_account': username,
+                        'tiktok_setup_complete': False
+                    })
+
+                    # Start background analytics fetch
+                    logger.info(f"Starting initial TikTok analytics fetch for user {user_id}")
+                    bg_thread = threading.Thread(target=fetch_initial_tiktok_data, args=(user_id, username))
+                    bg_thread.daemon = True
+                    bg_thread.start()
+
+                elif platform == 'instagram':
+                    # Instagram - no analytics yet, just store username
+                    UserService.update_user(user_id, {
+                        'instagram_account': username
+                    })
+                    logger.info(f"Stored Instagram username: {username}")
+
+                elif platform == 'youtube':
+                    # YouTube posting via Late.dev - no analytics, just store for posting capability
+                    logger.info(f"Stored YouTube posting account: {username}")
+
+                flash(f"Successfully connected {platform} account @{username}", "success")
+            else:
+                logger.error(f"Could not get username from Late.dev for {platform}")
+                flash(f"Connected {platform} but could not retrieve username", "warning")
+
+            return redirect(url_for('accounts.index'))
+        else:
+            logger.error(f"{platform.capitalize()} OAuth failed - no success indicator")
+            flash(f"Failed to connect {platform} account", "error")
+            return redirect(url_for('accounts.index'))
+
+    except Exception as e:
+        logger.error(f"Error in {platform} callback: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        flash(f"Error processing {platform} connection", "error")
         return redirect(url_for('accounts.index'))
 
 @bp.route('/fetch-x-replies', methods=['POST'])
@@ -367,6 +421,13 @@ def disconnect_account():
     platform = request.form.get('platform')
     
     if platform == 'x':
+        # Disconnect from Late.dev first
+        try:
+            LateDevOAuthService.disconnect(user_id, 'x')
+            logger.info(f"Disconnected X from Late.dev for user {user_id}")
+        except Exception as e:
+            logger.error(f"Error disconnecting X from Late.dev: {str(e)}")
+
         # Remove X account from Firebase
         UserService.update_user(user_id, {'x_account': ''})
 
@@ -456,6 +517,13 @@ def disconnect_account():
         flash("Successfully disconnected YouTube channel", "success")
         
     elif platform == 'tiktok':
+        # Disconnect from Late.dev first
+        try:
+            LateDevOAuthService.disconnect(user_id, 'tiktok')
+            logger.info(f"Disconnected TikTok from Late.dev for user {user_id}")
+        except Exception as e:
+            logger.error(f"Error disconnecting TikTok from Late.dev: {str(e)}")
+
         # Remove TikTok account from Firebase
         UserService.update_user(user_id, {
             'tiktok_account': '',
@@ -508,17 +576,42 @@ def disconnect_account():
             logger.error(f"Error starting TikTok cleanup thread: {str(e)}")
 
         flash("Successfully disconnected TikTok account", "success")
-        
+
+    elif platform == 'instagram':
+        # Disconnect from Late.dev
+        try:
+            LateDevOAuthService.disconnect(user_id, 'instagram')
+            logger.info(f"Disconnected Instagram from Late.dev for user {user_id}")
+        except Exception as e:
+            logger.error(f"Error disconnecting Instagram from Late.dev: {str(e)}")
+
+        # Remove Instagram account from Firebase
+        UserService.update_user(user_id, {
+            'instagram_account': ''
+        })
+
+        flash("Successfully disconnected Instagram account", "success")
+
+    elif platform == 'youtube_posting':
+        # Disconnect YouTube posting (Late.dev) only
+        try:
+            LateDevOAuthService.disconnect(user_id, 'youtube')
+            logger.info(f"Disconnected YouTube posting from Late.dev for user {user_id}")
+            flash("Successfully disconnected YouTube posting", "success")
+        except Exception as e:
+            logger.error(f"Error disconnecting YouTube posting from Late.dev: {str(e)}")
+            flash("Error disconnecting YouTube posting", "error")
+
     else:
         flash("Invalid platform specified", "error")
-    
+
     return redirect(url_for('accounts.index'))
 
-# YouTube OAuth route
-@bp.route('/connect/youtube', methods=['GET'])
+# YouTube Analytics OAuth route (separate from Late.dev posting)
+@bp.route('/connect/youtube-analytics', methods=['GET'])
 @auth_required
 def youtube_connect_redirect():
-    """Redirect to YouTube OAuth flow"""
+    """Redirect to YouTube Analytics OAuth flow"""
     return redirect(url_for('youtube.connect_youtube'))
 
 # Data endpoints for dashboard/analytics display

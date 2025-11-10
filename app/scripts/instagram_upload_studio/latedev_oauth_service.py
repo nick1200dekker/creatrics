@@ -48,15 +48,11 @@ class LateDevOAuthService:
             # Map platform to Late.dev API name
             api_platform = LateDevOAuthService._map_platform_name(platform)
 
-            # Build callback URL based on platform
-            if platform == 'tiktok':
-                redirect_url = f"{callback_url}/tiktok-upload-studio/callback"
-            elif platform in ['x', 'twitter']:
-                redirect_url = f"{callback_url}/x_post_editor/callback"
-            elif platform == 'youtube':
+            # Build callback URL - YouTube uses original callback, others use accounts callback
+            if platform == 'youtube':
                 redirect_url = f"{callback_url}/video-title-tags/callback"
             else:
-                redirect_url = f"{callback_url}/instagram-upload-studio/callback"
+                redirect_url = f"{callback_url}/accounts/callback/{platform}"
 
             # Call Late.dev API to get the auth URL
             headers = {

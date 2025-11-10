@@ -8,6 +8,9 @@
 <!-- Disable Turbo for this page to ensure full reload -->
 <meta name="turbo-visit-control" content="reload">
 <meta name="turbo-cache-control" content="no-cache">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 {% endblock %}
 
 {% block additional_styles %}
@@ -428,7 +431,7 @@ html.dark .action-button.primary:hover {
 }
 
 .action-button.secondary {
-    background: var(--bg-secondary);
+    background: transparent;
     color: var(--text-primary);
     border: 1px solid var(--border-primary);
 }
@@ -892,41 +895,59 @@ html.dark .x-logo-dark {
                     </div>
                     <h2 class="platform-name">YouTube</h2>
                 </div>
-                
-                {% if youtube_connected and youtube_setup_complete %}
-                    <div class="connection-status">
-                        <div class="status-info">
-                            <span class="status-label">Connected</span>
-                            <span class="status-value">{{ youtube_channel }}</span>
-                        </div>
-                        <span class="status-badge">Active</span>
-                    </div>
 
-                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}">
+                <div class="form-group">
+                    <label for="youtube_channel" class="form-label">
+                        Channel
+                        <i class="ph ph-info" style="color: #3B82F6; margin-left: 0.25rem; cursor: help;" title="YouTube requires 2 connections:&#10;1. Analytics (YouTube API)&#10;2. Posting (via our platform)"></i>
+                    </label>
+                    <input type="text"
+                           id="youtube_channel"
+                           name="youtube_channel"
+                           class="form-input"
+                           value="{% if youtube_analytics_connected %}{{ youtube_channel }}{% endif %}"
+                           placeholder="{% if youtube_analytics_connected %}{{ youtube_channel }}{% else %}Connect to view{% endif %}"
+                           disabled>
+                </div>
+
+                <!-- Analytics Connection -->
+                {% if youtube_analytics_connected %}
+                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}" onsubmit="handleDisconnect(event, 'disconnectYouTubeAnalyticsBtn')" style="margin-bottom: 0.5rem;">
                         <input type="hidden" name="platform" value="youtube">
-                        <button type="submit" class="action-button secondary">
-                            <i class="ph ph-link-break"></i>
-                            Disconnect Channel
+                        <button type="submit" class="action-button secondary" id="disconnectYouTubeAnalyticsBtn">
+                            <div class="button-spinner"></div>
+                            <i class="ph ph-link-break button-icon"></i>
+                            Disconnect Analytics
                         </button>
                     </form>
                 {% else %}
-                    <div class="form-group">
-                        <label for="youtube_channel" class="form-label">Channel</label>
-                        <input type="text"
-                               id="youtube_channel"
-                               name="youtube_channel"
-                               class="form-input"
-                               placeholder="Press connect button"
-                               disabled>
-                    </div>
-
                     <a href="{{ url_for('accounts.youtube_connect_redirect') }}"
-                       class="action-button primary"
+                       class="action-button {% if youtube_posting_connected %}primary{% else %}primary{% endif %}"
                        id="connectYouTubeBtn"
-                       data-turbo="false">
+                       data-turbo="false"
+                       style="margin-bottom: 0.5rem;">
                         <div class="button-spinner"></div>
-                        <i class="ph ph-link button-icon"></i>
-                        Connect with YouTube
+                        <i class="ph ph-chart-line button-icon"></i>
+                        Connect for Analytics
+                    </a>
+                {% endif %}
+
+                <!-- Posting Connection -->
+                {% if youtube_posting_connected %}
+                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}" onsubmit="handleDisconnect(event, 'disconnectYouTubePostingBtn')">
+                        <input type="hidden" name="platform" value="youtube_posting">
+                        <button type="submit" class="action-button secondary" id="disconnectYouTubePostingBtn">
+                            <div class="button-spinner"></div>
+                            <i class="ph ph-link-break button-icon"></i>
+                            Disconnect Posting
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{{ url_for('accounts.connect_platform', platform='youtube') }}"
+                       class="action-button {% if youtube_analytics_connected %}primary{% else %}secondary{% endif %}"
+                       data-turbo="false">
+                        <i class="ph ph-upload button-icon"></i>
+                        Connect for Posting
                     </a>
                 {% endif %}
             </div>
@@ -938,45 +959,33 @@ html.dark .x-logo-dark {
                         <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 16px; height: auto; padding: 0 !important;">
                         <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 16px; height: auto; padding: 0 !important;">
                     </div>
-                    <h2 class="platform-name">X</h2>
                 </div>
 
-                {% if x_connected and x_setup_complete %}
-                    <div class="connection-status">
-                        <div class="status-info">
-                            <span class="status-label">Connected</span>
-                            <span class="status-value">@{{ x_username }}</span>
-                        </div>
-                        <span class="status-badge">Active</span>
-                    </div>
+                <div class="form-group">
+                    <label for="x_username" class="form-label">Username</label>
+                    <input type="text"
+                           id="x_username"
+                           name="x_username"
+                           class="form-input"
+                           value="{% if x_connected %}@{{ x_username }}{% endif %}"
+                           placeholder="{% if x_connected %}@{{ x_username }}{% else %}Connect to view{% endif %}"
+                           disabled>
+                </div>
 
-                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}">
+                {% if x_connected %}
+                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}" onsubmit="handleDisconnect(event, 'disconnectXBtn')">
                         <input type="hidden" name="platform" value="x">
-                        <button type="submit" class="action-button secondary">
-                            <i class="ph ph-link-break"></i>
-                            Disconnect Account
+                        <button type="submit" class="action-button secondary" id="disconnectXBtn">
+                            <div class="button-spinner"></div>
+                            <i class="ph ph-link-break button-icon"></i>
+                            Disconnect
                         </button>
                     </form>
                 {% else %}
-                    <form method="POST" action="{{ url_for('accounts.connect_account') }}" data-turbo="false">
-                        <input type="hidden" name="platform" value="x">
-
-                        <div class="form-group">
-                            <label for="x_username" class="form-label">Username</label>
-                            <input type="text"
-                                   id="x_username"
-                                   name="x_username"
-                                   class="form-input"
-                                   placeholder="username"
-                                   required>
-                        </div>
-
-                        <button type="submit" class="action-button primary" id="connectXBtn">
-                            <div class="button-spinner"></div>
-                            <i class="ph ph-link button-icon"></i>
-                            Configure Account
-                        </button>
-                    </form>
+                    <a href="{{ url_for('accounts.connect_platform', platform='x') }}" class="action-button primary" id="connectXBtn">
+                        <i class="ph ph-link button-icon"></i>
+                        Connect
+                    </a>
                 {% endif %}
             </div>
 
@@ -989,47 +998,36 @@ html.dark .x-logo-dark {
                     <h2 class="platform-name">TikTok</h2>
                 </div>
 
-                {% if tiktok_connected and tiktok_setup_complete %}
-                    <div class="connection-status">
-                        <div class="status-info">
-                            <span class="status-label">Connected</span>
-                            <span class="status-value">@{{ tiktok_username }}</span>
-                        </div>
-                        <span class="status-badge">Active</span>
-                    </div>
+                <div class="form-group">
+                    <label for="tiktok_username" class="form-label">Username</label>
+                    <input type="text"
+                           id="tiktok_username"
+                           name="tiktok_username"
+                           class="form-input"
+                           value="{% if tiktok_connected %}@{{ tiktok_username }}{% endif %}"
+                           placeholder="{% if tiktok_connected %}@{{ tiktok_username }}{% else %}Connect to view{% endif %}"
+                           disabled>
+                </div>
 
-                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}">
+                {% if tiktok_connected %}
+                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}" onsubmit="handleDisconnect(event, 'disconnectTikTokBtn')">
                         <input type="hidden" name="platform" value="tiktok">
-                        <button type="submit" class="action-button secondary">
-                            <i class="ph ph-link-break"></i>
-                            Disconnect Account
+                        <button type="submit" class="action-button secondary" id="disconnectTikTokBtn">
+                            <div class="button-spinner"></div>
+                            <i class="ph ph-link-break button-icon"></i>
+                            Disconnect
                         </button>
                     </form>
                 {% else %}
-                    <form method="POST" action="{{ url_for('accounts.connect_account') }}" data-turbo="false">
-                        <input type="hidden" name="platform" value="tiktok">
-
-                        <div class="form-group">
-                            <label for="tiktok_username" class="form-label">Username</label>
-                            <input type="text"
-                                   id="tiktok_username"
-                                   name="tiktok_username"
-                                   class="form-input"
-                                   placeholder="username"
-                                   required>
-                        </div>
-
-                        <button type="submit" class="action-button primary" id="connectTikTokBtn">
-                            <div class="button-spinner"></div>
-                            <i class="ph ph-link button-icon"></i>
-                            Configure Account
-                        </button>
-                    </form>
+                    <a href="{{ url_for('accounts.connect_platform', platform='tiktok') }}" class="action-button primary" id="connectTikTokBtn">
+                        <i class="ph ph-link button-icon"></i>
+                        Connect
+                    </a>
                 {% endif %}
             </div>
 
             <!-- Instagram Account -->
-            <div class="account-card" style="opacity: 0.6; pointer-events: none;">
+            <div class="account-card">
                 <div class="card-header">
                     <div class="platform-icon" style="background: transparent; width: auto; height: 48px; display: flex; align-items: center; justify-content: center;">
                         <img src="{{ url_for('static', filename='img/templates/Instagram_Glyph_Gradient.png') }}" alt="Instagram" style="width: 28px; height: auto; padding: 0 !important;">
@@ -1037,33 +1035,73 @@ html.dark .x-logo-dark {
                     <h2 class="platform-name">Instagram</h2>
                 </div>
 
-                <form>
-                    <div class="form-group">
-                        <label for="instagram_username" class="form-label">Username</label>
-                        <input type="text"
-                               id="instagram_username"
-                               name="instagram_username"
-                               class="form-input"
-                               placeholder="username"
-                               disabled>
-                    </div>
+                <div class="form-group">
+                    <label for="instagram_username" class="form-label">Username</label>
+                    <input type="text"
+                           id="instagram_username"
+                           name="instagram_username"
+                           class="form-input"
+                           value="{% if instagram_connected %}@{{ instagram_username }}{% endif %}"
+                           placeholder="{% if instagram_connected %}@{{ instagram_username }}{% else %}Connect to view{% endif %}"
+                           disabled>
+                </div>
 
-                    <button type="button" class="action-button primary" disabled>
+                {% if instagram_connected %}
+                    <form method="POST" action="{{ url_for('accounts.disconnect_account') }}" onsubmit="handleDisconnect(event, 'disconnectInstagramBtn')">
+                        <input type="hidden" name="platform" value="instagram">
+                        <button type="submit" class="action-button secondary" id="disconnectInstagramBtn">
+                            <div class="button-spinner"></div>
+                            <i class="ph ph-link-break button-icon"></i>
+                            Disconnect
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{{ url_for('accounts.connect_platform', platform='instagram') }}" class="action-button primary" id="connectInstagramBtn">
                         <i class="ph ph-link button-icon"></i>
-                        Configure Account
-                    </button>
-                </form>
+                        Connect
+                    </a>
+                {% endif %}
             </div>
         </div>
         
         <!-- Info Section -->
         <div class="info-section">
-            <h3 class="info-title">Why configure your accounts?</h3>
-            <p class="info-text">
-                Configuring your social accounts allows Creatrics to provide personalized content suggestions
-                and analyze engagement metrics. For YouTube, connecting via the API gives you access to detailed
-                analytics data including views, watch time, audience demographics, and more.
-            </p>
+            <h3 class="info-title" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
+                <i class="ph ph-lightbulb" style="color: #3B82F6; font-size: 1.25rem;"></i>
+                Why Connect Your Accounts?
+            </h3>
+
+            <div style="display: grid; gap: 1rem;">
+                <div style="display: flex; gap: 0.75rem; align-items: start;">
+                    <i class="ph ph-chart-line" style="color: #3B82F6; font-size: 1.1rem; margin-top: 0.125rem; flex-shrink: 0;"></i>
+                    <div>
+                        <strong style="color: var(--text-primary); font-size: 0.9rem;">Track Performance</strong>
+                        <p class="info-text" style="margin: 0.25rem 0 0 0;">
+                            Monitor engagement metrics, views, and audience insights across all your platforms in one place.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; align-items: start;">
+                    <i class="ph ph-magic-wand" style="color: #3B82F6; font-size: 1.1rem; margin-top: 0.125rem; flex-shrink: 0;"></i>
+                    <div>
+                        <strong style="color: var(--text-primary); font-size: 0.9rem;">AI-Powered Content</strong>
+                        <p class="info-text" style="margin: 0.25rem 0 0 0;">
+                            Get personalized content suggestions based on your performance data and audience preferences.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; align-items: start;">
+                    <i class="ph ph-rocket-launch" style="color: #3B82F6; font-size: 1.1rem; margin-top: 0.125rem; flex-shrink: 0;"></i>
+                    <div>
+                        <strong style="color: var(--text-primary); font-size: 0.9rem;">Seamless Publishing</strong>
+                        <p class="info-text" style="margin: 0.25rem 0 0 0;">
+                            Create and publish content directly to your platforms without leaving the app.
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1319,5 +1357,24 @@ document.addEventListener('click', function(e) {
         link.setAttribute('data-turbo', 'false');
     }
 });
+
+// Handle disconnect button - show spinner and prevent double submission
+function handleDisconnect(event, buttonId) {
+    const button = document.getElementById(buttonId);
+    if (!button) return true;
+
+    // Check if already processing
+    if (button.classList.contains('loading')) {
+        event.preventDefault();
+        return false;
+    }
+
+    // Add loading state
+    button.classList.add('loading');
+    button.disabled = true;
+
+    // Allow form submission to proceed
+    return true;
+}
 </script>
 {% endblock %}

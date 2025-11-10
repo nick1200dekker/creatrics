@@ -1,4 +1,4 @@
-from flask import render_template, request, jsonify, g, redirect, url_for
+from flask import render_template, request, jsonify, g, redirect, url_for, flash, make_response
 from . import bp
 from app.system.auth.middleware import auth_required
 from app.system.auth.permissions import get_workspace_user_id, check_workspace_permission, require_permission, has_premium_subscription
@@ -71,19 +71,29 @@ def callback():
 
         if error:
             logger.error(f"YouTube OAuth error: {error}")
-            return redirect(url_for('video_title_tags.video_title_tags', error=f'oauth_error_{error}'))
+            flash(f"Error connecting YouTube account: {error}", "error")
+            response = make_response(redirect(url_for('accounts.index')))
+            response.headers['Turbo-Visit-Control'] = 'reload'
+            return response
 
         # Late.dev uses 'connected' parameter to indicate success
         if success == 'true' or connected:
             logger.info(f"YouTube connected successfully for user {user_id}")
-            return redirect(url_for('video_title_tags.video_title_tags', success='connected'))
+            flash("Successfully connected YouTube for posting", "success")
+            response = make_response(redirect(url_for('accounts.index')))
+            response.headers['Turbo-Visit-Control'] = 'reload'
+            return response
         else:
             logger.error(f"YouTube OAuth failed - no success indicator")
-            return redirect(url_for('video_title_tags.video_title_tags', error='oauth_failed'))
+            flash("Failed to connect YouTube account", "error")
+            response = make_response(redirect(url_for('accounts.index')))
+            response.headers['Turbo-Visit-Control'] = 'reload'
+            return response
 
     except Exception as e:
         logger.error(f"Error in YouTube callback: {str(e)}", exc_info=True)
-        return redirect(url_for('video_title_tags.video_title_tags', error='callback_error'))
+        flash("Error processing YouTube connection", "error")
+        return redirect(url_for('accounts.index'))
 
 @bp.route('/video-title-tags/disconnect', methods=['POST'])
 @auth_required

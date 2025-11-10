@@ -36,15 +36,19 @@ document.addEventListener('DOMContentLoaded', function() {
         handleStatusChange();
     }, 100);
 
-    // Set up connect/disconnect button listeners
+    // Set up connect/disconnect button listeners - redirect to Manage Accounts
     const connectBtn = document.getElementById('connectBtn');
     if (connectBtn) {
-        connectBtn.addEventListener('click', connectToYouTube);
+        connectBtn.addEventListener('click', () => {
+            window.location.href = '/accounts';
+        });
     }
 
     const disconnectBtn = document.getElementById('disconnectBtn');
     if (disconnectBtn) {
-        disconnectBtn.addEventListener('click', disconnectFromYouTube);
+        disconnectBtn.addEventListener('click', () => {
+            window.location.href = '/accounts';
+        });
     }
 });
 

@@ -363,16 +363,20 @@ function updateConnectionUI(data) {
  * Setup all event listeners
  */
 function setupEventListeners() {
-    // Connect button
+    // Connect button - redirect to Manage Accounts
     const connectBtn = document.getElementById('connectBtn');
     if (connectBtn) {
-        connectBtn.addEventListener('click', connectToTikTok);
+        connectBtn.addEventListener('click', () => {
+            window.location.href = '/accounts';
+        });
     }
 
-    // Disconnect button
+    // Disconnect button - redirect to Manage Accounts
     const disconnectBtn = document.getElementById('disconnectBtn');
     if (disconnectBtn) {
-        disconnectBtn.addEventListener('click', disconnectFromTikTok);
+        disconnectBtn.addEventListener('click', () => {
+            window.location.href = '/accounts';
+        });
     }
 }
 

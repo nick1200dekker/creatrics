@@ -3026,28 +3026,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Removed checkForOngoingUploads() - doesn't work with signed URL flow (uploads get cancelled when navigating away)
 
-    // Setup X connection buttons
+    // Setup X connection buttons - redirect to Manage Accounts
     const connectBtn = document.getElementById('connectXBtn');
     const disconnectBtn = document.getElementById('disconnectXBtn');
 
     if (connectBtn) {
-        connectBtn.addEventListener('click', handleConnectX);
+        connectBtn.addEventListener('click', () => {
+            window.location.href = '/accounts';
+        });
     }
 
     if (disconnectBtn) {
-        disconnectBtn.addEventListener('click', handleDisconnectX);
+        disconnectBtn.addEventListener('click', () => {
+            window.location.href = '/accounts';
+        });
     }
 
-    // Setup compact disconnect button (handles both connect and disconnect)
+    // Setup compact disconnect button - redirect to Manage Accounts
     const compactDisconnectBtn = document.getElementById('compactDisconnectBtn');
     if (compactDisconnectBtn) {
-        compactDisconnectBtn.addEventListener('click', (e) => {
-            const action = e.currentTarget.dataset.action;
-            if (action === 'disconnect') {
-                handleDisconnectX();
-            } else if (action === 'connect') {
-                handleConnectX();
-            }
+        compactDisconnectBtn.addEventListener('click', () => {
+            window.location.href = '/accounts';
         });
     }
 
