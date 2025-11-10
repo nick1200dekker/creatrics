@@ -1364,7 +1364,7 @@
                    class="nav-subitem {% if request.endpoint and 'accounts' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-user-circle"></i>
-                    <span>Manage Accounts</span>
+                    <span>Manage Channels</span>
                 </a>
                 {% if can_access_teams %}
                 <a href="{{ url_for('teams.teams_dashboard') }}"
