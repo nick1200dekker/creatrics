@@ -423,7 +423,7 @@ function updateToggleButtonsVisibility() {
             banner.className = 'youtube-connect-banner';
             banner.innerHTML = `
                 <div class="banner-content">
-                    <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 48px; height: auto; padding: 0 !important;">
+                    <img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 36px; height: auto; padding: 0 !important;">
                     <div class="banner-text">
                         <strong>Connect your YouTube account</strong>
                         <span>Get access to all features including public and private video optimization</span>

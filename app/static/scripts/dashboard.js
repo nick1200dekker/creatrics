@@ -108,7 +108,7 @@ function loadQuickActions(connectedPlatforms) {
         let platformIcon = '';
         if (feature.platform && feature.platform !== 'general') {
             if (feature.platform === 'youtube') {
-                platformIcon = '<img src="/static/img/templates/yt_icon_almostblack_digital.png" alt="YouTube" style="width: 24px; height: 24px;">';
+                platformIcon = '<img src="/static/img/templates/yt_icon_almostblack_digital.png" alt="YouTube" style="width: 18px; height: 18px;">';
             } else {
                 const iconType = feature.platform === 'x' ? 'x' : 'tiktok';
                 platformIcon = `<i class="ph ph-${iconType}-logo"></i>`;
@@ -175,20 +175,30 @@ document.addEventListener('DOMContentLoaded', async function() {
             tiktok: false
         };
 
-        // Show/hide channel cards based on connections
+        // Update channel cards based on connections
         let hasConnections = false;
 
         // YouTube Card
+        const youtubeCard = document.getElementById('youtube-card');
+        const youtubeUsername = document.getElementById('youtube-username');
+        const youtubeMetrics = document.getElementById('youtube-metrics');
+
         if (data.youtube_connected) {
             hasConnections = true;
             connectedPlatforms.youtube = true;
-            document.getElementById('youtube-card').style.display = 'block';
-            document.getElementById('youtube-username').textContent = '@' + data.youtube_account;
+
+            if (youtubeCard) {
+                youtubeCard.classList.remove('instagram-placeholder');
+            }
+
+            if (youtubeUsername) {
+                youtubeUsername.textContent = '@' + data.youtube_account;
+            }
 
             // Load YouTube analytics if available
-            if (data.youtube_analytics) {
-                const metrics = document.getElementById('youtube-metrics');
-                metrics.innerHTML = `
+            if (data.youtube_analytics && youtubeMetrics) {
+                youtubeMetrics.classList.remove('placeholder-metrics');
+                youtubeMetrics.innerHTML = `
                     <div class="metric-item">
                         <div class="metric-value">${formatNumber(data.youtube_analytics.views || 0)}</div>
                         <div class="metric-label">Views</div>
@@ -198,29 +208,45 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <div class="metric-label">Subscribers</div>
                     </div>
                     <div class="metric-item">
+                        <div class="metric-value">${formatNumber(data.youtube_analytics.video_count || 0)}</div>
+                        <div class="metric-label">Videos</div>
+                    </div>
+                    <div class="metric-item">
                         <div class="metric-value">${formatWatchTime(data.youtube_analytics.watch_time_minutes || 0)}</div>
                         <div class="metric-label">Watch Time</div>
                     </div>
                 `;
             }
-        } else {
-            document.getElementById('connect-youtube').style.display = 'block';
         }
 
         // X Card
+        const xCard = document.getElementById('x-card');
+        const xUsername = document.getElementById('x-username');
+        const xMetrics = document.getElementById('x-metrics');
+
         if (data.x_connected) {
             hasConnections = true;
             connectedPlatforms.x = true;
-            document.getElementById('x-card').style.display = 'block';
-            document.getElementById('x-username').textContent = '@' + data.x_account;
+
+            if (xCard) {
+                xCard.classList.remove('instagram-placeholder');
+            }
+
+            if (xUsername) {
+                xUsername.textContent = '@' + data.x_account;
+            }
 
             // Load X analytics if available
-            if (data.x_analytics) {
-                const metrics = document.getElementById('x-metrics');
-                metrics.innerHTML = `
+            if (data.x_analytics && xMetrics) {
+                xMetrics.classList.remove('placeholder-metrics');
+                xMetrics.innerHTML = `
                     <div class="metric-item">
                         <div class="metric-value">${formatNumber(data.x_analytics.followers || 0)}</div>
                         <div class="metric-label">Followers</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${formatNumber(data.x_analytics.posts || 0)}</div>
+                        <div class="metric-label">Posts</div>
                     </div>
                     <div class="metric-item">
                         <div class="metric-value">${formatNumber(data.x_analytics.avg_views || 0)}</div>
@@ -232,20 +258,28 @@ document.addEventListener('DOMContentLoaded', async function() {
                     </div>
                 `;
             }
-        } else {
-            document.getElementById('connect-x').style.display = 'block';
         }
 
         // TikTok Card
+        const tiktokCard = document.getElementById('tiktok-card');
+        const tiktokUsername = document.getElementById('tiktok-username');
+        const tiktokMetrics = document.getElementById('tiktok-metrics');
+
         if (data.tiktok_connected) {
             hasConnections = true;
             connectedPlatforms.tiktok = true;
-            document.getElementById('tiktok-card').style.display = 'block';
-            document.getElementById('tiktok-username').textContent = '@' + data.tiktok_account;
+
+            if (tiktokCard) {
+                tiktokCard.classList.remove('instagram-placeholder');
+            }
+
+            if (tiktokUsername) {
+                tiktokUsername.textContent = '@' + data.tiktok_account;
+            }
 
             // Load TikTok analytics if available from dashboard-data
-            if (data.tiktok_analytics) {
-                const metrics = document.getElementById('tiktok-metrics');
+            if (data.tiktok_analytics && tiktokMetrics) {
+                tiktokMetrics.classList.remove('placeholder-metrics');
                 const tiktokData = data.tiktok_analytics;
 
                 // Get engagement rate
@@ -261,10 +295,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 const displayEngagement = engagementRate === 0 ? '0%' : `${engagementRate.toFixed(1)}%`;
 
-                metrics.innerHTML = `
+                tiktokMetrics.innerHTML = `
                     <div class="metric-item">
                         <div class="metric-value">${formatNumber(tiktokData.followers || 0)}</div>
                         <div class="metric-label">Followers</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">${formatNumber(tiktokData.video_count || 0)}</div>
+                        <div class="metric-label">Videos</div>
                     </div>
                     <div class="metric-item">
                         <div class="metric-value">${formatNumber(tiktokData.likes || 0)}</div>
@@ -276,14 +314,19 @@ document.addEventListener('DOMContentLoaded', async function() {
                     </div>
                 `;
             }
-        } else {
-            document.getElementById('connect-tiktok').style.display = 'block';
         }
 
-        // Always show Analytics section (either with connected platforms or connect cards)
+        // Always show Analytics section (all cards always visible)
         const analyticsSection = document.getElementById('analytics-section');
+        const analyticsEmpty = document.getElementById('analytics-empty');
+
         if (analyticsSection) {
             analyticsSection.style.display = 'block';
+
+            // Hide empty state since we always show cards now
+            if (analyticsEmpty) {
+                analyticsEmpty.style.display = 'none';
+            }
         }
 
         // Load Quick Actions based on connected platforms

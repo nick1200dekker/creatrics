@@ -77,148 +77,150 @@
         <div class="calendar-section" id="analytics-section" style="display: none;">
             <div class="calendar-header">
                 <h2><i class="ph ph-chart-line"></i> Analytics</h2>
+                <a href="{{ url_for('accounts.index') }}" class="configure-accounts-btn">
+                    Configure Accounts
+                </a>
+            </div>
+
+            <!-- Empty State (shown when no accounts connected) -->
+            <div class="analytics-empty" id="analytics-empty" style="display: none;">
+                <i class="ph ph-chart-line-up"></i>
+                <h4>No Accounts Connected</h4>
+                <p>Connect your social accounts to start tracking your analytics and performance metrics</p>
+                <a href="{{ url_for('accounts.index') }}" class="connect-accounts-btn">
+                    <i class="ph ph-link"></i>
+                    Connect Accounts
+                </a>
             </div>
 
             <!-- Connected Channels Grid -->
             <div class="channels-grid" id="channels-container">
             <!-- YouTube Channel Card -->
-            <div class="channel-card" id="youtube-card" style="display: none;">
+            <div class="channel-card" id="youtube-card">
                 <div class="channel-header">
                     <div class="channel-info">
-                        <div class="channel-icon youtube" style="background: transparent !important;">
-                            <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 72px; height: auto; padding: 0 !important;">
-                        </div>
+                        <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" class="platform-logo" style="width: 28px; height: auto;">
                         <div class="channel-name">
                             <h3>YouTube</h3>
-                            <div class="channel-username" id="youtube-username">Loading...</div>
+                            <div class="channel-username" id="youtube-username">Not Connected</div>
                         </div>
                     </div>
-                    <a href="{{ url_for('analytics.index', platform='youtube') }}" class="view-analytics-btn">
-                        <i class="ph ph-chart-line"></i>
-                        Analytics
-                    </a>
                 </div>
-                
-                <div class="channel-metrics" id="youtube-metrics">
+
+                <div class="channel-metrics placeholder-metrics" id="youtube-metrics">
                     <div class="metric-item">
-                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-value">—</div>
                         <div class="metric-label">Views</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-value">—</div>
                         <div class="metric-label">Subscribers</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-value">—</div>
+                        <div class="metric-label">Videos</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">—</div>
                         <div class="metric-label">Watch Time</div>
                     </div>
                 </div>
             </div>
 
             <!-- X Channel Card -->
-            <div class="channel-card" id="x-card" style="display: none;">
+            <div class="channel-card" id="x-card">
                 <div class="channel-header">
                     <div class="channel-info">
-                        <div class="channel-icon x" style="background: transparent !important;">
-                            <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 18px; height: auto; padding: 0 !important;">
-                            <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 18px; height: auto; padding: 0 !important;">
-                        </div>
+                        <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="platform-logo x-logo-light" style="width: 20px; height: auto;">
+                        <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="platform-logo x-logo-dark" style="width: 20px; height: auto;">
                         <div class="channel-name">
                             <h3>X</h3>
-                            <div class="channel-username" id="x-username">Loading...</div>
+                            <div class="channel-username" id="x-username">Not Connected</div>
                         </div>
                     </div>
-                    <a href="{{ url_for('analytics.index', platform='x') }}" class="view-analytics-btn">
-                        <i class="ph ph-chart-line"></i>
-                        Analytics
-                    </a>
                 </div>
-                
-                <div class="channel-metrics" id="x-metrics">
+
+                <div class="channel-metrics placeholder-metrics" id="x-metrics">
                     <div class="metric-item">
-                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-value">—</div>
                         <div class="metric-label">Followers</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-value">—</div>
+                        <div class="metric-label">Posts</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">—</div>
                         <div class="metric-label">Avg Views</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-value">—</div>
                         <div class="metric-label">Engagement</div>
                     </div>
                 </div>
             </div>
 
             <!-- TikTok Channel Card -->
-            <div class="channel-card" id="tiktok-card" style="display: none;">
+            <div class="channel-card" id="tiktok-card">
                 <div class="channel-header">
                     <div class="channel-info">
-                        <div class="channel-icon tiktok" style="background: transparent !important;">
-                            <img src="{{ url_for('static', filename='img/templates/TikTok_Icon_Black_Circle.png') }}" alt="TikTok" style="width: 40px; height: auto; padding: 0 !important;">
-                        </div>
+                        <img src="{{ url_for('static', filename='img/templates/TikTok_Icon_Black_Circle.png') }}" alt="TikTok" class="platform-logo" style="width: 30px; height: auto;">
                         <div class="channel-name">
                             <h3>TikTok</h3>
-                            <div class="channel-username" id="tiktok-username">Loading...</div>
+                            <div class="channel-username" id="tiktok-username">Not Connected</div>
                         </div>
                     </div>
-                    <a href="{{ url_for('analytics.index', platform='tiktok') }}" class="view-analytics-btn">
-                        <i class="ph ph-chart-line"></i>
-                        Analytics
-                    </a>
                 </div>
-                
-                <div class="channel-metrics" id="tiktok-metrics">
+
+                <div class="channel-metrics placeholder-metrics" id="tiktok-metrics">
                     <div class="metric-item">
-                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-value">—</div>
                         <div class="metric-label">Followers</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-value">—</div>
+                        <div class="metric-label">Videos</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">—</div>
                         <div class="metric-label">Total Likes</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value skeleton-loader" style="width: 60px; height: 20px; margin: 0 auto;"></div>
+                        <div class="metric-value">—</div>
                         <div class="metric-label">Engagement</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Connect Channel Cards -->
-            <div class="channel-card connect-channel-card" id="connect-youtube" style="display: none;">
-                <div class="connect-content">
-                    <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 80px; height: auto; padding: 0 !important; margin-bottom: 1rem; margin-top: -0.25rem;">
-                    <h3>Connect YouTube</h3>
-                    <p>Track your channel analytics and optimize your content strategy</p>
-                    <a href="{{ url_for('accounts.index') }}" class="connect-btn">
-                        <i class="ph ph-link"></i>
-                        Connect Channel
-                    </a>
+            <!-- Instagram Channel Card (Placeholder) -->
+            <div class="channel-card instagram-placeholder" id="instagram-card">
+                <div class="channel-header">
+                    <div class="channel-info">
+                        <img src="{{ url_for('static', filename='img/templates/Instagram_Glyph_Gradient.png') }}" alt="Instagram" class="platform-logo" style="width: 30px; height: auto;">
+                        <div class="channel-name">
+                            <h3>Instagram</h3>
+                            <div class="channel-username">Not Connected</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="channel-card connect-channel-card" id="connect-x" style="display: none;">
-                <div class="connect-content">
-                    <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 30px; height: auto; padding: 0 !important; margin-bottom: 1rem;">
-                    <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 30px; height: auto; padding: 0 !important; margin-bottom: 1rem;">
-                    <h3>Add X Account</h3>
-                    <p>Monitor your engagement and discover trending topics</p>
-                    <a href="{{ url_for('accounts.index') }}" class="connect-btn">
-                        <i class="ph ph-plus"></i>
-                        Add Account
-                    </a>
-                </div>
-            </div>
-
-            <div class="channel-card connect-channel-card" id="connect-tiktok" style="display: none;">
-                <div class="connect-content">
-                    <img src="{{ url_for('static', filename='img/templates/TikTok_Icon_Black_Circle.png') }}" alt="TikTok" style="width: 50px; height: auto; padding: 0 !important; margin-bottom: 1rem;">
-                    <h3>Add TikTok Account</h3>
-                    <p>Track your viral potential and discover trending content</p>
-                    <a href="{{ url_for('accounts.index') }}" class="connect-btn">
-                        <i class="ph ph-plus"></i>
-                        Add Account
-                    </a>
+                <div class="channel-metrics placeholder-metrics">
+                    <div class="metric-item">
+                        <div class="metric-value">—</div>
+                        <div class="metric-label">Followers</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">—</div>
+                        <div class="metric-label">Posts</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">—</div>
+                        <div class="metric-label">Avg Likes</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">—</div>
+                        <div class="metric-label">Engagement</div>
+                    </div>
                 </div>
             </div>
             </div>
@@ -287,7 +289,7 @@
         <div class="features-preview">
             <div class="preview-card">
                 <div class="preview-icon">
-                    <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 72px; height: auto; padding: 0 !important;">
+                    <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 48px; height: auto; padding: 0 !important;">
                 </div>
                 <h3>YouTube Tools</h3>
                 <div class="preview-features">
@@ -454,7 +456,7 @@
                     <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 14px; height: auto; padding: 0 !important;">
                 </a>
                 <a href="https://www.youtube.com/@Creatrics" target="_blank" rel="noopener noreferrer" class="social-link">
-                    <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 56px; height: auto; padding: 0 !important;">
+                    <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 38px; height: auto; padding: 0 !important;">
                 </a>
             </div>
         </div>

@@ -247,9 +247,9 @@ html.dark .dashboard-wrapper {
     align-items: center;
     margin-bottom: 2rem;
     padding: 2rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(37, 99, 235, 0.04) 100%);
+    background: rgba(243, 244, 246, 0.5);
     border-radius: 16px;
-    border: 1px solid rgba(59, 130, 246, 0.12);
+    border: 1px solid var(--border-primary);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
@@ -336,18 +336,115 @@ html.dark .header-stat {
     white-space: nowrap;
 }
 
+/* Configure Accounts Button - Match View Calendar Button Style */
+.configure-accounts-btn {
+    padding: 0.625rem 1.25rem;
+    background: transparent;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+html.dark .configure-accounts-btn {
+    color: var(--text-tertiary);
+    border-color: rgba(63, 63, 70, 0.8);
+}
+
+.configure-accounts-btn:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #3B82F6;
+}
+
+html.dark .configure-accounts-btn:hover {
+    background: rgba(96, 165, 250, 0.1);
+    border-color: rgba(96, 165, 250, 0.4);
+    color: #60A5FA;
+}
+
+/* Analytics Empty State */
+.analytics-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(37, 99, 235, 0.02) 100%);
+    border-radius: 16px;
+    border: 2px dashed var(--border-primary);
+}
+
+html.dark .analytics-empty {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+    border-color: rgba(63, 63, 70, 0.6);
+}
+
+.analytics-empty i {
+    font-size: 4rem;
+    color: #3B82F6;
+    margin-bottom: 1.5rem;
+    opacity: 0.8;
+}
+
+html.dark .analytics-empty i {
+    color: #60A5FA;
+}
+
+.analytics-empty h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.analytics-empty p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.connect-accounts-btn {
+    padding: 0.875rem 1.75rem;
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+}
+
+.connect-accounts-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
 /* Channels Grid */
 .channels-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.875rem;
     margin-bottom: 2rem;
     max-width: 100%;
 }
 
-@supports (grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr))) {
+@supports (grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr))) {
     .channels-grid {
-        grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
     }
 }
 
@@ -355,35 +452,45 @@ html.dark .header-stat {
 .channel-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
-    border-radius: 16px;
+    border-radius: 18px;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
 }
 
 .channel-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    border-color: rgba(59, 130, 246, 0.2);
 }
 
 html.dark .channel-card {
-    background: rgba(39, 39, 42, 0.8);
+    background: rgba(39, 39, 42, 0.9);
     border-color: rgba(63, 63, 70, 0.8);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .channel-card:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border-color: rgba(96, 165, 250, 0.3);
 }
 
 .channel-header {
-    padding: 1.5rem;
-    background: transparent;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(37, 99, 235, 0.01) 100%);
     border-bottom: 1px solid var(--border-primary);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    min-height: 80px;
 }
 
 html.dark .channel-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
     border-bottom-color: rgba(63, 63, 70, 0.4);
 }
 
@@ -393,48 +500,37 @@ html.dark .channel-header {
     gap: 0.75rem;
 }
 
-.channel-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+/* Platform Logo - No Container */
+.platform-logo {
+    flex-shrink: 0;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    transition: transform 0.2s ease;
 }
 
-.channel-icon.youtube {
-    background: rgba(0, 0, 0, 0.05);
-}
-
-.channel-icon.x {
-    background: linear-gradient(135deg, #14171A 0%, #000000 100%);
-}
-
-.channel-icon.tiktok {
-    background: #000000;
-}
-
-html.dark .channel-icon.youtube {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-html.dark .channel-icon.tiktok {
-    background: #000000;
+.channel-card:hover .platform-logo {
+    transform: scale(1.05);
 }
 
 .channel-name h3 {
-    font-size: 1.125rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
+    line-height: 1.3;
 }
 
 .channel-username {
-    font-size: 0.813rem;
+    font-size: 0.688rem;
+    color: var(--text-primary);
+    line-height: 1.3;
+    margin-top: 0.25rem;
+    opacity: 0.6;
+}
+
+html.dark .channel-username {
     color: var(--text-tertiary);
+    opacity: 1;
 }
 
 .view-analytics-btn {
@@ -470,26 +566,51 @@ html.dark .view-analytics-btn:hover {
     color: #60A5FA;
 }
 
-/* Channel Metrics */
+/* Channel Metrics - 2x2 Grid */
 .channel-metrics {
-    padding: 1.5rem;
+    padding: 1.25rem;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    flex: 1;
 }
 
 .metric-item {
     text-align: center;
-    padding: 1.125rem 0.875rem;
+    padding: 0.875rem 0.625rem;
     border-radius: 10px;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-primary);
     min-width: 0;
-    transition: all 0.2s ease;
+    min-height: 75px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.metric-item:hover::before {
+    opacity: 1;
 }
 
 .metric-item:hover {
     background: var(--bg-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
 }
 
 html.dark .metric-item {
@@ -497,25 +618,85 @@ html.dark .metric-item {
     border-color: rgba(82, 82, 91, 0.5);
 }
 
+html.dark .metric-item:hover {
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+}
+
 .metric-value {
     font-size: 1.25rem;
-    font-weight: 800;
+    font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-bottom: 0.25rem;
+}
+
+html.dark .metric-value {
+    background: linear-gradient(135deg, #60A5FA, #A78BFA);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .metric-label {
-    font-size: 0.7rem;
-    color: var(--text-tertiary);
-    margin-top: 0.5rem;
-    font-weight: 500;
+    font-size: 0.625rem;
+    color: var(--text-primary);
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    opacity: 0.5;
+}
+
+html.dark .metric-label {
+    color: var(--text-tertiary);
+    opacity: 1;
+}
+
+/* Instagram Placeholder - No special styling, treat as normal */
+
+.coming-soon-badge {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 146, 60, 0.1) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 8px;
+    font-size: 0.813rem;
+    font-weight: 600;
+    color: #F59E0B;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+html.dark .coming-soon-badge {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 146, 60, 0.15) 100%);
+    border-color: rgba(251, 191, 36, 0.4);
+    color: #FCD34D;
+}
+
+.placeholder-metrics .metric-item {
+    cursor: default;
+}
+
+.placeholder-metrics .metric-item:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.placeholder-metrics .metric-item::before {
+    display: none;
+}
+
+.placeholder-metrics .metric-value {
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: unset;
+    background-clip: unset;
+    color: var(--text-tertiary);
+    font-size: 2rem;
 }
 
 /* NEW: Quick Actions Section - Standalone with auto-scroll */
@@ -779,12 +960,14 @@ html.dark .calendar-section {
 }
 
 .calendar-header i {
-    color: #3B82F6;
+    color: var(--text-primary);
     font-size: 1.375rem;
+    opacity: 0.7;
 }
 
 html.dark .calendar-header i {
     color: #60A5FA;
+    opacity: 1;
 }
 
 .view-calendar-btn {

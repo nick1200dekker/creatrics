@@ -888,7 +888,7 @@ html.dark .x-logo-dark {
             <div class="account-card">
                 <div class="card-header">
                     <div class="platform-icon youtube-platform">
-                        <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 57px; height: auto; padding: 0 !important;">
+                        <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 42px; height: auto; padding: 0 !important;">
                     </div>
                     <h2 class="platform-name">YouTube Channel</h2>
                 </div>
@@ -1088,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const config = configs[platform];
         if (icon) {
             if (platform === 'youtube') {
-                icon.innerHTML = '<img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 56px; height: auto; padding: 0 !important;">';
+                icon.innerHTML = '<img src="/static/img/templates/yt_icon_red_digital.png" alt="YouTube" style="width: 42px; height: auto; padding: 0 !important;">';
             } else {
                 icon.className = `ph ph-${config.icon}`;
             }
