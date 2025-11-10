@@ -1364,7 +1364,7 @@
                    class="nav-subitem {% if request.endpoint and 'accounts' in request.endpoint %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-user-circle"></i>
-                    <span>Social Accounts</span>
+                    <span>Manage Accounts</span>
                 </a>
                 {% if can_access_teams %}
                 <a href="{{ url_for('teams.teams_dashboard') }}"
@@ -1385,7 +1385,7 @@
                    class="nav-subitem {% if request.endpoint == 'payment.index' %}active{% endif %}"
                    onclick="return BaseApp.checkGuestAccess(event, this)">
                     <i class="ph ph-crown"></i>
-                    <span>Upgrade</span>
+                    <span>Upgrade Plan</span>
                 </a>
                 {% endif %}
             </div>

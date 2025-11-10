@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% set check_auth = true %}
 
-{% block title %}Social Accounts - Creator Tools{% endblock %}
+{% block title %}Manage Accounts - Creator Tools{% endblock %}
 
 {% block head %}
 {{ super() }}
@@ -161,17 +161,17 @@ html.dark .beta-warning a:hover {
 /* Account Cards Grid */
 .accounts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
     width: 100%;
     max-width: none;
 }
 
-/* On larger screens, use full width */
+/* On larger screens, show all 4 cards side by side */
 @media (min-width: 1280px) {
     .accounts-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 
@@ -862,7 +862,7 @@ html.dark .x-logo-dark {
         <div class="header-content">
             <h1 class="page-title">
                 <i class="ph ph-link"></i>
-                Social Accounts
+                Manage Accounts
             </h1>
         </div>
     </div>
@@ -888,9 +888,9 @@ html.dark .x-logo-dark {
             <div class="account-card">
                 <div class="card-header">
                     <div class="platform-icon youtube-platform">
-                        <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 42px; height: auto; padding: 0 !important;">
+                        <img src="{{ url_for('static', filename='img/templates/yt_icon_red_digital.png') }}" alt="YouTube" style="width: 32px; height: auto; padding: 0 !important;">
                     </div>
-                    <h2 class="platform-name">YouTube Channel</h2>
+                    <h2 class="platform-name">YouTube</h2>
                 </div>
                 
                 {% if youtube_connected and youtube_setup_complete %}
@@ -935,10 +935,10 @@ html.dark .x-logo-dark {
             <div class="account-card">
                 <div class="card-header">
                     <div class="platform-icon x-platform">
-                        <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 20px; height: auto; padding: 0 !important;">
-                        <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 20px; height: auto; padding: 0 !important;">
+                        <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}" alt="X" class="x-logo-light" style="width: 16px; height: auto; padding: 0 !important;">
+                        <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}" alt="X" class="x-logo-dark" style="width: 16px; height: auto; padding: 0 !important;">
                     </div>
-                    <h2 class="platform-name">X Account</h2>
+                    <h2 class="platform-name">X</h2>
                 </div>
 
                 {% if x_connected and x_setup_complete %}
@@ -984,11 +984,11 @@ html.dark .x-logo-dark {
             <div class="account-card">
                 <div class="card-header">
                     <div class="platform-icon tiktok-platform">
-                        <img src="{{ url_for('static', filename='img/templates/TikTok_Icon_Black_Circle.png') }}" alt="TikTok" style="width: 36px; height: auto; padding: 0 !important;">
+                        <img src="{{ url_for('static', filename='img/templates/TikTok_Icon_Black_Circle.png') }}" alt="TikTok" style="width: 28px; height: auto; padding: 0 !important;">
                     </div>
-                    <h2 class="platform-name">TikTok Account</h2>
+                    <h2 class="platform-name">TikTok</h2>
                 </div>
-                
+
                 {% if tiktok_connected and tiktok_setup_complete %}
                     <div class="connection-status">
                         <div class="status-info">
@@ -1008,17 +1008,17 @@ html.dark .x-logo-dark {
                 {% else %}
                     <form method="POST" action="{{ url_for('accounts.connect_account') }}" data-turbo="false">
                         <input type="hidden" name="platform" value="tiktok">
-                        
+
                         <div class="form-group">
                             <label for="tiktok_username" class="form-label">Username</label>
-                            <input type="text" 
-                                   id="tiktok_username" 
-                                   name="tiktok_username" 
-                                   class="form-input" 
-                                   placeholder="username" 
+                            <input type="text"
+                                   id="tiktok_username"
+                                   name="tiktok_username"
+                                   class="form-input"
+                                   placeholder="username"
                                    required>
                         </div>
-                        
+
                         <button type="submit" class="action-button primary" id="connectTikTokBtn">
                             <div class="button-spinner"></div>
                             <i class="ph ph-link button-icon"></i>
@@ -1026,6 +1026,33 @@ html.dark .x-logo-dark {
                         </button>
                     </form>
                 {% endif %}
+            </div>
+
+            <!-- Instagram Account -->
+            <div class="account-card" style="opacity: 0.6; pointer-events: none;">
+                <div class="card-header">
+                    <div class="platform-icon" style="background: transparent; width: auto; height: 48px; display: flex; align-items: center; justify-content: center;">
+                        <img src="{{ url_for('static', filename='img/templates/Instagram_Glyph_Gradient.png') }}" alt="Instagram" style="width: 28px; height: auto; padding: 0 !important;">
+                    </div>
+                    <h2 class="platform-name">Instagram</h2>
+                </div>
+
+                <form>
+                    <div class="form-group">
+                        <label for="instagram_username" class="form-label">Username</label>
+                        <input type="text"
+                               id="instagram_username"
+                               name="instagram_username"
+                               class="form-input"
+                               placeholder="username"
+                               disabled>
+                    </div>
+
+                    <button type="button" class="action-button primary" disabled>
+                        <i class="ph ph-link button-icon"></i>
+                        Configure Account
+                    </button>
+                </form>
             </div>
         </div>
         
