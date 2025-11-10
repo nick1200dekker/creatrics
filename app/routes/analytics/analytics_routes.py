@@ -69,8 +69,34 @@ def x_overview():
         latest_doc = latest_ref.get()
         
         if not latest_doc.exists:
-            logger.warning(f"No latest X analytics data for user {user_id}")
-            return jsonify({'error': 'No X analytics data available'}), 404
+            logger.info(f"No latest X analytics data for user {user_id} - returning zeros for new account")
+            # Return empty data structure with zeros for new accounts
+            return jsonify({
+                'current': {
+                    'followers': 0,
+                    'following': 0,
+                    'total_posts': 0,
+                    'total_views': 0,
+                    'total_likes': 0,
+                    'total_retweets': 0,
+                    'total_replies': 0,
+                    'total_bookmarks': 0,
+                    'engagement_rate': 0,
+                    'avg_views': 0,
+                    'avg_likes': 0,
+                    'avg_engagement_rate': 0,
+                    'last_updated': datetime.now().isoformat(),
+                    'posts_in_timeframe': 0,
+                    'timeframe': timeframe
+                },
+                'historical': [],
+                'trends': {
+                    'followers': 0,
+                    'posts': 0,
+                    'views': 0,
+                    'engagement': 0
+                }
+            }), 200
         
         latest_data = latest_doc.to_dict()
         
@@ -835,12 +861,24 @@ def youtube_overview():
             # Check if user has YouTube connected but no data (token may have been revoked)
             user_doc = db.collection('users').document(user_id).get()
             if user_doc.exists and user_doc.to_dict().get('youtube_account'):
-                # User has YouTube connected but no analytics data - token was likely revoked
+                # User has YouTube connected but no analytics data yet - return zeros for new account
+                logger.info(f"No YouTube analytics data for user {user_id} - returning zeros for new account")
                 return jsonify({
-                    'error': 'YouTube authorization expired or revoked. Please reconnect your account.',
-                    'needs_reconnect': True
-                }), 401
-            return jsonify({'error': 'No YouTube analytics data available'}), 404
+                    'current': {
+                        'views': 0,
+                        'watch_time_minutes': 0,
+                        'subscribers_gained': 0,
+                        'video_count': 0,
+                        'avg_view_duration_seconds': 0
+                    },
+                    'trends': {
+                        'views_change': 0,
+                        'watch_time_change': 0,
+                        'subscribers_change': 0
+                    },
+                    'data_age': None
+                }), 200
+            return jsonify({'error': 'YouTube not connected'}), 404
 
         latest_data = latest_doc.to_dict()
 
@@ -932,7 +970,20 @@ def youtube_daily_views():
         latest_doc = latest_ref.get()
 
         if not latest_doc.exists:
-            return jsonify({'error': 'No YouTube analytics data available'}), 404
+            logger.info(f"No YouTube analytics data for user {user_id} - returning empty data for new account")
+            # Return empty data structure for new accounts
+            return jsonify({
+                'daily_data': [],
+                'calculated_metrics': {
+                    'views': 0,
+                    'watch_time_minutes': 0,
+                    'subscribers_gained': 0,
+                    'video_count': 0,
+                    'avg_view_duration_seconds': 0
+                },
+                'timeframe': timeframe,
+                'data_age': None
+            }), 200
 
         latest_data = latest_doc.to_dict()
 
@@ -1128,7 +1179,8 @@ def youtube_top_videos():
         latest_doc = latest_ref.get()
 
         if not latest_doc.exists:
-            return jsonify({'error': 'No YouTube analytics data available'}), 404
+            logger.info(f"No YouTube analytics data for user {user_id} - returning empty videos list")
+            return jsonify({'top_videos': []}), 200
 
         latest_data = latest_doc.to_dict()
 

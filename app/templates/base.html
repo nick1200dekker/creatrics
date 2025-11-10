@@ -430,9 +430,9 @@
         padding: 0.75rem 0.8rem;
         margin: 0.15rem 0;
         border-radius: 8px;
-        color: #1e293b;
+        color: #475569;
         font-size: 0.875rem;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.15s ease;
         cursor: pointer;
         user-select: none;
@@ -444,6 +444,10 @@
     }
 
     .nav-group-header:hover {
+        background: #F1F5F9;
+    }
+
+    html.dark .nav-group-header:hover {
         background: var(--hover-bg);
     }
 
@@ -455,8 +459,8 @@
     */
 
     .nav-group-header .left-content span {
-        color: #1e293b;
-        font-weight: 500;
+        color: #334155;
+        font-weight: 600;
     }
 
     html.dark .nav-group-header .left-content span {
@@ -465,6 +469,10 @@
     }
 
     .nav-group-header:hover .left-content span {
+        color: #1e293b;
+    }
+
+    html.dark .nav-group-header:hover .left-content span {
         color: var(--text-primary);
     }
 
@@ -517,7 +525,7 @@
         padding: 0.6rem 0.8rem 0.6rem 1.5rem;
         margin: 0.1rem 0;
         border-radius: 8px;
-        color: #1e293b;
+        color: #64748B;
         font-size: 0.825rem;
         font-weight: 500;
         transition: all 0.15s ease;
@@ -534,26 +542,44 @@
 
     .nav-subitem i {
         font-weight: bold;
+        color: #94A3B8;
     }
 
     html.dark .nav-subitem i {
         font-weight: normal;
+        color: #64748B;
     }
 
     .nav-subitem:hover {
-        color: var(--text-primary);
-        background: var(--hover-bg);
+        color: #1e293b;
+        background: #F1F5F9;
         transform: translateX(2px);
     }
 
-    .nav-subitem.active {
-        background: var(--bg-tertiary);
+    html.dark .nav-subitem:hover {
         color: var(--text-primary);
+        background: var(--hover-bg);
+    }
+
+    .nav-subitem.active {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.08) 100%);
+        color: #3B82F6;
         font-weight: 600;
+        border-left: 3px solid #3B82F6;
+        padding-left: calc(1.5rem - 3px);
+    }
+
+    .nav-subitem.active i {
+        color: #3B82F6;
     }
 
     html.dark .nav-subitem.active {
         background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-left: 3px solid #3B82F6;
+    }
+
+    html.dark .nav-subitem.active i {
         color: var(--text-primary);
     }
 

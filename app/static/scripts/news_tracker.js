@@ -384,9 +384,19 @@ const NewsTracker = {
             <div class="news-card" data-index="${index}">
                 <div style="display: flex; align-items: flex-start; margin-bottom: 1rem;">
                     <div class="news-image-container">
-                        <div class="news-image-placeholder">
-                            <i class="${this.getCategoryIcon(article.category)}"></i>
-                        </div>
+                        ${article.image_url ? `
+                            <img src="${escapeHtml(article.image_url)}"
+                                 alt="${escapeHtml(article.title)}"
+                                 class="news-image"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="news-image-placeholder" style="display: none;">
+                                <i class="${this.getCategoryIcon(article.category)}"></i>
+                            </div>
+                        ` : `
+                            <div class="news-image-placeholder">
+                                <i class="${this.getCategoryIcon(article.category)}"></i>
+                            </div>
+                        `}
                     </div>
                     <div class="news-content-wrapper">
                         <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">

@@ -125,12 +125,45 @@ Return ONLY the post content, nothing else."""
                     clean_text = html.unescape(clean_text)
                     description = clean_text[:200] + '...' if len(clean_text) > 200 else clean_text
 
+                # Extract image/thumbnail from RSS feed
+                image_url = None
+
+                # Method 1: Check for media:content or media:thumbnail (common in RSS 2.0)
+                if hasattr(entry, 'media_content') and entry.media_content:
+                    image_url = entry.media_content[0].get('url', '')
+                elif hasattr(entry, 'media_thumbnail') and entry.media_thumbnail:
+                    image_url = entry.media_thumbnail[0].get('url', '')
+
+                # Method 2: Check for enclosure tag (podcasts/media)
+                elif hasattr(entry, 'enclosures') and entry.enclosures:
+                    for enclosure in entry.enclosures:
+                        if enclosure.get('type', '').startswith('image/'):
+                            image_url = enclosure.get('href', '')
+                            break
+
+                # Method 3: Parse content field HTML for img tags (used by The Verge, etc.)
+                if not image_url and hasattr(entry, 'content') and entry.content:
+                    content_html = entry.content[0].get('value', '')
+                    if content_html:
+                        content_soup = BeautifulSoup(content_html, 'html.parser')
+                        img_tag = content_soup.find('img')
+                        if img_tag and img_tag.get('src'):
+                            image_url = img_tag.get('src')
+
+                # Method 4: Parse description HTML for img tags (fallback)
+                if not image_url and description:
+                    desc_soup = BeautifulSoup(entry.get('description', entry.get('summary', '')), 'html.parser')
+                    img_tag = desc_soup.find('img')
+                    if img_tag and img_tag.get('src'):
+                        image_url = img_tag.get('src')
+
                 item = {
                     'title': title,
                     'link': entry.get('link', ''),
                     'description': description,  # Only for AI processing, not stored
                     'published': published_date,
                     'source': source,
+                    'image_url': image_url,  # Thumbnail from RSS feed
                 }
 
                 news_items.append(item)

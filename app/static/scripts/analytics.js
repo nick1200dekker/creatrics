@@ -1043,7 +1043,20 @@ function initializeAnalytics() {
     
     function renderYouTubeChartsWithDailyData(dailyData, overviewData) {
         const viewsContainer = document.querySelector("#youtube-views-chart");
-        if (viewsContainer && dailyData && dailyData.length > 0) {
+
+        // Handle empty data - show empty state instead of loading spinner
+        if (!dailyData || dailyData.length === 0) {
+            if (viewsContainer) {
+                viewsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ph ph-chart-line"></i></div><div class="empty-state-title">No Data Yet</div><div class="empty-state-description">Analytics will appear here once you have videos with views</div></div>';
+            }
+            const trafficContainer = document.querySelector("#youtube-traffic-chart");
+            if (trafficContainer) {
+                trafficContainer.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="ph ph-users-three"></i></div><div class="empty-state-title">No Traffic Data</div><div class="empty-state-description">Traffic sources will appear here once you have video views</div></div>';
+            }
+            return;
+        }
+
+        if (viewsContainer) {
             viewsContainer.innerHTML = '';
             
             const viewsOptions = {

@@ -195,24 +195,25 @@ document.addEventListener('DOMContentLoaded', async function() {
                 youtubeUsername.textContent = '@' + data.youtube_account;
             }
 
-            // Load YouTube analytics if available
-            if (data.youtube_analytics && youtubeMetrics) {
+            // Load YouTube analytics (show zeros if no data yet for new accounts)
+            if (youtubeMetrics) {
                 youtubeMetrics.classList.remove('placeholder-metrics');
+                const analytics = data.youtube_analytics || {};
                 youtubeMetrics.innerHTML = `
                     <div class="metric-item">
-                        <div class="metric-value">${formatNumber(data.youtube_analytics.views || 0)}</div>
+                        <div class="metric-value">${formatNumber(analytics.views || 0)}</div>
                         <div class="metric-label">Views</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value">+${formatNumber(data.youtube_analytics.subscribers_gained || 0)}</div>
+                        <div class="metric-value">+${formatNumber(analytics.subscribers_gained || 0)}</div>
                         <div class="metric-label">Subscribers</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value">${formatNumber(data.youtube_analytics.video_count || 0)}</div>
+                        <div class="metric-value">${formatNumber(analytics.video_count || 0)}</div>
                         <div class="metric-label">Videos</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value">${formatWatchTime(data.youtube_analytics.watch_time_minutes || 0)}</div>
+                        <div class="metric-value">${formatWatchTime(analytics.watch_time_minutes || 0)}</div>
                         <div class="metric-label">Watch Time</div>
                     </div>
                 `;
@@ -236,24 +237,25 @@ document.addEventListener('DOMContentLoaded', async function() {
                 xUsername.textContent = '@' + data.x_account;
             }
 
-            // Load X analytics if available
-            if (data.x_analytics && xMetrics) {
+            // Load X analytics (show zeros if no data yet for new accounts)
+            if (xMetrics) {
                 xMetrics.classList.remove('placeholder-metrics');
+                const analytics = data.x_analytics || {};
                 xMetrics.innerHTML = `
                     <div class="metric-item">
-                        <div class="metric-value">${formatNumber(data.x_analytics.followers || 0)}</div>
+                        <div class="metric-value">${formatNumber(analytics.followers || 0)}</div>
                         <div class="metric-label">Followers</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value">${formatNumber(data.x_analytics.posts || 0)}</div>
+                        <div class="metric-value">${formatNumber(analytics.posts || 0)}</div>
                         <div class="metric-label">Posts</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value">${formatNumber(data.x_analytics.avg_views || 0)}</div>
+                        <div class="metric-value">${formatNumber(analytics.avg_views || 0)}</div>
                         <div class="metric-label">Avg Views</div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-value">${data.x_analytics.engagement_rate_display || '0%'}</div>
+                        <div class="metric-value">${analytics.engagement_rate_display || '0%'}</div>
                         <div class="metric-label">Engagement</div>
                     </div>
                 `;
@@ -277,10 +279,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 tiktokUsername.textContent = '@' + data.tiktok_account;
             }
 
-            // Load TikTok analytics if available from dashboard-data
-            if (data.tiktok_analytics && tiktokMetrics) {
+            // Load TikTok analytics (show zeros if no data yet for new accounts)
+            if (tiktokMetrics) {
                 tiktokMetrics.classList.remove('placeholder-metrics');
-                const tiktokData = data.tiktok_analytics;
+                const tiktokData = data.tiktok_analytics || {};
 
                 // Get engagement rate
                 let engagementRate = tiktokData.engagement_rate || 0;

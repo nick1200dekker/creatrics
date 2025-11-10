@@ -15,10 +15,8 @@ bp = Blueprint('news_tracker', __name__, url_prefix='/news-tracker')
 RSS_FEEDS = [
     # General News
     {'name': 'BBC News', 'url': 'https://feeds.bbci.co.uk/news/rss.xml'},
-    {'name': 'Reuters World', 'url': 'http://feeds.reuters.com/Reuters/worldNews'},
     {'name': 'The Guardian', 'url': 'https://www.theguardian.com/world/rss'},
     {'name': 'CNN Top Stories', 'url': 'http://rss.cnn.com/rss/cnn_topstories.rss'},
-    {'name': 'Associated Press', 'url': 'https://apnews.com/index.rss'},
     {'name': 'NPR News', 'url': 'https://feeds.npr.org/1001/rss.xml'},
     {'name': 'Al Jazeera', 'url': 'https://www.aljazeera.com/xml/rss/all.xml'},
 
@@ -32,7 +30,6 @@ RSS_FEEDS = [
     {'name': 'MIT Technology Review', 'url': 'https://www.technologyreview.com/feed/'},
     {'name': 'VentureBeat', 'url': 'https://venturebeat.com/feed/'},
     {'name': 'Bloomberg Technology', 'url': 'https://feeds.bloomberg.com/technology/news.rss'},
-    {'name': 'Forbes Technology', 'url': 'https://www.forbes.com/technology/feed/'},
 
     # Finance & Crypto
     {'name': 'CoinDesk', 'url': 'https://www.coindesk.com/arc/outboundfeeds/rss/'},
@@ -61,12 +58,6 @@ RSS_FEEDS = [
     # Sports
     {'name': 'ESPN', 'url': 'https://www.espn.com/espn/rss/news'},
     {'name': 'BBC Sport', 'url': 'http://feeds.bbci.co.uk/sport/rss.xml'},
-    {'name': 'The Athletic', 'url': 'https://theathletic.com/feed/'},
-
-    # Lifestyle & Health
-    {'name': 'WebMD', 'url': 'https://www.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC'},
-    {'name': 'Healthline', 'url': 'https://www.healthline.com/feeds/rss'},
-    {'name': 'Medical News Today', 'url': 'https://www.medicalnewstoday.com/feeds/rss'},
 
     # Environment
     {'name': 'Climate Home News', 'url': 'https://www.climatechangenews.com/feed/'},

@@ -299,6 +299,7 @@ class NewsRadarService:
                 'published': article.get('published', ''),
                 'source': article['source'],
                 'feed_url': article['feed_url'],
+                'image_url': article.get('image_url', ''),  # Thumbnail from RSS feed
 
                 # AI-generated content (our original content)
                 'category': categorization['category'],
