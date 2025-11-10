@@ -288,13 +288,13 @@
     }
     
     .logo-section {
-        padding: 10px;
+        padding: 7px 10px 7px 5px;
         margin: 0;
         border-bottom: 1px solid var(--border-primary);
         flex-shrink: 0;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         position: relative;
         transition: all 0.3s ease;
     }
@@ -309,7 +309,7 @@
         display: block;
         object-fit: contain;
         transition: all 0.2s ease;
-        filter: drop-shadow(0 1px 3px rgba(59, 130, 246, 0.1));
+        filter: brightness(0) saturate(100%) invert(0);
         position: relative;
         z-index: 2;
     }
@@ -320,11 +320,6 @@
 
     .logo-section img:hover {
         transform: scale(1.05);
-        filter: drop-shadow(0 2px 6px rgba(59, 130, 246, 0.2));
-    }
-
-    html.dark .logo-section img:hover {
-        filter: brightness(0) saturate(100%) invert(100%);
     }
     
     .nav-section {
@@ -361,15 +356,20 @@
         padding: 0.75rem 0.8rem;
         margin: 0.15rem 0;
         border-radius: 8px;
-        color: #64748B;
+        color: #1e293b;
         font-size: 0.875rem;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.15s ease;
         position: relative;
         text-decoration: none;
         height: 48px;
         cursor: pointer;
         user-select: none;
+    }
+
+    html.dark .nav-item {
+        color: #64748B;
+        font-weight: 500;
     }
     
     .nav-item:hover {
@@ -385,14 +385,14 @@
     
     .nav-item.active {
         background: var(--bg-tertiary);
-        color: var(--accent-blue);
+        color: var(--text-primary);
         font-weight: 600;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
     html.dark .nav-item.active {
         background: var(--bg-tertiary);
-        color: #60A5FA;
+        color: var(--text-primary);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     }
     
@@ -411,6 +411,11 @@
     .nav-item i {
         font-size: 1.1rem;
         pointer-events: none;
+        font-weight: bold;
+    }
+
+    html.dark .nav-item i {
+        font-weight: normal;
     }
 
     /* Expandable menu styles */
@@ -425,12 +430,17 @@
         padding: 0.75rem 0.8rem;
         margin: 0.15rem 0;
         border-radius: 8px;
-        color: #64748B;
+        color: #1e293b;
         font-size: 0.875rem;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.15s ease;
         cursor: pointer;
         user-select: none;
+    }
+
+    html.dark .nav-group-header {
+        color: #64748B;
+        font-weight: 500;
     }
 
     .nav-group-header:hover {
@@ -445,6 +455,11 @@
     */
 
     .nav-group-header .left-content span {
+        color: #1e293b;
+        font-weight: 600;
+    }
+
+    html.dark .nav-group-header .left-content span {
         color: #64748B;
         font-weight: 500;
     }
@@ -459,10 +474,23 @@
         gap: 0.75rem;
     }
 
+    .nav-group-header .left-content i {
+        font-weight: bold;
+    }
+
+    html.dark .nav-group-header .left-content i {
+        font-weight: normal;
+    }
+
     .nav-group-header .chevron {
         transition: transform 0.2s ease;
         font-size: 0.875rem;
         color: var(--text-tertiary);
+        font-weight: bold;
+    }
+
+    html.dark .nav-group-header .chevron {
+        font-weight: normal;
     }
 
     .nav-group-header.expanded .chevron {
@@ -489,14 +517,27 @@
         padding: 0.6rem 0.8rem 0.6rem 2.5rem;
         margin: 0.1rem 0;
         border-radius: 8px;
-        color: #64748B;
+        color: #1e293b;
         font-size: 0.825rem;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.15s ease;
         position: relative;
         text-decoration: none;
         cursor: pointer;
         user-select: none;
+    }
+
+    html.dark .nav-subitem {
+        color: #64748B;
+        font-weight: 500;
+    }
+
+    .nav-subitem i {
+        font-weight: bold;
+    }
+
+    html.dark .nav-subitem i {
+        font-weight: normal;
     }
 
     .nav-subitem:hover {
@@ -507,13 +548,13 @@
 
     .nav-subitem.active {
         background: var(--bg-tertiary);
-        color: var(--accent-blue);
+        color: var(--text-primary);
         font-weight: 600;
     }
 
     html.dark .nav-subitem.active {
         background: var(--bg-tertiary);
-        color: #60A5FA;
+        color: var(--text-primary);
     }
 
     .user-section {
@@ -1096,7 +1137,7 @@
         <div class="nav-group" data-group="X">
             <div class="nav-group-header" onclick="toggleNavGroup(this)">
                 <div class="left-content">
-                    <i class="ph ph-x-logo"></i>
+                    <span>X</span>
                 </div>
                 <i class="ph ph-caret-right chevron"></i>
             </div>
