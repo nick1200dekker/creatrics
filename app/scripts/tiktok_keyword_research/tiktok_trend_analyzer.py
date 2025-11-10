@@ -265,18 +265,18 @@ class TikTokTrendAnalyzer:
             'mature': sum(1 for v in analyzed_videos if v['trend_status'] == 'mature')
         }
 
-        # Calculate Hot Score (0-100) - based on videos posted within 7 days
-        videos_within_7_days = sum(1 for v in analyzed_videos if v['age_hours'] <= 168)  # 7 days = 168 hours
-        hot_score_percentage = (videos_within_7_days / len(analyzed_videos) * 100) if analyzed_videos else 0
+        # Calculate Hot Score (0-100) - based on videos posted within 14 days
+        videos_within_14_days = sum(1 for v in analyzed_videos if v['age_hours'] <= 336)  # 14 days = 336 hours
+        hot_score_percentage = (videos_within_14_days / len(analyzed_videos) * 100) if analyzed_videos else 0
         hot_score = int(hot_score_percentage)
 
-        # Calculate Engagement Score (0-100) - based on views per day for videos within 7 days
-        videos_within_7_days_list = [v for v in analyzed_videos if v['age_hours'] <= 168]
+        # Calculate Engagement Score (0-100) - based on views per day for videos within 14 days
+        videos_within_14_days_list = [v for v in analyzed_videos if v['age_hours'] <= 336]
 
         # Calculate average views per day (views / days old)
-        if videos_within_7_days_list:
+        if videos_within_14_days_list:
             views_per_day_list = []
-            for v in videos_within_7_days_list:
+            for v in videos_within_14_days_list:
                 days_old = max(v['age_hours'] / 24, 0.5)  # Minimum 0.5 days to avoid division issues
                 views_per_day = v['playCount'] / days_old
                 views_per_day_list.append(views_per_day)
@@ -304,31 +304,31 @@ class TikTokTrendAnalyzer:
         else:
             base_score = (avg_views_per_day / 1000) * 10  # 0-10
 
-        # Bonus points ONLY for viral videos posted within 7 days
+        # Bonus points ONLY for viral videos posted within 14 days
         videos_100k_plus = sum(1 for v in analyzed_videos if v['playCount'] >= 100000)
         videos_1m_plus = sum(1 for v in analyzed_videos if v['playCount'] >= 1000000)
         videos_10m_plus = sum(1 for v in analyzed_videos if v['playCount'] >= 10000000)
 
-        # Count viral videos within 7 days only
-        videos_100k_recent = sum(1 for v in analyzed_videos if v['playCount'] >= 100000 and v['age_hours'] <= 168)
-        videos_1m_recent = sum(1 for v in analyzed_videos if v['playCount'] >= 1000000 and v['age_hours'] <= 168)
-        videos_10m_recent = sum(1 for v in analyzed_videos if v['playCount'] >= 10000000 and v['age_hours'] <= 168)
+        # Count viral videos within 14 days only
+        videos_100k_recent = sum(1 for v in analyzed_videos if v['playCount'] >= 100000 and v['age_hours'] <= 336)
+        videos_1m_recent = sum(1 for v in analyzed_videos if v['playCount'] >= 1000000 and v['age_hours'] <= 336)
+        videos_10m_recent = sum(1 for v in analyzed_videos if v['playCount'] >= 10000000 and v['age_hours'] <= 336)
 
         # Bonus points: Add extra points only for recent viral videos
         total_videos = len(analyzed_videos)
         bonus_points = 0
 
-        # 100k+ within 7 days: based on percentage
+        # 100k+ within 14 days: based on percentage
         if videos_100k_recent > 0:
             percentage = (videos_100k_recent / total_videos) * 100
             bonus_points += min(5, int(percentage / 10))  # 10% = 1pt, 50% = 5pts
 
-        # 1M+ within 7 days: based on percentage
+        # 1M+ within 14 days: based on percentage
         if videos_1m_recent > 0:
             percentage = (videos_1m_recent / total_videos) * 100
             bonus_points += min(7, int(percentage / 5))  # 5% = 1pt, 35% = 7pts
 
-        # 10M+ within 7 days: based on percentage
+        # 10M+ within 14 days: based on percentage
         if videos_10m_recent > 0:
             percentage = (videos_10m_recent / total_videos) * 100
             bonus_points += min(8, int(percentage / 3))  # 3% = 1pt, 24% = 8pts
@@ -367,7 +367,7 @@ class TikTokTrendAnalyzer:
             'engagement_score': engagement_score,
             'total_score': total_score,
             'avg_views': avg_views,
-            'videos_within_7_days': videos_within_7_days,
+            'videos_within_14_days': videos_within_14_days,
             'videos_100k_plus': videos_100k_plus,
             'videos_1m_plus': videos_1m_plus,
             'videos_10m_plus': videos_10m_plus,

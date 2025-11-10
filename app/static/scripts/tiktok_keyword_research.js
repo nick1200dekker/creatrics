@@ -145,124 +145,117 @@ function displayResults(result) {
     // Update trend summary
     document.getElementById('trendSummary').textContent = result.trend_summary;
 
-    // Store and display videos
-    currentVideos = result.analyzed_videos;
-    displayVideos(currentVideos);
+    // Display aggregated insights
+    displayAggregatedInsights(result.analyzed_videos);
 
     // Scroll to results
     document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
 }
 
 /**
- * Display video cards
+ * Display aggregated insights from analyzed videos
  */
-function displayVideos(videos) {
-    const grid = document.getElementById('videosGrid');
-    grid.innerHTML = '';
+function displayAggregatedInsights(videos) {
+    const container = document.getElementById('insightsContainer');
 
     if (!videos || videos.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 2rem;">No videos found</p>';
+        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No data available</p>';
         return;
     }
 
-    videos.forEach(video => {
-        const card = createVideoCard(video);
-        grid.appendChild(card);
-    });
-}
+    // Calculate aggregated metrics
+    const totalVideos = videos.length;
+    const totalViews = videos.reduce((sum, v) => sum + (v.playCount || 0), 0);
+    const totalLikes = videos.reduce((sum, v) => sum + (v.diggCount || 0), 0);
+    const totalComments = videos.reduce((sum, v) => sum + (v.commentCount || 0), 0);
+    const totalShares = videos.reduce((sum, v) => sum + (v.shareCount || 0), 0);
 
-/**
- * Create a video card element
- */
-function createVideoCard(video) {
-    const card = document.createElement('div');
-    card.className = 'video-card';
-    card.onclick = () => openVideoModal(video);
+    const avgViews = Math.round(totalViews / totalVideos);
+    const avgLikes = Math.round(totalLikes / totalVideos);
+    const avgComments = Math.round(totalComments / totalVideos);
+    const avgEngagement = videos.reduce((sum, v) => sum + (v.engagement_rate || 0), 0) / totalVideos;
+    const avgViewsPerHour = videos.reduce((sum, v) => sum + (v.views_per_hour || 0), 0) / totalVideos;
 
-    // Determine viral score class
-    let scoreClass = 'low';
-    if (video.viral_potential >= 80) {
-        scoreClass = 'excellent';
-    } else if (video.viral_potential >= 65) {
-        scoreClass = 'good';
-    } else if (video.viral_potential >= 50) {
-        scoreClass = 'medium';
-    }
+    // Viral potential distribution
+    const excellent = videos.filter(v => v.viral_potential >= 80).length;
+    const good = videos.filter(v => v.viral_potential >= 65 && v.viral_potential < 80).length;
+    const medium = videos.filter(v => v.viral_potential >= 50 && v.viral_potential < 65).length;
+    const low = videos.filter(v => v.viral_potential < 50).length;
 
-    // Format numbers
-    const views = formatNumber(video.playCount);
-    const likes = formatNumber(video.diggCount);
-    const comments = formatNumber(video.commentCount);
+    // Trend status distribution
+    const viral = videos.filter(v => v.trend_status === 'viral').length;
+    const trending = videos.filter(v => v.trend_status === 'trending').length;
+    const emerging = videos.filter(v => v.trend_status === 'emerging').length;
+    const mature = videos.filter(v => v.trend_status === 'mature').length;
 
-    // Build hashtags HTML
-    let hashtagsHTML = '';
-    if (video.challenges && video.challenges.length > 0) {
-        hashtagsHTML = '<div class="video-hashtags">';
-        video.challenges.slice(0, 3).forEach(tag => {
-            hashtagsHTML += `<span class="hashtag">#${escapeHtml(tag.title)}</span>`;
-        });
-        hashtagsHTML += '</div>';
-    }
-
-    card.innerHTML = `
-        <div class="video-thumbnail">
-            <img src="${video.video.cover}" alt="Video thumbnail">
-            <div class="video-overlay">
-                <div class="play-icon">
-                    <i class="ph ph-play-fill"></i>
+    container.innerHTML = `
+        <div class="insights-grid">
+            <div class="insight-card">
+                <i class="ph ph-eye insight-card-icon"></i>
+                <div class="insight-card-content">
+                    <div class="insight-card-value">${formatNumber(avgViews)}</div>
+                    <div class="insight-card-label">Avg Views</div>
                 </div>
-                <div class="video-stats-overlay">
-                    <div class="stat-overlay">
-                        <i class="ph ph-eye"></i>
-                        <span>${views}</span>
-                    </div>
-                    <div class="stat-overlay">
-                        <i class="ph ph-heart"></i>
-                        <span>${likes}</span>
-                    </div>
+            </div>
+
+            <div class="insight-card">
+                <i class="ph ph-heart insight-card-icon"></i>
+                <div class="insight-card-content">
+                    <div class="insight-card-value">${formatNumber(avgLikes)}</div>
+                    <div class="insight-card-label">Avg Likes</div>
+                </div>
+            </div>
+
+            <div class="insight-card">
+                <i class="ph ph-chat-circle insight-card-icon"></i>
+                <div class="insight-card-content">
+                    <div class="insight-card-value">${formatNumber(avgComments)}</div>
+                    <div class="insight-card-label">Avg Comments</div>
+                </div>
+            </div>
+
+            <div class="insight-card">
+                <i class="ph ph-chart-line insight-card-icon"></i>
+                <div class="insight-card-content">
+                    <div class="insight-card-value">${avgEngagement.toFixed(2)}%</div>
+                    <div class="insight-card-label">Avg Engagement</div>
                 </div>
             </div>
         </div>
-        <div class="video-content">
-            <div class="video-header">
-                <div class="viral-score ${scoreClass}">${video.viral_potential}/100</div>
-                <div class="trend-badge ${video.trend_status}">${video.trend_status}</div>
-            </div>
-            <div class="video-desc">${escapeHtml(video.desc)}</div>
-            <div class="video-meta">
-                <div class="video-meta-row">
-                    <div class="video-author">
-                        <span>@${escapeHtml(video.author.uniqueId)}</span>
+
+        <!-- Video List -->
+        <div class="video-list-section">
+            <h4><i class="ph ph-list-bullets"></i> Video Sample List</h4>
+            <div class="video-list">
+                ${videos.sort((a, b) => a.age_hours - b.age_hours).map((video, index) => `
+                    <div class="video-list-item">
+                        <div class="video-list-rank">#${index + 1}</div>
+                        <div class="video-list-metrics">
+                            <div class="video-list-stats">
+                                <div class="video-stat">
+                                    <i class="ph ph-eye"></i>
+                                    <span>${formatNumber(video.playCount)}</span>
+                                </div>
+                                <div class="video-stat">
+                                    <i class="ph ph-heart"></i>
+                                    <span>${formatNumber(video.diggCount)}</span>
+                                </div>
+                                <div class="video-stat">
+                                    <i class="ph ph-chat-circle"></i>
+                                    <span>${formatNumber(video.commentCount)}</span>
+                                </div>
+                            </div>
+                            <div class="video-list-performance">
+                                <span class="perf-badge">${formatNumber(video.views_per_hour)} views/hr</span>
+                                <span class="perf-badge">${video.engagement_rate}% engagement</span>
+                                <span class="perf-badge age">${video.age_display}</span>
+                            </div>
+                        </div>
                     </div>
-                    <span>${video.age_display}</span>
-                </div>
-                <div class="video-meta-row">
-                    <span>${formatNumber(video.views_per_hour)} views/hr</span>
-                    <span>${video.engagement_rate}% engagement</span>
-                </div>
+                `).join('')}
             </div>
-            ${hashtagsHTML}
         </div>
     `;
-
-    return card;
-}
-
-/**
- * Open video in modal
- */
-function openVideoModal(video) {
-    // Open TikTok video in new tab using video ID
-    const videoId = video.id;
-    const authorId = video.author.uniqueId;
-
-    if (videoId && authorId) {
-        // Open TikTok video directly on TikTok
-        const tiktokUrl = `https://www.tiktok.com/@${authorId}/video/${videoId}`;
-        window.open(tiktokUrl, '_blank');
-    } else {
-        alert('Video information not available');
-    }
 }
 
 /**

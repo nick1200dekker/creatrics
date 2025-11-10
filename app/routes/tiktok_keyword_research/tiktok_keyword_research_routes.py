@@ -56,76 +56,70 @@ def search_trends():
             "x-rapidapi-host": TIKTOK_API_HOST
         }
 
-        # PARALLEL API CALLS - Fetch first page to get search_id, then fetch remaining 4 pages in parallel
+        # SEQUENTIAL API CALLS - Fetch pages one by one using cursor from previous response
         all_videos = []
         search_id = "0"
+        cursor = 0
+        has_more = True
+        max_pages = 5  # Limit to 5 pages to avoid too many API calls
 
-        # First request to get search_id
-        first_params = {
-            "keyword": keyword,
-            "cursor": 0,
-            "search_id": "0"
-        }
+        page_count = 0
 
-        logger.info(f"Fetching first page for '{keyword}' ({mode} mode)")
-        first_response = requests.get(endpoint, headers=headers, params=first_params, timeout=30)
-        first_response.raise_for_status()
-        first_data = first_response.json()
+        while has_more and page_count < max_pages:
+            params = {
+                "keyword": keyword,
+                "cursor": cursor,
+                "search_id": search_id
+            }
 
-        if first_data.get('status_code') == 0:
-            # Process first page
-            if mode == 'video':
-                item_list = first_data.get('item_list', [])
-                if item_list:
-                    all_videos.extend(item_list)
-                search_id = first_data.get('search_id', search_id)
-            else:
-                page_data = first_data.get('data', [])
-                if page_data:
-                    all_videos.extend(page_data)
-                log_pb = first_data.get('log_pb', {})
-                impr_id = log_pb.get('impr_id')
-                if impr_id:
-                    search_id = impr_id
+            logger.info(f"Fetching page {page_count + 1} for '{keyword}' ({mode} mode) - cursor: {cursor}")
 
-            logger.info(f"Got search_id: {search_id}")
+            try:
+                response = requests.get(endpoint, headers=headers, params=params, timeout=30)
+                response.raise_for_status()
+                data = response.json()
 
-            # Fetch remaining 4 pages in PARALLEL
-            import asyncio
-            import httpx
+                if data.get('status_code') == 0:
+                    # Extract videos based on mode
+                    if mode == 'video':
+                        item_list = data.get('item_list', [])
+                        if item_list:
+                            all_videos.extend(item_list)
+                            logger.info(f"Page {page_count + 1}: Got {len(item_list)} videos")
 
-            async def fetch_remaining_pages():
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    tasks = []
-                    for page_num in range(1, 5):
-                        params = {
-                            "keyword": keyword,
-                            "cursor": page_num,
-                            "search_id": search_id
-                        }
-                        tasks.append(client.get(endpoint, headers=headers, params=params))
-                    return await asyncio.gather(*tasks, return_exceptions=True)
+                        # Get cursor and search_id for next request
+                        cursor = data.get('cursor', cursor)
+                        search_id = data.get('search_id', search_id)
+                        has_more = data.get('has_more', False)
+                    else:
+                        page_data = data.get('data', [])
+                        if page_data:
+                            all_videos.extend(page_data)
+                            logger.info(f"Page {page_count + 1}: Got {len(page_data)} videos")
 
-            logger.info("Fetching 4 more pages in parallel")
-            responses = asyncio.run(fetch_remaining_pages())
+                        # Get search_id from log_pb (for general search)
+                        log_pb = data.get('log_pb', {})
+                        impr_id = log_pb.get('impr_id')
+                        if impr_id:
+                            search_id = impr_id
 
-            # Process parallel responses
-            for resp in responses:
-                if isinstance(resp, Exception):
-                    continue
-                try:
-                    data = resp.json()
-                    if data.get('status_code') == 0:
-                        if mode == 'video':
-                            item_list = data.get('item_list', [])
-                            if item_list:
-                                all_videos.extend(item_list)
-                        else:
-                            page_data = data.get('data', [])
-                            if page_data:
-                                all_videos.extend(page_data)
-                except:
-                    continue
+                        # Get cursor for next page
+                        cursor = data.get('cursor', cursor)
+                        has_more = data.get('has_more', False)
+
+                    page_count += 1
+
+                    # If no items returned, stop
+                    if (mode == 'video' and not item_list) or (mode != 'video' and not page_data):
+                        logger.info(f"No more videos returned, stopping at page {page_count}")
+                        break
+                else:
+                    logger.warning(f"API returned status_code: {data.get('status_code')}")
+                    break
+
+            except Exception as e:
+                logger.error(f"Error fetching page {page_count + 1}: {e}")
+                break
 
         if not all_videos:
             return jsonify({
