@@ -8,16 +8,19 @@ Here is the list of keywords trending on TikTok:
 {keywords_text}
 
 Instructions:
-- Be STRICT: Only return keywords that are VIDEO GAMES and GAME TITLES
-- Include: video game titles, gaming platforms, gaming genres, esports, game-specific terms
-- Examples: minecraft, fortnite, roblox, valorant, leagueoflegends, playstation, xbox, fps, rpg, speedrun
-- EXCLUDE: Gaming creators/streamers (e.g., "pewdiepie", "ninja") - we only want games, not people
-- EXCLUDE: TV shows, movies, anime, general entertainment content (e.g., "smilingfriends" is a TV show, NOT a game)
-- EXCLUDE: General internet culture, memes, or trends not specifically about gaming
-- Only include a keyword if it is clearly a video game title or gaming activity
-- When in doubt, EXCLUDE it - we need high-quality gaming-only results
-- FIRST: Filter the list above to only gaming-related keywords
-- THEN: If you have less than 100 keywords, add popular/hot video game titles that are trending right now to reach 100 total keywords
+- Be EXTREMELY STRICT: Only return keywords that are VIDEO GAMES and GAME TITLES
+- Include ONLY: video game titles, gaming platforms, gaming genres, esports terms, game-specific gameplay terms
+- Examples of VALID keywords: minecraft, fortnite, roblox, valorant, leagueoflegends, callofduty, fifa, nba2k, pokemon, zelda, mariokart, gta, apex, overwatch, counterstrike, destiny, warzone
+- EXCLUDE: Anime (onepunchman, chainsawman, gachiakuta, helluvaboss, twistedwonderland) - these are NOT games
+- EXCLUDE: TV shows and movies - even if they have game adaptations
+- EXCLUDE: Gaming hardware (gamingkeyboard, gaminggear, headset) - we want GAMES not gear
+- EXCLUDE: Gaming events (twitchcon, e3, gameawards) - we want GAMES not events
+- EXCLUDE: Gaming creators/streamers - we want GAMES not people
+- EXCLUDE: General terms that aren't specific games (emote, headshot, imposter) unless they clearly refer to a specific game
+- If a keyword is anime/manga related, REMOVE IT and replace with an actual video game
+- FIRST: Filter the list above to ONLY video game titles and game-specific terms
+- THEN: Add popular/trending video game titles to reach exactly 100 total gaming keywords
+- Games to consider adding: minecraft, fortnite, roblox, valorant, lol, callofduty, warzone, apex, fifa, nba2k, madden, pokemon, zelda, mario, gta, rdr2, overwatch, csgo, dota2, pubg, freefire, mobilelegends, codm, amongus, fallguys, rocket league, destiny2, halo, gears, uncharted, spiderman, godofwar, horizon, lastofus, residentevil, silenthill, metalgear, finalfantasy, dragonquest, persona, darksouls, eldenring, bloodborne, sekiro, monsterhunter, streetfighter, tekken, mortalkombat, smashbros, splatoon, animalcrossing, stardewvalley, terraria, subnautica, ark, rust, dayz, tarkov, rainbowsix, battlefield, titanfall, doom, wolfenstein, borderlands, diablo, pathofexile, poe2, wow, ffxiv, elderscrolls, skyrim, fallout, witcher, cyberpunk, starfield, nomansky, satisfactory, factorio, cities, civilization, totalwar, xcom, stellaris, crusaderkings, heartsofiron
 - Return exactly 100 gaming keywords, one per line
 - Do NOT include explanations, numbering, or any other text
 
