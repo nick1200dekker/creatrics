@@ -76,8 +76,18 @@ def search_trends():
 
             try:
                 response = requests.get(endpoint, headers=headers, params=params, timeout=30)
+
+                # Log response status and content for debugging
+                logger.info(f"API Response Status: {response.status_code}")
+
                 response.raise_for_status()
-                data = response.json()
+
+                # Try to parse JSON, log raw response if it fails
+                try:
+                    data = response.json()
+                except ValueError as json_error:
+                    logger.error(f"Failed to parse JSON. Status: {response.status_code}, Response: {response.text[:500]}")
+                    raise json_error
 
                 if data.get('status_code') == 0:
                     # Extract videos based on mode

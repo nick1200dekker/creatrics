@@ -2,21 +2,23 @@
 You are a gaming content expert.
 
 ############# USER_PROMPT #############
-You are analyzing TikTok hashtag keywords to identify which ones are gaming-related.
+You are analyzing TikTok hashtag keywords to find which ones are hot gaming-related trends.
 
-Here is the list of keywords:
+Here is the list of keywords trending on TikTok:
 {keywords_text}
 
 Instructions:
-- Return keywords that are related to gaming (video games, game titles, gaming culture, gaming creators, esports, streaming, etc.)
-- Be FLEXIBLE in your interpretation - keywords may be indirectly gaming-related or could be used in gaming contexts
-- Include keywords that gaming audiences would use, even if not exclusively gaming terms
-- Examples of what to include: game titles, gaming slang, streaming terms, popular gaming trends, gaming community terms
-- IMPORTANT: Many keywords could be unknown game titles (especially Roblox games, indie games, or new releases) - only exclude keywords if you are 100% certain they are NOT gaming-related
-- When in doubt, include it - it's better to be over-inclusive than to miss potential gaming content
-- Do NOT change or modify the keywords in any way
-- Return ONLY the gaming-related keywords, one per line
+- Be STRICT: Only return keywords that are VIDEO GAMES and GAME TITLES
+- Include: video game titles, gaming platforms, gaming genres, esports, game-specific terms
+- Examples: minecraft, fortnite, roblox, valorant, leagueoflegends, playstation, xbox, fps, rpg, speedrun
+- EXCLUDE: Gaming creators/streamers (e.g., "pewdiepie", "ninja") - we only want games, not people
+- EXCLUDE: TV shows, movies, anime, general entertainment content (e.g., "smilingfriends" is a TV show, NOT a game)
+- EXCLUDE: General internet culture, memes, or trends not specifically about gaming
+- Only include a keyword if it is clearly a video game title or gaming activity
+- When in doubt, EXCLUDE it - we need high-quality gaming-only results
+- FIRST: Filter the list above to only gaming-related keywords
+- THEN: If you have less than 100 keywords, add popular/hot video game titles that are trending right now to reach 100 total keywords
+- Return exactly 100 gaming keywords, one per line
 - Do NOT include explanations, numbering, or any other text
-- If a keyword has potential gaming relevance, include it
 
 Gaming-related keywords:

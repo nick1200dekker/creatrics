@@ -201,12 +201,13 @@ class TikTokCompetitorAnalyzer:
                 views = [int(v.get('view_count', 0) or 0) for v in account_videos]
                 total_views = sum(views)
                 avg_views = total_views / len(views) if views else 0
-                
+
                 account_stats[sec_uid] = {
                     'avg_views': avg_views,
                     'total_views': total_views,
                     'video_count': len(account_videos),
-                    'account_nickname': account['nickname']
+                    'account_nickname': account['nickname'],
+                    'account_username': account['username']
                 }
         
         return account_stats
@@ -253,7 +254,7 @@ class TikTokCompetitorAnalyzer:
         account_performance = {}
         if account_stats:
             for sec_uid, stats in account_stats.items():
-                account_performance[stats['account_nickname']] = {
+                account_performance[stats['account_username']] = {
                     'avg_views': stats['avg_views'],
                     'video_count': stats['video_count']
                 }

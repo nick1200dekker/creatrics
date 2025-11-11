@@ -779,9 +779,10 @@ html.dark .video-list-section h4 i {
 
 .video-list-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
     padding: 1rem;
+    min-height: 100px;
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
     border-radius: 8px;
@@ -811,8 +812,41 @@ html.dark .video-list-item:hover {
     text-align: center;
 }
 
-.video-list-metrics {
+.video-list-thumbnail {
+    width: 60px;
+    height: 106px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.video-list-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.video-list-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.video-list-title {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.video-list-username {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.video-list-metrics {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;

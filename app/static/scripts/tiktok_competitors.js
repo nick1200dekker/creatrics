@@ -321,12 +321,11 @@ function renderCompetitorsList() {
                 return `
                     <div class="competitor-card">
                         <div class="competitor-info" style="flex: 1;">
-                            <div class="competitor-title">${escapeHtml(comp.nickname || 'Unknown Account')}</div>
-                            ${comp.username ? `<div class="channel-handle">@${escapeHtml(comp.username)}</div>` : ''}
+                            <div class="competitor-title">@${escapeHtml(comp.username || 'unknown')}</div>
                             <div class="competitor-stats">
                                 <span class="stat">
                                     <i class="ph ph-users"></i>
-                                    ${formatTikTokCount(comp.follower_count)}
+                                    ${formatTikTokCount(comp.follower_count)} followers
                                 </span>
                             </div>
                         </div>
@@ -564,7 +563,6 @@ function displayResults(data) {
                     <thead>
                         <tr>
                             <th>Video</th>
-                            <th>Account</th>
                             <th>Views</th>
                             <th>Likes</th>
                             <th>Comments</th>
@@ -672,14 +670,14 @@ function renderAccountActivity(accountPerformance, timeframeText) {
     const maxCount = Math.max(...accounts.map(c => c.videoCount));
 
     let accountBars = '';
-    accounts.forEach(account => {
+    accounts.forEach((account) => {
         const percentage = maxCount > 0 ? (account.videoCount / maxCount) * 100 : 0;
         const intensity = maxCount > 0 ? account.videoCount / maxCount : 0;
         const colorIntensity = Math.max(0.3, intensity);
 
         accountBars += `
             <div class="day-bar-row">
-                <div class="day-bar-label">${escapeHtml(account.name)}</div>
+                <div class="day-bar-label">@${escapeHtml(account.name)}</div>
                 <div class="day-bar-container">
                     <div class="day-bar-fill"
                          style="width: ${percentage}%; opacity: ${colorIntensity}"
@@ -720,15 +718,16 @@ function renderVideos() {
         const views = video.view_count || 0;
         const likes = video.like_count || 0;
         const comments = video.comment_count || 0;
+        const title = video.desc || 'No description';
+        const truncatedTitle = title.length > 200 ? title.substring(0, 197) + '...' : title;
 
         return `
-            <tr onclick="window.open('${video.video_url}', '_blank')" style="cursor: pointer;">
+            <tr>
                 <td class="video-cell">
                     <div class="video-title-cell">
-                        ${escapeHtml(video.desc || 'No description')}
+                        ${escapeHtml(truncatedTitle)}
                     </div>
                 </td>
-                <td class="channel-cell">${escapeHtml(video.account_nickname)}</td>
                 <td class="views-cell">${formatNumber(views)}</td>
                 <td class="likes-cell">${formatNumber(likes)}</td>
                 <td class="comments-cell">${formatNumber(comments)}</td>
@@ -814,7 +813,7 @@ async function searchAccounts() {
     }
 }
 
-// Render search results
+// Render search results - showing @handle instead of name
 function renderSearchResults() {
     const searchResultsDiv = document.getElementById('searchResults');
     const searchEmptyState = document.getElementById('searchEmptyState');
@@ -841,35 +840,23 @@ function renderSearchResults() {
     searchResultsGrid.innerHTML = searchResults.map(channel => {
         const isAdded = existingSecUids.has(channel.sec_uid);
 
-        const avatarHTML = channel.avatar ?
-            `<img src="${channel.avatar}" alt="${escapeHtml(channel.nickname || 'Account')}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="avatar-placeholder" style="display:none;">${(channel.nickname || '?')[0].toUpperCase()}</div>` :
-            `<div class="avatar-placeholder">${(channel.nickname || '?')[0].toUpperCase()}</div>`;
-
-        const tiktokUrl = `https://www.tiktok.com/@${channel.username}`;
-
         return `
-            <div class="search-result-card">
-                <div class="search-result-clickable" onclick="window.open('${tiktokUrl}', '_blank')">
-                    <div class="competitor-avatar">
-                        ${avatarHTML}
-                    </div>
-                    <div class="competitor-info">
-                        <div class="competitor-title">${escapeHtml(channel.nickname || 'Unknown Account')}</div>
-                        ${channel.username ? `<div class="channel-handle">@${escapeHtml(channel.username)}</div>` : ''}
-                        <div class="competitor-stats">
-                            <span class="stat">
-                                <i class="ph ph-users"></i>
-                                ${formatTikTokCount(channel.follower_count)}
-                            </span>
-                        </div>
+            <div class="search-result-card" onclick="window.open('https://www.tiktok.com/@${escapeHtml(channel.username)}', '_blank')" style="cursor: pointer;">
+                <button class="add-result-btn-compact ${isAdded ? 'added' : ''}"
+                        onclick='event.stopPropagation(); ${isAdded ? '' : `addChannelFromSearch(${JSON.stringify(channel).replace(/'/g, "&#39;").replace(/"/g, "&quot;")})`}'
+                        ${competitors.length >= 15 || isAdded ? 'disabled' : ''}
+                        title="${isAdded ? 'Already added' : 'Add to list'}">
+                    <i class="ph ${isAdded ? 'ph-check' : 'ph-plus'}"></i>
+                </button>
+                <div class="competitor-info">
+                    <div class="competitor-title">@${escapeHtml(channel.username || 'unknown')}</div>
+                    <div class="competitor-stats">
+                        <span class="stat">
+                            <i class="ph ph-users"></i>
+                            ${formatTikTokCount(channel.follower_count)} followers
+                        </span>
                     </div>
                 </div>
-                <button class="add-result-btn ${isAdded ? 'added' : ''}"
-                        onclick='event.stopPropagation(); ${isAdded ? '' : `addChannelFromSearch(${JSON.stringify(channel).replace(/'/g, "&#39;").replace(/"/g, "&quot;")})`}'
-                        ${competitors.length >= 15 || isAdded ? 'disabled' : ''}>
-                    <i class="ph ${isAdded ? 'ph-check' : 'ph-plus'}"></i>
-                    ${isAdded ? 'Added' : 'Add'}
-                </button>
             </div>
         `;
     }).join('');
@@ -1013,7 +1000,13 @@ function formatMarkdown(text) {
 
 function formatNumber(num) {
     if (!num && num !== 0) return '0';
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    if (num >= 1000000) {
+        return `${(num / 1000000).toFixed(1)}M`;
+    } else if (num >= 1000) {
+        return `${(num / 1000).toFixed(1)}K`;
+    } else {
+        return num.toString();
+    }
 }
 
 function formatTikTokCount(count) {

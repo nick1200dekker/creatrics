@@ -97,10 +97,10 @@ def analyze_trends():
 
         async def fetch_all_hashtag_pages():
             async with httpx.AsyncClient(timeout=30.0) as client:
-                tasks = []
+                results = []
                 url = f"https://{TIKTOK_CREATIVE_API_HOST}/api/trending/hashtag"
 
-                # Create 4 parallel requests
+                # Sequential requests with delay to avoid rate limits
                 for page in range(1, 3):
                     # With new_on_board filter
                     params_with_filter = {
@@ -112,7 +112,13 @@ def analyze_trends():
                         "filter_by": "new_on_board",
                         "industry_id": "25000000000"
                     }
-                    tasks.append(client.get(url, headers=headers, params=params_with_filter))
+                    try:
+                        resp = await client.get(url, headers=headers, params=params_with_filter)
+                        results.append(resp)
+                    except Exception as e:
+                        results.append(e)
+
+                    await asyncio.sleep(0.5)  # 500ms delay between requests
 
                     # Without filter
                     params_no_filter = {
@@ -123,11 +129,17 @@ def analyze_trends():
                         "sort_by": "popular",
                         "industry_id": "25000000000"
                     }
-                    tasks.append(client.get(url, headers=headers, params=params_no_filter))
+                    try:
+                        resp = await client.get(url, headers=headers, params=params_no_filter)
+                        results.append(resp)
+                    except Exception as e:
+                        results.append(e)
 
-                return await asyncio.gather(*tasks, return_exceptions=True)
+                    await asyncio.sleep(0.5)  # 500ms delay between requests
 
-        logger.info("Fetching 4 hashtag pages in parallel")
+                return results
+
+        logger.info("Fetching 4 hashtag pages with rate limiting")
         responses = asyncio.run(fetch_all_hashtag_pages())
 
         # Process all responses
@@ -243,81 +255,74 @@ def analyze_single_keyword(keyword: str) -> dict:
             "x-rapidapi-host": TIKTOK_API_HOST
         }
 
-        # PARALLEL API CALLS - Fetch first page to get search_id, then fetch remaining 4 pages in parallel
+        # SEQUENTIAL API CALLS - Fetch pages one by one using cursor from previous response
         all_videos = []
         search_id = "0"
         cursor = 0
+        has_more = True
+        max_pages = 5
 
-        # First request to get search_id
-        first_params = {
-            "keyword": keyword,
-            "cursor": 0,
-            "search_id": "0"
-        }
+        page_count = 0
 
-        first_response = requests.get(
-            f"https://{TIKTOK_API_HOST}/api/search/general",
-            headers=tiktok_headers,
-            params=first_params,
-            timeout=30
-        )
-        first_response.raise_for_status()
-        first_data = first_response.json()
+        while has_more and page_count < max_pages:
+            params = {
+                "keyword": keyword,
+                "cursor": cursor,
+                "search_id": search_id
+            }
 
-        if first_data.get('status_code') == 0:
-            page_data = first_data.get('data', [])
-            if page_data:
-                all_videos.extend(page_data)
+            try:
+                response = requests.get(
+                    f"https://{TIKTOK_API_HOST}/api/search/general",
+                    headers=tiktok_headers,
+                    params=params,
+                    timeout=30
+                )
+                response.raise_for_status()
+                data = response.json()
 
-            # Get search_id for next requests
-            log_pb = first_data.get('log_pb', {})
-            impr_id = log_pb.get('impr_id')
-            if impr_id:
-                search_id = impr_id
+                if data.get('status_code') == 0:
+                    page_data = data.get('data', [])
+                    if page_data:
+                        all_videos.extend(page_data)
+                        logger.info(f"Page {page_count + 1} for '{keyword}': Got {len(page_data)} videos")
 
-            # Fetch remaining 4 pages in PARALLEL
-            import asyncio
-            import httpx
+                    # Get search_id from log_pb (for general search)
+                    log_pb = data.get('log_pb', {})
+                    impr_id = log_pb.get('impr_id')
+                    if impr_id:
+                        search_id = impr_id
 
-            async def fetch_remaining_pages():
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    tasks = []
-                    for page_num in range(1, 5):  # Pages 1-4 (0-indexed)
-                        params = {
-                            "keyword": keyword,
-                            "cursor": page_num,
-                            "search_id": search_id
-                        }
-                        tasks.append(client.get(
-                            f"https://{TIKTOK_API_HOST}/api/search/general",
-                            headers=tiktok_headers,
-                            params=params
-                        ))
-                    return await asyncio.gather(*tasks, return_exceptions=True)
+                    # Get cursor for next page
+                    cursor = data.get('cursor', cursor)
+                    has_more = data.get('has_more', False)
 
-            responses = asyncio.run(fetch_remaining_pages())
+                    page_count += 1
 
-            # Process parallel responses
-            for resp in responses:
-                if isinstance(resp, Exception):
-                    continue
-                try:
-                    data = resp.json()
-                    if data.get('status_code') == 0:
-                        page_data = data.get('data', [])
-                        if page_data:
-                            all_videos.extend(page_data)
-                except:
-                    continue
+                    # If no items returned, stop
+                    if not page_data:
+                        logger.info(f"No more videos returned for '{keyword}', stopping at page {page_count}")
+                        break
+                else:
+                    logger.warning(f"API returned status_code: {data.get('status_code')} for '{keyword}'")
+                    break
+
+            except Exception as e:
+                logger.error(f"Error fetching page {page_count + 1} for '{keyword}': {e}")
+                break
+
+            # Add delay between requests to avoid rate limiting
+            import time
+            time.sleep(0.5)  # 500ms delay between requests
 
         # Analyze with the same algorithm as TikTok Keyword Research
         if all_videos:
             analysis_result = analyzer.analyze_videos(all_videos, sort_by='views')
 
-            # Filter out keywords with less than 35 videos analyzed
+            # Filter out keywords with less than 30 videos analyzed
             video_count = analysis_result.get('total_videos', 0)
-            if video_count < 35:
-                logger.info(f"Skipping '{keyword}': Only {video_count} videos (minimum 35 required)")
+            if video_count < 30:
+                logger.info(f"Skipping '{keyword}': Only {video_count} videos (minimum 30 required)")
                 return None
 
             return {

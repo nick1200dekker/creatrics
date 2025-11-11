@@ -227,32 +227,47 @@ function displayAggregatedInsights(videos) {
         <div class="video-list-section">
             <h4><i class="ph ph-list-bullets"></i> Video Sample List</h4>
             <div class="video-list">
-                ${videos.sort((a, b) => a.age_hours - b.age_hours).map((video, index) => `
-                    <div class="video-list-item">
+                ${videos.sort((a, b) => a.age_hours - b.age_hours).map((video, index) => {
+                    const title = video.desc || 'No title';
+                    const truncatedTitle = title.length > 200 ? title.substring(0, 197) + '...' : title;
+                    const username = video.author?.uniqueId || 'unknown';
+                    const videoUrl = `https://www.tiktok.com/@${username}/video/${video.id}`;
+                    const thumbnail = video.video?.cover || video.video?.originCover || '';
+
+                    return `
+                    <div class="video-list-item" onclick="window.open('${videoUrl}', '_blank')" style="cursor: pointer;">
                         <div class="video-list-rank">#${index + 1}</div>
-                        <div class="video-list-metrics">
-                            <div class="video-list-stats">
-                                <div class="video-stat">
-                                    <i class="ph ph-eye"></i>
-                                    <span>${formatNumber(video.playCount)}</span>
-                                </div>
-                                <div class="video-stat">
-                                    <i class="ph ph-heart"></i>
-                                    <span>${formatNumber(video.diggCount)}</span>
-                                </div>
-                                <div class="video-stat">
-                                    <i class="ph ph-chat-circle"></i>
-                                    <span>${formatNumber(video.commentCount)}</span>
-                                </div>
+                        ${thumbnail ? `<img src="${thumbnail}" class="video-list-thumbnail" alt="Video thumbnail" />` : ''}
+                        <div class="video-list-content">
+                            <div class="video-list-header">
+                                <div class="video-list-title">${escapeHtml(truncatedTitle)}</div>
+                                <div class="video-list-username">@${escapeHtml(username)}</div>
                             </div>
-                            <div class="video-list-performance">
-                                <span class="perf-badge">${formatNumber(video.views_per_hour)} views/hr</span>
-                                <span class="perf-badge">${video.engagement_rate}% engagement</span>
-                                <span class="perf-badge age">${video.age_display}</span>
+                            <div class="video-list-metrics">
+                                <div class="video-list-stats">
+                                    <div class="video-stat">
+                                        <i class="ph ph-eye"></i>
+                                        <span>${formatNumber(video.playCount)}</span>
+                                    </div>
+                                    <div class="video-stat">
+                                        <i class="ph ph-heart"></i>
+                                        <span>${formatNumber(video.diggCount)}</span>
+                                    </div>
+                                    <div class="video-stat">
+                                        <i class="ph ph-chat-circle"></i>
+                                        <span>${formatNumber(video.commentCount)}</span>
+                                    </div>
+                                </div>
+                                <div class="video-list-performance">
+                                    <span class="perf-badge">${formatNumber(video.views_per_hour)} views/hr</span>
+                                    <span class="perf-badge">${video.engagement_rate}% engagement</span>
+                                    <span class="perf-badge age">${video.age_display}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                `).join('')}
+                `;
+                }).join('')}
             </div>
         </div>
     `;
