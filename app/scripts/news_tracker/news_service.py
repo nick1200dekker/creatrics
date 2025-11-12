@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from time import mktime
 from app.system.ai_provider.ai_provider import get_ai_provider
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,42 @@ def load_prompt(filename: str) -> str:
     except Exception as e:
         logger.error(f"Error loading prompt {filename}: {e}")
         raise
+
+def clean_url(url: str) -> str:
+    """
+    Remove RSS tracking parameters from URL
+
+    Args:
+        url: URL to clean
+
+    Returns:
+        Cleaned URL without tracking parameters
+    """
+    try:
+        parsed = urlparse(url)
+        query_params = parse_qs(parsed.query)
+
+        # Remove RSS tracking parameters
+        tracking_params = ['at_medium', 'at_campaign', 'utm_source', 'utm_medium', 'utm_campaign']
+        cleaned_params = {k: v for k, v in query_params.items() if k not in tracking_params}
+
+        # Rebuild query string
+        new_query = urlencode(cleaned_params, doseq=True) if cleaned_params else ''
+
+        # Rebuild URL
+        cleaned_url = urlunparse((
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            parsed.params,
+            new_query,
+            parsed.fragment
+        ))
+
+        return cleaned_url
+    except Exception as e:
+        logger.warning(f"Error cleaning URL: {e}")
+        return url  # Return original URL if cleaning fails
 
 class NewsService:
     """Handles news fetching and X post generation"""
@@ -193,11 +230,14 @@ Return ONLY the post content, nothing else."""
 
             content = news_summary if news_summary else news_title
 
+            # Clean URL to remove tracking parameters
+            cleaned_url = clean_url(news_url)
+
             # Prepare prompt
             prompt = self.prompt_template.format(
                 title=news_title,
                 content=content,
-                url=news_url
+                url=cleaned_url
             )
 
             # Get AI provider with script name

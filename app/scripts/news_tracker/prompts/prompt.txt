@@ -21,13 +21,22 @@ RULES:
 ✓ Provide enough detail to be informative and engaging
 ✓ Make it shareable and discussion-worthy
 ✓ NO hashtags unless absolutely essential
-✓ Use SINGLE line breaks (\n) sparingly - only between distinct thoughts
-✓ ALWAYS include the article link at the end of the post
-✓ End with something that encourages engagement (question, hot take, call to action)
+✓ ALWAYS include the article link at the VERY END of the post
+✓ End with something that encourages engagement BEFORE the link (question, hot take, call to action)
 
 POST STRUCTURE:
 🚨 BREAKING: [ALL CAPS HEADLINE WITH EMOJIS]
-2-3 detailed sentences explaining the main points and context.
+
+[Blank line here]
+
+2-3 detailed sentences explaining the main points and context. Each sentence should be on its own line with blank lines between paragraphs for readability.
+
+[Blank line here]
+
+Engagement question or call to action goes here.
+
+[Blank line here]
+
 [Article URL]
 
 TONE:
@@ -36,22 +45,42 @@ TONE:
 - Detailed and comprehensive
 
 FORMATTING:
-- CRITICAL: Use SINGLE \n for line breaks between sections
-- NEVER use \n\n (double line breaks) - this creates too much spacing
-- Each section should be separated by exactly ONE \n
-- Keep sentences within a section flowing naturally with spaces
+- CRITICAL: Use blank lines between main sections (headline, body paragraphs, engagement question, and URL)
+- Add a blank line after the headline
+- Add blank lines between paragraphs in the body for readability
+- Add a blank line before the engagement question
+- Add a blank line before the URL at the end
+- The URL should ALWAYS be on its own line at the very end
 
 EXAMPLE OF CORRECT FORMATTING:
 🚨 BREAKING: PIERS MORGAN TO NOVAK DJOKOVIC: I OWE YOU AN APOLOGY OVER THE COVID VACCINE
-Piers Morgan publicly apologized to tennis star Novak Djokovic for criticizing his stance on COVID vaccines. The admission came during a recent interview where Morgan acknowledged he was wrong.
+
+Piers Morgan publicly apologized to tennis star Novak Djokovic for criticizing his stance on COVID vaccines.
+
+The admission came during a recent interview where Morgan acknowledged he was wrong about his previous harsh criticism of the tennis champion's personal health choices.
+
+Do you think public figures should admit when they're wrong like this?
+
 https://example.com/article
 
 🇺🇸 TRUMP ADMIN TO GUT KEY CIVIL RIGHTS RULE ON LENDING DISCRIMINATION
-The Trump administration is moving to eliminate a major civil rights rule that protects against lending discrimination. Critics warn this could impact millions of Americans seeking home loans and credit.
+
+The Trump administration is moving to eliminate a major civil rights rule that protects against lending discrimination.
+
+Critics warn this could impact millions of Americans seeking home loans and credit, rolling back decades of progress in fair lending practices.
+
+Is this the right move for financial freedom or a step backwards?
+
 https://example.com/article
 
 🇹🇼 TYPHOON FUNG-WONG BATTERS TAIWAN WITH RECORD FLOODS
-Typhoon Fung-Wong has caused unprecedented flooding across Taiwan, forcing thousands to evacuate. Emergency services are working around the clock as rainfall exceeds historical records.
+
+Typhoon Fung-Wong has caused unprecedented flooding across Taiwan, forcing thousands to evacuate.
+
+Emergency services are working around the clock as rainfall exceeds historical records, with some areas receiving over 500mm in just 24 hours.
+
+How can countries better prepare for these increasingly extreme weather events?
+
 https://example.com/article
 
 OUTPUT ONLY THE POST CONTENT - NO EXPLANATIONS OR COMMENTARY

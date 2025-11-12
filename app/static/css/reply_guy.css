@@ -2557,15 +2557,14 @@ html.dark #dark-mode-toggle .hidden.dark\:block {
 .gif-suggestion-panel {
     margin-top: 1rem;
     padding: 1rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
-    border-radius: 10px;
+    background: var(--bg-tertiary);
+    border: none;
+    border-radius: 0;
     display: none;
 }
 
 html.dark .gif-suggestion-panel {
-    background: rgba(39, 39, 42, 0.5);
-    border-color: rgba(82, 82, 91, 0.5);
+    background: rgba(39, 39, 42, 0.6);
 }
 
 .gif-suggestion-panel.show {
@@ -2610,21 +2609,21 @@ html.dark .gif-panel-title i {
 }
 
 .gif-panel-close:hover {
-    background: var(--bg-tertiary);
+    background: var(--bg-secondary);
     color: var(--text-primary);
 }
 
 .gif-grid-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.5rem;
-    max-height: 300px;
+    max-height: 250px;
     overflow-y: auto;
 }
 
 @media (max-width: 768px) {
     .gif-grid-container {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
@@ -2639,7 +2638,7 @@ html.dark .gif-panel-title i {
 }
 
 html.dark .gif-item-reply {
-    background: rgba(63, 63, 70, 0.5);
+    background: rgba(39, 39, 42, 0.8);
 }
 
 .gif-item-reply:hover {
