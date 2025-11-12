@@ -204,10 +204,9 @@ def get_my_videos():
                     # Get highest resolution thumbnail from RapidAPI response
                     # Array goes from low to high resolution, last item is typically maxresdefault
                     thumbnails = video.get('thumbnail')
+                    thumbnail = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
                     if thumbnails and isinstance(thumbnails, list) and len(thumbnails) > 0:
-                        thumbnail = thumbnails[-1].get('url', f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg")
-                    else:
-                        thumbnail = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+                        thumbnail = thumbnails[-1].get('url', thumbnail)
 
                     videos.append({
                         'video_id': video_id,
@@ -230,10 +229,9 @@ def get_my_videos():
                         # Get highest resolution thumbnail from RapidAPI response
                         # Array goes from low to high resolution, last item is typically maxresdefault
                         thumbnails = short.get('thumbnail')
+                        thumbnail = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
                         if thumbnails and isinstance(thumbnails, list) and len(thumbnails) > 0:
-                            thumbnail = thumbnails[-1].get('url', f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg")
-                        else:
-                            thumbnail = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+                            thumbnail = thumbnails[-1].get('url', thumbnail)
 
                         videos.append({
                             'video_id': video_id,
