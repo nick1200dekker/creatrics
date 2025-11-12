@@ -432,7 +432,7 @@ html.dark .progress-percentage {
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
     border-radius: 12px;
-    overflow: hidden;
+    overflow: visible;
     min-height: 600px;
     transition: all 0.3s ease;
 }
@@ -451,6 +451,8 @@ html.dark .main-panel {
     justify-content: space-between;
     align-items: flex-start;
     gap: 1rem;
+    border-radius: 12px 12px 0 0;
+    overflow: visible;
 }
 
 html.dark .panel-header {
@@ -592,64 +594,77 @@ html.dark .panel-title i {
     flex-shrink: 0;
 }
 
-/* Info Icon */
-.info-icon {
-    width: 20px;
-    height: 20px;
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
-    border-radius: 50%;
+/* Info Tooltip - Match TikTok Upload Studio styling */
+.info-tooltip {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    color: #6b7280;
+    margin-left: 0.25rem;
     cursor: help;
-    transition: all 0.2s ease;
-    position: relative;
 }
 
-html.dark .info-icon {
-    background: #52525b;
-    border: 1px solid #71717a;
-    color: #9ca3af;
+.info-tooltip i {
+    font-size: 1rem;
+    color: #3B82F6;
+    transition: color 0.2s ease;
 }
 
-.info-icon:hover {
-    background: #e5e7eb;
+.info-tooltip:hover i {
+    color: #2563EB;
+}
+
+html.dark .info-tooltip i {
+    color: #60A5FA;
+}
+
+html.dark .info-tooltip:hover i {
     color: #3B82F6;
 }
 
-html.dark .info-icon:hover {
-    background: #71717a;
-    color: #3B82F6;
-}
-
-/* Tooltip */
-.tooltip {
+.tooltip-text {
     position: absolute;
-    bottom: -32px;
+    bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    white-space: nowrap;
+    padding: 0.625rem 0.875rem;
+    background: var(--bg-primary);
     border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: normal;
+    max-width: 250px;
+    width: max-content;
     opacity: 0;
     visibility: hidden;
     transition: all 0.2s ease;
-    z-index: 10;
+    z-index: 10000;
     pointer-events: none;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-html.dark .tooltip {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+html.dark .tooltip-text {
+    background: rgba(39, 39, 42, 0.95);
+    border-color: rgba(63, 63, 70, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.info-icon:hover .tooltip {
+.tooltip-text::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--bg-primary);
+}
+
+html.dark .tooltip-text::after {
+    border-top-color: rgba(39, 39, 42, 0.95);
+}
+
+.info-tooltip:hover .tooltip-text {
     opacity: 1;
     visibility: visible;
 }
@@ -861,6 +876,13 @@ html.dark .modal-title-clean i {
     padding: 1.5rem;
 }
 
+.form-row-clean {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 0;
+}
+
 .info-box-modal {
     background: rgba(59, 130, 246, 0.08);
     border: 1px solid rgba(59, 130, 246, 0.15);
@@ -871,13 +893,6 @@ html.dark .modal-title-clean i {
     gap: 0.75rem;
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin-bottom: 1.25rem;
-}
-
-.form-row-clean {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
 }
 
 html.dark .info-box-modal {
@@ -1009,6 +1024,7 @@ html.dark .modal-footer-clean {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.75rem;
 }
 
 html.dark .dropdown-trigger {
@@ -1233,6 +1249,8 @@ html.dark .primary-btn:hover:not(:disabled) {
 .panel-content {
     padding: 1.5rem;
     min-height: 400px;
+    overflow: hidden;
+    border-radius: 0 0 12px 12px;
 }
 
 /* Loading Section - matching Optimize Video styles */
@@ -1726,7 +1744,7 @@ html.dark .reply-panel {
     padding: 1.75rem;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.75rem;
 }
 
 .reply-panel-header {
@@ -1734,7 +1752,7 @@ html.dark .reply-panel {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1rem;
-    gap: 1rem;
+    gap: 2rem;
     flex-wrap: wrap;
     min-width: 0;
 }
@@ -1751,6 +1769,7 @@ html.dark .reply-panel {
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
+        gap: 1.5rem;
     }
 
     .reply-controls {
@@ -1791,9 +1810,10 @@ html.dark .brand-voice-toggle {
 }
 
 .brand-voice-toggle.disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
     pointer-events: none !important;
+    filter: grayscale(50%);
 }
 
 .brand-voice-toggle.disabled * {
@@ -1806,6 +1826,11 @@ html.dark .brand-voice-toggle {
 
 .brand-voice-toggle.disabled .toggle-slider {
     cursor: not-allowed;
+    background: #d1d5db !important;
+}
+
+html.dark .brand-voice-toggle.disabled .toggle-slider {
+    background: #4b5563 !important;
 }
 
 .brand-voice-checkbox {
@@ -1850,6 +1875,19 @@ html.dark .toggle-slider {
     transform: translateX(20px);
 }
 
+/* Prevent visual "checked" state when disabled */
+.brand-voice-toggle.disabled .brand-voice-checkbox:checked + .toggle-slider {
+    background: #e5e7eb !important;
+}
+
+html.dark .brand-voice-toggle.disabled .brand-voice-checkbox:checked + .toggle-slider {
+    background: #374151 !important;
+}
+
+.brand-voice-toggle.disabled .brand-voice-checkbox:checked + .toggle-slider::after {
+    transform: translateX(0) !important;
+}
+
 .toggle-label {
     font-weight: 500;
     transition: color 0.2s ease;
@@ -1862,10 +1900,6 @@ html.dark .toggle-slider {
 
 html.dark .brand-voice-checkbox:checked ~ .toggle-label {
     color: #60A5FA;
-}
-
-.brand-voice-toggle:hover:not(.disabled) .toggle-label {
-    color: #3B82F6;
 }
 
 
@@ -1889,6 +1923,7 @@ html.dark .brand-voice-checkbox {
     width: 100%;
     font-family: inherit;
     line-height: 1.4;
+    margin-bottom: 0.5rem;
 }
 
 html.dark .reply-textarea {
@@ -1916,7 +1951,7 @@ html.dark .reply-textarea:focus {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 0.5rem;
+    margin-top: 0;
 }
 
 .character-count {
@@ -2581,7 +2616,7 @@ html.dark .gif-panel-title i {
 
 .gif-grid-container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem;
     max-height: 300px;
     overflow-y: auto;

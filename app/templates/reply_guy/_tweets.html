@@ -3,7 +3,8 @@
                         <div class="tweet-opportunity"
                              data-tweet-id="{{ tweet.tweet_id }}"
                              data-tweet-text="{{ tweet.text | replace('"', '&quot;') | replace("'", '&#39;') }}"
-                             data-tweet-author="{{ tweet.author }}">
+                             data-tweet-author="{{ tweet.author }}"
+                             {% if tweet.image_urls %}data-image-urls="{{ tweet.image_urls | tojson | escape }}"{% endif %}>
                             <div class="tweet-grid">
                                 <!-- Tweet Content - Official X Embed -->
                                 <div class="tweet-content-section">
@@ -45,11 +46,11 @@
                                         <div class="reply-footer">
                                             <div class="character-count">0/280</div>
                                             <div class="reply-actions">
-                                                <button class="action-btn post post-reply-btn" title="Post reply">
-                                                    <i class="ph ph-paper-plane-right"></i>
-                                                </button>
                                                 <button class="action-btn generate generate-reply-btn" title="Generate AI reply">
                                                     <i class="ph ph-sparkle"></i>
+                                                </button>
+                                                <button class="action-btn post post-reply-btn" title="Post reply">
+                                                    <i class="ph ph-paper-plane-right"></i>
                                                 </button>
                                             </div>
                                         </div>

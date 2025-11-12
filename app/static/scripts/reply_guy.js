@@ -22,6 +22,8 @@
     function init() {
         if (state.isInitialized) return;
 
+        // Load ongoing updates from sessionStorage FIRST
+        loadOngoingUpdates();
 
         // Load initial data
         loadInitialData();
@@ -71,8 +73,11 @@
                 throw new Error(data.error || 'Failed to load data');
             }
 
-            // Update state with loaded data
-            state.ongoingUpdates = data.ongoing_updates || {};
+            // Merge server ongoing updates with sessionStorage (sessionStorage takes precedence)
+            // This allows updates to persist across page navigation
+            const serverUpdates = data.ongoing_updates || {};
+            state.ongoingUpdates = { ...serverUpdates, ...state.ongoingUpdates };
+            console.log('🔄 Merged ongoing updates:', state.ongoingUpdates);
 
             // Update progress card with reply stats
             updateProgressCard(data.reply_stats);
@@ -388,8 +393,23 @@
     function saveOngoingUpdates() {
         try {
             sessionStorage.setItem('reply_guy_ongoing_updates', JSON.stringify(state.ongoingUpdates));
+            console.log('💾 Saved ongoing updates:', state.ongoingUpdates);
         } catch (error) {
             console.error('Error saving to sessionStorage:', error);
+        }
+    }
+
+    // Load ongoing updates from sessionStorage
+    function loadOngoingUpdates() {
+        try {
+            const saved = sessionStorage.getItem('reply_guy_ongoing_updates');
+            if (saved) {
+                state.ongoingUpdates = JSON.parse(saved);
+                console.log('📂 Loaded ongoing updates from sessionStorage:', state.ongoingUpdates);
+            }
+        } catch (error) {
+            console.error('Error loading from sessionStorage:', error);
+            state.ongoingUpdates = {};
         }
     }
 
@@ -533,8 +553,20 @@
                     }, { once: false });
                 }
             } else {
+                // Force uncheck and ensure it stays that way
                 checkbox.checked = false;
                 checkbox.removeAttribute('data-initialized');
+
+                // Clear localStorage preference when no brand voice data
+                localStorage.removeItem('preferBrandVoice');
+
+                // Prevent any interaction with disabled checkbox
+                checkbox.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.checked = false;
+                    return false;
+                };
             }
         });
 
@@ -601,6 +633,18 @@
         if (listsViewBtn) {
             listsViewBtn.onclick = () => switchView('lists');
         }
+
+        // Global brand voice checkbox guard - catch any change events
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('brand-voice-checkbox')) {
+                // If no brand voice data, force uncheck
+                if (!state.hasBrandVoiceData) {
+                    e.preventDefault();
+                    e.target.checked = false;
+                    console.log('Brand voice change blocked - no data available');
+                }
+            }
+        }, true); // Use capture phase to catch early
 
         const updateBtn = document.getElementById('update-btn');
         const updateBtnEmpty = document.getElementById('update-btn-empty');
@@ -809,6 +853,15 @@
 
         if (e.target.classList.contains('brand-voice-checkbox')) {
             const toggle = e.target.closest('.brand-voice-toggle');
+
+            // STRICT: Check if brand voice data is available before allowing interaction
+            if (!state.hasBrandVoiceData) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.target.checked = false;
+                console.log('Brand voice interaction blocked - no data available');
+                return false;
+            }
 
             // Prevent interaction if toggle is disabled or checkbox is disabled
             if ((toggle && toggle.classList.contains('disabled')) || e.target.disabled) {
@@ -1148,6 +1201,25 @@
         const updateBtnEmpty = document.getElementById('update-btn-empty');
 
         if (state.selectedListType === 'custom' && state.selectedList) {
+            // Check if THIS list is updating
+            const isThisListUpdating = state.selectedList in state.ongoingUpdates;
+
+            // Check if ANY OTHER list is updating
+            const otherListUpdating = Object.keys(state.ongoingUpdates).find(id => id !== state.selectedList);
+            const hasOtherListUpdating = !!otherListUpdating;
+
+            // If another list is updating, hide the button completely
+            if (hasOtherListUpdating) {
+                if (updateButtonContainer) {
+                    updateButtonContainer.style.display = 'none';
+                }
+                if (updateButtonContainerEmpty) {
+                    updateButtonContainerEmpty.style.display = 'none';
+                }
+                return;
+            }
+
+            // Show button containers
             if (updateButtonContainer) {
                 updateButtonContainer.style.display = 'block';
             }
@@ -1155,11 +1227,10 @@
                 updateButtonContainerEmpty.style.display = 'block';
             }
 
-            const isUpdating = state.selectedList in state.ongoingUpdates;
-
+            // Update button state based on whether THIS list is updating
             [updateBtn, updateBtnEmpty].forEach(btn => {
                 if (btn) {
-                    if (isUpdating) {
+                    if (isThisListUpdating) {
                         btn.disabled = true;
                         btn.classList.add('processing');
                         btn.innerHTML = '<span class="loading-spinner"></span>Updating...';
@@ -1171,6 +1242,7 @@
                 }
             });
         } else {
+            // Not a custom list, hide buttons
             if (updateButtonContainer) {
                 updateButtonContainer.style.display = 'none';
             }
@@ -1220,7 +1292,25 @@
                     console.log('📊 Loading default list data...');
                     loadInitialData();
                 } else {
-                    // Custom list with no analysis - auto-trigger analysis
+                    // Custom list with no analysis - check if we can auto-trigger
+                    const hasAnyUpdating = Object.keys(state.ongoingUpdates).length > 0;
+
+                    if (hasAnyUpdating) {
+                        console.log('⚠️ Cannot auto-trigger update - another list is updating');
+                        // Show empty state with manual update option
+                        const tweetsContainer = document.getElementById('tweets-section');
+                        if (tweetsContainer) {
+                            tweetsContainer.innerHTML = `
+                                <div class="empty-state">
+                                    <i class="ph ph-warning-circle empty-icon"></i>
+                                    <h3 class="empty-title">No Analysis Yet</h3>
+                                    <p class="empty-text">Please wait for the current update to finish, then click "Update" to analyze this list.</p>
+                                </div>
+                            `;
+                        }
+                        return;
+                    }
+
                     console.log('🔄 No analysis for custom list, auto-triggering update...');
 
                     // Mark as updating to show spinner on button
@@ -1231,18 +1321,6 @@
                     };
                     saveOngoingUpdates();
                     updateButtonVisibility();
-
-                    // Show empty state while loading
-                    const tweetsContainer = document.getElementById('tweets-section');
-                    if (tweetsContainer) {
-                        tweetsContainer.innerHTML = `
-                            <div class="empty-state">
-                                <i class="ph ph-arrows-clockwise empty-icon spin"></i>
-                                <h3 class="empty-title">Analyzing List...</h3>
-                                <p class="empty-text">Finding reply opportunities in your custom list.</p>
-                            </div>
-                        `;
-                    }
 
                     // Trigger analysis
                     fetch('/reply-guy/analyze', {
@@ -1297,8 +1375,11 @@
             return;
         }
 
-        if (state.selectedList in state.ongoingUpdates) {
-            // showToast('Update already in progress for this list', 'warning');
+        // Prevent starting multiple updates - check if ANY list is updating
+        const hasAnyUpdating = Object.keys(state.ongoingUpdates).length > 0;
+        if (hasAnyUpdating) {
+            console.log('⚠️ Cannot start update - another list is already updating');
+            // showToast('Please wait for the current update to finish', 'warning');
             return;
         }
 
@@ -1321,12 +1402,15 @@
         })
         .then(response => response.json())
         .then(data => {
-            delete state.ongoingUpdates[state.selectedList];
+            const listIdBeingUpdated = state.selectedList;
+            delete state.ongoingUpdates[listIdBeingUpdated];
             saveOngoingUpdates();
 
             if (data.success) {
-                // showToast('Analysis completed! Refreshing page...', 'success');
-                setTimeout(() => window.location.reload(), 1500);
+                // showToast('Analysis completed!', 'success');
+                console.log('✅ Update completed, reloading data...');
+                loadInitialData(); // Reload data instead of page reload
+                updateButtonVisibility();
             } else {
                 if (data.is_updating) {
                     state.ongoingUpdates[state.selectedList] = {
@@ -1364,8 +1448,18 @@
         const style = getSelectedStyle(tweetElement);
         const useBrandVoice = getBrandVoiceState(tweetElement);
 
-        // Image URLs are not extracted from embeds - backend should provide them if needed
-        const imageUrls = [];
+        // Extract image URLs from data attribute if available
+        let imageUrls = [];
+        try {
+            const imageUrlsData = tweetElement.getAttribute('data-image-urls');
+            if (imageUrlsData) {
+                imageUrls = JSON.parse(imageUrlsData);
+                console.log('📷 Found', imageUrls.length, 'image(s) in tweet');
+            }
+        } catch (e) {
+            console.error('Error parsing image URLs:', e);
+            imageUrls = [];
+        }
 
 
         const textarea = tweetElement.querySelector('.reply-textarea');
@@ -1443,9 +1537,18 @@
                 // showToast('Reply generated successfully!', 'success');
             } else {
                 if (textarea) {
-                    textarea.value = data.credits_required ?
-                        'Insufficient credits to generate reply.' :
-                        'Error generating reply: ' + data.error;
+                    if (data.credits_required) {
+                        textarea.value = 'Insufficient credits to generate reply.';
+                    } else if (data.error_type === 'brand_voice_unavailable') {
+                        textarea.value = 'Brand voice is not available. Please connect your X account and ensure you have reply data in analytics.';
+                        // Auto-disable brand voice checkbox
+                        const checkbox = tweetElement.querySelector('.brand-voice-checkbox');
+                        if (checkbox) {
+                            checkbox.checked = false;
+                        }
+                    } else {
+                        textarea.value = 'Error generating reply: ' + data.error;
+                    }
                 }
                 // showToast(data.credits_required ?
                 //     'Insufficient credits. Please purchase more credits.' :
@@ -2455,18 +2558,6 @@
                     saveOngoingUpdates();
                     updateButtonVisibility();
 
-                    // Show loading state in tweets area
-                    const tweetsContainer = document.getElementById('tweets-section');
-                    if (tweetsContainer) {
-                        tweetsContainer.innerHTML = `
-                            <div class="empty-state">
-                                <i class="ph ph-arrows-clockwise empty-icon spin"></i>
-                                <h3 class="empty-title">Analyzing List...</h3>
-                                <p class="empty-text">Finding reply opportunities in your new list.</p>
-                            </div>
-                        `;
-                    }
-
                     fetch('/reply-guy/analyze', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -2680,18 +2771,6 @@
                     };
                     saveOngoingUpdates();
                     updateButtonVisibility();
-
-                    // Show loading state in tweets area
-                    const tweetsContainer = document.getElementById('tweets-section');
-                    if (tweetsContainer) {
-                        tweetsContainer.innerHTML = `
-                            <div class="empty-state">
-                                <i class="ph ph-arrows-clockwise empty-icon spin"></i>
-                                <h3 class="empty-title">Analyzing List...</h3>
-                                <p class="empty-text">Finding reply opportunities in your new list.</p>
-                            </div>
-                        `;
-                    }
 
                     fetch('/reply-guy/analyze', {
                         method: 'POST',

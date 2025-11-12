@@ -344,13 +344,23 @@ def generate_reply():
         
         if len(tweet_text) > 2000:
             return jsonify({'success': False, 'error': 'Tweet text too long'}), 400
-        
+
         # Filter out mention tweets
         if tweet_text.startswith('@'):
             return jsonify({'success': False, 'error': 'Cannot generate replies to mention tweets'}), 400
-        
+
         user_id = get_workspace_user_id()
         user_subscription = get_user_subscription()
+
+        # Validate brand voice usage - prevent enabling if no data exists
+        if use_brand_voice:
+            service = ReplyGuyService()
+            if not service.has_brand_voice_data(user_id):
+                return jsonify({
+                    'success': False,
+                    'error': 'Brand voice is not available. Please connect your X account and ensure you have reply data in your analytics.',
+                    'error_type': 'brand_voice_unavailable'
+                }), 400
 
         # Check credits efficiently (following video_tags pattern)
         credits_manager = CreditsManager()
@@ -380,7 +390,9 @@ def generate_reply():
             }), 402
 
         # Generate reply with GIF suggestion (now returns dict with 'reply' and 'gif_query')
-        service = ReplyGuyService()
+        # Reuse service instance if already created for brand voice check
+        if 'service' not in locals():
+            service = ReplyGuyService()
         result = service.generate_reply(
             user_id=user_id,
             tweet_text=tweet_text,

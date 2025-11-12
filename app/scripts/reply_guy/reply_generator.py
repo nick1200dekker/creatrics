@@ -87,6 +87,12 @@ class ReplyGenerator:
             Dict with 'reply' text and 'gif_query' for suggested GIF, or None on error
         """
         try:
+            # Log image URLs received
+            if image_urls and len(image_urls) > 0:
+                logger.info(f"📷 Received {len(image_urls)} image(s) for tweet by @{author}: {image_urls}")
+            else:
+                logger.info(f"📷 No images received for tweet by @{author}")
+
             # Get AI provider with user subscription context
             ai_provider = self._get_ai_provider(user_subscription)
 
