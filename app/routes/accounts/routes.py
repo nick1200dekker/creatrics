@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, g, jsonify
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import has_premium_subscription
 from app.system.services.firebase_service import UserService
 from app.scripts.instagram_upload_studio.latedev_oauth_service import LateDevOAuthService
 from google.cloud import firestore
@@ -136,10 +137,13 @@ def index():
     check_incomplete_setups()
 
     user_id = g.user.get('id')
-    
+
     # Fetch user data from Firebase
     user_data = UserService.get_user(user_id)
-    
+
+    # Check premium status
+    has_premium = has_premium_subscription()
+
     # Check if accounts are connected via Late.dev (for X, TikTok, Instagram, YouTube posting)
     x_latedev_info = LateDevOAuthService.get_account_info(user_id, 'x')
     tiktok_latedev_info = LateDevOAuthService.get_account_info(user_id, 'tiktok')
@@ -184,7 +188,8 @@ def index():
         tiktok_setup_complete=tiktok_setup_complete,
         youtube_setup_complete=youtube_setup_complete,
         show_super_powers=show_super_powers,
-        user_data=user_data
+        user_data=user_data,
+        has_premium=has_premium
     )
 
 @bp.route('/connect/<platform>')

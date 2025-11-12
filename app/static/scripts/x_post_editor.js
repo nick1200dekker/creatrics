@@ -399,10 +399,10 @@
             // Show "Post to X" button
             if (postToXBtn) postToXBtn.style.display = 'inline-flex';
 
-            // Show schedule button only if no post over 280 chars
-            if (scheduleBtn && !anyPostOver280) {
+            // Show schedule button only for premium users and if no post over 280 chars
+            if (scheduleBtn && !anyPostOver280 && window.hasPremium) {
                 scheduleBtn.style.display = 'inline-flex';
-                // Check premium and connection status
+                // Check connection status
                 updateScheduleButtonVisibility();
             }
         }
@@ -411,10 +411,10 @@
             // Never show "Post to X" button in threads
             if (postToXBtn) postToXBtn.style.display = 'none';
 
-            // Show schedule button only if no post over 280 chars
-            if (scheduleBtn && !anyPostOver280) {
+            // Show schedule button only for premium users and if no post over 280 chars
+            if (scheduleBtn && !anyPostOver280 && window.hasPremium) {
                 scheduleBtn.style.display = 'inline-flex';
-                // Check premium and connection status
+                // Check connection status
                 updateScheduleButtonVisibility();
             }
         }
@@ -2280,15 +2280,6 @@ async function checkXConnectionStatus() {
  */
 function updateXConnectionUI(isConnected, accountInfo) {
     const compactStatus = document.getElementById('compactConnectionStatus');
-    const fullCard = document.querySelector('.connection-card');
-    const statusDot = document.querySelector('.connection-card .status-dot');
-    const statusText = document.querySelector('.status-text');
-    const connectBtn = document.getElementById('connectXBtn');
-    const disconnectBtn = document.getElementById('disconnectXBtn');
-    const userInfo = document.getElementById('userInfo');
-    const buttonSkeleton = document.getElementById('buttonSkeleton');
-    const connectionButtons = document.getElementById('connectionButtons');
-    const premiumNotice = document.getElementById('premiumNotice');
     const hasPremium = window.hasPremium || false;
 
     console.log('=== updateXConnectionUI Debug ===');
@@ -2297,70 +2288,48 @@ function updateXConnectionUI(isConnected, accountInfo) {
     console.log('accountInfo:', accountInfo);
     console.log('=== End Debug ===');
 
-    // Remove loading state
-    if (statusDot) statusDot.classList.remove('loading');
-
-    // Hide skeleton, show actual buttons
-    if (buttonSkeleton) buttonSkeleton.style.display = 'none';
-    if (connectionButtons) connectionButtons.style.display = 'block';
-
-    // Check premium and connection status
-    if (!hasPremium && !isConnected) {
-        // Free user, not connected - show full card with premium notice
+    // Free users don't see any connection UI
+    if (!hasPremium) {
         if (compactStatus) compactStatus.style.display = 'none';
-        if (fullCard) fullCard.style.display = 'block';
-        if (statusDot) statusDot.classList.add('disconnected');
-        if (statusText) statusText.textContent = 'Premium Required';
-        if (connectBtn) connectBtn.style.display = 'none';
-        if (disconnectBtn) disconnectBtn.style.display = 'none';
-        if (userInfo) userInfo.style.display = 'none';
-        if (premiumNotice) premiumNotice.style.display = 'flex';
-        if (connectionButtons) connectionButtons.style.display = 'none';
         return;
     }
 
-    // Hide premium notice for premium users
-    if (premiumNotice) premiumNotice.style.display = 'none';
+    // Premium users only
+    if (!compactStatus) return;
 
     if (isConnected && accountInfo) {
         // Connected - show compact status with username
-        if (fullCard) fullCard.style.display = 'none';
-        if (compactStatus) {
-            compactStatus.style.display = 'flex';
-            const compactDot = compactStatus.querySelector('.status-dot');
-            const compactStatusText = compactStatus.querySelector('.compact-status-text');
-            const compactDisconnectBtn = document.getElementById('compactDisconnectBtn');
+        compactStatus.style.display = 'flex';
+        const compactDot = compactStatus.querySelector('.status-dot');
+        const compactStatusText = compactStatus.querySelector('.compact-status-text');
+        const compactDisconnectBtn = document.getElementById('compactDisconnectBtn');
 
-            if (compactDot) {
-                compactDot.classList.remove('disconnected');
-                compactDot.classList.remove('loading');
-            }
-            if (compactStatusText) compactStatusText.innerHTML = `Connected as <strong id="compactUsername">@${accountInfo.username || ''}</strong>`;
-            if (compactDisconnectBtn) {
-                compactDisconnectBtn.style.display = 'flex';
-                compactDisconnectBtn.innerHTML = '<i class="ph ph-plug"></i> Disconnect';
-                compactDisconnectBtn.dataset.action = 'disconnect';
-            }
+        if (compactDot) {
+            compactDot.classList.remove('disconnected');
+            compactDot.classList.remove('loading');
+        }
+        if (compactStatusText) compactStatusText.innerHTML = `Connected as <strong id="compactUsername">@${accountInfo.username || ''}</strong>`;
+        if (compactDisconnectBtn) {
+            compactDisconnectBtn.style.display = 'flex';
+            compactDisconnectBtn.innerHTML = '<i class="ph ph-plug"></i> Disconnect';
+            compactDisconnectBtn.dataset.action = 'disconnect';
         }
     } else {
         // Not connected but has premium - show compact status with connect button
-        if (fullCard) fullCard.style.display = 'none';
-        if (compactStatus) {
-            compactStatus.style.display = 'flex';
-            const compactDot = compactStatus.querySelector('.status-dot');
-            const compactStatusText = compactStatus.querySelector('.compact-status-text');
-            const compactDisconnectBtn = document.getElementById('compactDisconnectBtn');
+        compactStatus.style.display = 'flex';
+        const compactDot = compactStatus.querySelector('.status-dot');
+        const compactStatusText = compactStatus.querySelector('.compact-status-text');
+        const compactDisconnectBtn = document.getElementById('compactDisconnectBtn');
 
-            if (compactDot) {
-                compactDot.classList.remove('loading');
-                compactDot.classList.add('disconnected');
-            }
-            if (compactStatusText) compactStatusText.innerHTML = 'Not connected to X';
-            if (compactDisconnectBtn) {
-                compactDisconnectBtn.style.display = 'flex';
-                compactDisconnectBtn.innerHTML = '<i class="ph ph-link"></i> Connect X';
-                compactDisconnectBtn.dataset.action = 'connect';
-            }
+        if (compactDot) {
+            compactDot.classList.remove('loading');
+            compactDot.classList.add('disconnected');
+        }
+        if (compactStatusText) compactStatusText.innerHTML = 'Not connected to X';
+        if (compactDisconnectBtn) {
+            compactDisconnectBtn.style.display = 'flex';
+            compactDisconnectBtn.innerHTML = '<i class="ph ph-link"></i> Connect X';
+            compactDisconnectBtn.dataset.action = 'connect';
         }
     }
 }
@@ -2407,10 +2376,16 @@ function updateScheduleButtonVisibility() {
     // Find ALL schedule buttons (one per post)
     const scheduleButtons = document.querySelectorAll('.schedule-x-btn');
 
-    // Check if user has premium and is connected
-    const canSchedule = state.hasPremium && state.isXConnected;
+    // Free users should NEVER see the schedule button
+    if (!state.hasPremium) {
+        scheduleButtons.forEach(btn => btn.style.display = 'none');
+        return;
+    }
 
-    // Hide schedule button if not premium or not connected
+    // Premium users: check if connected
+    const canSchedule = state.isXConnected;
+
+    // Hide schedule button if not connected (for premium users)
     scheduleButtons.forEach(btn => {
         if (!canSchedule && btn.style.display !== 'none') {
             btn.style.display = 'none';

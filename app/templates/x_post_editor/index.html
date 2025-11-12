@@ -212,7 +212,8 @@
 
         <!-- Editor Footer -->
         <div class="editor-footer-section">
-            <!-- Compact Connected Status (shown for premium users) -->
+            <!-- Compact Connected Status (shown for premium users only) -->
+            {% if has_premium %}
             <div id="compactConnectionStatus" class="compact-connection-status">
                 <div class="compact-status-content">
                     <div class="status-dot loading"></div>
@@ -223,55 +224,7 @@
                     Disconnect
                 </button>
             </div>
-        </div>
-
-        <!-- X Connection Status (only shown for free users with premium notice) -->
-        <div class="connection-card" style="display: none;">
-            <div class="connection-header">
-                <div class="connection-status">
-                    <div class="status-indicator">
-                        <div class="status-dot loading"></div>
-                        <span class="status-text">Checking connection...</span>
-                    </div>
-
-                    <div id="connectionButtons" style="display: none;">
-                        <button id="connectXBtn" class="secondary-button" style="display: none;">
-                            <i class="ph ph-link"></i>
-                            <span>Connect X Account</span>
-                        </button>
-
-                        <button id="disconnectXBtn" class="btn-disconnect" style="display: none;">
-                            <i class="ph ph-plug"></i>
-                            Disconnect
-                        </button>
-                    </div>
-
-                    <!-- Loading skeleton for buttons -->
-                    <div id="buttonSkeleton" class="skeleton-loader" style="width: 150px; height: 36px; border-radius: 8px;"></div>
-                </div>
-
-                <!-- User Info (shown when connected) -->
-                <div id="userInfo" class="user-info" style="display:none;">
-                    <img id="userAvatar" src="/static/img/default-avatar.png" alt="User Avatar" class="user-avatar">
-                    <div class="user-details">
-                        <div class="user-name" id="userName">X User</div>
-                        <div class="user-id" id="userOpenId">@username</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Premium Required Notice -->
-            <div id="premiumNotice" class="premium-notice" style="display: none;">
-                <div class="premium-icon">👑</div>
-                <div class="premium-text">
-                    <strong>Premium Feature</strong>
-                    <p>X scheduling requires a Premium Creator subscription to connect and schedule posts.</p>
-                </div>
-                <a href="/payment/checkout" class="premium-upgrade-btn">
-                    <i class="ph ph-crown"></i>
-                    Upgrade to Premium
-                </a>
-            </div>
+            {% endif %}
         </div>
     </main>
     </div>

@@ -9,10 +9,12 @@
 {% endblock %}
 
 {% block additional_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/reply_guy.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reply_guy.css') }}?v=8">
 {% endblock %}
 
 {% block scripts %}
+<!-- X (Twitter) Widgets Script -->
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 <script src="{{ url_for('static', filename='scripts/reply_guy.js') }}"></script>
 {% endblock %}
 
@@ -97,29 +99,32 @@
                             </div>
 
                             <!-- Dropdown - only visible for custom lists -->
-                            <div class="dropdown compact-dropdown custom-list-dropdown" style="display: none;">
-                                <div class="dropdown-trigger" id="list-dropdown-trigger">
-                                    <span id="selected-list-text">Choose a list...</span>
-                                    <i class="ph ph-caret-down dropdown-arrow"></i>
-                                </div>
-                                <div class="dropdown-menu compact-menu" id="list-dropdown-menu">
-                                    {% if custom_lists %}
-                                        {% for list in custom_lists %}
-                                        <div class="dropdown-option" data-value="{{ list.id }}" data-type="custom">
-                                            <i class="ph ph-user-circle option-icon"></i>
-                                            {{ list.name }}
+                            <div class="custom-list-container" style="display: none;">
+                                <div class="dropdown compact-dropdown custom-list-dropdown">
+                                    <div class="dropdown-trigger" id="list-dropdown-trigger">
+                                        <span id="selected-list-text">Choose a list...</span>
+                                        <i class="ph ph-caret-down dropdown-arrow"></i>
+                                    </div>
+                                    <div class="dropdown-menu compact-menu" id="list-dropdown-menu">
+                                        {% if custom_lists %}
+                                            {% for list in custom_lists %}
+                                            <div class="dropdown-option" data-value="{{ list.id }}" data-type="custom">
+                                                <i class="ph ph-user-circle option-icon"></i>
+                                                {{ list.name }}
+                                            </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="dropdown-empty">No custom lists yet</div>
+                                        {% endif %}
+                                        <div class="dropdown-divider"></div>
+                                        <div class="dropdown-option create-new" id="create-new-list">
+                                            <i class="ph ph-plus-circle"></i>
+                                            <span>Add X List</span>
                                         </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <div class="dropdown-empty">No custom lists yet</div>
-                                    {% endif %}
-                                    <div class="dropdown-divider"></div>
-                                    <div class="dropdown-option create-new" id="create-new-list">
-                                        <i class="ph ph-plus-circle"></i>
-                                        <span>Add New X List</span>
                                     </div>
                                 </div>
                             </div>
+
 
                             <!-- Loading indicator for mode switching -->
                             <div id="mode-switch-loading" class="mode-switch-loading" style="display: none;">
@@ -142,24 +147,51 @@
                     </div>
 
                     <div class="panel-content" id="tweets-container">
-                        <!-- Loading Section -->
-                        <div class="loading-section" id="tweets-loading-section" style="display: flex;">
-                            <div class="loading-card">
-                                <div class="loading-icon">
-                                    <i class="ph ph-spinner spin"></i>
-                                </div>
-                                <h2 class="loading-title">Loading Reply Opportunities</h2>
-                                <p class="loading-subtitle">Finding the best tweets for you to engage with...</p>
-                            </div>
-                        </div>
-
                         <!-- Tweets Section - populated by JavaScript -->
-                        <div id="tweets-section" style="display: none;">
+                        <div id="tweets-section" style="opacity: 0.5; pointer-events: none;">
                             <!-- Tweets will be rendered here by JavaScript -->
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add X List Modal - Clean Style -->
+<div id="create-list-panel" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog-clean">
+        <div class="modal-header-clean">
+            <div class="modal-title-clean">
+                <i class="ph ph-plus-circle"></i>
+                <span>Add X List</span>
+            </div>
+            <button class="modal-close-clean" id="close-create-panel">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <div class="modal-body-clean">
+            <div class="info-box-modal">
+                <i class="ph ph-info"></i>
+                <span>Find the ID in your X list URL: <strong>x.com/i/lists/1234567890</strong></span>
+            </div>
+            <div class="form-row-clean">
+                <div class="form-group">
+                    <label for="panel-list-name">List Name</label>
+                    <input type="text" id="panel-list-name" class="form-input" placeholder="e.g., AI Founders">
+                </div>
+                <div class="form-group">
+                    <label for="panel-x-list-id">X List ID</label>
+                    <input type="text" id="panel-x-list-id" class="form-input" placeholder="e.g., 1234567890">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer-clean">
+            <button id="cancel-panel-create" class="btn-cancel-clean">Cancel</button>
+            <button id="panel-create-btn" class="btn-primary-clean">
+                <i class="ph ph-plus"></i>
+                <span>Add List</span>
+            </button>
         </div>
     </div>
 </div>

@@ -55,6 +55,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Only load videos for premium users
     if (hasPremium) {
         loadMyVideos();
+    } else {
+        // Free users start on URL tab
+        switchInputMode('url');
     }
 
     // Check if video_id is in URL params (from homepage)
@@ -2907,7 +2910,7 @@ async function loadPrivateVideos(forceRefresh = false) {
         privateVideosGrid.innerHTML = `
             <div style="grid-column: 1 / -1;" class="empty-state">
                 <i class="ph ph-warning"></i>
-                <p>Failed to load private videos</p>
+                <p>Unable to Load Private Videos</p>
                 <span>${error.message}</span>
             </div>
         `;

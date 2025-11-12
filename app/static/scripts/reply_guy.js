@@ -14,7 +14,8 @@
         hasBrandVoiceData: false,
         ongoingUpdates: {},
         isInitialized: false,
-        gifCache: new Map() // Cache GIF search results by query
+        gifCache: new Map(), // Cache GIF search results by query
+        defaultLists: [] // Store default lists loaded from server
     };
 
     // Initialize application
@@ -41,14 +42,15 @@
 
     // Load initial data from server via API
     async function loadInitialData() {
-        const tweetsLoadingSection = document.getElementById('tweets-loading-section');
         const tweetsSection = document.getElementById('tweets-section');
 
         try {
-            // Ensure loading state is visible
             console.log('🔄 Loading initial data...');
-            if (tweetsLoadingSection) tweetsLoadingSection.style.display = 'flex';
-            if (tweetsSection) tweetsSection.style.display = 'none';
+            // Keep section visible but dimmed during load
+            if (tweetsSection) {
+                tweetsSection.style.opacity = '0.5';
+                tweetsSection.style.pointerEvents = 'none';
+            }
 
             // Fetch initial data from API
             const response = await fetch('/reply-guy/get-initial-data', {
@@ -75,6 +77,12 @@
             // Update progress card with reply stats
             updateProgressCard(data.reply_stats);
 
+            // Store default lists in state
+            if (data.default_lists && data.default_lists.length > 0) {
+                state.defaultLists = data.default_lists;
+                console.log('✅ Stored', data.default_lists.length, 'default lists');
+            }
+
             // Populate custom lists dropdown
             if (data.custom_lists && data.custom_lists.length > 0) {
                 populateCustomListsDropdown(data.custom_lists);
@@ -95,12 +103,24 @@
                     }
                 });
 
-                // Show/hide custom list dropdown based on mode
-                const dropdown = document.querySelector('.custom-list-dropdown');
+                // Show/hide custom list container based on mode
+                const container = document.querySelector('.custom-list-container');
                 if (data.current_selection.list_type === 'custom') {
-                    if (dropdown) dropdown.style.display = 'block';
+                    if (container) container.style.display = 'flex';
+
+                    // Update dropdown text with selected list name
+                    if (data.list_name) {
+                        const selectedListText = document.getElementById('selected-list-text');
+                        if (selectedListText) {
+                            selectedListText.textContent = data.list_name;
+                            console.log('✅ Set dropdown text to:', data.list_name);
+                        }
+                    }
+
+                    // Show update button for custom lists
+                    updateButtonVisibility();
                 } else {
-                    if (dropdown) dropdown.style.display = 'none';
+                    if (container) container.style.display = 'none';
                 }
             }
 
@@ -124,12 +144,47 @@
                 // 1. Inject HTML into DOM
                 tweetsSection.innerHTML = data.tweets_html;
 
-                // 2. Show tweets section (still hidden by loading spinner overlay)
+                // 2. Show tweets section first
                 tweetsSection.style.display = 'block';
+
+                // 3. Wait for Twitter widgets to be ready, then load each blockquote individually
+                setTimeout(async () => {
+                    console.log('🐦 Waiting for Twitter widgets...');
+                    const widgetsReady = await waitForTwitterWidgets();
+
+                    if (widgetsReady) {
+                        // Validate blockquotes before loading
+                        const blockquotes = Array.from(tweetsSection.querySelectorAll('blockquote.twitter-tweet'));
+                        console.log(`Found ${blockquotes.length} tweet blockquotes`);
+
+                        // Load each widget individually with error handling
+                        if (blockquotes.length > 0) {
+                            let successCount = 0;
+                            for (const blockquote of blockquotes) {
+                                try {
+                                    // Check if blockquote is still in DOM and has valid structure
+                                    if (blockquote.isConnected && blockquote.querySelector('a')) {
+                                        await window.twttr.widgets.createTweet(
+                                            blockquote.querySelector('a').href.split('/').pop(),
+                                            blockquote.parentElement,
+                                            { theme: 'dark', dnt: true }
+                                        );
+                                        // Remove original blockquote after widget loads
+                                        blockquote.remove();
+                                        successCount++;
+                                    }
+                                } catch (err) {
+                                    // Silently continue - some tweets may fail to load
+                                }
+                            }
+                            console.log(`✅ Loaded ${successCount}/${blockquotes.length} Twitter widgets`);
+                        }
+                    }
+                }, 200);
 
                 console.log('📝 Waiting for images and content to load...');
 
-                // 3. Wait for all images in tweets to load
+                // 4. Wait for all images in tweets to load
                 const images = tweetsSection.querySelectorAll('img');
                 const imagePromises = Array.from(images).map(img => {
                     if (img.complete) return Promise.resolve();
@@ -143,22 +198,23 @@
                 Promise.all(imagePromises).then(() => {
                     console.log('🖼️ Images loaded, initializing interactions...');
 
-                    // 4. Initialize event listeners
-                    setupReplyInteractions();
-                    initializeTimestamps();
+                    // 5. Initialize event listeners for dynamically loaded content
+                    setupReplyStyleDropdowns();
 
-                    console.log('✅ Everything ready, hiding spinner...');
+                    console.log('✅ Everything ready, enabling section...');
 
-                    // 5. NOW hide the spinner - everything is actually ready
-                    if (tweetsLoadingSection) {
-                        tweetsLoadingSection.style.display = 'none';
+                    // 6. Enable the section - everything is ready
+                    if (tweetsSection) {
+                        tweetsSection.style.opacity = '1';
+                        tweetsSection.style.pointerEvents = 'auto';
                     }
                 });
 
             } else {
                 console.log('ℹ️ No tweets to display');
-                if (tweetsLoadingSection) {
-                    tweetsLoadingSection.style.display = 'none';
+                if (tweetsSection) {
+                    tweetsSection.style.opacity = '1';
+                    tweetsSection.style.pointerEvents = 'auto';
                 }
             }
 
@@ -166,8 +222,11 @@
             console.error('❌ Error loading initial data:', error);
             showToast('Failed to load data. Please refresh the page.', 'error');
 
-            // Hide loading, show empty state
-            if (tweetsLoadingSection) tweetsLoadingSection.style.display = 'none';
+            // Enable section even on error
+            if (tweetsSection) {
+                tweetsSection.style.opacity = '1';
+                tweetsSection.style.pointerEvents = 'auto';
+            }
         }
     }
 
@@ -255,16 +314,24 @@
 
     // Populate custom lists dropdown
     function populateCustomListsDropdown(customLists) {
+        console.log('📋 populateCustomListsDropdown called with:', customLists);
         const dropdownMenu = document.getElementById('list-dropdown-menu');
-        if (!dropdownMenu) return;
+        if (!dropdownMenu) {
+            console.error('❌ Dropdown menu not found');
+            return;
+        }
 
         // Find the existing custom list options container
         const existingOptions = dropdownMenu.querySelectorAll('.dropdown-option[data-type="custom"]');
         const emptyMessage = dropdownMenu.querySelector('.dropdown-empty');
 
+        console.log('🔍 Found', existingOptions.length, 'existing options');
+        console.log('🔍 Empty message exists:', !!emptyMessage);
+
         // Remove empty message if it exists
         if (emptyMessage) {
             emptyMessage.remove();
+            console.log('🗑️ Removed empty message');
         }
 
         // Remove existing custom list options (but keep the "Add New" button)
@@ -276,6 +343,7 @@
 
         // Find the divider and "Add New" button
         const divider = dropdownMenu.querySelector('.dropdown-divider');
+        console.log('🔍 Divider found:', !!divider);
 
         // Add custom lists before the divider
         customLists.forEach(list => {
@@ -293,6 +361,7 @@
             } else {
                 dropdownMenu.appendChild(option);
             }
+            console.log('➕ Added custom list:', list.name, 'with id:', list.id);
         });
 
         console.log(`✅ Populated ${customLists.length} custom lists in dropdown`);
@@ -354,11 +423,12 @@
 
         // If no list is selected on page load, auto-select the first default list
         if (!state.selectedList) {
-            const firstDefaultDropdown = document.querySelector('.dropdown-option[data-type="default"]');
-            if (firstDefaultDropdown) {
-                firstDefaultDropdown.classList.add('selected');
-                state.selectedList = firstDefaultDropdown.getAttribute('data-value');
+            if (state.defaultLists && state.defaultLists.length > 0) {
+                // Select first default list
+                const firstDefaultList = state.defaultLists[0];
+                state.selectedList = firstDefaultList.id;
                 state.selectedListType = 'default';
+                console.log('✅ Auto-selected default list:', firstDefaultList.name);
             } else {
                 // Only fall back to custom list if no default lists exist
                 const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
@@ -370,6 +440,7 @@
                     firstCustomList.classList.add('selected');
                     state.selectedList = firstCustomList.getAttribute('data-value');
                     state.selectedListType = 'custom';
+                    console.log('✅ Auto-selected custom list:', optionText);
                 }
             }
         }
@@ -557,11 +628,11 @@
         }
         const cancelCreateBtn = document.getElementById('cancel-create-btn');
         if (cancelCreateBtn) {
-            cancelCreateBtn.onclick = hideCreatePanel;
+            cancelCreateBtn.onclick = hideCreateModal;
         }
         const closeCreateModal = document.getElementById('close-create-modal');
         if (closeCreateModal) {
-            closeCreateModal.onclick = hideCreatePanel;
+            closeCreateModal.onclick = hideCreateModal;
         }
 
         const createNewListBtn = document.getElementById('create-new-list');
@@ -570,15 +641,31 @@
         if (createNewListBtn) {
             createNewListBtn.onclick = function(e) {
                 e.preventDefault();
-                showCreatePanel();
+                e.stopPropagation();
+                showInlineCreateForm();
             };
         }
 
         if (createNewListEmptyBtn) {
             createNewListEmptyBtn.onclick = function(e) {
                 e.preventDefault();
-                showCreatePanel();
+                showInlineCreateForm();
             };
+        }
+
+        // Panel form controls
+        const closePanelBtn = document.getElementById('close-create-panel');
+        const cancelPanelCreate = document.getElementById('cancel-panel-create');
+        const panelCreateBtn = document.getElementById('panel-create-btn');
+
+        if (closePanelBtn) {
+            closePanelBtn.onclick = hideCreatePanel;
+        }
+        if (cancelPanelCreate) {
+            cancelPanelCreate.onclick = hideCreatePanel;
+        }
+        if (panelCreateBtn) {
+            panelCreateBtn.onclick = handlePanelCreateList;
         }
 
         document.addEventListener('click', handleDelegatedClicks);
@@ -590,14 +677,22 @@
 
         // Generate reply button
         if (e.target.closest('.generate-reply-btn')) {
+            console.log('🔘 Generate reply button clicked');
             e.preventDefault();
             const btn = e.target.closest('.generate-reply-btn');
             if (btn.disabled) {
+                console.log('⚠️ Button is disabled, ignoring click');
                 return;
             }
 
             btn.disabled = true;
             const tweetElement = btn.closest('.tweet-opportunity');
+            console.log('📝 Tweet element found:', !!tweetElement);
+            console.log('Tweet data:', {
+                id: tweetElement?.getAttribute('data-tweet-id'),
+                text: tweetElement?.getAttribute('data-tweet-text')?.substring(0, 50) + '...',
+                author: tweetElement?.getAttribute('data-tweet-author')
+            });
             generateReply(tweetElement).finally(() => {
                 btn.disabled = false;
             });
@@ -795,43 +890,32 @@
 
         // Function to handle mode switching
         function switchMode(mode) {
-            const dropdown = document.querySelector('.custom-list-dropdown');
+            const container = document.querySelector('.custom-list-container');
             const updateBtnContainer = document.getElementById('update-button-container');
-            const loadingIndicator = document.getElementById('mode-switch-loading');
 
             if (mode === 'default') {
-                // Hide dropdown and update button for default mode
-                if (dropdown) dropdown.style.display = 'none';
+                // Hide container and update button for default mode
+                if (container) container.style.display = 'none';
                 if (updateBtnContainer) updateBtnContainer.style.display = 'none';
 
-                // Auto-select first default list
-                const firstDefaultList = document.querySelector('.dropdown-option[data-type="default"]');
-                if (firstDefaultList) {
-                    const listId = firstDefaultList.getAttribute('data-value');
+                // Auto-select first default list from state
+                if (state.defaultLists && state.defaultLists.length > 0) {
+                    const firstDefaultList = state.defaultLists[0];
+                    const listId = firstDefaultList.id;
 
-                    // Show loading indicator
-                    if (loadingIndicator) {
-                        loadingIndicator.style.display = 'flex';
-                    } else {
-                    }
-
-                    // Clear any dropdown selections
-                    document.querySelectorAll('.dropdown-option').forEach(opt => {
-                        opt.classList.remove('selected');
-                    });
-                    firstDefaultList.classList.add('selected');
+                    console.log('🔄 Switching to default list:', firstDefaultList.name, listId);
 
                     state.selectedList = listId;
                     state.selectedListType = 'default';
 
-
-                    // Small delay to show spinner before API call
+                    // Small delay before API call
                     setTimeout(() => selectList(), 100);
                 } else {
+                    console.error('❌ No default lists available');
                 }
             } else {
-                // Show dropdown for custom mode
-                if (dropdown) dropdown.style.display = 'block';
+                // Show container for custom mode
+                if (container) container.style.display = 'flex';
 
                 // Auto-select first custom list
                 const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
@@ -839,12 +923,6 @@
                     const optionText = firstCustomList.textContent.trim();
                     const selectedListText = document.getElementById('selected-list-text');
                     if (selectedListText) selectedListText.textContent = optionText;
-
-                    // Show loading indicator
-                    if (loadingIndicator) {
-                        loadingIndicator.style.display = 'flex';
-                    } else {
-                    }
 
                     // Clear any dropdown selections
                     document.querySelectorAll('.dropdown-option').forEach(opt => {
@@ -855,8 +933,7 @@
                     state.selectedListType = 'custom';
                     firstCustomList.classList.add('selected');
 
-
-                    // Small delay to show spinner before API call
+                    // Small delay before API call
                     setTimeout(() => selectList(), 100);
                 }
 
@@ -895,14 +972,14 @@
         });
 
         // Show/hide UI elements based on initial mode
-        const dropdown = document.querySelector('.custom-list-dropdown');
+        const container = document.querySelector('.custom-list-container');
         const updateBtnContainer = document.getElementById('update-button-container');
 
         if (initialMode === 'default') {
-            if (dropdown) dropdown.style.display = 'none';
+            if (container) container.style.display = 'none';
             if (updateBtnContainer) updateBtnContainer.style.display = 'none';
         } else {
-            if (dropdown) dropdown.style.display = 'block';
+            if (container) container.style.display = 'flex';
             updateButtonVisibility();
         }
     }
@@ -1106,6 +1183,8 @@
     function selectList() {
         if (!state.selectedList) return;
 
+        console.log('🔄 Selecting list:', state.selectedList, 'type:', state.selectedListType);
+
         fetch('/reply-guy/select-list', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1117,6 +1196,8 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                console.log('✅ List selected, has_analysis:', data.has_analysis, 'is_updating:', data.is_updating);
+
                 if (data.is_updating) {
                     state.ongoingUpdates[state.selectedList] = {
                         ...data.update_info,
@@ -1131,25 +1212,83 @@
                 updateButtonVisibility();
 
                 if (data.has_analysis) {
-                    // Reload page when analysis exists (even if 0 opportunities)
-                    setTimeout(() => window.location.reload(), 1000);
+                    // Load the analysis data without reloading the page
+                    console.log('📊 Loading analysis data...');
+                    loadInitialData();
                 } else if (state.selectedListType === 'default') {
-                    // showToast('Loading default list analysis...', 'info');
-                    setTimeout(() => window.location.reload(), 1000);
+                    // For default lists, load data (should always have analysis)
+                    console.log('📊 Loading default list data...');
+                    loadInitialData();
                 } else {
-                    const emptyMessage = document.getElementById('empty-message');
-                    if (emptyMessage) {
-                        emptyMessage.textContent = data.is_updating ?
-                            'Update in progress for this list...' :
-                            'Click "Update" to analyze this custom list.';
+                    // Custom list with no analysis - auto-trigger analysis
+                    console.log('🔄 No analysis for custom list, auto-triggering update...');
+
+                    // Mark as updating to show spinner on button
+                    state.ongoingUpdates[state.selectedList] = {
+                        status: 'running',
+                        started_at: new Date().toISOString(),
+                        timestamp: Date.now()
+                    };
+                    saveOngoingUpdates();
+                    updateButtonVisibility();
+
+                    // Show empty state while loading
+                    const tweetsContainer = document.getElementById('tweets-section');
+                    if (tweetsContainer) {
+                        tweetsContainer.innerHTML = `
+                            <div class="empty-state">
+                                <i class="ph ph-arrows-clockwise empty-icon spin"></i>
+                                <h3 class="empty-title">Analyzing List...</h3>
+                                <p class="empty-text">Finding reply opportunities in your custom list.</p>
+                            </div>
+                        `;
                     }
+
+                    // Trigger analysis
+                    fetch('/reply-guy/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            list_id: state.selectedList,
+                            list_type: 'custom',
+                            time_range: '24h'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(analysisData => {
+                        delete state.ongoingUpdates[state.selectedList];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+
+                        if (analysisData.success) {
+                            console.log('✅ Analysis completed');
+                            loadInitialData();
+                        } else {
+                            console.error('❌ Analysis failed:', analysisData.error);
+                            if (tweetsContainer) {
+                                tweetsContainer.innerHTML = `
+                                    <div class="empty-state">
+                                        <i class="ph ph-warning-circle empty-icon"></i>
+                                        <h3 class="empty-title">Analysis Failed</h3>
+                                        <p class="empty-text">Failed to analyze this list. Please try clicking "Update" manually.</p>
+                                    </div>
+                                `;
+                            }
+                        }
+                    })
+                    .catch(analysisError => {
+                        delete state.ongoingUpdates[state.selectedList];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+                        console.error('❌ Analysis error:', analysisError);
+                    });
                 }
             } else {
-                // showToast('Error selecting list: ' + data.error, 'error');
+                console.error('❌ Error selecting list:', data.error);
             }
         })
         .catch(error => {
-            // showToast('Network error selecting list', 'error');
+            console.error('❌ Network error selecting list:', error);
         });
     }
 
@@ -1217,25 +1356,16 @@
         }
 
         const tweetId = tweetElement.getAttribute('data-tweet-id');
-        const tweetTextElement = tweetElement.querySelector('.tweet-text');
 
-        let tweetText = tweetTextElement ? tweetTextElement.innerHTML : '';
-        tweetText = tweetText.replace(/<br\s*\/?>/gi, '\n').trim();
-        tweetText = tweetText.replace(/<[^>]*>/g, '');
+        // Get tweet data from data attributes (since tweet is in iframe)
+        let tweetText = tweetElement.getAttribute('data-tweet-text') || '';
+        const author = tweetElement.getAttribute('data-tweet-author') || '';
 
-        const authorElement = tweetElement.querySelector('.tweet-author-username');
-        const author = authorElement ? authorElement.textContent.replace('@', '') : '';
         const style = getSelectedStyle(tweetElement);
         const useBrandVoice = getBrandVoiceState(tweetElement);
 
-        // Extract image URLs from tweet media
+        // Image URLs are not extracted from embeds - backend should provide them if needed
         const imageUrls = [];
-        const tweetImages = tweetElement.querySelectorAll('.tweet-image');
-        tweetImages.forEach(img => {
-            if (img.src) {
-                imageUrls.push(img.src);
-            }
-        });
 
 
         const textarea = tweetElement.querySelector('.reply-textarea');
@@ -2184,11 +2314,218 @@
         }, 3000);
     }
 
-    // Functions for managing create list panel
-    function showCreatePanel() {
+    // Functions for managing create list modal
+    function showInlineCreateForm() {
+        const modal = document.getElementById('create-list-panel');
+        if (modal) {
+            modal.style.display = 'flex';
+            // Close dropdown
+            closeDropdowns();
+        }
+    }
+
+    function hideCreatePanel() {
+        const modal = document.getElementById('create-list-panel');
+        if (modal) {
+            modal.style.display = 'none';
+            // Clear inputs
+            const nameInput = document.getElementById('panel-list-name');
+            const idInput = document.getElementById('panel-x-list-id');
+            if (nameInput) nameInput.value = '';
+            if (idInput) idInput.value = '';
+        }
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(e) {
+        const modal = document.getElementById('create-list-panel');
+        if (modal && e.target === modal) {
+            hideCreatePanel();
+        }
+    });
+
+    function handlePanelCreateList() {
+        const nameInput = document.getElementById('panel-list-name');
+        const idInput = document.getElementById('panel-x-list-id');
+        const btn = document.getElementById('panel-create-btn');
+
+        if (!nameInput || !idInput) return;
+
+        const name = nameInput.value.trim();
+        const xListId = idInput.value.trim();
+
+        if (!name) {
+            alert('Please enter a list name');
+            return;
+        }
+
+        if (!xListId) {
+            alert('Please enter an X List ID');
+            return;
+        }
+
+        // Show loading state on button
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('loading');
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.className = 'ph ph-spinner';
+            }
+            const span = btn.querySelector('span');
+            if (span) {
+                span.textContent = 'Adding...';
+            }
+        }
+
+        fetch('/reply-guy/create-custom-list', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                type: 'x_list',
+                x_list_id: xListId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Reset button state
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = 'ph ph-plus';
+                }
+                const span = btn.querySelector('span');
+                if (span) {
+                    span.textContent = 'Add List';
+                }
+            }
+
+            if (data.success) {
+                console.log('✅ List created:', data.list);
+                hideCreatePanel();
+
+                // Clear form
+                if (nameInput) nameInput.value = '';
+                if (idInput) idInput.value = '';
+
+                // Add the new list to the dropdown dynamically
+                const newList = data.list;
+                const dropdownMenu = document.getElementById('list-dropdown-menu');
+                if (dropdownMenu) {
+                    const divider = dropdownMenu.querySelector('.dropdown-divider');
+                    const option = document.createElement('div');
+                    option.className = 'dropdown-option';
+                    option.setAttribute('data-value', newList.id);
+                    option.setAttribute('data-type', 'custom');
+                    option.innerHTML = `
+                        <i class="ph ph-user-circle option-icon"></i>
+                        ${newList.name}
+                    `;
+
+                    if (divider) {
+                        dropdownMenu.insertBefore(option, divider);
+                    } else {
+                        dropdownMenu.appendChild(option);
+                    }
+
+                    // Remove "No custom lists yet" message if present
+                    const emptyMessage = dropdownMenu.querySelector('.dropdown-empty');
+                    if (emptyMessage) emptyMessage.remove();
+
+                    console.log('✅ Added list to dropdown');
+                }
+
+                // Select the newly created list
+                setTimeout(() => {
+                    state.selectedList = newList.id;
+                    state.selectedListType = 'custom';
+
+                    const selectedListText = document.getElementById('selected-list-text');
+                    if (selectedListText) selectedListText.textContent = newList.name;
+
+                    // Mark as updating to show spinner on button
+                    state.ongoingUpdates[newList.id] = {
+                        status: 'running',
+                        started_at: new Date().toISOString(),
+                        timestamp: Date.now()
+                    };
+                    saveOngoingUpdates();
+                    updateButtonVisibility();
+
+                    // Show loading state in tweets area
+                    const tweetsContainer = document.getElementById('tweets-section');
+                    if (tweetsContainer) {
+                        tweetsContainer.innerHTML = `
+                            <div class="empty-state">
+                                <i class="ph ph-arrows-clockwise empty-icon spin"></i>
+                                <h3 class="empty-title">Analyzing List...</h3>
+                                <p class="empty-text">Finding reply opportunities in your new list.</p>
+                            </div>
+                        `;
+                    }
+
+                    fetch('/reply-guy/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            list_id: newList.id,
+                            list_type: 'custom',
+                            time_range: '24h'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(analysisData => {
+                        delete state.ongoingUpdates[newList.id];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+
+                        if (analysisData.success) {
+                            console.log('✅ Analysis completed');
+                            loadInitialData();
+                        } else {
+                            console.error('❌ Analysis failed:', analysisData.error);
+                            loadInitialData();
+                        }
+                    })
+                    .catch(analysisError => {
+                        delete state.ongoingUpdates[newList.id];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+                        console.error('❌ Analysis error:', analysisError);
+                        loadInitialData();
+                    });
+                }, 500);
+            } else {
+                console.error('❌ Error creating list:', data.error);
+                alert('Error creating list: ' + data.error);
+            }
+        })
+        .catch(error => {
+            // Reset button state on error
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = 'ph ph-plus';
+                }
+                const span = btn.querySelector('span');
+                if (span) {
+                    span.textContent = 'Add List';
+                }
+            }
+            console.error('❌ Network error creating list:', error);
+            alert('Network error creating list');
+        });
+    }
+
+    // Functions for managing create list modal (deprecated - modal version)
+    function showCreateModal() {
         const modal = document.getElementById('create-list-modal');
         if (modal) {
-
             modal.classList.add('show');
 
             modal.setAttribute('style', `
@@ -2242,7 +2579,7 @@
         }
     }
 
-    function hideCreatePanel() {
+    function hideCreateModal() {
         const modal = document.getElementById('create-list-modal');
         if (modal) {
             modal.classList.remove('show');
@@ -2287,45 +2624,114 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showLoading('Running analysis...', 'Finding reply opportunities in your new list...');
-                hideCreatePanel();
+                console.log('✅ List created:', data.list);
+                hideCreateModal();
 
-                const listId = data.list.id;
-                fetch('/reply-guy/run-analysis', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        list_id: listId,
-                        list_type: 'custom',
-                        time_range: '24h'
-                    })
-                })
-                .then(response => response.json())
-                .then(analysisData => {
-                    hideLoading();
-                    if (analysisData.success) {
-                        // showToast('List created and analyzed successfully!', 'success');
-                        setTimeout(() => window.location.reload(), 1000);
+                // Clear form
+                if (nameInput) nameInput.value = '';
+                if (idInput) idInput.value = '';
+
+                // Add the new list to the dropdown dynamically
+                const newList = data.list;
+                const dropdownMenu = document.getElementById('list-dropdown-menu');
+                if (dropdownMenu) {
+                    const divider = dropdownMenu.querySelector('.dropdown-divider');
+                    const option = document.createElement('div');
+                    option.className = 'dropdown-option';
+                    option.setAttribute('data-value', newList.id);
+                    option.setAttribute('data-type', 'custom');
+                    option.innerHTML = `
+                        <i class="ph ph-user-circle option-icon"></i>
+                        ${newList.name}
+                    `;
+
+                    if (divider) {
+                        dropdownMenu.insertBefore(option, divider);
                     } else {
-                        // showToast('List created but analysis failed: ' + analysisData.error, 'warning');
-                        setTimeout(() => window.location.reload(), 1000);
+                        dropdownMenu.appendChild(option);
                     }
-                })
-                .catch(analysisError => {
-                    hideLoading();
-                    // showToast('List created but analysis failed', 'warning');
-                    console.error('Analysis error:', analysisError);
-                    setTimeout(() => window.location.reload(), 1000);
-                });
+
+                    // Remove "No custom lists yet" message if present
+                    const emptyMessage = dropdownMenu.querySelector('.dropdown-empty');
+                    if (emptyMessage) emptyMessage.remove();
+
+                    console.log('✅ Added list to dropdown');
+                }
+
+                // Switch to custom mode and select the new list
+                const customTab = document.querySelector('.mode-tab-compact[data-mode="custom"]');
+                if (customTab) {
+                    customTab.click();
+                }
+
+                // Select the newly created list after a short delay
+                setTimeout(() => {
+                    state.selectedList = newList.id;
+                    state.selectedListType = 'custom';
+
+                    const selectedListText = document.getElementById('selected-list-text');
+                    if (selectedListText) selectedListText.textContent = newList.name;
+
+                    // Mark as updating to show spinner on button
+                    state.ongoingUpdates[newList.id] = {
+                        status: 'running',
+                        started_at: new Date().toISOString(),
+                        timestamp: Date.now()
+                    };
+                    saveOngoingUpdates();
+                    updateButtonVisibility();
+
+                    // Show loading state in tweets area
+                    const tweetsContainer = document.getElementById('tweets-section');
+                    if (tweetsContainer) {
+                        tweetsContainer.innerHTML = `
+                            <div class="empty-state">
+                                <i class="ph ph-arrows-clockwise empty-icon spin"></i>
+                                <h3 class="empty-title">Analyzing List...</h3>
+                                <p class="empty-text">Finding reply opportunities in your new list.</p>
+                            </div>
+                        `;
+                    }
+
+                    fetch('/reply-guy/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            list_id: newList.id,
+                            list_type: 'custom',
+                            time_range: '24h'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(analysisData => {
+                        delete state.ongoingUpdates[newList.id];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+
+                        if (analysisData.success) {
+                            console.log('✅ Analysis completed');
+                            loadInitialData();
+                        } else {
+                            console.error('❌ Analysis failed:', analysisData.error);
+                            loadInitialData();
+                        }
+                    })
+                    .catch(analysisError => {
+                        delete state.ongoingUpdates[newList.id];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+                        console.error('❌ Analysis error:', analysisError);
+                        loadInitialData();
+                    });
+                }, 500);
             } else {
                 hideLoading();
-                // showToast('Error creating list: ' + data.error, 'error');
+                console.error('❌ Error creating list:', data.error);
             }
         })
         .catch(error => {
             hideLoading();
-            // showToast('Network error creating list', 'error');
-            console.error('Error:', error);
+            console.error('❌ Network error creating list:', error);
         });
     }
 
@@ -2581,6 +2987,23 @@
         }
     }
 
+    // Helper to wait for Twitter widgets to be ready
+    function waitForTwitterWidgets(maxWait = 5000) {
+        return new Promise((resolve) => {
+            const startTime = Date.now();
+            const checkInterval = setInterval(() => {
+                if (window.twttr && window.twttr.widgets) {
+                    clearInterval(checkInterval);
+                    resolve(true);
+                } else if (Date.now() - startTime > maxWait) {
+                    clearInterval(checkInterval);
+                    console.warn('Twitter widgets script not loaded after timeout');
+                    resolve(false);
+                }
+            }, 100);
+        });
+    }
+
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', init);
 
@@ -2590,8 +3013,8 @@
         formatLastRefresh();
     });
 
-    // Update timestamps immediately (no need for interval - full timestamps don't change)
-    updateTimestamps();
+    // Timestamps are now handled by X embed widgets
+    // updateTimestamps();
 
     // Pagination: Load More functionality with API
     const loadMoreBtn = document.getElementById('load-more-btn');
@@ -2629,11 +3052,16 @@
                         loadMoreContainer.insertAdjacentHTML('beforebegin', tweetHtml);
                     });
 
+                    // Reload X (Twitter) embed widgets for new tweets
+                    if (window.twttr && window.twttr.widgets) {
+                        window.twttr.widgets.load();
+                    }
+
                     const newLoaded = loaded + data.tweets.length;
                     this.setAttribute('data-loaded', newLoaded);
 
-                    // Update timestamps for newly loaded tweets
-                    updateTimestamps();
+                    // Timestamps are handled by X embed widgets
+                    // updateTimestamps();
 
                     // Re-setup reply style dropdowns for new tweets
                     setupReplyStyleDropdowns();
@@ -2674,89 +3102,6 @@
             {id: "contrarian", name: "Contrarian"}
         ];
 
-        // Render profile image or fallback
-        const profileImageHtml = tweet.profile_image_url ? `
-            <img src="${tweet.profile_image_url}" alt="${tweet.author}"
-                 onload="this.classList.remove('error')"
-                 onerror="this.classList.add('error')">
-            <div class="fallback-avatar">
-                <i class="ph ph-user"></i>
-            </div>
-        ` : `
-            <div class="fallback-avatar" style="display: flex;">
-                <i class="ph ph-user"></i>
-            </div>
-        `;
-
-        // Full timestamp and views below post (X brand style)
-        const timestampFullHtml = tweet.created_at ? `
-            <div class="tweet-timestamp-full" data-timestamp="${tweet.created_at}" data-views="${tweet.engagement.views || 0}">
-                <a href="https://twitter.com/${tweet.author}/status/${tweet.tweet_id}" target="_blank" rel="noopener noreferrer" class="tweet-time-link">
-                    <span class="tweet-time"></span>
-                </a>
-                <span class="tweet-views">
-                    <span class="tweet-views-count">${tweet.engagement.views || 0}</span> Views
-                </span>
-            </div>
-        ` : '';
-
-        // Render media (photos and videos)
-        let mediaHtml = '';
-        if (tweet.media) {
-            mediaHtml = '<div class="tweet-media">';
-
-            // Photos
-            if (tweet.media.photo && tweet.media.photo.length > 0) {
-                mediaHtml += '<div class="tweet-photos">';
-                tweet.media.photo.forEach(photo => {
-                    mediaHtml += `
-                        <div class="tweet-photo">
-                            <img src="${photo.media_url_https}" alt="Tweet image" class="tweet-image" loading="lazy"
-                                 onerror="this.style.display='none'">
-                        </div>
-                    `;
-                });
-                mediaHtml += '</div>';
-            }
-
-            // Videos
-            if (tweet.media.video && tweet.media.video.length > 0) {
-                mediaHtml += '<div class="tweet-videos">';
-                tweet.media.video.forEach(video => {
-                    if (video.variants && video.variants.length > 0) {
-                        const mp4Variant = video.variants.filter(v => v.content_type === 'video/mp4').pop();
-                        if (mp4Variant) {
-                            mediaHtml += `
-                                <div class="tweet-video">
-                                    <video controls class="tweet-video-player" poster="${video.media_url_https}">
-                                        <source src="${mp4Variant.url}" type="video/mp4">
-                                        Your browser does not support the video tag.
-                                    </video>
-                                </div>
-                            `;
-                        } else {
-                            mediaHtml += `
-                                <div class="tweet-video">
-                                    <img src="${video.media_url_https}" alt="Video thumbnail" class="tweet-video-thumb" loading="lazy"
-                                         onerror="this.style.display='none'">
-                                </div>
-                            `;
-                        }
-                    } else {
-                        mediaHtml += `
-                            <div class="tweet-video">
-                                <img src="${video.media_url_https}" alt="Video thumbnail" class="tweet-video-thumb" loading="lazy"
-                                     onerror="this.style.display='none'">
-                            </div>
-                        `;
-                    }
-                });
-                mediaHtml += '</div>';
-            }
-
-            mediaHtml += '</div>';
-        }
-
         // Render reply style options
         const replyStyleOptionsHtml = replyStyles.map((style, index) => `
             <div class="dropdown-option reply-style-option ${index === 0 ? 'selected' : ''}" data-value="${style.id}">
@@ -2767,46 +3112,11 @@
         return `
             <div class="tweet-opportunity" data-tweet-id="${tweet.tweet_id}">
                 <div class="tweet-grid">
-                    <!-- Tweet Content -->
+                    <!-- Tweet Content - Official X Embed -->
                     <div class="tweet-content-section">
-                        <!-- X Logo (required by brand guidelines) -->
-                        <img src="/static/img/templates/logo-black.png" alt="X" class="tweet-x-logo">
-                        <img src="/static/img/templates/logo-white.png" alt="X" class="tweet-x-logo">
-
-                        <div class="tweet-author-info">
-                            <div class="tweet-avatar">
-                                ${profileImageHtml}
-                            </div>
-                            <div class="tweet-author-details">
-                                <div class="tweet-author-name">${tweet.name || tweet.author}</div>
-                                <div class="tweet-author-username">
-                                    @${tweet.author}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="tweet-text" data-raw-text="${tweet.text}">
-                            ${formatTweetText(tweet.text)}
-                        </div>
-
-                        ${mediaHtml}
-
-                        ${timestampFullHtml}
-
-                        <div class="tweet-engagement">
-                            <div class="engagement-stat">
-                                <i class="ph ph-chat-centered"></i>
-                                ${tweet.engagement.replies || 0}
-                            </div>
-                            <div class="engagement-stat">
-                                <i class="ph ph-repeat"></i>
-                                ${tweet.engagement.retweets || 0}
-                            </div>
-                            <div class="engagement-stat">
-                                <i class="ph ph-heart"></i>
-                                ${tweet.engagement.likes || 0}
-                            </div>
-                        </div>
+                        <blockquote class="twitter-tweet" data-theme="dark" data-dnt="true">
+                            <a href="https://twitter.com/${tweet.author}/status/${tweet.tweet_id}"></a>
+                        </blockquote>
                     </div>
 
                     <!-- Reply Panel with GIF Support -->

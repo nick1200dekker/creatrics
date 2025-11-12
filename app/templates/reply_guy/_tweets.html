@@ -1,150 +1,60 @@
                         {% if current_analysis and current_analysis.tweet_opportunities %}
                         {% for tweet in current_analysis.tweet_opportunities %}
-                        <div class="tweet-opportunity" data-tweet-id="{{ tweet.tweet_id }}">
+                        <div class="tweet-opportunity"
+                             data-tweet-id="{{ tweet.tweet_id }}"
+                             data-tweet-text="{{ tweet.text | replace('"', '&quot;') | replace("'", '&#39;') }}"
+                             data-tweet-author="{{ tweet.author }}">
                             <div class="tweet-grid">
-                                <!-- Tweet Content -->
+                                <!-- Tweet Content - Official X Embed -->
                                 <div class="tweet-content-section">
-                                    <!-- X Logo (required by brand guidelines) -->
-                                    <img src="{{ url_for('static', filename='img/templates/logo-black.png') }}"
-                                         alt="X" class="tweet-x-logo">
-                                    <img src="{{ url_for('static', filename='img/templates/logo-white.png') }}"
-                                         alt="X" class="tweet-x-logo">
-
-                                    <div class="tweet-author-info">
-                                        <div class="tweet-avatar">
-                                            {% if tweet.profile_image_url %}
-                                            <img src="{{ tweet.profile_image_url }}" alt="{{ tweet.author }}"
-                                                 onload="this.classList.remove('error')"
-                                                 onerror="this.classList.add('error')">
-                                            <div class="fallback-avatar">
-                                                <i class="ph ph-user"></i>
-                                            </div>
-                                            {% else %}
-                                            <div class="fallback-avatar" style="display: flex;">
-                                                <i class="ph ph-user"></i>
-                                            </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="tweet-author-details">
-                                            <div class="tweet-author-name">{{ tweet.name or tweet.author }}</div>
-                                            <div class="tweet-author-username">
-                                                @{{ tweet.author }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="tweet-text" data-raw-text="{{ tweet.text }}">
-                                        {{ tweet.text | safe }}
-                                    </div>
-                                    
-                                    {% if tweet.media %}
-                                    <div class="tweet-media">
-                                        {% if tweet.media.photo %}
-                                        <div class="tweet-photos">
-                                            {% for photo in tweet.media.photo %}
-                                            <div class="tweet-photo">
-                                                <img src="{{ photo.media_url_https }}" alt="Tweet image" class="tweet-image" loading="lazy" 
-                                                     onerror="this.style.display='none'">
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                        {% endif %}
-                                        
-                                        {% if tweet.media.video %}
-                                        <div class="tweet-videos">
-                                            {% for video in tweet.media.video %}
-                                            <div class="tweet-video">
-                                                {% if video.variants %}
-                                                    {% set mp4_variant = video.variants | selectattr('content_type', 'equalto', 'video/mp4') | list | last %}
-                                                    {% if mp4_variant %}
-                                                    <video controls class="tweet-video-player" poster="{{ video.media_url_https }}">
-                                                        <source src="{{ mp4_variant.url }}" type="video/mp4">
-                                                        Your browser does not support the video tag.
-                                                    </video>
-                                                    {% else %}
-                                                    <img src="{{ video.media_url_https }}" alt="Video thumbnail" class="tweet-video-thumb" loading="lazy"
-                                                         onerror="this.style.display='none'">
-                                                    {% endif %}
-                                                {% else %}
-                                                <img src="{{ video.media_url_https }}" alt="Video thumbnail" class="tweet-video-thumb" loading="lazy"
-                                                     onerror="this.style.display='none'">
-                                                {% endif %}
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                    {% endif %}
-
-                                    <!-- Timestamp and Views below post -->
-                                    {% if tweet.created_at %}
-                                    <div class="tweet-timestamp-full" data-timestamp="{{ tweet.created_at }}" data-views="{{ tweet.engagement.views }}">
-                                        <a href="https://twitter.com/{{ tweet.author }}/status/{{ tweet.tweet_id }}" target="_blank" rel="noopener noreferrer" class="tweet-time-link">
-                                            <span class="tweet-time"></span>
-                                        </a>
-                                        <span class="tweet-views">
-                                            <span class="tweet-views-count">{{ tweet.engagement.views }}</span> Views
-                                        </span>
-                                    </div>
-                                    {% endif %}
-
-                                    <div class="tweet-engagement">
-                                        <div class="engagement-stat">
-                                            <i class="ph ph-chat-centered"></i>
-                                            {{ tweet.engagement.replies }}
-                                        </div>
-                                        <div class="engagement-stat">
-                                            <i class="ph ph-repeat"></i>
-                                            {{ tweet.engagement.retweets }}
-                                        </div>
-                                        <div class="engagement-stat">
-                                            <i class="ph ph-heart"></i>
-                                            {{ tweet.engagement.likes }}
-                                        </div>
-                                    </div>
+                                    <blockquote class="twitter-tweet" data-theme="dark" data-dnt="true">
+                                        <a href="https://twitter.com/{{ tweet.author }}/status/{{ tweet.tweet_id }}"></a>
+                                    </blockquote>
                                 </div>
                                 
                                 <!-- Reply Panel with GIF Support -->
                                 <div class="reply-panel">
-                                    <div class="reply-panel-header">
-                                        <div class="style-selector">
-                                            <div class="dropdown">
-                                                <div class="dropdown-trigger reply-style-trigger">
-                                                    <span class="selected-style-text">Creatrics</span>
-                                                    <i class="ph ph-caret-down dropdown-arrow"></i>
-                                                </div>
-                                                <div class="dropdown-menu reply-style-menu">
-                                                    {% for style in reply_styles %}
-                                                    <div class="dropdown-option reply-style-option {% if loop.index == 1 %}selected{% endif %}" data-value="{{ style.id }}">
-                                                        {{ style.name }}
+                                    <div class="reply-panel-inner">
+                                        <div class="reply-panel-header">
+                                            <div class="style-selector">
+                                                <div class="dropdown">
+                                                    <div class="dropdown-trigger reply-style-trigger">
+                                                        <span class="selected-style-text">Creatrics</span>
+                                                        <i class="ph ph-caret-down dropdown-arrow"></i>
                                                     </div>
-                                                    {% endfor %}
+                                                    <div class="dropdown-menu reply-style-menu">
+                                                        {% for style in reply_styles %}
+                                                        <div class="dropdown-option reply-style-option {% if loop.index == 1 %}selected{% endif %}" data-value="{{ style.id }}">
+                                                            {{ style.name }}
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
                                                 </div>
                                             </div>
+
+                                            <label for="brand-voice-tweet-{{ tweet.tweet_id }}" class="brand-voice-toggle">
+                                                <input type="checkbox" id="brand-voice-tweet-{{ tweet.tweet_id }}" class="brand-voice-checkbox">
+                                                <span class="toggle-slider"></span>
+                                                <span class="toggle-label">Brand Voice</span>
+                                            </label>
                                         </div>
 
-                                        <label for="brand-voice-tweet-{{ tweet.tweet_id }}" class="brand-voice-toggle">
-                                            <input type="checkbox" id="brand-voice-tweet-{{ tweet.tweet_id }}" class="brand-voice-checkbox">
-                                            <span class="toggle-slider"></span>
-                                            <span class="toggle-label">Brand Voice</span>
-                                        </label>
-                                    </div>
-                                    
-                                    <textarea id="reply-textarea-tweet-{{ tweet.tweet_id }}" class="reply-textarea" 
-                                              placeholder="Click generate to create a response..."></textarea>
-                                    
-                                    <div class="reply-footer">
-                                        <div class="character-count">0/280</div>
-                                        <div class="reply-actions">
-                                            <button class="action-btn post post-reply-btn" title="Post reply">
-                                                <i class="ph ph-paper-plane-right"></i>
-                                            </button>
-                                            <button class="action-btn generate generate-reply-btn" title="Generate AI reply">
-                                                <i class="ph ph-sparkle"></i>
-                                            </button>
+                                        <textarea id="reply-textarea-tweet-{{ tweet.tweet_id }}" class="reply-textarea"
+                                                  placeholder="Click generate to create a response..."></textarea>
+
+                                        <div class="reply-footer">
+                                            <div class="character-count">0/280</div>
+                                            <div class="reply-actions">
+                                                <button class="action-btn post post-reply-btn" title="Post reply">
+                                                    <i class="ph ph-paper-plane-right"></i>
+                                                </button>
+                                                <button class="action-btn generate generate-reply-btn" title="Generate AI reply">
+                                                    <i class="ph ph-sparkle"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    
+
                                     <!-- GIF Panel will be dynamically created by JS -->
                                 </div>
                             </div>

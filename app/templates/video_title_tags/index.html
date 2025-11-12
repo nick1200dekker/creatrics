@@ -320,6 +320,10 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+// Pass premium status to JavaScript
+window.hasPremium = {{ 'true' if has_premium else 'false' }};
+</script>
 <script src="{{ url_for('static', filename='scripts/repost-modal.js') }}?v=3"></script>
 <script src="{{ url_for('static', filename='scripts/calendar-link-modal.js') }}?v=3"></script>
 <script src="{{ url_for('static', filename='scripts/video_title_tags.js') }}?v=4"></script>

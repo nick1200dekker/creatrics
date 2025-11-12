@@ -196,7 +196,8 @@ Return ONLY the post content, nothing else."""
             # Prepare prompt
             prompt = self.prompt_template.format(
                 title=news_title,
-                content=content
+                content=content,
+                url=news_url
             )
 
             # Get AI provider with script name

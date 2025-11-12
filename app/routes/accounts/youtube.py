@@ -3,6 +3,7 @@
 
 from flask import Blueprint, redirect, url_for, request, flash, g, session, jsonify
 from app.system.auth.middleware import auth_required
+from app.system.auth.permissions import has_premium_subscription
 from app.system.services.firebase_service import UserService
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
@@ -118,6 +119,11 @@ def validate_scopes(received_scopes):
 def connect_youtube():
     """Start YouTube OAuth flow - Separate from login OAuth!"""
     user_id = g.user.get('id')
+
+    # Check if user has premium subscription (YouTube Analytics is premium-only)
+    if not has_premium_subscription():
+        flash("YouTube Analytics requires a Premium Creator subscription.", "error")
+        return redirect(url_for('accounts.index'))
 
     # This uses a DIFFERENT OAuth client than login
     client_secrets_file = get_client_secrets_file()

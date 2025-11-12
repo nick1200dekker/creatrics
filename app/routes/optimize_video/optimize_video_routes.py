@@ -298,7 +298,7 @@ def get_private_videos():
         if not yt_analytics.credentials or not yt_analytics.channel_id:
             return jsonify({
                 'success': False,
-                'error': 'No YouTube account connected with proper permissions'
+                'error': 'No YouTube Channel Connected. Connect your YouTube account in Social Accounts or use the URL option above to optimize any video'
             }), 400
 
         # Build YouTube Data API client

@@ -391,6 +391,7 @@ function updateConnectionUI(data) {
     const channelInfo = document.getElementById('channelInfo');
     const buttonSkeleton = document.getElementById('buttonSkeleton');
     const connectionButtons = document.getElementById('connectionButtons');
+    const hasPremium = window.hasPremium || false;
 
     // Remove loading state
     if (statusDot) statusDot.classList.remove('loading');
@@ -437,7 +438,13 @@ function updateConnectionUI(data) {
         // Disconnected state
         if (statusDot) statusDot.classList.add('disconnected');
         if (statusText) statusText.textContent = 'Not Connected';
-        if (connectBtn) connectBtn.style.display = 'inline-flex';
+
+        // Only show connect button if user has premium
+        // Free users see the premium notice instead
+        if (connectBtn) {
+            connectBtn.style.display = hasPremium ? 'inline-flex' : 'none';
+        }
+
         if (disconnectBtn) disconnectBtn.style.display = 'none';
         if (channelInfo) channelInfo.style.display = 'none';
     }

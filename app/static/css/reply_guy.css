@@ -712,9 +712,16 @@ html.dark .mode-tab-compact.active {
     font-size: 0.8125rem;
 }
 
+/* Custom list container - holds dropdown and add button */
+.custom-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
 /* Custom list dropdown - only shown when custom mode is active */
 .custom-list-dropdown {
-    min-width: 240px;
+    min-width: 200px;
 }
 
 @media (max-width: 768px) {
@@ -727,7 +734,7 @@ html.dark .mode-tab-compact.active {
 .dropdown-option .option-icon {
     margin-right: 0.5rem;
     color: #3B82F6;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
 }
 
 html.dark .dropdown-option .option-icon {
@@ -743,28 +750,237 @@ html.dark .dropdown-option .option-icon {
     font-style: italic;
 }
 
-/* Mode Switch Loading Indicator */
-.mode-switch-loading {
+/* Clean Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+    padding-top: 8rem;
+    animation: fadeIn 0.2s ease;
+}
+
+html.dark .modal-overlay {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-dialog-clean {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+    overflow: hidden;
+}
+
+html.dark .modal-dialog-clean {
+    background: rgba(39, 39, 42, 0.95);
+    border-color: rgba(63, 63, 70, 0.6);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header-clean {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+}
+
+html.dark .modal-header-clean {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.5);
+}
+
+.modal-title-clean {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    animation: fadeIn 0.3s ease;
+    gap: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
-.mode-switch-loading i {
+.modal-title-clean i {
     color: #3B82F6;
-    font-size: 1rem;
-    animation: spin 1s linear infinite;
+    font-size: 1.25rem;
 }
 
-html.dark .mode-switch-loading i {
+html.dark .modal-title-clean i {
     color: #60A5FA;
 }
 
-.mode-switch-loading span {
+.modal-close-clean {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 1.25rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close-clean:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.modal-body-clean {
+    padding: 1.5rem;
+}
+
+.info-box-modal {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 8px;
+    padding: 0.875rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+}
+
+.form-row-clean {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+html.dark .info-box-modal {
+    background: rgba(96, 165, 250, 0.1);
+    border-color: rgba(96, 165, 250, 0.2);
+}
+
+.info-box-modal i {
+    color: #3B82F6;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
+html.dark .info-box-modal i {
+    color: #60A5FA;
+}
+
+.modal-footer-clean {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+}
+
+html.dark .modal-footer-clean {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(63, 63, 70, 0.5);
+}
+
+.btn-cancel-clean,
+.btn-primary-clean {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9375rem;
     font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid;
+}
+
+.btn-cancel-clean {
+    background: var(--bg-tertiary);
+    border-color: var(--border-primary);
+    color: var(--text-secondary);
+}
+
+.btn-cancel-clean:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+}
+
+.btn-primary-clean {
+    background: #3B82F6;
+    border-color: #3B82F6;
+    color: white;
+}
+
+.btn-primary-clean:hover {
+    background: #2563EB;
+    border-color: #2563EB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary-clean:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-primary-clean.loading {
+    pointer-events: none;
+}
+
+.btn-primary-clean.loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .form-row-clean {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-dialog-clean {
+        max-width: 100%;
+        margin: 1rem;
+    }
+}
+
+/* Mode Switch Loading Indicator - HIDDEN (not used) */
+.mode-switch-loading {
+    display: none !important;
 }
 
 /* Spin animation for loading spinner */
@@ -776,7 +992,7 @@ html.dark .mode-switch-loading i {
 .dropdown {
     position: relative;
     display: inline-block;
-    min-width: 200px;
+    max-width: 100%;
 }
 
 .dropdown-trigger {
@@ -1021,42 +1237,68 @@ html.dark .primary-btn:hover:not(:disabled) {
 
 /* Loading Section - matching Optimize Video styles */
 .loading-section {
-    padding: 4rem 2rem;
-    text-align: center;
+    padding: 1rem;
 }
 
-.loading-card {
-    max-width: 400px;
-    margin: 0 auto;
+.tweet-skeleton {
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    background: var(--bg-primary);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
 }
 
-.loading-icon {
-    font-size: 3rem;
-    color: #3B82F6;
-    margin-bottom: 0.5rem;
+html.dark .tweet-skeleton {
+    border-color: #2F3336;
 }
 
-html.dark .loading-icon {
-    color: #60A5FA;
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    gap: 0;
+    min-height: 300px;
 }
 
-.loading-icon i {
-    animation: spin 1s linear infinite;
-    display: inline-block;
+.skeleton-tweet,
+.skeleton-reply {
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-secondary);
 }
 
-.loading-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0.5rem 0 0.5rem 0;
+html.dark .skeleton-tweet,
+html.dark .skeleton-reply {
+    background: rgba(63, 63, 70, 0.2);
 }
 
-.loading-subtitle {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin: 0;
-    line-height: 1.5;
+.skeleton-tweet {
+    border-right: 1px solid var(--border-primary);
+}
+
+html.dark .skeleton-tweet {
+    border-right-color: #2F3336;
+}
+
+.skeleton-tweet::before,
+.skeleton-reply::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
 }
 
 /* Tweet Opportunities - X Brand Compliant */
@@ -1117,8 +1359,10 @@ html.dark .tweet-content-section .tweet-x-logo:last-of-type {
 
 .tweet-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 40% 60%;
+    gap: 0;
     min-height: 300px;
+    overflow: hidden;
 }
 
 @media (max-width: 1024px) {
@@ -1130,15 +1374,28 @@ html.dark .tweet-content-section .tweet-x-logo:last-of-type {
 .tweet-content-section {
     padding: 1.25rem;
     border-right: 1px solid var(--border-primary);
-    background: #FFFFFF;
-    color: #0F1419;
+    background: var(--bg-primary);
     position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-x: auto;
 }
 
 html.dark .tweet-content-section {
-    background: #000000;
     border-right-color: #2F3336;
-    color: #E7E9EA;
+}
+
+/* X embed widget styling */
+.tweet-content-section .twitter-tweet {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 !important;
+}
+
+.tweet-content-section iframe {
+    max-width: 100% !important;
+    width: 100% !important;
 }
 
 @media (max-width: 1024px) {
@@ -1152,6 +1409,11 @@ html.dark .tweet-content-section {
     }
 }
 
+/* ========================================
+   Legacy Custom Tweet Styles (Not Used)
+   Now using official X embeds instead
+   ======================================== */
+/*
 .tweet-author-info {
     display: flex;
     align-items: center;
@@ -1446,18 +1708,25 @@ html.dark .tweet-engagement {
 html.dark .engagement-stat i {
     color: #71767B;
 }
+*/
+/* End Legacy Custom Tweet Styles */
 
 /* Reply Panel */
 .reply-panel {
-    padding: 1.25rem;
     background: var(--bg-tertiary);
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    min-width: 0;
+    overflow: hidden;
 }
 
 html.dark .reply-panel {
     background: rgba(63, 63, 70, 0.4);
+}
+
+.reply-panel-inner {
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
 }
 
 .reply-panel-header {
@@ -1466,6 +1735,8 @@ html.dark .reply-panel {
     justify-content: space-between;
     margin-bottom: 1rem;
     gap: 1rem;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 
 .reply-controls {
@@ -1490,8 +1761,9 @@ html.dark .reply-panel {
 }
 
 .style-selector {
-    flex: 1;
-    max-width: 150px;
+    flex: 0 1 auto;
+    max-width: 200px;
+    min-width: 0;
 }
 
 @media (max-width: 768px) {
@@ -1663,7 +1935,7 @@ html.dark .character-count {
 
 .reply-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.625rem;
     margin-left: auto;
 }
 
