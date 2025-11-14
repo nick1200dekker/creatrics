@@ -28,15 +28,14 @@ class AIProviderManager:
     # Pricing updated as of October 2025
     PROVIDER_CONFIGS = {
         AIProvider.OPENAI: {
-            'model_name': 'gpt-5.1-chat-latest',  # GPT-5.1 Instant (adaptive reasoning)
-            'display_name': 'gpt-5.1-chat',
+            'model_name': 'gpt-5-chat-latest',  # GPT-5 main (non-reasoning) chat model
+            'display_name': 'gpt-5-chat',
             'input_cost_per_token': 0.00000125,    # $1.25 / 1M tokens
             'output_cost_per_token': 0.00001,      # $10.00 / 1M tokens
-            'input_cost_cached': 0.000000125,      # $0.125 / 1M tokens (cached, 90% discount)
+            'input_cost_cached': 0.000000125,      # $0.125 / 1M tokens (cached)
             'context_window': 200000,  # 200K tokens
             'supports_vision': True,
-            'supports_functions': True,
-            'supports_adaptive_reasoning': True  # Dynamic reasoning based on task complexity
+            'supports_functions': True
         },
         AIProvider.DEEPSEEK: {
             'model_name': 'deepseek-chat',  # DeepSeek-V3.2-Exp (October 2025)
@@ -393,17 +392,9 @@ class AIProviderManager:
                     **kwargs
                 }
 
-                # GPT-5.1+ uses max_completion_tokens, older models and DeepSeek use max_tokens
-                # GPT-5.1+ only supports temperature=1 (default)
-                if self.provider == AIProvider.OPENAI and 'gpt-5.1' in self.api_model_name:
-                    api_kwargs['max_completion_tokens'] = max_tokens
-                    # Only set temperature if it's 1 (default), otherwise omit it
-                    if temperature == 1:
-                        api_kwargs['temperature'] = temperature
-                    # Don't set reasoning_effort - let model use its default (should be adaptive/minimal)
-                else:
-                    api_kwargs['temperature'] = temperature
-                    api_kwargs['max_tokens'] = max_tokens
+                # All OpenAI models and DeepSeek use standard chat API
+                api_kwargs['temperature'] = temperature
+                api_kwargs['max_tokens'] = max_tokens
 
                 logger.debug(f"OpenAI request: model={api_kwargs['model']}, params={list(api_kwargs.keys())}")
                 response = client.chat.completions.create(**api_kwargs)

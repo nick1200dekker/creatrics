@@ -332,41 +332,27 @@ class ReplyAnalyzer:
         return media
 
     def _extract_image_urls(self, tweet: Dict) -> List[str]:
-        """Extract image URLs for AI vision analysis (photos and video thumbnails)"""
+        """Extract image URLs for AI vision analysis"""
         image_urls = []
 
-        # Method 1: Direct media field with photos and videos
+        # Method 1: Direct media field with photos
         if 'media' in tweet and isinstance(tweet['media'], dict):
-            # Extract photos
             if 'photo' in tweet['media'] and tweet['media']['photo']:
                 for photo in tweet['media']['photo']:
                     if isinstance(photo, dict) and 'media_url_https' in photo:
                         image_urls.append(photo['media_url_https'])
 
-            # Extract video thumbnails for vision analysis
-            if 'video' in tweet['media'] and tweet['media']['video']:
-                for video in tweet['media']['video']:
-                    if isinstance(video, dict) and 'media_url_https' in video:
-                        # video.media_url_https is the thumbnail image
-                        image_urls.append(video['media_url_https'])
-
         # Method 2: entities.media (fallback)
         if not image_urls and 'entities' in tweet and 'media' in tweet['entities']:
             for item in tweet['entities']['media']:
-                item_type = item.get('type')
-                if 'media_url_https' in item:
-                    # Include both photos and video thumbnails
-                    if item_type in ['photo', 'video']:
-                        image_urls.append(item['media_url_https'])
+                if item.get('type') == 'photo' and 'media_url_https' in item:
+                    image_urls.append(item['media_url_https'])
 
         # Method 3: extended_entities.media (another fallback)
         if not image_urls and 'extended_entities' in tweet and 'media' in tweet['extended_entities']:
             for item in tweet['extended_entities']['media']:
-                item_type = item.get('type')
-                if 'media_url_https' in item:
-                    # Include both photos and video thumbnails
-                    if item_type in ['photo', 'video']:
-                        image_urls.append(item['media_url_https'])
+                if item.get('type') == 'photo' and 'media_url_https' in item:
+                    image_urls.append(item['media_url_https'])
 
         return image_urls
 

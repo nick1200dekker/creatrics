@@ -14,13 +14,16 @@
         hasBrandVoiceData: false,
         ongoingUpdates: {},
         isInitialized: false,
-        gifCache: new Map() // Cache GIF search results by query
+        gifCache: new Map(), // Cache GIF search results by query
+        defaultLists: [] // Store default lists loaded from server
     };
 
     // Initialize application
     function init() {
         if (state.isInitialized) return;
 
+        // Load ongoing updates from sessionStorage FIRST
+        loadOngoingUpdates();
 
         // Load initial data
         loadInitialData();
@@ -41,14 +44,15 @@
 
     // Load initial data from server via API
     async function loadInitialData() {
-        const tweetsLoadingSection = document.getElementById('tweets-loading-section');
         const tweetsSection = document.getElementById('tweets-section');
 
         try {
-            // Ensure loading state is visible
             console.log('🔄 Loading initial data...');
-            if (tweetsLoadingSection) tweetsLoadingSection.style.display = 'flex';
-            if (tweetsSection) tweetsSection.style.display = 'none';
+            // Keep section visible but dimmed during load
+            if (tweetsSection) {
+                tweetsSection.style.opacity = '0.5';
+                tweetsSection.style.pointerEvents = 'none';
+            }
 
             // Fetch initial data from API
             const response = await fetch('/reply-guy/get-initial-data', {
@@ -66,18 +70,23 @@
             console.log('✅ Data loaded:', data);
 
             if (!data.success) {
-                console.error('❌ Server returned error:', data.error);
                 throw new Error(data.error || 'Failed to load data');
             }
 
-            console.log('📊 Has tweets:', data.has_tweets);
-            console.log('📊 Total count:', data.total_count);
-
-            // Update state with loaded data
-            state.ongoingUpdates = data.ongoing_updates || {};
+            // Merge server ongoing updates with sessionStorage (sessionStorage takes precedence)
+            // This allows updates to persist across page navigation
+            const serverUpdates = data.ongoing_updates || {};
+            state.ongoingUpdates = { ...serverUpdates, ...state.ongoingUpdates };
+            console.log('🔄 Merged ongoing updates:', state.ongoingUpdates);
 
             // Update progress card with reply stats
             updateProgressCard(data.reply_stats);
+
+            // Store default lists in state
+            if (data.default_lists && data.default_lists.length > 0) {
+                state.defaultLists = data.default_lists;
+                console.log('✅ Stored', data.default_lists.length, 'default lists');
+            }
 
             // Populate custom lists dropdown
             if (data.custom_lists && data.custom_lists.length > 0) {
@@ -99,12 +108,24 @@
                     }
                 });
 
-                // Show/hide custom list dropdown based on mode
-                const dropdown = document.querySelector('.custom-list-dropdown');
+                // Show/hide custom list container based on mode
+                const container = document.querySelector('.custom-list-container');
                 if (data.current_selection.list_type === 'custom') {
-                    if (dropdown) dropdown.style.display = 'block';
+                    if (container) container.style.display = 'flex';
+
+                    // Update dropdown text with selected list name
+                    if (data.list_name) {
+                        const selectedListText = document.getElementById('selected-list-text');
+                        if (selectedListText) {
+                            selectedListText.textContent = data.list_name;
+                            console.log('✅ Set dropdown text to:', data.list_name);
+                        }
+                    }
+
+                    // Show update button for custom lists
+                    updateButtonVisibility();
                 } else {
-                    if (dropdown) dropdown.style.display = 'none';
+                    if (container) container.style.display = 'none';
                 }
             }
 
@@ -128,12 +149,47 @@
                 // 1. Inject HTML into DOM
                 tweetsSection.innerHTML = data.tweets_html;
 
-                // 2. Show tweets section (still hidden by loading spinner overlay)
+                // 2. Show tweets section first
                 tweetsSection.style.display = 'block';
+
+                // 3. Wait for Twitter widgets to be ready, then load each blockquote individually
+                setTimeout(async () => {
+                    console.log('🐦 Waiting for Twitter widgets...');
+                    const widgetsReady = await waitForTwitterWidgets();
+
+                    if (widgetsReady) {
+                        // Validate blockquotes before loading
+                        const blockquotes = Array.from(tweetsSection.querySelectorAll('blockquote.twitter-tweet'));
+                        console.log(`Found ${blockquotes.length} tweet blockquotes`);
+
+                        // Load each widget individually with error handling
+                        if (blockquotes.length > 0) {
+                            let successCount = 0;
+                            for (const blockquote of blockquotes) {
+                                try {
+                                    // Check if blockquote is still in DOM and has valid structure
+                                    if (blockquote.isConnected && blockquote.querySelector('a')) {
+                                        await window.twttr.widgets.createTweet(
+                                            blockquote.querySelector('a').href.split('/').pop(),
+                                            blockquote.parentElement,
+                                            { theme: 'dark', dnt: true }
+                                        );
+                                        // Remove original blockquote after widget loads
+                                        blockquote.remove();
+                                        successCount++;
+                                    }
+                                } catch (err) {
+                                    // Silently continue - some tweets may fail to load
+                                }
+                            }
+                            console.log(`✅ Loaded ${successCount}/${blockquotes.length} Twitter widgets`);
+                        }
+                    }
+                }, 200);
 
                 console.log('📝 Waiting for images and content to load...');
 
-                // 3. Wait for all images in tweets to load
+                // 4. Wait for all images in tweets to load
                 const images = tweetsSection.querySelectorAll('img');
                 const imagePromises = Array.from(images).map(img => {
                     if (img.complete) return Promise.resolve();
@@ -147,33 +203,23 @@
                 Promise.all(imagePromises).then(() => {
                     console.log('🖼️ Images loaded, initializing interactions...');
 
-                    // 4. Load Twitter embeds
-                    if (window.twttr && window.twttr.widgets) {
-                        console.log('🐦 Loading Twitter embeds...');
-                        window.twttr.widgets.load(tweetsSection);
-                    } else {
-                        console.warn('⚠️ Twitter widgets.js not loaded yet');
-                    }
+                    // 5. Initialize event listeners for dynamically loaded content
+                    setupReplyStyleDropdowns();
 
-                    // 5. Update timestamps and format numbers
-                    updateTimestamps();
+                    console.log('✅ Everything ready, enabling section...');
 
-                    // 6. Enable interaction with tweets section
-                    tweetsSection.style.opacity = '1';
-                    tweetsSection.style.pointerEvents = 'auto';
-
-                    console.log('✅ Everything ready, hiding spinner...');
-
-                    // 7. NOW hide the spinner - everything is actually ready
-                    if (tweetsLoadingSection) {
-                        tweetsLoadingSection.style.display = 'none';
+                    // 6. Enable the section - everything is ready
+                    if (tweetsSection) {
+                        tweetsSection.style.opacity = '1';
+                        tweetsSection.style.pointerEvents = 'auto';
                     }
                 });
 
             } else {
                 console.log('ℹ️ No tweets to display');
-                if (tweetsLoadingSection) {
-                    tweetsLoadingSection.style.display = 'none';
+                if (tweetsSection) {
+                    tweetsSection.style.opacity = '1';
+                    tweetsSection.style.pointerEvents = 'auto';
                 }
             }
 
@@ -181,8 +227,11 @@
             console.error('❌ Error loading initial data:', error);
             showToast('Failed to load data. Please refresh the page.', 'error');
 
-            // Hide loading, show empty state
-            if (tweetsLoadingSection) tweetsLoadingSection.style.display = 'none';
+            // Enable section even on error
+            if (tweetsSection) {
+                tweetsSection.style.opacity = '1';
+                tweetsSection.style.pointerEvents = 'auto';
+            }
         }
     }
 
@@ -270,16 +319,24 @@
 
     // Populate custom lists dropdown
     function populateCustomListsDropdown(customLists) {
+        console.log('📋 populateCustomListsDropdown called with:', customLists);
         const dropdownMenu = document.getElementById('list-dropdown-menu');
-        if (!dropdownMenu) return;
+        if (!dropdownMenu) {
+            console.error('❌ Dropdown menu not found');
+            return;
+        }
 
         // Find the existing custom list options container
         const existingOptions = dropdownMenu.querySelectorAll('.dropdown-option[data-type="custom"]');
         const emptyMessage = dropdownMenu.querySelector('.dropdown-empty');
 
+        console.log('🔍 Found', existingOptions.length, 'existing options');
+        console.log('🔍 Empty message exists:', !!emptyMessage);
+
         // Remove empty message if it exists
         if (emptyMessage) {
             emptyMessage.remove();
+            console.log('🗑️ Removed empty message');
         }
 
         // Remove existing custom list options (but keep the "Add New" button)
@@ -291,6 +348,7 @@
 
         // Find the divider and "Add New" button
         const divider = dropdownMenu.querySelector('.dropdown-divider');
+        console.log('🔍 Divider found:', !!divider);
 
         // Add custom lists before the divider
         customLists.forEach(list => {
@@ -308,6 +366,7 @@
             } else {
                 dropdownMenu.appendChild(option);
             }
+            console.log('➕ Added custom list:', list.name, 'with id:', list.id);
         });
 
         console.log(`✅ Populated ${customLists.length} custom lists in dropdown`);
@@ -334,8 +393,23 @@
     function saveOngoingUpdates() {
         try {
             sessionStorage.setItem('reply_guy_ongoing_updates', JSON.stringify(state.ongoingUpdates));
+            console.log('💾 Saved ongoing updates:', state.ongoingUpdates);
         } catch (error) {
             console.error('Error saving to sessionStorage:', error);
+        }
+    }
+
+    // Load ongoing updates from sessionStorage
+    function loadOngoingUpdates() {
+        try {
+            const saved = sessionStorage.getItem('reply_guy_ongoing_updates');
+            if (saved) {
+                state.ongoingUpdates = JSON.parse(saved);
+                console.log('📂 Loaded ongoing updates from sessionStorage:', state.ongoingUpdates);
+            }
+        } catch (error) {
+            console.error('Error loading from sessionStorage:', error);
+            state.ongoingUpdates = {};
         }
     }
 
@@ -369,11 +443,12 @@
 
         // If no list is selected on page load, auto-select the first default list
         if (!state.selectedList) {
-            const firstDefaultDropdown = document.querySelector('.dropdown-option[data-type="default"]');
-            if (firstDefaultDropdown) {
-                firstDefaultDropdown.classList.add('selected');
-                state.selectedList = firstDefaultDropdown.getAttribute('data-value');
+            if (state.defaultLists && state.defaultLists.length > 0) {
+                // Select first default list
+                const firstDefaultList = state.defaultLists[0];
+                state.selectedList = firstDefaultList.id;
                 state.selectedListType = 'default';
+                console.log('✅ Auto-selected default list:', firstDefaultList.name);
             } else {
                 // Only fall back to custom list if no default lists exist
                 const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
@@ -385,6 +460,7 @@
                     firstCustomList.classList.add('selected');
                     state.selectedList = firstCustomList.getAttribute('data-value');
                     state.selectedListType = 'custom';
+                    console.log('✅ Auto-selected custom list:', optionText);
                 }
             }
         }
@@ -477,8 +553,20 @@
                     }, { once: false });
                 }
             } else {
+                // Force uncheck and ensure it stays that way
                 checkbox.checked = false;
                 checkbox.removeAttribute('data-initialized');
+
+                // Clear localStorage preference when no brand voice data
+                localStorage.removeItem('preferBrandVoice');
+
+                // Prevent any interaction with disabled checkbox
+                checkbox.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.checked = false;
+                    return false;
+                };
             }
         });
 
@@ -546,6 +634,18 @@
             listsViewBtn.onclick = () => switchView('lists');
         }
 
+        // Global brand voice checkbox guard - catch any change events
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('brand-voice-checkbox')) {
+                // If no brand voice data, force uncheck
+                if (!state.hasBrandVoiceData) {
+                    e.preventDefault();
+                    e.target.checked = false;
+                    console.log('Brand voice change blocked - no data available');
+                }
+            }
+        }, true); // Use capture phase to catch early
+
         const updateBtn = document.getElementById('update-btn');
         const updateBtnEmpty = document.getElementById('update-btn-empty');
         if (updateBtn) {
@@ -572,11 +672,11 @@
         }
         const cancelCreateBtn = document.getElementById('cancel-create-btn');
         if (cancelCreateBtn) {
-            cancelCreateBtn.onclick = hideCreatePanel;
+            cancelCreateBtn.onclick = hideCreateModal;
         }
         const closeCreateModal = document.getElementById('close-create-modal');
         if (closeCreateModal) {
-            closeCreateModal.onclick = hideCreatePanel;
+            closeCreateModal.onclick = hideCreateModal;
         }
 
         const createNewListBtn = document.getElementById('create-new-list');
@@ -585,15 +685,31 @@
         if (createNewListBtn) {
             createNewListBtn.onclick = function(e) {
                 e.preventDefault();
-                showCreatePanel();
+                e.stopPropagation();
+                showInlineCreateForm();
             };
         }
 
         if (createNewListEmptyBtn) {
             createNewListEmptyBtn.onclick = function(e) {
                 e.preventDefault();
-                showCreatePanel();
+                showInlineCreateForm();
             };
+        }
+
+        // Panel form controls
+        const closePanelBtn = document.getElementById('close-create-panel');
+        const cancelPanelCreate = document.getElementById('cancel-panel-create');
+        const panelCreateBtn = document.getElementById('panel-create-btn');
+
+        if (closePanelBtn) {
+            closePanelBtn.onclick = hideCreatePanel;
+        }
+        if (cancelPanelCreate) {
+            cancelPanelCreate.onclick = hideCreatePanel;
+        }
+        if (panelCreateBtn) {
+            panelCreateBtn.onclick = handlePanelCreateList;
         }
 
         document.addEventListener('click', handleDelegatedClicks);
@@ -605,14 +721,22 @@
 
         // Generate reply button
         if (e.target.closest('.generate-reply-btn')) {
+            console.log('🔘 Generate reply button clicked');
             e.preventDefault();
             const btn = e.target.closest('.generate-reply-btn');
             if (btn.disabled) {
+                console.log('⚠️ Button is disabled, ignoring click');
                 return;
             }
 
             btn.disabled = true;
             const tweetElement = btn.closest('.tweet-opportunity');
+            console.log('📝 Tweet element found:', !!tweetElement);
+            console.log('Tweet data:', {
+                id: tweetElement?.getAttribute('data-tweet-id'),
+                text: tweetElement?.getAttribute('data-tweet-text')?.substring(0, 50) + '...',
+                author: tweetElement?.getAttribute('data-tweet-author')
+            });
             generateReply(tweetElement).finally(() => {
                 btn.disabled = false;
             });
@@ -730,6 +854,15 @@
         if (e.target.classList.contains('brand-voice-checkbox')) {
             const toggle = e.target.closest('.brand-voice-toggle');
 
+            // STRICT: Check if brand voice data is available before allowing interaction
+            if (!state.hasBrandVoiceData) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.target.checked = false;
+                console.log('Brand voice interaction blocked - no data available');
+                return false;
+            }
+
             // Prevent interaction if toggle is disabled or checkbox is disabled
             if ((toggle && toggle.classList.contains('disabled')) || e.target.disabled) {
                 e.preventDefault();
@@ -810,43 +943,32 @@
 
         // Function to handle mode switching
         function switchMode(mode) {
-            const dropdown = document.querySelector('.custom-list-dropdown');
+            const container = document.querySelector('.custom-list-container');
             const updateBtnContainer = document.getElementById('update-button-container');
-            const loadingIndicator = document.getElementById('mode-switch-loading');
 
             if (mode === 'default') {
-                // Hide dropdown and update button for default mode
-                if (dropdown) dropdown.style.display = 'none';
+                // Hide container and update button for default mode
+                if (container) container.style.display = 'none';
                 if (updateBtnContainer) updateBtnContainer.style.display = 'none';
 
-                // Auto-select first default list
-                const firstDefaultList = document.querySelector('.dropdown-option[data-type="default"]');
-                if (firstDefaultList) {
-                    const listId = firstDefaultList.getAttribute('data-value');
+                // Auto-select first default list from state
+                if (state.defaultLists && state.defaultLists.length > 0) {
+                    const firstDefaultList = state.defaultLists[0];
+                    const listId = firstDefaultList.id;
 
-                    // Show loading indicator
-                    if (loadingIndicator) {
-                        loadingIndicator.style.display = 'flex';
-                    } else {
-                    }
-
-                    // Clear any dropdown selections
-                    document.querySelectorAll('.dropdown-option').forEach(opt => {
-                        opt.classList.remove('selected');
-                    });
-                    firstDefaultList.classList.add('selected');
+                    console.log('🔄 Switching to default list:', firstDefaultList.name, listId);
 
                     state.selectedList = listId;
                     state.selectedListType = 'default';
 
-
-                    // Small delay to show spinner before API call
+                    // Small delay before API call
                     setTimeout(() => selectList(), 100);
                 } else {
+                    console.error('❌ No default lists available');
                 }
             } else {
-                // Show dropdown for custom mode
-                if (dropdown) dropdown.style.display = 'block';
+                // Show container for custom mode
+                if (container) container.style.display = 'flex';
 
                 // Auto-select first custom list
                 const firstCustomList = document.querySelector('.dropdown-option[data-type="custom"]');
@@ -854,12 +976,6 @@
                     const optionText = firstCustomList.textContent.trim();
                     const selectedListText = document.getElementById('selected-list-text');
                     if (selectedListText) selectedListText.textContent = optionText;
-
-                    // Show loading indicator
-                    if (loadingIndicator) {
-                        loadingIndicator.style.display = 'flex';
-                    } else {
-                    }
 
                     // Clear any dropdown selections
                     document.querySelectorAll('.dropdown-option').forEach(opt => {
@@ -870,8 +986,7 @@
                     state.selectedListType = 'custom';
                     firstCustomList.classList.add('selected');
 
-
-                    // Small delay to show spinner before API call
+                    // Small delay before API call
                     setTimeout(() => selectList(), 100);
                 }
 
@@ -910,14 +1025,14 @@
         });
 
         // Show/hide UI elements based on initial mode
-        const dropdown = document.querySelector('.custom-list-dropdown');
+        const container = document.querySelector('.custom-list-container');
         const updateBtnContainer = document.getElementById('update-button-container');
 
         if (initialMode === 'default') {
-            if (dropdown) dropdown.style.display = 'none';
+            if (container) container.style.display = 'none';
             if (updateBtnContainer) updateBtnContainer.style.display = 'none';
         } else {
-            if (dropdown) dropdown.style.display = 'block';
+            if (container) container.style.display = 'flex';
             updateButtonVisibility();
         }
     }
@@ -1086,6 +1201,25 @@
         const updateBtnEmpty = document.getElementById('update-btn-empty');
 
         if (state.selectedListType === 'custom' && state.selectedList) {
+            // Check if THIS list is updating
+            const isThisListUpdating = state.selectedList in state.ongoingUpdates;
+
+            // Check if ANY OTHER list is updating
+            const otherListUpdating = Object.keys(state.ongoingUpdates).find(id => id !== state.selectedList);
+            const hasOtherListUpdating = !!otherListUpdating;
+
+            // If another list is updating, hide the button completely
+            if (hasOtherListUpdating) {
+                if (updateButtonContainer) {
+                    updateButtonContainer.style.display = 'none';
+                }
+                if (updateButtonContainerEmpty) {
+                    updateButtonContainerEmpty.style.display = 'none';
+                }
+                return;
+            }
+
+            // Show button containers
             if (updateButtonContainer) {
                 updateButtonContainer.style.display = 'block';
             }
@@ -1093,11 +1227,10 @@
                 updateButtonContainerEmpty.style.display = 'block';
             }
 
-            const isUpdating = state.selectedList in state.ongoingUpdates;
-
+            // Update button state based on whether THIS list is updating
             [updateBtn, updateBtnEmpty].forEach(btn => {
                 if (btn) {
-                    if (isUpdating) {
+                    if (isThisListUpdating) {
                         btn.disabled = true;
                         btn.classList.add('processing');
                         btn.innerHTML = '<span class="loading-spinner"></span>Updating...';
@@ -1109,6 +1242,7 @@
                 }
             });
         } else {
+            // Not a custom list, hide buttons
             if (updateButtonContainer) {
                 updateButtonContainer.style.display = 'none';
             }
@@ -1121,6 +1255,8 @@
     function selectList() {
         if (!state.selectedList) return;
 
+        console.log('🔄 Selecting list:', state.selectedList, 'type:', state.selectedListType);
+
         fetch('/reply-guy/select-list', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1132,6 +1268,8 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                console.log('✅ List selected, has_analysis:', data.has_analysis, 'is_updating:', data.is_updating);
+
                 if (data.is_updating) {
                     state.ongoingUpdates[state.selectedList] = {
                         ...data.update_info,
@@ -1146,25 +1284,89 @@
                 updateButtonVisibility();
 
                 if (data.has_analysis) {
-                    // Reload page when analysis exists (even if 0 opportunities)
-                    setTimeout(() => window.location.reload(), 1000);
+                    // Load the analysis data without reloading the page
+                    console.log('📊 Loading analysis data...');
+                    loadInitialData();
                 } else if (state.selectedListType === 'default') {
-                    // showToast('Loading default list analysis...', 'info');
-                    setTimeout(() => window.location.reload(), 1000);
+                    // For default lists, load data (should always have analysis)
+                    console.log('📊 Loading default list data...');
+                    loadInitialData();
                 } else {
-                    const emptyMessage = document.getElementById('empty-message');
-                    if (emptyMessage) {
-                        emptyMessage.textContent = data.is_updating ?
-                            'Update in progress for this list...' :
-                            'Click "Update" to analyze this custom list.';
+                    // Custom list with no analysis - check if we can auto-trigger
+                    const hasAnyUpdating = Object.keys(state.ongoingUpdates).length > 0;
+
+                    if (hasAnyUpdating) {
+                        console.log('⚠️ Cannot auto-trigger update - another list is updating');
+                        // Show empty state with manual update option
+                        const tweetsContainer = document.getElementById('tweets-section');
+                        if (tweetsContainer) {
+                            tweetsContainer.innerHTML = `
+                                <div class="empty-state">
+                                    <i class="ph ph-warning-circle empty-icon"></i>
+                                    <h3 class="empty-title">No Analysis Yet</h3>
+                                    <p class="empty-text">Please wait for the current update to finish, then click "Update" to analyze this list.</p>
+                                </div>
+                            `;
+                        }
+                        return;
                     }
+
+                    console.log('🔄 No analysis for custom list, auto-triggering update...');
+
+                    // Mark as updating to show spinner on button
+                    state.ongoingUpdates[state.selectedList] = {
+                        status: 'running',
+                        started_at: new Date().toISOString(),
+                        timestamp: Date.now()
+                    };
+                    saveOngoingUpdates();
+                    updateButtonVisibility();
+
+                    // Trigger analysis
+                    fetch('/reply-guy/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            list_id: state.selectedList,
+                            list_type: 'custom',
+                            time_range: '24h'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(analysisData => {
+                        delete state.ongoingUpdates[state.selectedList];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+
+                        if (analysisData.success) {
+                            console.log('✅ Analysis completed');
+                            loadInitialData();
+                        } else {
+                            console.error('❌ Analysis failed:', analysisData.error);
+                            if (tweetsContainer) {
+                                tweetsContainer.innerHTML = `
+                                    <div class="empty-state">
+                                        <i class="ph ph-warning-circle empty-icon"></i>
+                                        <h3 class="empty-title">Analysis Failed</h3>
+                                        <p class="empty-text">Failed to analyze this list. Please try clicking "Update" manually.</p>
+                                    </div>
+                                `;
+                            }
+                        }
+                    })
+                    .catch(analysisError => {
+                        delete state.ongoingUpdates[state.selectedList];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+                        console.error('❌ Analysis error:', analysisError);
+                    });
                 }
             } else {
-                // showToast('Error selecting list: ' + data.error, 'error');
+                console.error('❌ Error selecting list:', data.error);
             }
         })
         .catch(error => {
-            // showToast('Network error selecting list', 'error');
+            console.error('❌ Network error selecting list:', error);
         });
     }
 
@@ -1173,8 +1375,11 @@
             return;
         }
 
-        if (state.selectedList in state.ongoingUpdates) {
-            // showToast('Update already in progress for this list', 'warning');
+        // Prevent starting multiple updates - check if ANY list is updating
+        const hasAnyUpdating = Object.keys(state.ongoingUpdates).length > 0;
+        if (hasAnyUpdating) {
+            console.log('⚠️ Cannot start update - another list is already updating');
+            // showToast('Please wait for the current update to finish', 'warning');
             return;
         }
 
@@ -1197,12 +1402,15 @@
         })
         .then(response => response.json())
         .then(data => {
-            delete state.ongoingUpdates[state.selectedList];
+            const listIdBeingUpdated = state.selectedList;
+            delete state.ongoingUpdates[listIdBeingUpdated];
             saveOngoingUpdates();
 
             if (data.success) {
-                // showToast('Analysis completed! Refreshing page...', 'success');
-                setTimeout(() => window.location.reload(), 1500);
+                // showToast('Analysis completed!', 'success');
+                console.log('✅ Update completed, reloading data...');
+                loadInitialData(); // Reload data instead of page reload
+                updateButtonVisibility();
             } else {
                 if (data.is_updating) {
                     state.ongoingUpdates[state.selectedList] = {
@@ -1233,25 +1441,24 @@
 
         const tweetId = tweetElement.getAttribute('data-tweet-id');
 
-        // Get tweet data from data attributes (stored on the tweet-opportunity div)
+        // Get tweet data from data attributes (since tweet is in iframe)
         let tweetText = tweetElement.getAttribute('data-tweet-text') || '';
         const author = tweetElement.getAttribute('data-tweet-author') || '';
+
         const style = getSelectedStyle(tweetElement);
         const useBrandVoice = getBrandVoiceState(tweetElement);
 
-        // Extract image URLs from data attribute
+        // Extract image URLs from data attribute if available
         let imageUrls = [];
-        const imageUrlsAttr = tweetElement.getAttribute('data-image-urls');
-        if (imageUrlsAttr) {
-            try {
-                imageUrls = JSON.parse(imageUrlsAttr);
-                console.log('📷 Found', imageUrls.length, 'image(s) for tweet', tweetId, ':', imageUrls);
-            } catch (e) {
-                console.error('Failed to parse image URLs:', e);
-                imageUrls = [];
+        try {
+            const imageUrlsData = tweetElement.getAttribute('data-image-urls');
+            if (imageUrlsData) {
+                imageUrls = JSON.parse(imageUrlsData);
+                console.log('📷 Found', imageUrls.length, 'image(s) in tweet');
             }
-        } else {
-            console.log('📷 No image URLs attribute found for tweet', tweetId);
+        } catch (e) {
+            console.error('Error parsing image URLs:', e);
+            imageUrls = [];
         }
 
 
@@ -1330,9 +1537,18 @@
                 // showToast('Reply generated successfully!', 'success');
             } else {
                 if (textarea) {
-                    textarea.value = data.credits_required ?
-                        'Insufficient credits to generate reply.' :
-                        'Error generating reply: ' + data.error;
+                    if (data.credits_required) {
+                        textarea.value = 'Insufficient credits to generate reply.';
+                    } else if (data.error_type === 'brand_voice_unavailable') {
+                        textarea.value = 'Brand voice is not available. Please connect your X account and ensure you have reply data in analytics.';
+                        // Auto-disable brand voice checkbox
+                        const checkbox = tweetElement.querySelector('.brand-voice-checkbox');
+                        if (checkbox) {
+                            checkbox.checked = false;
+                        }
+                    } else {
+                        textarea.value = 'Error generating reply: ' + data.error;
+                    }
                 }
                 // showToast(data.credits_required ?
                 //     'Insufficient credits. Please purchase more credits.' :
@@ -2141,7 +2357,7 @@
             body: JSON.stringify({ list_id: state.currentDeletingListId })
         })
         .then(response => response.json())
-     he   .then(data => {
+        .then(data => {
             if (data.success) {
                 // showToast('List deleted successfully!', 'success');
                 hideModal('delete-modal');
@@ -2201,11 +2417,206 @@
         }, 3000);
     }
 
-    // Functions for managing create list panel
-    function showCreatePanel() {
+    // Functions for managing create list modal
+    function showInlineCreateForm() {
+        const modal = document.getElementById('create-list-panel');
+        if (modal) {
+            modal.style.display = 'flex';
+            // Close dropdown
+            closeDropdowns();
+        }
+    }
+
+    function hideCreatePanel() {
+        const modal = document.getElementById('create-list-panel');
+        if (modal) {
+            modal.style.display = 'none';
+            // Clear inputs
+            const nameInput = document.getElementById('panel-list-name');
+            const idInput = document.getElementById('panel-x-list-id');
+            if (nameInput) nameInput.value = '';
+            if (idInput) idInput.value = '';
+        }
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(e) {
+        const modal = document.getElementById('create-list-panel');
+        if (modal && e.target === modal) {
+            hideCreatePanel();
+        }
+    });
+
+    function handlePanelCreateList() {
+        const nameInput = document.getElementById('panel-list-name');
+        const idInput = document.getElementById('panel-x-list-id');
+        const btn = document.getElementById('panel-create-btn');
+
+        if (!nameInput || !idInput) return;
+
+        const name = nameInput.value.trim();
+        const xListId = idInput.value.trim();
+
+        if (!name) {
+            alert('Please enter a list name');
+            return;
+        }
+
+        if (!xListId) {
+            alert('Please enter an X List ID');
+            return;
+        }
+
+        // Show loading state on button
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('loading');
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.className = 'ph ph-spinner';
+            }
+            const span = btn.querySelector('span');
+            if (span) {
+                span.textContent = 'Adding...';
+            }
+        }
+
+        fetch('/reply-guy/create-custom-list', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                type: 'x_list',
+                x_list_id: xListId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Reset button state
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = 'ph ph-plus';
+                }
+                const span = btn.querySelector('span');
+                if (span) {
+                    span.textContent = 'Add List';
+                }
+            }
+
+            if (data.success) {
+                console.log('✅ List created:', data.list);
+                hideCreatePanel();
+
+                // Clear form
+                if (nameInput) nameInput.value = '';
+                if (idInput) idInput.value = '';
+
+                // Add the new list to the dropdown dynamically
+                const newList = data.list;
+                const dropdownMenu = document.getElementById('list-dropdown-menu');
+                if (dropdownMenu) {
+                    const divider = dropdownMenu.querySelector('.dropdown-divider');
+                    const option = document.createElement('div');
+                    option.className = 'dropdown-option';
+                    option.setAttribute('data-value', newList.id);
+                    option.setAttribute('data-type', 'custom');
+                    option.innerHTML = `
+                        <i class="ph ph-user-circle option-icon"></i>
+                        ${newList.name}
+                    `;
+
+                    if (divider) {
+                        dropdownMenu.insertBefore(option, divider);
+                    } else {
+                        dropdownMenu.appendChild(option);
+                    }
+
+                    // Remove "No custom lists yet" message if present
+                    const emptyMessage = dropdownMenu.querySelector('.dropdown-empty');
+                    if (emptyMessage) emptyMessage.remove();
+
+                    console.log('✅ Added list to dropdown');
+                }
+
+                // Select the newly created list
+                setTimeout(() => {
+                    state.selectedList = newList.id;
+                    state.selectedListType = 'custom';
+
+                    const selectedListText = document.getElementById('selected-list-text');
+                    if (selectedListText) selectedListText.textContent = newList.name;
+
+                    // Mark as updating to show spinner on button
+                    state.ongoingUpdates[newList.id] = {
+                        status: 'running',
+                        started_at: new Date().toISOString(),
+                        timestamp: Date.now()
+                    };
+                    saveOngoingUpdates();
+                    updateButtonVisibility();
+
+                    fetch('/reply-guy/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            list_id: newList.id,
+                            list_type: 'custom',
+                            time_range: '24h'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(analysisData => {
+                        delete state.ongoingUpdates[newList.id];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+
+                        if (analysisData.success) {
+                            console.log('✅ Analysis completed');
+                            loadInitialData();
+                        } else {
+                            console.error('❌ Analysis failed:', analysisData.error);
+                            loadInitialData();
+                        }
+                    })
+                    .catch(analysisError => {
+                        delete state.ongoingUpdates[newList.id];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+                        console.error('❌ Analysis error:', analysisError);
+                        loadInitialData();
+                    });
+                }, 500);
+            } else {
+                console.error('❌ Error creating list:', data.error);
+                alert('Error creating list: ' + data.error);
+            }
+        })
+        .catch(error => {
+            // Reset button state on error
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = 'ph ph-plus';
+                }
+                const span = btn.querySelector('span');
+                if (span) {
+                    span.textContent = 'Add List';
+                }
+            }
+            console.error('❌ Network error creating list:', error);
+            alert('Network error creating list');
+        });
+    }
+
+    // Functions for managing create list modal (deprecated - modal version)
+    function showCreateModal() {
         const modal = document.getElementById('create-list-modal');
         if (modal) {
-
             modal.classList.add('show');
 
             modal.setAttribute('style', `
@@ -2259,7 +2670,7 @@
         }
     }
 
-    function hideCreatePanel() {
+    function hideCreateModal() {
         const modal = document.getElementById('create-list-modal');
         if (modal) {
             modal.classList.remove('show');
@@ -2304,45 +2715,102 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showLoading('Running analysis...', 'Finding reply opportunities in your new list...');
-                hideCreatePanel();
+                console.log('✅ List created:', data.list);
+                hideCreateModal();
 
-                const listId = data.list.id;
-                fetch('/reply-guy/run-analysis', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        list_id: listId,
-                        list_type: 'custom',
-                        time_range: '24h'
-                    })
-                })
-                .then(response => response.json())
-                .then(analysisData => {
-                    hideLoading();
-                    if (analysisData.success) {
-                        // showToast('List created and analyzed successfully!', 'success');
-                        setTimeout(() => window.location.reload(), 1000);
+                // Clear form
+                if (nameInput) nameInput.value = '';
+                if (idInput) idInput.value = '';
+
+                // Add the new list to the dropdown dynamically
+                const newList = data.list;
+                const dropdownMenu = document.getElementById('list-dropdown-menu');
+                if (dropdownMenu) {
+                    const divider = dropdownMenu.querySelector('.dropdown-divider');
+                    const option = document.createElement('div');
+                    option.className = 'dropdown-option';
+                    option.setAttribute('data-value', newList.id);
+                    option.setAttribute('data-type', 'custom');
+                    option.innerHTML = `
+                        <i class="ph ph-user-circle option-icon"></i>
+                        ${newList.name}
+                    `;
+
+                    if (divider) {
+                        dropdownMenu.insertBefore(option, divider);
                     } else {
-                        // showToast('List created but analysis failed: ' + analysisData.error, 'warning');
-                        setTimeout(() => window.location.reload(), 1000);
+                        dropdownMenu.appendChild(option);
                     }
-                })
-                .catch(analysisError => {
-                    hideLoading();
-                    // showToast('List created but analysis failed', 'warning');
-                    console.error('Analysis error:', analysisError);
-                    setTimeout(() => window.location.reload(), 1000);
-                });
+
+                    // Remove "No custom lists yet" message if present
+                    const emptyMessage = dropdownMenu.querySelector('.dropdown-empty');
+                    if (emptyMessage) emptyMessage.remove();
+
+                    console.log('✅ Added list to dropdown');
+                }
+
+                // Switch to custom mode and select the new list
+                const customTab = document.querySelector('.mode-tab-compact[data-mode="custom"]');
+                if (customTab) {
+                    customTab.click();
+                }
+
+                // Select the newly created list after a short delay
+                setTimeout(() => {
+                    state.selectedList = newList.id;
+                    state.selectedListType = 'custom';
+
+                    const selectedListText = document.getElementById('selected-list-text');
+                    if (selectedListText) selectedListText.textContent = newList.name;
+
+                    // Mark as updating to show spinner on button
+                    state.ongoingUpdates[newList.id] = {
+                        status: 'running',
+                        started_at: new Date().toISOString(),
+                        timestamp: Date.now()
+                    };
+                    saveOngoingUpdates();
+                    updateButtonVisibility();
+
+                    fetch('/reply-guy/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            list_id: newList.id,
+                            list_type: 'custom',
+                            time_range: '24h'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(analysisData => {
+                        delete state.ongoingUpdates[newList.id];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+
+                        if (analysisData.success) {
+                            console.log('✅ Analysis completed');
+                            loadInitialData();
+                        } else {
+                            console.error('❌ Analysis failed:', analysisData.error);
+                            loadInitialData();
+                        }
+                    })
+                    .catch(analysisError => {
+                        delete state.ongoingUpdates[newList.id];
+                        saveOngoingUpdates();
+                        updateButtonVisibility();
+                        console.error('❌ Analysis error:', analysisError);
+                        loadInitialData();
+                    });
+                }, 500);
             } else {
                 hideLoading();
-                // showToast('Error creating list: ' + data.error, 'error');
+                console.error('❌ Error creating list:', data.error);
             }
         })
         .catch(error => {
             hideLoading();
-            // showToast('Network error creating list', 'error');
-            console.error('Error:', error);
+            console.error('❌ Network error creating list:', error);
         });
     }
 
@@ -2598,6 +3066,23 @@
         }
     }
 
+    // Helper to wait for Twitter widgets to be ready
+    function waitForTwitterWidgets(maxWait = 5000) {
+        return new Promise((resolve) => {
+            const startTime = Date.now();
+            const checkInterval = setInterval(() => {
+                if (window.twttr && window.twttr.widgets) {
+                    clearInterval(checkInterval);
+                    resolve(true);
+                } else if (Date.now() - startTime > maxWait) {
+                    clearInterval(checkInterval);
+                    console.warn('Twitter widgets script not loaded after timeout');
+                    resolve(false);
+                }
+            }, 100);
+        });
+    }
+
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', init);
 
@@ -2607,8 +3092,8 @@
         formatLastRefresh();
     });
 
-    // Update timestamps immediately (no need for interval - full timestamps don't change)
-    updateTimestamps();
+    // Timestamps are now handled by X embed widgets
+    // updateTimestamps();
 
     // Pagination: Load More functionality with API
     const loadMoreBtn = document.getElementById('load-more-btn');
@@ -2646,11 +3131,16 @@
                         loadMoreContainer.insertAdjacentHTML('beforebegin', tweetHtml);
                     });
 
+                    // Reload X (Twitter) embed widgets for new tweets
+                    if (window.twttr && window.twttr.widgets) {
+                        window.twttr.widgets.load();
+                    }
+
                     const newLoaded = loaded + data.tweets.length;
                     this.setAttribute('data-loaded', newLoaded);
 
-                    // Update timestamps for newly loaded tweets
-                    updateTimestamps();
+                    // Timestamps are handled by X embed widgets
+                    // updateTimestamps();
 
                     // Re-setup reply style dropdowns for new tweets
                     setupReplyStyleDropdowns();
@@ -2691,89 +3181,6 @@
             {id: "contrarian", name: "Contrarian"}
         ];
 
-        // Render profile image or fallback
-        const profileImageHtml = tweet.profile_image_url ? `
-            <img src="${tweet.profile_image_url}" alt="${tweet.author}"
-                 onload="this.classList.remove('error')"
-                 onerror="this.classList.add('error')">
-            <div class="fallback-avatar">
-                <i class="ph ph-user"></i>
-            </div>
-        ` : `
-            <div class="fallback-avatar" style="display: flex;">
-                <i class="ph ph-user"></i>
-            </div>
-        `;
-
-        // Full timestamp and views below post (X brand style)
-        const timestampFullHtml = tweet.created_at ? `
-            <div class="tweet-timestamp-full" data-timestamp="${tweet.created_at}" data-views="${tweet.engagement.views || 0}">
-                <a href="https://twitter.com/${tweet.author}/status/${tweet.tweet_id}" target="_blank" rel="noopener noreferrer" class="tweet-time-link">
-                    <span class="tweet-time"></span>
-                </a>
-                <span class="tweet-views">
-                    <span class="tweet-views-count">${tweet.engagement.views || 0}</span> Views
-                </span>
-            </div>
-        ` : '';
-
-        // Render media (photos and videos)
-        let mediaHtml = '';
-        if (tweet.media) {
-            mediaHtml = '<div class="tweet-media">';
-
-            // Photos
-            if (tweet.media.photo && tweet.media.photo.length > 0) {
-                mediaHtml += '<div class="tweet-photos">';
-                tweet.media.photo.forEach(photo => {
-                    mediaHtml += `
-                        <div class="tweet-photo">
-                            <img src="${photo.media_url_https}" alt="Tweet image" class="tweet-image" loading="lazy"
-                                 onerror="this.style.display='none'">
-                        </div>
-                    `;
-                });
-                mediaHtml += '</div>';
-            }
-
-            // Videos
-            if (tweet.media.video && tweet.media.video.length > 0) {
-                mediaHtml += '<div class="tweet-videos">';
-                tweet.media.video.forEach(video => {
-                    if (video.variants && video.variants.length > 0) {
-                        const mp4Variant = video.variants.filter(v => v.content_type === 'video/mp4').pop();
-                        if (mp4Variant) {
-                            mediaHtml += `
-                                <div class="tweet-video">
-                                    <video controls class="tweet-video-player" poster="${video.media_url_https}">
-                                        <source src="${mp4Variant.url}" type="video/mp4">
-                                        Your browser does not support the video tag.
-                                    </video>
-                                </div>
-                            `;
-                        } else {
-                            mediaHtml += `
-                                <div class="tweet-video">
-                                    <img src="${video.media_url_https}" alt="Video thumbnail" class="tweet-video-thumb" loading="lazy"
-                                         onerror="this.style.display='none'">
-                                </div>
-                            `;
-                        }
-                    } else {
-                        mediaHtml += `
-                            <div class="tweet-video">
-                                <img src="${video.media_url_https}" alt="Video thumbnail" class="tweet-video-thumb" loading="lazy"
-                                     onerror="this.style.display='none'">
-                            </div>
-                        `;
-                    }
-                });
-                mediaHtml += '</div>';
-            }
-
-            mediaHtml += '</div>';
-        }
-
         // Render reply style options
         const replyStyleOptionsHtml = replyStyles.map((style, index) => `
             <div class="dropdown-option reply-style-option ${index === 0 ? 'selected' : ''}" data-value="${style.id}">
@@ -2784,46 +3191,11 @@
         return `
             <div class="tweet-opportunity" data-tweet-id="${tweet.tweet_id}">
                 <div class="tweet-grid">
-                    <!-- Tweet Content -->
+                    <!-- Tweet Content - Official X Embed -->
                     <div class="tweet-content-section">
-                        <!-- X Logo (required by brand guidelines) -->
-                        <img src="/static/img/templates/logo-black.png" alt="X" class="tweet-x-logo">
-                        <img src="/static/img/templates/logo-white.png" alt="X" class="tweet-x-logo">
-
-                        <div class="tweet-author-info">
-                            <div class="tweet-avatar">
-                                ${profileImageHtml}
-                            </div>
-                            <div class="tweet-author-details">
-                                <div class="tweet-author-name">${tweet.name || tweet.author}</div>
-                                <div class="tweet-author-username">
-                                    @${tweet.author}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="tweet-text" data-raw-text="${tweet.text}">
-                            ${formatTweetText(tweet.text)}
-                        </div>
-
-                        ${mediaHtml}
-
-                        ${timestampFullHtml}
-
-                        <div class="tweet-engagement">
-                            <div class="engagement-stat">
-                                <i class="ph ph-chat-centered"></i>
-                                ${tweet.engagement.replies || 0}
-                            </div>
-                            <div class="engagement-stat">
-                                <i class="ph ph-repeat"></i>
-                                ${tweet.engagement.retweets || 0}
-                            </div>
-                            <div class="engagement-stat">
-                                <i class="ph ph-heart"></i>
-                                ${tweet.engagement.likes || 0}
-                            </div>
-                        </div>
+                        <blockquote class="twitter-tweet" data-theme="dark" data-dnt="true">
+                            <a href="https://twitter.com/${tweet.author}/status/${tweet.tweet_id}"></a>
+                        </blockquote>
                     </div>
 
                     <!-- Reply Panel with GIF Support -->
