@@ -567,14 +567,14 @@ html.dark .progress-icon {
     justify-content: center;
 }
 
-.spinner-ring {
+.premium-spinner .spinner-ring {
     position: absolute;
     border: 2.5px solid transparent;
     border-radius: 50%;
     animation: spin 2s linear infinite;
 }
 
-.spinner-ring:nth-child(1) {
+.premium-spinner .spinner-ring:nth-child(1) {
     width: 80px;
     height: 80px;
     border-top-color: #3B82F6;
@@ -582,7 +582,7 @@ html.dark .progress-icon {
     animation-duration: 2s;
 }
 
-.spinner-ring:nth-child(2) {
+.premium-spinner .spinner-ring:nth-child(2) {
     width: 60px;
     height: 60px;
     border-top-color: #60A5FA;
@@ -591,7 +591,7 @@ html.dark .progress-icon {
     animation-direction: reverse;
 }
 
-.spinner-ring:nth-child(3) {
+.premium-spinner .spinner-ring:nth-child(3) {
     width: 40px;
     height: 40px;
     border-top-color: #93C5FD;
@@ -599,22 +599,22 @@ html.dark .progress-icon {
     animation-duration: 1s;
 }
 
-html.dark .spinner-ring:nth-child(1) {
+html.dark .premium-spinner .spinner-ring:nth-child(1) {
     border-top-color: #60A5FA;
     border-right-color: #60A5FA;
 }
 
-html.dark .spinner-ring:nth-child(2) {
+html.dark .premium-spinner .spinner-ring:nth-child(2) {
     border-top-color: #93C5FD;
     border-left-color: #93C5FD;
 }
 
-html.dark .spinner-ring:nth-child(3) {
+html.dark .premium-spinner .spinner-ring:nth-child(3) {
     border-top-color: #BFDBFE;
     border-right-color: #BFDBFE;
 }
 
-.spinner-core {
+.premium-spinner .spinner-core {
     width: 28px;
     height: 28px;
     background: #3B82F6;
@@ -624,14 +624,15 @@ html.dark .spinner-ring:nth-child(3) {
     justify-content: center;
     box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
     z-index: 1;
+    animation: pulse-core 2s ease-in-out infinite;
 }
 
-html.dark .spinner-core {
+html.dark .premium-spinner .spinner-core {
     background: #60A5FA;
     box-shadow: 0 0 15px rgba(96, 165, 250, 0.6);
 }
 
-.spinner-core i {
+.premium-spinner .spinner-core i {
     color: white;
     font-size: 1rem;
     animation: sparkle 1.5s ease-in-out infinite;
@@ -755,7 +756,7 @@ html.dark .spinner-core {
 
 /* Add icon before headers */
 .hot-timeline h2::before,
-.hot-timeline h3::before {
+.hot-timeline h3:not(.insufficient-credits-card h3)::before {
     content: '';
     display: inline-block;
     width: 4px;
@@ -766,8 +767,26 @@ html.dark .spinner-core {
 }
 
 html.dark .hot-timeline h2::before,
-html.dark .hot-timeline h3::before {
+html.dark .hot-timeline h3:not(.insufficient-credits-card h3)::before {
     background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+}
+
+/* Insufficient Credits Title */
+.insufficient-credits-title {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.insufficient-credits-title::before {
+    content: none !important;
+    display: none !important;
+}
+
+.insufficient-credits-text {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
 }
 
 /* Paragraphs */

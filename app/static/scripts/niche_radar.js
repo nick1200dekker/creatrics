@@ -1177,8 +1177,8 @@
                         <div class="credit-icon-wrapper">
                             <i class="ph ph-coins"></i>
                         </div>
-                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.25rem; font-weight: 700;">Insufficient Credits</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        <h3 class="insufficient-credits-title">Insufficient Credits</h3>
+                        <p class="insufficient-credits-text">
                             You don't have enough credits to use this feature.
                         </p>
                         <a href="/payment" class="upgrade-plan-btn">
