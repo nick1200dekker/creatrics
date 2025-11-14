@@ -219,9 +219,16 @@ async function searchVideos() {
         resultsGrid.innerHTML = `
             <div class="search-loading-state">
                 <div class="loading-spinner">
-                    <i class="ph ph-spinner spin"></i>
-                    <span class="loading-text">Searching for videos...</span>
+                    <div class="premium-spinner-small">
+                        <div class="spinner-ring"></div>
+                        <div class="spinner-ring"></div>
+                        <div class="spinner-ring"></div>
+                        <div class="spinner-core">
+                            <i class="ph ph-sparkle"></i>
+                        </div>
+                    </div>
                 </div>
+                <span class="loading-text">Searching for videos<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></span>
             </div>
         `;
 

@@ -66,8 +66,12 @@
             console.log('✅ Data loaded:', data);
 
             if (!data.success) {
+                console.error('❌ Server returned error:', data.error);
                 throw new Error(data.error || 'Failed to load data');
             }
+
+            console.log('📊 Has tweets:', data.has_tweets);
+            console.log('📊 Total count:', data.total_count);
 
             // Update state with loaded data
             state.ongoingUpdates = data.ongoing_updates || {};
@@ -143,13 +147,24 @@
                 Promise.all(imagePromises).then(() => {
                     console.log('🖼️ Images loaded, initializing interactions...');
 
-                    // 4. Initialize event listeners
-                    setupReplyInteractions();
-                    initializeTimestamps();
+                    // 4. Load Twitter embeds
+                    if (window.twttr && window.twttr.widgets) {
+                        console.log('🐦 Loading Twitter embeds...');
+                        window.twttr.widgets.load(tweetsSection);
+                    } else {
+                        console.warn('⚠️ Twitter widgets.js not loaded yet');
+                    }
+
+                    // 5. Update timestamps and format numbers
+                    updateTimestamps();
+
+                    // 6. Enable interaction with tweets section
+                    tweetsSection.style.opacity = '1';
+                    tweetsSection.style.pointerEvents = 'auto';
 
                     console.log('✅ Everything ready, hiding spinner...');
 
-                    // 5. NOW hide the spinner - everything is actually ready
+                    // 7. NOW hide the spinner - everything is actually ready
                     if (tweetsLoadingSection) {
                         tweetsLoadingSection.style.display = 'none';
                     }
@@ -1217,25 +1232,27 @@
         }
 
         const tweetId = tweetElement.getAttribute('data-tweet-id');
-        const tweetTextElement = tweetElement.querySelector('.tweet-text');
 
-        let tweetText = tweetTextElement ? tweetTextElement.innerHTML : '';
-        tweetText = tweetText.replace(/<br\s*\/?>/gi, '\n').trim();
-        tweetText = tweetText.replace(/<[^>]*>/g, '');
-
-        const authorElement = tweetElement.querySelector('.tweet-author-username');
-        const author = authorElement ? authorElement.textContent.replace('@', '') : '';
+        // Get tweet data from data attributes (stored on the tweet-opportunity div)
+        let tweetText = tweetElement.getAttribute('data-tweet-text') || '';
+        const author = tweetElement.getAttribute('data-tweet-author') || '';
         const style = getSelectedStyle(tweetElement);
         const useBrandVoice = getBrandVoiceState(tweetElement);
 
-        // Extract image URLs from tweet media
-        const imageUrls = [];
-        const tweetImages = tweetElement.querySelectorAll('.tweet-image');
-        tweetImages.forEach(img => {
-            if (img.src) {
-                imageUrls.push(img.src);
+        // Extract image URLs from data attribute
+        let imageUrls = [];
+        const imageUrlsAttr = tweetElement.getAttribute('data-image-urls');
+        if (imageUrlsAttr) {
+            try {
+                imageUrls = JSON.parse(imageUrlsAttr);
+                console.log('📷 Found', imageUrls.length, 'image(s) for tweet', tweetId, ':', imageUrls);
+            } catch (e) {
+                console.error('Failed to parse image URLs:', e);
+                imageUrls = [];
             }
-        });
+        } else {
+            console.log('📷 No image URLs attribute found for tweet', tweetId);
+        }
 
 
         const textarea = tweetElement.querySelector('.reply-textarea');

@@ -579,34 +579,103 @@ i.spin {
 .search-loading-state {
     grid-column: 1 / -1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 300px;
     padding: 3rem 2rem;
+    gap: 1rem;
 }
 
 .search-loading-state .loading-spinner {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
 }
 
-.search-loading-state .loading-spinner i {
-    font-size: 3rem;
-    color: #3B82F6;
-    animation: spin 1s linear infinite;
-    display: inline-block;
+/* Premium Spinner Small */
+.premium-spinner-small {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-html.dark .search-loading-state .loading-spinner i {
-    color: #60A5FA;
+.premium-spinner-small .spinner-ring {
+    position: absolute;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 2s linear infinite;
+}
+
+.premium-spinner-small .spinner-ring:nth-child(1) {
+    width: 60px;
+    height: 60px;
+    border-top-color: #3B82F6;
+    border-right-color: #3B82F6;
+    animation-duration: 2s;
+}
+
+.premium-spinner-small .spinner-ring:nth-child(2) {
+    width: 45px;
+    height: 45px;
+    border-top-color: #60A5FA;
+    border-left-color: #60A5FA;
+    animation-duration: 1.5s;
+    animation-direction: reverse;
+}
+
+.premium-spinner-small .spinner-ring:nth-child(3) {
+    width: 30px;
+    height: 30px;
+    border-top-color: #93C5FD;
+    border-right-color: #93C5FD;
+    animation-duration: 1s;
+}
+
+html.dark .premium-spinner-small .spinner-ring:nth-child(1) {
+    border-top-color: #60A5FA;
+    border-right-color: #60A5FA;
+}
+
+html.dark .premium-spinner-small .spinner-ring:nth-child(2) {
+    border-top-color: #93C5FD;
+    border-left-color: #93C5FD;
+}
+
+html.dark .premium-spinner-small .spinner-ring:nth-child(3) {
+    border-top-color: #BFDBFE;
+    border-right-color: #BFDBFE;
+}
+
+.premium-spinner-small .spinner-core {
+    width: 21px;
+    height: 21px;
+    background: #3B82F6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse-core 2s ease-in-out infinite;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+html.dark .premium-spinner-small .spinner-core {
+    background: #60A5FA;
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.6);
+}
+
+.premium-spinner-small .spinner-core i {
+    color: white;
+    font-size: 0.75rem;
+    animation: sparkle 1.5s ease-in-out infinite;
 }
 
 .search-loading-state .loading-text {
     font-size: 0.875rem;
-    color: var(--text-tertiary);
+    color: var(--text-secondary);
     font-weight: 500;
 }
 
