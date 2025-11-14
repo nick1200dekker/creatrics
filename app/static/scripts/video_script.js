@@ -159,8 +159,17 @@
         // Show loading state
         document.getElementById('resultsContainer').innerHTML = `
             <div class="loading-container">
-                <div class="loading-spinner"><i class="ph ph-spinner"></i></div>
-                <div class="loading-text">Creating Your Script</div>
+                <div class="loading-spinner">
+                    <div class="premium-spinner">
+                        <div class="spinner-ring"></div>
+                        <div class="spinner-ring"></div>
+                        <div class="spinner-ring"></div>
+                        <div class="spinner-core">
+                            <i class="ph ph-sparkle"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="loading-text">Creating Your Script<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></div>
                 <div class="loading-subtext">Our AI is crafting your video script based on your concept. This may take a moment...</div>
             </div>
         `;
