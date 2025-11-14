@@ -358,11 +358,27 @@ class XAnalytics:
             logger.error(f"Error in get_replies_data: {str(e)}")
             return None
     
-    def _fetch_replies_data(self):
-        """Fetch replies data from API and return it"""
+    def _fetch_replies_data(self, is_initial_fetch=None):
+        """Fetch replies data from API and return it
+
+        Args:
+            is_initial_fetch: If True, fetch more historical data. If False, only recent (7 days).
+                             If None, auto-detect based on existing data.
+        """
         try:
             username = self.x_handle.lstrip('@')
             logger.info(f"Fetching replies for {username}")
+
+            # Auto-detect if this is initial fetch by checking existing data
+            if is_initial_fetch is None:
+                try:
+                    replies_ref = self.db.collection('users').document(self.user_id).collection('x_replies').document('data')
+                    existing_data = replies_ref.get()
+                    is_initial_fetch = not existing_data.exists or not existing_data.to_dict().get('replies')
+                    logger.info(f"Auto-detected fetch type: {'initial' if is_initial_fetch else 'update'}")
+                except:
+                    is_initial_fetch = True
+                    logger.info(f"Defaulting to initial fetch")
 
             # Track all replies
             all_replies = []
@@ -373,11 +389,20 @@ class XAnalytics:
             prev_reply_count = 0
             pagination_no_progress_count = 0
 
-            # Set 7 days cutoff for replies
-            one_week_ago = datetime.now() - timedelta(days=7)
+            # Set time cutoff based on fetch type
+            if is_initial_fetch:
+                # Initial fetch: get up to 50 replies from last 6 months
+                max_replies = 50
+                time_cutoff = datetime.now() - timedelta(days=180)
+                logger.info(f"Initial fetch: targeting {max_replies} replies from last 6 months")
+            else:
+                # Update fetch: get up to 25 new replies from last 7 days
+                max_replies = 25
+                time_cutoff = datetime.now() - timedelta(days=7)
+                logger.info(f"Update fetch: targeting {max_replies} replies from last 7 days")
 
-            # Paginate through replies using cursor until we have 100 replies or no more results
-            while len(all_replies) < 100:
+            # Paginate through replies using cursor until we have enough replies or no more results
+            while len(all_replies) < max_replies:
                 remaining_attempts = max_attempts
                 success = False
                 
@@ -437,9 +462,9 @@ class XAnalytics:
                                             reply_date = datetime.strptime(reply_date_str, '%a %b %d %H:%M:%S %z %Y')
                                             reply_date_local = reply_date.replace(tzinfo=None)
 
-                                            # Skip replies older than 7 days
-                                            if reply_date_local < one_week_ago:
-                                                logger.info(f"Reached replies older than 7 days, stopping")
+                                            # Skip replies older than cutoff date
+                                            if reply_date_local < time_cutoff:
+                                                logger.info(f"Reached replies older than cutoff ({time_cutoff.strftime('%Y-%m-%d')}), stopping")
                                                 return all_replies
                                         except Exception as e:
                                             logger.debug(f"Error parsing reply date: {e}")
@@ -474,13 +499,13 @@ class XAnalytics:
                                 i += 1
                             
                             logger.info(f"Found {replies_found_this_page} replies on this page, total: {len(all_replies)}")
-                            
+
                             # Check if there are more results
-                            if data.get('next_cursor') and len(all_replies) < 100:
+                            if data.get('next_cursor') and len(all_replies) < max_replies:
                                 cursor = data['next_cursor']
                                 logger.info(f"Getting next page with cursor: {cursor[:20]}...")
                                 success = True
-                                
+
                                 # Add safety pagination limit to prevent infinite loops
                                 if len(all_replies) == prev_reply_count:
                                     pagination_no_progress_count += 1
@@ -489,7 +514,7 @@ class XAnalytics:
                                         break
                                 else:
                                     pagination_no_progress_count = 0
-                                
+
                                 prev_reply_count = len(all_replies)
                             else:
                                 # No more results or we have enough
