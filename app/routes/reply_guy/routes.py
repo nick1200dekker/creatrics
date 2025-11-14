@@ -774,7 +774,12 @@ def get_initial_data():
                 total = current_analysis.get('total_count', 0)
                 shown = len(current_analysis.get('tweet_opportunities', []))
                 timestamp = current_analysis.get('timestamp')
+
+                # Count tweets with image_urls for debugging
+                tweets_with_images = sum(1 for t in current_analysis.get('tweet_opportunities', []) if t.get('image_urls'))
+
                 logger.info(f"Loaded {shown} of {total} opportunities for {current_selection['list_type']} list {current_selection['list_id']}")
+                logger.info(f"📷 {tweets_with_images} of {shown} tweets have image URLs")
                 logger.info(f"Analysis timestamp: {timestamp} (type: {type(timestamp).__name__})")
 
         # Get reply stats efficiently
@@ -798,6 +803,11 @@ def get_initial_data():
                                      current_analysis=current_analysis,
                                      current_selection=current_selection,
                                      reply_styles=reply_styles)
+
+        # DEBUG: Check if data-image-urls is in the rendered HTML
+        import re
+        image_url_attrs = re.findall(r'data-image-urls="[^"]*"', tweets_html)
+        logger.info(f"📷 Rendered HTML contains {len(image_url_attrs)} data-image-urls attributes")
 
         return jsonify({
             'success': True,
