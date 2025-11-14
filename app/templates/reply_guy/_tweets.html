@@ -1,6 +1,5 @@
                         {% if current_analysis and current_analysis.tweet_opportunities %}
                         {% for tweet in current_analysis.tweet_opportunities %}
-                        <!-- DEBUG: tweet has image_urls: {{ tweet.image_urls|length if tweet.image_urls else 0 }} -->
                         <div class="tweet-opportunity"
                              data-tweet-id="{{ tweet.tweet_id }}"
                              data-tweet-text="{{ tweet.text | replace('"', '&quot;') | replace("'", '&#39;') }}"

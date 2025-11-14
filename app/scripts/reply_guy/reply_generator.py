@@ -111,12 +111,15 @@ class ReplyGenerator:
 
             # Add brand voice context if requested
             brand_voice_context = ""
+            logger.info(f"🔍 use_brand_voice parameter = {use_brand_voice}")
             if use_brand_voice:
                 brand_voice_context = self.get_brand_voice_context(user_id)
                 if brand_voice_context:
-                    logger.info(f"Adding Brand Voice context for user {user_id}")
+                    logger.info(f"✅ Brand Voice context loaded - length: {len(brand_voice_context)} chars, first 100: {brand_voice_context[:100]}")
                 else:
-                    logger.info(f"Brand Voice requested but no context found for user {user_id}")
+                    logger.warning(f"❌ Brand Voice requested but get_brand_voice_context returned empty string")
+            else:
+                logger.info(f"⚠️ Brand Voice is DISABLED (use_brand_voice=False)")
 
             # Convert _new_line_ back to actual newlines for the AI prompt
             clean_tweet_text = tweet_text.replace('_new_line_', '\n')
@@ -541,7 +544,7 @@ class ReplyGenerator:
                         reply_info = reply_item['reply']
                         if isinstance(reply_info, dict) and 'text' in reply_info:
                             reply_text = reply_info['text']
-                            if reply_text and len(reply_text.strip()) > 5:  # Only meaningful replies
+                            if reply_text and len(reply_text.strip()) > 1:  # Include short replies and emojis
                                 # Simple conversion: _new_line_ to actual newlines for AI context
                                 clean_text = reply_text.replace('_new_line_', '\n').strip()
                                 # Remove URLs to focus on writing style
@@ -563,7 +566,7 @@ class ReplyGenerator:
                         reply_info = value['reply']
                         if isinstance(reply_info, dict) and 'text' in reply_info:
                             reply_text = reply_info['text']
-                            if reply_text and len(reply_text.strip()) > 5:
+                            if reply_text and len(reply_text.strip()) > 1:
                                 clean_text = reply_text.replace('_new_line_', '\n').strip()
                                 import re
                                 clean_text = re.sub(r'https?://\S+', '', clean_text).strip()
@@ -575,7 +578,7 @@ class ReplyGenerator:
                                 reply_info = item['reply']
                                 if isinstance(reply_info, dict) and 'text' in reply_info:
                                     reply_text = reply_info['text']
-                                    if reply_text and len(reply_text.strip()) > 5:
+                                    if reply_text and len(reply_text.strip()) > 1:
                                         clean_text = reply_text.replace('_new_line_', '\n').strip()
                                         import re
                                         clean_text = re.sub(r'https?://\S+', '', clean_text).strip()

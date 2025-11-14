@@ -804,11 +804,6 @@ def get_initial_data():
                                      current_selection=current_selection,
                                      reply_styles=reply_styles)
 
-        # DEBUG: Check if data-image-urls is in the rendered HTML
-        import re
-        image_url_attrs = re.findall(r'data-image-urls="[^"]*"', tweets_html)
-        logger.info(f"📷 Rendered HTML contains {len(image_url_attrs)} data-image-urls attributes")
-
         return jsonify({
             'success': True,
             'tweets_html': tweets_html,

@@ -1481,17 +1481,9 @@
         let imageUrls = [];
         try {
             const imageUrlsData = tweetElement.getAttribute('data-image-urls');
-            console.log('🔍 DEBUG: Looking for data-image-urls attribute');
-            console.log('🔍 Tweet element:', tweetElement);
-            console.log('🔍 Tweet ID:', tweetElement.getAttribute('data-tweet-id'));
-            console.log('🔍 All attributes:', Array.from(tweetElement.attributes).map(a => a.name));
-            console.log('🔍 data-image-urls value:', imageUrlsData);
-
             if (imageUrlsData) {
                 imageUrls = JSON.parse(imageUrlsData);
                 console.log('📷 Found', imageUrls.length, 'image(s) in tweet');
-            } else {
-                console.log('⚠️ No data-image-urls attribute found on tweet element');
             }
         } catch (e) {
             console.error('Error parsing image URLs:', e);
