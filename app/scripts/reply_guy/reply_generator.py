@@ -124,6 +124,10 @@ class ReplyGenerator:
             # Convert _new_line_ back to actual newlines for the AI prompt
             clean_tweet_text = tweet_text.replace('_new_line_', '\n')
 
+            # Add language instruction - let AI detect and match the language
+            language_instruction = "\n\nIMPORTANT: Reply in the SAME LANGUAGE as the tweet above."
+            clean_tweet_text += language_instruction
+
             # Add image context only if provider supports vision and images are present
             if should_use_images:
                 image_context = f"\n\nIMAGES: This tweet contains {len(image_urls)} image(s). The images are shown above. Reference what you see in the images when crafting your reply to make it more relevant and engaging."
@@ -544,13 +548,14 @@ class ReplyGenerator:
                         reply_info = reply_item['reply']
                         if isinstance(reply_info, dict) and 'text' in reply_info:
                             reply_text = reply_info['text']
-                            if reply_text and len(reply_text.strip()) > 1:  # Include short replies and emojis
+                            if reply_text:
                                 # Simple conversion: _new_line_ to actual newlines for AI context
                                 clean_text = reply_text.replace('_new_line_', '\n').strip()
                                 # Remove URLs to focus on writing style
                                 import re
                                 clean_text = re.sub(r'https?://\S+', '', clean_text).strip()
-                                if clean_text:
+                                # Only keep if still meaningful after URL removal (min 10 chars)
+                                if clean_text and len(clean_text) > 10:
                                     reply_examples.append(clean_text)
 
                             # Get screen name from the first reply if available
@@ -566,11 +571,11 @@ class ReplyGenerator:
                         reply_info = value['reply']
                         if isinstance(reply_info, dict) and 'text' in reply_info:
                             reply_text = reply_info['text']
-                            if reply_text and len(reply_text.strip()) > 1:
+                            if reply_text:
                                 clean_text = reply_text.replace('_new_line_', '\n').strip()
                                 import re
                                 clean_text = re.sub(r'https?://\S+', '', clean_text).strip()
-                                if clean_text:
+                                if clean_text and len(clean_text) > 10:
                                     reply_examples.append(clean_text)
                     elif isinstance(value, list):
                         for item in value:
@@ -578,11 +583,11 @@ class ReplyGenerator:
                                 reply_info = item['reply']
                                 if isinstance(reply_info, dict) and 'text' in reply_info:
                                     reply_text = reply_info['text']
-                                    if reply_text and len(reply_text.strip()) > 1:
+                                    if reply_text:
                                         clean_text = reply_text.replace('_new_line_', '\n').strip()
                                         import re
                                         clean_text = re.sub(r'https?://\S+', '', clean_text).strip()
-                                        if clean_text:
+                                        if clean_text and len(clean_text) > 10:
                                             reply_examples.append(clean_text)
 
             # DON'T use regular posts - they're not replies!

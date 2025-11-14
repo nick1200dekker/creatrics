@@ -798,11 +798,15 @@ def get_initial_data():
         # Check for ongoing updates efficiently
         ongoing_updates = get_ongoing_updates(user_id)
 
+        # Check if user has brand voice data (for default checkbox state)
+        has_brand_voice = service.has_brand_voice_data(user_id)
+
         # Render the tweets partial template
         tweets_html = render_template('reply_guy/_tweets.html',
                                      current_analysis=current_analysis,
                                      current_selection=current_selection,
-                                     reply_styles=reply_styles)
+                                     reply_styles=reply_styles,
+                                     has_brand_voice=has_brand_voice)
 
         return jsonify({
             'success': True,

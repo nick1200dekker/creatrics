@@ -34,7 +34,7 @@
                                             </div>
 
                                             <label for="brand-voice-tweet-{{ tweet.tweet_id }}" class="brand-voice-toggle">
-                                                <input type="checkbox" id="brand-voice-tweet-{{ tweet.tweet_id }}" class="brand-voice-checkbox">
+                                                <input type="checkbox" id="brand-voice-tweet-{{ tweet.tweet_id }}" class="brand-voice-checkbox" {% if has_brand_voice %}checked{% endif %}>
                                                 <span class="toggle-slider"></span>
                                                 <span class="toggle-label">Brand Voice</span>
                                             </label>
