@@ -612,9 +612,9 @@ function escapeHtml(text) {
 
 function formatTextWithNewlines(text) {
     if (!text) return '';
-    // First escape HTML, then convert \n\n to <br><br>
+    // First escape HTML, then convert newlines to spaces to keep text flowing
     const escaped = escapeHtml(text);
-    return escaped.replace(/\\n\\n/g, '<br><br>').replace(/\\n/g, '<br>');
+    return escaped.replace(/\\n+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function formatDate(dateStr) {

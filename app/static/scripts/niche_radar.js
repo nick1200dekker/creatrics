@@ -118,7 +118,10 @@
                 setAnalyzingState(true, savedState.statusMessage);
                 validateSavedProcessingState(savedState.listName);
             } else {
-                setTimeout(checkForActiveProcessOnLoad, 100);
+                // Only check for active process if we didn't restore state
+                if (!savedState || window.CreatorPal.NicheRadar.StateManager.isStateExpired(savedState)) {
+                    setTimeout(checkForActiveProcessOnLoad, 100);
+                }
             }
         }
 
@@ -177,6 +180,12 @@
         }
 
         function setAnalyzingState(analyzing, statusMessage = '') {
+            // Prevent redundant state changes
+            if (window.NicheRadarState.isAnalyzing === analyzing) {
+                console.log('State already set to:', analyzing, '- skipping duplicate call');
+                return;
+            }
+
             console.log('Setting analyzing state:', analyzing, statusMessage);
             window.NicheRadarState.isAnalyzing = analyzing;
 

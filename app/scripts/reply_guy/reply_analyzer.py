@@ -235,6 +235,9 @@ class ReplyAnalyzer:
         # Extract image URLs for AI vision analysis
         processed["image_urls"] = self._extract_image_urls(tweet)
 
+        if processed["image_urls"]:
+            logger.info(f"✅ Tweet {tweet_id} has {len(processed['image_urls'])} image URL(s)")
+
         return processed
     
     def _extract_media(self, tweet: Dict) -> Dict:
@@ -337,18 +340,24 @@ class ReplyAnalyzer:
 
         # Method 1: Direct media field with photos and videos
         if 'media' in tweet and isinstance(tweet['media'], dict):
+            logger.debug(f"Tweet has media field with keys: {tweet['media'].keys()}")
+
             # Extract photos
             if 'photo' in tweet['media'] and tweet['media']['photo']:
+                logger.info(f"📷 Found {len(tweet['media']['photo'])} photo(s) in tweet")
                 for photo in tweet['media']['photo']:
                     if isinstance(photo, dict) and 'media_url_https' in photo:
                         image_urls.append(photo['media_url_https'])
+                        logger.info(f"📷 Added photo URL: {photo['media_url_https']}")
 
             # Extract video thumbnails for vision analysis
             if 'video' in tweet['media'] and tweet['media']['video']:
+                logger.info(f"🎥 Found {len(tweet['media']['video'])} video(s) in tweet")
                 for video in tweet['media']['video']:
                     if isinstance(video, dict) and 'media_url_https' in video:
                         # video.media_url_https is the thumbnail image
                         image_urls.append(video['media_url_https'])
+                        logger.info(f"🎥 Added video thumbnail URL: {video['media_url_https']}")
 
         # Method 2: entities.media (fallback)
         if not image_urls and 'entities' in tweet and 'media' in tweet['entities']:
