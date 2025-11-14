@@ -329,29 +329,34 @@ class XAnalytics:
 
         return all_posts
     
-    def get_replies_data(self):
-        """Get replies data for the user"""
+    def get_replies_data(self, is_initial_fetch=None):
+        """Get replies data for the user
+
+        Args:
+            is_initial_fetch: If True, fetch more historical data. If False, only recent (7 days).
+                             If None, auto-detect based on existing data.
+        """
         if not self.x_handle:
             logger.error("No X handle provided for replies")
             return None
-        
+
         # Check if a fetch is already running for this user
         if f"{self.user_id}_replies" in XAnalytics.running_fetches and XAnalytics.running_fetches[f"{self.user_id}_replies"]:
             logger.info(f"A replies data fetch is already running for user {self.user_id}")
             return None
-        
+
         try:
             # Mark that a fetch is in progress for this user
             XAnalytics.running_fetches[f"{self.user_id}_replies"] = True
-            
+
             # Fetch replies data
-            replies_data = self._fetch_replies_data()
-            
+            replies_data = self._fetch_replies_data(is_initial_fetch=is_initial_fetch)
+
             # Reset the status regardless of success or failure
             XAnalytics.running_fetches[f"{self.user_id}_replies"] = False
-            
+
             return replies_data
-            
+
         except Exception as e:
             # Make sure to reset status even if an exception occurs
             XAnalytics.running_fetches[f"{self.user_id}_replies"] = False
@@ -618,7 +623,7 @@ class XAnalytics:
 
         # Get replies data from X API - ALWAYS try to fetch replies, even if timeline failed
         logger.info(f"[X_SETUP] Step 5/5: Fetching replies for @{self.x_handle}")
-        replies_data = self.get_replies_data()
+        replies_data = self.get_replies_data(is_initial_fetch=is_initial)
         if replies_data:
             logger.info(f"[X_SETUP] Step 5/5 Complete: Fetched {len(replies_data)} replies")
             # Store replies in Firebase
