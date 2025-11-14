@@ -809,7 +809,8 @@ def get_initial_data():
             'custom_lists': custom_lists,
             'current_selection': current_selection,
             'timestamp': current_analysis.get('timestamp') if current_analysis else None,
-            'list_name': current_analysis.get('list_name', '') if current_analysis else ''
+            'list_name': current_analysis.get('list_name', '') if current_analysis else '',
+            'ongoing_updates': ongoing_updates
         })
 
     except Exception as e:

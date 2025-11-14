@@ -217,9 +217,24 @@
 
             } else {
                 console.log('ℹ️ No tweets to display');
+
+                // Show empty state for lists with 0 opportunities
                 if (tweetsSection) {
+                    tweetsSection.innerHTML = `
+                        <div class="empty-state">
+                            <i class="ph ph-chat-circle-text empty-icon"></i>
+                            <h3 class="empty-title">No Reply Opportunities</h3>
+                            <p class="empty-text">No suitable tweets found in this list. Try updating to analyze recent tweets.</p>
+                        </div>
+                    `;
+                    tweetsSection.style.display = 'block';
                     tweetsSection.style.opacity = '1';
                     tweetsSection.style.pointerEvents = 'auto';
+                }
+
+                // Hide loading spinner
+                if (tweetsLoadingSection) {
+                    tweetsLoadingSection.style.display = 'none';
                 }
             }
 
@@ -1200,9 +1215,12 @@
         const updateButtonContainerEmpty = document.getElementById('update-button-container-empty');
         const updateBtnEmpty = document.getElementById('update-btn-empty');
 
+        console.log('🔘 updateButtonVisibility - selectedList:', state.selectedList, 'type:', state.selectedListType, 'ongoingUpdates:', state.ongoingUpdates);
+
         if (state.selectedListType === 'custom' && state.selectedList) {
             // Check if THIS list is updating
             const isThisListUpdating = state.selectedList in state.ongoingUpdates;
+            console.log('🔘 isThisListUpdating:', isThisListUpdating);
 
             // Check if ANY OTHER list is updating
             const otherListUpdating = Object.keys(state.ongoingUpdates).find(id => id !== state.selectedList);
@@ -1292,22 +1310,33 @@
                     console.log('📊 Loading default list data...');
                     loadInitialData();
                 } else {
-                    // Custom list with no analysis - check if we can auto-trigger
+                    // Custom list with no analysis - show empty state first
+                    console.log('📭 Custom list has no analysis');
+                    const tweetsContainer = document.getElementById('tweets-section');
+                    const tweetsLoadingSection = document.getElementById('tweets-loading-section');
+
+                    // Hide loading spinner
+                    if (tweetsLoadingSection) {
+                        tweetsLoadingSection.style.display = 'none';
+                    }
+
+                    // Show empty state
+                    if (tweetsContainer) {
+                        tweetsContainer.innerHTML = `
+                            <div class="empty-state">
+                                <i class="ph ph-chat-circle-text empty-icon"></i>
+                                <h3 class="empty-title">No Reply Opportunities Yet</h3>
+                                <p class="empty-text">Click "Update" to analyze this list and find reply opportunities.</p>
+                            </div>
+                        `;
+                        tweetsContainer.style.display = 'block';
+                    }
+
+                    // Check if we can auto-trigger
                     const hasAnyUpdating = Object.keys(state.ongoingUpdates).length > 0;
 
                     if (hasAnyUpdating) {
                         console.log('⚠️ Cannot auto-trigger update - another list is updating');
-                        // Show empty state with manual update option
-                        const tweetsContainer = document.getElementById('tweets-section');
-                        if (tweetsContainer) {
-                            tweetsContainer.innerHTML = `
-                                <div class="empty-state">
-                                    <i class="ph ph-warning-circle empty-icon"></i>
-                                    <h3 class="empty-title">No Analysis Yet</h3>
-                                    <p class="empty-text">Please wait for the current update to finish, then click "Update" to analyze this list.</p>
-                                </div>
-                            `;
-                        }
                         return;
                     }
 
