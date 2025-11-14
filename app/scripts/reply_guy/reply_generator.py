@@ -137,8 +137,11 @@ class ReplyGenerator:
                 image_context = f"\n\nNOTE: This tweet contains {len(image_urls)} image(s), but you cannot see them. Focus on the text content only."
                 clean_tweet_text += image_context
 
-            # Load and prepare style guide
-            style_guide_template = load_prompt('prompts.txt', 'STYLE_GUIDE')
+            # Load and prepare style guide - use different version based on brand voice
+            if use_brand_voice and brand_voice_context:
+                style_guide_template = load_prompt('prompts.txt', 'STYLE_GUIDE_WITH_BRAND_VOICE')
+            else:
+                style_guide_template = load_prompt('prompts.txt', 'STYLE_GUIDE_NO_BRAND_VOICE')
             style_guide = style_guide_template.replace("{style}", style)
 
             # Replace placeholders in prompt

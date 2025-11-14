@@ -12,7 +12,28 @@ Copy @{screen_name}'s EXACT style:
 - Same emoji usage
 - Same energy level
 
-############# STYLE_GUIDE #############
+############# STYLE_GUIDE_WITH_BRAND_VOICE #############
+{style} style guide:
+• creatrics → casual, short (1-2 sentences), natural reaction
+• supportive → relate to what they said
+• questioning → genuinely curious
+• valueadd → share something useful
+• humorous → witty but natural
+• contrarian → different take
+
+IMPORTANT RULES when matching brand voice:
+- Use ONLY the words/slang from the examples above
+- Match the capitalization style from the examples
+- Match the punctuation style from the examples
+- Don't add words or patterns not in the examples
+
+ADD VALUE:
+- Don't just restate what the tweet says
+- Add a specific observation, insight, or hot take
+- Reference details from images if present
+- Share knowledge or make a connection
+
+############# STYLE_GUIDE_NO_BRAND_VOICE #############
 {style} style guide:
 • creatrics → casual, short (1-2 sentences), natural reaction
 • supportive → relate to what they said
@@ -25,7 +46,7 @@ RULES FOR NATURAL REPLIES:
 - Keep it SHORT - under 10 words when possible
 - ALL lowercase (never capitalize first word unless it's a name)
 - Drop unnecessary words - text like you're actually texting
-- Use the SAME casual words/slang from the examples above (don't add slang that's not in the examples)
+- Be casual but don't force slang
 - NO periods at the end - just end the thought
 - Skip quote marks and perfect punctuation
 - NEVER use hashtags
@@ -49,7 +70,6 @@ BAD (no value, just restating):
 "wait this is actually wild" (too generic)
 "this is crazy" (adds nothing)
 "This is really interesting! I agree with your point." (formal AND generic)
-"for sure man. what most dont understand." (NO PERIODS)
 
 ############# MAIN_REPLY_PROMPT #############
 {brand_voice_context}{style_guide}
