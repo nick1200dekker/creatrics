@@ -6,7 +6,9 @@
     <title>Register - CREATRICS</title>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 
     <!-- Apply dark mode class immediately - defaults to dark -->
@@ -798,16 +800,19 @@
             localStorage.removeItem('auth_token');
             sessionStorage.setItem('redirect_count', '0');
             
-            // Initialize Supabase
-            const supabaseUrl = '{{ supabase_url }}';
-            const supabaseKey = '{{ supabase_key }}';
+            // Initialize Firebase
+            const firebaseConfig = {
+                apiKey: '{{ firebase_api_key }}',
+                authDomain: '{{ firebase_auth_domain }}',
+                projectId: '{{ firebase_project_id }}'
+            };
             
-            if (!supabaseUrl || !supabaseKey) {
+            if (!firebaseConfig.apiKey || !firebaseConfig.authDomain) {
                 showError("Configuration error. Please try again later.");
                 return;
             }
             
-            const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+            Auth.initFirebase(firebaseConfig);
             
             // Helper functions
             function showError(message) {
@@ -886,27 +891,19 @@
                         localStorage.setItem('pendingReferralCode', referralCode);
                     }
 
-                    const { data, error } = await supabaseClient.auth.signUp({
-                        email,
-                        password,
-                        options: {
-                            data: {
-                                username: username,
-                                subscription_plan: 'Free Plan'
-                            },
-                            emailRedirectTo: window.location.origin + "/auth/callback"
-                        }
+                    // Use Auth.signUp which handles Firebase registration
+                    await Auth.signUp(email, password, {
+                        displayName: username
                     });
-
-                    if (error) {
-                        throw error;
-                    }
 
                     // Mark user registration date for welcome message
                     localStorage.setItem('userRegistrationDate', new Date().getTime().toString());
 
-                    // Show success message
-                    showSuccess();
+                    // Redirect to home after successful registration
+                    showPageTransition();
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 300);
 
                 } catch (error) {
                     // Clear referral code from storage on error

@@ -9,11 +9,10 @@ with HTTP-only cookies and simplified route protection.
 
 from flask import request, redirect, url_for, g, current_app, jsonify, make_response
 from functools import wraps
-import jwt
 import logging
 import os
 from datetime import datetime, timedelta
-from app.system.auth.supabase import verify_supabase_token
+from app.system.auth.firebase_auth import verify_firebase_token
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 logger = logging.getLogger('auth_middleware')
@@ -53,7 +52,7 @@ def verify_token(token):
     Verify JWT token authenticity and validity
     
     Args:
-        token (str): JWT token to verify
+        token (str): Firebase ID token to verify
         
     Returns:
         dict or None: Token payload or None if invalid
@@ -62,19 +61,12 @@ def verify_token(token):
         return None
         
     try:
-        # Use Supabase token verification
-        payload = verify_supabase_token(token)
+        # Use Firebase token verification
+        payload = verify_firebase_token(token)
         
         if not payload:
             logger.warning("Token verification failed")
             return None
-            
-        # Check if token is expired
-        if 'exp' in payload:
-            now = datetime.now().timestamp()
-            if payload['exp'] < now:
-                logger.warning("Token is expired")
-                return None
                 
         return payload
     except Exception as e:

@@ -43,16 +43,17 @@ from datetime import timedelta
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)  # Sessions last 24 hours
 app.config['SESSION_PERMANENT'] = True
 
-# Make Supabase URL and key available to all templates
+# Make Firebase config available to all templates
 @app.context_processor
-def inject_supabase_credentials():
+def inject_firebase_config():
     from app.config import get_config
     config = get_config()
-    credentials = {
-        'supabase_url': config.get('supabase_url', ''),
-        'supabase_key': config.get('supabase_anon_key', '')
+    firebase_config = {
+        'firebase_api_key': config.get('firebase_api_key', ''),
+        'firebase_auth_domain': config.get('firebase_auth_domain', ''),
+        'firebase_project_id': config.get('firebase_project_id', '')
     }
-    return credentials
+    return firebase_config
     
 # Make subscription plan available to all templates
 @app.context_processor

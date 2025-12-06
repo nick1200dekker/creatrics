@@ -1,38 +1,37 @@
 /**
  * Auth.js - Centralized authentication utilities for CreatorPal
  * 
- * This module provides shared authentication functionality using Supabase SDK and HTTP cookies
+ * This module provides shared authentication functionality using Firebase SDK and HTTP cookies
  * for more secure and maintainable authentication management.
  */
 
 const Auth = {
-    // Supabase client instance
-    supabaseClient: null,
+    // Firebase auth instance
+    firebaseAuth: null,
+    firebaseApp: null,
     
     /**
-     * Initialize the Supabase client with credentials
-     * @param {string} url - Supabase project URL
-     * @param {string} key - Supabase anon key
+     * Initialize Firebase with configuration
+     * @param {object} config - Firebase configuration object
      */
-    initSupabase: function(url, key) {
-        if (!url || !key) {
-            console.error("Supabase credentials not provided");
+    initFirebase: function(config) {
+        if (!config || !config.apiKey || !config.authDomain) {
+            console.error("Firebase configuration not provided");
             return false;
         }
 
         try {
-            // Initialize with automatic session persistence and refresh
-            this.supabaseClient = supabase.createClient(url, key, {
-                auth: {
-                    autoRefreshToken: true,  // Automatically refresh tokens
-                    persistSession: true,    // Persist session to localStorage
-                    detectSessionInUrl: true // Detect auth redirects
-                }
-            });
-            console.log("Supabase client initialized with automatic token refresh");
+            // Initialize Firebase
+            this.firebaseApp = firebase.initializeApp(config);
+            this.firebaseAuth = firebase.auth();
+            
+            // Set persistence to LOCAL (survives browser restarts)
+            this.firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+            
+            console.log("Firebase initialized successfully");
             return true;
         } catch (error) {
-            console.error("Failed to initialize Supabase client:", error);
+            console.error("Failed to initialize Firebase:", error);
             return false;
         }
     },
@@ -94,21 +93,19 @@ const Auth = {
      * @returns {Promise} Auth response promise
      */
     signIn: async function(email, password) {
-        if (!this.supabaseClient) {
-            console.error("Supabase client not initialized");
+        if (!this.firebaseAuth) {
+            console.error("Firebase not initialized");
             return Promise.reject(new Error("Auth not initialized"));
         }
         
         try {
-            const { data, error } = await this.supabaseClient.auth.signInWithPassword({
-                email,
-                password
-            });
+            const userCredential = await this.firebaseAuth.signInWithEmailAndPassword(email, password);
             
-            if (error) throw error;
+            // Get the ID token
+            const idToken = await userCredential.user.getIdToken();
             
-            // After successful Supabase auth, send token to server to establish cookie session
-            return this.createServerSession(data.session.access_token);
+            // Send token to server to establish cookie session
+            return this.createServerSession(idToken);
         } catch (error) {
             console.error("Sign in failed:", error);
             return Promise.reject(error);
@@ -120,23 +117,35 @@ const Auth = {
      * @param {string} provider - Provider name (google, github, etc.)
      */
     signInWithOAuth: async function(provider) {
-        if (!this.supabaseClient) {
-            console.error("Supabase client not initialized");
+        if (!this.firebaseAuth) {
+            console.error("Firebase not initialized");
             return Promise.reject(new Error("Auth not initialized"));
         }
         
         try {
-            const { data, error } = await this.supabaseClient.auth.signInWithOAuth({
-                provider,
-                options: {
-                    redirectTo: window.location.origin + "/auth/callback"
-                }
-            });
+            let authProvider;
             
-            if (error) throw error;
+            switch(provider.toLowerCase()) {
+                case 'google':
+                    authProvider = new firebase.auth.GoogleAuthProvider();
+                    break;
+                case 'github':
+                    authProvider = new firebase.auth.GithubAuthProvider();
+                    break;
+                case 'facebook':
+                    authProvider = new firebase.auth.FacebookAuthProvider();
+                    break;
+                default:
+                    throw new Error(`Unsupported provider: ${provider}`);
+            }
             
-            // OAuth redirect will happen automatically
-            return data;
+            const result = await this.firebaseAuth.signInWithPopup(authProvider);
+            
+            // Get the ID token
+            const idToken = await result.user.getIdToken();
+            
+            // Send token to server to establish cookie session
+            return this.createServerSession(idToken);
         } catch (error) {
             console.error(`${provider} sign in failed:`, error);
             return Promise.reject(error);
@@ -147,28 +156,30 @@ const Auth = {
      * Sign up a new user with email and password
      * @param {string} email - User email
      * @param {string} password - User password
-     * @param {Object} metadata - Additional user metadata
+     * @param {Object} metadata - Additional user metadata (e.g., displayName)
      * @returns {Promise} Auth response promise
      */
     signUp: async function(email, password, metadata = {}) {
-        if (!this.supabaseClient) {
-            console.error("Supabase client not initialized");
+        if (!this.firebaseAuth) {
+            console.error("Firebase not initialized");
             return Promise.reject(new Error("Auth not initialized"));
         }
         
         try {
-            const { data, error } = await this.supabaseClient.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: metadata,
-                    emailRedirectTo: window.location.origin + "/auth/callback"
-                }
-            });
+            const userCredential = await this.firebaseAuth.createUserWithEmailAndPassword(email, password);
             
-            if (error) throw error;
+            // Update profile if displayName provided
+            if (metadata.displayName) {
+                await userCredential.user.updateProfile({
+                    displayName: metadata.displayName
+                });
+            }
             
-            return data;
+            // Get the ID token
+            const idToken = await userCredential.user.getIdToken();
+            
+            // Send token to server to establish cookie session
+            return this.createServerSession(idToken);
         } catch (error) {
             console.error("Sign up failed:", error);
             return Promise.reject(error);
@@ -176,36 +187,33 @@ const Auth = {
     },
     
     /**
-     * Process OAuth callback with token and establish server session
-     * @param {string} hash - URL hash containing the access token
-     * @returns {Promise} Session creation promise
+     * Handle Firebase auth state changes and redirect
+     * Firebase handles OAuth callbacks automatically
      */
-    handleAuthCallback: async function(hash) {
-        if (!hash) {
-            console.error("No hash provided for auth callback");
-            return Promise.reject(new Error("Invalid auth callback"));
+    handleAuthCallback: async function() {
+        if (!this.firebaseAuth) {
+            console.error("Firebase not initialized");
+            return Promise.reject(new Error("Auth not initialized"));
         }
         
         try {
-            // Extract access token from URL hash
-            const hashParams = {};
-            const hashParts = hash.substring(1).split('&');
-            
-            for (const part of hashParts) {
-                const [key, value] = part.split('=');
-                hashParams[key] = decodeURIComponent(value || '');
-            }
-            
-            const accessToken = hashParams.access_token;
-            
-            if (!accessToken) {
-                throw new Error("No access token found in callback URL");
-            }
-            
-            console.log("Access token found in URL hash");
-            
-            // Create server session with the token
-            return this.createServerSession(accessToken);
+            // Wait for auth state to be ready
+            return new Promise((resolve, reject) => {
+                const unsubscribe = this.firebaseAuth.onAuthStateChanged(async (user) => {
+                    unsubscribe();
+                    
+                    if (user) {
+                        // Get the ID token
+                        const idToken = await user.getIdToken();
+                        
+                        // Create server session
+                        await this.createServerSession(idToken);
+                        resolve(user);
+                    } else {
+                        reject(new Error("No user found after auth callback"));
+                    }
+                });
+            });
         } catch (error) {
             console.error("Auth callback handling failed:", error);
             return Promise.reject(error);
@@ -257,14 +265,14 @@ const Auth = {
     },
     
     /**
-     * Log the user out by clearing the session cookie and Supabase session
+     * Log the user out by clearing the session cookie and Firebase session
      * @returns {Promise} Logout promise
      */
     logout: async function() {
         try {
-            // Sign out from Supabase
-            if (this.supabaseClient) {
-                await this.supabaseClient.auth.signOut();
+            // Sign out from Firebase
+            if (this.firebaseAuth) {
+                await this.firebaseAuth.signOut();
             }
             
             // Clear server-side session
@@ -299,64 +307,60 @@ const Auth = {
     },
     
     /**
-     * Get current user session from Supabase
-     * @returns {Promise} Session promise
+     * Get current user from Firebase
+     * @returns {Promise} User promise
      */
-    getCurrentSession: async function() {
-        if (!this.supabaseClient) {
-            console.error("Supabase client not initialized");
+    getCurrentUser: async function() {
+        if (!this.firebaseAuth) {
+            console.error("Firebase not initialized");
             return null;
         }
 
         try {
-            const { data, error } = await this.supabaseClient.auth.getSession();
-
-            if (error) throw error;
-
-            return data.session;
+            return new Promise((resolve) => {
+                const unsubscribe = this.firebaseAuth.onAuthStateChanged((user) => {
+                    unsubscribe();
+                    resolve(user);
+                });
+            });
         } catch (error) {
-            console.error("Get current session failed:", error);
+            console.error("Get current user failed:", error);
             return null;
         }
     },
 
     /**
-     * Refresh the access token using Supabase refresh token
-     * @returns {Promise} Refreshed session promise
+     * Refresh the ID token from Firebase
+     * @returns {Promise} Refreshed token promise
      */
     refreshToken: async function() {
-        if (!this.supabaseClient) {
-            console.error("Supabase client not initialized");
+        if (!this.firebaseAuth) {
+            console.error("Firebase not initialized");
             return null;
         }
 
         try {
-            const { data, error } = await this.supabaseClient.auth.refreshSession();
-
-            if (error) {
-                console.error("Token refresh error:", error);
-                // If refresh fails, user needs to re-authenticate
-                if (error.message && error.message.includes('refresh_token_not_found')) {
-                    console.warn("No refresh token found, redirecting to login");
-                    window.location.href = '/auth/login?reason=session_expired';
-                }
-                throw error;
+            const user = this.firebaseAuth.currentUser;
+            
+            if (!user) {
+                console.warn("No user logged in, redirecting to login");
+                window.location.href = '/auth/login?reason=session_expired';
+                return null;
             }
 
-            if (data.session && data.session.access_token) {
-                console.log("Token refreshed successfully, expires at:", new Date(data.session.expires_at * 1000).toLocaleTimeString());
-                // Update server session with new token
-                try {
-                    await this.createServerSession(data.session.access_token);
-                } catch (sessionError) {
-                    console.error("Failed to update server session after token refresh:", sessionError);
-                    // Continue even if server session update fails - the token is still valid
-                }
-                return data.session;
+            // Force refresh the ID token
+            const idToken = await user.getIdToken(true);
+            
+            console.log("Token refreshed successfully");
+            
+            // Update server session with new token
+            try {
+                await this.createServerSession(idToken);
+            } catch (sessionError) {
+                console.error("Failed to update server session after token refresh:", sessionError);
             }
-
-            console.warn("Token refresh returned no session");
-            return null;
+            
+            return idToken;
         } catch (error) {
             console.error("Token refresh failed:", error);
             return null;
@@ -364,62 +368,43 @@ const Auth = {
     },
 
     /**
-     * Start automatic token refresh (checks every 2 minutes, refreshes if < 30 minutes remaining)
+     * Start automatic token refresh for Firebase
+     * Firebase tokens expire after 1 hour
      */
     startTokenRefresh: function() {
-        // Check and refresh token every 2 minutes (more frequent checks)
-        const CHECK_INTERVAL = 2 * 60 * 1000; // 2 minutes
-        const REFRESH_THRESHOLD = 30 * 60; // Refresh if less than 30 minutes remaining (half of 1 hour)
-
-        // Set up Supabase auth state listener for automatic refresh
-        if (this.supabaseClient) {
-            this.supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                console.log('Auth state changed:', event);
-
-                if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
-                    // Update server session when token is refreshed
-                    if (session && session.access_token) {
-                        console.log('Updating server session with new token');
-                        try {
-                            await this.createServerSession(session.access_token);
-                        } catch (error) {
-                            console.error('Failed to update server session:', error);
-                        }
-                    }
-                } else if (event === 'SIGNED_OUT') {
-                    console.log('User signed out');
-                    window.location.href = '/auth/login?reason=session_expired';
-                }
-            });
+        if (!this.firebaseAuth) {
+            console.error("Firebase not initialized");
+            return;
         }
 
-        // Periodic check as backup
-        setInterval(async () => {
-            try {
-                const session = await this.getCurrentSession();
-
-                if (session && session.expires_at) {
-                    const expiresAt = session.expires_at;
-                    const now = Math.floor(Date.now() / 1000);
-                    const timeUntilExpiry = expiresAt - now;
-
-                    console.log(`Token expires in ${Math.floor(timeUntilExpiry / 60)} minutes`);
-
-                    // Refresh if less than 30 minutes remaining
-                    if (timeUntilExpiry < REFRESH_THRESHOLD && timeUntilExpiry > 0) {
-                        console.log("Token expiring soon, refreshing...");
-                        await this.refreshToken();
-                    } else if (timeUntilExpiry <= 0) {
-                        console.warn("Token has expired, redirecting to login");
-                        window.location.href = '/auth/login?reason=session_expired';
-                    }
-                }
-            } catch (error) {
-                console.error("Token refresh check failed:", error);
+        // Listen to auth state changes
+        this.firebaseAuth.onAuthStateChanged(async (user) => {
+            if (user) {
+                console.log('User authenticated, setting up token refresh');
+                
+                // Get token result to check expiration
+                const tokenResult = await user.getIdTokenResult();
+                const expirationTime = new Date(tokenResult.expirationTime).getTime();
+                const now = Date.now();
+                const timeUntilExpiry = expirationTime - now;
+                
+                console.log(`Token expires in ${Math.floor(timeUntilExpiry / 1000 / 60)} minutes`);
+                
+                // Refresh token 5 minutes before expiry (55 minutes after creation)
+                const refreshTime = Math.max(timeUntilExpiry - (5 * 60 * 1000), 0);
+                
+                setTimeout(async () => {
+                    console.log('Refreshing token proactively');
+                    await this.refreshToken();
+                    // Restart the refresh cycle
+                    this.startTokenRefresh();
+                }, refreshTime);
+            } else {
+                console.log('User signed out');
             }
-        }, CHECK_INTERVAL);
+        });
 
-        console.log("Automatic token refresh started (checks every 2 minutes, refreshes at 30 min threshold)");
+        console.log("Automatic token refresh started (Firebase manages token lifecycle)");
     },
     
     /**
